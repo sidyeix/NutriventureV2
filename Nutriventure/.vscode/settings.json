@@ -66,5 +66,12 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
     },
-    "dotnet.defaultSolution": "Nutriventure.sln"
+    "dotnet.defaultSolution": "Nutriventure.sln",
+    "python-envs.pythonProjects": [
+        {
+            "path": "Assets/Settings",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }
