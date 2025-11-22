@@ -1,26 +1,19 @@
 using UnityEngine;          
 using System.Collections;   
 using System.Collections.Generic; 
+using System;               
 using UnityEngine.UI;        
 using UnityEngine.SceneManagement; 
 using TMPro;                 
 
 public class MainMenu_Manager : MonoBehaviour
 {
-    [Header("UI Panels")]
     public GameObject SettingsPanel;
-    public GameObject ResetConfirmationPanel;
     
-    [Header("Settings UI Elements")]
-    public Slider musicVolumeSlider;
-    public Slider soundVolumeSlider;
-    public Button resetDataButton;
-    public Button confirmResetButton;
-    public Button cancelResetButton;
-    
+    // Character Selection References
     [Header("Character Selection References")]
-    public CharacterDatabase characterDatabase;
     public Transform characterSpawnPoint;
+    public List<GameObject> characterPrefabs;
     public List<Button> characterButtons;
     
     [Header("Character Selection Settings")]
@@ -29,12 +22,12 @@ public class MainMenu_Manager : MonoBehaviour
     
     // Local character data - temporary until saved
     private GameObject currentSpawnedCharacter;
-    private int currentSelectedCharacterID = 0;
+    private int currentSelectedCharacterIndex = 0;
+    private List<bool> unlockedCharacters = new List<bool>() { true, true, true, true, true, true };
 
     void Start()
     {
         SettingsPanel.SetActive(false);
-        ResetConfirmationPanel.SetActive(false);
         
         // Wait for GameDataManager to be ready, then initialize
         StartCoroutine(InitializeAfterFrame());
@@ -48,144 +41,28 @@ public class MainMenu_Manager : MonoBehaviour
         // If GameDataManager exists, load the saved character, otherwise use default
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
-            currentSelectedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+            currentSelectedCharacterIndex = GameDataManager.Instance.CurrentGameData.selectedCharacterIndex;
         }
         
         InitializeCharacterSystem();
-        InitializeSettingsUI();
     }
 
     public void ToggleSettings()
     {
-        bool newState = !SettingsPanel.activeSelf;
-        SettingsPanel.SetActive(newState);
-        
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
-        
-        // If opening settings, update sliders
-        if (newState)
-        {
-            UpdateSettingsSliders();
-        }
-    }
-    
-    // Settings Panel Methods
-    private void InitializeSettingsUI()
-    {
-        // Setup slider listeners
-        if (musicVolumeSlider != null)
-        {
-            musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
-        }
-        
-        if (soundVolumeSlider != null)
-        {
-            soundVolumeSlider.onValueChanged.AddListener(OnSoundVolumeChanged);
-        }
-        
-        // Setup reset button
-        if (resetDataButton != null)
-        {
-            resetDataButton.onClick.AddListener(OnResetDataClicked);
-        }
-        
-        // Setup confirmation panel buttons
-        if (confirmResetButton != null)
-        {
-            confirmResetButton.onClick.AddListener(OnConfirmResetClicked);
-        }
-        
-        if (cancelResetButton != null)
-        {
-            cancelResetButton.onClick.AddListener(OnCancelResetClicked);
-        }
-    }
-    
-    private void UpdateSettingsSliders()
-    {
-        if (AudioHandler.Instance != null)
-        {
-            musicVolumeSlider.value = AudioHandler.Instance.GetMusicVolume();
-            soundVolumeSlider.value = AudioHandler.Instance.GetSoundVolume();
-        }
-    }
-    
-    private void OnMusicVolumeChanged(float volume)
-    {
-        AudioHandler.Instance.SetMusicVolume(volume);
-    }
-    
-    private void OnSoundVolumeChanged(float volume)
-    {
-        AudioHandler.Instance.SetSoundVolume(volume);
-    }
-    
-    private void OnResetDataClicked()
-    {
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
-        
-        // Show confirmation panel, hide settings panel
-        SettingsPanel.SetActive(false);
-        ResetConfirmationPanel.SetActive(true);
-    }
-    
-    private void OnConfirmResetClicked()
-    {
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
-        
-        // Reset game data
-        if (GameDataManager.Instance != null)
-        {
-            GameDataManager.Instance.ResetGameData();
-            
-            // Update character selection to default
-            currentSelectedCharacterID = 0;
-            SpawnCharacter(currentSelectedCharacterID);
-            UpdateButtonAppearance();
-            
-            // Update audio settings
-            if (AudioHandler.Instance != null)
-            {
-                AudioHandler.Instance.SetMusicVolume(GameDataManager.Instance.CurrentGameData.musicVolume);
-                AudioHandler.Instance.SetSoundVolume(GameDataManager.Instance.CurrentGameData.soundVolume);
-                UpdateSettingsSliders();
-            }
-        }
-        
-        // Close confirmation panel, show settings panel
-        ResetConfirmationPanel.SetActive(false);
-        SettingsPanel.SetActive(true);
-        
-        Debug.Log("Game data reset successfully!");
-    }
-    
-    private void OnCancelResetClicked()
-    {
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
-        
-        // Close confirmation panel, show settings panel
-        ResetConfirmationPanel.SetActive(false);
-        SettingsPanel.SetActive(true);
+        SettingsPanel.SetActive(!SettingsPanel.activeSelf);
     }
     
     // START BUTTON - This is where we save to GameDataManager and transition
     public void OnStartButtonClicked()
     {
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
-        
-        Debug.Log($"Start button clicked - Saving character ID {currentSelectedCharacterID} to GameDataManager");
+        Debug.Log($"Start button clicked - Saving character {currentSelectedCharacterIndex} to GameDataManager");
         
         // Save the currently selected character to GameDataManager
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
-            GameDataManager.Instance.CurrentGameData.selectedCharacterID = currentSelectedCharacterID;
+            GameDataManager.Instance.CurrentGameData.selectedCharacterIndex = currentSelectedCharacterIndex;
             GameDataManager.Instance.SaveGameData();
-            Debug.Log($"Character ID {currentSelectedCharacterID} saved to GameDataManager");
+            Debug.Log($"Character {currentSelectedCharacterIndex} saved to GameDataManager");
         }
         else
         {
@@ -196,14 +73,9 @@ public class MainMenu_Manager : MonoBehaviour
         LoadNextScene();
     }
     
-    // Generic button click method for other buttons
-    public void OnButtonClick()
-    {
-        AudioHandler.Instance.PlayButtonClick();
-    }
-    
     private void LoadNextScene()
     {
+        // Replace "GameScene" with your actual game scene name
         SceneManager.LoadScene("2_Lobby");
     }
     
@@ -211,7 +83,7 @@ public class MainMenu_Manager : MonoBehaviour
     private void InitializeCharacterSystem()
     {
         // Spawn initial character
-        SpawnCharacter(currentSelectedCharacterID);
+        SpawnCharacter(currentSelectedCharacterIndex);
         UpdateButtonAppearance();
         
         // Clear existing listeners first to prevent duplicates
@@ -228,61 +100,41 @@ public class MainMenu_Manager : MonoBehaviour
             characterButtons[i].onClick.AddListener(() => OnCharacterSelected(index));
         }
         
-        Debug.Log($"Character system initialized with character ID: {currentSelectedCharacterID}");
+        Debug.Log($"Character system initialized with character: {currentSelectedCharacterIndex}");
     }
     
-    private void OnCharacterSelected(int buttonIndex)
+    private void OnCharacterSelected(int characterIndex)
     {
-        // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
+        Debug.Log($"Character {characterIndex} selected");
         
-        // Get character data from database using button index
-        if (buttonIndex >= characterDatabase.characters.Count) 
-        {
-            Debug.LogError($"Button index {buttonIndex} exceeds character database count");
-            return;
-        }
-        
-        CharacterDatabase.CharacterData selectedCharacter = characterDatabase.characters[buttonIndex];
-        int characterID = selectedCharacter.characterID;
-        
-        Debug.Log($"Character {selectedCharacter.characterName} (ID: {characterID}) selected");
-        
-        if (characterID == currentSelectedCharacterID) 
+        if (characterIndex == currentSelectedCharacterIndex) 
         {
             Debug.Log("Same character selected, ignoring");
             return;
         }
         
-        // Check if character is unlocked using database method
-        if (!characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData))
+        // Check if character is unlocked
+        if (!unlockedCharacters[characterIndex])
         {
-            Debug.Log($"Character {selectedCharacter.characterName} is locked!");
+            Debug.Log("Character is locked!");
             return;
         }
         
         // Update LOCAL data only - not saved to GameDataManager yet
-        currentSelectedCharacterID = characterID;
+        currentSelectedCharacterIndex = characterIndex;
         
         // Spawn new character
-        SpawnCharacter(characterID);
+        SpawnCharacter(characterIndex);
         UpdateButtonAppearance();
         
-        // Play character selection sound if available
-        if (selectedCharacter.selectionSound != null)
-        {
-            AudioHandler.Instance.PlayCharacterSelectionSound(selectedCharacter.selectionSound);
-        }
-        
-        Debug.Log($"Character preview changed to: {selectedCharacter.characterName} (ID: {characterID}) - Not saved yet");
+        Debug.Log($"Character preview changed to: {characterIndex} (Not saved yet)");
     }
     
-    private void SpawnCharacter(int characterID)
+    private void SpawnCharacter(int characterIndex)
     {
-        CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(characterID);
-        if (characterData == null || characterData.characterPrefab == null)
+        if (characterIndex < 0 || characterIndex >= characterPrefabs.Count)
         {
-            Debug.LogError($"Character data or prefab not found for ID: {characterID}");
+            Debug.LogError($"Invalid character index: {characterIndex}");
             return;
         }
         
@@ -292,58 +144,66 @@ public class MainMenu_Manager : MonoBehaviour
         }
         
         currentSpawnedCharacter = Instantiate(
-            characterData.characterPrefab, 
+            characterPrefabs[characterIndex], 
             characterSpawnPoint.position, 
             characterSpawnPoint.rotation
         );
         
-        Debug.Log($"Spawned character preview: {characterData.characterName}");
+        Debug.Log($"Spawned character preview: {characterPrefabs[characterIndex].name}");
     }
     
     private void UpdateButtonAppearance()
     {
         for (int i = 0; i < characterButtons.Count; i++)
         {
-            if (i >= characterDatabase.characters.Count) continue;
-            
+            Image buttonImage = characterButtons[i].GetComponent<Image>();
             Button button = characterButtons[i];
-            Image buttonImage = button.GetComponent<Image>();
-            CharacterDatabase.CharacterData characterData = characterDatabase.characters[i];
             
             if (buttonImage != null)
             {
-                bool isSelected = (characterData.characterID == currentSelectedCharacterID);
-                bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterData.characterID, GameDataManager.Instance.CurrentGameData);
+                // Visual feedback for selection
+                buttonImage.color = (i == currentSelectedCharacterIndex) ? selectedColor : normalColor;
                 
-                buttonImage.color = isSelected ? selectedColor : normalColor;
-                button.interactable = isUnlocked;
-                
-                if (!isUnlocked)
+                // Visual feedback for locked characters
+                if (!unlockedCharacters[i])
                 {
                     buttonImage.color = Color.gray;
+                    button.interactable = false;
+                }
+                else
+                {
+                    button.interactable = true;
                 }
             }
         }
     }
     
-    // Method to get the selected character data
-    public CharacterDatabase.CharacterData GetCurrentCharacterData()
+    // Method to get the selected character for the next scene
+    public GameObject GetCurrentCharacterPrefab()
     {
-        return characterDatabase.GetCharacterByID(currentSelectedCharacterID);
+        return characterPrefabs[currentSelectedCharacterIndex];
     }
     
-    public int GetCurrentCharacterID()
+    public int GetCurrentCharacterIndex()
     {
-        return currentSelectedCharacterID;
+        return currentSelectedCharacterIndex;
     }
     
-    // Helper methods to manage unlocked characters
-    public void UnlockCharacter(int characterID)
+    // Helper methods to manage unlocked characters if needed
+    public void UnlockCharacter(int characterIndex)
     {
-        if (!GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs.Contains(characterID))
+        if (characterIndex >= 0 && characterIndex < unlockedCharacters.Count)
         {
-            GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs.Add(characterID);
-            GameDataManager.Instance.SaveGameData();
+            unlockedCharacters[characterIndex] = true;
+            UpdateButtonAppearance();
+        }
+    }
+    
+    public void LockCharacter(int characterIndex)
+    {
+        if (characterIndex >= 0 && characterIndex < unlockedCharacters.Count)
+        {
+            unlockedCharacters[characterIndex] = false;
             UpdateButtonAppearance();
         }
     }

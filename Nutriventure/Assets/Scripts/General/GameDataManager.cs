@@ -68,9 +68,6 @@ public class GameDataManager : MonoBehaviour
         
         // Update energy based on time passed
         UpdateEnergyBasedOnTime();
-        
-        // Update chest availability based on time passed
-        UpdateChestAvailability();
     }
     
     private void CreateNewGameData()
@@ -81,17 +78,7 @@ public class GameDataManager : MonoBehaviour
     
     public void ResetGameData()
     {
-        // Create completely fresh game data
-        CurrentGameData = new GameData();
-        SaveGameData();
-        
-        // Update AudioHandler with new volume settings
-        if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.SetMusicVolume(CurrentGameData.musicVolume);
-            AudioHandler.Instance.SetSoundVolume(CurrentGameData.soundVolume);
-        }
-        
+        CreateNewGameData();
         Debug.Log("Game data reset to default!");
     }
     
@@ -106,56 +93,6 @@ public class GameDataManager : MonoBehaviour
             CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
             SaveGameData();
         }
-    }
-    
-    private void UpdateChestAvailability()
-    {
-        // If chest was already available, no need to check
-        if (CurrentGameData.isChestAvailable) return;
-        
-        // Check if 3 hours have passed since last claim
-        TimeSpan timeSinceLastClaim = DateTime.Now - CurrentGameData.lastChestClaimTime;
-        if (timeSinceLastClaim.TotalHours >= 3)
-        {
-            CurrentGameData.isChestAvailable = true;
-            SaveGameData();
-            Debug.Log("Chest is now available!");
-        }
-    }
-    
-    public bool CanClaimChest()
-    {
-        return CurrentGameData.isChestAvailable;
-    }
-    
-    public TimeSpan GetTimeUntilNextChest()
-    {
-        if (CurrentGameData.isChestAvailable)
-        {
-            return TimeSpan.Zero;
-        }
-        
-        TimeSpan timeSinceLastClaim = DateTime.Now - CurrentGameData.lastChestClaimTime;
-        TimeSpan timeRemaining = TimeSpan.FromHours(3) - timeSinceLastClaim;
-        
-        // Ensure we don't return negative time
-        return timeRemaining > TimeSpan.Zero ? timeRemaining : TimeSpan.Zero;
-    }
-    
-    public void ClaimChestReward()
-    {
-        if (!CurrentGameData.isChestAvailable) return;
-        
-        // Add 50 coins
-        CurrentGameData.nutriCoins += 50;
-        
-        // Update chest state
-        CurrentGameData.isChestAvailable = false;
-        CurrentGameData.lastChestClaimTime = DateTime.Now;
-        
-        SaveGameData();
-        
-        Debug.Log($"Chest claimed! Received 50 coins. Total coins: {CurrentGameData.nutriCoins}");
     }
     
     // Auto-save when app closes or pauses
