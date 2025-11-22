@@ -4,7 +4,7 @@ using System.Collections;
 public class LobbyMain_Manager : MonoBehaviour
 {
     public Transform characterSpawnPointinLobby;
-    public CharacterDatabase characterDatabase;
+    public GameObject[] characterPrefabs; // Assign your character prefabs in Inspector
     
     private GameObject currentSpawnedCharacter;
     
@@ -25,26 +25,19 @@ public class LobbyMain_Manager : MonoBehaviour
             yield break;
         }
         
-        if (characterDatabase == null)
-        {
-            Debug.LogError("CharacterDatabase not assigned!");
-            yield break;
-        }
+        int selectedCharacterIndex = GameDataManager.Instance.CurrentGameData.selectedCharacterIndex;
+        Debug.Log($"Loading character index: {selectedCharacterIndex} in lobby");
         
-        int selectedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
-        Debug.Log($"Loading character ID: {selectedCharacterID} in lobby");
-        
-        SpawnCharacterInLobby(selectedCharacterID);
-        ApplyCharacterAttributes(selectedCharacterID);
+        SpawnCharacterInLobby(selectedCharacterIndex);
     }
     
-    private void SpawnCharacterInLobby(int characterID)
+    private void SpawnCharacterInLobby(int characterIndex)
     {
-        CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(characterID);
-        if (characterData == null)
+        // Validate the index
+        if (characterIndex < 0 || characterIndex >= characterPrefabs.Length)
         {
-            Debug.LogError($"Character data not found for ID: {characterID}. Using default character.");
-            characterData = characterDatabase.GetCharacterByID(0); // Use default
+            Debug.LogError($"Invalid character index: {characterIndex}. Using default character 0.");
+            characterIndex = 0;
         }
         
         // Destroy existing character if any
@@ -55,50 +48,28 @@ public class LobbyMain_Manager : MonoBehaviour
         
         // Spawn the selected character
         currentSpawnedCharacter = Instantiate(
-            characterData.characterPrefab, 
+            characterPrefabs[characterIndex], 
             characterSpawnPointinLobby.position, 
             characterSpawnPointinLobby.rotation
         );
         
-        Debug.Log($"Spawned character in lobby: {characterData.characterName}");
-    }
-    
-    private void ApplyCharacterAttributes(int characterID)
-    {
-        CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(characterID);
-        if (characterData == null) return;
-        
-        // Apply character attributes to your game systems
-        Debug.Log($"Applied attributes for {characterData.characterName}: " +
-                 $"Speed: {characterData.speedMultiplier}x, " +
-                 $"Jump: {characterData.jumpForceMultiplier}x, " +
-                 $"Health: {characterData.healthMultiplier}x");
-        
-        // Example: Apply to player controller (you'll need to implement this)
-        // PlayerController player = currentSpawnedCharacter.GetComponent<PlayerController>();
-        // if (player != null)
-        // {
-        //     player.speed *= characterData.speedMultiplier;
-        //     player.jumpForce *= characterData.jumpForceMultiplier;
-        //     player.maxHealth *= characterData.healthMultiplier;
-        // }
-    }
-    
-    // Optional: Get the current character data
-    public CharacterDatabase.CharacterData GetCurrentCharacterData()
-    {
-        return characterDatabase.GetCharacterByID(GameDataManager.Instance.CurrentGameData.selectedCharacterID);
+        Debug.Log($"Spawned character in lobby: {characterPrefabs[characterIndex].name}");
     }
     
     // Optional: Method to update character if needed during runtime
-    public void UpdateCharacterInLobby(int newCharacterID)
+    public void UpdateCharacterInLobby(int newCharacterIndex)
     {
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
-            GameDataManager.Instance.CurrentGameData.selectedCharacterID = newCharacterID;
+            GameDataManager.Instance.CurrentGameData.selectedCharacterIndex = newCharacterIndex;
             GameDataManager.Instance.SaveGameData();
-            SpawnCharacterInLobby(newCharacterID);
-            ApplyCharacterAttributes(newCharacterID);
+            SpawnCharacterInLobby(newCharacterIndex);
         }
+    }
+    
+    // Optional: Get the currently spawned character
+    public GameObject GetCurrentSpawnedCharacter()
+    {
+        return currentSpawnedCharacter;
     }
 }
