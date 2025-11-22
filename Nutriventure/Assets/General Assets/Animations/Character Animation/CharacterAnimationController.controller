@@ -49,6 +49,7 @@ AnimatorStateMachine:
     m_Position: {x: 80, y: 310, z: 0}
   - serializedVersion: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     m_State: {fileID: 426478004347221590}
     m_Position: {x: 510, y: 340, z: 0}
 <<<<<<< Updated upstream
@@ -60,6 +61,10 @@ AnimatorStateMachine:
 =======
 >>>>>>> Stashed changes
 =======
+>>>>>>> Stashed changes
+=======
+    m_State: {fileID: -8001425455324483282}
+    m_Position: {x: 530, y: 370, z: 0}
 >>>>>>> Stashed changes
 =======
     m_State: {fileID: -8001425455324483282}
@@ -129,7 +134,11 @@ AnimatorStateTransition:
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 --- !u!1101 &-3738231084192548997
+=======
+--- !u!1101 &-1419275409425903063
+>>>>>>> Stashed changes
 =======
 --- !u!1101 &-1419275409425903063
 >>>>>>> Stashed changes
@@ -161,6 +170,9 @@ AnimatorStateTransition:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -204,6 +216,9 @@ AnimatorController:
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -226,6 +241,7 @@ AnimatorController:
     m_IKPass: 0
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -269,6 +285,9 @@ AnimatorState:
 =======
 --- !u!1101 &3582769773856571425
 >>>>>>> Stashed changes
+=======
+--- !u!1101 &3582769773856571425
+>>>>>>> Stashed changes
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -281,7 +300,11 @@ AnimatorStateTransition:
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   m_DstState: {fileID: 426478004347221590}
+=======
+  m_DstState: {fileID: -8001425455324483282}
+>>>>>>> Stashed changes
 =======
   m_DstState: {fileID: -8001425455324483282}
 >>>>>>> Stashed changes
@@ -340,6 +363,7 @@ AnimatorState:
   - {fileID: -5600373989810086183}
   - {fileID: 4152353732643558450}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   - {fileID: 3219118851526737408}
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -350,6 +374,9 @@ AnimatorState:
 =======
 >>>>>>> Stashed changes
 =======
+>>>>>>> Stashed changes
+=======
+  - {fileID: 3582769773856571425}
 >>>>>>> Stashed changes
 =======
   - {fileID: 3582769773856571425}
