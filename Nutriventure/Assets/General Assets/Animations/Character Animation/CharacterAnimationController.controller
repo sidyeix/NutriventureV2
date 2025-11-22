@@ -23,6 +23,9 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: 426478004347221590}
     m_Position: {x: 510, y: 340, z: 0}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
@@ -112,6 +115,9 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 --- !u!91 &9100000
 AnimatorController:
@@ -143,6 +149,9 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_AnimatorLayers:
   - serializedVersion: 5
@@ -158,7 +167,10 @@ AnimatorController:
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 --- !u!1102 &426478004347221590
 AnimatorState:
   serializedVersion: 6
@@ -254,6 +266,9 @@ AnimatorState:
   - {fileID: -5600373989810086183}
   - {fileID: 4152353732643558450}
   - {fileID: 3219118851526737408}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
