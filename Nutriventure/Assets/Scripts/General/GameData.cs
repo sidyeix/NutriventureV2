@@ -16,12 +16,8 @@ public class GameData
     public DateTime lastEnergyUpdateTime;
     
     // Character System
-    public int selectedCharacterID = 0; // Default to first character ID
-    public List<int> unlockedCharacterIDs = new List<int>() { 0 };
-    
-    // Chest System
-    public DateTime lastChestClaimTime;
-    public bool isChestAvailable = true;
+    public int selectedCharacterIndex;
+    public List<bool> unlockedCharacters = new List<bool>() { true, true, true, true, true, true }; // First char unlocked by default
     
     // Progress Tracking
     public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false }; // First kingdom unlocked
@@ -47,9 +43,6 @@ public class GameData
         nutriCoins = 0;
         currentEnergy = 10;
         lastEnergyUpdateTime = DateTime.Now;
-        lastChestClaimTime = DateTime.MinValue; // Never claimed
-        isChestAvailable = true;
-        selectedCharacterID = 0;
-        unlockedCharacterIDs = new List<int>() { 0 };
+        selectedCharacterIndex = 0;
     }
 }
