@@ -97,6 +97,10 @@ PrefabInstance:
       value: Aj
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 56746daa7cc4b174787a7962103a6d4c, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 56746daa7cc4b174787a7962103a6d4c, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 5ef49b4d4a7f9b94683a2e940675f008, type: 2}
