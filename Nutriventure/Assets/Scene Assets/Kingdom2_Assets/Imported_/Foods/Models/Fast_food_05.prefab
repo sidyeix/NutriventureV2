@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6718392018478361774}
   - component: {fileID: 8188555393295962195}
   - component: {fileID: 7541792763076417704}
+  - component: {fileID: 8139149328770678308}
   m_Layer: 0
   m_Name: Fast_food_05
   m_TagString: Untagged
@@ -89,3 +90,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &8139149328770678308
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4699898748729084304}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 9129350258849769760, guid: 53b7a2ef4775adf4d8060e75fc0374cd, type: 3}

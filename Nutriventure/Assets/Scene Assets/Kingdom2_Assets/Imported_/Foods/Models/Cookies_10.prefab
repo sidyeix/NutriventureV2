@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4005206192418815428}
   - component: {fileID: 4647606232741076280}
   - component: {fileID: 264080819648321271}
+  - component: {fileID: -2415080256583553623}
   m_Layer: 0
   m_Name: Cookies_10
   m_TagString: Untagged
@@ -89,3 +90,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &-2415080256583553623
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8890270827227211020}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -4705820949790507288, guid: 53b7a2ef4775adf4d8060e75fc0374cd, type: 3}

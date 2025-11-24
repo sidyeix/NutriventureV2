@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6230271246727373438}
   - component: {fileID: 5082776237152212234}
   - component: {fileID: 4370272212279281300}
+  - component: {fileID: 5358245695482394377}
   m_Layer: 0
   m_Name: Raw_meat_04
   m_TagString: Untagged
@@ -89,3 +90,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &5358245695482394377
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8887786913713044904}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3161252906704528250, guid: 53b7a2ef4775adf4d8060e75fc0374cd, type: 3}

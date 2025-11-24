@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6018222137748431982}
   - component: {fileID: 7404230012605007122}
   - component: {fileID: 7191148034605879114}
+  - component: {fileID: -5086355131235883235}
   m_Layer: 0
   m_Name: Burger_01
   m_TagString: Untagged
@@ -89,3 +90,25 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &-5086355131235883235
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963798114440609435}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5638011398655278274, guid: 53b7a2ef4775adf4d8060e75fc0374cd, type: 3}
