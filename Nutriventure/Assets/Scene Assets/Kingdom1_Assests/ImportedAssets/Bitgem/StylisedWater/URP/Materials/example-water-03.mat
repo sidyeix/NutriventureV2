@@ -27,22 +27,20 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: 2cddf2ee6a74aca44af00f5a49bd2cf1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _DISABLE_DECALS
-  - _DISABLE_SSR_TRANSPARENT
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
+  m_CustomRenderQueue: -1
   stringTagMap:
     MotionVector: User
   disabledShaderPasses:
-  - MOTIONVECTORS
+  - RayTracingPrepass
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
-  - RayTracingPrepass
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -97,9 +95,9 @@ Material:
     - Vector1_244B0600: 1
     - Vector1_34CF798A: 1.75
     - Vector1_36E8227: 0.6
-    - Vector1_3D886DA1: 0.05
-    - Vector1_46E42935: 0.5
-    - Vector1_47683D42: 1
+    - Vector1_3D886DA1: 0
+    - Vector1_46E42935: 0
+    - Vector1_47683D42: 0.25
     - Vector1_A0EAD698: 0.5
     - Vector1_A6A0BC26: 0
     - Vector1_B9F56378: 0
@@ -184,8 +182,8 @@ Material:
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - Color_7D9A58EC: {r: 0.046279836, g: 0.47778645, b: 0.754717, a: 1}
-    - Color_F01C36BF: {r: 0.47346365, g: 0.098039195, b: 0.65882355, a: 1}
+    - Color_7D9A58EC: {r: 0.04705883, g: 0.4784314, b: 0.75294125, a: 1}
+    - Color_F01C36BF: {r: 0.3803922, g: 0.80392164, b: 0.9725491, a: 1}
     - Vector2_37B21477: {r: 0.6, g: 0.6, b: 1, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
