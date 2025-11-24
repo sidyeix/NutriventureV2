@@ -12,6 +12,8 @@ public class CharacterDatabase : ScriptableObject
         public int characterID;
         public GameObject characterPrefab;
         public Sprite characterIcon;
+        public Avatar characterAvatar;    // Humanoid avatar
+
         
         [Header("Gameplay Attributes")]
         public float speedMultiplier = 1f;
