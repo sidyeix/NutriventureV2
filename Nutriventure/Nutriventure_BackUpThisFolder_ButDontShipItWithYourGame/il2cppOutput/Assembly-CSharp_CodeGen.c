@@ -97,6 +97,19 @@ extern void U3CTriggerLookAroundSmoothlyU3Ed__15_MoveNext_m41493460CB075EBFC64E5
 extern void U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_mFB73FF1B856608D7D7F20835861FC27AEF6A4DB5 (void);
 extern void U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_IEnumerator_Reset_mD4277751101323BEF1485D8B92B66C44E81C3F93 (void);
 extern void U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_IEnumerator_get_Current_m6763EF704EA11D55C0ED502DA677A30DB2FB4226 (void);
+extern void CoinCollectionSystem_Start_mE699B260EE9030E5302BAD293EEEBB17ADED00D5 (void);
+extern void CoinCollectionSystem_SetupCollider_mA2E267864D9C992F53ABF23FA3295E867708F56C (void);
+extern void CoinCollectionSystem_OnTriggerEnter_mCD35725D4E32B29150795DCB041390CD88B453E5 (void);
+extern void CoinCollectionSystem_OnTriggerStay_m619213F53683E699D92405600726BF59C9A182FA (void);
+extern void CoinCollectionSystem_IsPlayerCloseEnough_mEC5E9EA7802ADA1F16FBDB87D26C48CC824F055F (void);
+extern void CoinCollectionSystem_CollectCoin_m7ED29F4FDA23423B0A7F5EA252114F9F4A0D2261 (void);
+extern void CoinCollectionSystem_PlayCollectionEffects_m9F5028A1F888F0D966849FCEEC748A41ED7D2543 (void);
+extern void CoinCollectionSystem_AddCoins_m7627F8B0ADE34C9C92BC19415B17EB190E451273 (void);
+extern void CoinCollectionSystem_GetCurrentCoins_m37BF1BCE995EB9AFADF91918CB59CA38219C213B (void);
+extern void CoinCollectionSystem_CanAfford_m39C9468CDF4116808E5478A41F2A61FF4D040E25 (void);
+extern void CoinCollectionSystem_SpendCoins_m77F51B4FFABECF9316964644C1A378D5AA3A80D4 (void);
+extern void CoinCollectionSystem_OnDrawGizmosSelected_mB8F92CC3DE83F268AA2900F0F2DA680DD831D03E (void);
+extern void CoinCollectionSystem__ctor_m0403E1ACDD90C703DEAEC321576B3CBCE019079F (void);
 extern void GameData__ctor_mA9048174D2C20A10AD865A4B919045878E27099A (void);
 extern void GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927 (void);
 extern void GameDataManager_set_CurrentGameData_m10308975CC01760707932FA27BCE478D3617BC48 (void);
@@ -119,6 +132,17 @@ extern void InputManager_EnablePlayerInput_m883A36E82357F69328B6887509067A7E0FC5
 extern void InputManager_DisablePlayerInput_m17BBBA53A9A543E81612EF3C7FEDF47C3BF9F109 (void);
 extern void InputManager_IsInputEnabled_mA92BE27A6A3812ED073E8E8D1DDE61B8CCE86E47 (void);
 extern void InputManager__ctor_m52D2F3B9FA0D50C52BCC92486F49B300E9334C2A (void);
+extern void GameplayProgression_Start_mE3EFAAA539A4117B55290B277E9220D1A0478301 (void);
+extern void GameplayProgression_InitializeUI_m15EADED1A38D2B23C417B68A9E1BBAB62335EC5E (void);
+extern void GameplayProgression_UpdateCoinDisplay_mA01CB5626B31596F0003835FE83202CE4E3AA2E6 (void);
+extern void GameplayProgression_UpdateLevelDisplay_m5C02007A0FA710EAA855F1A5AEC6910F2190B5FF (void);
+extern void GameplayProgression_UpdateXPDisplay_mC7EEF991F211327606FF97251233DA3BC4C1D0DC (void);
+extern void GameplayProgression_UpdateAllDisplays_m9B27DB2F524123C474A774E3981DC0CA9093D79D (void);
+extern void GameplayProgression_OnCoinCollected_m0868209D60545EF81FE24652A9E4DE5F6E641C5F (void);
+extern void GameplayProgression_OnLevelUp_mE2C27C94E918CAA68511E81B5B85F63D6F909017 (void);
+extern void GameplayProgression_OnEnable_m9F9D376310917C577274B6863E2276D390251333 (void);
+extern void GameplayProgression_OnDestroy_m80A7BE189AFC6C5814AFC2FEE89419DED80C1986 (void);
+extern void GameplayProgression__ctor_m6D8AA5D76489714121CF4C5D4F888C9EEAD59B14 (void);
 extern void MainMenu_Manager_Start_m78514ADB04AF66AE4CF05E8ECD6CE4473EA96046 (void);
 extern void MainMenu_Manager_SetupCameras_m1FF929C2DFEA6727AFCA7D53BB47B9F329764B4E (void);
 extern void MainMenu_Manager_InitializeAfterFrame_m571E1662D8D76BB319D5F9461D2FE9BF3614A9FB (void);
@@ -576,7 +600,7 @@ extern void ThirdPersonController_OnDrawGizmosSelected_mCD3D7F711815BC95C166CB8E
 extern void ThirdPersonController_OnFootstep_mFE54F581AB0F72FC34208BCB6ABF77311BCC3D02 (void);
 extern void ThirdPersonController_OnLand_mAF1A04288C4B0ED39ACA52599F18D059F78D41C8 (void);
 extern void ThirdPersonController__ctor_mA2ECE265C51A281DA13F2344E30363399DD64321 (void);
-static Il2CppMethodPointer s_methodPointers[569] = 
+static Il2CppMethodPointer s_methodPointers[593] = 
 {
 	MobileDisableAutoSwitchControls_Start_m5E1CF874A11971B24762BC74EE94AB81CFF45368,
 	MobileDisableAutoSwitchControls_DisableAutoSwitchControls_m156A87BFC0F55EC1BD438F032CB959A464A39AE4,
@@ -668,6 +692,19 @@ static Il2CppMethodPointer s_methodPointers[569] =
 	U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_mFB73FF1B856608D7D7F20835861FC27AEF6A4DB5,
 	U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_IEnumerator_Reset_mD4277751101323BEF1485D8B92B66C44E81C3F93,
 	U3CTriggerLookAroundSmoothlyU3Ed__15_System_Collections_IEnumerator_get_Current_m6763EF704EA11D55C0ED502DA677A30DB2FB4226,
+	CoinCollectionSystem_Start_mE699B260EE9030E5302BAD293EEEBB17ADED00D5,
+	CoinCollectionSystem_SetupCollider_mA2E267864D9C992F53ABF23FA3295E867708F56C,
+	CoinCollectionSystem_OnTriggerEnter_mCD35725D4E32B29150795DCB041390CD88B453E5,
+	CoinCollectionSystem_OnTriggerStay_m619213F53683E699D92405600726BF59C9A182FA,
+	CoinCollectionSystem_IsPlayerCloseEnough_mEC5E9EA7802ADA1F16FBDB87D26C48CC824F055F,
+	CoinCollectionSystem_CollectCoin_m7ED29F4FDA23423B0A7F5EA252114F9F4A0D2261,
+	CoinCollectionSystem_PlayCollectionEffects_m9F5028A1F888F0D966849FCEEC748A41ED7D2543,
+	CoinCollectionSystem_AddCoins_m7627F8B0ADE34C9C92BC19415B17EB190E451273,
+	CoinCollectionSystem_GetCurrentCoins_m37BF1BCE995EB9AFADF91918CB59CA38219C213B,
+	CoinCollectionSystem_CanAfford_m39C9468CDF4116808E5478A41F2A61FF4D040E25,
+	CoinCollectionSystem_SpendCoins_m77F51B4FFABECF9316964644C1A378D5AA3A80D4,
+	CoinCollectionSystem_OnDrawGizmosSelected_mB8F92CC3DE83F268AA2900F0F2DA680DD831D03E,
+	CoinCollectionSystem__ctor_m0403E1ACDD90C703DEAEC321576B3CBCE019079F,
 	GameData__ctor_mA9048174D2C20A10AD865A4B919045878E27099A,
 	GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927,
 	GameDataManager_set_CurrentGameData_m10308975CC01760707932FA27BCE478D3617BC48,
@@ -690,6 +727,17 @@ static Il2CppMethodPointer s_methodPointers[569] =
 	InputManager_DisablePlayerInput_m17BBBA53A9A543E81612EF3C7FEDF47C3BF9F109,
 	InputManager_IsInputEnabled_mA92BE27A6A3812ED073E8E8D1DDE61B8CCE86E47,
 	InputManager__ctor_m52D2F3B9FA0D50C52BCC92486F49B300E9334C2A,
+	GameplayProgression_Start_mE3EFAAA539A4117B55290B277E9220D1A0478301,
+	GameplayProgression_InitializeUI_m15EADED1A38D2B23C417B68A9E1BBAB62335EC5E,
+	GameplayProgression_UpdateCoinDisplay_mA01CB5626B31596F0003835FE83202CE4E3AA2E6,
+	GameplayProgression_UpdateLevelDisplay_m5C02007A0FA710EAA855F1A5AEC6910F2190B5FF,
+	GameplayProgression_UpdateXPDisplay_mC7EEF991F211327606FF97251233DA3BC4C1D0DC,
+	GameplayProgression_UpdateAllDisplays_m9B27DB2F524123C474A774E3981DC0CA9093D79D,
+	GameplayProgression_OnCoinCollected_m0868209D60545EF81FE24652A9E4DE5F6E641C5F,
+	GameplayProgression_OnLevelUp_mE2C27C94E918CAA68511E81B5B85F63D6F909017,
+	GameplayProgression_OnEnable_m9F9D376310917C577274B6863E2276D390251333,
+	GameplayProgression_OnDestroy_m80A7BE189AFC6C5814AFC2FEE89419DED80C1986,
+	GameplayProgression__ctor_m6D8AA5D76489714121CF4C5D4F888C9EEAD59B14,
 	MainMenu_Manager_Start_m78514ADB04AF66AE4CF05E8ECD6CE4473EA96046,
 	MainMenu_Manager_SetupCameras_m1FF929C2DFEA6727AFCA7D53BB47B9F329764B4E,
 	MainMenu_Manager_InitializeAfterFrame_m571E1662D8D76BB319D5F9461D2FE9BF3614A9FB,
@@ -1151,9 +1199,9 @@ static Il2CppMethodPointer s_methodPointers[569] =
 extern void LookWeight__ctor_m9495967FD619B277AD3CE8B1281B6F2A81FE4E84_AdjustorThunk (void);
 static Il2CppTokenAdjustorThunkPair s_adjustorThunks[1] = 
 {
-	{ 0x060001E6, LookWeight__ctor_m9495967FD619B277AD3CE8B1281B6F2A81FE4E84_AdjustorThunk },
+	{ 0x060001FE, LookWeight__ctor_m9495967FD619B277AD3CE8B1281B6F2A81FE4E84_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[569] = 
+static const int32_t s_InvokerIndices[593] = 
 {
 	16779,
 	16779,
@@ -1246,6 +1294,19 @@ static const int32_t s_InvokerIndices[569] =
 	16779,
 	16543,
 	16779,
+	16779,
+	12734,
+	12734,
+	9061,
+	16779,
+	16779,
+	27104,
+	28297,
+	26342,
+	26342,
+	16779,
+	16779,
+	16779,
 	16543,
 	12734,
 	16779,
@@ -1266,6 +1327,17 @@ static const int32_t s_InvokerIndices[569] =
 	16779,
 	16779,
 	16313,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
+	16779,
 	16779,
 	16779,
 	16779,
@@ -1729,7 +1801,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule;
 const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule = 
 {
 	"Assembly-CSharp.dll",
-	569,
+	593,
 	s_methodPointers,
 	1,
 	s_adjustorThunks,
