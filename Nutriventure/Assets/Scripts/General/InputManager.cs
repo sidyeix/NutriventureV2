@@ -5,9 +5,9 @@ public class InputManager : MonoBehaviour
 {
     [Header("Starter Assets References")]
     public GameObject playerController; // Your PlayerArmature GameObject
-    public MonoBehaviour thirdPersonController; // ThirdPersonController component
-    public MonoBehaviour basicRigidBodyPush; // BasicRigidBodyPush component (if exists)
-    public MonoBehaviour starterAssetsInputs; // StarterAssetsInputs component
+    public ThirdPersonController thirdPersonController; // Use specific type
+    public StarterAssetsInputs starterAssetsInputs; // Use specific type
+    public BasicRigidBodyPush basicRigidBodyPush; // Use specific type (if exists)
 
     private bool inputEnabled = false;
 
@@ -28,6 +28,8 @@ public class InputManager : MonoBehaviour
 
         // Disable input by default
         DisablePlayerInput();
+
+        Debug.Log("InputManager initialized - Only movement scripts will be disabled");
     }
 
     public void EnablePlayerInput()
@@ -42,7 +44,7 @@ public class InputManager : MonoBehaviour
             basicRigidBodyPush.enabled = true;
 
         inputEnabled = true;
-        Debug.Log("Player input ENABLED");
+        Debug.Log("Player input ENABLED - Movement scripts activated");
     }
 
     public void DisablePlayerInput()
@@ -57,7 +59,7 @@ public class InputManager : MonoBehaviour
             basicRigidBodyPush.enabled = false;
 
         inputEnabled = false;
-        Debug.Log("Player input DISABLED");
+        Debug.Log("Player input DISABLED - Only movement scripts disabled, animator remains active");
     }
 
     public bool IsInputEnabled()
