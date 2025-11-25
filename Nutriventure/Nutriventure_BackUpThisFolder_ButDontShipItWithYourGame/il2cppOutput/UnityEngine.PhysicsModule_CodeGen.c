@@ -183,13 +183,15 @@ extern void Rigidbody_set_isKinematic_Injected_m5613C03722F001F12F373B8AAB0C3CFF
 extern void Rigidbody_set_detectCollisions_Injected_m4DBCBCAC10A4B747B6FDB966536BB94EA6C131A2 (void);
 extern void Rigidbody_AddForce_Injected_m0063728ED4AA2811701ED30CDFC9765816402152 (void);
 extern void SphereCollider_get_center_m122A197607CD350873539A0EEE3BA10E8BE1759E (void);
+extern void SphereCollider_set_center_m83F6CC0056B491CD577B9AC08FA1E331074203D4 (void);
 extern void SphereCollider_get_radius_m1BB513491906E76A4F71929E3DB72A1542309697 (void);
 extern void SphereCollider_set_radius_m6119FE18C6739B077AB17334B1B53984911017FF (void);
 extern void SphereCollider__ctor_mA8570CBE8C0E74C607669DC4E0CCA6CB1E4CB200 (void);
 extern void SphereCollider_get_center_Injected_m092FEA1F41E394E8C2E25921DFD2A1425F8874E9 (void);
+extern void SphereCollider_set_center_Injected_mD9C8D6B7DA038F9580EBE6877D4B0EF8CE585238 (void);
 extern void SphereCollider_get_radius_Injected_mF96901A391F7DBD16C5895D85C4853B65CD033A0 (void);
 extern void SphereCollider_set_radius_Injected_m1A4885A34095D7CE22CE2001BA6D47022F387747 (void);
-static Il2CppMethodPointer s_methodPointers[182] = 
+static Il2CppMethodPointer s_methodPointers[184] = 
 {
 	ContactPoint_get_point_mCCDFDACC5D8DB469898060A56A3CC45132911208,
 	ContactPoint_get_normal_mD7F0567CA2FD68644F7C6FE318E10C4D15F92AD6,
@@ -367,10 +369,12 @@ static Il2CppMethodPointer s_methodPointers[182] =
 	Rigidbody_set_detectCollisions_Injected_m4DBCBCAC10A4B747B6FDB966536BB94EA6C131A2,
 	Rigidbody_AddForce_Injected_m0063728ED4AA2811701ED30CDFC9765816402152,
 	SphereCollider_get_center_m122A197607CD350873539A0EEE3BA10E8BE1759E,
+	SphereCollider_set_center_m83F6CC0056B491CD577B9AC08FA1E331074203D4,
 	SphereCollider_get_radius_m1BB513491906E76A4F71929E3DB72A1542309697,
 	SphereCollider_set_radius_m6119FE18C6739B077AB17334B1B53984911017FF,
 	SphereCollider__ctor_mA8570CBE8C0E74C607669DC4E0CCA6CB1E4CB200,
 	SphereCollider_get_center_Injected_m092FEA1F41E394E8C2E25921DFD2A1425F8874E9,
+	SphereCollider_set_center_Injected_mD9C8D6B7DA038F9580EBE6877D4B0EF8CE585238,
 	SphereCollider_get_radius_Injected_mF96901A391F7DBD16C5895D85C4853B65CD033A0,
 	SphereCollider_set_radius_Injected_m1A4885A34095D7CE22CE2001BA6D47022F387747,
 };
@@ -453,7 +457,7 @@ static Il2CppTokenAdjustorThunkPair s_adjustorThunks[38] =
 	{ 0x060000A1, RaycastHit_get_transform_m89DB7FCFC50E0213A37CBE089400064B8FA19155_AdjustorThunk },
 	{ 0x060000A2, RaycastHit_get_rigidbody_mE6FCB1B1A9F0C8D4185A484C10B9A5403CCD6005_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[182] = 
+static const int32_t s_InvokerIndices[184] = 
 {
 	16767,
 	16767,
@@ -631,9 +635,11 @@ static const int32_t s_InvokerIndices[182] =
 	23981,
 	21758,
 	16767,
+	12948,
 	16672,
 	12853,
 	16779,
+	23980,
 	23980,
 	26857,
 	23987,
@@ -642,7 +648,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_PhysicsModule_CodeGenMod
 const Il2CppCodeGenModule g_UnityEngine_PhysicsModule_CodeGenModule = 
 {
 	"UnityEngine.PhysicsModule.dll",
-	182,
+	184,
 	s_methodPointers,
 	38,
 	s_adjustorThunks,
