@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Cinemachine; // Add this namespace
 
 public class MainMenu_Manager : MonoBehaviour
 {
@@ -12,6 +13,10 @@ public class MainMenu_Manager : MonoBehaviour
     public GameObject ResetConfirmationPanel;
     public GameObject menuCanvas; // Assign your main menu UI Canvas here
     public GameObject joystickCanvas; // Assign your joystick UI Canvas here
+
+    [Header("Camera References")]
+    public CinemachineVirtualCamera menuVirtualCamera; // Virtual camera for menu view
+    public CinemachineVirtualCamera playerFollowCamera; // Virtual camera that follows player
 
     [Header("Settings UI Elements")]
     public Slider musicVolumeSlider;
@@ -56,7 +61,16 @@ public class MainMenu_Manager : MonoBehaviour
             menuCanvas.SetActive(true);
         }
 
-        // Disable player input immediately
+        // Set up cameras - menu camera should be active at start
+        SetupCameras();
+
+        // CRITICAL: Ensure animator is enabled before disabling input
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.EnsureAnimatorEnabled();
+        }
+
+        // Disable player input immediately (this should only disable movement/input scripts, not animator)
         if (inputManager != null)
         {
             inputManager.DisablePlayerInput();
@@ -68,6 +82,30 @@ public class MainMenu_Manager : MonoBehaviour
 
         // Wait for GameDataManager to be ready, then initialize
         StartCoroutine(InitializeAfterFrame());
+    }
+
+    private void SetupCameras()
+    {
+        // Ensure menu camera is active and player camera is inactive at start
+        if (menuVirtualCamera != null)
+        {
+            menuVirtualCamera.Priority = 10; // High priority
+        }
+        else
+        {
+            Debug.LogWarning("Menu Virtual Camera not assigned!");
+        }
+
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = 0; // Low priority
+        }
+        else
+        {
+            Debug.LogWarning("Player Follow Camera not assigned!");
+        }
+
+        Debug.Log("Cameras setup: Menu camera active, Player camera inactive");
     }
 
     private IEnumerator InitializeAfterFrame()
@@ -111,6 +149,16 @@ public class MainMenu_Manager : MonoBehaviour
 
     private void SwitchToGameMode()
     {
+        // Switch to player follow camera
+        SwitchToPlayerCamera();
+
+        // STOP LookAround animation and set parameter to false
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.StopLookAroundAnimation();
+            Debug.Log("LookAround animation stopped for gameplay");
+        }
+
         // ENABLE player input
         if (inputManager != null)
         {
@@ -152,6 +200,9 @@ public class MainMenu_Manager : MonoBehaviour
     // Method to return to menu (in case you need it later)
     public void ReturnToMenu()
     {
+        // Switch back to menu camera
+        SwitchToMenuCamera();
+
         // Disable player input
         if (inputManager != null)
         {
@@ -180,6 +231,42 @@ public class MainMenu_Manager : MonoBehaviour
         }
 
         Debug.Log("Returned to menu mode");
+    }
+
+    private void SwitchToPlayerCamera()
+    {
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = 10; // High priority
+            Debug.Log("Switched to Player Follow Camera");
+        }
+        else
+        {
+            Debug.LogWarning("Player Follow Camera not assigned - cannot switch to player view");
+        }
+
+        if (menuVirtualCamera != null)
+        {
+            menuVirtualCamera.Priority = 0; // Low priority
+        }
+    }
+
+    private void SwitchToMenuCamera()
+    {
+        if (menuVirtualCamera != null)
+        {
+            menuVirtualCamera.Priority = 10; // High priority
+            Debug.Log("Switched to Menu Camera");
+        }
+        else
+        {
+            Debug.LogWarning("Menu Virtual Camera not assigned - cannot switch to menu view");
+        }
+
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = 0; // Low priority
+        }
     }
 
     // Generic button click method for other buttons

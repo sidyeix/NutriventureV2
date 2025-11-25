@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class CharacterVisualSwapper : MonoBehaviour
 {
@@ -6,48 +7,59 @@ public class CharacterVisualSwapper : MonoBehaviour
     public Transform geometryRoot; // Assign your "Geometry" transform in inspector
     public Animator playerAnimator; // Assign your PlayerArmature's Animator in inspector
 
+    [Header("Animation Parameters")]
+    public string lookAroundParameter = "LookAround"; // Name of the bool parameter in Animator
+
+    [Header("Visual Settings")]
+    public float initializationDelay = 0.2f; // Delay before showing character to ensure proper setup
+    public float swapDelay = 0.1f; // Delay to prevent T-pose flash
+
     private GameObject currentCharacterModel;
+    private Coroutine swapCoroutine;
+    private Renderer[] currentRenderers; // Changed to Renderer to catch all types
+
+    void Start()
+    {
+        ForceEnableAnimator();
+    }
 
     public void ApplyCharacterVisuals(CharacterDatabase.CharacterData characterData)
     {
-        if (characterData == null)
-        {
-            Debug.LogError("Character data is null!");
-            return;
-        }
+        if (characterData == null) return;
 
-        // Clear existing character model
+        if (swapCoroutine != null)
+            StopCoroutine(swapCoroutine);
+
+        swapCoroutine = StartCoroutine(SwapCharacterVisualsCoroutine(characterData));
+    }
+
+    private IEnumerator SwapCharacterVisualsCoroutine(CharacterDatabase.CharacterData characterData)
+    {
+        Debug.Log("Starting character swap with initial hiding...");
+
+        // PHASE 1: HIDE CURRENT CHARACTER (if exists)
+        HideCurrentCharacter();
+
+        // PHASE 2: CLEAR EXISTING MODEL
         if (currentCharacterModel != null)
         {
             Destroy(currentCharacterModel);
+            currentCharacterModel = null;
+            currentRenderers = null;
         }
 
-        // IMPORTANT: Reset animator before applying new avatar
+        yield return new WaitForEndOfFrame(); // Ensure cleanup
+
+        // PHASE 3: APPLY AVATAR FIRST
+        Debug.Log("Applying avatar first...");
         if (playerAnimator != null)
         {
-            // Disable the animator temporarily
             playerAnimator.enabled = false;
-
-            // Apply the avatar
-            if (characterData.characterAvatar != null)
-            {
-                playerAnimator.avatar = characterData.characterAvatar;
-                Debug.Log($"Applied avatar for: {characterData.characterName}");
-            }
-            else
-            {
-                Debug.LogWarning($"No avatar found for: {characterData.characterName}");
-            }
-
-            // Re-enable the animator
-            playerAnimator.enabled = true;
-
-            // Force the animator to update immediately
-            playerAnimator.Rebind();
-            playerAnimator.Update(0f);
+            playerAnimator.avatar = characterData.characterAvatar;
         }
 
-        // Instantiate the character prefab as child of geometry
+        // PHASE 4: INSTANTIATE NEW MODEL BUT KEEP IT HIDDEN
+        Debug.Log("Instantiating new model (hidden)...");
         if (characterData.characterPrefab != null && geometryRoot != null)
         {
             currentCharacterModel = Instantiate(characterData.characterPrefab, geometryRoot);
@@ -55,39 +67,152 @@ public class CharacterVisualSwapper : MonoBehaviour
             currentCharacterModel.transform.localRotation = Quaternion.identity;
             currentCharacterModel.transform.localScale = Vector3.one;
 
-            // Disable any components in the instantiated prefab to avoid conflicts
             DisableCharacterComponents(currentCharacterModel);
 
-            Debug.Log($"Applied mesh for: {characterData.characterName}");
+            // Get ALL renderers (SkinnedMeshRenderer and MeshRenderer)
+            currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
 
-            // Force the character to play default animation
-            PlayDefaultAnimation();
+            // IMPORTANT: Keep the character hidden initially
+            HideCurrentCharacterImmediately();
         }
-        else
+
+        yield return new WaitForEndOfFrame(); // Ensure instantiation completes
+
+        // PHASE 5: RE-ENABLE ANIMATOR WITH NEW AVATAR
+        Debug.Log("Re-enabling animator with new avatar...");
+        if (playerAnimator != null)
         {
-            Debug.LogError($"Character prefab or geometry root is null for: {characterData.characterName}");
+            playerAnimator.enabled = true;
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+        }
+
+        // PHASE 6: WAIT FOR INITIALIZATION - CRITICAL STEP!
+        Debug.Log($"Waiting {initializationDelay}s for proper initialization...");
+        yield return new WaitForSeconds(initializationDelay);
+
+        // PHASE 7: NOW SHOW THE CHARACTER (everything should be initialized)
+        Debug.Log("Showing character after initialization...");
+        ShowCurrentCharacter();
+
+        // PHASE 8: SMALL DELAY BEFORE ANIMATION
+        yield return new WaitForSeconds(swapDelay);
+
+        // PHASE 9: TRIGGER ANIMATION
+        Debug.Log("Triggering LookAround animation...");
+        TriggerLookAroundAnimation();
+
+        Debug.Log("Character swap completed successfully!");
+        swapCoroutine = null;
+    }
+
+    private void HideCurrentCharacter()
+    {
+        if (currentRenderers != null)
+        {
+            foreach (var renderer in currentRenderers)
+            {
+                if (renderer != null)
+                    renderer.enabled = false;
+            }
+        }
+    }
+
+    private void HideCurrentCharacterImmediately()
+    {
+        if (currentCharacterModel != null)
+        {
+            // Disable ALL renderers in the new character
+            Renderer[] allRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in allRenderers)
+            {
+                if (renderer != null)
+                    renderer.enabled = false;
+            }
+        }
+    }
+
+    private void ShowCurrentCharacter()
+    {
+        if (currentRenderers != null)
+        {
+            foreach (var renderer in currentRenderers)
+            {
+                if (renderer != null)
+                    renderer.enabled = true;
+            }
+        }
+        else if (currentCharacterModel != null)
+        {
+            // Fallback: if currentRenderers is null, find them again
+            currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
+            foreach (var renderer in currentRenderers)
+            {
+                if (renderer != null)
+                    renderer.enabled = true;
+            }
+        }
+    }
+
+    public void TriggerLookAroundAnimation()
+    {
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter) && playerAnimator.enabled)
+        {
+            StartCoroutine(TriggerLookAroundSmoothly());
+        }
+    }
+
+    private IEnumerator TriggerLookAroundSmoothly()
+    {
+        yield return new WaitForEndOfFrame();
+
+        if (playerAnimator != null && playerAnimator.enabled)
+        {
+            // Ensure animator is in a clean state
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+
+            // Reset parameter
+            playerAnimator.SetBool(lookAroundParameter, false);
+            playerAnimator.Update(0f);
+
+            yield return new WaitForEndOfFrame();
+
+            // Trigger animation
+            playerAnimator.SetBool(lookAroundParameter, true);
+            playerAnimator.Update(0.1f);
+
+            Debug.Log("LookAround animation triggered after proper initialization");
+        }
+    }
+
+    private void ForceEnableAnimator()
+    {
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.Update(0f);
         }
     }
 
     private void DisableCharacterComponents(GameObject characterModel)
     {
-        // Disable animator (we're using the PlayerArmature's animator)
+        // Disable animator in the instantiated model
         Animator animator = characterModel.GetComponent<Animator>();
         if (animator != null)
-        {
             animator.enabled = false;
-        }
 
-        // Disable any controller scripts that might interfere
+        // Disable any movement/input scripts
         MonoBehaviour[] scripts = characterModel.GetComponentsInChildren<MonoBehaviour>();
-        foreach (MonoBehaviour script in scripts)
+        foreach (var script in scripts)
         {
             if (script != null && script.enabled)
             {
                 if (script.GetType().Name.Contains("Controller") ||
                     script.GetType().Name.Contains("Movement") ||
                     script.GetType().Name.Contains("Input") ||
-                    script.GetType().Name.Contains("Camera"))
+                    script.GetType().Name.Contains("Camera") ||
+                    script.GetType().Name.Contains("StarterAssets"))
                 {
                     script.enabled = false;
                 }
@@ -95,66 +220,33 @@ public class CharacterVisualSwapper : MonoBehaviour
         }
     }
 
-    private void PlayDefaultAnimation()
-    {
-        if (playerAnimator != null)
-        {
-            // Make sure the animator is enabled and has an avatar
-            if (playerAnimator.avatar != null && playerAnimator.avatar.isValid)
-            {
-                // Reset to entry state and play
-                playerAnimator.Rebind();
-
-                // Try to play the default animation (usually "Idle" or "Entry")
-                if (playerAnimator.HasState(0, Animator.StringToHash("Idle")))
-                {
-                    playerAnimator.Play("Idle", 0, 0f);
-                }
-                else if (playerAnimator.HasState(0, Animator.StringToHash("Entry")))
-                {
-                    playerAnimator.Play("Entry", 0, 0f);
-                }
-                else
-                {
-                    // Play the first state available
-                    playerAnimator.Play(0, 0, 0f);
-                }
-
-                // Force immediate update
-                playerAnimator.Update(0.1f);
-
-                Debug.Log("Default animation playing");
-            }
-            else
-            {
-                Debug.LogWarning("Animator avatar is null or invalid - animations may not play correctly");
-            }
-        }
-    }
-
-    // Call this when you want to clear the character visuals
     public void ClearCharacterVisuals()
     {
         if (currentCharacterModel != null)
         {
             Destroy(currentCharacterModel);
             currentCharacterModel = null;
-        }
-
-        if (playerAnimator != null)
-        {
-            playerAnimator.avatar = null;
+            currentRenderers = null;
         }
     }
 
-    // Optional: Method to force animation refresh
-    public void RefreshAnimator()
+    public void EnsureAnimatorEnabled()
     {
-        if (playerAnimator != null)
+        ForceEnableAnimator();
+    }
+
+    void OnDestroy()
+    {
+        if (swapCoroutine != null)
+            StopCoroutine(swapCoroutine);
+    }
+    public void StopLookAroundAnimation()
+    {
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
         {
-            playerAnimator.Rebind();
+            playerAnimator.SetBool(lookAroundParameter, false);
             playerAnimator.Update(0f);
-            PlayDefaultAnimation();
+            Debug.Log("LookAround animation stopped - parameter set to false");
         }
     }
 }
