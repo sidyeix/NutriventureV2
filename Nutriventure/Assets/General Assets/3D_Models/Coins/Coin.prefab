@@ -296,6 +296,10 @@ MonoBehaviour:
   coinValue: 1
   coinCollectSound: {fileID: 8300000, guid: 7289e4f469e06ac41a2280c5fc6178a9, type: 3}
   collectionRadius: 0.3
+  useMeshBounds: 1
+  colliderCenterOffset: {x: 0, y: 0, z: 0}
+  playerHeightOffset: 1
+  useSimpleDetection: 1
   collectParticles: {fileID: 0}
 --- !u!65 &2001574538826490777
 BoxCollider:

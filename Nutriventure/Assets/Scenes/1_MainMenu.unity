@@ -11436,6 +11436,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   SettingsPanel: {fileID: 1273658606}
   ResetConfirmationPanel: {fileID: 276795765}
+  menuCanvas: {fileID: 0}
+  joystickCanvas: {fileID: 0}
+  menuVirtualCamera: {fileID: 0}
+  playerFollowCamera: {fileID: 0}
   musicVolumeSlider: {fileID: 1263891296}
   soundVolumeSlider: {fileID: 1387553602}
   resetDataButton: {fileID: 881670343}
@@ -11450,8 +11454,10 @@ MonoBehaviour:
   - {fileID: 1046571813}
   - {fileID: 507824830}
   - {fileID: 1571045505}
+  characterVisualSwapper: {fileID: 0}
   selectedColor: {r: 0.5764706, g: 0.4392157, b: 0.8588236, a: 0.6745098}
   normalColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+  inputManager: {fileID: 0}
 --- !u!1 &2075988698
 GameObject:
   m_ObjectHideFlags: 0
