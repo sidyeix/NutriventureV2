@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class MonsterObstacle : MonoBehaviour
 {
@@ -7,9 +8,20 @@ public class MonsterObstacle : MonoBehaviour
     public float patrolDistance = 15f;
     public float rotationSpeed = 180f;
     
+    [Header("Hunting Settings")]
+    public float huntSpeedMultiplier = 1.5f;
+    public float huntRotationSpeed = 360f;
+    public float returnToPatrolDelay = 2f;
+    public float stuckDetectionTime = 3f;
+    
     [Header("Collision Settings")]
     public int damageAmount = 1;
     public float collisionCooldown = 2f;
+    
+    [Header("Attack Animation Settings")]
+    public float attackAnimationDuration = 1.0f;
+    public float damageTriggerTime = 0.5f; // When during animation to apply damage
+    public bool pauseMovementDuringAttack = true;
     
     [Header("Collider Settings")]
     public float detectionRadius = 0.008f;
@@ -22,6 +34,8 @@ public class MonsterObstacle : MonoBehaviour
     [Header("Audio")]
     public AudioClip collisionSound;
     public AudioClip monsterSound;
+    public AudioClip huntSound;
+    public AudioClip attackSound;
     
     private Vector3 startPosition;
     private Vector3 targetPosition;
@@ -34,6 +48,35 @@ public class MonsterObstacle : MonoBehaviour
     private CapsuleCollider triggerCollider;
     private CapsuleCollider blockingCollider;
     
+    // Hunting state variables
+    private bool isHunting = false;
+    private float lastPlayerDetectionTime;
+    private Vector3 lastKnownPlayerPosition;
+    private MonsterState currentState = MonsterState.Patrolling;
+    
+    // Stuck detection variables
+    private Vector3 lastPosition;
+    private float lastMovementTime;
+    private bool isStuck = false;
+    private float stuckTimer = 0f;
+    
+    // Attack animation variables
+    private bool isAttacking = false;
+    private Coroutine attackCoroutine;
+    private bool damageApplied = false;
+    
+    // Animation parameters - ONLY IsAttacking is needed
+    private readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
+    
+    // Make the enum public to fix the accessibility error
+    public enum MonsterState
+    {
+        Patrolling,
+        Hunting,
+        ReturningToPatrol,
+        Attacking
+    }
+    
     void Start()
     {
         // Store initial position and calculate patrol points
@@ -42,12 +85,6 @@ public class MonsterObstacle : MonoBehaviour
         
         // Get animator component
         animator = GetComponent<Animator>();
-        
-        // Start walking animation
-        if (animator != null)
-        {
-            animator.SetBool("IsWalking", true);
-        }
         
         // Find player
         player = GameObject.FindGameObjectWithTag("Player");
@@ -65,14 +102,293 @@ public class MonsterObstacle : MonoBehaviour
         // Initialize sound timer
         lastMonsterSoundTime = Time.time;
         
+        // Initialize stuck detection
+        lastPosition = transform.position;
+        lastMovementTime = Time.time;
+        
         Debug.Log("MonsterObstacle initialized successfully");
     }
     
     void Update()
     {
-        MoveMonster();
-        CheckPatrolEnd();
-        CheckMonsterSound();
+        // Don't update movement if currently attacking
+        if (currentState != MonsterState.Attacking)
+        {
+            CheckPlayerDetection();
+            CheckIfStuck();
+            
+            switch (currentState)
+            {
+                case MonsterState.Patrolling:
+                    MoveMonster();
+                    CheckPatrolEnd();
+                    break;
+                    
+                case MonsterState.Hunting:
+                    HuntPlayer();
+                    break;
+                    
+                case MonsterState.ReturningToPatrol:
+                    ReturnToPatrol();
+                    break;
+            }
+            
+            CheckMonsterSound();
+            UpdateMovementDetection();
+        }
+    }
+    
+    private void UpdateMovementDetection()
+    {
+        // Check if monster is actually moving
+        if (Vector3.Distance(transform.position, lastPosition) > 0.01f)
+        {
+            lastMovementTime = Time.time;
+            lastPosition = transform.position;
+            isStuck = false;
+            stuckTimer = 0f; // Reset stuck timer when moving
+        }
+        else if (currentState == MonsterState.Hunting)
+        {
+            // Increment stuck timer when not moving while hunting
+            stuckTimer += Time.deltaTime;
+            
+            if (stuckTimer >= stuckDetectionTime)
+            {
+                isStuck = true;
+                Debug.Log("Monster is stuck! Returning to patrol.");
+                ReturnToPatrolState();
+            }
+        }
+    }
+    
+    private void CheckIfStuck()
+    {
+        // Additional stuck detection using raycasts for obstacles
+        if (currentState == MonsterState.Hunting && !isStuck && player != null)
+        {
+            // Check for obstacles in front
+            RaycastHit hit;
+            Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;
+            
+            if (Physics.Raycast(transform.position, directionToPlayer, out hit, 2f))
+            {
+                if (!hit.collider.CompareTag("Player") && hit.collider != blockingCollider)
+                {
+                    // There's an obstacle between monster and player
+                    Debug.Log($"Obstacle detected: {hit.collider.name}");
+                    
+                    // Check if we've been stuck for the required time
+                    if (stuckTimer >= stuckDetectionTime)
+                    {
+                        isStuck = true;
+                        Debug.Log("Monster blocked by obstacle! Returning to patrol.");
+                        ReturnToPatrolState();
+                    }
+                }
+            }
+        }
+    }
+    
+    private void CheckPlayerDetection()
+    {
+        if (player == null) return;
+        
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        
+        // Use monsterSoundRange as hunting radius for consistency
+        if (distanceToPlayer <= monsterSoundRange)
+        {
+            // Player detected in hunting radius
+            if (currentState != MonsterState.Hunting && !isStuck && currentState != MonsterState.Attacking)
+            {
+                StartHunting();
+            }
+            lastPlayerDetectionTime = Time.time;
+            lastKnownPlayerPosition = player.transform.position;
+        }
+        else if (currentState == MonsterState.Hunting)
+        {
+            // Player left hunting radius - return to patrol immediately
+            ReturnToPatrolState();
+        }
+    }
+    
+    private void StartHunting()
+    {
+        currentState = MonsterState.Hunting;
+        isHunting = true;
+        isStuck = false;
+        stuckTimer = 0f; // Reset stuck timer when starting to hunt
+        
+        // Update animations - only set IsAttacking to false
+        if (animator != null)
+        {
+            animator.SetBool(IsAttackingHash, false);
+        }
+        
+        // Play hunt sound
+        if (huntSound != null && AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayCharacterSelectionSound(huntSound);
+        }
+        
+        Debug.Log("Monster started hunting player!");
+    }
+    
+    private void HuntPlayer()
+    {
+        if (player == null) return;
+        
+        // Calculate direction to player
+        Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;
+        directionToPlayer.y = 0; // Keep movement horizontal
+        
+        // Use physics-based movement to respect collisions
+        Vector3 movement = directionToPlayer * (moveSpeed * huntSpeedMultiplier * Time.deltaTime);
+        
+        // Simple obstacle avoidance
+        if (!CheckForObstacles(directionToPlayer))
+        {
+            // Move towards player if no immediate obstacles
+            transform.position += movement;
+        }
+        else
+        {
+            // Try to find alternative path
+            Vector3 alternativeDirection = FindAlternativeDirection(directionToPlayer);
+            if (alternativeDirection != Vector3.zero)
+            {
+                transform.position += alternativeDirection * (moveSpeed * huntSpeedMultiplier * Time.deltaTime);
+            }
+        }
+        
+        // Rotate towards player quickly
+        if (directionToPlayer != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation, 
+                targetRotation, 
+                huntRotationSpeed * Time.deltaTime
+            );
+        }
+    }
+    
+    private bool CheckForObstacles(Vector3 direction)
+    {
+        RaycastHit hit;
+        float checkDistance = 1.5f;
+        
+        // Check for obstacles in the movement direction
+        if (Physics.Raycast(transform.position, direction, out hit, checkDistance))
+        {
+            if (!hit.collider.CompareTag("Player") && hit.collider != blockingCollider)
+            {
+                return true; // Obstacle detected
+            }
+        }
+        
+        return false; // No obstacles
+    }
+    
+    private Vector3 FindAlternativeDirection(Vector3 originalDirection)
+    {
+        // Try directions to the left and right of the original direction
+        Vector3[] testDirections = {
+            Quaternion.Euler(0, 30, 0) * originalDirection,
+            Quaternion.Euler(0, -30, 0) * originalDirection,
+            Quaternion.Euler(0, 45, 0) * originalDirection,
+            Quaternion.Euler(0, -45, 0) * originalDirection
+        };
+        
+        foreach (Vector3 testDir in testDirections)
+        {
+            if (!CheckForObstacles(testDir))
+            {
+                return testDir.normalized;
+            }
+        }
+        
+        return Vector3.zero; // No alternative path found
+    }
+    
+    private void ReturnToPatrolState()
+    {
+        if (currentState == MonsterState.Hunting || currentState == MonsterState.Attacking)
+        {
+            currentState = MonsterState.ReturningToPatrol;
+            isHunting = false;
+            isStuck = false;
+            stuckTimer = 0f; // Reset stuck timer
+            
+            // Update animations - only set IsAttacking to false
+            if (animator != null)
+            {
+                animator.SetBool(IsAttackingHash, false);
+            }
+            
+            Debug.Log("Monster returning to patrol route");
+        }
+    }
+    
+    private void ReturnToPatrol()
+    {
+        // Find the closest patrol point to return to
+        float distanceToStart = Vector3.Distance(transform.position, startPosition);
+        float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
+        
+        Vector3 returnTarget = distanceToStart < distanceToTarget ? startPosition : targetPosition;
+        movingToEnd = returnTarget == targetPosition;
+        
+        Vector3 direction = (returnTarget - transform.position).normalized;
+        
+        // Move towards patrol point
+        transform.position = Vector3.MoveTowards(transform.position, returnTarget, moveSpeed * Time.deltaTime);
+        
+        // Rotate towards movement direction
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+        
+        // Check if reached patrol route
+        if (Vector3.Distance(transform.position, returnTarget) < 0.1f)
+        {
+            currentState = MonsterState.Patrolling;
+            Debug.Log("Monster returned to patrol route");
+        }
+    }
+    
+    private void MoveMonster()
+    {
+        // Calculate movement direction for patrolling
+        Vector3 target = movingToEnd ? targetPosition : startPosition;
+        Vector3 direction = (target - transform.position).normalized;
+        
+        // Move towards target
+        transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+        
+        // Rotate towards movement direction (smooth rotation)
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+    
+    private void CheckPatrolEnd()
+    {
+        // Check if reached target position
+        float distanceToTarget = Vector3.Distance(transform.position, movingToEnd ? targetPosition : startPosition);
+        
+        if (distanceToTarget < 0.1f)
+        {
+            // Switch direction
+            movingToEnd = !movingToEnd;
+            Debug.Log($"Monster changing direction. Now moving to: {(movingToEnd ? "Target" : "Start")}");
+        }
     }
     
     private void SetupColliders()
@@ -103,36 +419,6 @@ public class MonsterObstacle : MonoBehaviour
         Debug.Log($"Monster colliders setup:");
         Debug.Log($"- Trigger: Radius {triggerCollider.radius}, Height {triggerCollider.height}");
         Debug.Log($"- Blocker: Radius {blockingCollider.radius}, Height {blockingCollider.height}");
-    }
-    
-    private void MoveMonster()
-    {
-        // Calculate movement direction
-        Vector3 target = movingToEnd ? targetPosition : startPosition;
-        Vector3 direction = (target - transform.position).normalized;
-        
-        // Move towards target
-        transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
-        
-        // Rotate towards movement direction (smooth rotation)
-        if (direction != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-        }
-    }
-    
-    private void CheckPatrolEnd()
-    {
-        // Check if reached target position
-        float distanceToTarget = Vector3.Distance(transform.position, movingToEnd ? targetPosition : startPosition);
-        
-        if (distanceToTarget < 0.1f)
-        {
-            // Switch direction
-            movingToEnd = !movingToEnd;
-            Debug.Log($"Monster changing direction. Now moving to: {(movingToEnd ? "Target" : "Start")}");
-        }
     }
     
     private void CheckMonsterSound()
@@ -174,7 +460,7 @@ public class MonsterObstacle : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;
-            HandlePlayerCollision(other.gameObject);
+            // Don't automatically handle collision in stay to prevent spam
         }
     }
     
@@ -194,20 +480,102 @@ public class MonsterObstacle : MonoBehaviour
         {
             lastCollisionTime = Time.time;
             
-            Debug.Log("Player collided with monster - applying damage!");
+            Debug.Log("Player collided with monster - starting attack sequence!");
             
-            // Apply damage to player
-            ApplyDamageToPlayer();
-            
-            // Play collision sound
-            PlayCollisionSound();
-            
-            // Trigger vibration
-            TriggerVibration();
-            
-            // Trigger visual effects via Game Manager
-            TriggerVisualEffects();
+            // Trigger attack animation FIRST
+            TriggerAttackAnimation();
         }
+    }
+    
+    private void TriggerAttackAnimation()
+    {
+        if (animator != null)
+        {
+            // Stop any existing attack coroutine
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+            }
+            
+            // Start attack sequence
+            attackCoroutine = StartCoroutine(AttackSequence());
+        }
+    }
+    
+    private IEnumerator AttackSequence()
+    {
+        // Set attacking state
+        currentState = MonsterState.Attacking;
+        isAttacking = true;
+        damageApplied = false; // Reset damage flag
+        
+        // Update animator - trigger attack animation FIRST
+        if (animator != null)
+        {
+            animator.SetBool(IsAttackingHash, true);
+        }
+        
+        // Play attack sound
+        if (attackSound != null && AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayCharacterSelectionSound(attackSound);
+        }
+        
+        Debug.Log("Monster attacking player - animation started!");
+        
+        // Wait for the damage trigger time (when attack connects in animation)
+        yield return new WaitForSeconds(damageTriggerTime);
+        
+        // NOW apply damage and effects (at the peak of the attack animation)
+        if (!damageApplied)
+        {
+            ApplyDamageAndEffects();
+            damageApplied = true;
+        }
+        
+        // Wait for the remaining animation duration
+        yield return new WaitForSeconds(attackAnimationDuration - damageTriggerTime);
+        
+        // Reset attack state
+        isAttacking = false;
+        damageApplied = false;
+        
+        // Return to appropriate state based on player position
+        if (animator != null)
+        {
+            animator.SetBool(IsAttackingHash, false);
+            
+            if (player != null && Vector3.Distance(transform.position, player.transform.position) <= monsterSoundRange)
+            {
+                // Player still in range - resume hunting
+                currentState = MonsterState.Hunting;
+                Debug.Log("Attack complete - resuming hunt");
+            }
+            else
+            {
+                // Player out of range - return to patrol
+                ReturnToPatrolState();
+            }
+        }
+        
+        attackCoroutine = null;
+    }
+    
+    private void ApplyDamageAndEffects()
+    {
+        Debug.Log("Attack connecting - applying damage and effects!");
+        
+        // Apply damage to player
+        ApplyDamageToPlayer();
+        
+        // Play collision sound
+        PlayCollisionSound();
+        
+        // Trigger vibration
+        TriggerVibration();
+        
+        // Trigger visual effects via Game Manager
+        TriggerVisualEffects();
     }
     
     private void ApplyDamageToPlayer()
@@ -291,9 +659,15 @@ public class MonsterObstacle : MonoBehaviour
         Vector3 direction = (currentEnd - currentStart).normalized;
         Gizmos.DrawRay(transform.position, direction * 2f);
         
-        // Draw monster sound range
+        // Draw monster sound range (now also used as hunting radius)
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, monsterSoundRange);
+        
+        // Draw hunting state indicator
+        Gizmos.color = currentState == MonsterState.Hunting ? Color.red : 
+                      currentState == MonsterState.ReturningToPatrol ? Color.yellow : 
+                      currentState == MonsterState.Attacking ? Color.magenta : new Color(0f, 1f, 0f, 0.3f);
+        Gizmos.DrawWireSphere(transform.position, monsterSoundRange * 1.1f);
         
         // Draw trigger collider (green - small)
         if (triggerCollider != null)
@@ -309,6 +683,14 @@ public class MonsterObstacle : MonoBehaviour
             Gizmos.color = Color.red;
             Vector3 blockCenter = transform.TransformPoint(blockingCollider.center);
             Gizmos.DrawWireSphere(blockCenter, blockingCollider.radius);
+        }
+        
+        // Draw obstacle detection rays when hunting
+        if (currentState == MonsterState.Hunting && player != null)
+        {
+            Gizmos.color = Color.white;
+            Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;
+            Gizmos.DrawRay(transform.position, directionToPlayer * 2f);
         }
     }
     
@@ -326,12 +708,26 @@ public class MonsterObstacle : MonoBehaviour
         Debug.Log($"Monster move speed set to: {newSpeed}");
     }
     
+    public void SetDamageTriggerTime(float newTime)
+    {
+        damageTriggerTime = Mathf.Clamp(newTime, 0.1f, attackAnimationDuration - 0.1f);
+        Debug.Log($"Damage trigger time set to: {damageTriggerTime}");
+    }
+    
     public void StopPatrol()
     {
         if (animator != null)
         {
-            animator.SetBool("IsWalking", false);
+            animator.SetBool(IsAttackingHash, false);
         }
+        
+        // Stop any attack coroutine
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+        
         enabled = false;
         Debug.Log("Monster patrol stopped");
     }
@@ -340,9 +736,10 @@ public class MonsterObstacle : MonoBehaviour
     {
         if (animator != null)
         {
-            animator.SetBool("IsWalking", true);
+            animator.SetBool(IsAttackingHash, false);
         }
         enabled = true;
+        currentState = MonsterState.Patrolling;
         Debug.Log("Monster patrol started");
     }
     
@@ -357,19 +754,39 @@ public class MonsterObstacle : MonoBehaviour
     {
         if (player != null)
         {
-            HandlePlayerCollision(player);
+            TriggerAttackAnimation();
         }
     }
     
     // Get monster state information
     public bool IsPatrolling()
     {
-        return enabled;
+        return currentState == MonsterState.Patrolling;
+    }
+    
+    public bool IsHunting()
+    {
+        return currentState == MonsterState.Hunting;
+    }
+    
+    public bool IsReturningToPatrol()
+    {
+        return currentState == MonsterState.ReturningToPatrol;
+    }
+    
+    public bool IsAttacking()
+    {
+        return currentState == MonsterState.Attacking;
     }
     
     public bool IsCollidingWithPlayer()
     {
         return isCollidingWithPlayer;
+    }
+    
+    public bool IsStuck()
+    {
+        return isStuck;
     }
     
     public float GetTimeUntilNextAttack()
@@ -378,9 +795,21 @@ public class MonsterObstacle : MonoBehaviour
         return Mathf.Max(0f, collisionCooldown - timeSinceLastAttack);
     }
     
+    // Now this works because MonsterState is public
+    public MonsterState GetCurrentState()
+    {
+        return currentState;
+    }
+    
     // Clean up when destroyed
     private void OnDestroy()
     {
+        // Stop any running coroutines
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+        }
+        
         Debug.Log("Monster destroyed");
     }
 }

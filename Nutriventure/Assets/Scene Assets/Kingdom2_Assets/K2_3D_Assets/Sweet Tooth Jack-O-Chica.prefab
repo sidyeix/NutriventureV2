@@ -623,7 +623,7 @@ Animator:
   m_GameObject: {fileID: 1938799506880121017}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 849d039cb29b4e648a8f689e8be87a54, type: 2}
+  m_Controller: {fileID: 9100000, guid: a227f42faa5f1d648991eaa8a8926a54, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -650,6 +650,10 @@ MonoBehaviour:
   moveSpeed: 3
   patrolDistance: 15
   rotationSpeed: 180
+  huntDetectionRadius: 10
+  huntSpeedMultiplier: 1.5
+  huntRotationSpeed: 360
+  returnToPatrolDelay: 2
   damageAmount: 1
   collisionCooldown: 2
   detectionRadius: 0.008
@@ -658,6 +662,7 @@ MonoBehaviour:
   monsterSoundInterval: 3
   collisionSound: {fileID: 8300000, guid: 489eec8a0350d1c488b030f0c3bc0b7c, type: 3}
   monsterSound: {fileID: 8300000, guid: 39a814f369ae18743bde2e771b119e36, type: 3}
+  huntSound: {fileID: 8300000, guid: 39a814f369ae18743bde2e771b119e36, type: 3}
 --- !u!136 &4930410516559275916
 CapsuleCollider:
   m_ObjectHideFlags: 0

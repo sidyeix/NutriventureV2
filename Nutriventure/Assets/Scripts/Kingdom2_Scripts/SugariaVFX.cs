@@ -19,6 +19,7 @@ public class SugariaVFX : MonoBehaviour
     private Vector3 originalCameraPosition;
     private Coroutine flashCoroutine;
     private Coroutine shakeCoroutine;
+    private bool isFlashPanelActive = false;
     
     void Awake()
     {
@@ -40,14 +41,26 @@ public class SugariaVFX : MonoBehaviour
             originalCameraPosition = mainCamera.transform.localPosition;
         }
         
-        // Initialize flash image to transparent
+        // Initialize flash image - ensure it's hidden at start
+        InitializeFlashPanel();
+    }
+    
+    private void InitializeFlashPanel()
+    {
         if (damageFlashImage != null)
         {
+            // Set color to transparent
             damageFlashImage.color = new Color(damageFlashColor.r, damageFlashColor.g, damageFlashColor.b, 0f);
+            
+            // Ensure the GameObject is disabled initially
+            damageFlashImage.gameObject.SetActive(false);
+            isFlashPanelActive = false;
+            
+            Debug.Log("Flash panel initialized and hidden");
         }
         else
         {
-            Debug.LogWarning("Damage Flash Image not assigned in VisualEffectsManager!");
+            Debug.LogWarning("Damage Flash Image not assigned in SugariaVFX!");
         }
     }
     
@@ -103,6 +116,15 @@ public class SugariaVFX : MonoBehaviour
     
     private IEnumerator FlashRoutine()
     {
+        // Activate the flash panel GameObject
+        if (!isFlashPanelActive)
+        {
+            damageFlashImage.gameObject.SetActive(true);
+            isFlashPanelActive = true;
+            Debug.Log("Flash panel activated");
+        }
+        
+        // Set initial flash color
         damageFlashImage.color = damageFlashColor;
         
         float elapsed = 0f;
@@ -114,12 +136,26 @@ public class SugariaVFX : MonoBehaviour
             yield return null;
         }
         
+        // Ensure it's completely invisible at the end
         damageFlashImage.color = new Color(damageFlashColor.r, damageFlashColor.g, damageFlashColor.b, 0f);
+        
+        // Deactivate the flash panel GameObject after the flash is complete
+        damageFlashImage.gameObject.SetActive(false);
+        isFlashPanelActive = false;
+        Debug.Log("Flash panel deactivated");
+        
         flashCoroutine = null;
     }
     
     private IEnumerator FlashRoutineCustom(Color color, float duration)
     {
+        // Activate the flash panel GameObject
+        if (!isFlashPanelActive)
+        {
+            damageFlashImage.gameObject.SetActive(true);
+            isFlashPanelActive = true;
+        }
+        
         damageFlashImage.color = color;
         
         float elapsed = 0f;
@@ -132,6 +168,11 @@ public class SugariaVFX : MonoBehaviour
         }
         
         damageFlashImage.color = new Color(color.r, color.g, color.b, 0f);
+        
+        // Deactivate the flash panel GameObject after the flash is complete
+        damageFlashImage.gameObject.SetActive(false);
+        isFlashPanelActive = false;
+        
         flashCoroutine = null;
     }
     
@@ -160,15 +201,58 @@ public class SugariaVFX : MonoBehaviour
         shakeCoroutine = null;
     }
     
+    // Emergency method to ensure flash panel is hidden
+    public void ForceHideFlashPanel()
+    {
+        if (damageFlashImage != null)
+        {
+            damageFlashImage.gameObject.SetActive(false);
+            isFlashPanelActive = false;
+            
+            if (flashCoroutine != null)
+            {
+                StopCoroutine(flashCoroutine);
+                flashCoroutine = null;
+            }
+            
+            Debug.Log("Flash panel force-hidden");
+        }
+    }
+    
+    // Method to check if flash is currently active
+    public bool IsFlashActive()
+    {
+        return isFlashPanelActive;
+    }
+    
     // Clean up
     private void OnDestroy()
     {
-        if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-        if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
+        if (flashCoroutine != null) 
+        {
+            StopCoroutine(flashCoroutine);
+            flashCoroutine = null;
+        }
+        
+        if (shakeCoroutine != null) 
+        {
+            StopCoroutine(shakeCoroutine);
+            shakeCoroutine = null;
+        }
         
         if (mainCamera != null)
         {
             mainCamera.transform.localPosition = originalCameraPosition;
         }
+        
+        // Ensure flash panel is hidden when destroyed
+        ForceHideFlashPanel();
+    }
+    
+    // Handle scene changes
+    private void OnEnable()
+    {
+        // Re-initialize when re-enabled
+        InitializeFlashPanel();
     }
 }
