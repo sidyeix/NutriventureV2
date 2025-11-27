@@ -1052,7 +1052,9 @@
           },
           {
             "name": "CapsuleCollider",
-            "scenes": [],
+            "scenes": [
+              "Assets/Scenes/4_Kingdom 2.unity"
+            ],
             "dependencyType": 0,
             "icon": null
           },

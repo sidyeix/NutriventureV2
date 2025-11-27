@@ -588,6 +588,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5768461240200400939}
   - component: {fileID: 2617595486936383610}
+  - component: {fileID: 1100477029689711302}
+  - component: {fileID: 4930410516559275916}
   m_Layer: 0
   m_Name: Sweet Tooth Jack-O-Chica
   m_TagString: Untagged
@@ -633,6 +635,52 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1100477029689711302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1938799506880121017}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3c9b32861524ec459d2fafb358b5659, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterObstacle
+  moveSpeed: 3
+  patrolDistance: 15
+  rotationSpeed: 180
+  damageAmount: 1
+  collisionCooldown: 2
+  detectionRadius: 0.008
+  blockingRadius: 0.008
+  monsterSoundRange: 8
+  monsterSoundInterval: 3
+  collisionSound: {fileID: 8300000, guid: 489eec8a0350d1c488b030f0c3bc0b7c, type: 3}
+  monsterSound: {fileID: 8300000, guid: 39a814f369ae18743bde2e771b119e36, type: 3}
+--- !u!136 &4930410516559275916
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1938799506880121017}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.009
+  m_Height: 0.06
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2022858676884097835
 GameObject:
   m_ObjectHideFlags: 0
