@@ -30,11 +30,16 @@ public class MonsterObstacle : MonoBehaviour
     [Header("Monster Sound Settings")]
     public float monsterSoundRange = 8f;
     public float monsterSoundInterval = 3f;
+    [Range(0f, 1f)]
+    public float monsterSoundVolume = 0.7f;
+    [Range(0f, 1f)]
+    public float attackSoundVolume = 0.8f;
+    [Range(0f, 1f)]
+    public float collisionSoundVolume = 1f;
     
     [Header("Audio")]
     public AudioClip collisionSound;
     public AudioClip monsterSound;
-    public AudioClip huntSound;
     public AudioClip attackSound;
     
     private Vector3 startPosition;
@@ -47,6 +52,7 @@ public class MonsterObstacle : MonoBehaviour
     private bool isCollidingWithPlayer = false;
     private CapsuleCollider triggerCollider;
     private CapsuleCollider blockingCollider;
+    private AudioSource audioSource;
     
     // Hunting state variables
     private bool isHunting = false;
@@ -85,6 +91,16 @@ public class MonsterObstacle : MonoBehaviour
         
         // Get animator component
         animator = GetComponent<Animator>();
+        
+        // Get or add AudioSource component
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.spatialBlend = 1f; // 3D sound
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.maxDistance = 20f;
+        }
         
         // Find player
         player = GameObject.FindGameObjectWithTag("Player");
@@ -225,12 +241,6 @@ public class MonsterObstacle : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool(IsAttackingHash, false);
-        }
-        
-        // Play hunt sound
-        if (huntSound != null && AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.PlayCharacterSelectionSound(huntSound);
         }
         
         Debug.Log("Monster started hunting player!");
@@ -438,9 +448,9 @@ public class MonsterObstacle : MonoBehaviour
     
     private void PlayMonsterSound()
     {
-        if (AudioHandler.Instance != null)
+        if (monsterSound != null && audioSource != null)
         {
-            AudioHandler.Instance.PlayCharacterSelectionSound(monsterSound);
+            audioSource.PlayOneShot(monsterSound, monsterSoundVolume);
             Debug.Log("Monster sound played");
         }
     }
@@ -516,9 +526,9 @@ public class MonsterObstacle : MonoBehaviour
         }
         
         // Play attack sound
-        if (attackSound != null && AudioHandler.Instance != null)
+        if (attackSound != null && audioSource != null)
         {
-            AudioHandler.Instance.PlayCharacterSelectionSound(attackSound);
+            audioSource.PlayOneShot(attackSound, attackSoundVolume);
         }
         
         Debug.Log("Monster attacking player - animation started!");
@@ -603,9 +613,9 @@ public class MonsterObstacle : MonoBehaviour
     
     private void PlayCollisionSound()
     {
-        if (collisionSound != null && AudioHandler.Instance != null)
+        if (collisionSound != null && audioSource != null)
         {
-            AudioHandler.Instance.PlayCharacterSelectionSound(collisionSound);
+            audioSource.PlayOneShot(collisionSound, collisionSoundVolume);
             Debug.Log("Collision sound played");
         }
     }
@@ -712,6 +722,32 @@ public class MonsterObstacle : MonoBehaviour
     {
         damageTriggerTime = Mathf.Clamp(newTime, 0.1f, attackAnimationDuration - 0.1f);
         Debug.Log($"Damage trigger time set to: {damageTriggerTime}");
+    }
+    
+    public void SetMonsterSoundVolume(float volume)
+    {
+        monsterSoundVolume = Mathf.Clamp01(volume);
+        Debug.Log($"Monster sound volume set to: {monsterSoundVolume}");
+    }
+    
+    public void SetAttackSoundVolume(float volume)
+    {
+        attackSoundVolume = Mathf.Clamp01(volume);
+        Debug.Log($"Attack sound volume set to: {attackSoundVolume}");
+    }
+    
+    public void SetCollisionSoundVolume(float volume)
+    {
+        collisionSoundVolume = Mathf.Clamp01(volume);
+        Debug.Log($"Collision sound volume set to: {collisionSoundVolume}");
+    }
+    
+    public void SetAllSoundVolumes(float volume)
+    {
+        monsterSoundVolume = Mathf.Clamp01(volume);
+        attackSoundVolume = Mathf.Clamp01(volume);
+        collisionSoundVolume = Mathf.Clamp01(volume);
+        Debug.Log($"All monster sound volumes set to: {volume}");
     }
     
     public void StopPatrol()

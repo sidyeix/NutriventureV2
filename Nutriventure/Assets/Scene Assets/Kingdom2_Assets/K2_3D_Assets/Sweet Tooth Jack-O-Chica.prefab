@@ -650,19 +650,25 @@ MonoBehaviour:
   moveSpeed: 3
   patrolDistance: 15
   rotationSpeed: 180
-  huntDetectionRadius: 10
   huntSpeedMultiplier: 1.5
   huntRotationSpeed: 360
   returnToPatrolDelay: 2
+  stuckDetectionTime: 3
   damageAmount: 1
   collisionCooldown: 2
+  attackAnimationDuration: 1
+  damageTriggerTime: 0.5
+  pauseMovementDuringAttack: 1
   detectionRadius: 0.008
   blockingRadius: 0.008
   monsterSoundRange: 8
   monsterSoundInterval: 3
+  monsterSoundVolume: 0.7
+  attackSoundVolume: 1
+  collisionSoundVolume: 1
   collisionSound: {fileID: 8300000, guid: 489eec8a0350d1c488b030f0c3bc0b7c, type: 3}
   monsterSound: {fileID: 8300000, guid: 39a814f369ae18743bde2e771b119e36, type: 3}
-  huntSound: {fileID: 8300000, guid: 39a814f369ae18743bde2e771b119e36, type: 3}
+  attackSound: {fileID: 8300000, guid: 3b7d4efabe66f4c4cb2d454f655ba13c, type: 3}
 --- !u!136 &4930410516559275916
 CapsuleCollider:
   m_ObjectHideFlags: 0
