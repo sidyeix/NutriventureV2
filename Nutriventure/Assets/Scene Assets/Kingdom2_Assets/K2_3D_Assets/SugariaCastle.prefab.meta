@@ -1,6 +1,12 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Nutriventure/Assets/Scene Assets/Kingdom2_Assets/K2_3D_Assets/SugariaCastle.prefab.meta
 guid: 2378e085777830a44b9f781878ebb227
 PrefabImporter:
+========
+guid: 91ab19554d327a148af21d64f747ebdb
+folderAsset: yes
+DefaultImporter:
+>>>>>>>> main:Nutriventure/Assets/Scene Assets/Kingdom4_Assets/Foods.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
