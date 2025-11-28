@@ -7,6 +7,8 @@ TagManager:
   - CinemachineTarget
   - Coin
   - MovingPlatform
+  - NaturalSugar
+  - AddedSugar
   layers:
   - Default
   - TransparentFX
