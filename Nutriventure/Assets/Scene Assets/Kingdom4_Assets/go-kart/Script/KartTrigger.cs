@@ -4,7 +4,12 @@ using UnityEngine.InputSystem;
 
 public class KartTrigger : MonoBehaviour
 {
-    public GameObject driveUI;
+    [Header("UI References")]
+    public GameObject playerUI;             // Normal player UI (health, inventory, etc.)
+    public GameObject driveUI;              // "Enter Kart" button UI
+    public GameObject kartDrivingUI;        // Kart controls UI (steering buttons, etc.)
+    
+    [Header("Kart References")]
     public KartController kartController;
     public Transform kartSeatPosition;
 
@@ -19,11 +24,15 @@ public class KartTrigger : MonoBehaviour
         {
             Debug.LogError("❌ No GameObject tagged 'Player' found!");
         }
+
+        // Ensure all UIs are in correct state at start
+        playerUI?.SetActive(true);          // Player UI visible by default
+        driveUI?.SetActive(false);          // Drive UI hidden
+        kartDrivingUI?.SetActive(false);    // Driving UI hidden
     }
 
     private void Update()
     {
-        // Use new Input System for E key
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
             if (playerInside && !isDriving)
@@ -42,6 +51,8 @@ public class KartTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = true;
+            
+            // Show drive UI, keep player UI visible
             driveUI?.SetActive(true);
         }
     }
@@ -51,6 +62,8 @@ public class KartTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = false;
+            
+            // Hide drive UI, keep player UI visible
             driveUI?.SetActive(false);
         }
     }
@@ -60,6 +73,11 @@ public class KartTrigger : MonoBehaviour
         if (!playerInside || player == null) return;
 
         isDriving = true;
+
+        // Switch UI states:
+        playerUI?.SetActive(false);         // Hide normal player UI
+        driveUI?.SetActive(false);          // Hide "Enter Kart" UI
+        kartDrivingUI?.SetActive(true);     // Show kart driving controls
 
         // Parent player to kart seat
         player.transform.SetParent(kartSeatPosition);
@@ -76,8 +94,6 @@ public class KartTrigger : MonoBehaviour
         // Enable kart controller
         if (kartController != null)
             kartController.SetControllable(true);
-
-        driveUI?.SetActive(false);
     }
 
     public void ExitKart()
@@ -85,6 +101,15 @@ public class KartTrigger : MonoBehaviour
         if (!isDriving) return;
 
         isDriving = false;
+
+        // Switch UI states:
+        playerUI?.SetActive(true);          // Show normal player UI
+        kartDrivingUI?.SetActive(false);    // Hide kart driving controls
+        
+        if (playerInside)
+        {
+            driveUI?.SetActive(true);       // Show "Enter Kart" UI if still in trigger
+        }
 
         // Unparent player
         player.transform.SetParent(null);
@@ -99,9 +124,5 @@ public class KartTrigger : MonoBehaviour
         // Disable kart controller
         if (kartController != null)
             kartController.SetControllable(false);
-
-        // Show drive UI if player is still in trigger
-        if (playerInside && driveUI != null)
-            driveUI.SetActive(true);
     }
 }
