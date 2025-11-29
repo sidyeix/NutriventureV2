@@ -31,6 +31,12 @@ public class ChestUIHandler : MonoBehaviour
     {
         if (currentChest != null)
         {
+            // Play claim sound using AudioHandler
+            if (AudioHandler.Instance != null)
+            {
+                AudioHandler.Instance.PlayClaimSound();
+            }
+
             currentChest.ClaimChest();
             currentChest = null;
         }
@@ -42,6 +48,12 @@ public class ChestUIHandler : MonoBehaviour
         ClearRewardsGrid();
         claimButton.gameObject.SetActive(false);
         UpdateUI();
+
+        // Play chest open sound using AudioHandler
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayChestOpen();
+        }
 
         if (rewardRevealCoroutine != null)
             StopCoroutine(rewardRevealCoroutine);
@@ -89,6 +101,12 @@ public class ChestUIHandler : MonoBehaviour
                 Vector3 startPos = GetChestSpawnPosition();
                 Vector3 targetPos = targetPositions[i];
 
+                // Play gold ball fly sound using AudioHandler
+                if (AudioHandler.Instance != null)
+                {
+                    AudioHandler.Instance.PlayGoldBallFly();
+                }
+
                 GameObject goldBall = Instantiate(goldBallPrefab);
                 GoldBallController ballController = goldBall.GetComponent<GoldBallController>();
 
@@ -101,7 +119,7 @@ public class ChestUIHandler : MonoBehaviour
             // Wait for gold ball to reach target, then show reward
             yield return new WaitForSeconds(rewardSpawnDelay - 0.3f);
 
-            // Show the reward with pop effect
+            // Show the reward with pop effect (sound is played inside RewardItem.ShowReward())
             if (i < rewardItems.Count)
             {
                 rewardItems[i].SetActive(true);

@@ -21,10 +21,6 @@ public class RewardItem : MonoBehaviour
     public GameObject popEffectPrefab;
     public float appearDuration = 0.5f;
 
-    [Header("Sound Effects")]
-    public AudioClip popSound;
-    public AudioSource audioSource; // Reference to your existing AudioSource
-
     private void Start()
     {
         // Start invisible
@@ -75,8 +71,11 @@ public class RewardItem : MonoBehaviour
 
     IEnumerator AnimateAppearance()
     {
-        // Play pop sound effect
-        PlayPopSound();
+        // Play pop sound effect using AudioHandler
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayRewardPop();
+        }
 
         // Create pop effect
         if (popEffectPrefab != null)
@@ -107,18 +106,6 @@ public class RewardItem : MonoBehaviour
                 yield return null;
             }
             canvasGroup.alpha = 1f;
-        }
-    }
-
-    private void PlayPopSound()
-    {
-        if (audioSource != null && popSound != null)
-        {
-            audioSource.PlayOneShot(popSound);
-        }
-        else
-        {
-            Debug.LogWarning("AudioSource or PopSound not assigned in RewardItem");
         }
     }
 

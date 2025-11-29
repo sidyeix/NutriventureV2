@@ -4037,12 +4037,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChestManager
   chestPrefabs:
+  - {fileID: 1990241744087739384, guid: bd66b02c0f135b249a547966fd5ab254, type: 3}
+  - {fileID: 1990241744087739384, guid: 44db6db5671b43c4b8a9411cf5d4827a, type: 3}
   - {fileID: 1990241744087739384, guid: b2810c8307bf17b468a50f98ac1b5f72, type: 3}
   chestSpawnPoint: {fileID: 785343553}
   chestCamera: {fileID: 680589574}
   menuCanvas: {fileID: 534855656}
   chestCanvas: {fileID: 563525422}
-  fadeDuration: 1.5
+  videoPlayer: {fileID: 1399000021}
+  chestVideoClips:
+  - {fileID: 32900000, guid: 768200897e9d5dc4eade60620ba389c7, type: 3}
+  - {fileID: 32900000, guid: 3b2aed01bb6ffbd4495608731256cfb0, type: 3}
+  - {fileID: 32900000, guid: 7dd4ec4177fb48c43afe92acefae8fd0, type: 3}
+  videoRenderTexture: {fileID: 8400000, guid: da9fbddbfd242164ea000540c0687681, type: 2}
+  fadeDuration: 2
 --- !u!1001 &109579542
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16115,6 +16123,10 @@ MonoBehaviour:
   soundEffectsSource: {fileID: 1705826819}
   mainMenuMusic: {fileID: 8300000, guid: b38ae38a7498db449ac8237405d927af, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
+  chestOpenSound: {fileID: 0}
+  rewardPopSound: {fileID: 8300000, guid: 10959615eb93c49b0a89d8041f4e9ccb, type: 3}
+  claimSound: {fileID: 0}
+  goldBallFlySound: {fileID: 0}
 --- !u!1001 &390112096
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -43421,7 +43433,7 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1305747982}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
@@ -45840,7 +45852,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1399000019}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 3048373dcd43e6740aa8cc37f77ae743, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: 768200897e9d5dc4eade60620ba389c7, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -60136,7 +60148,7 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1705826817}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
