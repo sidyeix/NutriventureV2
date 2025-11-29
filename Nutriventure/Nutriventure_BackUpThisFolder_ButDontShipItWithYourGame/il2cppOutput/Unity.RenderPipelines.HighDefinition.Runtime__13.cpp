@@ -31106,7 +31106,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ComputeShader_tA7BDD0F6EE879D1494
 		return L_0;
 	}
 }
-// Method Definition Index: 54987
+// Method Definition Index: 54991
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void float4__ctor_mB2F7F2D8BCE8159BEF5A0D6400499E211858ED2D_inline (float4_t89D9A294E7A79BD81BFBDD18654508532958555E* __this, float ___0_x, float ___1_y, float ___2_z, float ___3_w, const RuntimeMethod* method) 
 {
 	{
@@ -31436,7 +31436,7 @@ IL_0023:
 		return L_9;
 	}
 }
-// Method Definition Index: 68372
+// Method Definition Index: 68376
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR VisibleLight_t39B7C1870E82102A9922C3530B99C0EBCC88A457 NativeList_1_get_Item_m859F4BE4F5D95D6C1C6C6E68C20BCE59429A1323_gshared_inline (NativeList_1_t0CF5D799F6D3ADB381BFAE3415BF263CE8E61FC5* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	{
@@ -31448,7 +31448,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR VisibleLight_t39B7C1870E82102A992
 		return L_2;
 	}
 }
-// Method Definition Index: 68375
+// Method Definition Index: 68379
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t NativeList_1_get_Length_m50446F321FB1AC86B39EF06322F672904A300A55_gshared_inline (NativeList_1_t0CF5D799F6D3ADB381BFAE3415BF263CE8E61FC5* __this, const RuntimeMethod* method) 
 {
 	{
@@ -31649,7 +31649,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR RuntimeObject* Enumerator_get_Cur
 		return L_0;
 	}
 }
-// Method Definition Index: 86402
+// Method Definition Index: 86458
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR RuntimeObject* Enumerable_Empty_TisAOVRequestData_t97C9C01E3105170E8501A6A42C004931B9E6B786_mF226712CAD884FD6BFF1CE69D20E2789E1318D07_gshared_inline (const RuntimeMethod* method) 
 {
 	il2cpp_rgctx_method_init(method);
@@ -31856,7 +31856,7 @@ IL_0023:
 		return (bool)0;
 	}
 }
-// Method Definition Index: 66768
+// Method Definition Index: 66772
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t CollectionHelper_AssumePositive_mD1EC1F05F50F605141D9BA5D70C4332AC902B4B1_inline (int32_t ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -31865,7 +31865,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t CollectionHelper_AssumePo
 		return L_0;
 	}
 }
-// Method Definition Index: 69426
+// Method Definition Index: 69430
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR VisibleLight_t39B7C1870E82102A9922C3530B99C0EBCC88A457 UnsafeList_1_get_Item_mA5B28DA21FBE6CC75581729129FD13754F51EE54_gshared_inline (UnsafeList_1_t7533C6A4C8BD28AC73877EFB354F16D0B3FD5CD8* __this, int32_t ___0_index, const RuntimeMethod* method) 
 {
 	{
@@ -31879,7 +31879,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR VisibleLight_t39B7C1870E82102A992
 		return L_4;
 	}
 }
-// Method Definition Index: 69422
+// Method Definition Index: 69426
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t UnsafeList_1_get_Length_m58631AF5F63DDA624DEF7DD202E0FAB33ECB2069_gshared_inline (UnsafeList_1_t7533C6A4C8BD28AC73877EFB354F16D0B3FD5CD8* __this, const RuntimeMethod* method) 
 {
 	{
