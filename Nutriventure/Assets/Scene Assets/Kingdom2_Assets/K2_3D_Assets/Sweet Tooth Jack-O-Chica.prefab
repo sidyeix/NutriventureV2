@@ -592,7 +592,7 @@ GameObject:
   - component: {fileID: 4930410516559275916}
   m_Layer: 0
   m_Name: Sweet Tooth Jack-O-Chica
-  m_TagString: Untagged
+  m_TagString: K2_Monster
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
