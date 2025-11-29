@@ -9,6 +9,8 @@ TagManager:
   - MovingPlatform
   - NaturalSugar
   - AddedSugar
+  - K2_ParticleSystem
+  - K2_Monster
   layers:
   - Default
   - TransparentFX
@@ -16,7 +18,7 @@ TagManager:
   - 
   - Water
   - UI
-  - Clickable
+  - Interactable
   - 
   - 
   - 
