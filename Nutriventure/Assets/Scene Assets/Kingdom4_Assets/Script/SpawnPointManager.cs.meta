@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 39084b1a1920b364a9704a77ebc0a6aa
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - peanutPrefab: {fileID: 7474300815308641637, guid: eebe4aa991643fa458d7910b4e9cd13a, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
