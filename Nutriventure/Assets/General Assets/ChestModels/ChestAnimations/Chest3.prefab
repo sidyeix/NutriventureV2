@@ -93,7 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Chest
   timeToBecomeClaimable: 3
-  chestOrder: 0
+  chestOrder: 2
   animator: {fileID: 9089004741798091455}
   chestCollider: {fileID: 3449264459141048982}
   worldSpaceUI: {fileID: 7722336643548412932}

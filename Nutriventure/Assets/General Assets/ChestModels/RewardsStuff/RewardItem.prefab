@@ -99,10 +99,8 @@ MonoBehaviour:
   gemIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
   keyIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
   powerUpIcon: {fileID: 21300000, guid: 179b7d7279a926a488ba1fcef188b847, type: 3}
-  popEffectPrefab: {fileID: 8815772876778669515, guid: 501b518658e9d5849baa4c882a278b29, type: 3}
+  popEffectPrefab: {fileID: 6725704921534058217, guid: f02b6a4394719104283462b8f7f10914, type: 3}
   appearDuration: 0.5
-  popSound: {fileID: 8300000, guid: 10959615eb93c49b0a89d8041f4e9ccb, type: 3}
-  audioSource: {fileID: 0}
 --- !u!1 &1186668560013526788
 GameObject:
   m_ObjectHideFlags: 0
