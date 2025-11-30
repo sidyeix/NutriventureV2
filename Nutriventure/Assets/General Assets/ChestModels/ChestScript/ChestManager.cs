@@ -25,6 +25,9 @@ public class ChestManager : MonoBehaviour
     public VideoClip[] chestVideoClips;
     public RenderTexture videoRenderTexture;
 
+    [Header("Audio Settings")]
+    public AudioClip[] chestBackgroundMusic; // Assign chest background music for each chest
+
     [Header("Fade Settings")]
     public float fadeDuration = 1f;
 
@@ -33,6 +36,7 @@ public class ChestManager : MonoBehaviour
     private ChestUIHandler chestUIHandler;
     private CanvasGroup chestCanvasGroup;
     private int currentChestIndex = 0;
+    private bool isPlayingChestMusic = false;
 
     public static ChestManager Instance { get; private set; }
 
@@ -130,6 +134,9 @@ public class ChestManager : MonoBehaviour
     {
         if (chest != currentChest || chestCamera == null) return;
 
+        // Stop main menu music and play chest background music (no loop)
+        PlayChestBackgroundMusic(chest.chestOrder);
+
         ChangeBackgroundVideo(chest.chestOrder);
 
         chestCamera.Priority = 20;
@@ -152,6 +159,81 @@ public class ChestManager : MonoBehaviour
         if (chestUIHandler != null)
         {
             chestUIHandler.SetCurrentChest(chest);
+        }
+    }
+
+    private void PlayChestBackgroundMusic(int chestOrder)
+    {
+        if (AudioHandler.Instance != null)
+        {
+            // Stop main menu music
+            AudioHandler.Instance.musicSource.Stop();
+
+            // Play chest background music if available (play once, no loop)
+            if (chestBackgroundMusic != null && chestOrder < chestBackgroundMusic.Length)
+            {
+                AudioClip chestMusic = chestBackgroundMusic[chestOrder];
+                if (chestMusic != null)
+                {
+                    AudioHandler.Instance.musicSource.clip = chestMusic;
+                    AudioHandler.Instance.musicSource.loop = false; // No looping - play once
+                    AudioHandler.Instance.musicSource.Play();
+                    isPlayingChestMusic = true;
+
+                    // Start coroutine to stop music when it ends (don't resume main menu music)
+                    StartCoroutine(StopMusicWhenEnds(chestMusic.length));
+
+                    Debug.Log("Playing chest background music (no loop): " + chestMusic.name);
+                }
+                else
+                {
+                    Debug.LogWarning("No chest background music assigned for chest order: " + chestOrder);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("No chest background music array assigned or index out of range");
+            }
+        }
+        else
+        {
+            Debug.LogError("AudioHandler Instance not found!");
+        }
+    }
+
+    private IEnumerator StopMusicWhenEnds(float musicLength)
+    {
+        // Wait for the chest music to finish playing
+        yield return new WaitForSeconds(musicLength);
+
+        // If we're still in chest view and music finished, just stop the music (don't resume main menu)
+        if (isPlayingChestMusic && chestCanvas != null && chestCanvas.activeInHierarchy)
+        {
+            Debug.Log("Chest background music finished, stopping music");
+            StopChestMusic();
+        }
+    }
+
+    private void StopChestMusic()
+    {
+        if (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null)
+        {
+            AudioHandler.Instance.musicSource.Stop();
+            isPlayingChestMusic = false;
+            Debug.Log("Chest music stopped");
+        }
+    }
+
+    private void ResumeMainMenuMusic()
+    {
+        if (AudioHandler.Instance != null)
+        {
+            // Stop current music first
+            StopChestMusic();
+
+            // Play main menu music
+            AudioHandler.Instance.PlayMainMenuMusic();
+            Debug.Log("Resumed main menu music");
         }
     }
 
@@ -217,6 +299,9 @@ public class ChestManager : MonoBehaviour
         }
 
         StopVideo();
+
+        // Resume main menu music ONLY when chest is claimed
+        ResumeMainMenuMusic();
 
         if (currentChest != null)
         {
@@ -329,6 +414,9 @@ public class ChestManager : MonoBehaviour
         Debug.Log("   - Video Player Playing: " + (videoPlayer != null ? videoPlayer.isPlaying.ToString() : "NULL"));
         Debug.Log("   - Video Player Prepared: " + (videoPlayer != null ? videoPlayer.isPrepared.ToString() : "NULL"));
         Debug.Log("   - Video Clip: " + (videoPlayer != null && videoPlayer.clip != null ? videoPlayer.clip.name : "NULL"));
+        Debug.Log("   - Music Source Playing: " + (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null ? AudioHandler.Instance.musicSource.isPlaying.ToString() : "NULL"));
+        Debug.Log("   - Music Clip: " + (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null && AudioHandler.Instance.musicSource.clip != null ? AudioHandler.Instance.musicSource.clip.name : "NULL"));
+        Debug.Log("   - Is Playing Chest Music: " + isPlayingChestMusic);
         Debug.Log("===== END STATUS =====");
     }
 }
