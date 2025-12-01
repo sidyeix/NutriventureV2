@@ -9,15 +9,24 @@ public class IngredientInteractable : Interactable
     public string ingredientDescription;
     public Sprite ingredientIcon;
     
+    private BookUIManager bookManager;
+    
+    void Start()
+    {
+        bookManager = FindAnyObjectByType<BookUIManager>();
+    }
+    
     public override void Pickup()
     {
-        if (BookUIManager.Instance != null)
+        if (bookManager != null && bookManager.GetMainBook() != null)
         {
-            BookUIManager.Instance.AddIngredientToBook(ingredientId, ingredientName, ingredientDescription, ingredientIcon);
+            // Add ingredient directly to the main book
+            bookManager.GetMainBook().AddIngredient(ingredientId, ingredientName, ingredientDescription, ingredientIcon);
         }
         else
         {
-            Debug.LogError("BookUIManager Instance not found!");
+            Debug.LogWarning("No book collected yet! Collect the book first.");
+            // Optional: You can still destroy the ingredient or keep it for later
         }
         
         base.Pickup();
