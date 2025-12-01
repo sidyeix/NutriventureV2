@@ -11,6 +11,7 @@ TagManager:
   - AddedSugar
   - K2_ParticleSystem
   - K2_Monster
+  - NutriHeart
   layers:
   - Default
   - TransparentFX
