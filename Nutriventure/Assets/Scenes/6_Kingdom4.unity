@@ -9735,9 +9735,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1988197540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 27.5, y: -50}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 55, y: 62}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &581604665
@@ -15381,6 +15381,7 @@ MonoBehaviour:
   - {fileID: 1152087185}
   - {fileID: 97516336}
   - {fileID: 994912152}
+  - {fileID: 1988197539}
   ingredientsGrid: {fileID: 675193681}
   ingredientSlotPrefab: {fileID: 6657676624580443701, guid: 57d45cd64ccf9514e93b9751c5015e25, type: 3}
   ingredientNameText: {fileID: 564022758}
@@ -15388,61 +15389,70 @@ MonoBehaviour:
   ingredientIconImage: {fileID: 0}
   closeIngredientButton: {fileID: 529665098}
   closeBookButton: {fileID: 2022426454}
-  unknownIngredientSprite: {fileID: 0}
+  silhouetteSprites: []
   allPossibleIngredients:
   - ingredientId: peanut
     ingredientName: Peanut
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: ce6982d371689bd4799926c1070a4743, type: 3}
+    silhouetteIndex: -1
   - ingredientId: milk
     ingredientName: Milk
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Dairy-based ingredient that may trigger lactose intolerance or
       immune responses.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: 7ae4abda54a0f664a814c447479af74e, type: 3}
+    silhouetteIndex: -1
   - ingredientId: egg
     ingredientName: Egg
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Contains proteins in both yolk and white that may trigger immune
       responses.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: c0a6a8a62de941b48a9bbb92fbfd9f28, type: 3}
+    silhouetteIndex: -1
   - ingredientId: fish
     ingredientName: Fish
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Contains specific proteins that may trigger allergic responses
       even in small amounts.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: eed61c787378b7643b7a9c0d2bc3b0fe, type: 3}
+    silhouetteIndex: -1
   - ingredientId: shellfish
     ingredientName: Shellfish
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Includes crustaceans like shrimp, crab, and lobster which can
       cause particularly strong reactions.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: fdf5907be4dad0943b8e706751942321, type: 3}
+    silhouetteIndex: -1
   - ingredientId: tree nuts
     ingredientName: Tree Nuts
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Includes almonds, walnuts, cashews, and other tree-grown nuts
       with potent allergenic proteins.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: 96fd00010fd939b4ea0c699940240450, type: 3}
+    silhouetteIndex: -1
   - ingredientId: wheat
     ingredientName: Wheat
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Contains gluten and other proteins that may trigger celiac disease
       or wheat allergies.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: 6eb742647711c3548b90c07e6728be35, type: 3}
+    silhouetteIndex: -1
   - ingredientId: soybeans
     ingredientName: Soybeans
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Legume-based ingredient with proteins that may trigger immune
       responses.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: ed6d4643205cfd043b5b2440edc0356d, type: 3}
+    silhouetteIndex: -1
   - ingredientId: sesame
     ingredientName: Sesame
     ingredientDescription: A common allergen that can cause severe reactions in sensitive
       individuals. Seed-based ingredient that has been recognized as a major allergen
       with increasing prevalence.
-    ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+    ingredientIcon: {fileID: 21300000, guid: 7b0e50bd76de45b4d9da95ca78d8ae4d, type: 3}
+    silhouetteIndex: -1
 --- !u!4 &908390044
 Transform:
   m_ObjectHideFlags: 0
@@ -16704,7 +16714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
   duration: 120
-  startOnAwake: 0
+  startOnAwake: 1
   loopTimer: 0
   timerIcon: {fileID: 581604666}
   timerText: {fileID: 1670040729}
@@ -27643,9 +27653,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1988197540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 155, y: -50}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1674924015
@@ -31976,7 +31986,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1988197540
 RectTransform:
   m_ObjectHideFlags: 0
