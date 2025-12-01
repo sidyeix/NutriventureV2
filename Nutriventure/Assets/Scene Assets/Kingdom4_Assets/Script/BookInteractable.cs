@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class BookInteractable : Interactable
 {
+    public static BookInteractable Instance { get; private set; }
+    
     [Header("Book Settings")]
     public string bookId = "BookOfAllergens";
     public string bookName = "Book of Allergens";
@@ -22,6 +24,18 @@ public class BookInteractable : Interactable
     
     private BookUIManager bookManager;
     
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    
     void Start()
     {
         bookManager = FindAnyObjectByType<BookUIManager>();
@@ -40,7 +54,9 @@ public class BookInteractable : Interactable
             bookManager.AddBookToUI(bookId, bookName, bookIcon);
         }
         
-        base.Pickup();
+        // Don't destroy the book GameObject, just disable it
+        gameObject.SetActive(false);
+        Debug.Log("Book collected and stored (GameObject disabled)");
     }
     
     public void AddIngredient(string ingredientId, string name, string description, Sprite icon)
