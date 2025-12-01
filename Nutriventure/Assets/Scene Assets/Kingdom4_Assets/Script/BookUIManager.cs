@@ -26,7 +26,7 @@ public class BookUIManager : MonoBehaviour
     public Button closeBookButton;
     
     [Header("Silhouette Settings")]
-    public Sprite unknownIngredientSprite; // Assign your silhouette sprite here
+    public List<Sprite> silhouetteSprites = new List<Sprite>(); // Assign your 9 silhouette sprites here
     
     [Header("All Possible Ingredients")]
     public List<IngredientDefinition> allPossibleIngredients = new List<IngredientDefinition>();
@@ -34,6 +34,7 @@ public class BookUIManager : MonoBehaviour
     private BookInteractable mainBook;
     private GameObject currentBookUIEntry;
     private List<GameObject> hiddenUIElements = new List<GameObject>();
+    private Dictionary<string, Sprite> ingredientSilhouetteMap = new Dictionary<string, Sprite>();
     
     [System.Serializable]
     public class IngredientDefinition
@@ -42,6 +43,7 @@ public class BookUIManager : MonoBehaviour
         public string ingredientName;
         public string ingredientDescription;
         public Sprite ingredientIcon;
+        public int silhouetteIndex = -1; // Optional: assign specific silhouette index
     }
     
     void Start()
@@ -58,6 +60,57 @@ public class BookUIManager : MonoBehaviour
         {
             closeBookButton.onClick.AddListener(CloseBook);
         }
+        
+        // Initialize silhouette mapping
+        InitializeSilhouetteMapping();
+    }
+    
+    private void InitializeSilhouetteMapping()
+    {
+        // Clear existing mapping
+        ingredientSilhouetteMap.Clear();
+        
+        // Assign silhouette sprites to ingredients
+        for (int i = 0; i < allPossibleIngredients.Count; i++)
+        {
+            var ingredient = allPossibleIngredients[i];
+            Sprite silhouette = GetSilhouetteForIngredient(ingredient, i);
+            ingredientSilhouetteMap[ingredient.ingredientId] = silhouette;
+        }
+    }
+    
+    private Sprite GetSilhouetteForIngredient(IngredientDefinition ingredient, int index)
+    {
+        // If ingredient has a specific silhouette index assigned, use it
+        if (ingredient.silhouetteIndex >= 0 && ingredient.silhouetteIndex < silhouetteSprites.Count)
+        {
+            return silhouetteSprites[ingredient.silhouetteIndex];
+        }
+        
+        // Otherwise, assign based on index (cycle through available silhouettes)
+        if (silhouetteSprites.Count > 0)
+        {
+            return silhouetteSprites[index % silhouetteSprites.Count];
+        }
+        
+        Debug.LogWarning("No silhouette sprites assigned! Please assign silhouette sprites in the inspector.");
+        return null;
+    }
+    
+    public Sprite GetSilhouetteForIngredientId(string ingredientId)
+    {
+        if (ingredientSilhouetteMap.TryGetValue(ingredientId, out Sprite silhouette))
+        {
+            return silhouette;
+        }
+        
+        // Fallback: return first silhouette or null
+        if (silhouetteSprites.Count > 0)
+        {
+            return silhouetteSprites[0];
+        }
+        
+        return null;
     }
     
     public void SetMainBook(BookInteractable book)
@@ -68,7 +121,7 @@ public class BookUIManager : MonoBehaviour
     
     public BookInteractable GetMainBook()
     {
-        return mainBook;
+        return BookInteractable.Instance;
     }
     
     public void AddBookToUI(string bookId, string bookName, Sprite bookIcon)
@@ -188,6 +241,10 @@ public class BookUIManager : MonoBehaviour
                         ingredientIcon = ingredientDef.ingredientIcon
                     };
                     
+                    // Get the specific silhouette for this ingredient
+                    Sprite silhouette = GetSilhouetteForIngredientId(ingredientDef.ingredientId);
+                    slot.silhouetteSprite = silhouette;
+                    
                     slot.Initialize(displayData, this, isCollected);
                 }
             }
@@ -219,23 +276,41 @@ public class BookUIManager : MonoBehaviour
         if (ingredientPanel != null) ingredientPanel.SetActive(false);
     }
     
-    // Method to add ingredients dynamically
-    public void AddPossibleIngredient(string id, string name, string description, Sprite icon)
+    // Method to add ingredients dynamically with silhouette support
+    public void AddPossibleIngredient(string id, string name, string description, Sprite icon, int silhouetteIndex = -1)
     {
         IngredientDefinition newIngredient = new IngredientDefinition
         {
             ingredientId = id,
             ingredientName = name,
             ingredientDescription = description,
-            ingredientIcon = icon
+            ingredientIcon = icon,
+            silhouetteIndex = silhouetteIndex
         };
         
         allPossibleIngredients.Add(newIngredient);
+        
+        // Add to silhouette mapping
+        Sprite silhouette = GetSilhouetteForIngredient(newIngredient, allPossibleIngredients.Count - 1);
+        ingredientSilhouetteMap[id] = silhouette;
     }
     
     // Method to refresh the UI
     public void RefreshUI()
     {
         UpdateBookUI();
+    }
+    
+    // Method to manually assign a specific silhouette to an ingredient
+    public void AssignSilhouetteToIngredient(string ingredientId, int silhouetteIndex)
+    {
+        if (silhouetteIndex >= 0 && silhouetteIndex < silhouetteSprites.Count)
+        {
+            ingredientSilhouetteMap[ingredientId] = silhouetteSprites[silhouetteIndex];
+        }
+        else
+        {
+            Debug.LogWarning($"Invalid silhouette index: {silhouetteIndex}. Must be between 0 and {silhouetteSprites.Count - 1}");
+        }
     }
 }

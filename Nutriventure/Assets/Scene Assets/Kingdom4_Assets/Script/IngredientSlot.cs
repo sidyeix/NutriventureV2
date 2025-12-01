@@ -47,12 +47,20 @@ public class IngredientSlot : MonoBehaviour
                 // Show actual icon for collected ingredients
                 ingredientIcon.sprite = ingredientData.ingredientIcon;
                 ingredientIcon.color = collectedColor;
+                ingredientIcon.preserveAspect = true;
             }
             else
             {
                 // Show silhouette for uncollected ingredients
-                ingredientIcon.sprite = silhouetteSprite ?? ingredientData.ingredientIcon;
+                ingredientIcon.sprite = silhouetteSprite != null ? silhouetteSprite : ingredientData.ingredientIcon;
                 ingredientIcon.color = silhouetteColor;
+                ingredientIcon.preserveAspect = true;
+                
+                // Log silhouette info for debugging
+                if (silhouetteSprite != null)
+                {
+                    Debug.Log($"Using silhouette: {silhouetteSprite.name} with size: {silhouetteSprite.rect.size}");
+                }
             }
         }
         
@@ -61,7 +69,7 @@ public class IngredientSlot : MonoBehaviour
         {
             ingredientNameText.text = ingredientData.ingredientName;
             // Optional: Change text color based on collection status
-            ingredientNameText.color = isCollected ? Color.white : Color.gray;
+            ingredientNameText.color = isCollected ? Color.black : Color.gray;
         }
         
         // Update overlay states
@@ -111,5 +119,12 @@ public class IngredientSlot : MonoBehaviour
     public BookInteractable.IngredientData GetIngredientData()
     {
         return ingredientData;
+    }
+    
+    // Public method to set a specific silhouette sprite
+    public void SetSilhouetteSprite(Sprite silhouette)
+    {
+        silhouetteSprite = silhouette;
+        UpdateAppearance();
     }
 }
