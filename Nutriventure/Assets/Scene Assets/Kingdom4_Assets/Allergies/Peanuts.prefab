@@ -126,23 +126,47 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -8838498973306087919}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 3850887922858143452}
+    - targetCorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7314464974701040384}
+    - targetCorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7650852436387872968}
   m_SourcePrefab: {fileID: 100100000, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
---- !u!1 &7474300815308641637 stripped
+--- !u!1 &6205388906443579414 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
   m_PrefabInstance: {fileID: 7744895225271642164}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-8838498973306087919
+--- !u!65 &7314464974701040384
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6205388906443579414}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.013890511, y: 0.043508768, z: 0.014406072}
+  m_Center: {x: 0.0012099543, y: 0.000009402559, z: 0.00007395535}
+--- !u!114 &7650852436387872968
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7474300815308641637}
+  m_GameObject: {fileID: 6205388906443579414}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df5cd2525664fbd4d825319d3d0bb71c, type: 3}
@@ -150,6 +174,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PeanutHazard
   damageAmount: 1
   damageCooldown: 2
+  disappearOnContact: 1
+  disappearDelay: 0.5
+--- !u!1 &7474300815308641637 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+  m_PrefabInstance: {fileID: 7744895225271642164}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &3850887922858143452
 Animator:
   serializedVersion: 7

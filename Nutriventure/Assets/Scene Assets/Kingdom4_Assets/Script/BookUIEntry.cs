@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class BookUIEntry : MonoBehaviour
 {
-    public Text bookNameText;
     public Image bookIconImage;
     public Button bookButton;
     
@@ -18,9 +18,6 @@ public class BookUIEntry : MonoBehaviour
         bookName = name;
         bookIcon = icon;
         bookManager = manager;
-        
-        if (bookNameText != null)
-            bookNameText.text = name;
             
         if (bookIconImage != null && icon != null)
             bookIconImage.sprite = icon;
