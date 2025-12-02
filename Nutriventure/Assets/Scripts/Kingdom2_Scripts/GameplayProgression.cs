@@ -47,6 +47,10 @@ public class GameplayProgression : MonoBehaviour
         
         // Listen for game start event
         SetupGameStartListener();
+        
+        // Subscribe to product panel events
+        ProductInformationManager.OnProductPanelShown += PauseTimer;
+        ProductInformationManager.OnProductPanelHidden += ResumeTimer;
     }
     
     private void SetupGameStartListener()
@@ -179,7 +183,8 @@ public class GameplayProgression : MonoBehaviour
     
     public void ResumeTimer()
     {
-        if (gameStarted)
+        // FIXED: Check if game is actually started before resuming
+        if (gameStarted && !isTimerRunning)
         {
             isTimerRunning = true;
             Debug.Log("Timer resumed");
@@ -325,6 +330,10 @@ public class GameplayProgression : MonoBehaviour
         {
             CancelInvoke(nameof(UpdateAllDisplays));
         }
+        
+        // Unsubscribe from events
+        ProductInformationManager.OnProductPanelShown -= PauseTimer;
+        ProductInformationManager.OnProductPanelHidden -= ResumeTimer;
     }
     
     // Context menu methods for testing in editor
