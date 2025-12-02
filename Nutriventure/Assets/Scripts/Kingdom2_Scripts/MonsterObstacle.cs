@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class MonsterObstacle : MonoBehaviour
 {
@@ -71,16 +72,21 @@ public class MonsterObstacle : MonoBehaviour
     private Coroutine attackCoroutine;
     private bool damageApplied = false;
     
-    // Animation parameters - ONLY IsAttacking is needed
+    // Pause state variables
+    private bool isPaused = false;
+    private MonsterState stateBeforePause = MonsterState.Patrolling;
+    private bool wasInAttackAnimation = false;
+    
+    // Animation parameters
     private readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
     
-    // Make the enum public to fix the accessibility error
     public enum MonsterState
     {
         Patrolling,
         Hunting,
         ReturningToPatrol,
-        Attacking
+        Attacking,
+        Idle
     }
     
     void Start()
@@ -122,11 +128,17 @@ public class MonsterObstacle : MonoBehaviour
         lastPosition = transform.position;
         lastMovementTime = Time.time;
         
+        // Subscribe to product panel events
+        ProductInformationManager.OnProductPanelShown += PauseMonster;
+        ProductInformationManager.OnProductPanelHidden += ResumeMonster;
+        
         Debug.Log("MonsterObstacle initialized successfully");
     }
     
     void Update()
     {
+        if (isPaused) return; // Don't update if paused
+        
         // Don't update movement if currently attacking
         if (currentState != MonsterState.Attacking)
         {
@@ -146,6 +158,10 @@ public class MonsterObstacle : MonoBehaviour
                     
                 case MonsterState.ReturningToPatrol:
                     ReturnToPatrol();
+                    break;
+                    
+                case MonsterState.Idle:
+                    // Do nothing in idle state
                     break;
             }
             
@@ -213,10 +229,10 @@ public class MonsterObstacle : MonoBehaviour
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
         
         // Use monsterSoundRange as hunting radius for consistency
-        if (distanceToPlayer <= monsterSoundRange)
+        if (distanceToPlayer <= monsterSoundRange && currentState != MonsterState.Attacking)
         {
             // Player detected in hunting radius
-            if (currentState != MonsterState.Hunting && !isStuck && currentState != MonsterState.Attacking)
+            if (currentState != MonsterState.Hunting && !isStuck)
             {
                 StartHunting();
             }
@@ -458,7 +474,7 @@ public class MonsterObstacle : MonoBehaviour
     // TRIGGER for detection only
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && !isPaused)
         {
             isCollidingWithPlayer = true;
             HandlePlayerCollision(other.gameObject);
@@ -486,7 +502,7 @@ public class MonsterObstacle : MonoBehaviour
     private void HandlePlayerCollision(GameObject playerObject)
     {
         // Check if collided with player and cooldown has passed
-        if (playerObject.CompareTag("Player") && Time.time >= lastCollisionTime + collisionCooldown)
+        if (playerObject.CompareTag("Player") && Time.time >= lastCollisionTime + collisionCooldown && !isPaused)
         {
             lastCollisionTime = Time.time;
             
@@ -499,12 +515,13 @@ public class MonsterObstacle : MonoBehaviour
     
     private void TriggerAttackAnimation()
     {
-        if (animator != null)
+        if (animator != null && !isPaused)
         {
             // Stop any existing attack coroutine
             if (attackCoroutine != null)
             {
                 StopCoroutine(attackCoroutine);
+                attackCoroutine = null;
             }
             
             // Start attack sequence
@@ -537,7 +554,7 @@ public class MonsterObstacle : MonoBehaviour
         yield return new WaitForSeconds(damageTriggerTime);
         
         // NOW apply damage and effects (at the peak of the attack animation)
-        if (!damageApplied)
+        if (!damageApplied && !isPaused)
         {
             ApplyDamageAndEffects();
             damageApplied = true;
@@ -546,6 +563,17 @@ public class MonsterObstacle : MonoBehaviour
         // Wait for the remaining animation duration
         yield return new WaitForSeconds(attackAnimationDuration - damageTriggerTime);
         
+        // Only complete attack if we're not paused
+        if (!isPaused)
+        {
+            CompleteAttack();
+        }
+        
+        attackCoroutine = null;
+    }
+    
+    private void CompleteAttack()
+    {
         // Reset attack state
         isAttacking = false;
         damageApplied = false;
@@ -567,8 +595,6 @@ public class MonsterObstacle : MonoBehaviour
                 ReturnToPatrolState();
             }
         }
-        
-        attackCoroutine = null;
     }
     
     private void ApplyDamageAndEffects()
@@ -651,6 +677,105 @@ public class MonsterObstacle : MonoBehaviour
         }
     }
     
+    // Pause/Resume methods - COMPLETELY REWRITTEN
+    public void PauseMonster()
+    {
+        if (!isPaused)
+        {
+            isPaused = true;
+            stateBeforePause = currentState;
+            wasInAttackAnimation = (currentState == MonsterState.Attacking);
+            
+            // If we were attacking, stop the attack coroutine
+            if (wasInAttackAnimation && attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+                attackCoroutine = null;
+                
+                // Reset animation
+                if (animator != null)
+                {
+                    animator.SetBool(IsAttackingHash, false);
+                }
+            }
+            
+            // Set to idle state while paused
+            currentState = MonsterState.Idle;
+            
+            // Stop any audio
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
+            
+            Debug.Log($"Monster paused. Previous state: {stateBeforePause}, Was attacking: {wasInAttackAnimation}");
+        }
+    }
+    
+    public void ResumeMonster()
+    {
+        if (isPaused)
+        {
+            isPaused = false;
+            
+            // Reset all stuck detection variables
+            lastPosition = transform.position;
+            lastMovementTime = Time.time;
+            isStuck = false;
+            stuckTimer = 0f;
+            
+            // Handle resuming based on previous state
+            if (wasInAttackAnimation)
+            {
+                // If we were attacking before pause, we need to decide what to do
+                // Check player position first
+                if (player != null)
+                {
+                    float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+                    
+                    if (distanceToPlayer <= monsterSoundRange)
+                    {
+                        // Player is still nearby, resume hunting (not attacking)
+                        currentState = MonsterState.Hunting;
+                        Debug.Log("Monster resumed - Player still nearby, resuming hunt");
+                    }
+                    else
+                    {
+                        // Player moved away, return to patrol
+                        currentState = MonsterState.ReturningToPatrol;
+                        Debug.Log("Monster resumed - Player moved away, returning to patrol");
+                    }
+                }
+                else
+                {
+                    // No player found, return to patrol
+                    currentState = MonsterState.ReturningToPatrol;
+                    Debug.Log("Monster resumed - No player found, returning to patrol");
+                }
+                
+                wasInAttackAnimation = false;
+            }
+            else
+            {
+                // Resume the state we were in before pause
+                currentState = stateBeforePause;
+                
+                // If we were hunting, check if player is still nearby
+                if (currentState == MonsterState.Hunting && player != null)
+                {
+                    float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+                    if (distanceToPlayer > monsterSoundRange)
+                    {
+                        // Player moved away, return to patrol
+                        ReturnToPatrolState();
+                    }
+                }
+                
+                Debug.Log($"Monster resumed. State: {currentState}");
+            }
+        }
+    }
+    
     // Visual debugging
     private void OnDrawGizmosSelected()
     {
@@ -676,7 +801,8 @@ public class MonsterObstacle : MonoBehaviour
         // Draw hunting state indicator
         Gizmos.color = currentState == MonsterState.Hunting ? Color.red : 
                       currentState == MonsterState.ReturningToPatrol ? Color.yellow : 
-                      currentState == MonsterState.Attacking ? Color.magenta : new Color(0f, 1f, 0f, 0.3f);
+                      currentState == MonsterState.Attacking ? Color.magenta :
+                      currentState == MonsterState.Idle ? Color.gray : new Color(0f, 1f, 0f, 0.3f);
         Gizmos.DrawWireSphere(transform.position, monsterSoundRange * 1.1f);
         
         // Draw trigger collider (green - small)
@@ -788,7 +914,7 @@ public class MonsterObstacle : MonoBehaviour
     // Method to manually trigger attack (for external events)
     public void ManualAttack()
     {
-        if (player != null)
+        if (player != null && !isPaused)
         {
             TriggerAttackAnimation();
         }
@@ -815,6 +941,11 @@ public class MonsterObstacle : MonoBehaviour
         return currentState == MonsterState.Attacking;
     }
     
+    public bool IsIdle()
+    {
+        return currentState == MonsterState.Idle;
+    }
+    
     public bool IsCollidingWithPlayer()
     {
         return isCollidingWithPlayer;
@@ -831,15 +962,33 @@ public class MonsterObstacle : MonoBehaviour
         return Mathf.Max(0f, collisionCooldown - timeSinceLastAttack);
     }
     
-    // Now this works because MonsterState is public
     public MonsterState GetCurrentState()
     {
         return currentState;
     }
     
+    public bool IsPaused()
+    {
+        return isPaused;
+    }
+    
+    // Force monster to return to patrol (for external control)
+    public void ForceReturnToPatrol()
+    {
+        if (!isPaused)
+        {
+            ReturnToPatrolState();
+            Debug.Log("Monster forced to return to patrol");
+        }
+    }
+    
     // Clean up when destroyed
     private void OnDestroy()
     {
+        // Unsubscribe from events
+        ProductInformationManager.OnProductPanelShown -= PauseMonster;
+        ProductInformationManager.OnProductPanelHidden -= ResumeMonster;
+        
         // Stop any running coroutines
         if (attackCoroutine != null)
         {

@@ -247,6 +247,7 @@ public class CollectProducts : MonoBehaviour
         }
     }
     
+    // In your CollectProducts script, modify the CompletePickup method:
     private void CompletePickup()
     {
         Debug.Log("Completing pickup process");
@@ -262,7 +263,37 @@ public class CollectProducts : MonoBehaviour
             string productName = currentNearbyProduct.name;
             string productTag = currentNearbyProduct.tag;
             
-            Debug.Log($"Destroying product: {productName} ({productTag})");
+            Debug.Log($"Collecting product: {productName} ({productTag})");
+            
+            // Get product information manager
+            ProductInformationManager productInfoManager = FindObjectOfType<ProductInformationManager>();
+            if (productInfoManager != null)
+            {
+                // Extract product ID from name
+                string productID = ExtractProductID(productName);
+                
+                // Check if already collected in this session
+                if (productInfoManager.IsProductCollected(productID))
+                {
+                    Debug.Log($"Product {productID} already collected this session! Skipping info panel.");
+                    // Still destroy the product, but don't show info
+                    Destroy(currentNearbyProduct);
+                    currentNearbyProduct = null;
+                    
+                    // Re-enable movement immediately
+                    if (playerMovementScript != null)
+                        playerMovementScript.enabled = true;
+                        
+                    return;
+                }
+                
+                // Show product information (first time collection)
+                productInfoManager.ShowProductInfo(productID);
+            }
+            else
+            {
+                Debug.LogWarning("ProductInformationManager not found!");
+            }
             
             // Play product disappearance effect if available
             PlayProductDisappearanceEffect();
@@ -277,14 +308,29 @@ public class CollectProducts : MonoBehaviour
             currentNearbyProduct = null;
         }
         
-        // Re-enable player movement
-        if (playerMovementScript != null)
-        {
-            playerMovementScript.enabled = true;
-            Debug.Log("Player movement re-enabled");
-        }
+        // Note: Player movement will be re-enabled by product info manager when panel closes
+        // Only re-enable here if we didn't show the info panel
+        // if (playerMovementScript != null)
+        // {
+        //     playerMovementScript.enabled = true;
+        // }
         
         Debug.Log("Pickup completed successfully");
+    }
+    private string ExtractProductID(string productName)
+    {
+        // Extract product ID from the name
+        // Example: "Banana_Instance" -> "BANANA"
+        string cleanName = productName.ToUpper();
+        
+        // Remove common suffixes
+        if (cleanName.Contains("_"))
+            cleanName = cleanName.Split('_')[0];
+        
+        if (cleanName.Contains("(CLONE)"))
+            cleanName = cleanName.Replace("(CLONE)", "").Trim();
+        
+        return cleanName;
     }
     
     private void PlayProductDisappearanceEffect()
