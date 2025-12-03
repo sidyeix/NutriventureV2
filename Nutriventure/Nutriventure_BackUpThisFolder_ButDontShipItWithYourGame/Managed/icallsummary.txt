@@ -342,7 +342,6 @@ UnityEngine.Animator::get_runtimeAnimatorController_Injected
 UnityEngine.Animator::get_speed_Injected
 UnityEngine.Animator::GetAnimatorClipInfoInternal_Injected
 UnityEngine.Animator::GetAnimatorStateInfo_Injected
-UnityEngine.Animator::Play_Injected
 UnityEngine.Animator::Rebind_Injected
 UnityEngine.Animator::ResetTriggerString_Injected
 UnityEngine.Animator::SetBoolID_Injected
@@ -392,7 +391,6 @@ UnityEngine.AudioSource::PlayOneShotHelper_Injected
 UnityEngine.AudioSource::Stop_Injected
 UnityEngine.AudioSource::set_loop_Injected
 UnityEngine.AudioSource::set_maxDistance_Injected
-UnityEngine.AudioSource::set_playOnAwake_Injected
 UnityEngine.AudioSource::set_resource_Injected
 UnityEngine.AudioSource::set_rolloffMode_Injected
 UnityEngine.AudioSource::set_spatialBlend_Injected
@@ -551,9 +549,7 @@ UnityEngine.CanvasGroup::get_ignoreParentGroups_Injected
 UnityEngine.CanvasGroup::get_interactable_Injected
 UnityEngine.CanvasGroup::get_alpha_Injected
 UnityEngine.CanvasGroup::set_alpha_Injected
-UnityEngine.CanvasGroup::set_blocksRaycasts_Injected
 UnityEngine.CanvasGroup::set_ignoreParentGroups_Injected
-UnityEngine.CanvasGroup::set_interactable_Injected
 UnityEngine.CanvasRenderer::get_cullTransparentMesh_Injected
 UnityEngine.CanvasRenderer::get_cull_Injected
 UnityEngine.CanvasRenderer::get_hasMoved_Injected
@@ -594,7 +590,6 @@ UnityEngine.CharacterController::get_center_Injected
 UnityEngine.CharacterController::get_velocity_Injected
 UnityEngine.CharacterController::Move_Injected
 UnityEngine.Collider::get_enabled_Injected
-UnityEngine.Collider::get_isTrigger_Injected
 UnityEngine.Collider::get_attachedRigidbody_Injected
 UnityEngine.Collider::ClosestPoint_Injected
 UnityEngine.Collider::Raycast_Injected
@@ -777,7 +772,6 @@ UnityEngine.GameObject::set_tag_Injected
 UnityEngine.GameObject::FindGameObjectsWithTag_Injected
 UnityEngine.GeometryUtility::TestPlanesAABB_Injected
 UnityEngine.GeometryUtility::Internal_ExtractPlanes_Injected
-UnityEngine.Gizmos::DrawCube_Injected
 UnityEngine.Gizmos::DrawIcon_Injected
 UnityEngine.Gizmos::DrawLine_Injected
 UnityEngine.Gizmos::DrawSphere_Injected
@@ -1215,7 +1209,6 @@ UnityEngine.ObjectDispatcher::EnableTransformTracking
 UnityEngine.ObjectDispatcher::EnableTypeTracking
 UnityEngine.ObjectGUIState::Internal_Create
 UnityEngine.ObjectGUIState::Internal_Destroy
-UnityEngine.ParticleSystem::get_isPlaying_Injected
 UnityEngine.ParticleSystem::get_useAutoRandomSeed_Injected
 UnityEngine.ParticleSystem::get_time_Injected
 UnityEngine.ParticleSystem::EmitOld_Internal_Injected
@@ -1228,7 +1221,6 @@ UnityEngine.ParticleSystem::set_randomSeed_Injected
 UnityEngine.ParticleSystem::set_useAutoRandomSeed_Injected
 UnityEngine.ParticleSystem/MainModule::get_loop
 UnityEngine.ParticleSystem/MainModule::get_duration
-UnityEngine.ParticleSystem/MainModule::get_startLifetimeBlittable_Injected
 UnityEngine.ParticleSystem/SubEmittersModule::get_subEmittersCount
 UnityEngine.ParticleSystem/SubEmittersModule::GetSubEmitterSystem_Injected
 UnityEngine.ParticleSystemRenderer::GetMeshes_Injected
@@ -1244,7 +1236,6 @@ UnityEngine.Physics::SendOnCollisionExit_Injected
 UnityEngine.Physics::SendOnCollisionStay_Injected
 UnityEngine.Physics::get_defaultPhysicsScene_Injected
 UnityEngine.Physics::get_gravity_Injected
-UnityEngine.Physics::OverlapSphere_Internal_Injected
 UnityEngine.Physics2D::get_queriesHitTriggers
 UnityEngine.Physics2D::GetRayIntersectionAll_Internal_Injected
 UnityEngine.PhysicsScene::Internal_RaycastTest_Injected
@@ -2139,7 +2130,6 @@ UnityEngine.TouchScreenKeyboard::set_hideInput
 UnityEngine.TouchScreenKeyboard::set_text_Injected
 UnityEngine.TouchScreenKeyboard::get_inputFieldAppearance
 UnityEngine.TouchScreenKeyboard::get_status_Injected
-UnityEngine.TrailRenderer::set_emitting_Injected
 UnityEngine.Transform::IsChildOf_Injected
 UnityEngine.Transform::get_hasChanged_Injected
 UnityEngine.Transform::get_childCount_Injected
@@ -2292,21 +2282,8 @@ UnityEngine.VFX.VisualEffect::set_pause_Injected
 UnityEngine.VFX.VisualEffect::set_resetSeedOnPlay_Injected
 UnityEngine.VFX.VisualEffect::set_startSeed_Injected
 UnityEngine.VFX.VisualEffectAsset::GetExposedSpace_Injected
-UnityEngine.Video.VideoPlayer::get_isPlaying_Injected
-UnityEngine.Video.VideoPlayer::get_isPrepared_Injected
-UnityEngine.Video.VideoPlayer::get_clip_Injected
-UnityEngine.Video.VideoPlayer::Play_Injected
-UnityEngine.Video.VideoPlayer::Prepare_Injected
-UnityEngine.Video.VideoPlayer::Stop_Injected
-UnityEngine.Video.VideoPlayer::set_audioOutputMode_Injected
-UnityEngine.Video.VideoPlayer::set_clip_Injected
-UnityEngine.Video.VideoPlayer::set_isLooping_Injected
-UnityEngine.Video.VideoPlayer::set_playOnAwake_Injected
 UnityEngine.Video.VideoPlayer::set_renderMode_Injected
-UnityEngine.Video.VideoPlayer::set_skipOnDrop_Injected
 UnityEngine.Video.VideoPlayer::set_targetCamera_Injected
-UnityEngine.Video.VideoPlayer::set_targetTexture_Injected
-UnityEngine.Video.VideoPlayer::set_waitForFirstFrame_Injected
 UnityEngine.XR.XRDevice::DisableAutoXRCameraTracking_Injected
 UnityEngine.XR.XRDisplaySubsystem::AddGraphicsThreadMirrorViewBlit_Injected
 UnityEngine.XR.XRDisplaySubsystem::GetMirrorViewBlitDesc_Injected
