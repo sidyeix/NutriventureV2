@@ -414,9 +414,7 @@
           },
           {
             "name": "RenderTexture",
-            "scenes": [
-              "Assets/Scenes/4_Kingdom 2.unity"
-            ],
+            "scenes": [],
             "dependencyType": 0,
             "icon": null
           },
@@ -532,12 +530,6 @@
             "name": "TimeManager",
             "scenes": [],
             "dependencyType": 1,
-            "icon": null
-          },
-          {
-            "name": "TrailRenderer",
-            "scenes": [],
-            "dependencyType": 0,
             "icon": null
           },
           {
@@ -1841,12 +1833,6 @@
       {
         "name": "Video",
         "dependencies": [
-          {
-            "name": "VideoClip",
-            "scenes": [],
-            "dependencyType": 0,
-            "icon": null
-          },
           {
             "name": "VideoPlayer",
             "scenes": [],
