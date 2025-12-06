@@ -12,6 +12,8 @@ TagManager:
   - K2_ParticleSystem
   - K2_Monster
   - NutriHeart
+  - Interactable
+  - Destination
   layers:
   - Default
   - TransparentFX
