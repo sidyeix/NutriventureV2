@@ -21922,7 +21922,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &893180577
 RectTransform:
   m_ObjectHideFlags: 0
@@ -37755,16 +37755,18 @@ MonoBehaviour:
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
   characterSpawnPoint: {fileID: 1403402096}
   characterButtons:
-  - {fileID: 1669051783}
-  - {fileID: 6426358}
-  - {fileID: 674504934}
-  - {fileID: 1889288580}
-  - {fileID: 1448901107}
-  - {fileID: 1515245989}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   characterVisualSwapper: {fileID: 1809557558}
   selectedColor: {r: 0.5764706, g: 0.4392157, b: 0.8588236, a: 0.6745098}
   normalColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   inputManager: {fileID: 435752629}
+  characterSelectionAnimator: {fileID: 0}
+  characterRotationController: {fileID: 0}
 --- !u!1 &1515245988
 GameObject:
   m_ObjectHideFlags: 0
@@ -42683,6 +42685,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d0e0e2bccde7924da70d4b486ad2a26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
+  characterDatabase: {fileID: 0}
 --- !u!4 &1725830017 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
@@ -44565,9 +44568,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterVisualSwapper
   geometryRoot: {fileID: 1830585844}
   playerAnimator: {fileID: 1809557560}
+  characterDatabase: {fileID: 0}
   lookAroundParameter: LookAround
   initializationDelay: 0.2
   swapDelay: 0.1
+  hideDuration: 0.05
 --- !u!143 &1809557559
 CharacterController:
   m_ObjectHideFlags: 0

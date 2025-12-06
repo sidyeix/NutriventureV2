@@ -4,82 +4,158 @@ using System.Collections;
 public class CharacterVisualSwapper : MonoBehaviour
 {
     [Header("References")]
-    public Transform geometryRoot; // Assign your "Geometry" transform in inspector
-    public Animator playerAnimator; // Assign your PlayerArmature's Animator in inspector
+    public Transform geometryRoot;
+    public Animator playerAnimator;
+    public CharacterDatabase characterDatabase;
 
     [Header("Animation Parameters")]
-    public string lookAroundParameter = "LookAround"; // Name of the bool parameter in Animator
+    public string lookAroundParameter = "LookAround";
 
     [Header("Visual Settings")]
-    public float initializationDelay = 0.2f; // Delay before showing character to ensure proper setup
-    public float swapDelay = 0.1f; // Delay to prevent T-pose flash
+    public float initializationDelay = 0.2f;
+    public float swapDelay = 0.1f;
+    public float hideDuration = 0.05f;
 
     private GameObject currentCharacterModel;
+    private GameObject currentSkinModel;
     private Coroutine swapCoroutine;
-    private Renderer[] currentRenderers; // Changed to Renderer to catch all types
+    private Renderer[] currentRenderers;
+    private int currentCharacterID = -1;
+    private int currentSkinID = -1;
 
     void Start()
     {
         ForceEnableAnimator();
+        Debug.Log($"CharacterVisualSwapper initialized - CharacterDB: {characterDatabase != null}");
     }
 
+    // OLD METHOD - For backward compatibility
     public void ApplyCharacterVisuals(CharacterDatabase.CharacterData characterData)
     {
         if (characterData == null) return;
 
+        ApplyCharacterVisuals(characterData.characterID, -1);
+    }
+
+    // NEW METHOD - Apply character with optional skin
+    public void ApplyCharacterVisuals(int characterID, int skinID = -1)
+    {
+        if (characterDatabase == null)
+        {
+            Debug.LogError("CharacterDatabase not assigned!");
+            return;
+        }
+
+        CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(characterID);
+        if (characterData == null)
+        {
+            Debug.LogError($"Character {characterID} not found!");
+            return;
+        }
+
+        currentCharacterID = characterID;
+        currentSkinID = skinID;
+        Debug.Log($"ApplyCharacterVisuals: CharID={characterID}, SkinID={skinID}");
+
         if (swapCoroutine != null)
             StopCoroutine(swapCoroutine);
 
-        swapCoroutine = StartCoroutine(SwapCharacterVisualsCoroutine(characterData));
+        swapCoroutine = StartCoroutine(SwapCharacterVisualsCoroutine(characterData, skinID));
     }
 
-    private IEnumerator SwapCharacterVisualsCoroutine(CharacterDatabase.CharacterData characterData)
+    private IEnumerator SwapCharacterVisualsCoroutine(CharacterDatabase.CharacterData characterData, int skinID = -1)
     {
-        Debug.Log("Starting character swap with initial hiding...");
+        Debug.Log($"SwapCoroutine: {characterData.characterName}, SkinID={skinID}");
 
-        // PHASE 1: HIDE CURRENT CHARACTER (if exists)
-        HideCurrentCharacter();
+        // PHASE 1: HIDE CURRENT
+        HideCurrentCharacterImmediately();
 
-        // PHASE 2: CLEAR EXISTING MODEL
-        if (currentCharacterModel != null)
-        {
-            Destroy(currentCharacterModel);
-            currentCharacterModel = null;
-            currentRenderers = null;
-        }
+        // PHASE 2: CLEAR EXISTING
+        ClearExistingModels();
 
-        yield return new WaitForEndOfFrame(); // Ensure cleanup
+        yield return new WaitForEndOfFrame();
 
-        // PHASE 3: APPLY AVATAR FIRST
-        Debug.Log("Applying avatar first...");
+        // PHASE 3: APPLY AVATAR
         if (playerAnimator != null)
         {
             playerAnimator.enabled = false;
-            playerAnimator.avatar = characterData.characterAvatar;
+
+            // If skin is used and contains its own avatar
+            if (skinID != -1)
+            {
+                var skinData = characterDatabase.GetSkinByID(characterData.characterID, skinID);
+                if (skinData != null && skinData.skinAvatar != null)
+                {
+                    playerAnimator.avatar = skinData.skinAvatar;
+                    Debug.Log("Applied Skin Avatar: " + skinData.skinName);
+                }
+                else
+                {
+                    playerAnimator.avatar = characterData.characterAvatar;
+                    Debug.Log("Skin has NO avatar — using character avatar");
+                }
+            }
+            else
+            {
+                playerAnimator.avatar = characterData.characterAvatar;
+                Debug.Log("Applied Character Avatar");
+            }
         }
 
-        // PHASE 4: INSTANTIATE NEW MODEL BUT KEEP IT HIDDEN
-        Debug.Log("Instantiating new model (hidden)...");
-        if (characterData.characterPrefab != null && geometryRoot != null)
+
+        bool shouldUseSkin = (skinID != -1);
+        GameObject modelToUse = null;
+
+        // PHASE 4: DECIDE WHICH MODEL TO USE
+        if (shouldUseSkin)
         {
-            currentCharacterModel = Instantiate(characterData.characterPrefab, geometryRoot);
-            currentCharacterModel.transform.localPosition = Vector3.zero;
-            currentCharacterModel.transform.localRotation = Quaternion.identity;
-            currentCharacterModel.transform.localScale = Vector3.one;
-
-            DisableCharacterComponents(currentCharacterModel);
-
-            // Get ALL renderers (SkinnedMeshRenderer and MeshRenderer)
-            currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
-
-            // IMPORTANT: Keep the character hidden initially
-            HideCurrentCharacterImmediately();
+            // Try to use skin prefab
+            var skinData = characterDatabase.GetSkinByID(characterData.characterID, skinID);
+            if (skinData != null && skinData.skinPrefab != null)
+            {
+                modelToUse = skinData.skinPrefab;
+                Debug.Log($"Using skin: {skinData.skinName}");
+                currentSkinID = skinID;
+            }
+            else
+            {
+                Debug.LogWarning($"Skin {skinID} not found, using default character model");
+                shouldUseSkin = false;
+            }
         }
 
-        yield return new WaitForEndOfFrame(); // Ensure instantiation completes
+        if (!shouldUseSkin)
+        {
+            // Use character's default prefab
+            modelToUse = characterData.characterPrefab;
+            currentSkinID = -1;
+            Debug.Log("Using default character model");
+        }
 
-        // PHASE 5: RE-ENABLE ANIMATOR WITH NEW AVATAR
-        Debug.Log("Re-enabling animator with new avatar...");
+        // PHASE 5: INSTANTIATE MODEL
+        if (modelToUse != null && geometryRoot != null)
+        {
+            if (shouldUseSkin)
+            {
+                currentSkinModel = Instantiate(modelToUse, geometryRoot);
+                SetupModelTransform(currentSkinModel);
+                DisableCharacterComponents(currentSkinModel);
+                currentRenderers = currentSkinModel.GetComponentsInChildren<Renderer>(true);
+            }
+            else
+            {
+                currentCharacterModel = Instantiate(modelToUse, geometryRoot);
+                SetupModelTransform(currentCharacterModel);
+                DisableCharacterComponents(currentCharacterModel);
+                currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
+            }
+
+            HideAllRenderers(currentRenderers);
+        }
+
+        yield return new WaitForEndOfFrame();
+
+        // PHASE 6: RE-ENABLE ANIMATOR
         if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
@@ -87,26 +163,120 @@ public class CharacterVisualSwapper : MonoBehaviour
             playerAnimator.Update(0f);
         }
 
-        // PHASE 6: WAIT FOR INITIALIZATION - CRITICAL STEP!
-        Debug.Log($"Waiting {initializationDelay}s for proper initialization...");
+        // PHASE 7: WAIT FOR INITIALIZATION
         yield return new WaitForSeconds(initializationDelay);
 
-        // PHASE 7: NOW SHOW THE CHARACTER (everything should be initialized)
-        Debug.Log("Showing character after initialization...");
+        // PHASE 8: SMALL DELAY
+        yield return new WaitForSeconds(hideDuration);
+
+        // PHASE 9: SHOW CHARACTER
         ShowCurrentCharacter();
 
-        // PHASE 8: SMALL DELAY BEFORE ANIMATION
+        // PHASE 10: DELAY BEFORE ANIMATION
         yield return new WaitForSeconds(swapDelay);
 
-        // PHASE 9: TRIGGER ANIMATION
-        Debug.Log("Triggering LookAround animation...");
+        // PHASE 11: TRIGGER ANIMATION
         TriggerLookAroundAnimation();
 
-        Debug.Log("Character swap completed successfully!");
+        Debug.Log("Character swap completed!");
         swapCoroutine = null;
     }
 
-    private void HideCurrentCharacter()
+    // In CharacterVisualSwapper.cs - Optimize ApplySkinToCurrentCharacter
+    public void ApplySkinToCurrentCharacter(int skinID)
+    {
+        Debug.Log($"ApplySkinToCurrentCharacter: SkinID={skinID}, CurrentSkinID={currentSkinID}");
+
+        // Check if we're already using this skin
+        if (currentSkinID == skinID)
+        {
+            Debug.Log($"Skin {skinID} is already applied, skipping reload");
+            return;
+        }
+
+        if (currentCharacterID == -1)
+        {
+            Debug.LogError("No character loaded!");
+            return;
+        }
+
+        if (characterDatabase == null)
+        {
+            Debug.LogError("CharacterDatabase not assigned!");
+            return;
+        }
+
+        // If skinID is -1, just reload character without skin
+        if (skinID == -1)
+        {
+            Debug.Log("Applying default character (no skin)");
+            ApplyCharacterVisuals(currentCharacterID, -1);
+            return;
+        }
+
+        // Check if skin exists
+        var skinData = characterDatabase.GetSkinByID(currentCharacterID, skinID);
+        if (skinData == null)
+        {
+            Debug.LogError($"Skin {skinID} not found for character {currentCharacterID}!");
+            return;
+        }
+
+        if (skinData.skinPrefab == null)
+        {
+            Debug.LogError($"Skin prefab is null for skin {skinData.skinName}!");
+            return;
+        }
+
+        Debug.Log($"Applying skin: {skinData.skinName}");
+        currentSkinID = skinID;
+
+        // Use the main swap method
+        ApplyCharacterVisuals(currentCharacterID, skinID);
+    }
+
+    // Load saved skin for character
+    public void LoadCharacterWithSavedSkin(int characterID)
+    {
+        int savedSkinID = -1;
+
+        if (GameDataManager.Instance != null)
+        {
+            savedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+            Debug.Log($"LoadCharacterWithSavedSkin: CharID={characterID}, SavedSkinID={savedSkinID}");
+        }
+
+        // Apply character with saved skin (or default if -1)
+        ApplyCharacterVisuals(characterID, savedSkinID);
+    }
+
+    private void SetupModelTransform(GameObject model)
+    {
+        if (model == null) return;
+
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
+        model.transform.localScale = Vector3.one;
+    }
+
+    private void ClearExistingModels()
+    {
+        if (currentCharacterModel != null)
+        {
+            Destroy(currentCharacterModel);
+            currentCharacterModel = null;
+        }
+
+        if (currentSkinModel != null)
+        {
+            Destroy(currentSkinModel);
+            currentSkinModel = null;
+        }
+
+        currentRenderers = null;
+    }
+
+    private void HideCurrentCharacterImmediately()
     {
         if (currentRenderers != null)
         {
@@ -118,13 +288,11 @@ public class CharacterVisualSwapper : MonoBehaviour
         }
     }
 
-    private void HideCurrentCharacterImmediately()
+    private void HideAllRenderers(Renderer[] renderers)
     {
-        if (currentCharacterModel != null)
+        if (renderers != null)
         {
-            // Disable ALL renderers in the new character
-            Renderer[] allRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
-            foreach (Renderer renderer in allRenderers)
+            foreach (var renderer in renderers)
             {
                 if (renderer != null)
                     renderer.enabled = false;
@@ -136,16 +304,6 @@ public class CharacterVisualSwapper : MonoBehaviour
     {
         if (currentRenderers != null)
         {
-            foreach (var renderer in currentRenderers)
-            {
-                if (renderer != null)
-                    renderer.enabled = true;
-            }
-        }
-        else if (currentCharacterModel != null)
-        {
-            // Fallback: if currentRenderers is null, find them again
-            currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in currentRenderers)
             {
                 if (renderer != null)
@@ -168,21 +326,15 @@ public class CharacterVisualSwapper : MonoBehaviour
 
         if (playerAnimator != null && playerAnimator.enabled)
         {
-            // Ensure animator is in a clean state
             playerAnimator.Rebind();
             playerAnimator.Update(0f);
-
-            // Reset parameter
             playerAnimator.SetBool(lookAroundParameter, false);
             playerAnimator.Update(0f);
 
             yield return new WaitForEndOfFrame();
 
-            // Trigger animation
             playerAnimator.SetBool(lookAroundParameter, true);
             playerAnimator.Update(0.1f);
-
-            Debug.Log("LookAround animation triggered after proper initialization");
         }
     }
 
@@ -197,12 +349,10 @@ public class CharacterVisualSwapper : MonoBehaviour
 
     private void DisableCharacterComponents(GameObject characterModel)
     {
-        // Disable animator in the instantiated model
         Animator animator = characterModel.GetComponent<Animator>();
         if (animator != null)
             animator.enabled = false;
 
-        // Disable any movement/input scripts
         MonoBehaviour[] scripts = characterModel.GetComponentsInChildren<MonoBehaviour>();
         foreach (var script in scripts)
         {
@@ -222,12 +372,7 @@ public class CharacterVisualSwapper : MonoBehaviour
 
     public void ClearCharacterVisuals()
     {
-        if (currentCharacterModel != null)
-        {
-            Destroy(currentCharacterModel);
-            currentCharacterModel = null;
-            currentRenderers = null;
-        }
+        ClearExistingModels();
     }
 
     public void EnsureAnimatorEnabled()
@@ -240,13 +385,17 @@ public class CharacterVisualSwapper : MonoBehaviour
         if (swapCoroutine != null)
             StopCoroutine(swapCoroutine);
     }
+
     public void StopLookAroundAnimation()
     {
         if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
         {
             playerAnimator.SetBool(lookAroundParameter, false);
             playerAnimator.Update(0f);
-            Debug.Log("LookAround animation stopped - parameter set to false");
         }
     }
+
+    // Getters
+    public int GetCurrentCharacterID() => currentCharacterID;
+    public int GetCurrentSkinID() => currentSkinID;
 }
