@@ -2,23 +2,32 @@ using UnityEngine;
 using Cinemachine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 
 public class CharacterSelectionController : MonoBehaviour
 {
     [Header("Camera References")]
     public CinemachineVirtualCamera menuCamera;
     public CinemachineVirtualCamera characterSelectionCamera;
+    public CinemachineVirtualCamera skinSelectionCamera;
 
     [Header("UI References")]
     public CanvasGroup characterSelectionCanvas;
+    public CanvasGroup characterPreviewCanvas;
     public GameObject characterSelectionPanel;
     public GameObject mainMenuCanvasesParent;
     public Button selectCharacterButton;
+    public Button previewSelectButton;
+    public Button skinButton;
+    public Button backButton;
+    public Button characterButton;
 
     [Header("Animation Settings")]
     public float fadeDuration = 0.5f;
     public float slideDuration = 0.3f;
     public float menuShowDelay = 1.5f;
+    public float canvasShowDelay = 1.0f;
 
     [Header("Panel Positions")]
     public Vector3 panelEntryPosition = new Vector3(-466.331299f, -72.6670303f, 1.23346881e-05f);
@@ -33,33 +42,82 @@ public class CharacterSelectionController : MonoBehaviour
     [Header("Player Armature Reference")]
     public GameObject playerArmature;
 
+    [Header("UI Color Objects")]
+    public List<Image> colorizableImages = new List<Image>();
+    public List<Text> colorizableTexts = new List<Text>();
+
+    [Header("Skin Selection")]
+    public SkinSelectionController skinSelectionController;
+
+    [Header("Character Visual Management")]
+    public CharacterVisualSwapper characterVisualSwapper;
+    public CharacterDatabase characterDatabase;
+
     private bool isInCharacterSelection = false;
+    private bool isInSkinSelection = false;
     private RectTransform panelRectTransform;
     private int pendingCharacterSelection = -1;
+    private int selectedSkinID = -1;
     private Coroutine exitCoroutine;
+    private Coroutine canvasShowCoroutine;
+
+    // NEW: Track the last saved character and skin
+    private int lastSavedCharacterID = 0;
+    private int lastSavedSkinID = -1;
 
     void Start()
     {
-        // Get the panel's RectTransform
         if (characterSelectionPanel != null)
         {
             panelRectTransform = characterSelectionPanel.GetComponent<RectTransform>();
         }
 
-        // Setup select character button
+        // Setup buttons
         if (selectCharacterButton != null)
         {
             selectCharacterButton.onClick.RemoveAllListeners();
-            selectCharacterButton.onClick.AddListener(OnSelectCharacterConfirmed);
-            selectCharacterButton.interactable = false;
+            selectCharacterButton.onClick.AddListener(OnFirstSelectButtonClicked);
+            selectCharacterButton.interactable = true;
         }
 
-        // Ensure character selection is hidden at start
+        if (previewSelectButton != null)
+        {
+            previewSelectButton.onClick.RemoveAllListeners();
+            previewSelectButton.onClick.AddListener(OnSecondSelectButtonClicked);
+            previewSelectButton.interactable = true;
+        }
+
+        if (skinButton != null)
+        {
+            skinButton.onClick.RemoveAllListeners();
+            skinButton.onClick.AddListener(OnSkinButtonClicked);
+        }
+
+        if (backButton != null)
+        {
+            backButton.onClick.RemoveAllListeners();
+            backButton.onClick.AddListener(OnBackButtonClicked);
+        }
+
+        if (characterButton != null)
+        {
+            characterButton.onClick.RemoveAllListeners();
+            characterButton.onClick.AddListener(OnCharacterButtonClicked);
+        }
+
+        // Initialize UI states
         if (characterSelectionCanvas != null)
         {
             characterSelectionCanvas.alpha = 0f;
             characterSelectionCanvas.interactable = false;
             characterSelectionCanvas.blocksRaycasts = false;
+        }
+
+        if (characterPreviewCanvas != null)
+        {
+            characterPreviewCanvas.alpha = 0f;
+            characterPreviewCanvas.interactable = false;
+            characterPreviewCanvas.blocksRaycasts = false;
         }
 
         if (characterSelectionPanel != null && panelRectTransform != null)
@@ -68,56 +126,207 @@ public class CharacterSelectionController : MonoBehaviour
             characterSelectionPanel.SetActive(false);
         }
 
-        // Ensure main menu canvases are visible at start
         if (mainMenuCanvasesParent != null)
         {
             mainMenuCanvasesParent.SetActive(true);
         }
 
-        // Set initial camera priorities
         SetMenuCameraActive();
 
-        // Ensure animator starts in correct state
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isChanging", false);
             characterSelectionAnimator.SetBool("isSelected", false);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+        }
+
+        if (skinSelectionController != null)
+        {
+            skinSelectionController.gameObject.SetActive(false);
+        }
+
+        // NEW: Load last saved character and skin
+        if (GameDataManager.Instance != null)
+        {
+            lastSavedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+            lastSavedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(lastSavedCharacterID);
+            Debug.Log($"Loaded saved character: {lastSavedCharacterID}, skin: {lastSavedSkinID}");
         }
     }
 
-    // This method should be called when clicking the PlayerArmature
-    public void OnPlayerArmatureClicked()
+    public void OnFirstSelectButtonClicked()
     {
-        if (!isInCharacterSelection)
+        int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
+        OnSelectCharacterConfirmed(characterToSelect);
+    }
+
+    public void OnSecondSelectButtonClicked()
+    {
+        int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
+        OnSelectCharacterConfirmed(characterToSelect);
+    }
+
+    public void OnCharacterButtonClicked()
+    {
+        Debug.Log("Character button clicked - returning to character selection");
+
+        if (characterSelectionAnimator != null)
         {
-            EnterCharacterSelection();
+            characterSelectionAnimator.SetBool("isChanging", true);
+            characterSelectionAnimator.SetBool("isSelected", false);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
         }
-        else
+
+        ShowCharacterSelectionPanel();
+        ResetToCharacterSelection();
+    }
+
+    private void ShowCharacterSelectionPanel()
+    {
+        if (characterSelectionPanel != null && panelRectTransform != null)
+        {
+            characterSelectionPanel.SetActive(true);
+            StartCoroutine(SlidePanel(characterSelectionPanel, true));
+        }
+    }
+
+    private void HideCharacterSelectionPanel()
+    {
+        if (characterSelectionPanel != null && panelRectTransform != null)
+        {
+            StartCoroutine(SlidePanel(characterSelectionPanel, false));
+        }
+    }
+
+    public void OnSkinButtonClicked()
+    {
+        if (isInCharacterSelection && !isInSkinSelection)
+        {
+            int characterID = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
+
+            // Load saved skin for this character
+            if (GameDataManager.Instance != null)
+            {
+                selectedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+            }
+
+            // Enter skin selection
+            if (skinSelectionController != null)
+            {
+                skinSelectionController.gameObject.SetActive(true);
+                skinSelectionController.EnterSkinSelection(characterID);
+            }
+
+            HideCharacterSelectionPanel();
+            EnterSkinSelection();
+        }
+    }
+
+    public void OnBackButtonClicked()
+    {
+        Debug.Log("Back button clicked");
+
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.SetBool("isChanging", true);
+            characterSelectionAnimator.SetBool("isSelected", false);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+        }
+
+        if (isInSkinSelection)
+        {
+            // IMPORTANT: DO NOT APPLY OR SAVE ANY SKINS HERE
+            // Skin was already applied when skin button was clicked
+            Debug.Log("Exiting skin selection - NO skin changes made");
+
+            // Exit skin selection
+            if (skinSelectionController != null)
+            {
+                skinSelectionController.ExitSkinSelection();
+                skinSelectionController.gameObject.SetActive(false);
+            }
+
+            ShowCharacterSelectionPanel();
+            ExitSkinSelection();
+        }
+        else if (isInCharacterSelection)
         {
             ExitCharacterSelectionWithoutSaving();
         }
+    }
+
+    public void OnPlayerArmatureClicked()
+    {
+        if (!isInCharacterSelection && !isInSkinSelection)
+        {
+            EnterCharacterSelection();
+        }
+        else if (isInCharacterSelection && !isInSkinSelection)
+        {
+            ExitCharacterSelectionWithoutSaving();
+        }
+    }
+
+    private void EnterSkinSelection()
+    {
+        isInSkinSelection = true;
+
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.SetBool("isSelectingSkin", true);
+            characterSelectionAnimator.SetBool("isChanging", false);
+            characterSelectionAnimator.SetBool("isSelected", false);
+        }
+
+        SetSkinSelectionCameraActive();
+
+        if (characterSelectionCanvas != null)
+        {
+            StartCoroutine(FadeCanvas(characterSelectionCanvas, characterSelectionCanvas.alpha, 0f, fadeDuration));
+            characterSelectionCanvas.interactable = false;
+            characterSelectionCanvas.blocksRaycasts = false;
+        }
+
+        ShowCharacterPreviewCanvasWithDelay();
+    }
+
+    private void ExitSkinSelection()
+    {
+        isInSkinSelection = false;
+
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+            characterSelectionAnimator.SetBool("isChanging", true);
+            characterSelectionAnimator.SetBool("isSelected", false);
+        }
+
+        SetCharacterSelectionCameraActive();
+
+        if (characterPreviewCanvas != null)
+        {
+            StartCoroutine(FadeCanvas(characterPreviewCanvas, characterPreviewCanvas.alpha, 0f, fadeDuration));
+            characterPreviewCanvas.interactable = false;
+            characterPreviewCanvas.blocksRaycasts = false;
+        }
+
+        ShowCharacterSelectionCanvasWithDelay();
     }
 
     private void EnterCharacterSelection()
     {
         isInCharacterSelection = true;
 
-        // Switch to character selection camera
         SetCharacterSelectionCameraActive();
 
-        // Trigger changing animation on CharacterSelection animator
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isChanging", true);
             characterSelectionAnimator.SetBool("isSelected", false);
-            Debug.Log("Set isChanging = true, isSelected = false on CharacterSelection animator");
-        }
-        else
-        {
-            Debug.LogWarning("CharacterSelection Animator not assigned!");
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+            Debug.Log("Set isChanging = true, isSelected = false, isSelectingSkin = false on CharacterSelection animator");
         }
 
-        // Enable character rotation
         if (characterRotationController != null)
         {
             // Reset rotation when entering character selection
@@ -125,46 +334,50 @@ public class CharacterSelectionController : MonoBehaviour
             Debug.Log("Character rotation enabled for selection");
         }
 
-        // Hide main menu canvases
         HideMainMenuCanvases();
-
-        // Show character selection UI with effects
         ShowCharacterSelectionUI();
 
-        // Reset pending selection
         pendingCharacterSelection = -1;
-        UpdateSelectButtonState();
+        // DO NOT reset selectedSkinID here - preserve current skin
+
+        // CHANGED: Do NOT load any character when entering character selection
+        // The character should stay exactly as it was
+        Debug.Log("Entered Character Selection Mode - Character remains unchanged");
+
+        if (selectCharacterButton != null) selectCharacterButton.interactable = true;
+        if (previewSelectButton != null) previewSelectButton.interactable = true;
 
         Debug.Log("Entered Character Selection Mode");
     }
 
-    // Called when user confirms character selection with the button
-    public void OnSelectCharacterConfirmed()
+    // CHANGED: Modified to accept characterID parameter
+    public void OnSelectCharacterConfirmed(int characterID = -1)
     {
-        if (pendingCharacterSelection != -1)
-        {
-            // Save the character selection
-            SaveCharacterSelection(pendingCharacterSelection);
+        int characterToSave = characterID != -1 ? characterID : (pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID);
 
-            // Start the synchronized exit sequence
-            if (exitCoroutine != null)
-                StopCoroutine(exitCoroutine);
-            exitCoroutine = StartCoroutine(SynchronizedExitSequence());
-        }
-        else
-        {
-            Debug.LogWarning("No character selected to confirm!");
-        }
+        // Update last saved character
+        lastSavedCharacterID = characterToSave;
+
+        // Save the character selection
+        SaveCharacterSelection(characterToSave);
+
+        // CHANGED: Do NOT reload the character - it's already showing from the preview
+        // The character visuals are already applied, we just need to save the selection
+        Debug.Log($"Character {characterToSave} confirmed - No reload needed, character already displayed");
+
+        // Start the synchronized exit sequence
+        if (exitCoroutine != null)
+            StopCoroutine(exitCoroutine);
+        exitCoroutine = StartCoroutine(SynchronizedExitSequence());
     }
 
-    // Called when user wants to exit without saving (like a back button)
     public void ExitCharacterSelectionWithoutSaving()
     {
-        // Exit immediately without animation synchronization
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isSelected", false);
-            Debug.Log("Set isSelected = false - Exited without selection");
+            characterSelectionAnimator.SetBool("isChanging", true);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
         }
 
         ExitCharacterSelection();
@@ -178,7 +391,9 @@ public class CharacterSelectionController : MonoBehaviour
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isSelected", true);
-            Debug.Log("Set isSelected = true - Starting selection animation");
+            characterSelectionAnimator.SetBool("isChanging", false);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+            Debug.Log("Set isSelected = true, isChanging = false, isSelectingSkin = false - Starting selection animation");
         }
 
         // Reset character rotation when confirming selection
@@ -188,17 +403,24 @@ public class CharacterSelectionController : MonoBehaviour
             Debug.Log("Character rotation reset for selection confirmation");
         }
 
-        // Hide character selection UI immediately
+        // Hide character selection UI immediately (including panel)
         HideCharacterSelectionUI();
 
-        // PHASE 2: Switch camera priority IMMEDIATELY with the animation
-        SetMenuCameraActive();
-        Debug.Log("Camera priority switched to menu camera - synchronized with selection animation");
+        // Hide character preview canvas immediately
+        if (characterPreviewCanvas != null)
+        {
+            StartCoroutine(FadeCanvas(characterPreviewCanvas, characterPreviewCanvas.alpha, 0f, fadeDuration));
+            characterPreviewCanvas.interactable = false;
+            characterPreviewCanvas.blocksRaycasts = false;
+        }
 
-        // PHASE 3: Wait for the selection animation to complete
+        // Switch to menu camera immediately
+        SetMenuCameraActive();
+
+        // PHASE 2: Wait for the selection animation to complete
         yield return new WaitForSeconds(menuShowDelay);
 
-        // PHASE 4: Complete the exit process
+        // PHASE 3: Complete the exit process
         CompleteExitProcess();
 
         Debug.Log("Synchronized exit sequence completed");
@@ -206,67 +428,73 @@ public class CharacterSelectionController : MonoBehaviour
 
     private void ExitCharacterSelection()
     {
-        // Hide character selection UI immediately
         HideCharacterSelectionUI();
+        HideCharacterPreviewUI();
 
-        // Switch camera immediately
+        if (skinSelectionController != null)
+        {
+            skinSelectionController.gameObject.SetActive(false);
+        }
+
         SetMenuCameraActive();
-
-        // Complete exit process
         CompleteExitProcess();
     }
 
     private void CompleteExitProcess()
     {
         isInCharacterSelection = false;
+        isInSkinSelection = false;
 
-        // Stop changing animation on CharacterSelection animator
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isChanging", false);
-            Debug.Log("Set isChanging = false on CharacterSelection animator");
+            characterSelectionAnimator.SetBool("isSelected", false);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
         }
 
-        // Show main menu canvases
         ShowMainMenuCanvases();
 
-        // Reset pending selection
         pendingCharacterSelection = -1;
-        UpdateSelectButtonState();
+        // DO NOT reset selectedSkinID here - preserve current skin
 
-        Debug.Log("Character Selection Mode Exited");
+        if (selectCharacterButton != null) selectCharacterButton.interactable = true;
+        if (previewSelectButton != null) previewSelectButton.interactable = true;
     }
 
-    // Called when a character button is clicked in the panel
     public void OnCharacterPreviewSelected(int characterID)
     {
-        // Store the character ID as pending selection
         pendingCharacterSelection = characterID;
 
-        // Reset character rotation when previewing new character
         if (characterRotationController != null)
         {
             characterRotationController.OnCharacterSelected();
-            Debug.Log("Character rotation reset for new preview");
         }
 
-        // Enable the select button since we have a character selected
-        UpdateSelectButtonState();
+        // Apply character preview visuals WITH SAVED SKIN
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.LoadCharacterWithSavedSkin(characterID);
+        }
 
         Debug.Log($"Character {characterID} selected for preview");
     }
 
     private void SaveCharacterSelection(int characterID)
     {
-        // Save to GameDataManager
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.CurrentGameData.selectedCharacterID = characterID;
+
+            // Save the skin if we have one selected
+            if (selectedSkinID != -1)
+            {
+                GameDataManager.Instance.CurrentGameData.SetSelectedSkinForCharacter(characterID, selectedSkinID);
+            }
+
             GameDataManager.Instance.SaveGameData();
-            Debug.Log($"Character ID {characterID} saved to GameDataManager");
+            Debug.Log($"Saved character: {characterID}, skin: {selectedSkinID}");
         }
 
-        // If MainMenu_Manager exists, sync with it
         MainMenu_Manager mainMenuManager = FindObjectOfType<MainMenu_Manager>();
         if (mainMenuManager != null)
         {
@@ -277,66 +505,134 @@ public class CharacterSelectionController : MonoBehaviour
                 field.SetValue(mainMenuManager, characterID);
             }
         }
-
-        Debug.Log($"Character selection confirmed: {characterID}");
     }
 
-    private void UpdateSelectButtonState()
+    // In CharacterSelectionController.cs, update the UpdateSkinSelection method:
+    public void UpdateSkinSelection(int skinID)
     {
-        if (selectCharacterButton != null)
-        {
-            selectCharacterButton.interactable = (pendingCharacterSelection != -1);
+        // This method is called by SkinSelectionController when a skin button is clicked
+        // We just update the selectedSkinID variable
+        selectedSkinID = skinID;
 
-            Text buttonText = selectCharacterButton.GetComponentInChildren<Text>();
-            if (buttonText != null)
-            {
-                buttonText.text = (pendingCharacterSelection != -1) ? "SELECT CHARACTER" : "SELECT A CHARACTER";
-            }
+        // The skin is already applied by SkinSelectionController, we don't need to do anything here
+        Debug.Log($"Skin selection updated in CharacterSelectionController: {skinID}");
+
+        // Save to GameData if we have a character selected
+        if (pendingCharacterSelection != -1 && GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.SetSelectedSkinForCharacter(pendingCharacterSelection, skinID);
+            Debug.Log($"Skin {skinID} saved for character {pendingCharacterSelection}");
         }
+    }
+
+    // Helper methods
+    private void ShowCharacterSelectionCanvasWithDelay()
+    {
+        if (canvasShowCoroutine != null) StopCoroutine(canvasShowCoroutine);
+        canvasShowCoroutine = StartCoroutine(ShowCharacterSelectionCanvasDelayed());
+    }
+
+    private void ShowCharacterPreviewCanvasWithDelay()
+    {
+        if (canvasShowCoroutine != null) StopCoroutine(canvasShowCoroutine);
+        canvasShowCoroutine = StartCoroutine(ShowCharacterPreviewCanvasDelayed());
+    }
+
+    private IEnumerator ShowCharacterSelectionCanvasDelayed()
+    {
+        yield return new WaitForSeconds(canvasShowDelay);
+        if (characterSelectionCanvas != null)
+        {
+            characterSelectionCanvas.alpha = 0f;
+            StartCoroutine(FadeCanvas(characterSelectionCanvas, 0f, 1f, fadeDuration));
+            characterSelectionCanvas.interactable = true;
+            characterSelectionCanvas.blocksRaycasts = true;
+        }
+    }
+
+    private IEnumerator ShowCharacterPreviewCanvasDelayed()
+    {
+        yield return new WaitForSeconds(canvasShowDelay);
+        if (characterPreviewCanvas != null)
+        {
+            characterPreviewCanvas.alpha = 0f;
+            StartCoroutine(FadeCanvas(characterPreviewCanvas, 0f, 1f, fadeDuration));
+            characterPreviewCanvas.interactable = true;
+            characterPreviewCanvas.blocksRaycasts = true;
+        }
+    }
+
+    private void ResetToCharacterSelection()
+    {
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.SetBool("isSelected", false);
+            characterSelectionAnimator.SetBool("isChanging", true);
+            characterSelectionAnimator.SetBool("isSelectingSkin", false);
+        }
+
+        if (characterPreviewCanvas != null)
+        {
+            StartCoroutine(FadeCanvas(characterPreviewCanvas, characterPreviewCanvas.alpha, 0f, fadeDuration));
+            characterPreviewCanvas.interactable = false;
+            characterPreviewCanvas.blocksRaycasts = false;
+        }
+
+        if (skinSelectionController != null && skinSelectionController.IsInSkinPreview())
+        {
+            skinSelectionController.ExitSkinSelection();
+            skinSelectionController.gameObject.SetActive(false);
+        }
+
+        ShowCharacterSelectionCanvasWithDelay();
+        SetCharacterSelectionCameraActive();
+
+        isInSkinSelection = false;
+        isInCharacterSelection = true;
+        pendingCharacterSelection = -1;
+        // DO NOT reset selectedSkinID here - preserve current skin
+
+        if (selectCharacterButton != null) selectCharacterButton.interactable = true;
+        if (previewSelectButton != null) previewSelectButton.interactable = true;
+
+        Debug.Log($"Reset to character selection - preserving character: {lastSavedCharacterID}, skin: {selectedSkinID}");
     }
 
     private void HideMainMenuCanvases()
     {
-        if (mainMenuCanvasesParent != null)
-        {
-            mainMenuCanvasesParent.SetActive(false);
-        }
+        if (mainMenuCanvasesParent != null) mainMenuCanvasesParent.SetActive(false);
     }
 
     private void ShowMainMenuCanvases()
     {
-        if (mainMenuCanvasesParent != null)
-        {
-            mainMenuCanvasesParent.SetActive(true);
-        }
+        if (mainMenuCanvasesParent != null) mainMenuCanvasesParent.SetActive(true);
     }
 
     private void SetMenuCameraActive()
     {
         if (menuCamera != null) menuCamera.Priority = 20;
         if (characterSelectionCamera != null) characterSelectionCamera.Priority = 0;
+        if (skinSelectionCamera != null) skinSelectionCamera.Priority = 0;
     }
 
     private void SetCharacterSelectionCameraActive()
     {
         if (characterSelectionCamera != null) characterSelectionCamera.Priority = 20;
         if (menuCamera != null) menuCamera.Priority = 0;
+        if (skinSelectionCamera != null) skinSelectionCamera.Priority = 0;
+    }
+
+    private void SetSkinSelectionCameraActive()
+    {
+        if (skinSelectionCamera != null) skinSelectionCamera.Priority = 20;
+        if (characterSelectionCamera != null) characterSelectionCamera.Priority = 10;
+        if (menuCamera != null) menuCamera.Priority = 0;
     }
 
     private void ShowCharacterSelectionUI()
     {
-        if (characterSelectionCanvas != null)
-        {
-            characterSelectionCanvas.interactable = true;
-            characterSelectionCanvas.blocksRaycasts = true;
-            StartCoroutine(FadeCanvas(characterSelectionCanvas, 0f, 1f, fadeDuration));
-        }
-
-        if (characterSelectionPanel != null && panelRectTransform != null)
-        {
-            characterSelectionPanel.SetActive(true);
-            StartCoroutine(SlidePanel(characterSelectionPanel, true));
-        }
+        ShowCharacterSelectionCanvasWithDelay();
+        ShowCharacterSelectionPanel();
     }
 
     private void HideCharacterSelectionUI()
@@ -347,10 +643,16 @@ public class CharacterSelectionController : MonoBehaviour
             characterSelectionCanvas.blocksRaycasts = false;
             StartCoroutine(FadeCanvas(characterSelectionCanvas, 1f, 0f, fadeDuration));
         }
+        HideCharacterSelectionPanel();
+    }
 
-        if (characterSelectionPanel != null && panelRectTransform != null)
+    private void HideCharacterPreviewUI()
+    {
+        if (characterPreviewCanvas != null)
         {
-            StartCoroutine(SlidePanel(characterSelectionPanel, false));
+            StartCoroutine(FadeCanvas(characterPreviewCanvas, characterPreviewCanvas.alpha, 0f, fadeDuration));
+            characterPreviewCanvas.interactable = false;
+            characterPreviewCanvas.blocksRaycasts = false;
         }
     }
 
@@ -358,7 +660,6 @@ public class CharacterSelectionController : MonoBehaviour
     {
         float elapsedTime = 0f;
         canvasGroup.alpha = startAlpha;
-
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
@@ -366,24 +667,15 @@ public class CharacterSelectionController : MonoBehaviour
             canvasGroup.alpha = currentAlpha;
             yield return null;
         }
-
         canvasGroup.alpha = endAlpha;
-
-        if (endAlpha == 0f && characterSelectionPanel != null)
-        {
-            characterSelectionPanel.SetActive(false);
-        }
     }
 
     private IEnumerator SlidePanel(GameObject panel, bool slideIn)
     {
         if (panelRectTransform == null) yield break;
-
         Vector3 startPosition = slideIn ? panelExitPosition : panelRectTransform.anchoredPosition3D;
         Vector3 targetPosition = slideIn ? panelEntryPosition : panelExitPosition;
-
         panelRectTransform.anchoredPosition3D = startPosition;
-
         float elapsedTime = 0f;
         while (elapsedTime < slideDuration)
         {
@@ -392,38 +684,19 @@ public class CharacterSelectionController : MonoBehaviour
             panelRectTransform.anchoredPosition3D = Vector3.Lerp(startPosition, targetPosition, t);
             yield return null;
         }
-
         panelRectTransform.anchoredPosition3D = targetPosition;
-
-        if (!slideIn)
-        {
-            panel.SetActive(false);
-        }
+        if (!slideIn) panel.SetActive(false);
+        else panel.SetActive(true);
     }
 
-    // Public method to manually reset selection state if needed
-    public void ResetSelectionState()
-    {
-        if (characterSelectionAnimator != null)
-        {
-            characterSelectionAnimator.SetBool("isSelected", false);
-            Debug.Log("Selection state reset: isSelected = false");
-        }
-    }
-
-    public bool IsInCharacterSelection()
-    {
-        return isInCharacterSelection;
-    }
-
-    public int GetPendingCharacterSelection()
-    {
-        return pendingCharacterSelection;
-    }
+    public bool IsInCharacterSelection() => isInCharacterSelection;
+    public bool IsInSkinSelection() => isInSkinSelection;
+    public int GetPendingCharacterSelection() => pendingCharacterSelection;
+    public int GetSelectedSkinID() => selectedSkinID;
 
     void OnDestroy()
     {
-        if (exitCoroutine != null)
-            StopCoroutine(exitCoroutine);
+        if (exitCoroutine != null) StopCoroutine(exitCoroutine);
+        if (canvasShowCoroutine != null) StopCoroutine(canvasShowCoroutine);
     }
 }

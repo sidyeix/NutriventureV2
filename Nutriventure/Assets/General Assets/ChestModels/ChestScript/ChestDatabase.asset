@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2ea483a11375484eb807e3fe489aa2f, type: 3}
+  m_Name: ChestDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::ChestData
+  chestConfigs:
+  - chestName: Common Chest
+    chestPrefab: {fileID: 1990241744087739384, guid: bd66b02c0f135b249a547966fd5ab254, type: 3}
+    rewardDelay: 4
+    videoClip: {fileID: 32900000, guid: ee8e15372f320c343aed86a042ef1d4c, type: 3}
+    backgroundMusic: {fileID: 8300000, guid: f8c0cb11ca73e73478709dcd5e2b219b, type: 3}
+    chestColor: {r: 0.53333336, g: 0.18823531, b: 0.54509807, a: 1}
+    chestDescription: The most common chest
+    chestRarityImage: {fileID: 21300000, guid: 0b4402dafba733f4fb29ab6cd09b946c, type: 3}
+    rewardItemBackground: {fileID: 21300000, guid: f64356845ff572a47a04b8365d073209, type: 3}
+    chestRewards:
+    - rewardName: NutriCoins
+      rewardType: Coins
+      amount: 500
+      rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
+    - rewardName: NutriGems
+      rewardType: Gems
+      amount: 100
+      rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
+    - rewardName: Experience
+      rewardType: EXP
+      amount: 50
+      rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
+  - chestName: Rare Chest
+    chestPrefab: {fileID: 1990241744087739384, guid: 44db6db5671b43c4b8a9411cf5d4827a, type: 3}
+    rewardDelay: 4
+    videoClip: {fileID: 32900000, guid: 3b2aed01bb6ffbd4495608731256cfb0, type: 3}
+    backgroundMusic: {fileID: 8300000, guid: f8c0cb11ca73e73478709dcd5e2b219b, type: 3}
+    chestColor: {r: 0, g: 0.627451, b: 0.7568628, a: 1}
+    chestDescription: The most rare chest
+    chestRarityImage: {fileID: 21300000, guid: 02d115c67d767dd41914f594148c1fb0, type: 3}
+    rewardItemBackground: {fileID: 21300000, guid: 7722ecf497b4989468a010712cf7faba, type: 3}
+    chestRewards:
+    - rewardName: NutriCoins
+      rewardType: Coins
+      amount: 10
+      rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
+    - rewardName: NutriGems
+      rewardType: Gems
+      amount: 100
+      rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
+    - rewardName: Experience
+      rewardType: EXP
+      amount: 80
+      rewardIcon: {fileID: 21300000, guid: f419c55ac59d54b4dab9900bd1635eac, type: 3}
+  - chestName: Epic Chest
+    chestPrefab: {fileID: 1990241744087739384, guid: b2810c8307bf17b468a50f98ac1b5f72, type: 3}
+    rewardDelay: 7.5
+    videoClip: {fileID: 32900000, guid: 46268326066147a4a852eb686e0bdee3, type: 3}
+    backgroundMusic: {fileID: 8300000, guid: 24d477d508e294747b6758bcea476e03, type: 3}
+    chestColor: {r: 1, g: 0.77647066, b: 0.023529414, a: 1}
+    chestDescription: The most epic chest
+    chestRarityImage: {fileID: 21300000, guid: 155f85abc6f01a24e96bb55fbce57bac, type: 3}
+    rewardItemBackground: {fileID: 21300000, guid: 14781569e295ce342a59882aa06055e9, type: 3}
+    chestRewards:
+    - rewardName: NutriCoins
+      rewardType: Coins
+      amount: 10
+      rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
+    - rewardName: NutriGems
+      rewardType: Gem
+      amount: 10
+      rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
+    - rewardName: Nutri Expi
+      rewardType: Experience
+      amount: 50
+      rewardIcon: {fileID: 21300000, guid: be841510c761e934f84a2e8aa6b2f6a6, type: 3}

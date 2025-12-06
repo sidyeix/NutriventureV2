@@ -7,8 +7,14 @@ using UnityEngine.Video;
 
 public class ChestManager : MonoBehaviour
 {
-    [Header("Chest Prefabs")]
+    [Header("Chest Database")]
+    public ChestDatabase chestDatabase; // Single ScriptableObject with list
+
+    [Header("Fallback Settings (Use if no Database)")]
     public GameObject[] chestPrefabs;
+    public VideoClip[] chestVideoClips;
+    public AudioClip[] chestBackgroundMusic;
+    public float[] chestRewardDelays = new float[] { 2f, 3f, 4f, 5f };
 
     [Header("Spawn Point")]
     public Transform chestSpawnPoint;
@@ -22,21 +28,21 @@ public class ChestManager : MonoBehaviour
 
     [Header("Video Settings")]
     public VideoPlayer videoPlayer;
-    public VideoClip[] chestVideoClips;
     public RenderTexture videoRenderTexture;
-
-    [Header("Audio Settings")]
-    public AudioClip[] chestBackgroundMusic; // Assign chest background music for each chest
 
     [Header("Fade Settings")]
     public float fadeDuration = 1f;
 
-    private Queue<GameObject> chestQueue = new Queue<GameObject>();
+    [Header("Player Settings")]
+    public GameObject playerObject;
+
+    private Queue<int> chestQueue = new Queue<int>();
     private Chest currentChest;
     private ChestUIHandler chestUIHandler;
     private CanvasGroup chestCanvasGroup;
     private int currentChestIndex = 0;
     private bool isPlayingChestMusic = false;
+    private Coroutine waitForDelayCoroutine;
 
     public static ChestManager Instance { get; private set; }
 
@@ -101,23 +107,38 @@ public class ChestManager : MonoBehaviour
 
     void InitializeChestQueue()
     {
-        foreach (GameObject chestPrefab in chestPrefabs)
+        // Queue up all chest indices
+        int chestCount = GetChestCount();
+        for (int i = 0; i < chestCount; i++)
         {
-            if (chestPrefab != null)
-            {
-                chestQueue.Enqueue(chestPrefab);
-            }
+            chestQueue.Enqueue(i);
         }
+    }
+
+    int GetChestCount()
+    {
+        // Use database if available, otherwise use fallback arrays
+        if (chestDatabase != null && chestDatabase.chestConfigs != null && chestDatabase.chestConfigs.Count > 0)
+        {
+            return chestDatabase.chestConfigs.Count;
+        }
+        else if (chestPrefabs != null && chestPrefabs.Length > 0)
+        {
+            return chestPrefabs.Length;
+        }
+        return 0;
     }
 
     void SpawnNextChest()
     {
         if (chestQueue.Count == 0) return;
 
-        GameObject nextChestPrefab = chestQueue.Dequeue();
-        if (nextChestPrefab == null || chestSpawnPoint == null) return;
+        int chestIndex = chestQueue.Dequeue();
+        GameObject chestPrefab = GetChestPrefab(chestIndex);
 
-        GameObject chestObj = Instantiate(nextChestPrefab, chestSpawnPoint);
+        if (chestPrefab == null || chestSpawnPoint == null) return;
+
+        GameObject chestObj = Instantiate(chestPrefab, chestSpawnPoint);
         chestObj.transform.localPosition = Vector3.zero;
         chestObj.transform.localRotation = Quaternion.identity;
 
@@ -125,133 +146,158 @@ public class ChestManager : MonoBehaviour
         if (currentChest != null)
         {
             currentChest.Initialize();
-            currentChest.chestOrder = currentChestIndex;
-            currentChestIndex++;
+            currentChest.SetChestIndex(chestIndex);
+            currentChestIndex = chestIndex;
         }
+    }
+
+    GameObject GetChestPrefab(int index)
+    {
+        if (chestDatabase != null && chestDatabase.chestConfigs != null &&
+            chestDatabase.chestConfigs.Count > index && chestDatabase.chestConfigs[index] != null)
+        {
+            return chestDatabase.chestConfigs[index].chestPrefab;
+        }
+        else if (chestPrefabs != null && chestPrefabs.Length > index)
+        {
+            return chestPrefabs[index];
+        }
+        return null;
     }
 
     public void FocusOnChest(Chest chest)
     {
         if (chest != currentChest || chestCamera == null) return;
 
-        // Stop main menu music and play chest background music (no loop)
-        PlayChestBackgroundMusic(chest.chestOrder);
+        // REMOVED: Hide the player/character - Character will remain visible
 
-        ChangeBackgroundVideo(chest.chestOrder);
+        // Get the chest index
+        int chestIndex = chest.chestOrder;
 
+        // Get the custom delay for this chest type
+        float customDelay = GetRewardDelayForChest(chestIndex);
+
+        // Play chest background music
+        PlayChestBackgroundMusic(chestIndex);
+
+        // Change background video
+        ChangeBackgroundVideo(chestIndex);
+
+        // Set up camera
         chestCamera.Priority = 20;
         chestCamera.LookAt = chest.transform;
         chestCamera.Follow = chest.transform;
 
-        if (menuCanvas != null)
-        {
-            menuCanvas.SetActive(false);
-        }
-
+        // Hide menu, show chest UI
+        if (menuCanvas != null) menuCanvas.SetActive(false);
         if (chestCanvas != null)
         {
             chestCanvas.SetActive(true);
             StartCoroutine(FadeCanvas(chestCanvasGroup, 0f, 1f, fadeDuration));
         }
 
+        // Open the chest
         chest.OpenChest();
 
+        // Set the chest in UI handler (shows "Opening...")
         if (chestUIHandler != null)
         {
             chestUIHandler.SetCurrentChest(chest);
         }
+
+        // Wait for custom delay before showing rewards
+        if (waitForDelayCoroutine != null)
+            StopCoroutine(waitForDelayCoroutine);
+
+        waitForDelayCoroutine = StartCoroutine(WaitForCustomDelay(chest, customDelay));
     }
 
-    private void PlayChestBackgroundMusic(int chestOrder)
+    float GetRewardDelayForChest(int chestIndex)
+    {
+        if (chestDatabase != null && chestDatabase.chestConfigs != null &&
+            chestDatabase.chestConfigs.Count > chestIndex && chestDatabase.chestConfigs[chestIndex] != null)
+        {
+            return chestDatabase.chestConfigs[chestIndex].rewardDelay;
+        }
+        else if (chestRewardDelays != null && chestRewardDelays.Length > chestIndex)
+        {
+            return chestRewardDelays[chestIndex];
+        }
+        return 2f; // Default
+    }
+
+    VideoClip GetVideoClipForChest(int chestIndex)
+    {
+        if (chestDatabase != null && chestDatabase.chestConfigs != null &&
+            chestDatabase.chestConfigs.Count > chestIndex && chestDatabase.chestConfigs[chestIndex] != null)
+        {
+            return chestDatabase.chestConfigs[chestIndex].videoClip;
+        }
+        else if (chestVideoClips != null && chestVideoClips.Length > chestIndex)
+        {
+            return chestVideoClips[chestIndex];
+        }
+        return null;
+    }
+
+    AudioClip GetAudioClipForChest(int chestIndex)
+    {
+        if (chestDatabase != null && chestDatabase.chestConfigs != null &&
+            chestDatabase.chestConfigs.Count > chestIndex && chestDatabase.chestConfigs[chestIndex] != null)
+        {
+            return chestDatabase.chestConfigs[chestIndex].backgroundMusic;
+        }
+        else if (chestBackgroundMusic != null && chestBackgroundMusic.Length > chestIndex)
+        {
+            return chestBackgroundMusic[chestIndex];
+        }
+        return null;
+    }
+
+    IEnumerator WaitForCustomDelay(Chest chest, float delay)
+    {
+        Debug.Log($"Waiting {delay} seconds before showing rewards for {chest.ChestName}");
+
+        yield return new WaitForSeconds(delay);
+
+        Debug.Log($"Delay finished, showing rewards for {chest.ChestName}");
+
+        // Now start revealing rewards
+        if (chestUIHandler != null)
+        {
+            chestUIHandler.StartRevealingRewards(chest);
+        }
+    }
+
+    void PlayChestBackgroundMusic(int chestIndex)
     {
         if (AudioHandler.Instance != null)
         {
             // Stop main menu music
             AudioHandler.Instance.musicSource.Stop();
 
-            // Play chest background music if available (play once, no loop)
-            if (chestBackgroundMusic != null && chestOrder < chestBackgroundMusic.Length)
+            AudioClip chestMusic = GetAudioClipForChest(chestIndex);
+            if (chestMusic != null)
             {
-                AudioClip chestMusic = chestBackgroundMusic[chestOrder];
-                if (chestMusic != null)
-                {
-                    AudioHandler.Instance.musicSource.clip = chestMusic;
-                    AudioHandler.Instance.musicSource.loop = false; // No looping - play once
-                    AudioHandler.Instance.musicSource.Play();
-                    isPlayingChestMusic = true;
+                AudioHandler.Instance.musicSource.clip = chestMusic;
+                AudioHandler.Instance.musicSource.loop = false;
+                AudioHandler.Instance.musicSource.Play();
+                isPlayingChestMusic = true;
 
-                    // Start coroutine to stop music when it ends (don't resume main menu music)
-                    StartCoroutine(StopMusicWhenEnds(chestMusic.length));
-
-                    Debug.Log("Playing chest background music (no loop): " + chestMusic.name);
-                }
-                else
-                {
-                    Debug.LogWarning("No chest background music assigned for chest order: " + chestOrder);
-                }
-            }
-            else
-            {
-                Debug.LogWarning("No chest background music array assigned or index out of range");
+                StartCoroutine(StopMusicWhenEnds(chestMusic.length));
+                Debug.Log($"Playing chest music: {chestMusic.name}");
             }
         }
-        else
-        {
-            Debug.LogError("AudioHandler Instance not found!");
-        }
     }
 
-    private IEnumerator StopMusicWhenEnds(float musicLength)
-    {
-        // Wait for the chest music to finish playing
-        yield return new WaitForSeconds(musicLength);
-
-        // If we're still in chest view and music finished, just stop the music (don't resume main menu)
-        if (isPlayingChestMusic && chestCanvas != null && chestCanvas.activeInHierarchy)
-        {
-            Debug.Log("Chest background music finished, stopping music");
-            StopChestMusic();
-        }
-    }
-
-    private void StopChestMusic()
-    {
-        if (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null)
-        {
-            AudioHandler.Instance.musicSource.Stop();
-            isPlayingChestMusic = false;
-            Debug.Log("Chest music stopped");
-        }
-    }
-
-    private void ResumeMainMenuMusic()
-    {
-        if (AudioHandler.Instance != null)
-        {
-            // Stop current music first
-            StopChestMusic();
-
-            // Play main menu music
-            AudioHandler.Instance.PlayMainMenuMusic();
-            Debug.Log("Resumed main menu music");
-        }
-    }
-
-    private void ChangeBackgroundVideo(int chestOrder)
+    void ChangeBackgroundVideo(int chestIndex)
     {
         if (videoPlayer == null) return;
 
-        if (chestVideoClips != null && chestOrder < chestVideoClips.Length)
+        VideoClip targetVideo = GetVideoClipForChest(chestIndex);
+        if (targetVideo != null)
         {
-            VideoClip targetVideo = chestVideoClips[chestOrder];
-            if (targetVideo != null)
-            {
-                StartCoroutine(ChangeVideoRoutine(targetVideo, chestOrder));
-            }
-            else
-            {
-                StopVideo();
-            }
+            StartCoroutine(ChangeVideoRoutine(targetVideo));
         }
         else
         {
@@ -259,7 +305,7 @@ public class ChestManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ChangeVideoRoutine(VideoClip newClip, int chestOrder)
+    IEnumerator ChangeVideoRoutine(VideoClip newClip)
     {
         videoPlayer.Stop();
 
@@ -283,7 +329,39 @@ public class ChestManager : MonoBehaviour
         videoPlayer.Play();
     }
 
-    private void StopVideo()
+    // REMOVED: HidePlayer() method - Character will remain visible
+
+    // REMOVED: ShowPlayer() method - Character will remain visible
+
+    IEnumerator StopMusicWhenEnds(float musicLength)
+    {
+        yield return new WaitForSeconds(musicLength);
+
+        if (isPlayingChestMusic && chestCanvas != null && chestCanvas.activeInHierarchy)
+        {
+            StopChestMusic();
+        }
+    }
+
+    void StopChestMusic()
+    {
+        if (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null)
+        {
+            AudioHandler.Instance.musicSource.Stop();
+            isPlayingChestMusic = false;
+        }
+    }
+
+    void ResumeMainMenuMusic()
+    {
+        if (AudioHandler.Instance != null)
+        {
+            StopChestMusic();
+            AudioHandler.Instance.PlayMainMenuMusic();
+        }
+    }
+
+    void StopVideo()
     {
         if (videoPlayer != null && videoPlayer.isPlaying)
         {
@@ -293,20 +371,26 @@ public class ChestManager : MonoBehaviour
 
     public void OnChestClaimed()
     {
+        // REMOVED: Show player again - Character remains visible
+
         if (chestUIHandler != null)
         {
             chestUIHandler.OnChestUIClosed();
         }
 
         StopVideo();
-
-        // Resume main menu music ONLY when chest is claimed
         ResumeMainMenuMusic();
 
         if (currentChest != null)
         {
             Destroy(currentChest.gameObject);
             currentChest = null;
+        }
+
+        if (waitForDelayCoroutine != null)
+        {
+            StopCoroutine(waitForDelayCoroutine);
+            waitForDelayCoroutine = null;
         }
 
         if (chestCanvas != null && chestCanvasGroup != null)
@@ -320,14 +404,14 @@ public class ChestManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FadeAndHideCanvas()
+    IEnumerator FadeAndHideCanvas()
     {
         yield return StartCoroutine(FadeCanvas(chestCanvasGroup, 1f, 0f, fadeDuration / 2f));
         SwitchBackToMenu();
         StartCoroutine(SpawnNextChestAfterDelay(1f));
     }
 
-    private void SwitchBackToMenu()
+    void SwitchBackToMenu()
     {
         if (chestCamera != null)
         {
@@ -336,18 +420,11 @@ public class ChestManager : MonoBehaviour
             chestCamera.Follow = null;
         }
 
-        if (menuCanvas != null)
-        {
-            menuCanvas.SetActive(true);
-        }
-
-        if (chestCanvas != null)
-        {
-            chestCanvas.SetActive(false);
-        }
+        if (menuCanvas != null) menuCanvas.SetActive(true);
+        if (chestCanvas != null) chestCanvas.SetActive(false);
     }
 
-    private IEnumerator FadeCanvas(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
+    IEnumerator FadeCanvas(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
     {
         if (canvasGroup == null) yield break;
 
@@ -382,41 +459,23 @@ public class ChestManager : MonoBehaviour
         SpawnNextChest();
     }
 
-    void Update()
+    // Helper method to get chest config from database
+    public ChestDatabase.ChestConfig GetChestConfig(int index)
     {
-        if (Keyboard.current.dKey.wasPressedThisFrame)
+        if (chestDatabase != null)
         {
-            DebugChestStatus();
+            return chestDatabase.GetChestConfig(index);
         }
-
-        if (Keyboard.current.nKey.wasPressedThisFrame)
-        {
-            if (currentChest != null)
-            {
-                Destroy(currentChest.gameObject);
-                currentChest = null;
-            }
-            SpawnNextChest();
-        }
-
-        if (Keyboard.current.cKey.wasPressedThisFrame && currentChest != null)
-        {
-            currentChest.MakeChestClaimable();
-        }
+        return null;
     }
 
-    public void DebugChestStatus()
+    // Helper method to get chest config by name
+    public ChestDatabase.ChestConfig GetChestConfigByName(string name)
     {
-        Debug.Log("===== CHEST MANAGER STATUS =====");
-        Debug.Log("   - Current Chest: " + (currentChest != null ? currentChest.ChestName : "NULL"));
-        Debug.Log("   - Chest Order: " + (currentChest != null ? currentChest.chestOrder.ToString() : "NULL"));
-        Debug.Log("   - Chests in queue: " + chestQueue.Count);
-        Debug.Log("   - Video Player Playing: " + (videoPlayer != null ? videoPlayer.isPlaying.ToString() : "NULL"));
-        Debug.Log("   - Video Player Prepared: " + (videoPlayer != null ? videoPlayer.isPrepared.ToString() : "NULL"));
-        Debug.Log("   - Video Clip: " + (videoPlayer != null && videoPlayer.clip != null ? videoPlayer.clip.name : "NULL"));
-        Debug.Log("   - Music Source Playing: " + (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null ? AudioHandler.Instance.musicSource.isPlaying.ToString() : "NULL"));
-        Debug.Log("   - Music Clip: " + (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null && AudioHandler.Instance.musicSource.clip != null ? AudioHandler.Instance.musicSource.clip.name : "NULL"));
-        Debug.Log("   - Is Playing Chest Music: " + isPlayingChestMusic);
-        Debug.Log("===== END STATUS =====");
+        if (chestDatabase != null)
+        {
+            return chestDatabase.GetChestConfigByName(name);
+        }
+        return null;
     }
 }

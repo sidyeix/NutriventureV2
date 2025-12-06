@@ -99,6 +99,12 @@ public class Chest : MonoBehaviour
         return Mathf.Max(0f, remaining);
     }
 
+    // NEW METHOD: Set chest index from ChestManager
+    public void SetChestIndex(int index)
+    {
+        chestOrder = index;
+    }
+
     void Update()
     {
         // Handle clicks only when chest is claimable and not opened
@@ -194,7 +200,7 @@ public class Chest : MonoBehaviour
 
         Debug.Log("Notifying ChestManager about chest click...");
 
-        // HIDE WORLD SPACE UI WHEN CHEST IS CLICKED - THIS WAS MISSING!
+        // HIDE WORLD SPACE UI WHEN CHEST IS CLICKED
         if (worldSpaceUI != null)
         {
             worldSpaceUI.OnChestClicked();
