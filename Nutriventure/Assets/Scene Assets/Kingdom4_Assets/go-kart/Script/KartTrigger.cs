@@ -1,17 +1,23 @@
 using UnityEngine;
 using StarterAssets;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class KartTrigger : MonoBehaviour
 {
     [Header("UI References")]
-    public GameObject playerUI;             // Normal player UI (health, inventory, etc.)
-    public GameObject driveUI;              // "Enter Kart" button UI
-    public GameObject kartDrivingUI;        // Kart controls UI (steering buttons, etc.)
+    public GameObject playerUI;
+    public GameObject driveUI;
+    public GameObject kartDrivingUI;
+    public TextMeshProUGUI destinationText;
     
     [Header("Kart References")]
     public KartController kartController;
     public Transform kartSeatPosition;
+    
+    [Header("Destination Settings")]
+    public Transform[] destinations; // Multiple destinations
+    private int currentDestinationIndex = 0;
 
     private GameObject player;
     private bool playerInside = false;
@@ -26,9 +32,17 @@ public class KartTrigger : MonoBehaviour
         }
 
         // Ensure all UIs are in correct state at start
-        playerUI?.SetActive(true);          // Player UI visible by default
-        driveUI?.SetActive(false);          // Drive UI hidden
-        kartDrivingUI?.SetActive(false);    // Driving UI hidden
+        playerUI?.SetActive(true);
+        driveUI?.SetActive(false);
+        kartDrivingUI?.SetActive(false);
+
+        
+        // Set first destination if available
+        if (destinations != null && destinations.Length > 0 && kartController != null)
+        {
+            kartController.SetDestination(destinations[0]);
+            UpdateDestinationUI();
+        }
     }
 
     private void Update()
@@ -39,10 +53,16 @@ public class KartTrigger : MonoBehaviour
             {
                 DriveKart();
             }
-            else if (isDriving)
+            else if (isDriving && !kartController.HasArrived) // Don't allow manual exit if arrived
             {
                 ExitKart();
             }
+        }
+        
+        // Update destination UI while driving
+        if (isDriving)
+        {
+            UpdateDestinationUI();
         }
     }
 
@@ -51,8 +71,6 @@ public class KartTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = true;
-            
-            // Show drive UI, keep player UI visible
             driveUI?.SetActive(true);
         }
     }
@@ -62,8 +80,6 @@ public class KartTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = false;
-            
-            // Hide drive UI, keep player UI visible
             driveUI?.SetActive(false);
         }
     }
@@ -73,11 +89,10 @@ public class KartTrigger : MonoBehaviour
         if (!playerInside || player == null) return;
 
         isDriving = true;
-
-        // Switch UI states:
-        playerUI?.SetActive(false);         // Hide normal player UI
-        driveUI?.SetActive(false);          // Hide "Enter Kart" UI
-        kartDrivingUI?.SetActive(true);     // Show kart driving controls
+        
+        playerUI?.SetActive(false);
+        driveUI?.SetActive(false);
+        kartDrivingUI?.SetActive(true);
 
         // Parent player to kart seat
         player.transform.SetParent(kartSeatPosition);
@@ -93,7 +108,10 @@ public class KartTrigger : MonoBehaviour
 
         // Enable kart controller
         if (kartController != null)
+        {
             kartController.SetControllable(true);
+            UpdateDestinationUI();
+        }
     }
 
     public void ExitKart()
@@ -102,13 +120,12 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = false;
 
-        // Switch UI states:
-        playerUI?.SetActive(true);          // Show normal player UI
-        kartDrivingUI?.SetActive(false);    // Hide kart driving controls
+        playerUI?.SetActive(true);
+        kartDrivingUI?.SetActive(false);
         
         if (playerInside)
         {
-            driveUI?.SetActive(true);       // Show "Enter Kart" UI if still in trigger
+            driveUI?.SetActive(true);
         }
 
         // Unparent player
@@ -124,5 +141,116 @@ public class KartTrigger : MonoBehaviour
         // Disable kart controller
         if (kartController != null)
             kartController.SetControllable(false);
+    }
+    
+    // Special method for auto-exit from kart controller
+    public void AutoExitKart()
+    {
+        if (!isDriving) return;
+
+        isDriving = false;
+
+        // Show destination reached UI
+        kartDrivingUI?.SetActive(false);
+        
+        // Wait a moment, then exit
+        Invoke("CompleteAutoExit", 1.5f);
+    }
+    
+    void CompleteAutoExit()
+    {
+        playerUI?.SetActive(true);
+        
+        if (playerInside)
+        {
+            driveUI?.SetActive(true);
+        }
+
+        // Unparent player
+        player.transform.SetParent(null);
+
+        // Re-enable player components
+        CharacterController cc = player.GetComponent<CharacterController>();
+        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
+
+        if (tpc) tpc.enabled = true;
+        if (cc) cc.enabled = true;
+
+        // Move to next destination
+        GoToNextDestination();
+    }
+    
+    void GoToNextDestination()
+    {
+        // Go to next destination
+        currentDestinationIndex++;
+        if (currentDestinationIndex >= destinations.Length)
+        {
+            currentDestinationIndex = 0; // Loop back
+        }
+        
+        // Set next destination
+        if (kartController != null && destinations.Length > 0)
+        {
+            kartController.SetDestination(destinations[currentDestinationIndex]);
+            UpdateDestinationUI();
+        }
+    }
+    
+    void UpdateDestinationUI()
+    {
+        if (destinationText != null && kartController != null && kartController.CurrentDestination != null)
+        {
+            float distance = Vector3.Distance(kartController.transform.position, kartController.CurrentDestination.position);
+            destinationText.text = $"Destination: {kartController.CurrentDestination.name}\nDistance: {distance:F1}m";
+            
+            // Change color when close
+            if (distance <= kartController.autoBrakeDistance)
+            {
+                destinationText.color = Color.yellow;
+            }
+            else
+            {
+                destinationText.color = Color.white;
+            }
+        }
+        else if (destinationText != null)
+        {
+            destinationText.text = "Destination: None";
+        }
+    }
+    
+    // UI Button methods
+    public void SetNextDestination()
+    {
+        if (destinations == null || destinations.Length == 0) return;
+        
+        currentDestinationIndex = (currentDestinationIndex + 1) % destinations.Length;
+        if (kartController != null)
+        {
+            kartController.SetDestination(destinations[currentDestinationIndex]);
+            UpdateDestinationUI();
+        }
+    }
+    
+    public void ClearDestination()
+    {
+        if (kartController != null)
+        {
+            kartController.ClearDestination();
+            UpdateDestinationUI();
+        }
+    }
+    
+    public void SetDestinationByIndex(int index)
+    {
+        if (destinations == null || index < 0 || index >= destinations.Length) return;
+        
+        currentDestinationIndex = index;
+        if (kartController != null)
+        {
+            kartController.SetDestination(destinations[currentDestinationIndex]);
+            UpdateDestinationUI();
+        }
     }
 }
