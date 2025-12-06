@@ -11,13 +11,18 @@ public class IngredientInteractable : Interactable
     
     public override void Pickup()
     {
-        if (BookUIManager.Instance != null)
+        // Use the singleton instance instead of finding through BookUIManager
+        if (BookInteractable.Instance != null)
         {
-            BookUIManager.Instance.AddIngredientToBook(ingredientId, ingredientName, ingredientDescription, ingredientIcon);
+            // Add ingredient directly to the book
+            BookInteractable.Instance.AddIngredient(ingredientId, ingredientName, ingredientDescription, ingredientIcon);
+            Debug.Log($"Added {ingredientName} to book");
         }
         else
         {
-            Debug.LogError("BookUIManager Instance not found!");
+            Debug.LogWarning("No book collected yet! Collect the book first.");
+            // Option 1: Still destroy the ingredient
+            // Option 2: Don't destroy it (comment out base.Pickup())
         }
         
         base.Pickup();

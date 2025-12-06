@@ -73,21 +73,14 @@ public class KartCameraSystem : MonoBehaviour
     
     private void FindPlayerFollowCamera()
     {
-        // Use non-deprecated FindObjectsByType method
-        CinemachineVirtualCamera[] allVirtualCams = FindObjectsByType<CinemachineVirtualCamera>(FindObjectsSortMode.None);
+        // Use the new FindAnyObjectByType method
+        CinemachineVirtualCamera cam = FindAnyObjectByType<CinemachineVirtualCamera>();
         
-        foreach (CinemachineVirtualCamera cam in allVirtualCams)
+        if (cam != null && cam != kartFollowCamera)
         {
-            // Skip the kart camera itself
-            if (cam == kartFollowCamera) continue;
-            
-            // Look for the player follow camera (usually the one that's active at start)
-            if (cam.gameObject.activeInHierarchy && cam.Priority >= 0)
-            {
-                playerFollowCamera = cam;
-                Debug.Log("✅ Player follow camera found automatically!");
-                return;
-            }
+            playerFollowCamera = cam;
+            Debug.Log("✅ Player follow camera found automatically!");
+            return;
         }
         
         // Method 2: If still not found, try to find by common naming patterns

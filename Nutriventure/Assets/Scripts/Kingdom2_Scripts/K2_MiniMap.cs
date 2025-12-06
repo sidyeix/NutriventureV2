@@ -19,16 +19,18 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
     public RawImage miniMapRenderImage;
     public RectTransform miniMapBorder;
     
-    [Header("Monster Icon Settings")]
-    public Sprite monsterIconSprite; // Assign your monster icon here
+    [Header("Icon Settings")]
+    public bool enableIconSystem = true;
+    public Sprite monsterIconSprite;
     public float monsterIconSize = 15f;
     public Color monsterIconColor = Color.red;
     public bool showMonsterIcons = true;
     
     [Header("Layer Settings")]
-    public LayerMask minimapLayers = -1; // Layers visible in minimap
-    public string particleSystemTag = "ParticleSystem"; // Tag to identify particle systems to hide
-    public int excludedLayer = 31; // Use an existing layer (31 is usually available)
+    public LayerMask minimapLayers = -1;
+    public bool enableLayerFiltering = true;
+    public string particleSystemTag = "ParticleSystem";
+    public int excludedLayer = 31;
     
     [Header("Mobile Controls")]
     public bool toggleOnTap = true;
@@ -43,17 +45,25 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
     private InputAction toggleAction;
     private Camera mainCamera;
     
-    // Monster tracking
-    private List<Transform> monsters = new List<Transform>();
-    private List<RectTransform> monsterIcons = new List<RectTransform>();
-    private GameObject monsterIconsContainer;
+    // Icon tracking
+    private List<Transform> trackedObjects = new List<Transform>();
+    private List<RectTransform> objectIcons = new List<RectTransform>();
+    private GameObject iconsContainer;
 
     void Start()
     {
         InitializeMinimap();
         SetupInputSystem();
-        SetupMonsterIcons();
-        SetupLayerFiltering();
+        
+        if (enableIconSystem)
+        {
+            SetupIconSystem();
+        }
+        
+        if (enableLayerFiltering)
+        {
+            SetupLayerFiltering();
+        }
     }
 
     void Update()
@@ -61,7 +71,11 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
         if (!isInitialized) return;
         
         UpdateMinimapCamera();
-        UpdateMonsterIcons();
+        
+        if (enableIconSystem && showMonsterIcons)
+        {
+            UpdateObjectIcons();
+        }
     }
 
     private void InitializeMinimap()
@@ -77,8 +91,10 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
             }
             else
             {
-                Debug.LogError("Player not found! Please assign playerTransform in inspector.");
-                return;
+                // Create a dummy player transform if none exists
+                GameObject dummyPlayer = new GameObject("DummyPlayer");
+                playerTransform = dummyPlayer.transform;
+                Debug.LogWarning("No player found. Created dummy player transform for minimap.");
             }
         }
 
@@ -101,11 +117,11 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
                 mainCamera = Camera.main;
                 if (mainCamera == null)
                 {
-                    Debug.LogWarning("Could not find actual camera from Cinemachine virtual camera. Minimap will use fixed orientation.");
+                    Debug.LogWarning("Could not find main camera. Minimap will use fixed orientation.");
                 }
                 else
                 {
-                    Debug.Log("Using main camera as fallback: " + mainCamera.name);
+                    Debug.Log("Using main camera: " + mainCamera.name);
                 }
             }
             else
@@ -142,7 +158,7 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
         miniMapCamera.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
         miniMapCamera.targetTexture = miniMapRenderTexture;
         miniMapCamera.backgroundColor = backgroundColor;
-        miniMapCamera.cullingMask = minimapLayers; // Apply layer filtering
+        miniMapCamera.cullingMask = minimapLayers;
 
         // Set up UI image
         if (miniMapRenderImage != null)
@@ -165,56 +181,72 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
         Debug.Log("Minimap mode: " + (rotateWithCamera ? "Camera-oriented" : "North-up fixed"));
     }
 
-    private void SetupMonsterIcons()
+    private void SetupIconSystem()
     {
-        // Create container for monster icons
+        // Create container for icons
         if (miniMapBorder != null)
         {
-            monsterIconsContainer = new GameObject("MonsterIcons");
-            monsterIconsContainer.transform.SetParent(miniMapBorder);
-            RectTransform containerRT = monsterIconsContainer.AddComponent<RectTransform>();
+            iconsContainer = new GameObject("MinimapIcons");
+            iconsContainer.transform.SetParent(miniMapBorder);
+            RectTransform containerRT = iconsContainer.AddComponent<RectTransform>();
             containerRT.anchorMin = Vector2.zero;
             containerRT.anchorMax = Vector2.one;
             containerRT.offsetMin = Vector2.zero;
             containerRT.offsetMax = Vector2.zero;
         }
 
-        // Find all monsters in the scene
-        FindAllMonsters();
+        // Optional: Auto-find monsters if enabled
+        if (showMonsterIcons)
+        {
+            FindAllTrackedObjects();
+        }
     }
 
-    private void FindAllMonsters()
+    private void FindAllTrackedObjects()
     {
         // Clear existing lists
-        monsters.Clear();
-        foreach (var icon in monsterIcons)
+        trackedObjects.Clear();
+        foreach (var icon in objectIcons)
         {
             if (icon != null) Destroy(icon.gameObject);
         }
-        monsterIcons.Clear();
+        objectIcons.Clear();
 
-        // Find all game objects with monster tags
-        GameObject[] naturalMonsters = GameObject.FindGameObjectsWithTag("K2_Monster");        
-        // Add all found monsters to the list
-        foreach (GameObject monster in naturalMonsters)
+        // Find objects with common enemy/monster tags
+        string[] possibleTags = { "K2_Monster", "Monster", "Enemy", "K2_Enemy" };
+        
+        foreach (string tag in possibleTags)
         {
-            if (monster != null && !monsters.Contains(monster.transform))
+            if (!string.IsNullOrEmpty(tag))
             {
-                monsters.Add(monster.transform);
-                CreateMonsterIcon(monster.transform);
+                GameObject[] foundObjects = GameObject.FindGameObjectsWithTag(tag);
+                foreach (GameObject obj in foundObjects)
+                {
+                    if (obj != null && !trackedObjects.Contains(obj.transform))
+                    {
+                        trackedObjects.Add(obj.transform);
+                        CreateObjectIcon(obj.transform);
+                    }
+                }
+                
+                if (foundObjects.Length > 0)
+                {
+                    Debug.Log($"Found {foundObjects.Length} objects with tag: {tag}");
+                    break; // Use the first tag that finds objects
+                }
             }
         }
 
-        Debug.Log($"Found {monsters.Count} monsters in scene");
+        Debug.Log($"Total tracked objects: {trackedObjects.Count}");
     }
 
-    private void CreateMonsterIcon(Transform monsterTransform)
+    private void CreateObjectIcon(Transform objectTransform)
     {
-        if (monsterIconsContainer == null || monsterIconSprite == null) return;
+        if (iconsContainer == null || monsterIconSprite == null) return;
 
-        // Create UI Image for monster icon
-        GameObject iconGO = new GameObject($"MonsterIcon_{monsterTransform.name}");
-        iconGO.transform.SetParent(monsterIconsContainer.transform);
+        // Create UI Image for object icon
+        GameObject iconGO = new GameObject($"Icon_{objectTransform.name}");
+        iconGO.transform.SetParent(iconsContainer.transform);
         
         Image iconImage = iconGO.AddComponent<Image>();
         iconImage.sprite = monsterIconSprite;
@@ -226,7 +258,7 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
         iconRT.anchorMax = new Vector2(0.5f, 0.5f);
         iconRT.pivot = new Vector2(0.5f, 0.5f);
         
-        monsterIcons.Add(iconRT);
+        objectIcons.Add(iconRT);
     }
 
     private void SetupLayerFiltering()
@@ -238,37 +270,33 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
             excludedLayer = 31;
         }
 
-        // Hide particle systems from minimap by disabling them for the minimap camera
-        GameObject[] particleSystems = GameObject.FindGameObjectsWithTag(particleSystemTag);
-        
-        foreach (GameObject ps in particleSystems)
+        // Hide particle systems from minimap
+        if (!string.IsNullOrEmpty(particleSystemTag))
         {
-            if (ps != null)
+            GameObject[] particleSystems = GameObject.FindGameObjectsWithTag(particleSystemTag);
+            
+            foreach (GameObject ps in particleSystems)
             {
-                // Method 1: Move to excluded layer (if layer exists and is valid)
-                try
+                if (ps != null)
                 {
-                    SetLayerRecursively(ps, excludedLayer);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"Could not set layer for {ps.name}: {e.Message}");
-                    // Fallback: Disable particle systems temporarily
-                    ParticleSystem[] particles = ps.GetComponentsInChildren<ParticleSystem>();
-                    foreach (ParticleSystem particle in particles)
+                    try
                     {
-                        particle.gameObject.SetActive(false);
+                        SetLayerRecursively(ps, excludedLayer);
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogWarning($"Could not set layer for {ps.name}: {e.Message}");
                     }
                 }
             }
-        }
 
-        Debug.Log($"Processed {particleSystems.Length} particle systems for minimap filtering");
+            Debug.Log($"Processed {particleSystems.Length} particle systems for minimap filtering");
+        }
 
         // Update minimap camera layer mask to exclude the particle layer
         if (miniMapCamera != null)
         {
-            minimapLayers &= ~(1 << excludedLayer); // Remove excluded layer from visible layers
+            minimapLayers &= ~(1 << excludedLayer);
             miniMapCamera.cullingMask = minimapLayers;
             Debug.Log($"Minimap camera culling mask set to: {minimapLayers.value}");
         }
@@ -278,7 +306,6 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
     {
         if (obj == null) return;
         
-        // Validate layer range
         if (layer < 0 || layer > 31)
         {
             Debug.LogWarning($"Invalid layer {layer} for object {obj.name}. Using layer 0 instead.");
@@ -295,19 +322,17 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    private void UpdateMonsterIcons()
+    private void UpdateObjectIcons()
     {
-        if (!showMonsterIcons || monsterIcons.Count != monsters.Count) return;
+        if (objectIcons.Count != trackedObjects.Count) return;
 
-        for (int i = 0; i < monsters.Count; i++)
+        for (int i = 0; i < trackedObjects.Count; i++)
         {
-            if (monsters[i] == null || monsterIcons[i] == null) continue;
+            if (trackedObjects[i] == null || objectIcons[i] == null) continue;
 
-            // Convert world position to minimap UI position using camera space
-            Vector3 monsterWorldPos = monsters[i].position;
-            
-            // Convert world position to viewport position (0-1 range)
-            Vector3 viewportPos = miniMapCamera.WorldToViewportPoint(monsterWorldPos);
+            // Convert world position to minimap UI position
+            Vector3 objectWorldPos = trackedObjects[i].position;
+            Vector3 viewportPos = miniMapCamera.WorldToViewportPoint(objectWorldPos);
             
             // Convert viewport position to UI coordinates
             RectTransform borderRT = miniMapBorder;
@@ -319,77 +344,91 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
             // Only show icons that are within the minimap bounds
             bool isInBounds = viewportPos.x >= 0f && viewportPos.x <= 1f && 
                              viewportPos.y >= 0f && viewportPos.y <= 1f && 
-                             viewportPos.z > 0f; // In front of camera
+                             viewportPos.z > 0f;
             
-            monsterIcons[i].gameObject.SetActive(isInBounds);
+            objectIcons[i].gameObject.SetActive(isInBounds);
             
             if (isInBounds)
             {
                 // Update icon position
-                monsterIcons[i].anchoredPosition = uiPos;
+                objectIcons[i].anchoredPosition = uiPos;
                 
-                // Update icon rotation based on monster's facing direction
+                // Update icon rotation
                 if (rotateWithCamera && mainCamera != null)
                 {
-                    float monsterRotation = monsters[i].eulerAngles.y;
+                    float objectRotation = trackedObjects[i].eulerAngles.y;
                     float cameraRotation = mainCamera.transform.eulerAngles.y;
-                    float relativeRotation = monsterRotation - cameraRotation;
-                    monsterIcons[i].rotation = Quaternion.Euler(0f, 0f, -relativeRotation);
+                    float relativeRotation = objectRotation - cameraRotation;
+                    objectIcons[i].rotation = Quaternion.Euler(0f, 0f, -relativeRotation);
                 }
                 else
                 {
-                    monsterIcons[i].rotation = Quaternion.Euler(0f, 0f, -monsters[i].eulerAngles.y);
+                    objectIcons[i].rotation = Quaternion.Euler(0f, 0f, -trackedObjects[i].eulerAngles.y);
                 }
             }
         }
     }
 
-    // Public methods to manage monsters dynamically
-    public void AddMonster(Transform monsterTransform)
+    // Public API for dynamic object tracking
+    public void AddTrackedObject(Transform objectTransform)
     {
-        if (monsterTransform != null && !monsters.Contains(monsterTransform))
+        if (objectTransform != null && !trackedObjects.Contains(objectTransform))
         {
-            monsters.Add(monsterTransform);
-            CreateMonsterIcon(monsterTransform);
-            Debug.Log($"Added monster to minimap: {monsterTransform.name}");
+            trackedObjects.Add(objectTransform);
+            CreateObjectIcon(objectTransform);
+            Debug.Log($"Added object to minimap: {objectTransform.name}");
         }
     }
 
-    public void RemoveMonster(Transform monsterTransform)
+    public void RemoveTrackedObject(Transform objectTransform)
     {
-        int index = monsters.IndexOf(monsterTransform);
+        int index = trackedObjects.IndexOf(objectTransform);
         if (index >= 0)
         {
-            monsters.RemoveAt(index);
-            if (index < monsterIcons.Count && monsterIcons[index] != null)
+            trackedObjects.RemoveAt(index);
+            if (index < objectIcons.Count && objectIcons[index] != null)
             {
-                Destroy(monsterIcons[index].gameObject);
-                monsterIcons.RemoveAt(index);
+                Destroy(objectIcons[index].gameObject);
+                objectIcons.RemoveAt(index);
             }
-            Debug.Log($"Removed monster from minimap: {monsterTransform.name}");
+            Debug.Log($"Removed object from minimap: {objectTransform.name}");
         }
     }
 
-    public void RefreshMonsters()
+    public void ClearAllTrackedObjects()
     {
-        FindAllMonsters();
-        Debug.Log("Refreshed monster list for minimap");
+        trackedObjects.Clear();
+        foreach (var icon in objectIcons)
+        {
+            if (icon != null) Destroy(icon.gameObject);
+        }
+        objectIcons.Clear();
+        Debug.Log("Cleared all tracked objects from minimap");
     }
 
-    public void SetMonsterIconVisibility(bool visible)
+    public void RefreshTrackedObjects()
+    {
+        if (enableIconSystem)
+        {
+            FindAllTrackedObjects();
+        }
+        Debug.Log("Refreshed tracked objects for minimap");
+    }
+
+    public void SetIconVisibility(bool visible)
     {
         showMonsterIcons = visible;
-        if (monsterIconsContainer != null)
+        if (iconsContainer != null)
         {
-            monsterIconsContainer.SetActive(visible && minimapEnabled);
+            iconsContainer.SetActive(visible && minimapEnabled);
         }
-        Debug.Log("Monster icons visibility: " + visible);
+        Debug.Log("Icons visibility: " + visible);
     }
 
-    public void SetMonsterIconColor(Color color)
+    public void SetIconColor(Color color)
     {
         monsterIconColor = color;
-        foreach (var icon in monsterIcons)
+        foreach (var icon in objectIcons)
         {
             if (icon != null)
             {
@@ -400,29 +439,35 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
                 }
             }
         }
-        Debug.Log("Monster icon color updated");
+        Debug.Log("Icon color updated");
     }
 
-    // Alternative method to exclude objects without changing layers
-    public void ExcludeObjectFromMinimap(GameObject obj)
+    // Scene management
+    public void OnSceneLoaded()
     {
-        if (obj != null)
+        Debug.Log("Minimap refreshing for new scene...");
+        
+        // Refresh camera references
+        if (playerFollowCamera == null)
         {
-            // Simply disable the object for the minimap camera
-            obj.SetActive(false);
+            playerFollowCamera = FindObjectOfType<CinemachineVirtualCamera>();
         }
+        
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
+        
+        // Refresh tracked objects if system is enabled
+        if (enableIconSystem)
+        {
+            RefreshTrackedObjects();
+        }
+        
+        Debug.Log("Minimap refreshed for new scene");
     }
 
-    // Method to restore excluded objects
-    public void IncludeObjectInMinimap(GameObject obj)
-    {
-        if (obj != null)
-        {
-            obj.SetActive(true);
-        }
-    }
-
-    // Existing methods remain the same with minor updates for monster icons
+    // Input and core functionality
     private void SetupInputSystem()
     {
         toggleAction = new InputAction("ToggleMinimap", InputActionType.Button);
@@ -486,7 +531,7 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
     {
         if (miniMapRenderImage != null) miniMapRenderImage.gameObject.SetActive(minimapEnabled);
         if (miniMapBorder != null) miniMapBorder.gameObject.SetActive(minimapEnabled);
-        if (monsterIconsContainer != null) monsterIconsContainer.SetActive(minimapEnabled && showMonsterIcons);
+        if (iconsContainer != null) iconsContainer.SetActive(minimapEnabled && showMonsterIcons);
     }
 
     // Clean up
@@ -508,41 +553,17 @@ public class K2_MiniMap : MonoBehaviour, IPointerClickHandler
     public void DebugMinimapInfo()
     {
         Debug.Log("=== Minimap Debug Info ===");
-        Debug.Log($"Monsters tracked: {monsters.Count}");
-        Debug.Log($"Monster icons created: {monsterIcons.Count}");
-        Debug.Log($"Show Monster Icons: {showMonsterIcons}");
-        Debug.Log($"Minimap Layers: {minimapLayers.value}");
-        Debug.Log($"Excluded Layer: {excludedLayer}");
-        
-        // Debug monster positions
-        for (int i = 0; i < monsters.Count; i++)
-        {
-            if (monsters[i] != null)
-            {
-                Vector3 viewportPos = miniMapCamera.WorldToViewportPoint(monsters[i].position);
-                Debug.Log($"Monster {i}: World={monsters[i].position}, Viewport={viewportPos}");
-            }
-        }
+        Debug.Log($"Initialized: {isInitialized}");
+        Debug.Log($"Minimap Enabled: {minimapEnabled}");
+        Debug.Log($"Icon System: {enableIconSystem}");
+        Debug.Log($"Tracked Objects: {trackedObjects.Count}");
+        Debug.Log($"Layer Filtering: {enableLayerFiltering}");
+        Debug.Log($"Rotation Mode: {(rotateWithCamera ? "Camera-oriented" : "North-up fixed")}");
     }
 
-    [ContextMenu("Refresh Monsters")]
-    public void DebugRefreshMonsters()
+    [ContextMenu("Refresh Minimap")]
+    public void DebugRefreshMinimap()
     {
-        RefreshMonsters();
-    }
-
-    [ContextMenu("Fix Layer Settings")]
-    public void FixLayerSettings()
-    {
-        // Reset to safe defaults
-        excludedLayer = 31;
-        minimapLayers = ~(1 << excludedLayer); // All layers except the excluded one
-        
-        if (miniMapCamera != null)
-        {
-            miniMapCamera.cullingMask = minimapLayers;
-        }
-        
-        Debug.Log("Layer settings reset to safe defaults");
+        OnSceneLoaded();
     }
 }
