@@ -12,8 +12,15 @@ public class CollectProducts : MonoBehaviour
     public float pickupAnimationDuration = 0.5f;
     public float pickupRange = 3f; // How close player needs to be to show button
     
-    [Header("UI References")]
+    [Header("UI References - Regular Products")]
     public Button pickupButton; // Assign your UI pickup button here
+    
+    [Header("UI References - Dummy Products")]
+    public Button dummyPickupButton; // Separate button for dummy products
+    
+    [Header("Instruction UI for Dummy Products")]
+    public RawImage instructionImage1; // Instruction when near DummyProduct
+    public RawImage instructionImage2; // Instruction after collecting DummyProduct and info panel shows
     
     [Header("Player Movement")]
     public MonoBehaviour playerMovementScript; // Assign your ThirdPersonController here
@@ -28,8 +35,15 @@ public class CollectProducts : MonoBehaviour
     private bool isPickingUp = false;
     private float pickupTimer = 0f;
     private GameObject currentNearbyProduct = null;
-    private bool isButtonVisible = false;
+    private bool isRegularButtonVisible = false;
+    private bool isDummyButtonVisible = false;
     private AudioSource audioSource;
+    private bool isNearDummyProduct = false;
+    private bool hasCollectedDummyProduct = false;
+    
+    // Track product type
+    public enum ProductType { Regular, Dummy }
+    private ProductType currentProductType = ProductType.Regular;
     
     // Events for other systems
     public System.Action<GameObject> OnPickupStart;
@@ -51,7 +65,7 @@ public class CollectProducts : MonoBehaviour
         
         // Get or add AudioSource component
         audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
+        if (audioSource != null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.spatialBlend = 1f; // 3D sound
@@ -62,17 +76,43 @@ public class CollectProducts : MonoBehaviour
         // Convert parameter name to hash for better performance
         pickupHash = Animator.StringToHash(pickupParameterName);
         
-        // Set up the pickup button
+        // Set up the regular pickup button
         if (pickupButton != null)
         {
-            pickupButton.onClick.AddListener(OnPickupButtonClicked);
+            pickupButton.onClick.AddListener(() => OnPickupButtonClicked(ProductType.Regular));
             pickupButton.gameObject.SetActive(false); // Hide by default
-            isButtonVisible = false;
-            Debug.Log("Pickup button listener added - button hidden by default");
+            isRegularButtonVisible = false;
+            Debug.Log("Regular pickup button listener added - button hidden by default");
         }
         else
         {
-            Debug.LogError("Pickup Button not assigned in Inspector!");
+            Debug.LogError("Regular Pickup Button not assigned in Inspector!");
+        }
+        
+        // Set up the dummy pickup button
+        if (dummyPickupButton != null)
+        {
+            dummyPickupButton.onClick.AddListener(() => OnPickupButtonClicked(ProductType.Dummy));
+            dummyPickupButton.gameObject.SetActive(false); // Hide by default
+            isDummyButtonVisible = false;
+            Debug.Log("Dummy pickup button listener added - button hidden by default");
+        }
+        else
+        {
+            Debug.LogError("Dummy Pickup Button not assigned in Inspector!");
+        }
+        
+        // Initialize instruction images
+        if (instructionImage1 != null)
+        {
+            instructionImage1.gameObject.SetActive(false);
+            Debug.Log("Instruction Image 1 initialized and hidden");
+        }
+        
+        if (instructionImage2 != null)
+        {
+            instructionImage2.gameObject.SetActive(false);
+            Debug.Log("Instruction Image 2 initialized and hidden");
         }
         
         if (playerAnimator == null)
@@ -82,6 +122,45 @@ public class CollectProducts : MonoBehaviour
         else
         {
             Debug.Log($"Pickup animation controller initialized with parameter: {pickupParameterName}");
+        }
+        
+        // Subscribe to panel events
+        SubscribeToPanelEvents();
+    }
+    
+    void SubscribeToPanelEvents()
+    {
+        ProductInformationManager.OnProductPanelShown += OnProductPanelShown;
+        ProductInformationManager.OnProductPanelHidden += OnProductPanelHidden;
+    }
+    
+    void UnsubscribeFromPanelEvents()
+    {
+        ProductInformationManager.OnProductPanelShown -= OnProductPanelShown;
+        ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
+    }
+    
+    void OnProductPanelShown()
+    {
+        Debug.Log("Product panel shown event received");
+        
+        // Show instruction image 2 ONLY if we just collected a dummy product
+        if (currentProductType == ProductType.Dummy && instructionImage2 != null)
+        {
+            instructionImage2.gameObject.SetActive(true);
+            Debug.Log("Showing instruction image 2 - Dummy product panel is showing");
+        }
+    }
+    
+    void OnProductPanelHidden()
+    {
+        Debug.Log("Product panel hidden event received");
+        
+        // ALWAYS hide instruction image 2 when panel is closed
+        if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+        {
+            instructionImage2.gameObject.SetActive(false);
+            Debug.Log("Hiding instruction image 2 - Panel closed");
         }
     }
     
@@ -110,9 +189,12 @@ public class CollectProducts : MonoBehaviour
         // Find all products with the specified tags
         GameObject[] naturalSugarProducts = GameObject.FindGameObjectsWithTag("NaturalSugar");
         GameObject[] addedSugarProducts = GameObject.FindGameObjectsWithTag("AddedSugar");
+        GameObject[] dummyProducts = GameObject.FindGameObjectsWithTag("DummyProduct");
         
-        GameObject closestProduct = null;
-        float closestDistance = float.MaxValue;
+        GameObject closestRegularProduct = null;
+        GameObject closestDummyProduct = null;
+        float closestRegularDistance = float.MaxValue;
+        float closestDummyDistance = float.MaxValue;
         
         // Check NaturalSugar products
         foreach (GameObject product in naturalSugarProducts)
@@ -120,10 +202,10 @@ public class CollectProducts : MonoBehaviour
             if (product == null) continue;
             
             float distance = Vector3.Distance(transform.position, product.transform.position);
-            if (distance < pickupRange && distance < closestDistance)
+            if (distance < pickupRange && distance < closestRegularDistance)
             {
-                closestProduct = product;
-                closestDistance = distance;
+                closestRegularProduct = product;
+                closestRegularDistance = distance;
             }
         }
         
@@ -133,28 +215,57 @@ public class CollectProducts : MonoBehaviour
             if (product == null) continue;
             
             float distance = Vector3.Distance(transform.position, product.transform.position);
-            if (distance < pickupRange && distance < closestDistance)
+            if (distance < pickupRange && distance < closestRegularDistance)
             {
-                closestProduct = product;
-                closestDistance = distance;
+                closestRegularProduct = product;
+                closestRegularDistance = distance;
             }
         }
         
-        // Update button visibility based on proximity
-        if (closestProduct != null && closestDistance <= pickupRange)
+        // Check DummyProduct products (only if not already collected)
+        if (!hasCollectedDummyProduct)
         {
-            // Product is nearby
-            if (currentNearbyProduct != closestProduct)
+            foreach (GameObject product in dummyProducts)
             {
-                currentNearbyProduct = closestProduct;
-                Debug.Log($"Nearby product detected: {currentNearbyProduct.name} (Distance: {closestDistance:F2})");
+                if (product == null) continue;
+                
+                float distance = Vector3.Distance(transform.position, product.transform.position);
+                if (distance < pickupRange && distance < closestDummyDistance)
+                {
+                    closestDummyProduct = product;
+                    closestDummyDistance = distance;
+                }
             }
-            
-            // Show button if not already visible
-            if (!isButtonVisible)
+        }
+        
+        // Determine which product to show button for
+        bool showDummyButton = false;
+        bool showRegularButton = false;
+        
+        if (closestDummyProduct != null && closestDummyDistance <= pickupRange)
+        {
+            // Dummy product is closer or only dummy available
+            if (closestRegularProduct == null || closestDummyDistance <= closestRegularDistance)
             {
-                ShowPickupButton();
+                currentNearbyProduct = closestDummyProduct;
+                currentProductType = ProductType.Dummy;
+                showDummyButton = true;
+                showRegularButton = false;
             }
+            else
+            {
+                currentNearbyProduct = closestRegularProduct;
+                currentProductType = ProductType.Regular;
+                showDummyButton = false;
+                showRegularButton = true;
+            }
+        }
+        else if (closestRegularProduct != null && closestRegularDistance <= pickupRange)
+        {
+            currentNearbyProduct = closestRegularProduct;
+            currentProductType = ProductType.Regular;
+            showDummyButton = false;
+            showRegularButton = true;
         }
         else
         {
@@ -164,17 +275,52 @@ public class CollectProducts : MonoBehaviour
                 Debug.Log("Moved away from product");
                 currentNearbyProduct = null;
             }
+        }
+        
+        // Update dummy product instruction visibility
+        UpdateDummyProductInstructions(showDummyButton);
+        
+        // Update button visibility
+        if (showDummyButton && !isDummyButtonVisible)
+        {
+            ShowDummyPickupButton();
+            HideRegularPickupButton();
+        }
+        else if (showRegularButton && !isRegularButtonVisible)
+        {
+            ShowRegularPickupButton();
+            HideDummyPickupButton();
+        }
+        else if (!showDummyButton && !showRegularButton)
+        {
+            HideAllPickupButtons();
+        }
+    }
+    
+    void UpdateDummyProductInstructions(bool showDummyButton)
+    {
+        if (showDummyButton != isNearDummyProduct)
+        {
+            isNearDummyProduct = showDummyButton;
             
-            // Hide button if currently visible
-            if (isButtonVisible)
+            // Show/hide instruction image 1 based on proximity to dummy product
+            if (instructionImage1 != null)
             {
-                HidePickupButton();
+                instructionImage1.gameObject.SetActive(showDummyButton && !hasCollectedDummyProduct);
+                if (showDummyButton && !hasCollectedDummyProduct)
+                {
+                    Debug.Log("Showing instruction image 1 - Near DummyProduct");
+                }
+                else if (instructionImage1.gameObject.activeSelf)
+                {
+                    Debug.Log("Hiding instruction image 1");
+                }
             }
         }
     }
     
-    // This method is called when the pickup button is clicked
-    public void OnPickupButtonClicked()
+    // This method is called when either pickup button is clicked
+    public void OnPickupButtonClicked(ProductType productType)
     {
         if (isPickingUp)
         {
@@ -185,7 +331,15 @@ public class CollectProducts : MonoBehaviour
         if (currentNearbyProduct == null)
         {
             Debug.LogWarning("No product nearby to pickup!");
-            HidePickupButton();
+            HideAllPickupButtons();
+            return;
+        }
+        
+        // Verify we're picking up the right type
+        if ((productType == ProductType.Dummy && !currentNearbyProduct.CompareTag("DummyProduct")) ||
+            (productType == ProductType.Regular && currentNearbyProduct.CompareTag("DummyProduct")))
+        {
+            Debug.LogWarning($"Button type mismatch! Button: {productType}, Product: {currentNearbyProduct.tag}");
             return;
         }
         
@@ -201,7 +355,7 @@ public class CollectProducts : MonoBehaviour
     
     private IEnumerator PickupProduct()
     {
-        Debug.Log($"Starting pickup process for: {currentNearbyProduct.name}");
+        Debug.Log($"Starting pickup process for: {currentNearbyProduct.name} (Type: {currentProductType})");
         
         // Disable player movement
         if (playerMovementScript != null)
@@ -210,8 +364,14 @@ public class CollectProducts : MonoBehaviour
             Debug.Log("Player movement disabled");
         }
         
-        // Hide pickup button immediately
-        HidePickupButton();
+        // Hide pickup buttons immediately
+        HideAllPickupButtons();
+        
+        // Hide instruction image 1 if it's a dummy product
+        if (currentProductType == ProductType.Dummy && instructionImage1 != null)
+        {
+            instructionImage1.gameObject.SetActive(false);
+        }
         
         // Trigger the pickup animation
         playerAnimator.SetBool(pickupHash, true);
@@ -247,7 +407,6 @@ public class CollectProducts : MonoBehaviour
         }
     }
     
-    // In your CollectProducts script, modify the CompletePickup method:
     private void CompletePickup()
     {
         Debug.Log("Completing pickup process");
@@ -265,34 +424,16 @@ public class CollectProducts : MonoBehaviour
             
             Debug.Log($"Collecting product: {productName} ({productTag})");
             
-            // Get product information manager
-            ProductInformationManager productInfoManager = FindObjectOfType<ProductInformationManager>();
-            if (productInfoManager != null)
+            // Check if it's a dummy product
+            if (currentProductType == ProductType.Dummy)
             {
-                // Extract product ID from name
-                string productID = ExtractProductID(productName);
-                
-                // Check if already collected in this session
-                if (productInfoManager.IsProductCollected(productID))
-                {
-                    Debug.Log($"Product {productID} already collected this session! Skipping info panel.");
-                    // Still destroy the product, but don't show info
-                    Destroy(currentNearbyProduct);
-                    currentNearbyProduct = null;
-                    
-                    // Re-enable movement immediately
-                    if (playerMovementScript != null)
-                        playerMovementScript.enabled = true;
-                        
-                    return;
-                }
-                
-                // Show product information (first time collection)
-                productInfoManager.ShowProductInfo(productID);
+                // Handle dummy product collection (shows panel but doesn't count)
+                HandleDummyProductCollection(productName);
             }
             else
             {
-                Debug.LogWarning("ProductInformationManager not found!");
+                // Handle regular product collection
+                HandleRegularProductCollection(productName, productTag);
             }
             
             // Play product disappearance effect if available
@@ -308,15 +449,81 @@ public class CollectProducts : MonoBehaviour
             currentNearbyProduct = null;
         }
         
-        // Note: Player movement will be re-enabled by product info manager when panel closes
-        // Only re-enable here if we didn't show the info panel
-        // if (playerMovementScript != null)
-        // {
-        //     playerMovementScript.enabled = true;
-        // }
-        
         Debug.Log("Pickup completed successfully");
     }
+    
+    private void HandleDummyProductCollection(string productName)
+    {
+        Debug.Log($"Collected dummy product: {productName}");
+        hasCollectedDummyProduct = true;
+        
+        // Extract product ID from dummy product name (assuming it's named like "Soda_Dummy")
+        string productID = ExtractProductID(productName.Replace("_Dummy", "").Replace("Dummy_", ""));
+        
+        // Get product information manager
+        ProductInformationManager productInfoManager = FindObjectOfType<ProductInformationManager>();
+        if (productInfoManager != null)
+        {
+            // Show product information WITHOUT adding to collection
+            productInfoManager.ShowProductInfoForDummy(productID);
+            
+            // Instruction image 2 will be shown by OnProductPanelShown event
+            // when the panel actually appears
+        }
+        else
+        {
+            Debug.LogWarning("ProductInformationManager not found!");
+            // Re-enable movement if no manager found
+            if (playerMovementScript != null)
+            {
+                playerMovementScript.enabled = true;
+            }
+        }
+    }
+    
+    private void HandleRegularProductCollection(string productName, string productTag)
+    {
+        // Get product information manager
+        ProductInformationManager productInfoManager = FindObjectOfType<ProductInformationManager>();
+        if (productInfoManager != null)
+        {
+            // Extract product ID from name
+            string productID = ExtractProductID(productName);
+            
+            // Check if already collected in this session
+            if (productInfoManager.IsProductCollected(productID))
+            {
+                Debug.Log($"Product {productID} already collected this session! Skipping info panel.");
+                // Re-enable movement immediately
+                if (playerMovementScript != null)
+                    playerMovementScript.enabled = true;
+                    
+                return;
+            }
+            
+            // Show product information (first time collection)
+            productInfoManager.ShowProductInfo(productID);
+            
+            // If this is a soda product and we've collected a dummy product before,
+            // make sure instruction image 2 is hidden
+            if ((productID.Contains("SODA") || productID.Contains("SODA_")) && hasCollectedDummyProduct)
+            {
+                if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+                {
+                    instructionImage2.gameObject.SetActive(false);
+                    Debug.Log("Hiding instruction image 2 - Real soda collected");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("ProductInformationManager not found!");
+            // Re-enable movement if no manager found
+            if (playerMovementScript != null)
+                playerMovementScript.enabled = true;
+        }
+    }
+    
     private string ExtractProductID(string productName)
     {
         // Extract product ID from the name
@@ -350,6 +557,55 @@ public class CollectProducts : MonoBehaviour
         */
         
         Debug.Log("Product disappearance effect triggered");
+    }
+    
+    // Button visibility methods
+    private void ShowRegularPickupButton()
+    {
+        if (pickupButton != null && !isRegularButtonVisible)
+        {
+            pickupButton.gameObject.SetActive(true);
+            pickupButton.interactable = true;
+            isRegularButtonVisible = true;
+            Debug.Log("Regular pickup button shown");
+        }
+    }
+    
+    private void HideRegularPickupButton()
+    {
+        if (pickupButton != null && isRegularButtonVisible)
+        {
+            pickupButton.gameObject.SetActive(false);
+            isRegularButtonVisible = false;
+            Debug.Log("Regular pickup button hidden");
+        }
+    }
+    
+    private void ShowDummyPickupButton()
+    {
+        if (dummyPickupButton != null && !isDummyButtonVisible)
+        {
+            dummyPickupButton.gameObject.SetActive(true);
+            dummyPickupButton.interactable = true;
+            isDummyButtonVisible = true;
+            Debug.Log("Dummy pickup button shown");
+        }
+    }
+    
+    private void HideDummyPickupButton()
+    {
+        if (dummyPickupButton != null && isDummyButtonVisible)
+        {
+            dummyPickupButton.gameObject.SetActive(false);
+            isDummyButtonVisible = false;
+            Debug.Log("Dummy pickup button hidden");
+        }
+    }
+    
+    private void HideAllPickupButtons()
+    {
+        HideRegularPickupButton();
+        HideDummyPickupButton();
     }
     
     // Call this to manually end the pickup animation
@@ -388,35 +644,27 @@ public class CollectProducts : MonoBehaviour
             // Reset button state
             if (currentNearbyProduct != null)
             {
-                ShowPickupButton();
+                if (currentProductType == ProductType.Dummy)
+                    ShowDummyPickupButton();
+                else
+                    ShowRegularPickupButton();
             }
             else
             {
-                HidePickupButton();
+                HideAllPickupButtons();
+            }
+            
+            // Reset instruction images
+            if (instructionImage1 != null && instructionImage1.gameObject.activeSelf)
+            {
+                instructionImage1.gameObject.SetActive(false);
+            }
+            if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+            {
+                instructionImage2.gameObject.SetActive(false);
             }
             
             Debug.Log("Pickup animation force stopped");
-        }
-    }
-    
-    private void ShowPickupButton()
-    {
-        if (pickupButton != null && !isButtonVisible)
-        {
-            pickupButton.gameObject.SetActive(true);
-            pickupButton.interactable = true;
-            isButtonVisible = true;
-            Debug.Log("Pickup button shown");
-        }
-    }
-    
-    private void HidePickupButton()
-    {
-        if (pickupButton != null && isButtonVisible)
-        {
-            pickupButton.gameObject.SetActive(false);
-            isButtonVisible = false;
-            Debug.Log("Pickup button hidden");
         }
     }
     
@@ -472,6 +720,7 @@ public class CollectProducts : MonoBehaviour
         
         if (currentNearbyProduct.CompareTag("NaturalSugar")) return "NaturalSugar";
         if (currentNearbyProduct.CompareTag("AddedSugar")) return "AddedSugar";
+        if (currentNearbyProduct.CompareTag("DummyProduct")) return "DummyProduct";
         
         return "Unknown";
     }
@@ -479,7 +728,7 @@ public class CollectProducts : MonoBehaviour
     // Check if button is currently visible
     public bool IsButtonVisible()
     {
-        return isButtonVisible;
+        return isRegularButtonVisible || isDummyButtonVisible;
     }
     
     // Get distance to current nearby product
@@ -497,6 +746,10 @@ public class CollectProducts : MonoBehaviour
         {
             pickupButton.interactable = enabled;
         }
+        if (dummyPickupButton != null)
+        {
+            dummyPickupButton.interactable = enabled;
+        }
     }
     
     // Show or hide the pickup button manually
@@ -504,22 +757,49 @@ public class CollectProducts : MonoBehaviour
     {
         if (visible)
         {
-            ShowPickupButton();
+            if (currentProductType == ProductType.Dummy)
+                ShowDummyPickupButton();
+            else
+                ShowRegularPickupButton();
         }
         else
         {
-            HidePickupButton();
+            HideAllPickupButtons();
         }
+    }
+    
+    // Check if dummy product has been collected
+    public bool HasCollectedDummyProduct()
+    {
+        return hasCollectedDummyProduct;
+    }
+    
+    // Reset dummy product collection state
+    public void ResetDummyProductCollection()
+    {
+        hasCollectedDummyProduct = false;
+        if (instructionImage2 != null)
+        {
+            instructionImage2.gameObject.SetActive(false);
+        }
+        Debug.Log("Dummy product collection state reset");
     }
     
     // Clean up
     private void OnDestroy()
     {
-        // Remove the button listener to prevent memory leaks
+        // Remove the button listeners to prevent memory leaks
         if (pickupButton != null)
         {
-            pickupButton.onClick.RemoveListener(OnPickupButtonClicked);
+            pickupButton.onClick.RemoveAllListeners();
         }
+        if (dummyPickupButton != null)
+        {
+            dummyPickupButton.onClick.RemoveAllListeners();
+        }
+        
+        // Unsubscribe from events
+        UnsubscribeFromPanelEvents();
     }
     
     // Visualize pickup range in editor
@@ -531,7 +811,7 @@ public class CollectProducts : MonoBehaviour
         // Draw line to current nearby product if any
         if (currentNearbyProduct != null)
         {
-            Gizmos.color = Color.green;
+            Gizmos.color = currentProductType == ProductType.Dummy ? Color.blue : Color.green;
             Gizmos.DrawLine(transform.position, currentNearbyProduct.transform.position);
         }
     }
@@ -542,31 +822,20 @@ public class CollectProducts : MonoBehaviour
     {
         GameObject[] naturalSugarProducts = GameObject.FindGameObjectsWithTag("NaturalSugar");
         GameObject[] addedSugarProducts = GameObject.FindGameObjectsWithTag("AddedSugar");
+        GameObject[] dummyProducts = GameObject.FindGameObjectsWithTag("DummyProduct");
         
+        Debug.Log($"=== NEARBY PRODUCTS DEBUG ===");
         Debug.Log($"NaturalSugar products in scene: {naturalSugarProducts.Length}");
         Debug.Log($"AddedSugar products in scene: {addedSugarProducts.Length}");
+        Debug.Log($"DummyProduct products in scene: {dummyProducts.Length}");
         
-        foreach (GameObject product in naturalSugarProducts)
-        {
-            if (product != null)
-            {
-                float distance = Vector3.Distance(transform.position, product.transform.position);
-                Debug.Log($"NaturalSugar: {product.name} - Distance: {distance:F2} - In Range: {distance <= pickupRange}");
-            }
-        }
-        
-        foreach (GameObject product in addedSugarProducts)
-        {
-            if (product != null)
-            {
-                float distance = Vector3.Distance(transform.position, product.transform.position);
-                Debug.Log($"AddedSugar: {product.name} - Distance: {distance:F2} - In Range: {distance <= pickupRange}");
-            }
-        }
-        
-        Debug.Log($"Current nearby product: {(currentNearbyProduct != null ? currentNearbyProduct.name : "None")}");
-        Debug.Log($"Button visible: {isButtonVisible}");
+        Debug.Log($"Current nearby product: {(currentNearbyProduct != null ? currentNearbyProduct.name + " (" + currentNearbyProduct.tag + ")" : "None")}");
+        Debug.Log($"Product type: {currentProductType}");
+        Debug.Log($"Regular button visible: {isRegularButtonVisible}");
+        Debug.Log($"Dummy button visible: {isDummyButtonVisible}");
         Debug.Log($"Is picking up: {isPickingUp}");
+        Debug.Log($"Has collected dummy product: {hasCollectedDummyProduct}");
+        Debug.Log($"Instruction Image 2 active: {(instructionImage2 != null ? instructionImage2.gameObject.activeSelf.ToString() : "null")}");
     }
     
     // Test sound method

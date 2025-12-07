@@ -1,34 +1,62 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
+using UnityEngine.InputSystem; // Add this namespace
+using System.Collections;
 
 public class K2_IntroCutsceneManager : MonoBehaviour
 {
     [Header("Timeline References")]
-    [SerializeField] private GameObject timelineParentObject; // Drag your parent object with PlayableDirector here
+    [SerializeField] private GameObject timelineParentObject;
     [SerializeField] private PlayableDirector timelineDirector;
     
     [Header("UI References")]
-    [SerializeField] private Button startButton; // Drag your UI button here
+    [SerializeField] private Button startButton;
+    [SerializeField] private Button skipButton;
     
     [Header("Camera References")]
-    [SerializeField] private GameObject playerFollowCamera; // Drag your PlayerFollowCamera Virtual Camera here
-    [SerializeField] private GameObject timelineCamera; // Optional: Your timeline's camera if separate
+    [SerializeField] private GameObject playerFollowCamera;
+    [SerializeField] private GameObject timelineCamera;
     
     [Header("UI Canvas")]
-    [SerializeField] private GameObject gameUICanvas; // Drag your "UI_Canvas_StarterAssetsInputs_Joysticks" here
+    [SerializeField] private GameObject gameUICanvas;
     
     [Header("Audio Handler")]
-    [SerializeField] private GameObject audioHandler; // Drag your "Audio_Handler" GameObject here
+    [SerializeField] private GameObject audioHandler;
+    
+    [Header("Skip Settings")]
+    [SerializeField] private bool allowSkip = true;
+    [SerializeField] private float skipDelay = 1.0f;
+    
+    [Header("Input Actions")]
+    [SerializeField] private InputAction skipAction; // Define input action for skipping
+    
+    private bool isCutscenePlaying = false;
     
     void Start()
     {
         InitializeAllComponents();
         
-        // Add click listener to button
+        // Add click listener to buttons
         if (startButton != null)
         {
             startButton.onClick.AddListener(PlayCutscene);
+        }
+        
+        if (skipButton != null)
+        {
+            skipButton.onClick.AddListener(SkipCutscene);
+        }
+        
+        // Setup input action for skipping
+        if (allowSkip)
+        {
+            skipAction = new InputAction("SkipCutscene");
+            skipAction.AddBinding("<Keyboard>/space");
+            skipAction.AddBinding("<Keyboard>/escape");
+            skipAction.AddBinding("<Keyboard>/enter");
+            skipAction.AddBinding("<Gamepad>/buttonSouth"); // A button on Xbox, Cross on PlayStation
+            skipAction.performed += ctx => SkipCutscene();
         }
     }
     
@@ -44,7 +72,6 @@ public class K2_IntroCutsceneManager : MonoBehaviour
         if (timelineDirector != null)
         {
             timelineDirector.Stop();
-            // Subscribe to the stopped event
             timelineDirector.stopped += OnTimelineFinished;
         }
         
@@ -60,10 +87,32 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             gameUICanvas.SetActive(false);
         }
         
-        // Ensure audio handler is enabled initially (for background audio before cutscene)
+        // Ensure skip button is disabled initially
+        if (skipButton != null)
+        {
+            skipButton.gameObject.SetActive(false);
+        }
+        
+        // Ensure audio handler is enabled initially
         if (audioHandler != null)
         {
             audioHandler.SetActive(true);
+        }
+    }
+    
+    void OnEnable()
+    {
+        if (allowSkip)
+        {
+            skipAction.Enable();
+        }
+    }
+    
+    void OnDisable()
+    {
+        if (allowSkip)
+        {
+            skipAction.Disable();
         }
     }
     
@@ -74,12 +123,19 @@ public class K2_IntroCutsceneManager : MonoBehaviour
         {
             timelineDirector.stopped -= OnTimelineFinished;
         }
+        
+        if (allowSkip)
+        {
+            skipAction.Dispose();
+        }
     }
 
     public void PlayCutscene()
     {
         if (timelineParentObject != null && timelineDirector != null)
         {
+            isCutscenePlaying = true;
+            
             // Enable the timeline parent object
             timelineParentObject.SetActive(true);
             
@@ -90,15 +146,18 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             if (startButton != null)
             {
                 startButton.interactable = false;
-                
-                // Optional: Hide the entire button GameObject
-                // startButton.gameObject.SetActive(false);
             }
             
             // Disable audio handler during cutscene
             if (audioHandler != null)
             {
                 audioHandler.SetActive(false);
+            }
+            
+            // Show skip button after delay (if allowed)
+            if (allowSkip && skipButton != null)
+            {
+                StartCoroutine(ShowSkipButtonAfterDelay());
             }
             
             Debug.Log("Cutscene started - Audio handler disabled");
@@ -109,9 +168,41 @@ public class K2_IntroCutsceneManager : MonoBehaviour
         }
     }
     
+    private IEnumerator ShowSkipButtonAfterDelay()
+    {
+        yield return new WaitForSeconds(skipDelay);
+        
+        if (skipButton != null && isCutscenePlaying)
+        {
+            skipButton.gameObject.SetActive(true);
+        }
+    }
+    
+    public void SkipCutscene()
+    {
+        if (!isCutscenePlaying || !allowSkip) return;
+        
+        Debug.Log("Cutscene skipped");
+        
+        // Stop the timeline
+        if (timelineDirector != null && timelineDirector.state == PlayState.Playing)
+        {
+            timelineDirector.Stop();
+        }
+        
+        // Manually call the finish method
+        FinishCutscene();
+    }
+    
     private void OnTimelineFinished(PlayableDirector director)
     {
-        // This method is called when the timeline finishes playing
+        // This method is called when the timeline finishes playing normally
+        FinishCutscene();
+    }
+    
+    private void FinishCutscene()
+    {
+        isCutscenePlaying = false;
         
         // Disable the timeline parent object
         if (timelineParentObject != null)
@@ -137,9 +228,12 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             audioHandler.SetActive(true);
         }
         
-        Debug.Log("Cutscene finished - UI enabled, audio handler re-enabled");
+        // Hide skip button
+        if (skipButton != null)
+        {
+            skipButton.gameObject.SetActive(false);
+        }
         
-        // Optional: You can also hide the start button completely after cutscene
-        // if (startButton != null) startButton.gameObject.SetActive(false);
+        Debug.Log("Cutscene finished/skipped - UI enabled, audio handler re-enabled");
     }
 }

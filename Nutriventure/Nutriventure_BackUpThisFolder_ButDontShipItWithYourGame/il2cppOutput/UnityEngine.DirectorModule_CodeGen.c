@@ -29,6 +29,10 @@ extern void PlayableDirector_GetPlayState_m530EE60FE30CAAB5BCA57F96C93964A26DD25
 extern void PlayableDirector_GetWrapMode_m91F64F0166340F3C55911879B448B32C3271686A (void);
 extern void PlayableDirector_GetGraphHandle_m71F1BC34DF71AAACDDC44ACC74FFD66200875896 (void);
 extern void PlayableDirector_Internal_GetPlayableAsset_m74CF2B5E24E39114ED3A256185175BCC2CF31F24 (void);
+extern void PlayableDirector_add_played_m8A41D810B43EA46886904460F74EFD184AAE8604 (void);
+extern void PlayableDirector_remove_played_mEDED15F8A15D2D32F464D1B9C07AF51451BF4374 (void);
+extern void PlayableDirector_add_paused_m23F6F60C960AAA38C9C73CC75265D3E3FF0105DB (void);
+extern void PlayableDirector_remove_paused_m5AC5D63CBF564106D6A4EA018CC5D851C6F5AF31 (void);
 extern void PlayableDirector_add_stopped_m8162B112FF06D90F144C49E6C990F705DFC28C96 (void);
 extern void PlayableDirector_remove_stopped_m615BBD51C1CA79B01469504CD9403C84938C535F (void);
 extern void PlayableDirector_SendOnPlayableDirectorPlay_m7F75DBA4355DAA92F53AC337BB952069B63081A0 (void);
@@ -65,7 +69,7 @@ extern void DataPlayableOutputEnumerator_System_Collections_IEnumerator_get_Curr
 extern void DataPlayableOutputEnumerator_Dispose_m5BD2B7D3897D0EBF12FAE16E334B3951BAD4C8A0 (void);
 extern void DataPlayableOutputEnumerator_MoveNext_m79AF7F2D9D94412B14EE28BA574B598B61B382D9 (void);
 extern void DataPlayableOutputEnumerator_Reset_mD8CE079A62EAB2C1D0A3D4CC780C7748D47247FF (void);
-static Il2CppMethodPointer s_methodPointers[60] = 
+static Il2CppMethodPointer s_methodPointers[64] = 
 {
 	DataPlayableOutput__ctor_m09D4185F0C250450BE1FF451995AC6DFDF8176DD,
 	DataPlayableOutput_GetHandle_m80B8C82F9002EC765218149A007490FEBAEE07B7,
@@ -91,6 +95,10 @@ static Il2CppMethodPointer s_methodPointers[60] =
 	PlayableDirector_GetWrapMode_m91F64F0166340F3C55911879B448B32C3271686A,
 	PlayableDirector_GetGraphHandle_m71F1BC34DF71AAACDDC44ACC74FFD66200875896,
 	PlayableDirector_Internal_GetPlayableAsset_m74CF2B5E24E39114ED3A256185175BCC2CF31F24,
+	PlayableDirector_add_played_m8A41D810B43EA46886904460F74EFD184AAE8604,
+	PlayableDirector_remove_played_mEDED15F8A15D2D32F464D1B9C07AF51451BF4374,
+	PlayableDirector_add_paused_m23F6F60C960AAA38C9C73CC75265D3E3FF0105DB,
+	PlayableDirector_remove_paused_m5AC5D63CBF564106D6A4EA018CC5D851C6F5AF31,
 	PlayableDirector_add_stopped_m8162B112FF06D90F144C49E6C990F705DFC28C96,
 	PlayableDirector_remove_stopped_m615BBD51C1CA79B01469504CD9403C84938C535F,
 	PlayableDirector_SendOnPlayableDirectorPlay_m7F75DBA4355DAA92F53AC337BB952069B63081A0,
@@ -135,7 +143,7 @@ static Il2CppTokenAdjustorThunkPair s_adjustorThunks[2] =
 	{ 0x06000001, DataPlayableOutput__ctor_m09D4185F0C250450BE1FF451995AC6DFDF8176DD_AdjustorThunk },
 	{ 0x06000002, DataPlayableOutput_GetHandle_m80B8C82F9002EC765218149A007490FEBAEE07B7_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[60] = 
+static const int32_t s_InvokerIndices[64] = 
 {
 	12763,
 	16575,
@@ -161,6 +169,10 @@ static const int32_t s_InvokerIndices[60] =
 	16480,
 	16572,
 	16547,
+	12738,
+	12738,
+	12738,
+	12738,
 	12738,
 	12738,
 	16783,
@@ -202,7 +214,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_DirectorModule_CodeGenMo
 const Il2CppCodeGenModule g_UnityEngine_DirectorModule_CodeGenModule = 
 {
 	"UnityEngine.DirectorModule.dll",
-	60,
+	64,
 	s_methodPointers,
 	2,
 	s_adjustorThunks,

@@ -263,7 +263,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR double Math_Log_m5A3BBBF06AB82F25C885812E07D2
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 89993
+// Method Definition Index: 90086
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR MonoScriptData_tF0177CF10839434FDFCF9D8911BFA3D07A5FA257 UnitySourceGeneratedAssemblyMonoScriptTypes_v1_Get_m0283E990BF6C719614D6D0816F5676C1CC699317 (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -297,7 +297,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR MonoScriptData_tF0177CF10839434FDFCF9D8911BFA
 		return L_6;
 	}
 }
-// Method Definition Index: 89994
+// Method Definition Index: 90087
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void UnitySourceGeneratedAssemblyMonoScriptTypes_v1__ctor_m2680F2F5D3BABDA7C70A7299DED8ED6D002EEF27 (UnitySourceGeneratedAssemblyMonoScriptTypes_v1_tF1E8A22049E2B9A7A22543FBCD0D1328A1D2ABB7* __this, const RuntimeMethod* method) 
 {
 	{
@@ -407,7 +407,7 @@ IL2CPP_EXTERN_C void MonoScriptData_tF0177CF10839434FDFCF9D8911BFA3D07A5FA257_ma
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 89995
+// Method Definition Index: 90088
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ShaderConfig__ctor_m37A8EEE4F61860FD4C04F72B6B9E2EC62023CC33 (ShaderConfig_tB0071DEDAFA079DC303735CCD4DCD1C33F9075A2* __this, const RuntimeMethod* method) 
 {
 	{
@@ -415,7 +415,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ShaderConfig__ctor_m37A8EEE4F61860FD4C04
 		return;
 	}
 }
-// Method Definition Index: 89996
+// Method Definition Index: 90089
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ShaderConfig__cctor_m154F4E71F5E2CE730B813C440928D01A3D51AA00 (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -454,7 +454,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ShaderConfig__cctor_m154F4E71F5E2CE730B8
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 89997
+// Method Definition Index: 90090
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void InternalLightCullingDefs__ctor_m00ADB4C30F0AC1A2AE4235CA8BDE938F4E64752A (InternalLightCullingDefs_t3578B94998CE824C90BF77810328DAEF2FFB02F8* __this, const RuntimeMethod* method) 
 {
 	{
@@ -462,7 +462,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void InternalLightCullingDefs__ctor_m00ADB4C3
 		return;
 	}
 }
-// Method Definition Index: 89998
+// Method Definition Index: 90091
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void InternalLightCullingDefs__cctor_mAA179C0BE7DE721174786E4A121D0EE84BB08E20 (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;

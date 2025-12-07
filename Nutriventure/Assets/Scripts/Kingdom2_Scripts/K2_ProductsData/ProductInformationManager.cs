@@ -23,7 +23,7 @@ public class ProductInformationManager : MonoBehaviour
     public TextMeshProUGUI collectionCountText; // For panel: "X/8"
     
     [Header("Text Fields - In-Game Display")]
-    public TextMeshProUGUI inGameCollectionText; // NEW: For in-game display: "Collected Product Count: X/8"
+    public TextMeshProUGUI inGameCollectionText; // For in-game display: "Collected Product Count: X/8"
     
     [Header("Colors")]
     public Color naturalSugarColor = Color.green;
@@ -47,10 +47,15 @@ public class ProductInformationManager : MonoBehaviour
     public static event Action OnProductPanelShown;
     public static event Action OnProductPanelHidden;
     
-    // Session-based collection tracking
+    // Session-based collection tracking (only counts regular products)
     private List<string> collectedProductIDs = new List<string>();
     private GameObject currentDisplayedProduct;
     private ProductData.ProductInfo currentProductInfo;
+    private K2_DummypTimeline dummyTimelineController;
+
+    
+    // Track if this is a dummy product display
+    private bool isDummyProductDisplay = false;
     
     void Start()
     {
@@ -59,6 +64,9 @@ public class ProductInformationManager : MonoBehaviour
         // Hide panel at start
         if (infoPanel != null)
             infoPanel.SetActive(false);
+
+        // Get reference to dummy timeline controller
+        dummyTimelineController = FindObjectOfType<K2_DummypTimeline>();
             
         // Reset collection at start of each session
         ResetSessionCollection();
@@ -107,14 +115,22 @@ public class ProductInformationManager : MonoBehaviour
         // Disable player movement
         DisablePlayerMovement();
         
-        Debug.Log($"Showing product info for: {currentProductInfo.displayName}");
+        string displayName = isDummyProductDisplay ? 
+            $"{currentProductInfo.displayName} (Demo)" : 
+            currentProductInfo.displayName;
+        
+        Debug.Log($"Showing product info for: {displayName}");
     }
     
-    private void UpdateProductUI(ProductData.ProductInfo productInfo)
+    private void UpdateProductUI(ProductData.ProductInfo productInfo, bool isDummy = false)
     {
         // Basic information
         if (productNameText != null)
-            productNameText.text = productInfo.displayName;
+        {
+            productNameText.text = isDummy ? 
+                $"{productInfo.displayName} (Demo Version)" : 
+                productInfo.displayName;
+        }
         
         if (sugarTypeText != null)
         {
@@ -136,8 +152,11 @@ public class ProductInformationManager : MonoBehaviour
         if (funFactText != null)
             funFactText.text = productInfo.funFact;
         
-        // Update collection count
-        UpdateAllCollectionDisplays();
+        // Update collection count (don't update for dummy products)
+        if (!isDummy)
+        {
+            UpdateAllCollectionDisplays();
+        }
     }
     
     private void SpawnProductForDisplay(GameObject productPrefab)
@@ -166,7 +185,7 @@ public class ProductInformationManager : MonoBehaviour
         }
     }
     
-    public void HideProductInfo()
+        public void HideProductInfo()
     {
         if (panelAnimator != null)
         {
@@ -177,6 +196,14 @@ public class ProductInformationManager : MonoBehaviour
         {
             if (infoPanel != null)
                 infoPanel.SetActive(false);
+            
+            // Check if this was a dummy product display
+            if (isDummyProductDisplay && dummyTimelineController != null)
+            {
+                // Start the second timeline for dummy product
+                dummyTimelineController.StartSecondCutscene();
+            }
+            
             OnPanelHidden();
         }
         
@@ -186,15 +213,26 @@ public class ProductInformationManager : MonoBehaviour
             Destroy(currentDisplayedProduct);
             currentDisplayedProduct = null;
         }
+        
+        // Reset dummy product flag
+        isDummyProductDisplay = false;
     }
     
+// Also update the HidePanelAfterAnimation coroutine
     private IEnumerator HidePanelAfterAnimation()
     {
-        // Wait for animation to complete (adjust time based on your animation)
+        // Wait for animation to complete
         yield return new WaitForSeconds(0.5f);
         
         if (infoPanel != null)
             infoPanel.SetActive(false);
+        
+        // Check if this was a dummy product display
+        if (isDummyProductDisplay && dummyTimelineController != null)
+        {
+            // Start the second timeline for dummy product
+            dummyTimelineController.StartSecondCutscene();
+        }
         
         OnPanelHidden();
     }
@@ -290,6 +328,106 @@ public class ProductInformationManager : MonoBehaviour
         return collectedProductIDs.Contains(productID);
     }
     
+    // Show product info for dummy products (doesn't add to collection)
+    public void ShowProductInfoForDummy(string productID)
+    {
+        if (productDatabase == null)
+        {
+            Debug.LogError("No product database assigned!");
+            return;
+        }
+        
+        // Get product information
+        currentProductInfo = productDatabase.GetProductInfo(productID);
+        if (currentProductInfo == null)
+        {
+            // Try alternative ID if not found
+            string alternativeID = productID.Replace("_DUMMY", "").Replace("DUMMY_", "");
+            currentProductInfo = productDatabase.GetProductInfo(alternativeID);
+            
+            if (currentProductInfo == null)
+            {
+                Debug.LogError($"Product with ID '{productID}' not found in database!");
+                return;
+            }
+        }
+        
+        // Set dummy product flag
+        isDummyProductDisplay = true;
+        
+        // Update UI with product information (marked as dummy)
+        UpdateProductUI(currentProductInfo, true);
+        
+        // Spawn product for display
+        SpawnProductForDisplay(currentProductInfo.productPrefab);
+        
+        // Force all nearby monsters to return to patrol before showing panel
+        ForceAllMonstersToReturnToPatrol();
+        
+        // Show the panel
+        StartCoroutine(ShowPanelWithDelay());
+        
+        Debug.Log($"Showing dummy product info for: {productID} (not counted in collection)");
+    }
+    
+    // Show product info for regular products (adds to collection)
+    public void ShowProductInfo(string productID)
+    {
+        if (productDatabase == null)
+        {
+            Debug.LogError("No product database assigned!");
+            return;
+        }
+        
+        // Get product information
+        currentProductInfo = productDatabase.GetProductInfo(productID);
+        if (currentProductInfo == null)
+        {
+            Debug.LogError($"Product with ID '{productID}' not found in database!");
+            return;
+        }
+        
+        // Set dummy product flag to false
+        isDummyProductDisplay = false;
+        
+        // Add to session collection if not already collected
+        if (!collectedProductIDs.Contains(productID))
+        {
+            collectedProductIDs.Add(productID);
+            UpdateAllCollectionDisplays();
+            Debug.Log($"Added {productID} to session collection. Total: {collectedProductIDs.Count}");
+        }
+        
+        // Update UI with product information
+        UpdateProductUI(currentProductInfo, false);
+        
+        // Spawn product for display
+        SpawnProductForDisplay(currentProductInfo.productPrefab);
+        
+        // Force all nearby monsters to return to patrol before showing panel
+        ForceAllMonstersToReturnToPatrol();
+        
+        // Show the panel
+        StartCoroutine(ShowPanelWithDelay());
+    }
+    
+    // Force all monsters to return to patrol
+    public void ForceAllMonstersToReturnToPatrol()
+    {
+        // Find all monsters in the scene
+        MonsterObstacle[] allMonsters = FindObjectsOfType<MonsterObstacle>();
+        
+        foreach (MonsterObstacle monster in allMonsters)
+        {
+            if (monster != null && !monster.IsPaused())
+            {
+                monster.ForceReturnToPatrol();
+            }
+        }
+        
+        Debug.Log($"Forced {allMonsters.Length} monsters to return to patrol");
+    }
+    
     // Reset for new game session
     public void ResetForNewSession()
     {
@@ -345,6 +483,12 @@ public class ProductInformationManager : MonoBehaviour
         ShowProductInfo("COOKIES");
     }
     
+    [ContextMenu("Test Show Dummy Soda")]
+    public void TestShowDummySoda()
+    {
+        ShowProductInfoForDummy("SODA");
+    }
+    
     [ContextMenu("Reset Session Collection")]
     public void ResetCurrentSession()
     {
@@ -375,63 +519,6 @@ public class ProductInformationManager : MonoBehaviour
             Debug.Log($"Added test collection: {testID}");
         }
     }
-
-    // Add this method to the ProductInformationManager class:
-
-  public void ForceAllMonstersToReturnToPatrol()
-  {
-      // Find all monsters in the scene
-      MonsterObstacle[] allMonsters = FindObjectsOfType<MonsterObstacle>();
-      
-      foreach (MonsterObstacle monster in allMonsters)
-      {
-          if (monster != null && !monster.IsPaused())
-          {
-              monster.ForceReturnToPatrol();
-          }
-      }
-      
-      Debug.Log($"Forced {allMonsters.Length} monsters to return to patrol");
-  }
-
-    // Modify the ShowProductInfo method to call this:
-    public void ShowProductInfo(string productID)
-    {
-        if (productDatabase == null)
-        {
-            Debug.LogError("No product database assigned!");
-            return;
-        }
-        
-        // Get product information
-        currentProductInfo = productDatabase.GetProductInfo(productID);
-        if (currentProductInfo == null)
-        {
-            Debug.LogError($"Product with ID '{productID}' not found in database!");
-            return;
-        }
-        
-        // Add to session collection if not already collected
-        if (!collectedProductIDs.Contains(productID))
-        {
-            collectedProductIDs.Add(productID);
-            UpdateAllCollectionDisplays();
-            Debug.Log($"Added {productID} to session collection. Total: {collectedProductIDs.Count}");
-        }
-        
-        // Update UI with product information
-        UpdateProductUI(currentProductInfo);
-        
-        // Spawn product for display
-        SpawnProductForDisplay(currentProductInfo.productPrefab);
-        
-        // Force all nearby monsters to return to patrol before showing panel
-        ForceAllMonstersToReturnToPatrol();
-        
-        // Show the panel
-        StartCoroutine(ShowPanelWithDelay());
-    }
-
 }
 
 // Simple rotator script for displayed products
@@ -445,4 +532,3 @@ public class ProductDisplayRotator : MonoBehaviour
         transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
     }
 }
-

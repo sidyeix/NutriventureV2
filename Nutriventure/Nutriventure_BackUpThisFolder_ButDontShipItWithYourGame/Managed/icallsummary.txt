@@ -1811,9 +1811,11 @@ UnityEngine.Rigidbody::MoveRotation_Injected
 UnityEngine.Rigidbody::get_linearVelocity_Injected
 UnityEngine.Rigidbody::get_position_Injected
 UnityEngine.Rigidbody::get_rotation_Injected
+UnityEngine.Rigidbody::set_angularVelocity_Injected
 UnityEngine.Rigidbody::set_centerOfMass_Injected
 UnityEngine.Rigidbody::set_detectCollisions_Injected
 UnityEngine.Rigidbody::set_isKinematic_Injected
+UnityEngine.Rigidbody::set_linearVelocity_Injected
 UnityEngine.Rigidbody2D::get_mass_Injected
 UnityEngine.Rigidbody2D::get_linearVelocity_Injected
 UnityEngine.ScalableBufferManager::get_heightScaleFactor
