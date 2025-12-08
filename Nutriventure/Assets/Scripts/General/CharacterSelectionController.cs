@@ -170,6 +170,11 @@ public class CharacterSelectionController : MonoBehaviour
     {
         Debug.Log("Character button clicked - returning to character selection");
 
+        if (skinSelectionController != null && skinSelectionController.skinTimelineBridge != null)
+        {
+            skinSelectionController.skinTimelineBridge.StopTimelineAndReturn();
+        }
+
         if (characterSelectionAnimator != null)
         {
             characterSelectionAnimator.SetBool("isChanging", true);
@@ -225,6 +230,11 @@ public class CharacterSelectionController : MonoBehaviour
     public void OnBackButtonClicked()
     {
         Debug.Log("Back button clicked");
+
+        if (skinSelectionController != null && skinSelectionController.skinTimelineBridge != null)
+        {
+            skinSelectionController.skinTimelineBridge.StopTimelineAndReturn();
+        }
 
         if (characterSelectionAnimator != null)
         {
@@ -353,6 +363,12 @@ public class CharacterSelectionController : MonoBehaviour
     // CHANGED: Modified to accept characterID parameter
     public void OnSelectCharacterConfirmed(int characterID = -1)
     {
+
+        if (skinSelectionController != null && skinSelectionController.skinTimelineBridge != null)
+        {
+            skinSelectionController.skinTimelineBridge.StopTimelineAndReturn();
+        }
+
         int characterToSave = characterID != -1 ? characterID : (pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID);
 
         // Update last saved character
