@@ -2,6 +2,7 @@ using UnityEngine;
 using StarterAssets;
 using UnityEngine.InputSystem;
 using TMPro;
+using System.Collections.Generic; // Add this for List support
 
 public class KartTrigger : MonoBehaviour
 {
@@ -10,6 +11,9 @@ public class KartTrigger : MonoBehaviour
     public GameObject driveUI;
     public GameObject kartDrivingUI;
     public TextMeshProUGUI destinationText;
+    
+    [Header("Player UI Elements to Hide")]
+    public GameObject[] playerUIElementsToHide; // Drag UI elements here to hide them
     
     [Header("Kart References")]
     public KartController kartController;
@@ -22,6 +26,9 @@ public class KartTrigger : MonoBehaviour
     private GameObject player;
     private bool playerInside = false;
     private bool isDriving = false;
+    
+    // Store original active states
+    private Dictionary<GameObject, bool> playerUIElementStates = new Dictionary<GameObject, bool>();
 
     private void Start()
     {
@@ -31,12 +38,23 @@ public class KartTrigger : MonoBehaviour
             Debug.LogError("❌ No GameObject tagged 'Player' found!");
         }
 
+        // Store original active states of UI elements
+        if (playerUIElementsToHide != null)
+        {
+            foreach (GameObject uiElement in playerUIElementsToHide)
+            {
+                if (uiElement != null)
+                {
+                    playerUIElementStates[uiElement] = uiElement.activeSelf;
+                }
+            }
+        }
+
         // Ensure all UIs are in correct state at start
         playerUI?.SetActive(true);
         driveUI?.SetActive(false);
         kartDrivingUI?.SetActive(false);
 
-        
         // Set first destination if available
         if (destinations != null && destinations.Length > 0 && kartController != null)
         {
@@ -90,7 +108,9 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = true;
         
-        playerUI?.SetActive(false);
+        // Hide specific player UI elements
+        HidePlayerUIElements();
+        
         driveUI?.SetActive(false);
         kartDrivingUI?.SetActive(true);
 
@@ -120,7 +140,9 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = false;
 
-        playerUI?.SetActive(true);
+        // Restore player UI elements
+        ShowPlayerUIElements();
+        
         kartDrivingUI?.SetActive(false);
         
         if (playerInside)
@@ -159,7 +181,8 @@ public class KartTrigger : MonoBehaviour
     
     void CompleteAutoExit()
     {
-        playerUI?.SetActive(true);
+        // Restore player UI elements
+        ShowPlayerUIElements();
         
         if (playerInside)
         {
@@ -251,6 +274,54 @@ public class KartTrigger : MonoBehaviour
         {
             kartController.SetDestination(destinations[currentDestinationIndex]);
             UpdateDestinationUI();
+        }
+    }
+    
+    // Methods to hide/show specific UI elements
+    private void HidePlayerUIElements()
+    {
+        if (playerUIElementsToHide != null)
+        {
+            foreach (GameObject uiElement in playerUIElementsToHide)
+            {
+                if (uiElement != null)
+                {
+                    // Store current state if not already stored
+                    if (!playerUIElementStates.ContainsKey(uiElement))
+                    {
+                        playerUIElementStates[uiElement] = uiElement.activeSelf;
+                    }
+                    uiElement.SetActive(false);
+                }
+            }
+        }
+    }
+    
+    private void ShowPlayerUIElements()
+    {
+        if (playerUIElementsToHide != null)
+        {
+            foreach (GameObject uiElement in playerUIElementsToHide)
+            {
+                if (uiElement != null && playerUIElementStates.ContainsKey(uiElement))
+                {
+                    uiElement.SetActive(playerUIElementStates[uiElement]);
+                }
+            }
+        }
+    }
+    
+    // Method to manually hide/show specific element
+    public void SetPlayerUIElementActive(GameObject uiElement, bool active)
+    {
+        if (uiElement != null && playerUIElementsToHide != null && 
+            System.Array.Exists(playerUIElementsToHide, element => element == uiElement))
+        {
+            uiElement.SetActive(active);
+            if (playerUIElementStates.ContainsKey(uiElement))
+            {
+                playerUIElementStates[uiElement] = active;
+            }
         }
     }
 }
