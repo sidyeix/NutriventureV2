@@ -18,6 +18,46 @@ MonoBehaviour:
     characterPrefab: {fileID: 3836724281444035794, guid: aa3bd33e89167304689cc42b7c55df07, type: 3}
     characterIcon: {fileID: 21300000, guid: c87495e6d005b354a99e551f7094ac87, type: 3}
     characterAvatar: {fileID: 9000000, guid: 56746daa7cc4b174787a7962103a6d4c, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 11111
+      skinPrefab: {fileID: 3836724281444035794, guid: aa3bd33e89167304689cc42b7c55df07, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 56746daa7cc4b174787a7962103a6d4c, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: c87495e6d005b354a99e551f7094ac87, type: 3}
+      skinDescription: This is summerific vibes so when walking there's a summer
+        something
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: AJ Summer Vibes
+      skinID: 5120310
+      skinPrefab: {fileID: 3836724281444035794, guid: d06d7373ad718474981f6e245ed29d7b, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 4589ef32e76862f4bb21c971f83ad4e6, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 744fc73402976a14086a27bd3d5cd271, type: 2}
+      skinIcon: {fileID: 21300000, guid: aaba8b60f8b252d4ea527a0558eb14c0, type: 3}
+      skinDescription: This is summerific vibes so when walking there's a summer
+        something
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Snowmanny
+      skinID: 541552
+      skinPrefab: {fileID: 3836724281444035794, guid: 146209d7e27ec1440945388d919f4a1f, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 25752ad13c756614fa8b16975f893963, type: 3}
+      skinTimeline: {fileID: 11400000, guid: a63191087cd349d4c8b209e22097fafc, type: 2}
+      skinIcon: {fileID: 21300000, guid: aaba8b60f8b252d4ea527a0558eb14c0, type: 3}
+      skinDescription: This is summerific vibes so when walking there's a summer
+        something
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
@@ -27,12 +67,51 @@ MonoBehaviour:
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
     selectionSound: {fileID: 0}
-    characterDescription: 
+    characterDescription: 'asdasdsadasd
+
+'
   - characterName: Amy
     characterID: 1
     characterPrefab: {fileID: 7932040793359988603, guid: fd42a03c386aa1b468f4a721561c51f1, type: 3}
     characterIcon: {fileID: 21300000, guid: 3b07c356ea553524eaa0f773fadf5353, type: 3}
     characterAvatar: {fileID: 9000000, guid: 765b4ddf7bafd1948bdd4e9bd151136a, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 0
+      skinPrefab: {fileID: 7932040793359988603, guid: fd42a03c386aa1b468f4a721561c51f1, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 765b4ddf7bafd1948bdd4e9bd151136a, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: 3b07c356ea553524eaa0f773fadf5353, type: 3}
+      skinDescription: sgsagasgaga
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Summer Vibes Amy
+      skinID: 5555555
+      skinPrefab: {fileID: 7932040793359988603, guid: e21167a28dac3b14690717a2f2d98518, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 6d93944f7e5bbcf45bb039ba587c76bc, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 76d4981038e8a814d95b02dc9751e245, type: 2}
+      skinIcon: {fileID: 21300000, guid: 3b07c356ea553524eaa0f773fadf5353, type: 3}
+      skinDescription: asgagasgagagsa
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Allergy Warrior Amy
+      skinID: 5150215
+      skinPrefab: {fileID: 7932040793359988603, guid: 4eab9039b55d88042abea8655a27b377, type: 3}
+      skinAvatar: {fileID: 9000000, guid: ff89ebe76c826c347b48c396888c3986, type: 3}
+      skinTimeline: {fileID: 11400000, guid: c5d18c674d48498478d7444feef783e6, type: 2}
+      skinIcon: {fileID: 21300000, guid: 3b07c356ea553524eaa0f773fadf5353, type: 3}
+      skinDescription: asdgags
+      skinColor: {r: 1, g: 1, b: 1, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
@@ -42,12 +121,37 @@ MonoBehaviour:
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
     selectionSound: {fileID: 0}
-    characterDescription: 
+    characterDescription: asgsagasdggdsasdsa
   - characterName: Claire
     characterID: 2
     characterPrefab: {fileID: 2665255341719858796, guid: 50bd89ac555549d4fb43486a6a2cd09f, type: 3}
     characterIcon: {fileID: 21300000, guid: d331cefdebe87124abd9d4e41160e89a, type: 3}
     characterAvatar: {fileID: 9000000, guid: b638c7d53255d9a4fa961dcacc6edc42, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 11113543
+      skinPrefab: {fileID: 2665255341719858796, guid: 50bd89ac555549d4fb43486a6a2cd09f, type: 3}
+      skinAvatar: {fileID: 9000000, guid: b638c7d53255d9a4fa961dcacc6edc42, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: d331cefdebe87124abd9d4e41160e89a, type: 3}
+      skinDescription: asgasgasgfas
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: SummerVibes Claire
+      skinID: 254521421
+      skinPrefab: {fileID: 2665255341719858796, guid: 1702c16763c635e408759d29caadc9e2, type: 3}
+      skinAvatar: {fileID: 9000000, guid: b0123af2bad2b7e46907abec35eca1ef, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 097ed5f7aa1d3b6419ab74574536f78c, type: 2}
+      skinIcon: {fileID: 21300000, guid: d331cefdebe87124abd9d4e41160e89a, type: 3}
+      skinDescription: asgsagasgsagag
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
@@ -57,12 +161,49 @@ MonoBehaviour:
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
     selectionSound: {fileID: 0}
-    characterDescription: 
+    characterDescription: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   - characterName: Jackie
     characterID: 3
     characterPrefab: {fileID: 3764866139487181691, guid: a9054cc45871e0f42b122a71071c572a, type: 3}
     characterIcon: {fileID: 21300000, guid: 5be15720eadf4c848909b9cf3ff395bf, type: 3}
     characterAvatar: {fileID: 9000000, guid: a8d7151dc748ddd46a67267441cfa0a6, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 455845415
+      skinPrefab: {fileID: 3764866139487181691, guid: a9054cc45871e0f42b122a71071c572a, type: 3}
+      skinAvatar: {fileID: 9000000, guid: a8d7151dc748ddd46a67267441cfa0a6, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: 5be15720eadf4c848909b9cf3ff395bf, type: 3}
+      skinDescription: sgsagasgasgas
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Jackie Christmas Star
+      skinID: 454531
+      skinPrefab: {fileID: 3764866139487181691, guid: 671a18c7d509bf44f8f60eb3c30f988e, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 3248dabfad90dd64bb1aaa1bb821a6bb, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 03bb156233c19664795777e96d543dab, type: 2}
+      skinIcon: {fileID: 21300000, guid: 5be15720eadf4c848909b9cf3ff395bf, type: 3}
+      skinDescription: asgasda
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Preserva Jackie
+      skinID: 5456341
+      skinPrefab: {fileID: 3764866139487181691, guid: b619f1724e1d4964bbeca94855a7c195, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 08b353e6ca019ed4396d694cc932a7a2, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 97f574ee13308e94cb12ac39ad1e8e1a, type: 2}
+      skinIcon: {fileID: 21300000, guid: 5be15720eadf4c848909b9cf3ff395bf, type: 3}
+      skinDescription: asgasda
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
@@ -78,6 +219,7 @@ MonoBehaviour:
     characterPrefab: {fileID: 5479913008165066298, guid: 3a48cdaaabad3924fae64815c2e406ad, type: 3}
     characterIcon: {fileID: 21300000, guid: 4a206da3b2462814897e36933ac6c303, type: 3}
     characterAvatar: {fileID: 9000000, guid: c2b8bd739e3c1a746b9e5137f79ae97b, type: 3}
+    skins: []
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
@@ -93,6 +235,95 @@ MonoBehaviour:
     characterPrefab: {fileID: 7739073019032111348, guid: 97f7935764a60194c876987162ba5175, type: 3}
     characterIcon: {fileID: 21300000, guid: e738b537937d5e94cb463352d4028110, type: 3}
     characterAvatar: {fileID: 9000000, guid: 33c60ecb28e316f49860ebfbf3adcc76, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 1231231
+      skinPrefab: {fileID: 7739073019032111348, guid: 97f7935764a60194c876987162ba5175, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 33c60ecb28e316f49860ebfbf3adcc76, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: e738b537937d5e94cb463352d4028110, type: 3}
+      skinDescription: asgsagasg
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Summer Vibes Michelle
+      skinID: 120231564
+      skinPrefab: {fileID: 7739073019032111348, guid: 97bc14c0a1fa63446b06ed72ee9ef3da, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 5197da393b4d93a4eb24c6e235ba06cb, type: 3}
+      skinTimeline: {fileID: 11400000, guid: c2440e1ff2efa07418351933b1c3d0d5, type: 2}
+      skinIcon: {fileID: 21300000, guid: e738b537937d5e94cb463352d4028110, type: 3}
+      skinDescription: asgassagsag
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Sweetie Mich
+      skinID: 213123123
+      skinPrefab: {fileID: 7739073019032111348, guid: c849fc1aa8fc94b4fbf63c7b6f1c6fd8, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 678ffd1e39a30bf44a3c5deb38346db8, type: 3}
+      skinTimeline: {fileID: 11400000, guid: 436bbb1242471f240b6137dc67ebc224, type: 2}
+      skinIcon: {fileID: 21300000, guid: e738b537937d5e94cb463352d4028110, type: 3}
+      skinDescription: gsagasgad
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    speedMultiplier: 0
+    jumpForceMultiplier: 0
+    healthMultiplier: 0
+    energyMultiplier: 0
+    unlockedByDefault: 1
+    coinsToUnlock: 0
+    levelRequirement: 0
+    characterColor: {r: 0, g: 0, b: 0, a: 0}
+    selectionSound: {fileID: 0}
+    characterDescription: 
+  - characterName: Albert
+    characterID: 6
+    characterPrefab: {fileID: 7932040793359988603, guid: 5301a60e7df1c0a4d92f24003cc02a7a, type: 3}
+    characterIcon: {fileID: 21300000, guid: e738b537937d5e94cb463352d4028110, type: 3}
+    characterAvatar: {fileID: 9000000, guid: 3808111bbd48d574e9521c352862a0cb, type: 3}
+    skins:
+    - skinName: Normal Skin
+      skinID: 97456156
+      skinPrefab: {fileID: 7932040793359988603, guid: 5301a60e7df1c0a4d92f24003cc02a7a, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 3808111bbd48d574e9521c352862a0cb, type: 3}
+      skinTimeline: {fileID: 0}
+      skinIcon: {fileID: 21300000, guid: 3b07c356ea553524eaa0f773fadf5353, type: 3}
+      skinDescription: sfsafas
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Albert the Elf
+      skinID: 546156132
+      skinPrefab: {fileID: 7932040793359988603, guid: e234d3023b48ca94682fe38360354a5c, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 89a082a842edaef48a9e67529b3fb256, type: 3}
+      skinTimeline: {fileID: 11400000, guid: d9fadd2a9a70ada4196d7c42fd774345, type: 2}
+      skinIcon: {fileID: 21300000, guid: c87495e6d005b354a99e551f7094ac87, type: 3}
+      skinDescription: asgadgadasdga
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
+    - skinName: Mang Albert
+      skinID: 54541615
+      skinPrefab: {fileID: 7932040793359988603, guid: 383f1d205de0fbd42a0c29fd16d95771, type: 3}
+      skinAvatar: {fileID: 9000000, guid: 762ff321c98b2f74f90b7598a19ab32e, type: 3}
+      skinTimeline: {fileID: 11400000, guid: abea01cf1de8ad5459b4d48b9d7f8996, type: 2}
+      skinIcon: {fileID: 21300000, guid: c87495e6d005b354a99e551f7094ac87, type: 3}
+      skinDescription: asgadgadasdgaasfasfF
+      skinColor: {r: 0, g: 0, b: 0, a: 0}
+      selectionSound: {fileID: 0}
+      unlockedByDefault: 1
+      coinsToUnlock: 0
+      levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
