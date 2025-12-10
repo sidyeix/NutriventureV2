@@ -51,8 +51,7 @@ public class ProductInformationManager : MonoBehaviour
     private List<string> collectedProductIDs = new List<string>();
     private GameObject currentDisplayedProduct;
     private ProductData.ProductInfo currentProductInfo;
-    private K2_DummypTimeline dummyTimelineController;
-
+    private K2_DummypTimeline timelineController;
     
     // Track if this is a dummy product display
     private bool isDummyProductDisplay = false;
@@ -65,8 +64,16 @@ public class ProductInformationManager : MonoBehaviour
         if (infoPanel != null)
             infoPanel.SetActive(false);
 
-        // Get reference to dummy timeline controller
-        dummyTimelineController = FindObjectOfType<K2_DummypTimeline>();
+        // Get reference to timeline controller
+        timelineController = FindObjectOfType<K2_DummypTimeline>();
+        if (timelineController == null)
+        {
+            Debug.LogWarning("K2_DummypTimeline controller not found!");
+        }
+        else
+        {
+            Debug.Log("Found K2_DummypTimeline controller");
+        }
             
         // Reset collection at start of each session
         ResetSessionCollection();
@@ -185,7 +192,7 @@ public class ProductInformationManager : MonoBehaviour
         }
     }
     
-        public void HideProductInfo()
+    public void HideProductInfo()
     {
         if (panelAnimator != null)
         {
@@ -198,10 +205,10 @@ public class ProductInformationManager : MonoBehaviour
                 infoPanel.SetActive(false);
             
             // Check if this was a dummy product display
-            if (isDummyProductDisplay && dummyTimelineController != null)
+            if (isDummyProductDisplay && timelineController != null)
             {
                 // Start the second timeline for dummy product
-                dummyTimelineController.StartSecondCutscene();
+                timelineController.StartSecondCutscene();
             }
             
             OnPanelHidden();
@@ -214,11 +221,27 @@ public class ProductInformationManager : MonoBehaviour
             currentDisplayedProduct = null;
         }
         
+        // Check if this was the last product collection (for third cutscene)
+        if (!isDummyProductDisplay && productDatabase != null && collectedProductIDs.Count >= productDatabase.GetTotalCount())
+        {
+            Debug.Log("=== LAST PRODUCT COLLECTED ===");
+            Debug.Log($"Collection complete: {collectedProductIDs.Count}/{productDatabase.GetTotalCount()}");
+            
+            if (timelineController != null)
+            {
+                Debug.Log("Notifying timeline controller about last product collection...");
+                timelineController.OnLastProductCollected();
+            }
+            else
+            {
+                Debug.LogError("Timeline controller not found!");
+            }
+        }
+        
         // Reset dummy product flag
         isDummyProductDisplay = false;
     }
     
-// Also update the HidePanelAfterAnimation coroutine
     private IEnumerator HidePanelAfterAnimation()
     {
         // Wait for animation to complete
@@ -228,10 +251,10 @@ public class ProductInformationManager : MonoBehaviour
             infoPanel.SetActive(false);
         
         // Check if this was a dummy product display
-        if (isDummyProductDisplay && dummyTimelineController != null)
+        if (isDummyProductDisplay && timelineController != null)
         {
             // Start the second timeline for dummy product
-            dummyTimelineController.StartSecondCutscene();
+            timelineController.StartSecondCutscene();
         }
         
         OnPanelHidden();
@@ -396,6 +419,27 @@ public class ProductInformationManager : MonoBehaviour
             collectedProductIDs.Add(productID);
             UpdateAllCollectionDisplays();
             Debug.Log($"Added {productID} to session collection. Total: {collectedProductIDs.Count}");
+            
+            // Check if this was the last product
+            if (IsAllCollected())
+            {
+                Debug.Log("=== ALL 8 PRODUCTS COLLECTED ===");
+                Debug.Log("All products collected! This will trigger third cutscene after panel closes.");
+                
+                // Notify the timeline controller that all products are collected
+                if (timelineController != null)
+                {
+                    timelineController.OnLastProductCollected();
+                }
+                else
+                {
+                    Debug.LogError("K2_DummypTimeline controller not found!");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log($"Product {productID} already collected. Not adding to collection.");
         }
         
         // Update UI with product information
@@ -505,6 +549,13 @@ public class ProductInformationManager : MonoBehaviour
         Debug.Log($"All Collected: {IsAllCollected()}");
         Debug.Log($"In-Game Counter Visible: {showInGameCounter}");
         Debug.Log($"In-Game Text Assigned: {inGameCollectionText != null}");
+        
+        // Check timeline controller
+        if (timelineController == null)
+        {
+            timelineController = FindObjectOfType<K2_DummypTimeline>();
+        }
+        Debug.Log($"Timeline Controller Found: {timelineController != null}");
     }
     
     [ContextMenu("Test Add Collection")]
@@ -519,16 +570,17 @@ public class ProductInformationManager : MonoBehaviour
             Debug.Log($"Added test collection: {testID}");
         }
     }
-}
-
-// Simple rotator script for displayed products
-public class ProductDisplayRotator : MonoBehaviour
-{
-    public float rotationSpeed = 30f;
-    public Vector3 rotationAxis = Vector3.up;
     
-    void Update()
+    // Simple rotator script for displayed products
+    public class ProductDisplayRotator : MonoBehaviour
     {
-        transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
+        public float rotationSpeed = 30f;
+        public Vector3 rotationAxis = Vector3.up;
+        
+        void Update()
+        {
+            transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
+        }
     }
+    
 }

@@ -216,7 +216,7 @@ public class GameplayProgression : MonoBehaviour
         if (coinsText != null)
         {
             int currentCoins = CoinCollectionSystem.GetCurrentCoins();
-            coinsText.text = $"Coins: {currentCoins}";
+            coinsText.text = $"{currentCoins}";
         }
     }
     

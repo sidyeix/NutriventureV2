@@ -63,14 +63,19 @@ public class CollectProducts : MonoBehaviour
             playerMovementScript = GetComponent<StarterAssets.ThirdPersonController>();
         }
         
-        // Get or add AudioSource component
+        // Get or add AudioSource component - FIXED LOGIC
         audioSource = GetComponent<AudioSource>();
-        if (audioSource != null)
+        if (audioSource == null)  // FIXED: Changed from != to ==
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.spatialBlend = 1f; // 3D sound
             audioSource.rolloffMode = AudioRolloffMode.Linear;
             audioSource.maxDistance = 10f;
+            Debug.Log("AudioSource component added");
+        }
+        else
+        {
+            Debug.Log("AudioSource component found");
         }
         
         // Convert parameter name to hash for better performance
@@ -126,6 +131,26 @@ public class CollectProducts : MonoBehaviour
         
         // Subscribe to panel events
         SubscribeToPanelEvents();
+        
+        // Test audio source
+        TestAudioSource();
+    }
+    
+    void TestAudioSource()
+    {
+        if (audioSource == null)
+        {
+            Debug.LogError("AudioSource is null! Sound will not play.");
+        }
+        else
+        {
+            Debug.Log($"AudioSource is ready. PlayOnAwake: {audioSource.playOnAwake}, IsPlaying: {audioSource.isPlaying}");
+        }
+        
+        if (pickupSound == null)
+        {
+            Debug.LogWarning("Pickup sound clip is not assigned!");
+        }
     }
     
     void SubscribeToPanelEvents()
@@ -384,9 +409,13 @@ public class CollectProducts : MonoBehaviour
         Debug.Log($"Pickup animation started for: {currentNearbyProduct.name}");
         
         // Play pickup sound with delay to align with animation
-        if (playSoundOnPickup && pickupSound != null)
+        if (playSoundOnPickup && pickupSound != null && audioSource != null)
         {
             StartCoroutine(PlayPickupSoundWithDelay());
+        }
+        else
+        {
+            Debug.LogWarning($"Cannot play pickup sound. PlaySoundOnPickup: {playSoundOnPickup}, PickupSound: {pickupSound != null}, AudioSource: {audioSource != null}");
         }
         
         // Wait for animation to complete
@@ -403,7 +432,11 @@ public class CollectProducts : MonoBehaviour
         if (audioSource != null && pickupSound != null)
         {
             audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
-            Debug.Log("Pickup sound played");
+            Debug.Log($"Pickup sound played: {pickupSound.name}, Volume: {pickupSoundVolume}");
+        }
+        else
+        {
+            Debug.LogError("Cannot play pickup sound - audio source or pickup sound is null!");
         }
     }
     
@@ -849,7 +882,7 @@ public class CollectProducts : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Cannot test pickup sound - audio source or pickup sound not set");
+            Debug.LogWarning($"Cannot test pickup sound - AudioSource: {audioSource != null}, PickupSound: {pickupSound != null}");
         }
     }
 }
