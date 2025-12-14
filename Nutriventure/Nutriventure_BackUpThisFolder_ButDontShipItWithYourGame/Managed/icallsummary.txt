@@ -385,6 +385,7 @@ UnityEngine.AudioListener::GetSpectrumDataHelper_Injected
 UnityEngine.AudioSettings::StartAudioOutput
 UnityEngine.AudioSettings::StopAudioOutput
 UnityEngine.AudioSource::get_isPlaying_Injected
+UnityEngine.AudioSource::get_playOnAwake_Injected
 UnityEngine.AudioSource::get_resource_Injected
 UnityEngine.AudioSource::GetSpectrumDataHelper_Injected
 UnityEngine.AudioSource::PlayHelper_Injected
@@ -666,6 +667,7 @@ UnityEngine.CullingGroup::set_enabled_Injected
 UnityEngine.CullingGroup::set_targetCamera_Injected
 UnityEngine.Cursor::SetCursor_Injected
 UnityEngine.Cursor::set_lockState
+UnityEngine.Cursor::set_visible
 UnityEngine.Cursor::get_lockState
 UnityEngine.Debug::get_isDebugBuild
 UnityEngine.Debug::ExtractStackTraceNoAlloc_Injected

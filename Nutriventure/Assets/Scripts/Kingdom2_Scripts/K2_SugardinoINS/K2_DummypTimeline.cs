@@ -5,6 +5,7 @@ using StarterAssets;
 using UnityEngine.InputSystem;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class K2_DummypTimeline : MonoBehaviour
 {
@@ -31,11 +32,17 @@ public class K2_DummypTimeline : MonoBehaviour
     [SerializeField] private GameObject dialogueCanvas; // Dialogue box canvas for second timeline
     [SerializeField] private GameObject dialogueCanvas3; // Dialogue box canvas for third timeline
     
+    [Header("Skip Button Settings")]
+    [SerializeField] private Button skipButton; // Skip button for cutscenes
+    [SerializeField] private bool enableSkipButton = true; // Whether skip button is enabled
+    [SerializeField] private float skipButtonDelay = 2f; // Delay before skip button appears
+    
     [Header("Events")]
     public UnityEvent onSecondCutsceneStart;
     public UnityEvent onSecondCutsceneEnd;
     public UnityEvent onThirdCutsceneStart;
     public UnityEvent onThirdCutsceneEnd;
+    public UnityEvent onCutsceneSkipped; // Event fired when cutscene is skipped
     
     // Simple state tracking
     private bool isSecondCutscenePlaying = false;
@@ -45,6 +52,10 @@ public class K2_DummypTimeline : MonoBehaviour
     // Monster tracking
     private List<MonsterObstacle> allMonsters = new List<MonsterObstacle>();
     private List<bool> monsterPauseStates = new List<bool>(); // Track which monsters were already paused
+    
+    // Skip button variables
+    private float skipButtonTimer = 0f;
+    private bool skipButtonReady = false;
     
     void Start()
     {
@@ -60,6 +71,28 @@ public class K2_DummypTimeline : MonoBehaviour
         if (productInfoManager != null && productInfoManager.IsAllCollected() && !isSecondCutscenePlaying && !isThirdCutscenePlaying && !waitingForFinalPanelConfirm)
         {
             Debug.Log("DEBUG: All products collected but not waiting for panel. Checking conditions...");
+        }
+
+            // ENFORCE: Gameplay UI & Audio must stay OFF during any cutscene
+        if (isSecondCutscenePlaying || isThirdCutscenePlaying)
+        {
+            if (gameUICanvas != null && gameUICanvas.activeSelf)
+                gameUICanvas.SetActive(false);
+
+            if (audioHandler != null && audioHandler.activeSelf)
+                audioHandler.SetActive(false);
+        }
+        
+        // Handle skip button timer
+        if ((isSecondCutscenePlaying || isThirdCutscenePlaying) && enableSkipButton && !skipButtonReady)
+        {
+            skipButtonTimer += Time.unscaledDeltaTime; // Use unscaled time since game might be paused
+            
+            if (skipButtonTimer >= skipButtonDelay)
+            {
+                skipButtonReady = true;
+                ShowSkipButton();
+            }
         }
     }
     
@@ -120,6 +153,18 @@ public class K2_DummypTimeline : MonoBehaviour
         else
         {
             Debug.LogError("PlayableDirector for cutscene3 (NPC_Timeline3) not assigned!");
+        }
+        
+        // Initialize skip button
+        if (skipButton != null)
+        {
+            skipButton.onClick.AddListener(OnSkipButtonClicked);
+            skipButton.gameObject.SetActive(false); // Hidden by default
+            Debug.Log("Skip button initialized");
+        }
+        else
+        {
+            Debug.LogWarning("Skip button not assigned in Inspector!");
         }
         
         // Disable dialogue canvas
@@ -246,6 +291,21 @@ public class K2_DummypTimeline : MonoBehaviour
         // Unsubscribe from panel events
         ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
         Debug.Log("Unsubscribed from ProductInformationManager.OnProductPanelHidden event");
+        
+        // Remove skip button listener
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveListener(OnSkipButtonClicked);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // Remove skip button listener
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveListener(OnSkipButtonClicked);
+        }
     }
     
     // Find all monsters in the scene
@@ -409,6 +469,9 @@ public class K2_DummypTimeline : MonoBehaviour
         
         isSecondCutscenePlaying = true;
         
+        // Reset skip button state
+        ResetSkipButtonState();
+        
         // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
         
@@ -463,6 +526,9 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         isThirdCutscenePlaying = true;
+        
+        // Reset skip button state
+        ResetSkipButtonState();
         
         // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
@@ -699,8 +765,11 @@ public class K2_DummypTimeline : MonoBehaviour
     void OnSecondCutscenePlayed(PlayableDirector director)
     {
         Debug.Log("Second timeline started playing");
-        
-        // Show dialogue canvas when timeline starts
+
+        // FORCE UI & AUDIO OFF (in case something re-enabled them)
+        if (gameUICanvas != null) gameUICanvas.SetActive(false);
+        if (audioHandler != null) audioHandler.SetActive(false);
+
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(true);
@@ -711,8 +780,11 @@ public class K2_DummypTimeline : MonoBehaviour
     void OnThirdCutscenePlayed(PlayableDirector director)
     {
         Debug.Log("Third timeline started playing");
-        
-        // Show dialogue canvas when timeline starts
+
+        // FORCE UI & AUDIO OFF (THIS FIXES THE MID-CUTSCENE POP)
+        if (gameUICanvas != null) gameUICanvas.SetActive(false);
+        if (audioHandler != null) audioHandler.SetActive(false);
+
         if (dialogueCanvas3 != null)
         {
             dialogueCanvas3.SetActive(true);
@@ -726,7 +798,7 @@ public class K2_DummypTimeline : MonoBehaviour
         
         if (isSecondCutscenePlaying)
         {
-            FinishSecondCutscene();
+            FinishSecondCutscene(false); // false = not skipped
         }
     }
     
@@ -736,13 +808,16 @@ public class K2_DummypTimeline : MonoBehaviour
         
         if (isThirdCutscenePlaying)
         {
-            FinishThirdCutscene();
+            FinishThirdCutscene(false); // false = not skipped
         }
     }
     
-    void FinishSecondCutscene()
+    void FinishSecondCutscene(bool wasSkipped = false)
     {
-        Debug.Log("=== FINISHING SECOND CUTSCENE ===");
+        Debug.Log($"=== FINISHING SECOND CUTSCENE (Skipped: {wasSkipped}) ===");
+        
+        // Hide skip button
+        HideSkipButton();
         
         // Hide dialogue canvas
         if (dialogueCanvas != null)
@@ -781,15 +856,24 @@ public class K2_DummypTimeline : MonoBehaviour
         // Update state
         isSecondCutscenePlaying = false;
         
+        // If skipped, invoke skipped event
+        if (wasSkipped)
+        {
+            onCutsceneSkipped?.Invoke();
+        }
+        
         // Invoke end event
         onSecondCutsceneEnd?.Invoke();
         
-        Debug.Log("Second cutscene finished successfully");
+        Debug.Log($"Second cutscene {(wasSkipped ? "skipped" : "finished")} successfully");
     }
     
-    void FinishThirdCutscene()
+    void FinishThirdCutscene(bool wasSkipped = false)
     {
-        Debug.Log("=== FINISHING THIRD CUTSCENE ===");
+        Debug.Log($"=== FINISHING THIRD CUTSCENE (Skipped: {wasSkipped}) ===");
+        
+        // Hide skip button
+        HideSkipButton();
         
         // Hide dialogue canvas
         if (dialogueCanvas3 != null)
@@ -828,10 +912,16 @@ public class K2_DummypTimeline : MonoBehaviour
         // Update state
         isThirdCutscenePlaying = false;
         
+        // If skipped, invoke skipped event
+        if (wasSkipped)
+        {
+            onCutsceneSkipped?.Invoke();
+        }
+        
         // Invoke end event
         onThirdCutsceneEnd?.Invoke();
         
-        Debug.Log("Third cutscene finished successfully");
+        Debug.Log($"Third cutscene {(wasSkipped ? "skipped" : "finished")} successfully");
     }
     
     void UnfreezePlayer()
@@ -873,6 +963,145 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log("Player unfrozen successfully");
     }
     
+    // Skip button click handler
+    private void OnSkipButtonClicked()
+    {
+        if (isSecondCutscenePlaying || isThirdCutscenePlaying)
+        {
+            SkipCurrentCutscene();
+        }
+    }
+    
+    // Show skip button with delay
+    private void ShowSkipButton()
+    {
+        if (skipButton != null && enableSkipButton)
+        {
+            skipButton.gameObject.SetActive(true);
+            Debug.Log("Skip button activated");
+        }
+    }
+    
+    // Hide skip button
+    private void HideSkipButton()
+    {
+        if (skipButton != null)
+        {
+            skipButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Reset skip button state
+    private void ResetSkipButtonState()
+    {
+        skipButtonTimer = 0f;
+        skipButtonReady = false;
+        
+        // Hide skip button
+        HideSkipButton();
+    }
+    
+    // Skip the current cutscene
+    public void SkipCurrentCutscene()
+    {
+        if (isSecondCutscenePlaying && npcCutscene2Director != null)
+        {
+            Debug.Log("Skipping second cutscene");
+            
+            // FAST FORWARD TO END: Set timeline to the end before stopping
+            double currentTime = npcCutscene2Director.time;
+            double duration = npcCutscene2Director.duration;
+            
+            if (duration > 0)
+            {
+                // Fast forward to the end
+                npcCutscene2Director.time = duration;
+                
+                // Evaluate the timeline at the end time
+                npcCutscene2Director.Evaluate();
+                
+                // Trigger all bindings that should happen at the end
+                TriggerAllBindings(npcCutscene2Director);
+            }
+            
+            // Stop the director
+            npcCutscene2Director.Stop();
+            
+            // Manually call the finish function
+            FinishSecondCutscene(true);
+        }
+        else if (isThirdCutscenePlaying && npcTimeline3Director != null)
+        {
+            Debug.Log("Skipping third cutscene");
+            
+            // FAST FORWARD TO END: Set timeline to the end before stopping
+            double currentTime = npcTimeline3Director.time;
+            double duration = npcTimeline3Director.duration;
+            
+            if (duration > 0)
+            {
+                // Fast forward to the end
+                npcTimeline3Director.time = duration;
+                
+                // Evaluate the timeline at the end time
+                npcTimeline3Director.Evaluate();
+                
+                // Trigger all bindings that should happen at the end
+                TriggerAllBindings(npcTimeline3Director);
+            }
+            
+            // Stop the director
+            npcTimeline3Director.Stop();
+            
+            // Manually call the finish function
+            FinishThirdCutscene(true);
+        }
+    }
+    
+    // NEW: Trigger all timeline bindings to ensure end-of-timeline events fire
+    private void TriggerAllBindings(PlayableDirector director)
+    {
+        if (director == null) return;
+        
+        // Get all PlayableBindings
+        var bindings = director.playableAsset.outputs;
+        
+        foreach (var binding in bindings)
+        {
+            try
+            {
+                // Get the bound object
+                var boundObject = director.GetGenericBinding(binding.sourceObject);
+                
+                if (boundObject != null)
+                {
+                    // If it's an animation track, force it to evaluate at the end
+                    if (binding.outputTargetType == typeof(Animator))
+                    {
+                        Animator animator = boundObject as Animator;
+                        if (animator != null)
+                        {
+                            // Ensure the animator is updated
+                            animator.Update(0f);
+                        }
+                    }
+                    
+                    // You can add more specific handling for other track types here
+                    // For example, Activation tracks, Audio tracks, etc.
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Error evaluating binding: {e.Message}");
+            }
+        }
+        
+        // Force evaluation of all playables
+        director.Evaluate();
+        
+        Debug.Log("Timeline bindings triggered for skip");
+    }
+    
     // Public method to manually start second cutscene from other scripts
     public void ManualStartSecondCutscene()
     {
@@ -891,27 +1120,15 @@ public class K2_DummypTimeline : MonoBehaviour
         return isSecondCutscenePlaying || isThirdCutscenePlaying;
     }
     
-    // Skip the current cutscene
-    public void SkipCurrentCutscene()
-    {
-        if (isSecondCutscenePlaying && npcCutscene2Director != null)
-        {
-            Debug.Log("Skipping second cutscene");
-            npcCutscene2Director.Stop();
-        }
-        else if (isThirdCutscenePlaying && npcTimeline3Director != null)
-        {
-            Debug.Log("Skipping third cutscene");
-            npcTimeline3Director.Stop();
-        }
-    }
-    
     // Reset all cutscenes
     public void ResetAllCutscenes()
     {
         isSecondCutscenePlaying = false;
         isThirdCutscenePlaying = false;
         waitingForFinalPanelConfirm = false;
+        
+        // Reset skip button state
+        ResetSkipButtonState();
         
         // Hide dialogue canvases
         if (dialogueCanvas != null)
@@ -963,6 +1180,39 @@ public class K2_DummypTimeline : MonoBehaviour
             }
             waitingForFinalPanelConfirm = false;
         }
+    }
+    
+    // Enable/disable skip button functionality
+    public void SetSkipButtonEnabled(bool enabled)
+    {
+        enableSkipButton = enabled;
+        
+        if (!enabled && skipButton != null)
+        {
+            HideSkipButton();
+        }
+        
+        Debug.Log($"Skip button functionality {(enabled ? "enabled" : "disabled")}");
+    }
+    
+    // Set skip button delay
+    public void SetSkipButtonDelay(float delay)
+    {
+        skipButtonDelay = Mathf.Max(0f, delay);
+        Debug.Log($"Skip button delay set to: {skipButtonDelay} seconds");
+    }
+    
+    // Check if skip button is ready/visible
+    public bool IsSkipButtonReady()
+    {
+        return skipButtonReady;
+    }
+    
+    // Get remaining time until skip button appears
+    public float GetSkipButtonTimeRemaining()
+    {
+        if (skipButtonReady) return 0f;
+        return Mathf.Max(0f, skipButtonDelay - skipButtonTimer);
     }
     
     // Debug method to test monster control

@@ -48,7 +48,7 @@ public class ProductInformationManager : MonoBehaviour
     public static event Action OnProductPanelHidden;
     
     // Session-based collection tracking (only counts regular products)
-    private List<string> collectedProductIDs = new List<string>();
+    public List<string> collectedProductIDs = new List<string>();
     private GameObject currentDisplayedProduct;
     private ProductData.ProductInfo currentProductInfo;
     private K2_DummypTimeline timelineController;
