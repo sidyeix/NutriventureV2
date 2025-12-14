@@ -4,19 +4,19 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using Cinemachine; // Add this namespace
+using Cinemachine;
 
 public class MainMenu_Manager : MonoBehaviour
 {
     [Header("UI Panels")]
     public GameObject SettingsPanel;
     public GameObject ResetConfirmationPanel;
-    public GameObject menuCanvas; // Assign your main menu UI Canvas here
-    public GameObject joystickCanvas; // Assign your joystick UI Canvas here
+    public GameObject menuCanvas;
+    public GameObject joystickCanvas;
 
     [Header("Camera References")]
-    public CinemachineVirtualCamera menuVirtualCamera; // Virtual camera for menu view
-    public CinemachineVirtualCamera playerFollowCamera; // Virtual camera that follows player
+    public CinemachineVirtualCamera menuVirtualCamera;
+    public CinemachineVirtualCamera playerFollowCamera;
 
     [Header("Settings UI Elements")]
     public Slider musicVolumeSlider;
@@ -31,14 +31,20 @@ public class MainMenu_Manager : MonoBehaviour
     public List<Button> characterButtons;
 
     [Header("Character Visual Swapper")]
-    public CharacterVisualSwapper characterVisualSwapper; // Assign this in inspector
+    public CharacterVisualSwapper characterVisualSwapper;
 
     [Header("Character Selection Settings")]
     public Color selectedColor = Color.yellow;
     public Color normalColor = Color.white;
 
     [Header("Input Management")]
-    public InputManager inputManager; // Assign this in inspector
+    public InputManager inputManager;
+
+    [Header("Character Selection Animator")]
+    public Animator characterSelectionAnimator;
+
+    [Header("Character Rotation Controller")]
+    public CharacterRotationController characterRotationController;
 
     // Local character data - temporary until saved
     private GameObject currentSpawnedCharacter;
@@ -49,28 +55,23 @@ public class MainMenu_Manager : MonoBehaviour
         SettingsPanel.SetActive(false);
         ResetConfirmationPanel.SetActive(false);
 
-        // Ensure joystick canvas is disabled at start
         if (joystickCanvas != null)
         {
             joystickCanvas.SetActive(false);
         }
 
-        // Ensure menu canvas is enabled at start
         if (menuCanvas != null)
         {
             menuCanvas.SetActive(true);
         }
 
-        // Set up cameras - menu camera should be active at start
         SetupCameras();
 
-        // CRITICAL: Ensure animator is enabled before disabling input
         if (characterVisualSwapper != null)
         {
             characterVisualSwapper.EnsureAnimatorEnabled();
         }
 
-        // Disable player input immediately (this should only disable movement/input scripts, not animator)
         if (inputManager != null)
         {
             inputManager.DisablePlayerInput();
@@ -80,16 +81,14 @@ public class MainMenu_Manager : MonoBehaviour
             Debug.LogWarning("InputManager not assigned - player input might interfere with UI");
         }
 
-        // Wait for GameDataManager to be ready, then initialize
         StartCoroutine(InitializeAfterFrame());
     }
 
     private void SetupCameras()
     {
-        // Ensure menu camera is active and player camera is inactive at start
         if (menuVirtualCamera != null)
         {
-            menuVirtualCamera.Priority = 10; // High priority
+            menuVirtualCamera.Priority = 10;
         }
         else
         {
@@ -98,7 +97,7 @@ public class MainMenu_Manager : MonoBehaviour
 
         if (playerFollowCamera != null)
         {
-            playerFollowCamera.Priority = 0; // Low priority
+            playerFollowCamera.Priority = 0;
         }
         else
         {
@@ -110,10 +109,8 @@ public class MainMenu_Manager : MonoBehaviour
 
     private IEnumerator InitializeAfterFrame()
     {
-        // Wait for GameDataManager to initialize
         yield return null;
 
-        // If GameDataManager exists, load the saved character, otherwise use default
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             currentSelectedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
@@ -126,12 +123,10 @@ public class MainMenu_Manager : MonoBehaviour
     // START BUTTON - This is where we enable input and switch to game mode
     public void OnStartButtonClicked()
     {
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
         Debug.Log($"Start button clicked - Saving character ID {currentSelectedCharacterID} to GameDataManager");
 
-        // Save the currently selected character to GameDataManager
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             GameDataManager.Instance.CurrentGameData.selectedCharacterID = currentSelectedCharacterID;
@@ -157,6 +152,20 @@ public class MainMenu_Manager : MonoBehaviour
         {
             characterVisualSwapper.StopLookAroundAnimation();
             Debug.Log("LookAround animation stopped for gameplay");
+        }
+
+        // Disable CharacterSelection animator when starting the game
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.enabled = false;
+            Debug.Log("CharacterSelection animator disabled for gameplay");
+        }
+
+        // DISABLE CharacterRotationController to give control back to Starter Assets
+        if (characterRotationController != null)
+        {
+            characterRotationController.enabled = false;
+            Debug.Log("CharacterRotationController disabled - Starter Assets now controls rotation");
         }
 
         // ENABLE player input
@@ -203,6 +212,21 @@ public class MainMenu_Manager : MonoBehaviour
         // Switch back to menu camera
         SwitchToMenuCamera();
 
+        // Re-enable CharacterSelection animator when returning to menu
+        if (characterSelectionAnimator != null)
+        {
+            characterSelectionAnimator.enabled = true;
+            Debug.Log("CharacterSelection animator re-enabled for menu");
+        }
+
+        // RE-ENABLE CharacterRotationController for menu character rotation
+        if (characterRotationController != null)
+        {
+            characterRotationController.enabled = true;
+            characterRotationController.ResetRotation();
+            Debug.Log("CharacterRotationController re-enabled for menu rotation");
+        }
+
         // Disable player input
         if (inputManager != null)
         {
@@ -237,7 +261,7 @@ public class MainMenu_Manager : MonoBehaviour
     {
         if (playerFollowCamera != null)
         {
-            playerFollowCamera.Priority = 10; // High priority
+            playerFollowCamera.Priority = 10;
             Debug.Log("Switched to Player Follow Camera");
         }
         else
@@ -247,7 +271,7 @@ public class MainMenu_Manager : MonoBehaviour
 
         if (menuVirtualCamera != null)
         {
-            menuVirtualCamera.Priority = 0; // Low priority
+            menuVirtualCamera.Priority = 0;
         }
     }
 
@@ -255,7 +279,7 @@ public class MainMenu_Manager : MonoBehaviour
     {
         if (menuVirtualCamera != null)
         {
-            menuVirtualCamera.Priority = 10; // High priority
+            menuVirtualCamera.Priority = 10;
             Debug.Log("Switched to Menu Camera");
         }
         else
@@ -265,7 +289,7 @@ public class MainMenu_Manager : MonoBehaviour
 
         if (playerFollowCamera != null)
         {
-            playerFollowCamera.Priority = 0; // Low priority
+            playerFollowCamera.Priority = 0;
         }
     }
 
@@ -280,16 +304,13 @@ public class MainMenu_Manager : MonoBehaviour
         bool newState = !SettingsPanel.activeSelf;
         SettingsPanel.SetActive(newState);
 
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
-        // If opening settings, update sliders
         if (newState)
         {
             UpdateSettingsSliders();
         }
 
-        // Ensure input stays DISABLED when settings are open/closed
         if (inputManager != null && inputManager.IsInputEnabled())
         {
             inputManager.DisablePlayerInput();
@@ -299,7 +320,6 @@ public class MainMenu_Manager : MonoBehaviour
     // Settings Panel Methods
     private void InitializeSettingsUI()
     {
-        // Setup slider listeners
         if (musicVolumeSlider != null)
         {
             musicVolumeSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
@@ -310,13 +330,11 @@ public class MainMenu_Manager : MonoBehaviour
             soundVolumeSlider.onValueChanged.AddListener(OnSoundVolumeChanged);
         }
 
-        // Setup reset button
         if (resetDataButton != null)
         {
             resetDataButton.onClick.AddListener(OnResetDataClicked);
         }
 
-        // Setup confirmation panel buttons
         if (confirmResetButton != null)
         {
             confirmResetButton.onClick.AddListener(OnConfirmResetClicked);
@@ -349,28 +367,22 @@ public class MainMenu_Manager : MonoBehaviour
 
     private void OnResetDataClicked()
     {
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
-        // Show confirmation panel, hide settings panel
         SettingsPanel.SetActive(false);
         ResetConfirmationPanel.SetActive(true);
     }
 
     private void OnConfirmResetClicked()
     {
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
-        // Reset game data
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.ResetGameData();
 
-            // Update character selection to default
             currentSelectedCharacterID = 0;
 
-            // Use visual swapper if available, otherwise fallback
             if (characterVisualSwapper != null)
             {
                 CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(currentSelectedCharacterID);
@@ -386,7 +398,6 @@ public class MainMenu_Manager : MonoBehaviour
 
             UpdateButtonAppearance();
 
-            // Update audio settings
             if (AudioHandler.Instance != null)
             {
                 AudioHandler.Instance.SetMusicVolume(GameDataManager.Instance.CurrentGameData.musicVolume);
@@ -395,13 +406,11 @@ public class MainMenu_Manager : MonoBehaviour
             }
         }
 
-        // Close confirmation panel, show settings panel
         ResetConfirmationPanel.SetActive(false);
         SettingsPanel.SetActive(true);
 
         Debug.Log("Game data reset successfully!");
 
-        // Ensure input stays DISABLED after reset
         if (inputManager != null && inputManager.IsInputEnabled())
         {
             inputManager.DisablePlayerInput();
@@ -410,18 +419,15 @@ public class MainMenu_Manager : MonoBehaviour
 
     private void OnCancelResetClicked()
     {
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
-        // Close confirmation panel, show settings panel
         ResetConfirmationPanel.SetActive(false);
         SettingsPanel.SetActive(true);
     }
 
-    // Character Selection Methods - UPDATED
+    // Character Selection Methods
     private void InitializeCharacterSystem()
     {
-        // Use visual swapper if available, otherwise use old system
         if (characterVisualSwapper != null)
         {
             CharacterDatabase.CharacterData characterData = characterDatabase.GetCharacterByID(currentSelectedCharacterID);
@@ -433,21 +439,18 @@ public class MainMenu_Manager : MonoBehaviour
         }
         else
         {
-            // Fallback to old system
             SpawnCharacter(currentSelectedCharacterID);
             Debug.Log("Using fallback character spawning system");
         }
 
         UpdateButtonAppearance();
 
-        // Clear existing listeners first to prevent duplicates
         foreach (Button button in characterButtons)
         {
             if (button != null)
                 button.onClick.RemoveAllListeners();
         }
 
-        // Set up button listeners
         for (int i = 0; i < characterButtons.Count; i++)
         {
             int index = i;
@@ -459,10 +462,8 @@ public class MainMenu_Manager : MonoBehaviour
 
     private void OnCharacterSelected(int buttonIndex)
     {
-        // Play button click sound
         AudioHandler.Instance.PlayButtonClick();
 
-        // Get character data from database using button index
         if (buttonIndex >= characterDatabase.characters.Count)
         {
             Debug.LogError($"Button index {buttonIndex} exceeds character database count");
@@ -480,17 +481,14 @@ public class MainMenu_Manager : MonoBehaviour
             return;
         }
 
-        // Check if character is unlocked using database method
         if (!characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData))
         {
             Debug.Log($"Character {selectedCharacter.characterName} is locked!");
             return;
         }
 
-        // Update LOCAL data only - not saved to GameDataManager yet
         currentSelectedCharacterID = characterID;
 
-        // Use visual swapper if available, otherwise use old system
         if (characterVisualSwapper != null)
         {
             characterVisualSwapper.ApplyCharacterVisuals(selectedCharacter);
@@ -498,13 +496,11 @@ public class MainMenu_Manager : MonoBehaviour
         }
         else
         {
-            // Fallback to old system
             SpawnCharacter(characterID);
         }
 
         UpdateButtonAppearance();
 
-        // Play character selection sound if available
         if (selectedCharacter.selectionSound != null)
         {
             AudioHandler.Instance.PlayCharacterSelectionSound(selectedCharacter.selectionSound);
@@ -512,7 +508,6 @@ public class MainMenu_Manager : MonoBehaviour
 
         Debug.Log($"Character preview changed to: {selectedCharacter.characterName} (ID: {characterID}) - Not saved yet");
 
-        // Ensure input stays DISABLED during character selection
         if (inputManager != null && inputManager.IsInputEnabled())
         {
             inputManager.DisablePlayerInput();
@@ -540,7 +535,6 @@ public class MainMenu_Manager : MonoBehaviour
             characterSpawnPoint.rotation
         );
 
-        // Disable any components in preview character
         DisablePreviewCharacterComponents(currentSpawnedCharacter);
 
         Debug.Log($"Spawned character preview: {characterData.characterName}");
@@ -548,14 +542,12 @@ public class MainMenu_Manager : MonoBehaviour
 
     private void DisablePreviewCharacterComponents(GameObject previewCharacter)
     {
-        // Disable animator in preview
         Animator animator = previewCharacter.GetComponent<Animator>();
         if (animator != null)
         {
             animator.enabled = false;
         }
 
-        // Disable any controller scripts
         MonoBehaviour[] scripts = previewCharacter.GetComponentsInChildren<MonoBehaviour>();
         foreach (MonoBehaviour script in scripts)
         {
@@ -622,11 +614,9 @@ public class MainMenu_Manager : MonoBehaviour
     // Fallback method to disable StarterAssets directly if InputManager is not available
     private void DisableStarterAssetsDirectly()
     {
-        // Find the player controller
         GameObject player = GameObject.Find("PlayerArmature");
         if (player != null)
         {
-            // Disable ThirdPersonController
             MonoBehaviour controller = player.GetComponent<MonoBehaviour>();
             if (controller != null && controller.GetType().Name.Contains("ThirdPersonController"))
             {
@@ -634,7 +624,6 @@ public class MainMenu_Manager : MonoBehaviour
                 Debug.Log("ThirdPersonController disabled directly");
             }
 
-            // Disable StarterAssetsInputs
             MonoBehaviour inputs = player.GetComponent<MonoBehaviour>();
             if (inputs != null && inputs.GetType().Name.Contains("StarterAssetsInputs"))
             {
@@ -644,10 +633,8 @@ public class MainMenu_Manager : MonoBehaviour
         }
     }
 
-    // Called when the menu is destroyed or scene changes
     void OnDestroy()
     {
-        // Clean up any spawned characters (only for fallback system)
         if (currentSpawnedCharacter != null)
         {
             Destroy(currentSpawnedCharacter);

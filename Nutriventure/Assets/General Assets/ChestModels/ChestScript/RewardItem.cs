@@ -11,11 +11,8 @@ public class RewardItem : MonoBehaviour
     public TextMeshProUGUI rewardAmountText;
     public CanvasGroup canvasGroup;
 
-    [Header("Icons")]
-    public Sprite coinIcon;
-    public Sprite gemIcon;
-    public Sprite keyIcon;
-    public Sprite powerUpIcon;
+    // ADD THIS: Background image component
+    public Image backgroundImage;
 
     [Header("Effects")]
     public GameObject popEffectPrefab;
@@ -30,7 +27,7 @@ public class RewardItem : MonoBehaviour
         }
     }
 
-    public void SetReward(string rewardName, string rewardType, int amount = 1)
+    public void SetReward(string rewardName, string rewardType, int amount, Sprite icon = null, Sprite background = null)
     {
         // Set reward name
         if (rewardNameText != null)
@@ -40,27 +37,59 @@ public class RewardItem : MonoBehaviour
         if (rewardAmountText != null)
             rewardAmountText.text = "x" + amount;
 
-        // Set reward icon based on type
+        // Set reward icon
         if (rewardIcon != null)
         {
-            switch (rewardType.ToLower())
+            if (icon != null)
             {
-                case "coin":
-                    rewardIcon.sprite = coinIcon;
-                    break;
-                case "gem":
-                    rewardIcon.sprite = gemIcon;
-                    break;
-                case "key":
-                    rewardIcon.sprite = keyIcon;
-                    break;
-                case "powerup":
-                    rewardIcon.sprite = powerUpIcon;
-                    break;
-                default:
-                    rewardIcon.sprite = coinIcon;
-                    break;
+                // Use the icon from database
+                rewardIcon.sprite = icon;
             }
+            else
+            {
+                // Fallback: Use icon based on type
+                SetIconByType(rewardType);
+            }
+        }
+
+        // SET BACKGROUND IMAGE
+        if (backgroundImage != null)
+        {
+            if (background != null)
+            {
+                backgroundImage.sprite = background;
+                backgroundImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                // Hide background if none provided
+                backgroundImage.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void SetIconByType(string rewardType)
+    {
+        if (rewardIcon == null) return;
+
+        // Fallback icons if no icon provided
+        switch (rewardType.ToLower())
+        {
+            case "coin":
+                rewardIcon.sprite = Resources.Load<Sprite>("Icons/CoinIcon");
+                break;
+            case "gem":
+                rewardIcon.sprite = Resources.Load<Sprite>("Icons/GemIcon");
+                break;
+            case "key":
+                rewardIcon.sprite = Resources.Load<Sprite>("Icons/KeyIcon");
+                break;
+            case "powerup":
+                rewardIcon.sprite = Resources.Load<Sprite>("Icons/PowerUpIcon");
+                break;
+            default:
+                rewardIcon.sprite = Resources.Load<Sprite>("Icons/DefaultIcon");
+                break;
         }
     }
 

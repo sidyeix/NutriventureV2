@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-public class Chest : MonoBehaviour
+// Add IPointerClickHandler interface
+public class Chest : MonoBehaviour, IPointerClickHandler
 {
     [Header("Chest Settings")]
     public float timeToBecomeClaimable = 10f;
@@ -14,6 +15,9 @@ public class Chest : MonoBehaviour
     [Header("Components")]
     public Animator animator;
     public Collider chestCollider;
+
+    // Add this new field for mobile touch handling
+    public BoxCollider touchCollider; // Separate collider for mobile touch
 
     [Header("World Space UI")]
     public WorldSpaceChestUI worldSpaceUI;
@@ -24,6 +28,7 @@ public class Chest : MonoBehaviour
 
     [Header("Click Settings")]
     public float clickDistance = 1000f;
+    public float touchColliderSizeMultiplier = 1.5f; // Make touch collider larger
 
     // Animation parameter hashes
     public readonly int isOpenHash = Animator.StringToHash("isOpen");
@@ -43,7 +48,39 @@ public class Chest : MonoBehaviour
         if (chestCollider == null)
             Debug.LogError("No collider found on chest!");
 
+        // Setup touch collider for mobile
+        SetupTouchCollider();
+
         Initialize();
+    }
+
+    // Add this method to setup touch collider
+    private void SetupTouchCollider()
+    {
+        // Check if we're on mobile
+        if (Application.isMobilePlatform || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            // Add a separate collider for touch if it doesn't exist
+            if (touchCollider == null)
+            {
+                touchCollider = gameObject.AddComponent<BoxCollider>();
+
+                // Copy bounds from existing collider or create default
+                if (chestCollider != null)
+                {
+                    Bounds bounds = chestCollider.bounds;
+                    touchCollider.center = transform.InverseTransformPoint(bounds.center);
+                    touchCollider.size = bounds.size * touchColliderSizeMultiplier;
+                }
+                else
+                {
+                    touchCollider.center = Vector3.zero;
+                    touchCollider.size = Vector3.one * 2f; // Default size
+                }
+
+                Debug.Log($"Created touch collider for {ChestName} (Mobile)");
+            }
+        }
     }
 
     public void Initialize()
@@ -99,12 +136,39 @@ public class Chest : MonoBehaviour
         return Mathf.Max(0f, remaining);
     }
 
+    // NEW METHOD: Set chest index from ChestManager
+    public void SetChestIndex(int index)
+    {
+        chestOrder = index;
+    }
+
     void Update()
     {
-        // Handle clicks only when chest is claimable and not opened
+        // Handle mouse clicks only on desktop
+#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_EDITOR
         if (isClaimable && !isOpened && Mouse.current.leftButton.wasPressedThisFrame)
         {
             CheckForChestClick();
+        }
+#endif
+    }
+
+    // NEW METHOD: IPointerClickHandler implementation for mobile touch
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        // Only respond to touch if chest is claimable and not opened
+        if (isClaimable && !isOpened)
+        {
+            Debug.Log("CHEST TOUCHED (Mobile): " + ChestName);
+            HandleChestClick();
+        }
+        else if (!isClaimable)
+        {
+            Debug.Log("Chest not claimable yet! Time remaining: " + GetRemainingTime());
+        }
+        else if (isOpened)
+        {
+            Debug.Log("Chest already opened!");
         }
     }
 
@@ -159,13 +223,14 @@ public class Chest : MonoBehaviour
             if (result.gameObject.GetComponent<Button>() != null ||
                 result.gameObject.GetComponent<Toggle>() != null ||
                 result.gameObject.GetComponent<Slider>() != null ||
-                result.gameObject.GetComponent<InputField>() != null)
+                result.gameObject.GetComponent<InputField>() != null ||
+                result.gameObject.GetComponent<IPointerClickHandler>() != null)
             {
                 return true;
             }
 
             // Or check if it's a specific named button you want to protect
-            string[] protectedButtons = { "Play", "Credits", "Settings", "ResetGameData" };
+            string[] protectedButtons = { "Play", "Credits", "Settings", "ResetGameData", "Claim" };
             foreach (string buttonName in protectedButtons)
             {
                 if (result.gameObject.name.Contains(buttonName))
@@ -194,7 +259,7 @@ public class Chest : MonoBehaviour
 
         Debug.Log("Notifying ChestManager about chest click...");
 
-        // HIDE WORLD SPACE UI WHEN CHEST IS CLICKED - THIS WAS MISSING!
+        // HIDE WORLD SPACE UI WHEN CHEST IS CLICKED
         if (worldSpaceUI != null)
         {
             worldSpaceUI.OnChestClicked();
