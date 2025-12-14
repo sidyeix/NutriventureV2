@@ -79831,7 +79831,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d0e0e2bccde7924da70d4b486ad2a26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
-  characterDatabase: {fileID: 0}
+  characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
 --- !u!1001 &1733825801
 PrefabInstance:
   m_ObjectHideFlags: 0

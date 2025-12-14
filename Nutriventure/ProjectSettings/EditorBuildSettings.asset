@@ -20,6 +20,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/6_Kingdom4.unity
     guid: 2f572999887977549abe98b88002efd8
+  - enabled: 1
+    path: Assets/Scenes/GeneralCutscenes/LogoScreen.unity
+    guid: 7037d90476ec74140ae21d31fca3e18f
+  - enabled: 1
+    path: Assets/Scenes/GeneralCutscenes/LoadingScreen.unity
+    guid: 23e0adf84f1003e4594810161ca4de27
+  - enabled: 1
+    path: Assets/Scenes/GeneralCutscenes/PlayerProfile.unity
+    guid: 32bd45f41e08ba844857c5d2d8f10579
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 9e7be553448fa2546aea5752021cbcf7, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
