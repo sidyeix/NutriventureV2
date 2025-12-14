@@ -1,0 +1,177 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &902148506574596258
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5471605603572839118}
+  - component: {fileID: 6576866393357801681}
+  - component: {fileID: 2663099669534852568}
+  m_Layer: 6
+  m_Name: TreeNutAllergenPrefab
+  m_TagString: Interactable
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5471605603572839118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902148506574596258}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1622428977813111249}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &6576866393357801681
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902148506574596258}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.73654175, y: 0.56981754, z: 0.7087101}
+  m_Center: {x: -0.024074554, y: 0.21509123, z: -0.0072355866}
+--- !u!114 &2663099669534852568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902148506574596258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48cc1a0f35a514346ac5750f12af98e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientInteractable
+  interactableName: Object
+  destroyOnPickup: 1
+  OnPickup:
+    m_PersistentCalls:
+      m_Calls: []
+  OnInteract:
+    m_PersistentCalls:
+      m_Calls: []
+  ingredientId: tree nuts
+  ingredientName: Tree Nuts
+  ingredientDescription: Tree nut allergies are among the most common food allergies
+    in both children and adults. Includes nuts like almonds, walnuts, cashews, pistachios,
+    and Brazil nuts. Often lifelong and can cause severe reactions.
+  ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+--- !u!1001 &1229130795787265594
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5471605603572839118}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.41664
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.41664
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.41664
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.052999854
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8292910012133684881, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -1921946162418839376, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Name
+      value: WalnutBowl
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2891746525080496957, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 5928075077413350132, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+--- !u!4 &1622428977813111249 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b8cecaa78af3c2448b9fe7d9b2c0e35d, type: 3}
+  m_PrefabInstance: {fileID: 1229130795787265594}
+  m_PrefabAsset: {fileID: 0}

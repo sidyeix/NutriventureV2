@@ -116,6 +116,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Peanuts
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+      propertyPath: m_TagString
+      value: Allergen
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: -5998301319071483956, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
@@ -127,55 +131,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3850887922858143452}
-    - targetCorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7314464974701040384}
-    - targetCorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
+      addedObject: {fileID: 6785636207230955223}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7650852436387872968}
+      addedObject: {fileID: 7498064613517805824}
   m_SourcePrefab: {fileID: 100100000, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
---- !u!1 &6205388906443579414 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4424396828587804706, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
-  m_PrefabInstance: {fileID: 7744895225271642164}
-  m_PrefabAsset: {fileID: 0}
---- !u!65 &7314464974701040384
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6205388906443579414}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.013890511, y: 0.043508768, z: 0.014406072}
-  m_Center: {x: 0.0012099543, y: 0.000009402559, z: 0.00007395535}
---- !u!114 &7650852436387872968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6205388906443579414}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df5cd2525664fbd4d825319d3d0bb71c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PeanutHazard
-  damageAmount: 1
-  damageCooldown: 2
-  disappearOnContact: 1
-  disappearDelay: 0.5
 --- !u!1 &7474300815308641637 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d87c809406a15c94087f322a0eeefe5c, type: 3}
@@ -203,3 +165,47 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!65 &6785636207230955223
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7474300815308641637}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.013890511, y: 0.043508768, z: 0.014406072}
+  m_Center: {x: 0.0012099543, y: 0.000009402559, z: 0.00007395535}
+--- !u!114 &7498064613517805824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7474300815308641637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23625f14c2627dc45ba961506f740c21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemCollectible
+  itemData: {fileID: 11400000, guid: fe72427fdbe292e4bba767f4d0ecaa48, type: 2}
+  collectionRadius: 0.1
+  overrideCollectSound: {fileID: 0}
+  overrideCollectParticles: {fileID: 0}
+  shieldDuration: 5
+  shieldMaterial: {fileID: 0}
+  shieldActivationParticles: {fileID: 0}
+  shieldActivationSound: {fileID: 0}
+  damageAmount: 1
+  damageParticles: {fileID: 0}
+  damageSound: {fileID: 0}

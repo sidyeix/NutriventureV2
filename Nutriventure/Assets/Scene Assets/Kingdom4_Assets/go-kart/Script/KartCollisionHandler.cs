@@ -6,17 +6,21 @@ public class KartCollisionHandler : MonoBehaviour
     [Header("Fence Settings")]
     public string fenceTag = "Fence";
     
+    [Header("Allergen Settings")]
+    public string allergenTag = "Allergen"; // Optional: tag allergens with this
+    
     [Header("Reset Settings")]
-    public Transform[] roadWaypoints; // Waypoints marking the middle of the road
-    public float resetDistance = 5f; // Max distance to reset when hitting fence
-    public float resetHeight = 0.5f; // Height above ground when resetting
-    public float resetSpeed = 10f; // Speed of reset animation
-    public bool findNearestWaypoint = true; // Auto-find nearest waypoint
+    public Transform[] roadWaypoints;
+    public float resetDistance = 5f;
+    public float resetHeight = 0.5f;
+    public float resetSpeed = 10f;
+    public bool findNearestWaypoint = true;
     
     [Header("Damage Settings")]
     public int damagePerCollision = 1;
-    public float collisionCooldown = 2f; // Time between allowed collisions
-    public float invulnerabilityAfterReset = 1f; // Invulnerability after reset
+    public float collisionCooldown = 2f;
+    public float invulnerabilityAfterReset = 1f;
+    public float allergenCooldown = 0.3f; // Separate cooldown for allergens
     
     [Header("Collision Effects")]
     public AudioClip collisionSound;
@@ -24,14 +28,25 @@ public class KartCollisionHandler : MonoBehaviour
     public float shakeIntensity = 0.5f;
     public float shakeDuration = 0.3f;
     
+    [Header("Allergen Effects")]
+    public AudioClip allergenSound;
+    public ParticleSystem allergenParticles;
+    
+    [Header("Shield Settings")]
+    public AudioClip shieldBlockSound;
+    public ParticleSystem shieldBlockParticles;
+    public float shieldBlockShakeIntensity = 0.3f;
+    public float shieldBlockShakeDuration = 0.2f;
+    
     [Header("References")]
-    public PlayerHealth playerHealth; // Reference to PlayerHealth component
-    public KartController kartController; // Reference to KartController
+    public PlayerHealth playerHealth;
+    public KartController kartController;
     
     private Vector3 lastSafePosition;
     private Quaternion lastSafeRotation;
     private bool isResetting = false;
-    private float lastCollisionTime = -10f;
+    private float lastFenceCollisionTime = -10f;
+    private float lastAllergenCollisionTime = -10f;
     private Rigidbody kartRigidbody;
     private bool isInvulnerable = false;
     private Camera mainCamera;
@@ -47,27 +62,23 @@ public class KartCollisionHandler : MonoBehaviour
             cameraOriginalPosition = mainCamera.transform.localPosition;
         }
         
-        // Auto-find PlayerHealth if not assigned
         if (playerHealth == null)
         {
             playerHealth = FindAnyObjectByType<PlayerHealth>();
             if (playerHealth == null)
             {
-                Debug.LogWarning("PlayerHealth not found! Make sure to assign it or add it to the player.");
+                Debug.LogWarning("PlayerHealth not found!");
             }
         }
         
-        // Auto-find KartController if not assigned
         if (kartController == null)
         {
             kartController = GetComponent<KartController>();
         }
         
-        // Store initial position as safe
         lastSafePosition = transform.position;
         lastSafeRotation = transform.rotation;
         
-        // Find waypoints in scene if not assigned
         if ((roadWaypoints == null || roadWaypoints.Length == 0) && findNearestWaypoint)
         {
             FindRoadWaypoints();
@@ -76,7 +87,6 @@ public class KartCollisionHandler : MonoBehaviour
     
     void FindRoadWaypoints()
     {
-        // Find all waypoints in the scene
         GameObject[] waypointObjects = GameObject.FindGameObjectsWithTag("Waypoint");
         
         if (waypointObjects.Length > 0)
@@ -90,10 +100,11 @@ public class KartCollisionHandler : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("No waypoints found with tag 'Waypoint'! Add waypoints to the road.");
+            Debug.LogWarning("No waypoints found with tag 'Waypoint'!");
         }
     }
     
+    // Handle regular collisions (for fences)
     void OnCollisionEnter(Collision collision)
     {
         HandleFenceCollision(collision);
@@ -101,54 +112,121 @@ public class KartCollisionHandler : MonoBehaviour
     
     void OnCollisionStay(Collision collision)
     {
-        // Also handle continuous collision with fences
-        if (Time.time - lastCollisionTime > collisionCooldown && !isResetting)
+        if (Time.time - lastFenceCollisionTime > collisionCooldown && !isResetting)
         {
             HandleFenceCollision(collision);
         }
     }
     
+    // Handle trigger collisions
+    void OnTriggerEnter(Collider other)
+{
+    // Add DEBUG LOG to see what's triggering
+    Debug.Log($"🔵 Kart OnTriggerEnter: {other.gameObject.name}");
+    
+    // Check if it's a powerup FIRST
+    ItemCollectible item = other.GetComponent<ItemCollectible>();
+    if (item != null && item.itemData != null)
+    {
+        if (item.itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
+        {
+            Debug.Log($"🎯 POWERUP detected! Type: {item.itemData.itemType}");
+            Debug.Log($"   Skipping allergen handling for powerup");
+            return; // Don't handle powerups at all
+        }
+    }
+    
+    // Only handle allergens (not powerups)
+    HandleAllergenTrigger(other);
+}
+
+    
     void HandleFenceCollision(Collision collision)
     {
-        // Check if collided with fence (using MeshCollider)
         if (IsFenceCollision(collision))
         {
-            // Check cooldown
-            if (Time.time - lastCollisionTime < collisionCooldown) return;
+            if (Time.time - lastFenceCollisionTime < collisionCooldown) return;
             
-            // Set collision time
-            lastCollisionTime = Time.time;
+            lastFenceCollisionTime = Time.time;
             
             Debug.Log($"🚗 Kart collided with fence: {collision.gameObject.name}");
             
-            // Apply damage to player
+            if (IsShieldActive())
+            {
+                PlayShieldBlockEffect(collision.contacts[0].point);
+                return;
+            }
+            
             ApplyDamage();
             
-            // Store current safe position before reset
             lastSafePosition = transform.position;
             lastSafeRotation = transform.rotation;
             
-            // Start reset process
             StartCoroutine(ResetToRoad());
-            
-            // Play collision effects
             PlayCollisionEffects(collision.contacts[0].point);
+        }
+    }
+    
+    void HandleAllergenTrigger(Collider other)
+    {
+        // FIRST, check if it's a powerup - if so, DO NOTHING
+        ItemCollectible itemCollectible = other.GetComponent<ItemCollectible>();
+        if (itemCollectible != null && itemCollectible.itemData != null)
+        {
+            if (itemCollectible.itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
+            {
+                Debug.Log($"🎯 Powerup detected by kart: {itemCollectible.itemData.itemType}");
+                Debug.Log($"   Letting ItemCollectible handle collection...");
+                return; // Let ItemCollectible handle powerups
+            }
+        }
+        
+        // Now check if it's an allergen
+        if (IsAllergen(other.gameObject))
+        {
+            if (Time.time - lastAllergenCollisionTime < allergenCooldown) return;
+            
+            lastAllergenCollisionTime = Time.time;
+            
+            Debug.Log($"⚠️ Kart hit allergen: {other.gameObject.name}");
+            
+            if (IsShieldActive())
+            {
+                Debug.Log($"🛡️ Shield protected from allergen!");
+                PlayShieldBlockEffect(other.transform.position);
+                
+                // Destroy the allergen
+                if (other.gameObject != null)
+                {
+                    Destroy(other.gameObject);
+                }
+                return;
+            }
+            
+            // Apply damage for allergen
+            ApplyDamage();
+            
+            // Play allergen-specific effects
+            PlayAllergenEffects(other.transform.position);
+            
+            // Destroy the allergen
+            if (other.gameObject != null)
+            {
+                Destroy(other.gameObject);
+            }
         }
     }
     
     bool IsFenceCollision(Collision collision)
     {
-        // Check by tag
         if (!string.IsNullOrEmpty(fenceTag) && collision.gameObject.CompareTag(fenceTag))
         {
             return true;
         }
         
-        // Check if it has a MeshCollider (common for fences)
         MeshCollider meshCollider = collision.gameObject.GetComponent<MeshCollider>();
         if (meshCollider != null)
         {
-            // Additional check: name contains "fence" or "Fence"
             string objName = collision.gameObject.name.ToLower();
             if (objName.Contains("fence") || objName.Contains("barrier") || objName.Contains("wall"))
             {
@@ -159,14 +237,58 @@ public class KartCollisionHandler : MonoBehaviour
         return false;
     }
     
+    bool IsAllergen(GameObject obj)
+    {
+        // Check by tag
+        if (!string.IsNullOrEmpty(allergenTag) && obj.CompareTag(allergenTag))
+        {
+            return true;
+        }
+        
+        // Check by name
+        string objName = obj.name.ToLower();
+        string[] allergenKeywords = { 
+            "peanut", "milk", "egg", "fish", "shellfish", 
+            "treenut", "wheat", "soybean", "sesame", "allergen" 
+        };
+        
+        foreach (string keyword in allergenKeywords)
+        {
+            if (objName.Contains(keyword))
+            {
+                return true;
+            }
+        }
+        
+        // Check by ItemCollectible component - ONLY if it's NOT a powerup
+        ItemCollectible item = obj.GetComponent<ItemCollectible>();
+        if (item != null && item.itemData != null)
+        {
+            // Check if it's an allergen (NotSafe category)
+            if (item.itemData.category == SpawnableItemData.ItemCategory.NotSafe)
+            {
+                return true;
+            }
+            // If it's a powerup, return false
+            else if (item.itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
+            {
+                return false;
+            }
+        }
+        
+        return false;
+    }
+    
+bool IsShieldActive()
+{
+    return ItemCollectible.IsShieldActive();
+}
+    
     void ApplyDamage()
     {
         if (isInvulnerable || playerHealth == null) return;
         
-        // Deduct health
         playerHealth.TakeDamage(damagePerCollision);
-        
-        // Show warning message
         Debug.Log($"❤️ Player lost {damagePerCollision} heart(s)!");
     }
     
@@ -177,7 +299,6 @@ public class KartCollisionHandler : MonoBehaviour
         isResetting = true;
         isInvulnerable = true;
         
-        // Disable kart controls temporarily
         bool wasControllable = false;
         if (kartController != null)
         {
@@ -185,21 +306,16 @@ public class KartCollisionHandler : MonoBehaviour
             kartController.SetControllable(false);
         }
         
-        // Stop kart movement
         if (kartRigidbody != null)
         {
             kartRigidbody.linearVelocity = Vector3.zero;
             kartRigidbody.angularVelocity = Vector3.zero;
         }
         
-        // Find nearest road point
         Vector3 targetPosition = GetNearestRoadPoint();
         Quaternion targetRotation = Quaternion.LookRotation(GetRoadDirection(targetPosition));
-        
-        // Add height offset
         targetPosition += Vector3.up * resetHeight;
         
-        // Smooth reset animation
         float elapsedTime = 0f;
         Vector3 startPosition = transform.position;
         Quaternion startRotation = transform.rotation;
@@ -215,24 +331,19 @@ public class KartCollisionHandler : MonoBehaviour
             yield return null;
         }
         
-        // Ensure exact position
         transform.position = targetPosition;
         transform.rotation = targetRotation;
         
-        // Wait a moment before re-enabling controls
         yield return new WaitForSeconds(0.5f);
         
-        // Re-enable kart controls if it was controllable before
         if (kartController != null && wasControllable)
         {
             kartController.SetControllable(true);
         }
         
-        // Store new safe position
         lastSafePosition = transform.position;
         lastSafeRotation = transform.rotation;
         
-        // Keep invulnerability for a short time after reset
         yield return new WaitForSeconds(invulnerabilityAfterReset);
         
         isInvulnerable = false;
@@ -241,7 +352,6 @@ public class KartCollisionHandler : MonoBehaviour
     
     Vector3 GetNearestRoadPoint()
     {
-        // If waypoints are available, find nearest
         if (roadWaypoints != null && roadWaypoints.Length > 0)
         {
             Vector3 nearestPoint = roadWaypoints[0].position;
@@ -257,7 +367,6 @@ public class KartCollisionHandler : MonoBehaviour
                 }
             }
             
-            // Adjust to be on the road surface
             RaycastHit hit;
             if (Physics.Raycast(nearestPoint + Vector3.up * 10f, Vector3.down, out hit, 20f))
             {
@@ -267,16 +376,13 @@ public class KartCollisionHandler : MonoBehaviour
             return nearestPoint;
         }
         
-        // Fallback: Return a position slightly forward from current position
         return transform.position + transform.forward * 3f;
     }
     
     Vector3 GetRoadDirection(Vector3 roadPoint)
     {
-        // Find the road direction based on waypoints
         if (roadWaypoints != null && roadWaypoints.Length > 1)
         {
-            // Find nearest waypoint index
             int nearestIndex = 0;
             float nearestDistance = Vector3.Distance(roadPoint, roadWaypoints[0].position);
             
@@ -290,32 +396,26 @@ public class KartCollisionHandler : MonoBehaviour
                 }
             }
             
-            // Get direction to next waypoint
             if (nearestIndex < roadWaypoints.Length - 1)
             {
-                Vector3 direction = (roadWaypoints[nearestIndex + 1].position - roadWaypoints[nearestIndex].position).normalized;
-                return direction;
+                return (roadWaypoints[nearestIndex + 1].position - roadWaypoints[nearestIndex].position).normalized;
             }
             else if (nearestIndex > 0)
             {
-                Vector3 direction = (roadWaypoints[nearestIndex].position - roadWaypoints[nearestIndex - 1].position).normalized;
-                return direction;
+                return (roadWaypoints[nearestIndex].position - roadWaypoints[nearestIndex - 1].position).normalized;
             }
         }
         
-        // Fallback: Use current forward direction
         return transform.forward;
     }
     
     void PlayCollisionEffects(Vector3 collisionPoint)
     {
-        // Play sound
         if (collisionSound != null)
         {
             AudioSource.PlayClipAtPoint(collisionSound, collisionPoint);
         }
         
-        // Play particles at collision point
         if (collisionParticles != null)
         {
             ParticleSystem particles = Instantiate(collisionParticles, collisionPoint, Quaternion.identity);
@@ -323,28 +423,68 @@ public class KartCollisionHandler : MonoBehaviour
             Destroy(particles.gameObject, particles.main.duration);
         }
         
-        // Camera shake effect
-        StartCoroutine(ShakeCamera());
+        StartCoroutine(ShakeCamera(shakeIntensity, shakeDuration));
     }
     
-    IEnumerator ShakeCamera()
+    void PlayAllergenEffects(Vector3 position)
+    {
+        // Use allergen-specific sound if available, otherwise use collision sound
+        AudioClip sound = allergenSound != null ? allergenSound : collisionSound;
+        if (sound != null)
+        {
+            AudioSource.PlayClipAtPoint(sound, position);
+        }
+        
+        // Use allergen-specific particles if available
+        ParticleSystem particles = allergenParticles != null ? allergenParticles : collisionParticles;
+        if (particles != null)
+        {
+            ParticleSystem instance = Instantiate(particles, position, Quaternion.identity);
+            instance.Play();
+            Destroy(instance.gameObject, instance.main.duration);
+        }
+        
+        // Gentler shake for allergens
+        StartCoroutine(ShakeCamera(shakeIntensity * 0.5f, shakeDuration * 0.5f));
+    }
+    
+    void PlayShieldBlockEffect(Vector3 collisionPoint)
+    {
+        Debug.Log($"🛡️ Shield protected!");
+        
+        if (shieldBlockSound != null)
+        {
+            AudioSource.PlayClipAtPoint(shieldBlockSound, collisionPoint);
+        }
+        
+        if (shieldBlockParticles != null)
+        {
+            ParticleSystem particles = Instantiate(shieldBlockParticles, collisionPoint, Quaternion.identity);
+            particles.Play();
+            Destroy(particles.gameObject, particles.main.duration);
+        }
+        
+        StartCoroutine(ShakeCamera(shieldBlockShakeIntensity, shieldBlockShakeDuration));
+        StartCoroutine(FlashShieldEffect());
+    }
+    
+    IEnumerator ShakeCamera(float intensity, float duration)
     {
         if (mainCamera == null) yield break;
         
         Vector3 originalPos = mainCamera.transform.localPosition;
         float elapsed = 0f;
         
-        while (elapsed < shakeDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float percentComplete = elapsed / shakeDuration;
+            float percentComplete = elapsed / duration;
             float damper = 1.0f - Mathf.Clamp(4.0f * percentComplete - 3.0f, 0.0f, 1.0f);
             
-            // Map noise to [-1, 1]
             float x = Random.value * 2.0f - 1.0f;
             float y = Random.value * 2.0f - 1.0f;
-            x *= shakeIntensity * damper;
-            y *= shakeIntensity * damper;
+            x *= intensity * damper;
+            y *= intensity * damper;
             
             mainCamera.transform.localPosition = originalPos + new Vector3(x, y, 0);
             
@@ -354,7 +494,19 @@ public class KartCollisionHandler : MonoBehaviour
         mainCamera.transform.localPosition = originalPos;
     }
     
-    // Public method to manually trigger reset (for debugging or special cases)
+    IEnumerator FlashShieldEffect()
+    {
+        Renderer playerRenderer = GetComponent<Renderer>();
+        if (playerRenderer != null)
+        {
+            Color originalColor = playerRenderer.material.color;
+            playerRenderer.material.color = Color.cyan;
+            yield return new WaitForSeconds(0.1f);
+            playerRenderer.material.color = originalColor;
+        }
+    }
+    
+    // Keep all your existing public methods...
     public void ManualResetToRoad()
     {
         if (!isResetting)
@@ -363,7 +515,6 @@ public class KartCollisionHandler : MonoBehaviour
         }
     }
     
-    // Method to add a waypoint at runtime
     public void AddWaypoint(Transform waypoint)
     {
         if (roadWaypoints == null)
@@ -377,7 +528,6 @@ public class KartCollisionHandler : MonoBehaviour
         }
     }
     
-    // Method to manually set invulnerability
     public void SetInvulnerable(bool invulnerable, float duration = 0f)
     {
         isInvulnerable = invulnerable;
@@ -393,16 +543,45 @@ public class KartCollisionHandler : MonoBehaviour
         isInvulnerable = false;
     }
     
-    // Visual debugging in editor
+    public bool CheckShieldActive()
+    {
+        return IsShieldActive();
+    }
+    
+    public bool GetInvulnerabilityState()
+    {
+        return isInvulnerable;
+    }
+    
+    public bool GetResettingState()
+    {
+        return isResetting;
+    }
+    
+    public Vector3 GetLastSafePosition()
+    {
+        return lastSafePosition;
+    }
+    
+    public void TestShieldEffect()
+    {
+        PlayShieldBlockEffect(transform.position);
+    }
+    
+    [ContextMenu("Test Allergen Damage")]
+    void TestAllergenDamage()
+    {
+        Debug.Log("Testing allergen damage...");
+        ApplyDamage();
+    }
+    
     void OnDrawGizmosSelected()
     {
         if (enabled)
         {
-            // Draw reset area
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, resetDistance);
             
-            // Draw waypoints if assigned
             if (roadWaypoints != null)
             {
                 Gizmos.color = Color.green;
@@ -412,7 +591,6 @@ public class KartCollisionHandler : MonoBehaviour
                     {
                         Gizmos.DrawSphere(roadWaypoints[i].position, 0.5f);
                         
-                        // Draw connections between waypoints
                         if (i < roadWaypoints.Length - 1 && roadWaypoints[i + 1] != null)
                         {
                             Gizmos.DrawLine(roadWaypoints[i].position, roadWaypoints[i + 1].position);
@@ -421,12 +599,10 @@ public class KartCollisionHandler : MonoBehaviour
                 }
             }
             
-            // Draw safe position
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(lastSafePosition, 0.3f);
             Gizmos.DrawLine(transform.position, lastSafePosition);
             
-            // Draw current forward direction
             Gizmos.color = Color.blue;
             Gizmos.DrawRay(transform.position, transform.forward * 3f);
         }
@@ -434,8 +610,16 @@ public class KartCollisionHandler : MonoBehaviour
     
     void OnDrawGizmos()
     {
-        // Always draw a small indicator on the kart for visibility
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, 0.2f);
+        if (enabled)
+        {
+            Gizmos.color = IsShieldActive() ? Color.cyan : Color.red;
+            Gizmos.DrawWireSphere(transform.position, 0.4f);
+            
+            if (IsShieldActive())
+            {
+                Gizmos.color = new Color(0, 1, 1, 0.3f);
+                Gizmos.DrawSphere(transform.position, 0.6f);
+            }
+        }
     }
 }

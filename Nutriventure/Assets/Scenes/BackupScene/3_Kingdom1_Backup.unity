@@ -12367,6 +12367,10 @@ MonoBehaviour:
   soundEffectsSource: {fileID: 1705826819}
   mainMenuMusic: {fileID: 8300000, guid: b38ae38a7498db449ac8237405d927af, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
+  chestOpenSound: {fileID: 0}
+  rewardPopSound: {fileID: 0}
+  claimSound: {fileID: 0}
+  goldBallFlySound: {fileID: 0}
 --- !u!1001 &390112096
 PrefabInstance:
   m_ObjectHideFlags: 0
