@@ -15,6 +15,7 @@ TagManager:
   - Interactable
   - Destination
   - Fence
+  - SpawnPoint
   layers:
   - Default
   - TransparentFX

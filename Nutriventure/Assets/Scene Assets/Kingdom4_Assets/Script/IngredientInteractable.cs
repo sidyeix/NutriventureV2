@@ -21,8 +21,13 @@ public class IngredientInteractable : Interactable
         else
         {
             Debug.LogWarning("No book collected yet! Collect the book first.");
-            // Option 1: Still destroy the ingredient
-            // Option 2: Don't destroy it (comment out base.Pickup())
+        }
+        
+        // Notify spawn manager that this allergen was collected
+        AllergenSpawnManager spawnManager = FindAnyObjectByType<AllergenSpawnManager>();
+        if (spawnManager != null)
+        {
+            spawnManager.OnAllergenCollected(gameObject);
         }
         
         base.Pickup();

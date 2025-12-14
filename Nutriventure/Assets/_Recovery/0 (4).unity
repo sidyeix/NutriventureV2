@@ -5711,6 +5711,10 @@ MonoBehaviour:
   soundEffectsSource: {fileID: 1705826819}
   mainMenuMusic: {fileID: 8300000, guid: b38ae38a7498db449ac8237405d927af, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
+  chestOpenSound: {fileID: 0}
+  rewardPopSound: {fileID: 0}
+  claimSound: {fileID: 0}
+  goldBallFlySound: {fileID: 0}
 --- !u!1001 &391781830
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21050,9 +21054,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ed31aedfc19c734185ad7e7ce2fac29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KartTrigger
+  playerUI: {fileID: 0}
   driveUI: {fileID: 1155302386}
+  kartDrivingUI: {fileID: 0}
+  destinationText: {fileID: 0}
+  playerUIElementsToHide: []
   kartController: {fileID: 919132147703828508}
   kartSeatPosition: {fileID: 1674924016}
+  destinations: []
 --- !u!65 &1404455834
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -31069,6 +31078,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KartController
   speed: 10
   turnSpeed: 100
+  autoBrakeDistance: 3
+  stopDistance: 2
+  useTriggerDetection: 1
+  destinationTag: Destination
+  destination: {fileID: 0}
+  hasDestination: 0
+  autoExitOnArrival: 1
+  autoExitDelay: 2
   mobileVertical: 0
   mobileHorizontal: 0
 --- !u!65 &919132147703828509
