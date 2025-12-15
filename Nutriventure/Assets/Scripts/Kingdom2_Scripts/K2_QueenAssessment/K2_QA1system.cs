@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using System.Collections;
 
-public class QA1AssessmentSystem : MonoBehaviour
+public class K2_QA1system : MonoBehaviour
 {
     [Header("Trigger Settings")]
     public bool canTriggerMultipleTimes = false;
@@ -22,6 +22,10 @@ public class QA1AssessmentSystem : MonoBehaviour
     [Header("Confirm Button Component - ASSIGN THIS")]
     public Button confirmButton; // ConfirmBTN button component
     public TextMeshProUGUI confirmButtonText; // Text component inside ConfirmBTN
+    
+    [Header("Close Button Component - ASSIGN THIS")]
+    public Button closeButton; // New button to close the panel
+    public TextMeshProUGUI closeButtonText; // Text component inside Close button
     
     [Header("1BTN Child References - DRAG FROM YOUR 1BTN")]
     public RawImage templateContBG; // ContBG RawImage from 1BTN
@@ -42,6 +46,7 @@ public class QA1AssessmentSystem : MonoBehaviour
     public AudioClip errorSound;
     public AudioClip successSound;
     public AudioClip uiShowSound;
+    public AudioClip uiCloseSound; // New: Sound for closing UI
     
     [Header("Selection Settings")]
     public int maxSelections = 5; // Limit to select only 5 products
@@ -70,6 +75,10 @@ public class QA1AssessmentSystem : MonoBehaviour
     public bool freezeGameplay = false; // NEW: Option to freeze gameplay during assessment
     public bool freezePlayerControls = true; // NEW: Option to just freeze player controls
     
+    [Header("Close Button Settings")]
+    public bool enableCloseButton = true; // Whether close button is enabled
+    public float closeCooldown = 3f; // Cooldown after closing before can trigger again
+    
     // Runtime variables
     private List<ProductData.ProductInfo> collectedProducts = new List<ProductData.ProductInfo>();
     private List<string> selectedProductIDs = new List<string>();
@@ -93,6 +102,9 @@ public class QA1AssessmentSystem : MonoBehaviour
     
     // Store original time scale
     private float originalTimeScale = 1f;
+    
+    // NEW: Track if panel was closed via close button
+    private bool wasClosedByButton = false;
     
     void Start()
     {
@@ -125,6 +137,17 @@ public class QA1AssessmentSystem : MonoBehaviour
             Debug.LogWarning("Confirm Button is not assigned in Inspector!");
         }
         
+        // Setup close button if assigned
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(OnCloseButtonClick);
+            Debug.Log("Close button listener added");
+        }
+        else
+        {
+            Debug.LogWarning("Close Button is not assigned in Inspector!");
+        }
+        
         if (productManager == null)
             productManager = FindObjectOfType<ProductInformationManager>();
         
@@ -135,8 +158,14 @@ public class QA1AssessmentSystem : MonoBehaviour
         if (playerHealth == null)
             playerHealth = FindObjectOfType<SugariaPlayerStat>();
         
-        if (playerHealth == null)
+        if (playerHealth != null)
+        {
+            Debug.Log("Player health system found");
+        }
+        else
+        {
             Debug.LogWarning("Player health system not found! Error heart cost will not work.");
+        }
         
         // Hide the template button initially
         if (buttonTemplate != null)
@@ -157,6 +186,8 @@ public class QA1AssessmentSystem : MonoBehaviour
         if (templateButton == null) Debug.LogError("templateButton is not assigned!");
         if (confirmButton == null) Debug.LogError("confirmButton is not assigned!");
         if (confirmButtonText == null) Debug.LogError("confirmButtonText is not assigned!");
+        if (closeButton == null) Debug.LogError("closeButton is not assigned!");
+        if (closeButtonText == null) Debug.LogWarning("closeButtonText is not assigned!");
     }
     
     private void ValidateSpawnPoints()
@@ -188,7 +219,7 @@ public class QA1AssessmentSystem : MonoBehaviour
         // Handle escape key to close UI (for testing/PC)
         if (isUIActive && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            HideAssessmentUI();
+            OnCloseButtonClick();
         }
     }
     
@@ -215,6 +246,7 @@ public class QA1AssessmentSystem : MonoBehaviour
         isUIActive = true;
         isProcessing = false;
         isSuccessState = false; // Reset success state
+        wasClosedByButton = false; // Reset close button state
         
         // Store original time scale
         originalTimeScale = Time.timeScale;
@@ -551,6 +583,12 @@ public class QA1AssessmentSystem : MonoBehaviour
             isValid = false;
         }
         
+        if (closeButton == null)
+        {
+            Debug.LogError("closeButton component is not assigned!");
+            isValid = false;
+        }
+        
         return isValid;
     }
     
@@ -648,6 +686,24 @@ public class QA1AssessmentSystem : MonoBehaviour
         }
     }
     
+    // NEW: Close button click handler
+    private void OnCloseButtonClick()
+    {
+        if (!isUIActive || isProcessing || isSuccessState) return;
+        
+        // Play close sound
+        if (uiCloseSound != null)
+        {
+            audioSource.PlayOneShot(uiCloseSound);
+        }
+        
+        // Mark as closed by button
+        wasClosedByButton = true;
+        
+        // Close the UI
+        HideAssessmentUI();
+    }
+    
     private void OnConfirmButtonClick()
     {
         if (isProcessing || isSuccessState) return; // Prevent multiple clicks
@@ -723,10 +779,15 @@ public class QA1AssessmentSystem : MonoBehaviour
         // Disable all buttons
         SetAllButtonsInteractable(false);
         
-        // Also disable confirm button
+        // Also disable confirm button and close button
         if (confirmButton != null)
         {
             confirmButton.interactable = false;
+        }
+        
+        if (closeButton != null)
+        {
+            closeButton.interactable = false;
         }
         
         // Wait a moment for user to see success message
@@ -779,6 +840,12 @@ public class QA1AssessmentSystem : MonoBehaviour
             confirmButton.interactable = false;
         }
         
+        // Disable close button temporarily during shake
+        if (closeButton != null)
+        {
+            closeButton.interactable = false;
+        }
+        
         // Shake all selected buttons
         yield return StartCoroutine(ShakeSelectedButtons());
         
@@ -786,6 +853,12 @@ public class QA1AssessmentSystem : MonoBehaviour
         if (confirmButton != null)
         {
             confirmButton.interactable = selectedProductIDs.Count == maxSelections;
+        }
+        
+        // Re-enable close button
+        if (closeButton != null)
+        {
+            closeButton.interactable = true;
         }
         
         // Reset confirm button text
@@ -904,9 +977,14 @@ public class QA1AssessmentSystem : MonoBehaviour
         {
             confirmButton.interactable = interactable;
         }
+        
+        if (closeButton != null)
+        {
+            closeButton.interactable = interactable;
+        }
     }
     
-    private void SpawnSelectedProducts()
+        private void SpawnSelectedProducts()
     {
         Debug.Log($"Spawning {selectedProductIDs.Count} products at assigned spawn points");
         
@@ -927,27 +1005,43 @@ public class QA1AssessmentSystem : MonoBehaviour
                     spawnPoints[i].rotation
                 );
                 
+                // Tag for QA2 scanning - ADD THIS LINE
+                spawnedProduct.tag = "QA2SpawnedProduct";
+                
+                // You might also want to keep the original tag for reference
+                // Add a component to store the original product type
+                QA2Scannable scannable = spawnedProduct.AddComponent<QA2Scannable>();
+                scannable.productID = productID;
+                scannable.productType = product.productType;
+                
                 // Add to spawned products list
                 spawnedProducts.Add(spawnedProduct);
                 
-                Debug.Log($"Spawned {product.displayName} at spawn point {i} (Position: {spawnPoints[i].position})");
+                Debug.Log($"Spawned {product.displayName} at spawn point {i} (Tagged for QA2)");
             }
             else
             {
                 Debug.LogWarning($"Could not spawn product {productID} at spawn point {i}. " +
-                               $"Product: {product != null}, Prefab: {product?.productPrefab != null}, " +
-                               $"SpawnPoint: {spawnPoints[i] != null}");
+                            $"Product: {product != null}, Prefab: {product?.productPrefab != null}, " +
+                            $"SpawnPoint: {spawnPoints[i] != null}");
             }
         }
         
         if (spawnedProducts.Count > 0)
         {
-            Debug.Log($"Successfully spawned {spawnedProducts.Count} products");
+            Debug.Log($"Successfully spawned {spawnedProducts.Count} products for QA2 scanning");
         }
         else
         {
             Debug.LogError("Failed to spawn any products!");
         }
+    }
+
+    // Add this helper class at the end of your K2_QA1system script
+    public class QA2Scannable : MonoBehaviour
+    {
+        public string productID;
+        public ProductData.ProductType productType;
     }
     
     private void ClearSpawnedProducts()
@@ -1025,7 +1119,12 @@ public class QA1AssessmentSystem : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
         }
         
-        if (canTriggerMultipleTimes && !isInCooldown)
+        // NEW: If closed by button, start the special cooldown
+        if (wasClosedByButton && enableCloseButton)
+        {
+            StartCoroutine(StartCloseCooldown());
+        }
+        else if (canTriggerMultipleTimes && !isInCooldown)
         {
             StartCoroutine(StartCooldown());
         }
@@ -1076,6 +1175,17 @@ public class QA1AssessmentSystem : MonoBehaviour
         isInCooldown = true;
         yield return new WaitForSeconds(cooldownTime);
         isInCooldown = false;
+        Debug.Log("Cooldown finished");
+    }
+    
+    // NEW: Special cooldown for close button
+    private IEnumerator StartCloseCooldown()
+    {
+        isInCooldown = true;
+        Debug.Log($"Close button cooldown started for {closeCooldown} seconds");
+        yield return new WaitForSeconds(closeCooldown);
+        isInCooldown = false;
+        Debug.Log("Close button cooldown finished");
     }
     
     private void DisablePlayerControls()
@@ -1121,6 +1231,39 @@ public class QA1AssessmentSystem : MonoBehaviour
         {
             confirmButton.interactable = false;
         }
+        
+        // Make sure close button is enabled
+        if (closeButton != null && enableCloseButton)
+        {
+            closeButton.interactable = true;
+        }
+    }
+    
+    // Public method to close panel from external scripts
+    public void ClosePanel()
+    {
+        OnCloseButtonClick();
+    }
+    
+    // Enable/disable close button
+    public void SetCloseButtonEnabled(bool enabled)
+    {
+        enableCloseButton = enabled;
+        
+        if (closeButton != null)
+        {
+            closeButton.interactable = enabled;
+            closeButton.gameObject.SetActive(enabled);
+        }
+        
+        Debug.Log($"Close button {(enabled ? "enabled" : "disabled")}");
+    }
+    
+    // Set close cooldown time
+    public void SetCloseCooldown(float cooldown)
+    {
+        closeCooldown = Mathf.Max(0.5f, cooldown); // Minimum 0.5 seconds
+        Debug.Log($"Close button cooldown set to: {closeCooldown} seconds");
     }
     
     // AssessmentButton class
@@ -1256,12 +1399,15 @@ public class QA1AssessmentSystem : MonoBehaviour
         hasTriggered = false;
         isInCooldown = false;
         isSuccessState = false; // Reset success state
+        wasClosedByButton = false; // Reset close button state
         
         // Re-enable particle system if it was disabled
         if (triggerParticleSystem != null)
         {
             triggerParticleSystem.Play();
         }
+        
+        Debug.Log("Assessment trigger reset");
     }
     
     public bool IsUIActive()
@@ -1282,6 +1428,17 @@ public class QA1AssessmentSystem : MonoBehaviour
     public List<string> GetSelectedProducts()
     {
         return new List<string>(selectedProductIDs);
+    }
+    
+    public bool IsInCooldown()
+    {
+        return isInCooldown;
+    }
+    
+    public float GetRemainingCooldown()
+    {
+        // Note: This is a simple implementation. For accurate timing, you'd need to track start time
+        return isInCooldown ? closeCooldown : 0f;
     }
     
     #if UNITY_EDITOR
@@ -1392,6 +1549,19 @@ public class QA1AssessmentSystem : MonoBehaviour
             {
                 Debug.LogError($"Spawn Point {i}: NULL");
             }
+        }
+    }
+    
+    [ContextMenu("Test Close Button")]
+    private void TestCloseButton()
+    {
+        if (isUIActive)
+        {
+            OnCloseButtonClick();
+        }
+        else
+        {
+            Debug.Log("UI is not active. Trigger assessment first.");
         }
     }
     #endif

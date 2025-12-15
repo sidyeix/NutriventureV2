@@ -24,6 +24,11 @@ public class K2_Instructions2D : MonoBehaviour
     [Header("Instruction Images")]
     [SerializeField] private List<Texture2D> instructionImages = new List<Texture2D>(); // List of 2D sprites/images
     
+    [Header("External UI Button")]
+    [SerializeField] private Button externalOpenButton; // UI Button that can open the panel
+    [SerializeField] private bool enableExternalButton = true; // Whether the external button is enabled
+    [SerializeField] private bool showButtonAfterTrigger = true; // Show button after collider is triggered
+    
     [Header("Player Detection")]
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private bool disableAfterFirstTrigger = true;
@@ -35,11 +40,13 @@ public class K2_Instructions2D : MonoBehaviour
     private bool hasBeenTriggered = false;
     private StarterAssets.ThirdPersonController playerController;
     private UnityEngine.InputSystem.PlayerInput playerInput;
+    private bool panelOpenedExternally = false; // Track if panel was opened by button
     
     void Start()
     {
         InitializePanel();
         SetupButtonListeners();
+        InitializeExternalButton();
     }
     
     void InitializePanel()
@@ -59,6 +66,26 @@ public class K2_Instructions2D : MonoBehaviour
         if (disableAfterFirstTrigger && hasBeenTriggered)
         {
             GetComponent<Collider>().enabled = false;
+        }
+    }
+    
+    void InitializeExternalButton()
+    {
+        if (externalOpenButton != null)
+        {
+            // Initially disable the external button
+            externalOpenButton.gameObject.SetActive(showButtonAfterTrigger ? false : true);
+            externalOpenButton.interactable = false;
+            
+            // Add listener to open panel
+            externalOpenButton.onClick.RemoveAllListeners();
+            externalOpenButton.onClick.AddListener(OpenPanelFromButton);
+            
+            Debug.Log("External button initialized - initially disabled");
+        }
+        else if (enableExternalButton)
+        {
+            Debug.LogWarning("ExternalOpenButton not assigned but enableExternalButton is true!");
         }
     }
     
@@ -107,20 +134,57 @@ public class K2_Instructions2D : MonoBehaviour
         if (other.CompareTag(playerTag) && !hasBeenTriggered)
         {
             Debug.Log("Player entered instruction trigger");
-            OpenInstructionPanel();
+            TriggerInstructionPanel();
         }
     }
     
-    void OpenInstructionPanel()
+    // This method handles the initial trigger (from collider)
+    public void TriggerInstructionPanel()
+    {
+        if (!hasBeenTriggered)
+        {
+            hasBeenTriggered = true;
+            
+            // Activate external button if enabled
+            if (enableExternalButton && externalOpenButton != null)
+            {
+                externalOpenButton.gameObject.SetActive(true);
+                externalOpenButton.interactable = true;
+                Debug.Log("External button activated after collider trigger");
+            }
+            
+            // Disable trigger collider if needed
+            if (disableAfterFirstTrigger)
+            {
+                GetComponent<Collider>().enabled = false;
+            }
+            
+            // Open the panel immediately
+            OpenInstructionPanel(false); // false = not opened by button
+        }
+    }
+    
+    // Called by external UI button
+    public void OpenPanelFromButton()
+    {
+        if (hasBeenTriggered && enableExternalButton)
+        {
+            panelOpenedExternally = true;
+            OpenInstructionPanel(true); // true = opened by button
+        }
+        else if (!hasBeenTriggered)
+        {
+            Debug.LogWarning("Cannot open panel from button: Collider not triggered yet!");
+        }
+    }
+    
+    void OpenInstructionPanel(bool fromButton = false)
     {
         if (systemsPanel == null || instructionImages.Count == 0)
         {
             Debug.LogError("Cannot open panel: Missing references!");
             return;
         }
-        
-        // Mark as triggered
-        hasBeenTriggered = true;
         
         // Get player references
         GameObject player = GameObject.FindGameObjectWithTag(playerTag);
@@ -146,13 +210,7 @@ public class K2_Instructions2D : MonoBehaviour
         // Activate panel
         systemsPanel.SetActive(true);
         
-        // Disable trigger collider if needed
-        if (disableAfterFirstTrigger)
-        {
-            GetComponent<Collider>().enabled = false;
-        }
-        
-        Debug.Log("Instruction panel opened");
+        Debug.Log($"Instruction panel opened {(fromButton ? "from button" : "from trigger")}");
     }
     
     void CloseInstructionPanel()
@@ -173,6 +231,9 @@ public class K2_Instructions2D : MonoBehaviour
         // Reset player references
         playerController = null;
         playerInput = null;
+        
+        // Reset external button state
+        panelOpenedExternally = false;
     }
     
     void PreviousInstruction()
@@ -262,7 +323,13 @@ public class K2_Instructions2D : MonoBehaviour
     {
         if (!hasBeenTriggered)
         {
-            OpenInstructionPanel();
+            // Trigger from manual call (e.g., from another script)
+            TriggerInstructionPanel();
+        }
+        else
+        {
+            // Panel already triggered, open it
+            OpenInstructionPanel(false);
         }
     }
     
@@ -331,13 +398,62 @@ public class K2_Instructions2D : MonoBehaviour
         return systemsPanel != null && systemsPanel.activeInHierarchy;
     }
     
+    public bool IsExternalButtonEnabled()
+    {
+        return externalOpenButton != null && externalOpenButton.interactable;
+    }
+    
     // Reset functionality
     
     public void ResetTrigger()
     {
         hasBeenTriggered = false;
         GetComponent<Collider>().enabled = true;
-        Debug.Log("Instruction trigger reset");
+        panelOpenedExternally = false;
+        
+        // Reset external button
+        if (externalOpenButton != null)
+        {
+            externalOpenButton.gameObject.SetActive(showButtonAfterTrigger ? false : true);
+            externalOpenButton.interactable = false;
+        }
+        
+        Debug.Log("Instruction trigger and external button reset");
+    }
+    
+    // Enable/disable external button programmatically
+    
+    public void SetExternalButtonEnabled(bool enabled)
+    {
+        enableExternalButton = enabled;
+        
+        if (externalOpenButton != null)
+        {
+            if (enabled && hasBeenTriggered)
+            {
+                externalOpenButton.gameObject.SetActive(true);
+                externalOpenButton.interactable = true;
+            }
+            else
+            {
+                externalOpenButton.interactable = false;
+                if (!showButtonAfterTrigger)
+                {
+                    externalOpenButton.gameObject.SetActive(false);
+                }
+            }
+        }
+        
+        Debug.Log($"External button {(enabled ? "enabled" : "disabled")}");
+    }
+    
+    public void SetExternalButtonVisible(bool visible)
+    {
+        if (externalOpenButton != null)
+        {
+            externalOpenButton.gameObject.SetActive(visible);
+            Debug.Log($"External button {(visible ? "made visible" : "hidden")}");
+        }
     }
     
     // Input handling with Input System - Disabled for mobile by default
@@ -461,7 +577,7 @@ public class K2_Instructions2D : MonoBehaviour
             return;
         }
         
-        OpenInstructionPanel();
+        TriggerInstructionPanel();
     }
     
     [ContextMenu("Test Close Panel")]
@@ -480,5 +596,18 @@ public class K2_Instructions2D : MonoBehaviour
     void TestPreviousInstruction()
     {
         PreviousInstruction();
+    }
+    
+    [ContextMenu("Test Trigger From Button")]
+    void TestTriggerFromButton()
+    {
+        // Simulate button click
+        OpenPanelFromButton();
+    }
+    
+    [ContextMenu("Test Reset Trigger")]
+    void TestResetTrigger()
+    {
+        ResetTrigger();
     }
 }

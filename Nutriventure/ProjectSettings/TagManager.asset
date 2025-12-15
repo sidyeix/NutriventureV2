@@ -13,6 +13,7 @@ TagManager:
   - K2_Monster
   - NutriHeart
   - DummyProduct
+  - QA2SpawnedProduct
   layers:
   - Default
   - TransparentFX
