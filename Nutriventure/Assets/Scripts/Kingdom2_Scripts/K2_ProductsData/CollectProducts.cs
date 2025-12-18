@@ -482,8 +482,9 @@ public class CollectProducts : MonoBehaviour
             currentNearbyProduct = null;
         }
         
-        Debug.Log("Pickup completed successfully");
-    }
+            
+            Debug.Log("Pickup completed successfully");
+        }
     
     private void HandleDummyProductCollection(string productName)
     {

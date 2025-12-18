@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using System.Collections;
+using UnityEngine.Events;
 
 public class K2_QA1system : MonoBehaviour
 {
@@ -78,6 +79,10 @@ public class K2_QA1system : MonoBehaviour
     [Header("Close Button Settings")]
     public bool enableCloseButton = true; // Whether close button is enabled
     public float closeCooldown = 3f; // Cooldown after closing before can trigger again
+    
+    [Header("Scoring Integration")]
+    public bool enableScoring = true; // Enable/disable scoring
+    public UnityEvent<int, bool> OnQA1Completed; // Event for scoring system
     
     // Runtime variables
     private List<ProductData.ProductInfo> collectedProducts = new List<ProductData.ProductInfo>();
@@ -176,6 +181,12 @@ public class K2_QA1system : MonoBehaviour
         
         // Validate spawn points
         ValidateSpawnPoints();
+        
+        // NEW: Initialize the UnityEvent if null
+        if (OnQA1Completed == null)
+        {
+            OnQA1Completed = new UnityEvent<int, bool>();
+        }
     }
     
     private void ValidateTemplateComponents()
@@ -776,6 +787,12 @@ public class K2_QA1system : MonoBehaviour
             confirmButtonText.color = Color.green;
         }
         
+        // NEW: TRIGGER SCORING HERE - This is the most important part!
+        if (enableScoring)
+        {
+            TriggerQA1Scoring();
+        }
+        
         // Disable all buttons
         SetAllButtonsInteractable(false);
         
@@ -810,6 +827,80 @@ public class K2_QA1system : MonoBehaviour
         
         // Reset processing flag
         isProcessing = false;
+    }
+    
+    // NEW: Method to trigger scoring
+    private void TriggerQA1Scoring()
+    {
+        int selectedCount = selectedProductIDs.Count;
+        bool allAddedSugar = CheckIfAllAddedSugar();
+        
+        Debug.Log($"Triggering QA1 Scoring: {selectedCount} products selected, All Added Sugar: {allAddedSugar}");
+        
+        // Method 1: Trigger UnityEvent (for scoring system to subscribe to)
+        if (OnQA1Completed != null)
+        {
+            OnQA1Completed.Invoke(selectedCount, allAddedSugar);
+            Debug.Log($"QA1 UnityEvent triggered with params: {selectedCount}, {allAddedSugar}");
+        }
+        
+        // Method 2: Call scoring system directly (most reliable)
+        try
+        {
+            if (SugariaScoringSystem.Instance != null)
+            {
+                SugariaScoringSystem.Instance.DirectScoreQA1(selectedCount, allAddedSugar);
+                Debug.Log($"Direct scoring call successful to SugariaScoringSystem");
+            }
+            else
+            {
+                Debug.LogWarning("SugariaScoringSystem.Instance is null!");
+                
+                // Try to find it dynamically
+                SugariaScoringSystem scoringSystem = FindObjectOfType<SugariaScoringSystem>();
+                if (scoringSystem != null)
+                {
+                    scoringSystem.DirectScoreQA1(selectedCount, allAddedSugar);
+                    Debug.Log($"Found and called scoring system dynamically");
+                }
+                else
+                {
+                    Debug.LogError("Could not find SugariaScoringSystem in scene!");
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error calling scoring system: {e.Message}");
+        }
+        
+        // Method 3: Use the public manual method as fallback
+        try
+        {
+            // Try using reflection as a last resort
+            var scoringType = System.Type.GetType("SugariaScoringSystem");
+            if (scoringType != null)
+            {
+                var instanceProperty = scoringType.GetProperty("Instance");
+                if (instanceProperty != null)
+                {
+                    object scoringInstance = instanceProperty.GetValue(null);
+                    if (scoringInstance != null)
+                    {
+                        var manualMethod = scoringType.GetMethod("ManualQA1Completed");
+                        if (manualMethod != null)
+                        {
+                            manualMethod.Invoke(scoringInstance, new object[] { selectedCount, allAddedSugar });
+                            Debug.Log($"Used reflection to call ManualQA1Completed");
+                        }
+                    }
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"Reflection fallback failed: {e.Message}");
+        }
     }
     
     private IEnumerator ShowError(string message)
@@ -984,7 +1075,7 @@ public class K2_QA1system : MonoBehaviour
         }
     }
     
-        private void SpawnSelectedProducts()
+    private void SpawnSelectedProducts()
     {
         Debug.Log($"Spawning {selectedProductIDs.Count} products at assigned spawn points");
         
@@ -1441,6 +1532,67 @@ public class K2_QA1system : MonoBehaviour
         return isInCooldown ? closeCooldown : 0f;
     }
     
+    // NEW: Public method to check if all selected are added sugar
+    public bool CheckAllSelectedAreAddedSugar()
+    {
+        return CheckIfAllAddedSugar();
+    }
+    
+    // NEW: Public method to manually trigger scoring (for testing)
+    [ContextMenu("Test Score QA1")]
+    public void TestScoreQA1()
+    {
+        if (selectedProductIDs.Count > 0)
+        {
+            bool allAddedSugar = CheckIfAllAddedSugar();
+            TriggerQA1Scoring();
+            Debug.Log($"Test scoring triggered: {selectedProductIDs.Count} products, All Added Sugar: {allAddedSugar}");
+        }
+        else
+        {
+            Debug.LogWarning("No products selected. Cannot test scoring.");
+        }
+    }
+    
+    // NEW: Helper method for debugging scoring connection
+    [ContextMenu("Test Scoring Connection")]
+    public void TestScoringConnection()
+    {
+        Debug.Log("=== TESTING SCORING CONNECTION ===");
+        
+        // Check if scoring system exists
+        if (SugariaScoringSystem.Instance != null)
+        {
+            Debug.Log("✓ SugariaScoringSystem.Instance found");
+            Debug.Log($"  Current Score: {SugariaScoringSystem.Instance.GetCurrentScore()}");
+            Debug.Log($"  QA1 Already Scored: {SugariaScoringSystem.Instance.GetQA1Scored()}");
+        }
+        else
+        {
+            Debug.LogError("✗ SugariaScoringSystem.Instance not found!");
+            
+            // Try to find it
+            SugariaScoringSystem scoringSystem = FindObjectOfType<SugariaScoringSystem>();
+            if (scoringSystem != null)
+            {
+                Debug.Log("✓ Found SugariaScoringSystem via FindObjectOfType");
+            }
+        }
+        
+        // Test event
+        if (OnQA1Completed != null)
+        {
+            int listenerCount = OnQA1Completed.GetPersistentEventCount();
+            Debug.Log($"✓ OnQA1Completed UnityEvent has {listenerCount} persistent listener(s)");
+        }
+        else
+        {
+            Debug.LogWarning("✗ OnQA1Completed UnityEvent is null");
+        }
+        
+        Debug.Log("=== END SCORING TEST ===");
+    }
+    
     #if UNITY_EDITOR
     [ContextMenu("Auto Find All Components")]
     private void AutoFindAllComponents()
@@ -1563,6 +1715,33 @@ public class K2_QA1system : MonoBehaviour
         {
             Debug.Log("UI is not active. Trigger assessment first.");
         }
+    }
+    
+    [ContextMenu("Auto Connect Scoring Events")]
+    private void AutoConnectScoringEvents()
+    {
+        Debug.Log("=== ATTEMPTING AUTO-CONNECTION ===");
+        
+        // Try to find scoring system
+        SugariaScoringSystem scoringSystem = FindObjectOfType<SugariaScoringSystem>();
+        if (scoringSystem != null)
+        {
+            Debug.Log($"Found SugariaScoringSystem on: {scoringSystem.gameObject.name}");
+            
+            // Note: UnityEvent connections must be made in Inspector
+            Debug.Log("To connect in Inspector:");
+            Debug.Log("1. Select your QA1 GameObject");
+            Debug.Log("2. In the Inspector, find the 'On QA1 Completed ()' event");
+            Debug.Log("3. Click the '+' to add a new event");
+            Debug.Log("4. Drag the SugariaScoringSystem GameObject into the slot");
+            Debug.Log("5. From the function dropdown, select: SugariaScoringSystem > ManualQA1Completed");
+        }
+        else
+        {
+            Debug.LogError("Could not find SugariaScoringSystem in scene!");
+        }
+        
+        Debug.Log("=== AUTO-CONNECTION COMPLETE ===");
     }
     #endif
 }

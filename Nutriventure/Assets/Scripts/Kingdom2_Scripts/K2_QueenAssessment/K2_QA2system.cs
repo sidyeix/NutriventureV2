@@ -27,16 +27,39 @@ public class K2_QA2system : MonoBehaviour
     public Button closeButton; // Close button on panel
     public TextMeshProUGUI productNameText; // Optional: Show product name on panel
     
+    [Header("Input Field Components")]
+    public TMP_InputField sugarInputField; // Input field for sugar amount
+    public GameObject inputFieldContainer; // Container for the input field (optional)
+    public TextMeshProUGUI validationText; // Text to show validation messages
+    public GameObject inputFieldGroup; // Group containing input field and label
+    public Color correctColor = Color.green;
+    public Color incorrectColor = Color.red;
+    public Color defaultColor = Color.white;
+    public float validationTextDuration = 2f;
+    
+    [Header("Heart Damage Settings")]
+    public SugariaPlayerStat playerHealth; // Reference to player health system
+    public int wrongAnswerDamage = 1; // Hearts to lose on wrong answer
+    public GameObject damageEffectPrefab; // Optional: Visual effect when losing heart
+    public Transform damageEffectSpawnPoint; // Where to spawn damage effect
+    public AudioClip damageSound; // Sound when taking damage
+    public AudioClip wrongAnswerSound; // Sound for wrong input
+    
     [Header("Audio")]
     public AudioClip scanSound;
     public AudioClip panelOpenSound;
     public AudioClip panelCloseSound;
     public AudioClip completionSound; // NEW: Sound when product is completed (particle activates + animator removed)
     public AudioClip particleActivationSound; // NEW: Sound when particle system activates
+    public AudioClip correctAnswerSound; // Sound for correct input
     
     [Header("Animation Settings")]
     public float uiFadeInDuration = 0.3f;
     public float uiFadeOutDuration = 0.3f;
+    public float wrongAnswerShakeDuration = 0.5f;
+    public float wrongAnswerShakeIntensity = 10f;
+    public float correctAnswerPulseDuration = 0.5f;
+    public float correctAnswerPulseScale = 1.2f;
     
     [Header("Player Controls")]
     public bool freezePlayerControls = true; // Freeze player when panel is open
@@ -53,6 +76,7 @@ public class K2_QA2system : MonoBehaviour
     [Header("Debug")]
     public bool debugMode = true;
     public bool alwaysShowScanButton = false; // For testing
+    public bool skipValidationForTesting = false; // Skip validation for testing
     
     // Runtime variables
     private GameObject currentNearbyProduct = null;
@@ -63,6 +87,13 @@ public class K2_QA2system : MonoBehaviour
     
     // Track scanned products
     private List<string> scannedProductIDs = new List<string>();
+    private List<string> correctlyAnsweredIDs = new List<string>(); // Track which products were answered correctly
+    
+    // Input validation
+    private float targetSugarAmount = 0f;
+    private Coroutine validationTextCoroutine;
+    private string currentProductID = "";
+    private Vector3 originalPanelPosition;
     
     // References to player components
     private MonoBehaviour playerMovementScript;
@@ -86,6 +117,9 @@ public class K2_QA2system : MonoBehaviour
         // Store particle system positions for reference
         CacheParticlePositions();
         
+        // Store original position for animation
+        if (panel != null) originalPanelPosition = panel.transform.localPosition;
+        
         // Disable scan button by default
         if (scanButton != null)
         {
@@ -98,10 +132,17 @@ public class K2_QA2system : MonoBehaviour
             assessmentCanvas.SetActive(false);
         }
         
+        // Disable validation text by default
+        if (validationText != null)
+        {
+            validationText.gameObject.SetActive(false);
+        }
+        
         LogDebug("QA2 System initialized.");
         LogDebug($"Looking for products with tag: {spawnProductTag}");
         LogDebug($"QA1 System found: {qa1System != null}");
         LogDebug($"Player Transform found: {playerTransform != null}");
+        LogDebug($"Player Health System found: {playerHealth != null}");
     }
     
     private void InitializeComponents()
@@ -117,6 +158,20 @@ public class K2_QA2system : MonoBehaviour
         // Find player components
         playerMovementScript = FindObjectOfType<StarterAssets.ThirdPersonController>();
         playerInput = FindObjectOfType<UnityEngine.InputSystem.PlayerInput>();
+        
+        // Find player health if not assigned
+        if (playerHealth == null)
+        {
+            playerHealth = FindObjectOfType<SugariaPlayerStat>();
+            if (playerHealth != null)
+            {
+                LogDebug("Found player health system automatically.");
+            }
+            else
+            {
+                LogDebug("Player health system not found.");
+            }
+        }
         
         // Find player transform if not assigned
         if (playerTransform == null)
@@ -179,12 +234,40 @@ public class K2_QA2system : MonoBehaviour
         // Setup panel buttons
         if (confirmButton != null)
         {
-            confirmButton.onClick.AddListener(OnConfirmButtonClicked);
+            confirmButton.onClick.AddListener(ValidateAndConfirm);
         }
         
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(OnCloseButtonClicked);
+        }
+        
+        // Setup input field - NO real-time validation
+        if (sugarInputField != null)
+        {
+            // REMOVED: onValueChanged listener for real-time validation
+            sugarInputField.onSubmit.AddListener(OnInputSubmitted);
+            sugarInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
+            sugarInputField.characterLimit = 6; // Allow up to 999.99
+            
+            // Set up validation
+            sugarInputField.characterValidation = TMP_InputField.CharacterValidation.Decimal;
+            sugarInputField.keyboardType = TouchScreenKeyboardType.NumberPad;
+            
+            // Clear initial text
+            sugarInputField.text = "";
+            
+            LogDebug("Sugar input field initialized (no real-time validation).");
+        }
+        else
+        {
+            Debug.LogWarning("Sugar input field not assigned! Input validation will not work.");
+        }
+        
+        // Initialize validation text
+        if (validationText != null)
+        {
+            validationText.gameObject.SetActive(false);
         }
         
         // Get or add CanvasGroup for fade effects
@@ -196,6 +279,12 @@ public class K2_QA2system : MonoBehaviour
                 canvasGroup = assessmentCanvas.AddComponent<CanvasGroup>();
             }
             canvasGroup.alpha = 0f;
+        }
+        
+        // Hide input field group initially
+        if (inputFieldGroup != null)
+        {
+            inputFieldGroup.SetActive(false);
         }
     }
     
@@ -280,6 +369,22 @@ public class K2_QA2system : MonoBehaviour
         {
             OnCloseButtonClicked();
         }
+        
+        // Handle Enter key to confirm
+        if (isPanelActive && UnityEngine.InputSystem.Keyboard.current != null && 
+            UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame)
+        {
+            ValidateAndConfirm();
+        }
+        
+        // Handle Tab key to focus input field
+        if (isPanelActive && UnityEngine.InputSystem.Keyboard.current != null && 
+            UnityEngine.InputSystem.Keyboard.current.tabKey.wasPressedThisFrame &&
+            sugarInputField != null && sugarInputField.gameObject.activeInHierarchy)
+        {
+            sugarInputField.Select();
+            sugarInputField.ActivateInputField();
+        }
     }
     
     private bool IsQA1Completed()
@@ -317,11 +422,11 @@ public class K2_QA2system : MonoBehaviour
             {
                 if (product == null) continue;
                 
-                // Check if this product has already been scanned
+                // Check if this product has already been scanned and correctly answered
                 string productID = GetProductIDFromObject(product);
-                if (scannedProductIDs.Contains(productID))
+                if (correctlyAnsweredIDs.Contains(productID))
                 {
-                    continue;
+                    continue; // Skip products that were already correctly answered
                 }
                 
                 // FIXED: Use player position instead of this GameObject's position
@@ -383,7 +488,8 @@ public class K2_QA2system : MonoBehaviour
             GameObject product = scannable.gameObject;
             string productID = scannable.productID;
             
-            if (scannedProductIDs.Contains(productID))
+            // Skip products that were already correctly answered
+            if (correctlyAnsweredIDs.Contains(productID))
             {
                 continue;
             }
@@ -406,7 +512,7 @@ public class K2_QA2system : MonoBehaviour
         {
             scanButton.gameObject.SetActive(true);
             isScanButtonVisible = true;
-            LogDebug($"Scan button shown for {currentNearbyProduct.name}");
+            LogDebug($"Scan button shown for {currentNearbyProduct?.name}");
         }
     }
     
@@ -479,6 +585,7 @@ public class K2_QA2system : MonoBehaviour
     private void ShowNutritionLabelPanel(string productID)
     {
         isPanelActive = true;
+        currentProductID = productID; // Store the current product ID
         
         // Hide scan button
         HideScanButton();
@@ -508,6 +615,9 @@ public class K2_QA2system : MonoBehaviour
         
         LogDebug($"Showing nutrition label for: {productInfo.displayName}");
         
+        // Store target sugar amount for validation
+        targetSugarAmount = productInfo.sugarContentAmount;
+        
         // Set product name if text component is available
         if (productNameText != null)
         {
@@ -529,6 +639,36 @@ public class K2_QA2system : MonoBehaviour
                 nutritionLabelImage.gameObject.SetActive(false);
             }
         }
+        
+        // Reset input field
+        if (sugarInputField != null)
+        {
+            sugarInputField.text = "";
+            sugarInputField.interactable = true;
+            
+            // Show input field if this product hasn't been correctly answered yet
+            if (inputFieldGroup != null)
+            {
+                bool showInputField = !correctlyAnsweredIDs.Contains(productID);
+                inputFieldGroup.SetActive(showInputField);
+                
+                if (showInputField)
+                {
+                    // Select the input field
+                    sugarInputField.Select();
+                    sugarInputField.ActivateInputField();
+                }
+            }
+        }
+        
+        // Hide validation text
+        if (validationText != null)
+        {
+            validationText.gameObject.SetActive(false);
+        }
+        
+        // REMOVED: No button state update on typing
+        // Confirm button is always interactable
         
         // Store original time scale
         originalTimeScale = Time.timeScale;
@@ -565,26 +705,206 @@ public class K2_QA2system : MonoBehaviour
         }
     }
     
-    private IEnumerator FadeCanvas(float startAlpha, float endAlpha, float duration)
+    // REMOVED: OnInputValueChanged method - no real-time validation
+    
+    private void OnInputSubmitted(string value)
     {
-        if (canvasGroup == null) yield break;
-        
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
-            yield return null;
-        }
-        canvasGroup.alpha = endAlpha;
+        // When user presses Enter in the input field, validate
+        ValidateAndConfirm();
     }
     
-    private void OnConfirmButtonClicked()
+    // REMOVED: UpdateConfirmButtonState method - no button highlighting
+    
+    private void ValidateAndConfirm()
     {
-        LogDebug("Confirm button clicked");
+        if (sugarInputField == null || string.IsNullOrEmpty(sugarInputField.text))
+        {
+            ShowValidationText("Please enter a value!", defaultColor);
+            return;
+        }
         
-        // Add product to scanned list
+        bool validationPassed = false;
+        
+        if (skipValidationForTesting)
+        {
+            // Bypass validation for testing
+            validationPassed = true;
+            LogDebug("Skipping validation for testing");
+        }
+        else if (float.TryParse(sugarInputField.text, out float inputValue))
+        {
+            // Check if the value matches the target sugar amount
+            validationPassed = Mathf.Abs(inputValue - targetSugarAmount) < 0.01f;
+            LogDebug($"Validation: Input={inputValue}, Target={targetSugarAmount}, Passed={validationPassed}");
+        }
+        else
+        {
+            ShowValidationText("Please enter a valid number!", defaultColor);
+            return;
+        }
+        
+        if (validationPassed)
+        {
+            OnCorrectAnswer();
+        }
+        else
+        {
+            OnWrongAnswer();
+        }
+    }
+    
+    private void OnCorrectAnswer()
+    {
+        LogDebug("Correct answer!");
+        
+        // Play correct answer sound
+        if (correctAnswerSound != null)
+        {
+            audioSource.PlayOneShot(correctAnswerSound);
+        }
+        
+        // Show success message
+        ShowValidationText($"Correct! {targetSugarAmount}g of sugar", correctColor, 2f);
+        
+        // Add to correctly answered list
+        if (!correctlyAnsweredIDs.Contains(currentProductID))
+        {
+            correctlyAnsweredIDs.Add(currentProductID);
+        }
+        
+        // Disable input field
+        if (sugarInputField != null)
+        {
+            sugarInputField.interactable = false;
+        }
+        
+        // Start success animation
+        StartCoroutine(CorrectAnswerAnimation());
+        
+        // Wait a moment then proceed
+        StartCoroutine(DelayedConfirm(1f));
+    }
+    
+    private void OnWrongAnswer()
+    {
+        LogDebug("Wrong answer!");
+        
+        // Play wrong answer sound
+        if (wrongAnswerSound != null)
+        {
+            audioSource.PlayOneShot(wrongAnswerSound);
+        }
+        
+        // Show error message
+        ShowValidationText($"Incorrect. Try again!", incorrectColor);
+        
+        // Apply damage to player health
+        ApplyDamageToPlayer();
+        
+        // Start wrong answer animation
+        StartCoroutine(WrongAnswerAnimation());
+        
+        // Clear input field but keep it focused
+        if (sugarInputField != null)
+        {
+            sugarInputField.text = "";
+            sugarInputField.Select();
+            sugarInputField.ActivateInputField();
+        }
+        
+        // Do NOT close the panel - let user try again
+    }
+    
+    private void ApplyDamageToPlayer()
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(wrongAnswerDamage);
+            LogDebug($"Player took {wrongAnswerDamage} damage for wrong answer");
+            
+            // Show damage effect
+            if (damageEffectPrefab != null)
+            {
+                Transform spawnPoint = damageEffectSpawnPoint != null ? damageEffectSpawnPoint : transform;
+                GameObject effect = Instantiate(damageEffectPrefab, spawnPoint.position, Quaternion.identity);
+                Destroy(effect, 2f);
+            }
+            
+            // Play damage sound
+            if (damageSound != null)
+            {
+                audioSource.PlayOneShot(damageSound);
+            }
+        }
+        else
+        {
+            LogDebug("Player health system not found - damage not applied");
+        }
+    }
+    
+    private IEnumerator CorrectAnswerAnimation()
+    {
+        if (confirmButton != null)
+        {
+            Vector3 originalScale = confirmButton.transform.localScale;
+            float elapsed = 0f;
+            
+            while (elapsed < correctAnswerPulseDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = elapsed / correctAnswerPulseDuration;
+                
+                // Pulse animation
+                float scale = Mathf.Lerp(1f, correctAnswerPulseScale, 
+                    Mathf.Sin(t * Mathf.PI * 2f) * 0.5f + 0.5f);
+                confirmButton.transform.localScale = originalScale * scale;
+                
+                yield return null;
+            }
+            
+            confirmButton.transform.localScale = originalScale;
+        }
+    }
+    
+    private IEnumerator WrongAnswerAnimation()
+    {
+        if (panel != null)
+        {
+            Vector3 originalPos = panel.transform.localPosition;
+            float elapsed = 0f;
+            
+            while (elapsed < wrongAnswerShakeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = elapsed / wrongAnswerShakeDuration;
+                
+                // Shake animation
+                float shakeAmount = Mathf.Lerp(wrongAnswerShakeIntensity, 0f, t);
+                Vector3 shakeOffset = new Vector3(
+                    Random.Range(-shakeAmount, shakeAmount),
+                    Random.Range(-shakeAmount, shakeAmount),
+                    0f
+                );
+                panel.transform.localPosition = originalPos + shakeOffset;
+                
+                yield return null;
+            }
+            
+            panel.transform.localPosition = originalPos;
+        }
+    }
+    
+    private IEnumerator DelayedConfirm(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        
+        // Now actually confirm
+        ProcessProductConfirmation();
+    }
+    
+    private void ProcessProductConfirmation()
+    {
+        // Add product to scanned list if not already there
         if (currentNearbyProduct != null)
         {
             string productID = GetProductIDFromObject(currentNearbyProduct);
@@ -611,31 +931,65 @@ public class K2_QA2system : MonoBehaviour
         ClosePanel();
     }
     
-    private IEnumerator PlayCompletionSounds()
+    private void ShowValidationText(string message, Color color, float duration = -1f)
     {
-        // Wait a moment before playing sounds
-        yield return new WaitForSeconds(soundDelay);
+        if (validationText == null) return;
         
-        // Play completion sound (for animator removal and general completion)
-        if (completionSound != null)
+        // Stop existing coroutine if any
+        if (validationTextCoroutine != null)
         {
-            audioSource.PlayOneShot(completionSound, completionSoundVolume);
-            LogDebug($"Played completion sound: {completionSound.name}");
+            StopCoroutine(validationTextCoroutine);
         }
         
-        // Play particle activation sound
-        if (particleActivationSound != null)
+        // Set text and color
+        validationText.text = message;
+        validationText.color = color;
+        validationText.gameObject.SetActive(true);
+        
+        // Start hide coroutine if duration is specified
+        if (duration > 0)
         {
-            // Play particle sound slightly after completion sound for layered effect
-            yield return new WaitForSeconds(0.05f);
-            audioSource.PlayOneShot(particleActivationSound, particleSoundVolume);
-            LogDebug($"Played particle activation sound: {particleActivationSound.name}");
+            validationTextCoroutine = StartCoroutine(HideValidationTextAfterDelay(duration));
         }
+    }
+    
+    private IEnumerator HideValidationTextAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        
+        if (validationText != null)
+        {
+            validationText.gameObject.SetActive(false);
+        }
+    }
+    
+    private IEnumerator FadeCanvas(float startAlpha, float endAlpha, float duration)
+    {
+        if (canvasGroup == null) yield break;
+        
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
+            yield return null;
+        }
+        canvasGroup.alpha = endAlpha;
     }
     
     private void OnCloseButtonClicked()
     {
         LogDebug("Close button clicked");
+        
+        // Check if we should warn about unsaved input
+        if (sugarInputField != null && !string.IsNullOrEmpty(sugarInputField.text) && 
+            !correctlyAnsweredIDs.Contains(currentProductID))
+        {
+            // Optional: Show confirmation dialog
+            // For now, just close
+        }
+        
         ClosePanel();
     }
     
@@ -672,12 +1026,15 @@ public class K2_QA2system : MonoBehaviour
         
         // Reset panel state
         isPanelActive = false;
+        currentProductID = "";
         
-        // Show scan button again if still near product
+        // Show scan button again if still near product and not correctly answered
         if (currentNearbyProduct != null)
         {
+            string productID = GetProductIDFromObject(currentNearbyProduct);
             float distance = Vector3.Distance(playerTransform.position, currentNearbyProduct.transform.position);
-            if (distance <= scanRange && !scannedProductIDs.Contains(GetProductIDFromObject(currentNearbyProduct)))
+            
+            if (distance <= scanRange && !correctlyAnsweredIDs.Contains(productID))
             {
                 ShowScanButton();
             }
@@ -723,6 +1080,28 @@ public class K2_QA2system : MonoBehaviour
         
         if (playerInput != null)
             playerInput.enabled = true;
+    }
+    
+    private IEnumerator PlayCompletionSounds()
+    {
+        // Wait a moment before playing sounds
+        yield return new WaitForSeconds(soundDelay);
+        
+        // Play completion sound (for animator removal and general completion)
+        if (completionSound != null)
+        {
+            audioSource.PlayOneShot(completionSound, completionSoundVolume);
+            LogDebug($"Played completion sound: {completionSound.name}");
+        }
+        
+        // Play particle activation sound
+        if (particleActivationSound != null)
+        {
+            // Play particle sound slightly after completion sound for layered effect
+            yield return new WaitForSeconds(0.05f);
+            audioSource.PlayOneShot(particleActivationSound, particleSoundVolume);
+            LogDebug($"Played particle activation sound: {particleActivationSound.name}");
+        }
     }
     
     private void CleanupProductComponents(GameObject product)
@@ -927,9 +1306,19 @@ public class K2_QA2system : MonoBehaviour
         return new List<string>(scannedProductIDs);
     }
     
+    public List<string> GetCorrectlyAnsweredProducts()
+    {
+        return new List<string>(correctlyAnsweredIDs);
+    }
+    
     public int GetScannedCount()
     {
         return scannedProductIDs.Count;
+    }
+    
+    public int GetCorrectlyAnsweredCount()
+    {
+        return correctlyAnsweredIDs.Count;
     }
     
     public bool IsScanningAvailable()
@@ -983,6 +1372,7 @@ public class K2_QA2system : MonoBehaviour
         Debug.Log($"Scan Button Visible: {isScanButtonVisible}");
         Debug.Log($"Panel Active: {isPanelActive}");
         Debug.Log($"Scanned Products: {scannedProductIDs.Count} - {string.Join(", ", scannedProductIDs)}");
+        Debug.Log($"Correctly Answered: {correctlyAnsweredIDs.Count} - {string.Join(", ", correctlyAnsweredIDs)}");
         Debug.Log($"Scan Range: {scanRange}");
         Debug.Log($"Spawn Product Tag: {spawnProductTag}");
         Debug.Log($"Particle Systems: {spawnPointParticles?.Length ?? 0}");
@@ -1099,6 +1489,26 @@ public class K2_QA2system : MonoBehaviour
         }
     }
     
+    [ContextMenu("Test Correct Answer")]
+    public void TestCorrectAnswer()
+    {
+        if (isPanelActive && sugarInputField != null)
+        {
+            sugarInputField.text = targetSugarAmount.ToString();
+            ValidateAndConfirm();
+        }
+    }
+    
+    [ContextMenu("Test Wrong Answer")]
+    public void TestWrongAnswer()
+    {
+        if (isPanelActive && sugarInputField != null)
+        {
+            sugarInputField.text = (targetSugarAmount + 5).ToString();
+            ValidateAndConfirm();
+        }
+    }
+    
     private void CreateTestProduct()
     {
         if (playerTransform == null)
@@ -1155,7 +1565,8 @@ public class K2_QA2system : MonoBehaviour
     public void ClearScannedProducts()
     {
         scannedProductIDs.Clear();
-        Debug.Log("Cleared scanned products list");
+        correctlyAnsweredIDs.Clear();
+        Debug.Log("Cleared scanned and correctly answered products lists");
     }
     
     [ContextMenu("Recache Particle Positions")]
@@ -1163,5 +1574,19 @@ public class K2_QA2system : MonoBehaviour
     {
         CacheParticlePositions();
         Debug.Log("Recached particle positions");
+    }
+    
+    [ContextMenu("Find Player Health System")]
+    public void FindPlayerHealth()
+    {
+        playerHealth = FindObjectOfType<SugariaPlayerStat>();
+        if (playerHealth != null)
+        {
+            Debug.Log($"Found player health system: {playerHealth.gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Player health system not found in scene!");
+        }
     }
 }

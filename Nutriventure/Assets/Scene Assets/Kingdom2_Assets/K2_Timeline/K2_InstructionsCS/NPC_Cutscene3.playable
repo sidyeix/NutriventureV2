@@ -308,7 +308,7 @@ MonoBehaviour:
   m_Name: K2_SubtitlePlayableAsset
   m_EditorClassIdentifier: Assembly-CSharp::K2_SubtitlePlayableAsset
   subtitleText: Great work! You've successfully collected those 8 products.
-  typingSpeed: 0.07
+  typingSpeed: 0.05
 --- !u!114 &-5355211073228300486
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1132,7 +1132,7 @@ MonoBehaviour:
   m_Name: K2_SubtitlePlayableAsset
   m_EditorClassIdentifier: Assembly-CSharp::K2_SubtitlePlayableAsset
   subtitleText: Now proceed to the castle, the queen awaits you!
-  typingSpeed: 0.07
+  typingSpeed: 0.05
 --- !u!114 &6978906397417752027
 MonoBehaviour:
   m_ObjectHideFlags: 1
