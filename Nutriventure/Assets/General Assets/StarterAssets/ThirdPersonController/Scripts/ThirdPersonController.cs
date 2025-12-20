@@ -4,9 +4,6 @@
 using UnityEngine.InputSystem;
 #endif
 
-/* Note: animations are called via the controller for both the character and capsule using animator null checks
- */
-
 namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
@@ -22,6 +19,9 @@ namespace StarterAssets
         [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 56.335f;
 
+        [Tooltip("Crawl speed of the character in m/s")]
+        public float CrawlSpeed = 1.5f;
+
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
         public float RotationSmoothTime = 0.12f;
@@ -36,6 +36,9 @@ namespace StarterAssets
         [Space(10)]
         [Tooltip("The height the player can jump")]
         public float JumpHeight = 1.2f;
+
+        [Tooltip("Crawl jump height (reduced)")]
+        public float CrawlJumpHeight = 0.8f;
 
         [Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
         public float Gravity = -15.0f;
@@ -76,9 +79,30 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [Header("Crawling")]
+        [Tooltip("Crawl height as percentage of normal height")]
+        [Range(0.1f, 1f)]
+        public float CrawlHeightRatio = 0.5f;
+        [Tooltip("How fast the character transitions between standing and crawling")]
+        public float HeightChangeSpeed = 5f;
+        [Tooltip("Character controller radius when crawling")]
+        public float CrawlRadius = 0.2f;
+        [Tooltip("Camera Y offset when crawling")]
+        public float CrawlCameraYOffset = -0.5f;
+        [Tooltip("Smooth transition speed for camera offset")]
+        public float CameraOffsetSmoothSpeed = 5f;
+        [Tooltip("Allow jumping while crawling")]
+        public bool AllowJumpWhileCrawling = true;
+        [Tooltip("Automatically stand up when jumping from crawl")]
+        public bool AutoStandAfterCrawlJump = true;
+        [Tooltip("Delay before auto-stand after crawl jump (seconds)")]
+        public float AutoStandDelay = 0.5f;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
+        private Vector3 _originalCameraLocalPosition;
+        private Vector3 _targetCameraLocalPosition;
 
         // player
         private float _speed;
@@ -91,6 +115,7 @@ namespace StarterAssets
         // timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
+        private float _autoStandTimer = 0f;
 
         // animation IDs
         private int _animIDSpeed;
@@ -98,6 +123,18 @@ namespace StarterAssets
         private int _animIDJump;
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
+        private int _animIDCrawl;
+
+        // crawling variables
+        [SerializeField] private bool _isCrawling = false;
+        private float _originalHeight;
+        private float _originalRadius;
+        private Vector3 _originalCenter;
+        private float _targetHeight;
+        private float _currentCameraYOffset = 0f;
+
+        // Simple toggle tracking
+        private bool _previousCrawlInput = false;
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -136,7 +173,7 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -145,6 +182,19 @@ namespace StarterAssets
 #else
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
+
+            // Store original character controller values
+            _originalHeight = _controller.height;
+            _originalCenter = _controller.center;
+            _originalRadius = _controller.radius;
+            _targetHeight = _originalHeight;
+
+            // Store original camera position
+            if (CinemachineCameraTarget != null)
+            {
+                _originalCameraLocalPosition = CinemachineCameraTarget.transform.localPosition;
+                _targetCameraLocalPosition = _originalCameraLocalPosition;
+            }
 
             AssignAnimationIDs();
 
@@ -157,9 +207,12 @@ namespace StarterAssets
         {
             _hasAnimator = TryGetComponent(out _animator);
 
+            HandleAutoStandTimer();
+            HandleCrawlingInput();
             JumpAndGravity();
             GroundedCheck();
             Move();
+            UpdateCameraOffset();
         }
 
         private void LateUpdate()
@@ -174,12 +227,95 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+            _animIDCrawl = Animator.StringToHash("Crawl");
+        }
+
+        private void HandleAutoStandTimer()
+        {
+            if (_autoStandTimer > 0f)
+            {
+                _autoStandTimer -= Time.deltaTime;
+                if (_autoStandTimer <= 0f && AutoStandAfterCrawlJump)
+                {
+                    SetCrawling(false);
+                }
+            }
+        }
+
+        private void HandleCrawlingInput()
+        {
+            // Check for keyboard input (C key)
+            bool crawlInput = _input.crawl;
+
+            // Detect button press (not hold)
+            bool crawlButtonPressed = crawlInput && !_previousCrawlInput;
+
+            // Update previous state
+            _previousCrawlInput = crawlInput;
+
+            // Toggle crawl on button press
+            if (crawlButtonPressed && Grounded)
+            {
+                ToggleCrawl();
+            }
+
+            // Always update the crawling state
+            UpdateCrawlingState();
+        }
+
+        private void UpdateCrawlingState()
+        {
+            // Calculate target height based on crawl state
+            _targetHeight = _isCrawling ? _originalHeight * CrawlHeightRatio : _originalHeight;
+
+            // Smoothly transition to target height
+            _controller.height = Mathf.Lerp(_controller.height, _targetHeight, Time.deltaTime * HeightChangeSpeed);
+
+            // Adjust controller center to keep feet on ground
+            float heightDifference = _originalHeight - _controller.height;
+            Vector3 newCenter = _originalCenter;
+            newCenter.y -= heightDifference / 2f;
+            _controller.center = newCenter;
+
+            // Adjust radius when crawling
+            _controller.radius = _isCrawling ? CrawlRadius : _originalRadius;
+
+            // Update target camera position
+            if (CinemachineCameraTarget != null)
+            {
+                _targetCameraLocalPosition = _originalCameraLocalPosition;
+                if (_isCrawling)
+                {
+                    _targetCameraLocalPosition.y += CrawlCameraYOffset;
+                }
+            }
+
+            // Update animator with crawl state
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDCrawl, _isCrawling);
+            }
+        }
+
+        private void UpdateCameraOffset()
+        {
+            if (CinemachineCameraTarget != null)
+            {
+                // Smoothly interpolate camera position
+                Vector3 currentPosition = CinemachineCameraTarget.transform.localPosition;
+                Vector3 newPosition = Vector3.Lerp(currentPosition, _targetCameraLocalPosition,
+                    Time.deltaTime * CameraOffsetSmoothSpeed);
+                CinemachineCameraTarget.transform.localPosition = newPosition;
+            }
         }
 
         private void GroundedCheck()
         {
+            // Adjust grounded check based on crawling state
+            float currentGroundedOffset = _isCrawling ? GroundedOffset * 0.5f : GroundedOffset;
+
             // set sphere position, with offset
-            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset,
+            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - currentGroundedOffset,
                 transform.position.z);
             Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers,
                 QueryTriggerInteraction.Ignore);
@@ -215,11 +351,21 @@ namespace StarterAssets
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            float targetSpeed = 0f;
 
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+            if (_isCrawling)
+            {
+                targetSpeed = CrawlSpeed;
+            }
+            else if (_input.sprint)
+            {
+                targetSpeed = SprintSpeed;
+            }
+            else
+            {
+                targetSpeed = MoveSpeed;
+            }
 
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
@@ -265,7 +411,6 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
             }
 
-
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // move the player
@@ -300,11 +445,20 @@ namespace StarterAssets
                     _verticalVelocity = -2f;
                 }
 
-                // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                // Jump - check if allowed while crawling
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f && (!_isCrawling || AllowJumpWhileCrawling))
                 {
+                    // Calculate jump height based on crawl state
+                    float currentJumpHeight = _isCrawling ? CrawlJumpHeight : JumpHeight;
+
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
-                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+                    _verticalVelocity = Mathf.Sqrt(currentJumpHeight * -2f * Gravity);
+
+                    // If jumping while crawling and auto-stand is enabled, start timer
+                    if (_isCrawling && AutoStandAfterCrawlJump)
+                    {
+                        _autoStandTimer = AutoStandDelay;
+                    }
 
                     // update animator if using character
                     if (_hasAnimator)
@@ -387,6 +541,50 @@ namespace StarterAssets
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+            }
+        }
+
+        // Public method to check if player is crawling
+        public bool IsCrawling()
+        {
+            return _isCrawling;
+        }
+
+        // Public method to set crawl state
+        public void SetCrawling(bool crawl)
+        {
+            if (Grounded || !crawl)
+            {
+                _isCrawling = crawl;
+                if (_hasAnimator)
+                {
+                    _animator.SetBool(_animIDCrawl, _isCrawling);
+                }
+
+                if (_isCrawling)
+                {
+                    _input.sprint = false;
+                }
+            }
+        }
+
+        // Public method to toggle crawl - CALL THIS FROM UI BUTTON
+        public void ToggleCrawl()
+        {
+            if (Grounded)
+            {
+                _isCrawling = !_isCrawling;
+                Debug.Log("ToggleCrawl called. New state: " + _isCrawling);
+
+                if (_hasAnimator)
+                {
+                    _animator.SetBool(_animIDCrawl, _isCrawling);
+                }
+
+                if (_isCrawling)
+                {
+                    _input.sprint = false;
+                }
             }
         }
     }

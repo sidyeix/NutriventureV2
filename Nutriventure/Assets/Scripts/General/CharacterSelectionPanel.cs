@@ -3,13 +3,14 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
-// Helper component to store button data - MOVED TO TOP
 public class CharacterButtonData : MonoBehaviour
 {
     public int characterIndex;
     public int characterID;
     public Image lockIcon;
     public Image selectedHighlight;
+    public Image characterIcon;
+    public GameObject lockedOverlay;
 }
 
 public class CharacterSelectionPanel : MonoBehaviour
@@ -25,6 +26,14 @@ public class CharacterSelectionPanel : MonoBehaviour
     public float buttonSpacing = 20f;
     public Vector2 buttonSize = new Vector2(350f, 450f);
 
+    [Header("Character Icon Colors")]
+    [Tooltip("Color of character icon when selected")]
+    public Color selectedIconColor = Color.white;
+    [Tooltip("Color of character icon when not selected")]
+    public Color deselectedIconColor = new Color(0.6f, 0.6f, 0.6f, 1f); // #9A9A9A
+    [Tooltip("Color of character icon when locked - #313131")]
+    public Color lockedIconColor = new Color(0.192f, 0.192f, 0.192f, 1f); // #313131
+
     [Header("Character System References")]
     public CharacterDatabase characterDatabase;
     public CharacterVisualSwapper characterVisualSwapper;
@@ -32,19 +41,10 @@ public class CharacterSelectionPanel : MonoBehaviour
     public CharacterSelectionController characterSelectionController;
 
     private List<GameObject> characterButtons = new List<GameObject>();
-    private MainMenu_Manager mainMenuManager;
     private int currentSelectedCharacterID = -1;
 
     void Start()
     {
-        // Get reference to MainMenu_Manager
-        mainMenuManager = FindObjectOfType<MainMenu_Manager>();
-
-        if (mainMenuManager == null)
-        {
-            Debug.LogError("MainMenu_Manager not found in scene!");
-        }
-
         // Get reference to CharacterSelectionController
         if (characterSelectionController == null)
         {
@@ -59,6 +59,9 @@ public class CharacterSelectionPanel : MonoBehaviour
 
         // Initialize the panel
         InitializeCharacterPanel();
+
+        // Debug check
+        DebugCharacterIcons();
     }
 
     public void InitializeCharacterPanel()
@@ -101,13 +104,6 @@ public class CharacterSelectionPanel : MonoBehaviour
         // Setup button components
         Button button = buttonGO.GetComponent<Button>();
 
-        // Find UI elements
-        SetupButtonUIElements(buttonGO, characterData);
-
-        // Set button click listener
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => OnCharacterButtonClicked(characterIndex));
-
         // Store character data in button for easy access
         CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
         if (buttonData == null)
@@ -116,38 +112,126 @@ public class CharacterSelectionPanel : MonoBehaviour
         buttonData.characterIndex = characterIndex;
         buttonData.characterID = characterData.characterID;
 
+        // Setup UI elements (including icon)
+        SetupButtonUIElements(buttonGO, characterData, buttonData);
+
+        // Set button click listener
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() => OnCharacterButtonClicked(characterIndex));
+
         // Initial appearance setup
         UpdateButtonAppearance(buttonGO);
     }
 
-    private void SetupButtonUIElements(GameObject buttonGO, CharacterDatabase.CharacterData characterData)
+    private void SetupButtonUIElements(GameObject buttonGO, CharacterDatabase.CharacterData characterData, CharacterButtonData buttonData)
     {
-        // Character Icon
-        Image characterIcon = buttonGO.transform.Find("CharacterIcon")?.GetComponent<Image>();
-        if (characterIcon != null && characterData.characterIcon != null)
-            characterIcon.sprite = characterData.characterIcon;
-
-        // Lock Icon
-        Image lockIcon = buttonGO.transform.Find("LockIcon")?.GetComponent<Image>();
-        if (lockIcon != null)
+        // 1. CHARACTER ICON (Main addition)
+        Transform characterIconTransform = FindDeepChild(buttonGO.transform, "CharacterIcon");
+        if (characterIconTransform == null)
         {
-            CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
-            if (buttonData != null) buttonData.lockIcon = lockIcon;
+            characterIconTransform = buttonGO.transform.Find("CharacterIcon");
         }
 
-        // Selected Highlight
-        Image selectedHighlight = buttonGO.transform.Find("SelectedHighlight")?.GetComponent<Image>();
-        if (selectedHighlight != null)
+        if (characterIconTransform != null)
         {
-            CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
-            if (buttonData != null) buttonData.selectedHighlight = selectedHighlight;
+            Image characterIcon = characterIconTransform.GetComponent<Image>();
+            if (characterIcon != null)
+            {
+                buttonData.characterIcon = characterIcon;
+
+                if (characterData.characterIcon != null)
+                {
+                    characterIcon.sprite = characterData.characterIcon;
+                    characterIcon.preserveAspect = true;
+                    characterIcon.gameObject.SetActive(true);
+                }
+                else
+                {
+                    Debug.LogWarning($"No icon assigned for character: {characterData.characterName}");
+                    characterIcon.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                Debug.LogError($"CharacterIcon GameObject found but no Image component attached!");
+            }
         }
+        else
+        {
+            Debug.LogError($"CharacterIcon not found in button prefab hierarchy! Check button prefab structure.");
+        }
+
+        // 2. LOCK ICON
+        Transform lockIconTransform = FindDeepChild(buttonGO.transform, "LockIcon");
+        if (lockIconTransform == null)
+        {
+            lockIconTransform = buttonGO.transform.Find("LockIcon");
+        }
+
+        if (lockIconTransform != null)
+        {
+            Image lockIcon = lockIconTransform.GetComponent<Image>();
+            if (lockIcon != null)
+            {
+                buttonData.lockIcon = lockIcon;
+            }
+        }
+
+        // 3. SELECTED HIGHLIGHT
+        Transform selectedHighlightTransform = FindDeepChild(buttonGO.transform, "SelectedHighlight");
+        if (selectedHighlightTransform == null)
+        {
+            selectedHighlightTransform = buttonGO.transform.Find("SelectedHighlight");
+        }
+
+        if (selectedHighlightTransform != null)
+        {
+            Image selectedHighlight = selectedHighlightTransform.GetComponent<Image>();
+            if (selectedHighlight != null)
+            {
+                buttonData.selectedHighlight = selectedHighlight;
+            }
+        }
+
+        // 4. LOCKED OVERLAY - NEW
+        Transform lockedOverlayTransform = FindDeepChild(buttonGO.transform, "LockedOverlay");
+        if (lockedOverlayTransform == null)
+        {
+            lockedOverlayTransform = buttonGO.transform.Find("LockedOverlay");
+        }
+
+        if (lockedOverlayTransform != null)
+        {
+            buttonData.lockedOverlay = lockedOverlayTransform.gameObject;
+        }
+        else
+        {
+            Debug.LogWarning($"LockedOverlay not found in button prefab hierarchy!");
+        }
+    }
+
+    // Helper method to find child recursively
+    private Transform FindDeepChild(Transform parent, string childName)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == childName)
+                return child;
+
+            Transform result = FindDeepChild(child, childName);
+            if (result != null)
+                return result;
+        }
+        return null;
     }
 
     private void OnCharacterButtonClicked(int characterIndex)
     {
         // Play button click sound
-        AudioHandler.Instance.PlayButtonClick();
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
         // Get character data
         CharacterDatabase.CharacterData selectedCharacter = characterDatabase.characters[characterIndex];
@@ -155,8 +239,9 @@ public class CharacterSelectionPanel : MonoBehaviour
 
         Debug.Log($"Character {selectedCharacter.characterName} (ID: {characterID}) selected for preview");
 
-        // Check if character is unlocked
-        if (!characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData))
+        // Check if character is unlocked using database method (checks unlockedByDefault)
+        bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData);
+        if (!isUnlocked)
         {
             Debug.Log($"Character {selectedCharacter.characterName} is locked!");
             return;
@@ -191,7 +276,7 @@ public class CharacterSelectionPanel : MonoBehaviour
         }
 
         // Play character selection sound if available
-        if (selectedCharacter.selectionSound != null)
+        if (selectedCharacter.selectionSound != null && AudioHandler.Instance != null)
         {
             AudioHandler.Instance.PlayCharacterSelectionSound(selectedCharacter.selectionSound);
         }
@@ -211,7 +296,7 @@ public class CharacterSelectionPanel : MonoBehaviour
             inputManager.DisablePlayerInput();
         }
 
-        Debug.Log($"Character preview changed to: {selectedCharacter.characterName} (ID: {characterID}) - Click 'Select Character' to confirm");
+        Debug.Log($"Character preview changed to: {selectedCharacter.characterName} (ID: {characterID})");
     }
 
     private void SetupGridLayout()
@@ -267,6 +352,8 @@ public class CharacterSelectionPanel : MonoBehaviour
         if (buttonData == null) return;
 
         CharacterDatabase.CharacterData characterData = characterDatabase.characters[buttonData.characterIndex];
+
+        // Check unlock status using database method (checks unlockedByDefault)
         bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterData.characterID, GameDataManager.Instance.CurrentGameData);
         bool isSelected = (currentSelectedCharacterID == characterData.characterID);
 
@@ -276,10 +363,16 @@ public class CharacterSelectionPanel : MonoBehaviour
             button.interactable = isUnlocked;
         }
 
-        // Update lock icon
+        // Update lock icon (show when locked)
         if (buttonData.lockIcon != null)
         {
             buttonData.lockIcon.gameObject.SetActive(!isUnlocked);
+        }
+
+        // Update locked overlay (show when locked)
+        if (buttonData.lockedOverlay != null)
+        {
+            buttonData.lockedOverlay.SetActive(!isUnlocked);
         }
 
         // Update selection highlight
@@ -288,21 +381,95 @@ public class CharacterSelectionPanel : MonoBehaviour
             buttonData.selectedHighlight.gameObject.SetActive(isSelected);
         }
 
-        // Update button color based on selection and lock state
-        Image buttonImage = buttonGO.GetComponent<Image>();
-        if (buttonImage != null)
+        // Update character icon color based on selection and lock state
+        if (buttonData.characterIcon != null)
         {
-            if (isSelected)
+            if (!isUnlocked)
             {
-                buttonImage.color = new Color(1f, 1f, 0.5f, 1f); // Light yellow for selection
+                // Character is locked - use locked color (#313131)
+                buttonData.characterIcon.color = lockedIconColor;
             }
-            else if (!isUnlocked)
+            else if (isSelected)
             {
-                buttonImage.color = new Color(0.5f, 0.5f, 0.5f, 0.7f); // Gray for locked
+                // Character is selected and unlocked - use selected color (white)
+                buttonData.characterIcon.color = selectedIconColor;
             }
             else
             {
-                buttonImage.color = Color.white; // Normal color
+                // Character is unlocked but not selected - use deselected color (#9A9A9A)
+                buttonData.characterIcon.color = deselectedIconColor;
+            }
+        }
+
+        // Debug log for unlock status
+        if (characterData.unlockedByDefault)
+        {
+            Debug.Log($"Character {characterData.characterName} is unlocked by default in database");
+        }
+        else if (isUnlocked)
+        {
+            Debug.Log($"Character {characterData.characterName} is unlocked via GameData");
+        }
+        else
+        {
+            Debug.Log($"Character {characterData.characterName} is LOCKED");
+        }
+    }
+
+    // Debug method to check icon setup
+    private void DebugCharacterIcons()
+    {
+        Debug.Log($"=== Character Icon Debug ===");
+        Debug.Log($"Total characters: {characterDatabase.characters.Count}");
+        Debug.Log($"Total buttons created: {characterButtons.Count}");
+
+        for (int i = 0; i < characterDatabase.characters.Count; i++)
+        {
+            var charData = characterDatabase.characters[i];
+            Debug.Log($"Character {i}: {charData.characterName} - " +
+                     $"Icon: {charData.characterIcon?.name ?? "NULL"}, " +
+                     $"UnlockedByDefault: {charData.unlockedByDefault}");
+        }
+
+        foreach (GameObject buttonGO in characterButtons)
+        {
+            CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
+            if (buttonData != null)
+            {
+                CharacterDatabase.CharacterData charData = characterDatabase.characters[buttonData.characterIndex];
+
+                Image icon = buttonGO.transform.Find("CharacterIcon")?.GetComponent<Image>();
+                if (icon == null)
+                {
+                    Transform iconTransform = FindDeepChild(buttonGO.transform, "CharacterIcon");
+                    icon = iconTransform?.GetComponent<Image>();
+                }
+
+                Debug.Log($"Button {buttonData.characterIndex} - " +
+                         $"Icon Found: {icon != null}, " +
+                         $"Sprite: {icon?.sprite?.name ?? "NULL"}, " +
+                         $"Active: {icon?.gameObject.activeSelf}");
+            }
+        }
+    }
+
+    // Force refresh icons (useful for testing)
+    public void ForceRefreshIcons()
+    {
+        foreach (GameObject buttonGO in characterButtons)
+        {
+            CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
+            if (buttonData != null && buttonData.characterIcon != null)
+            {
+                CharacterDatabase.CharacterData charData = characterDatabase.characters[buttonData.characterIndex];
+                if (charData.characterIcon != null)
+                {
+                    buttonData.characterIcon.sprite = charData.characterIcon;
+                    buttonData.characterIcon.SetAllDirty(); // Force UI update
+
+                    // Also update color and overlay
+                    UpdateButtonAppearance(buttonGO);
+                }
             }
         }
     }
@@ -317,5 +484,48 @@ public class CharacterSelectionPanel : MonoBehaviour
     public int GetCurrentCharacterID()
     {
         return currentSelectedCharacterID;
+    }
+
+    // Get character button by ID
+    public GameObject GetCharacterButton(int characterID)
+    {
+        foreach (GameObject buttonGO in characterButtons)
+        {
+            CharacterButtonData buttonData = buttonGO.GetComponent<CharacterButtonData>();
+            if (buttonData != null && buttonData.characterID == characterID)
+            {
+                return buttonGO;
+            }
+        }
+        return null;
+    }
+
+    // Select a specific character programmatically
+    public void SelectCharacterByID(int characterID)
+    {
+        for (int i = 0; i < characterDatabase.characters.Count; i++)
+        {
+            if (characterDatabase.characters[i].characterID == characterID)
+            {
+                OnCharacterButtonClicked(i);
+                return;
+            }
+        }
+        Debug.LogWarning($"Character with ID {characterID} not found!");
+    }
+
+    // Method to manually update icon colors (can be called externally)
+    public void UpdateIconColors(Color newSelectedColor, Color newDeselectedColor, Color newLockedColor)
+    {
+        selectedIconColor = newSelectedColor;
+        deselectedIconColor = newDeselectedColor;
+        lockedIconColor = newLockedColor;
+        UpdateAllButtonAppearances();
+    }
+
+    // Method to check if a specific character is unlocked
+    public bool CheckCharacterUnlocked(int characterID)
+    {
+        return characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData);
     }
 }

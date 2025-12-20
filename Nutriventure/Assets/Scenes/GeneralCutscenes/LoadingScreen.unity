@@ -246,7 +246,9 @@ MonoBehaviour:
   backgroundSprites:
   - {fileID: 21300000, guid: c9a32b145c9deab4fb796aa0aa12b54f, type: 3}
   minLoadingTime: 5
-  allowSkip: 1
+  immediateScene: PlayerProfile
+  preloadForLater: 3_Kingdom1
+  enablePreloading: 1
 --- !u!4 &489749043
 Transform:
   m_ObjectHideFlags: 0

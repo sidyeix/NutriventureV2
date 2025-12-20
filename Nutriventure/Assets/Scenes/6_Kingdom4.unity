@@ -34144,7 +34144,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6751388636123340836, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8176038822839415544, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
       propertyPath: m_IsActive
@@ -39502,9 +39502,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1988197540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 27.5, y: -50}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 55, y: 62}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &581604665
@@ -52989,6 +52989,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crawl: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -53121,6 +53122,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveSpeed: 4
   SprintSpeed: 10
+  CrawlSpeed: 1.5
   RotationSmoothTime: 0.12
   SpeedChangeRate: 10
   LandingAudioClip: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
@@ -53137,6 +53139,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a3194b8bbc96ef84fab1f98f4b7dae3e, type: 3}
   FootstepAudioVolume: 0.3
   JumpHeight: 1.2
+  CrawlJumpHeight: 0.8
   Gravity: -15
   JumpTimeout: 0.3
   FallTimeout: 0.15
@@ -53151,6 +53154,15 @@ MonoBehaviour:
   BottomClamp: -30
   CameraAngleOverride: 0
   LockCameraPosition: 0
+  CrawlHeightRatio: 0.5
+  HeightChangeSpeed: 5
+  CrawlRadius: 0.2
+  CrawlCameraYOffset: -0.5
+  CameraOffsetSmoothSpeed: 5
+  AllowJumpWhileCrawling: 1
+  AutoStandAfterCrawlJump: 1
+  AutoStandDelay: 0.5
+  _isCrawling: 0
 --- !u!143 &806231551
 CharacterController:
   m_ObjectHideFlags: 0
@@ -53230,9 +53242,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterVisualSwapper
   geometryRoot: {fileID: 1878790128}
   playerAnimator: {fileID: 806231552}
+  characterDatabase: {fileID: 0}
   lookAroundParameter: LookAround
   initializationDelay: 0.2
   swapDelay: 0.05
+  hideDuration: 0.05
 --- !u!114 &806231555
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108576,9 +108590,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1988197540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 155, y: -50}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1670087025
@@ -113190,6 +113204,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d0e0e2bccde7924da70d4b486ad2a26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
+  characterDatabase: {fileID: 0}
 --- !u!1001 &1734054750
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -136551,6 +136566,8 @@ MonoBehaviour:
   selectedColor: {r: 0.5764706, g: 0.4392157, b: 0.8588236, a: 0.6745098}
   normalColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   inputManager: {fileID: 1248646887}
+  characterSelectionAnimator: {fileID: 0}
+  characterRotationController: {fileID: 0}
 --- !u!1001 &2070039314
 PrefabInstance:
   m_ObjectHideFlags: 0

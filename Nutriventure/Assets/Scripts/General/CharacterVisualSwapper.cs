@@ -15,6 +15,7 @@ public class CharacterVisualSwapper : MonoBehaviour
     public float initializationDelay = 0.2f;
     public float swapDelay = 0.1f;
     public float hideDuration = 0.05f;
+    public float lookAroundDelay = 0.3f; // Delay before triggering LookAround
 
     private GameObject currentCharacterModel;
     private GameObject currentSkinModel;
@@ -29,16 +30,22 @@ public class CharacterVisualSwapper : MonoBehaviour
         Debug.Log($"CharacterVisualSwapper initialized - CharacterDB: {characterDatabase != null}");
     }
 
-    // OLD METHOD - For backward compatibility
+    // METHOD 1: Takes CharacterData (for CharacterSelectionPanel) - WITH ANIMATION
     public void ApplyCharacterVisuals(CharacterDatabase.CharacterData characterData)
     {
         if (characterData == null) return;
 
-        ApplyCharacterVisuals(characterData.characterID, -1);
+        currentCharacterID = characterData.characterID;
+        Debug.Log($"Applying character visuals for: {characterData.characterName} (ID: {characterData.characterID})");
+
+        if (swapCoroutine != null)
+            StopCoroutine(swapCoroutine);
+
+        swapCoroutine = StartCoroutine(SwapCharacterAndTriggerLookAround(characterData));
     }
 
-    // NEW METHOD - Apply character with optional skin
-    public void ApplyCharacterVisuals(int characterID, int skinID = -1)
+    // METHOD 2: Takes characterID (for CharacterSelectionManager) - WITH ANIMATION
+    public void ApplyCharacterVisuals(int characterID)
     {
         if (characterDatabase == null)
         {
@@ -53,19 +60,13 @@ public class CharacterVisualSwapper : MonoBehaviour
             return;
         }
 
-        currentCharacterID = characterID;
-        currentSkinID = skinID;
-        Debug.Log($"ApplyCharacterVisuals: CharID={characterID}, SkinID={skinID}");
-
-        if (swapCoroutine != null)
-            StopCoroutine(swapCoroutine);
-
-        swapCoroutine = StartCoroutine(SwapCharacterVisualsCoroutine(characterData, skinID));
+        // Call the existing method
+        ApplyCharacterVisuals(characterData);
     }
 
-    private IEnumerator SwapCharacterVisualsCoroutine(CharacterDatabase.CharacterData characterData, int skinID = -1)
+    private IEnumerator SwapCharacterAndTriggerLookAround(CharacterDatabase.CharacterData characterData)
     {
-        Debug.Log($"SwapCoroutine: {characterData.characterName}, SkinID={skinID}");
+        Debug.Log($"SwapCharacterAndTriggerLookAround: {characterData.characterName}");
 
         // PHASE 1: HIDE CURRENT
         HideCurrentCharacterImmediately();
@@ -79,63 +80,147 @@ public class CharacterVisualSwapper : MonoBehaviour
         if (playerAnimator != null)
         {
             playerAnimator.enabled = false;
+            playerAnimator.avatar = characterData.characterAvatar;
+            Debug.Log("Applied Character Avatar: " + characterData.characterAvatar.name);
+        }
 
-            // If skin is used and contains its own avatar
+        // PHASE 4: INSTANTIATE MODEL
+        if (characterData.characterPrefab != null && geometryRoot != null)
+        {
+            currentCharacterModel = Instantiate(characterData.characterPrefab, geometryRoot);
+            SetupModelTransform(currentCharacterModel);
+            DisableCharacterComponents(currentCharacterModel);
+            currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
+            HideAllRenderers(currentRenderers);
+        }
+
+        yield return new WaitForEndOfFrame();
+
+        // PHASE 5: RE-ENABLE ANIMATOR
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+        }
+
+        // PHASE 6: WAIT FOR INITIALIZATION
+        yield return new WaitForSeconds(initializationDelay);
+
+        // PHASE 7: SMALL DELAY
+        yield return new WaitForSeconds(hideDuration);
+
+        // PHASE 8: SHOW CHARACTER
+        ShowCurrentCharacter();
+
+        // PHASE 9: DELAY BEFORE ANIMATION
+        yield return new WaitForSeconds(swapDelay);
+
+        // PHASE 10: TRIGGER LOOKAROUND ANIMATION
+        yield return StartCoroutine(TriggerLookAroundAfterLoad());
+
+        Debug.Log("Character swap completed! LookAround animation triggered");
+        swapCoroutine = null;
+    }
+
+    // Load character with saved skin - WITH ANIMATION
+    public void LoadCharacterWithSavedSkin(int characterID)
+    {
+        int savedSkinID = -1;
+
+        if (GameDataManager.Instance != null)
+        {
+            savedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+            Debug.Log($"LoadCharacterWithSavedSkin: CharID={characterID}, SavedSkinID={savedSkinID}");
+        }
+
+        // Get character data
+        if (characterDatabase != null)
+        {
+            var characterData = characterDatabase.GetCharacterByID(characterID);
+            if (characterData != null)
+            {
+                ApplyCharacterVisuals(characterData);
+            }
+        }
+    }
+
+    // NEW: Load character with saved skin - WITHOUT ANIMATION (for game start)
+    public void LoadCharacterWithSavedSkinNoAnimation(int characterID)
+    {
+        int savedSkinID = -1;
+
+        if (GameDataManager.Instance != null)
+        {
+            savedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+            Debug.Log($"LoadCharacterWithSavedSkinNoAnimation: CharID={characterID}, SavedSkinID={savedSkinID}");
+        }
+
+        // Get character data
+        if (characterDatabase != null)
+        {
+            var characterData = characterDatabase.GetCharacterByID(characterID);
+            if (characterData != null)
+            {
+                // Load character WITHOUT triggering LookAround
+                StartCoroutine(LoadCharacterWithoutAnimation(characterData, savedSkinID));
+            }
+        }
+    }
+
+    private IEnumerator LoadCharacterWithoutAnimation(CharacterDatabase.CharacterData characterData, int skinID = -1)
+    {
+        Debug.Log($"LoadCharacterWithoutAnimation: {characterData.characterName}, SkinID={skinID}");
+
+        // Store current character ID
+        currentCharacterID = characterData.characterID;
+        currentSkinID = skinID;
+
+        // Clear existing models
+        ClearExistingModels();
+
+        yield return new WaitForEndOfFrame();
+
+        // Apply avatar
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = false;
+
+            // Handle skin avatar if needed
             if (skinID != -1)
             {
                 var skinData = characterDatabase.GetSkinByID(characterData.characterID, skinID);
                 if (skinData != null && skinData.skinAvatar != null)
                 {
                     playerAnimator.avatar = skinData.skinAvatar;
-                    Debug.Log("Applied Skin Avatar: " + skinData.skinName);
                 }
                 else
                 {
                     playerAnimator.avatar = characterData.characterAvatar;
-                    Debug.Log("Skin has NO avatar — using character avatar");
                 }
             }
             else
             {
                 playerAnimator.avatar = characterData.characterAvatar;
-                Debug.Log("Applied Character Avatar");
             }
         }
 
+        // Instantiate model
+        GameObject modelToUse = characterData.characterPrefab;
 
-        bool shouldUseSkin = (skinID != -1);
-        GameObject modelToUse = null;
-
-        // PHASE 4: DECIDE WHICH MODEL TO USE
-        if (shouldUseSkin)
+        // Check if we should use skin model
+        if (skinID != -1)
         {
-            // Try to use skin prefab
             var skinData = characterDatabase.GetSkinByID(characterData.characterID, skinID);
             if (skinData != null && skinData.skinPrefab != null)
             {
                 modelToUse = skinData.skinPrefab;
-                Debug.Log($"Using skin: {skinData.skinName}");
-                currentSkinID = skinID;
-            }
-            else
-            {
-                Debug.LogWarning($"Skin {skinID} not found, using default character model");
-                shouldUseSkin = false;
             }
         }
 
-        if (!shouldUseSkin)
-        {
-            // Use character's default prefab
-            modelToUse = characterData.characterPrefab;
-            currentSkinID = -1;
-            Debug.Log("Using default character model");
-        }
-
-        // PHASE 5: INSTANTIATE MODEL
         if (modelToUse != null && geometryRoot != null)
         {
-            if (shouldUseSkin)
+            if (skinID != -1)
             {
                 currentSkinModel = Instantiate(modelToUse, geometryRoot);
                 SetupModelTransform(currentSkinModel);
@@ -149,13 +234,11 @@ public class CharacterVisualSwapper : MonoBehaviour
                 DisableCharacterComponents(currentCharacterModel);
                 currentRenderers = currentCharacterModel.GetComponentsInChildren<Renderer>(true);
             }
-
-            HideAllRenderers(currentRenderers);
         }
 
         yield return new WaitForEndOfFrame();
 
-        // PHASE 6: RE-ENABLE ANIMATOR
+        // Re-enable animator
         if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
@@ -163,29 +246,20 @@ public class CharacterVisualSwapper : MonoBehaviour
             playerAnimator.Update(0f);
         }
 
-        // PHASE 7: WAIT FOR INITIALIZATION
-        yield return new WaitForSeconds(initializationDelay);
+        // Make sure LookAround is OFF
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
+        {
+            playerAnimator.SetBool(lookAroundParameter, false);
+            playerAnimator.Update(0f);
+        }
 
-        // PHASE 8: SMALL DELAY
-        yield return new WaitForSeconds(hideDuration);
-
-        // PHASE 9: SHOW CHARACTER
-        ShowCurrentCharacter();
-
-        // PHASE 10: DELAY BEFORE ANIMATION
-        yield return new WaitForSeconds(swapDelay);
-
-        // PHASE 11: TRIGGER ANIMATION
-        TriggerLookAroundAnimation();
-
-        Debug.Log("Character swap completed!");
-        swapCoroutine = null;
+        Debug.Log($"Character loaded without animation: {characterData.characterName}");
     }
 
-    // In CharacterVisualSwapper.cs - Optimize ApplySkinToCurrentCharacter
+    // Skin application method
     public void ApplySkinToCurrentCharacter(int skinID)
     {
-        Debug.Log($"ApplySkinToCurrentCharacter: SkinID={skinID}, CurrentSkinID={currentSkinID}");
+        Debug.Log($"ApplySkinToCurrentCharacter: SkinID={skinID}, CurrentCharacterID={currentCharacterID}");
 
         // Check if we're already using this skin
         if (currentSkinID == skinID)
@@ -206,54 +280,134 @@ public class CharacterVisualSwapper : MonoBehaviour
             return;
         }
 
-        // If skinID is -1, just reload character without skin
-        if (skinID == -1)
+        // Get character data
+        var characterData = characterDatabase.GetCharacterByID(currentCharacterID);
+        if (characterData != null)
         {
-            Debug.Log("Applying default character (no skin)");
-            ApplyCharacterVisuals(currentCharacterID, -1);
-            return;
+            // If skinID is -1, just reload character without skin
+            if (skinID == -1)
+            {
+                Debug.Log("Applying default character (no skin)");
+                ApplyCharacterVisuals(characterData);
+                return;
+            }
+
+            // Check if skin exists
+            var skinData = characterDatabase.GetSkinByID(currentCharacterID, skinID);
+            if (skinData != null)
+            {
+                Debug.Log($"Applying skin: {skinData.skinName}");
+                currentSkinID = skinID;
+
+                // Apply skin - this will trigger LookAround animation
+                StartCoroutine(ApplySkinAndTriggerLookAround(characterData, skinData));
+            }
         }
-
-        // Check if skin exists
-        var skinData = characterDatabase.GetSkinByID(currentCharacterID, skinID);
-        if (skinData == null)
-        {
-            Debug.LogError($"Skin {skinID} not found for character {currentCharacterID}!");
-            return;
-        }
-
-        if (skinData.skinPrefab == null)
-        {
-            Debug.LogError($"Skin prefab is null for skin {skinData.skinName}!");
-            return;
-        }
-
-        Debug.Log($"Applying skin: {skinData.skinName}");
-        currentSkinID = skinID;
-
-        // Use the main swap method
-        ApplyCharacterVisuals(currentCharacterID, skinID);
     }
 
-    // Load saved skin for character
-    public void LoadCharacterWithSavedSkin(int characterID)
+    private IEnumerator ApplySkinAndTriggerLookAround(CharacterDatabase.CharacterData characterData, CharacterDatabase.SkinData skinData)
     {
-        int savedSkinID = -1;
+        Debug.Log($"Applying skin: {skinData.skinName}");
 
-        if (GameDataManager.Instance != null)
+        // Hide current character
+        HideCurrentCharacterImmediately();
+        ClearExistingModels();
+
+        yield return new WaitForEndOfFrame();
+
+        // Apply avatar
+        if (playerAnimator != null)
         {
-            savedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
-            Debug.Log($"LoadCharacterWithSavedSkin: CharID={characterID}, SavedSkinID={savedSkinID}");
+            playerAnimator.enabled = false;
+            playerAnimator.avatar = skinData.skinAvatar != null ? skinData.skinAvatar : characterData.characterAvatar;
+            Debug.Log("Applied skin avatar");
         }
 
-        // Apply character with saved skin (or default if -1)
-        ApplyCharacterVisuals(characterID, savedSkinID);
+        // Instantiate skin model
+        if (skinData.skinPrefab != null && geometryRoot != null)
+        {
+            currentSkinModel = Instantiate(skinData.skinPrefab, geometryRoot);
+            SetupModelTransform(currentSkinModel);
+            DisableCharacterComponents(currentSkinModel);
+            currentRenderers = currentSkinModel.GetComponentsInChildren<Renderer>(true);
+            HideAllRenderers(currentRenderers);
+        }
+
+        yield return new WaitForEndOfFrame();
+
+        // Re-enable animator
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+        }
+
+        // Wait and show character
+        yield return new WaitForSeconds(initializationDelay + hideDuration);
+        ShowCurrentCharacter();
+
+        // Trigger LookAround animation
+        yield return new WaitForSeconds(lookAroundDelay);
+        TriggerLookAroundAnimation();
+
+        Debug.Log($"Skin applied and LookAround animation triggered for {skinData.skinName}");
     }
 
+    // Trigger LookAround animation
+    public void TriggerLookAroundAnimation()
+    {
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter) && playerAnimator.enabled)
+        {
+            StartCoroutine(TriggerLookAroundSmoothly());
+        }
+    }
+
+    private IEnumerator TriggerLookAroundAfterLoad()
+    {
+        yield return new WaitForSeconds(lookAroundDelay);
+        TriggerLookAroundAnimation();
+    }
+
+    private IEnumerator TriggerLookAroundSmoothly()
+    {
+        yield return new WaitForEndOfFrame();
+
+        if (playerAnimator != null && playerAnimator.enabled)
+        {
+            // Reset animation state
+            playerAnimator.Rebind();
+            playerAnimator.Update(0f);
+
+            // Set LookAround parameter to false first
+            playerAnimator.SetBool(lookAroundParameter, false);
+            playerAnimator.Update(0f);
+
+            yield return new WaitForEndOfFrame();
+
+            // Set LookAround parameter to true to trigger animation
+            playerAnimator.SetBool(lookAroundParameter, true);
+            playerAnimator.Update(0.1f);
+
+            Debug.Log($"LookAround animation triggered! Parameter '{lookAroundParameter}' set to TRUE");
+        }
+    }
+
+    // Stop LookAround animation (set bool to false)
+    public void StopLookAroundAnimation()
+    {
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
+        {
+            playerAnimator.SetBool(lookAroundParameter, false);
+            playerAnimator.Update(0f);
+            Debug.Log($"LookAround animation stopped! Parameter '{lookAroundParameter}' set to FALSE");
+        }
+    }
+
+    // Utility methods
     private void SetupModelTransform(GameObject model)
     {
         if (model == null) return;
-
         model.transform.localPosition = Vector3.zero;
         model.transform.localRotation = Quaternion.identity;
         model.transform.localScale = Vector3.one;
@@ -312,32 +466,6 @@ public class CharacterVisualSwapper : MonoBehaviour
         }
     }
 
-    public void TriggerLookAroundAnimation()
-    {
-        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter) && playerAnimator.enabled)
-        {
-            StartCoroutine(TriggerLookAroundSmoothly());
-        }
-    }
-
-    private IEnumerator TriggerLookAroundSmoothly()
-    {
-        yield return new WaitForEndOfFrame();
-
-        if (playerAnimator != null && playerAnimator.enabled)
-        {
-            playerAnimator.Rebind();
-            playerAnimator.Update(0f);
-            playerAnimator.SetBool(lookAroundParameter, false);
-            playerAnimator.Update(0f);
-
-            yield return new WaitForEndOfFrame();
-
-            playerAnimator.SetBool(lookAroundParameter, true);
-            playerAnimator.Update(0.1f);
-        }
-    }
-
     private void ForceEnableAnimator()
     {
         if (playerAnimator != null)
@@ -384,15 +512,6 @@ public class CharacterVisualSwapper : MonoBehaviour
     {
         if (swapCoroutine != null)
             StopCoroutine(swapCoroutine);
-    }
-
-    public void StopLookAroundAnimation()
-    {
-        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
-        {
-            playerAnimator.SetBool(lookAroundParameter, false);
-            playerAnimator.Update(0f);
-        }
     }
 
     // Getters
