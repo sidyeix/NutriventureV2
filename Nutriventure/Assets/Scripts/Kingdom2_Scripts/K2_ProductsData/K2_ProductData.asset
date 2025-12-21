@@ -17,6 +17,9 @@ MonoBehaviour:
     displayName: Avocado
     productType: 0
     productPrefab: {fileID: 7419860229806312305, guid: 44c3bf479bda46549b6905aafd79a74b, type: 3}
+    productIcon: {fileID: 21300000, guid: c3088dcbb83616d44acde9bece120070, type: 3}
+    nutritionLabelImage: {fileID: 0}
+    sugarContentAmount: 0
     description: "Avocados contain almost no sugar only 0.2g, which is practically
       nothing. Instead, they\u2019re filled with healthy fats and fiber that keep
       you full and give you long-lasting energy without any sugar spike."
@@ -28,6 +31,9 @@ MonoBehaviour:
     displayName: Banana
     productType: 0
     productPrefab: {fileID: 2402274759429571662, guid: 8a2039a0c6f846143a50d34b99642955, type: 3}
+    productIcon: {fileID: 21300000, guid: 9146c80d7bf4faa4a891d7091594c3a1, type: 3}
+    nutritionLabelImage: {fileID: 0}
+    sugarContentAmount: 0
     description: "Bananas contain natural fructose, which your body digests slowly
       thanks to the fiber inside the fruit. One banana has around 14g of natural
       sugar (3.5 teaspoons), but because it\u2019s packaged with nutrients like potassium
@@ -40,6 +46,9 @@ MonoBehaviour:
     displayName: Coconut
     productType: 0
     productPrefab: {fileID: 9064385651540129686, guid: e6f197828a1a0ee4e9787161fb1bb3fc, type: 3}
+    productIcon: {fileID: 21300000, guid: 521201242a3417b4db1a11bde7c12087, type: 3}
+    nutritionLabelImage: {fileID: 0}
+    sugarContentAmount: 0
     description: "Coconut has around 5\u20136g of natural sugar, but its high fiber
       content helps your body absorb it slowly. Unlike sugary coconut-flavored snacks,
       whole coconut provides nutrients like manganese and iron."
@@ -49,8 +58,11 @@ MonoBehaviour:
       start new trees!
   - productID: BREADCOLLECT
     displayName: White Bread
-    productType: 0
+    productType: 1
     productPrefab: {fileID: 5793490747404462157, guid: 14b6a702e3ae15b46a00cfed39acdf3b, type: 3}
+    productIcon: {fileID: 21300000, guid: e273170163c4ef241a3d32aeb193a95f, type: 3}
+    nutritionLabelImage: {fileID: 21300000, guid: c6ddc58a61a73234692b221177a28a56, type: 3}
+    sugarContentAmount: 3
     description: "White bread often includes 2\u20135g of added sugar per slice.
       The sugar helps the bread rise, become softer, and develop a brown crust. Because
       it's made from refined flour, the body turns it into sugar quickly, causing
@@ -63,6 +75,9 @@ MonoBehaviour:
     displayName: Cereals (Box)
     productType: 1
     productPrefab: {fileID: 1733681768320106238, guid: 40e66630baa69814d8b62579a58c58f0, type: 3}
+    productIcon: {fileID: 21300000, guid: d9624fda805a6dd4493710c118012da1, type: 3}
+    nutritionLabelImage: {fileID: 21300000, guid: 3f87779991564e142865f348486aee57, type: 3}
+    sugarContentAmount: 12
     description: "Many cereals contain 8\u201320g of sugar (2\u20135 teaspoons) per
       serving, mostly added. Some are coated with sugar or flavored syrup. Even \u201Chealthy\u201D
       cereals can be sweetened, which is why serving size matters a small bowl may
@@ -75,6 +90,9 @@ MonoBehaviour:
     displayName: Packed Cookies
     productType: 1
     productPrefab: {fileID: 734968219280685595, guid: 6fab5704e4c0a8f4ba266c845eef8312, type: 3}
+    productIcon: {fileID: 21300000, guid: 21e5b3f54ed35a646803f239c6ed4b44, type: 3}
+    nutritionLabelImage: {fileID: 21300000, guid: 0f0e85a30e9e7a54c811e0e9e96edf6a, type: 3}
+    sugarContentAmount: 25
     description: "Packed cookies contain 10\u201318g of sugar (2.5\u20134.5 teaspoons)
       per serving. They often use several forms of added sugar like maltose, glucose
       syrup, and invert sugar to make them sweeter and longer-lasting. These sugars
@@ -87,6 +105,9 @@ MonoBehaviour:
     displayName: Boxed Milk
     productType: 1
     productPrefab: {fileID: 6847286953101804840, guid: 4b896b1a38ba129489811bc808b6bb7b, type: 3}
+    productIcon: {fileID: 21300000, guid: dc74a80330abb244e8afb83d769d6bbc, type: 3}
+    nutritionLabelImage: {fileID: 21300000, guid: d044a20af919b2b4caa2dd94799fcf67, type: 3}
+    sugarContentAmount: 16
     description: "Flavored milks (like chocolate or strawberry) usually contain 10\u201320g
       of sugar (2.5 to 5 teaspoons), mostly from added sugar. Natural milk sugar
       (lactose) is mild, but added sugar makes these drinks much sweeter \u2014 and
@@ -98,6 +119,9 @@ MonoBehaviour:
     displayName: Soft Drinks
     productType: 1
     productPrefab: {fileID: 2624451992907081943, guid: 47772403f29efbd4b96e8aacbf270ed5, type: 3}
+    productIcon: {fileID: 21300000, guid: ab6d39308d2cfe74fa3387deb34b4f51, type: 3}
+    nutritionLabelImage: {fileID: 21300000, guid: 242f7066030355e4289ef6c3d6c1b769, type: 3}
+    sugarContentAmount: 39
     description: "A single can of soda holds 30\u201345g of sugar (7 to 11 teaspoons!)
       all from added sources like high-fructose corn syrup. Because soda has zero
       fiber, its sugar hits the bloodstream extremely fast, causing a big energy

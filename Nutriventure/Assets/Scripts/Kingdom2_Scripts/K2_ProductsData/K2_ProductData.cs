@@ -14,13 +14,18 @@ public class ProductData : ScriptableObject
         
         [Header("Visuals")]
         public GameObject productPrefab; // The 3D model prefab
+        public Sprite productIcon; // New: 2D sprite icon for UI
+        
+        [Header("Nutrition Information")]
+        public Sprite nutritionLabelImage; // 2D UI Sprite for nutrition facts label
+        [Range(0, 100)] public float sugarContentAmount; // Sugar content in grams
         
         [Header("Information")]
         [TextArea(3, 5)] public string description;
         [TextArea(2, 4)] public string labelTip;
         [TextArea(2, 4)] public string funFact;
         
-        // Removed: productIcon, productMaterial, nutrition info
+        // Removed: productMaterial
     }
     
     public enum ProductType
@@ -56,5 +61,35 @@ public class ProductData : ScriptableObject
     public int GetTotalCount()
     {
         return allProducts.Length;
+    }
+    
+    // New helper methods for accessing nutrition data
+    public Sprite GetNutritionLabelImage(string productID)
+    {
+        ProductInfo product = GetProductInfo(productID);
+        return product?.nutritionLabelImage;
+    }
+    
+    public float GetSugarContentAmount(string productID)
+    {
+        ProductInfo product = GetProductInfo(productID);
+        return product?.sugarContentAmount ?? 0f;
+    }
+    
+    public string GetFormattedSugarContent(string productID)
+    {
+        ProductInfo product = GetProductInfo(productID);
+        if (product != null)
+        {
+            return $"{product.sugarContentAmount}g";
+        }
+        return "0g";
+    }
+    
+    // New helper method for accessing product icon
+    public Sprite GetProductIcon(string productID)
+    {
+        ProductInfo product = GetProductInfo(productID);
+        return product?.productIcon;
     }
 }

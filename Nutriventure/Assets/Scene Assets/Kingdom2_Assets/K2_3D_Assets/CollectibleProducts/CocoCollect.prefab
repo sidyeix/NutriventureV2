@@ -180,6 +180,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ProductParticles
       objectReference: {fileID: 0}
+    - target: {fileID: 2433270284821948948, guid: 3d3aa150f4c020f4abe25a1b2e370a1b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2880330404206810179, guid: 3d3aa150f4c020f4abe25a1b2e370a1b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
