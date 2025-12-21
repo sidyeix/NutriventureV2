@@ -48468,6 +48468,8 @@ MonoBehaviour:
   selectedColor: {r: 0.5764706, g: 0.4392157, b: 0.8588236, a: 0.6745098}
   normalColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   inputManager: {fileID: 435752629}
+  characterSelectionAnimator: {fileID: 0}
+  characterRotationController: {fileID: 0}
 --- !u!1 &1515245988
 GameObject:
   m_ObjectHideFlags: 0
@@ -55061,6 +55063,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d0e0e2bccde7924da70d4b486ad2a26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
+  characterDatabase: {fileID: 0}
 --- !u!1 &1725111666
 GameObject:
   m_ObjectHideFlags: 3
@@ -57505,6 +57508,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crawl: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -57539,6 +57543,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveSpeed: 4
   SprintSpeed: 10
+  CrawlSpeed: 1.5
   RotationSmoothTime: 0.12
   SpeedChangeRate: 10
   LandingAudioClip: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
@@ -57555,6 +57560,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a3194b8bbc96ef84fab1f98f4b7dae3e, type: 3}
   FootstepAudioVolume: 0.3
   JumpHeight: 1.2
+  CrawlJumpHeight: 0.8
   Gravity: -15
   JumpTimeout: 0.3
   FallTimeout: 0.15
@@ -57569,6 +57575,15 @@ MonoBehaviour:
   BottomClamp: -30
   CameraAngleOverride: 0
   LockCameraPosition: 0
+  CrawlHeightRatio: 0.5
+  HeightChangeSpeed: 5
+  CrawlRadius: 0.2
+  CrawlCameraYOffset: -0.5
+  CameraOffsetSmoothSpeed: 5
+  AllowJumpWhileCrawling: 1
+  AutoStandAfterCrawlJump: 1
+  AutoStandDelay: 0.5
+  _isCrawling: 0
 --- !u!4 &1809557556
 Transform:
   m_ObjectHideFlags: 0
@@ -57699,9 +57714,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterVisualSwapper
   geometryRoot: {fileID: 1830585844}
   playerAnimator: {fileID: 1809557560}
+  characterDatabase: {fileID: 0}
   lookAroundParameter: LookAround
   initializationDelay: 0.2
   swapDelay: 0.1
+  hideDuration: 0.05
+  lookAroundDelay: 0.3
 --- !u!143 &1809557559
 CharacterController:
   m_ObjectHideFlags: 0
