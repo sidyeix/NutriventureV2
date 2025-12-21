@@ -111,9 +111,7 @@ public class SugariaScoringSystem : MonoBehaviour
     private K2_QA1system _qa1System;
     private K2_QA2system _qa2System;
     
-    // QA1 tracking
-    private bool _wasQA1Active = false;
-    private int _lastQA1SelectedCount = 0;
+    // QA1 tracking - SIMPLIFIED
     private bool _qa1CompletionScored = false; // Track if we already scored this QA1 session
     
     // State tracking
@@ -202,7 +200,7 @@ public class SugariaScoringSystem : MonoBehaviour
         if (_qa2System != null) Debug.Log("Found QA2 system");
     }
     
-    // NEW: Subscribe to QA1 events
+    // SIMPLIFIED: Subscribe to QA1 events ONLY
     void SubscribeToQA1Events()
     {
         if (_qa1System == null) return;
@@ -221,6 +219,7 @@ public class SugariaScoringSystem : MonoBehaviour
                 {
                     qa1Event.AddListener(HandleQA1Completed);
                     Debug.Log("Subscribed to QA1 UnityEvent");
+                    return; // Successfully subscribed via event
                 }
             }
             catch (Exception e)
@@ -249,23 +248,28 @@ public class SugariaScoringSystem : MonoBehaviour
             {
                 completeMethod.Invoke(_qa1System, new object[] { new Action<int, bool>(HandleQA1Completed) });
                 Debug.Log("Registered QA1 completion handler");
+                return; // Successfully registered via method
             }
             catch { }
         }
+        
+        // Method 4: If no event system found, set up direct polling
+        Debug.Log("No QA1 event system found. Using direct polling method.");
     }
     
-    // NEW: Handle QA1 completion event
+    // Handle QA1 completion event
     void HandleQA1Completed(int selectedCount, bool allAddedSugar)
     {
+        Debug.Log($"QA1 completion event received: Selected={selectedCount}, AllAddedSugar={allAddedSugar}");
+        
         if (!_qa1CompletionScored)
         {
             AwardQA1Points(selectedCount, allAddedSugar);
             _qa1CompletionScored = true;
-            Debug.Log($"QA1 completed via event! Selected: {selectedCount}, All Added Sugar: {allAddedSugar}");
         }
         else
         {
-            Debug.LogWarning("QA1 already scored this session!");
+            Debug.LogWarning("QA1 already scored this session - ignoring duplicate event");
         }
     }
     #endregion
@@ -294,8 +298,21 @@ public class SugariaScoringSystem : MonoBehaviour
         // Monitor product collection
         MonitorProductCollection();
         
-        // Monitor QA1 completion (backup method)
-        MonitorQA1Completion();
+        // Monitor QA1 completion ONLY IF NO EVENT SYSTEM
+        if (_qa1System != null)
+        {
+            // Check if we need to use polling (no event subscription)
+            var qa1Type = _qa1System.GetType();
+            var onCompletedField = qa1Type.GetField("OnQA1Completed");
+            var registerMethod = qa1Type.GetMethod("RegisterCompletionHandler");
+            
+            bool hasEventSystem = (onCompletedField != null) || (registerMethod != null);
+            
+            if (!hasEventSystem)
+            {
+                MonitorQA1Polling();
+            }
+        }
         
         // Monitor QA2 answers
         MonitorQA2Answers();
@@ -333,7 +350,8 @@ public class SugariaScoringSystem : MonoBehaviour
         }
     }
 
-    void MonitorQA1Completion()
+    // NEW: Polling method for QA1 (only used if no event system exists)
+    void MonitorQA1Polling()
     {
         if (_qa1System == null) return;
         
@@ -341,40 +359,29 @@ public class SugariaScoringSystem : MonoBehaviour
         int currentSelected = _qa1System.GetSelectedCount();
         int maxSelections = _qa1System.GetMaxSelections();
         
-        // NEW: Direct completion detection (not dependent on UI closing)
+        // Only score when QA1 is completed AND UI closes
         if (isQA1Active && currentSelected >= maxSelections && !_qa1CompletionScored)
         {
-            // QA1 is completed (max selections reached)
-            bool allAddedSugar = CheckIfQA1AllAddedSugar();
-            
-            AwardQA1Points(currentSelected, allAddedSugar);
-            _qa1CompletionScored = true;
-            
-            Debug.Log($"QA1 completed via direct detection! Selected: {currentSelected}/{maxSelections}, All Added Sugar: {allAddedSugar}");
+            // Wait for UI to close before scoring
+            // This prevents scoring while still in QA1
+            Debug.Log("QA1 completed (polling), waiting for UI to close...");
         }
         
-        // Backup: Still check for UI transition (legacy support)
-        if (_wasQA1Active && !isQA1Active)
+        // Score when QA1 UI closes with max selections
+        if (!isQA1Active && !_qa1CompletionScored && currentSelected >= maxSelections)
         {
-            if (!_qa1CompletionScored && currentSelected >= maxSelections)
-            {
-                bool allAddedSugar = CheckIfQA1AllAddedSugar();
-                AwardQA1Points(currentSelected, allAddedSugar);
-                _qa1CompletionScored = true;
-                Debug.Log($"QA1 completed via UI transition backup");
-            }
+            bool allAddedSugar = CheckIfQA1AllAddedSugar();
+            AwardQA1Points(currentSelected, allAddedSugar);
+            _qa1CompletionScored = true;
+            Debug.Log($"QA1 completed via polling! Selected: {currentSelected}/{maxSelections}");
         }
         
         // Reset scoring flag when QA1 becomes active (new attempt)
-        if (!_wasQA1Active && isQA1Active)
+        if (isQA1Active && _qa1CompletionScored)
         {
             _qa1CompletionScored = false;
-            Debug.Log("QA1 started - resetting scoring flag");
+            Debug.Log("QA1 restarted - resetting scoring flag");
         }
-        
-        // Update tracking variables
-        _wasQA1Active = isQA1Active;
-        _lastQA1SelectedCount = currentSelected;
     }
     
     // Method to check if all selected QA1 products are added sugar
@@ -533,31 +540,48 @@ public class SugariaScoringSystem : MonoBehaviour
         // Calculate base points
         int basePoints = baseProductPoints;
         
-        // Check for combo
+        // CHECK FOR COMBO - FIXED VERSION
         float timeSinceLast = Time.time - _lastCollectionTime;
-        if (timeSinceLast <= comboTimeWindow)
+        
+        // If this is the first product OR time window expired, start new combo
+        if (_lastCollectionTime == 0f || timeSinceLast > comboTimeWindow)
         {
-            _comboCount = Mathf.Min(_comboCount + 1, maxComboMultiplier);
+            _comboCount = 1; // Start new combo
+            Debug.Log($"Starting new combo (first product or combo expired: {timeSinceLast:F1}s > {comboTimeWindow}s)");
         }
-        else
+        else if (timeSinceLast <= comboTimeWindow)
         {
-            _comboCount = 1;
+            // Continue combo
+            _comboCount = Mathf.Min(_comboCount + 1, maxComboMultiplier);
+            Debug.Log($"Continuing combo: {_comboCount}x (time since last: {timeSinceLast:F1}s)");
         }
         
         _lastCollectionTime = Time.time;
         
-        // Calculate combo bonus
-        int comboPoints = comboBonus * (_comboCount - 1);
+        // Calculate combo bonus - FIXED: Only give bonus for combo 2+
+        int comboPoints = 0;
+        if (_comboCount > 1)
+        {
+            // Bonus increases with combo length: 2nd = 50, 3rd = 100, 4th = 150, 5th = 200
+            comboPoints = comboBonus * (_comboCount - 1);
+            Debug.Log($"Combo bonus: {comboPoints} (Combo x{_comboCount}, Bonus per level: {comboBonus})");
+        }
         
         // Type bonus
         int typeBonus = 0;
         if (productType == "NaturalSugar")
         {
             typeBonus = naturalSugarBonus;
+            Debug.Log($"Natural sugar bonus: +{typeBonus}");
         }
         else if (productType == "AddedSugar")
         {
             typeBonus = addedSugarBonus;
+            Debug.Log($"Added sugar bonus: +{typeBonus}");
+        }
+        else
+        {
+            Debug.Log($"Regular product type: {productType}");
         }
         
         // Calculate raw score
@@ -582,21 +606,130 @@ public class SugariaScoringSystem : MonoBehaviour
         if (enableScorePopups && finalScore > 0)
         {
             ShowScorePopup(finalScore, productScoreColor, "Product");
+            
+            // Show combo popup separately if we have combo
+            if (_comboCount > 1 && comboPoints > 0)
+            {
+                // Show combo popup in combo color
+                ShowComboPopup(_comboCount, comboPoints);
+            }
         }
         
         // Show combo message if applicable
         if (_comboCount > 1)
         {
-            OnBonusEarned?.Invoke($"Combo x{_comboCount}! +{comboPoints}");
+            string comboMessage = $"Combo x{_comboCount}! +{comboPoints}";
+            OnBonusEarned?.Invoke(comboMessage);
+            Debug.Log($"Bonus earned: {comboMessage}");
         }
         
+        // Debug breakdown
         Debug.Log($"Product scored: {productID} | " +
-                 $"Raw: {rawScore} × {multiplier:F2} = {finalScore} points | " +
-                 $"New Multiplier: {GetCurrentMultiplier():F1}x");
+                 $"Base: {basePoints} + Combo: {comboPoints} + Type: {typeBonus} = Raw: {rawScore} " +
+                 $"× Multiplier: {multiplier:F2} = Final: {finalScore} points | " +
+                 $"Combo: x{_comboCount} | New Multiplier: {GetCurrentMultiplier():F1}x");
+    }
+
+    // NEW: Separate method to show combo popup
+    private void ShowComboPopup(int comboLevel, int comboBonusPoints)
+    {
+        if (!enableScorePopups || scorePopupPrefab == null || scorePopupParent == null)
+            return;
+        
+        // Create combo popup with different style
+        GameObject comboPopup = Instantiate(scorePopupPrefab, scorePopupParent);
+        comboPopup.name = $"ComboPopup_x{comboLevel}";
+        
+        TMP_Text comboText = comboPopup.GetComponent<TMP_Text>();
+        if (comboText == null)
+        {
+            comboText = comboPopup.GetComponentInChildren<TMP_Text>();
+        }
+        
+        if (comboText != null)
+        {
+            comboText.text = $"COMBOx{comboLevel}! +{comboBonusPoints}";
+            comboText.color = comboScoreColor;
+            comboText.enableAutoSizing = false;
+            comboText.fontSize = 60f; // or 64f, 80f, etc.
+            
+            // Position near but offset from regular score popup
+            Vector3 position = new Vector3(
+                Screen.width / 2 + 50,
+                Screen.height * 0.3f + (_activePopups.Count * popupSpacing * 2), // More spacing
+                0
+            );
+            
+            comboPopup.transform.position = position;
+            
+            // Special animation for combo popup
+            StartCoroutine(AnimateComboPopup(comboPopup, comboText, position));
+        }
+        else
+        {
+            Destroy(comboPopup);
+        }
+    }
+    
+    private IEnumerator AnimateComboPopup(GameObject popupObj, TMP_Text popupText, Vector3 startPosition)
+    {
+        float elapsedTime = 0f;
+        Color startColor = popupText.color;
+        Vector3 startScale = popupText.transform.localScale;
+        
+        // First, grow animation
+        while (elapsedTime < 0.2f)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / 0.2f;
+            
+            // Pulse effect
+            float pulse = Mathf.Sin(t * Mathf.PI) * 0.3f + 1f;
+            popupText.transform.localScale = startScale * pulse;
+            
+            yield return null;
+        }
+        
+        // Reset scale
+        popupText.transform.localScale = startScale;
+        
+        // Then float upward like regular popup
+        elapsedTime = 0f;
+        
+        while (elapsedTime < popupLifetime)
+        {
+            elapsedTime += Time.deltaTime;
+            float normalizedTime = elapsedTime / popupLifetime;
+            
+            // Float upward
+            float floatAmount = Mathf.Lerp(0, popupFloatSpeed * 1.5f, EaseOutQuad(normalizedTime));
+            popupObj.transform.position = startPosition + Vector3.up * floatAmount;
+            
+            // Fade out near the end
+            if (normalizedTime > (1f - (popupFadeDuration / popupLifetime)))
+            {
+                float fadeProgress = (normalizedTime - (1f - (popupFadeDuration / popupLifetime))) * 
+                    (popupLifetime / popupFadeDuration);
+                Color fadedColor = startColor;
+                fadedColor.a = Mathf.Lerp(startColor.a, 0f, fadeProgress);
+                popupText.color = fadedColor;
+            }
+            
+            yield return null;
+        }
+        
+        Destroy(popupObj);
     }
 
     public void AwardQA1Points(int correctlySelected, bool perfectSelection)
     {
+        // Prevent duplicate scoring
+        if (_qa1CompletionScored)
+        {
+            Debug.LogWarning("Attempted to score QA1 again, but it's already been scored this session");
+            return;
+        }
+        
         Debug.Log($"AwardQA1Points called! Selected: {correctlySelected}, Perfect: {perfectSelection}");
         
         // Base points
@@ -620,6 +753,9 @@ public class SugariaScoringSystem : MonoBehaviour
         _qa1Score += finalScore;
         _currentScore += finalScore;
         _qa1CorrectSelections = correctlySelected;
+        
+        // Mark as scored
+        _qa1CompletionScored = true;
         
         // Trigger events
         OnQA1Scored?.Invoke(finalScore);
@@ -699,14 +835,17 @@ public class SugariaScoringSystem : MonoBehaviour
         return 0;
     }
     
-    // NEW: Public method for QA1 system to call directly
+    // Public method for QA1 system to call directly
     public void ScoreQA1Completion(int selectedCount, bool allAddedSugar)
     {
         if (!_qa1CompletionScored)
         {
             AwardQA1Points(selectedCount, allAddedSugar);
-            _qa1CompletionScored = true;
             Debug.Log($"QA1 scored via direct call! Selected: {selectedCount}, All Added Sugar: {allAddedSugar}");
+        }
+        else
+        {
+            Debug.LogWarning("Attempted to score QA1 via direct call, but already scored");
         }
     }
     #endregion
@@ -774,7 +913,7 @@ public class SugariaScoringSystem : MonoBehaviour
     #endregion
 
     #region Score Popup System
-    // NEW: Class to store popup data
+    // Class to store popup data
     private class ScorePopupData
     {
         public int scoreAmount;
@@ -783,7 +922,7 @@ public class SugariaScoringSystem : MonoBehaviour
         public Vector3? worldPosition;
     }
     
-    // NEW: Show score popup
+    // Show score popup
     private void ShowScorePopup(int score, Color color, string label = "", Vector3? worldPosition = null)
     {
         if (!enableScorePopups || scorePopupPrefab == null || scorePopupParent == null)
@@ -799,7 +938,7 @@ public class SugariaScoringSystem : MonoBehaviour
         });
     }
     
-    // NEW: Process popup queue
+    // Process popup queue
     private void ProcessPopupQueue()
     {
         if (_scorePopupQueue.Count > 0 && !_isProcessingPopup)
@@ -943,7 +1082,7 @@ public class SugariaScoringSystem : MonoBehaviour
         return 1 - (1 - t) * (1 - t);
     }
     
-    // NEW: Public method to show score popup at world position
+    // Public method to show score popup at world position
     public void ShowScorePopupAtPosition(int score, Vector3 worldPosition, ScorePopupType type = ScorePopupType.Product)
     {
         Color color = GetPopupColorForType(type);
@@ -987,7 +1126,7 @@ public class SugariaScoringSystem : MonoBehaviour
         }
     }
     
-    // NEW: Method to show popup with custom settings
+    // Method to show popup with custom settings
     public void ShowCustomScorePopup(int score, Vector3 position, Color color, string text = "")
     {
         if (!string.IsNullOrEmpty(text))
@@ -1038,10 +1177,10 @@ public class SugariaScoringSystem : MonoBehaviour
     public int GetQA1Correct() => _qa1CorrectSelections;
     public int GetQA2Correct() => _qa2CorrectAnswers;
     
-    // NEW: Getter for QA1 scoring status
+    // Getter for QA1 scoring status
     public bool GetQA1Scored() => _qa1CompletionScored;
     
-    // NEW: Direct scoring method for QA1 system
+    // Direct scoring method for QA1 system
     public void DirectScoreQA1(int selectedCount, bool allAddedSugar)
     {
         ScoreQA1Completion(selectedCount, allAddedSugar);
@@ -1208,6 +1347,103 @@ public class SugariaScoringSystem : MonoBehaviour
         ShowScorePopup(500, bonusScoreColor, "Bonus");
         Debug.Log("Multiple test popups queued");
     }
+    
+    [ContextMenu("Test Product Collection Combo")]
+    public void DebugTestProductCollectionCombo()
+    {
+        Debug.Log("=== Testing Combo System ===");
+        
+        // Simulate quick successive collections
+        StartCoroutine(TestComboSequence());
+    }
+    
+    private IEnumerator TestComboSequence()
+    {
+        // First product
+        Debug.Log("Collecting product 1...");
+        AwardProductPoints("TEST_BANANA", "NaturalSugar");
+        
+        // Wait within combo time window
+        yield return new WaitForSeconds(5f);
+        
+        // Second product (should create combo x2)
+        Debug.Log("Collecting product 2 (within combo window)...");
+        AwardProductPoints("TEST_APPLE", "NaturalSugar");
+        
+        // Wait within combo time window
+        yield return new WaitForSeconds(5f);
+        
+        // Third product (should create combo x3)
+        Debug.Log("Collecting product 3 (within combo window)...");
+        AwardProductPoints("TEST_SODA", "AddedSugar");
+        
+        // Wait within combo time window
+        yield return new WaitForSeconds(5f);
+        
+        // Fourth product (should create combo x4)
+        Debug.Log("Collecting product 4 (within combo window)...");
+        AwardProductPoints("TEST_CANDY", "AddedSugar");
+        
+        // Wait longer than combo window (combo should reset)
+        yield return new WaitForSeconds(comboTimeWindow + 1f);
+        
+        // Fifth product (should start new combo x1)
+        Debug.Log("Collecting product 5 (after combo expired)...");
+        AwardProductPoints("TEST_ORANGE", "NaturalSugar");
+        
+        Debug.Log("=== Combo Test Complete ===");
+    }
+    
+    [ContextMenu("Debug Combo State")]
+    public void DebugComboState()
+    {
+        Debug.Log("=== COMBO SYSTEM STATE ===");
+        Debug.Log($"Current Combo: x{_comboCount}");
+        Debug.Log($"Time since last collection: {Time.time - _lastCollectionTime:F1}s");
+        Debug.Log($"Combo time window: {comboTimeWindow}s");
+        Debug.Log($"Combo bonus per level: {comboBonus}");
+        Debug.Log($"Max combo multiplier: {maxComboMultiplier}");
+        
+        if (_lastCollectionTime > 0)
+        {
+            float timeRemaining = comboTimeWindow - (Time.time - _lastCollectionTime);
+            if (timeRemaining > 0)
+            {
+                Debug.Log($"Combo window expires in: {timeRemaining:F1}s");
+            }
+            else
+            {
+                Debug.Log($"Combo window expired {Mathf.Abs(timeRemaining):F1}s ago");
+            }
+        }
+        else
+        {
+            Debug.Log("No products collected yet");
+        }
+    }
+    
+    [ContextMenu("Reset Combo")]
+    public void DebugResetCombo()
+    {
+        _comboCount = 0;
+        _lastCollectionTime = 0f;
+        Debug.Log("Combo manually reset");
+    }
+    
+    [ContextMenu("Test Max Combo")]
+    public void DebugTestMaxCombo()
+    {
+        Debug.Log("=== Testing Max Combo ===");
+        
+        // Set up for max combo test
+        _comboCount = maxComboMultiplier - 1;
+        _lastCollectionTime = Time.time - 1f; // Within window
+        
+        // This should hit max combo
+        AwardProductPoints("TEST_MAX_COMBO", "NaturalSugar");
+        
+        Debug.Log($"After max combo test: Combo = x{_comboCount}");
+    }
     #endregion
 
     void OnDestroy()
@@ -1226,12 +1462,5 @@ public class SugariaScoringSystem : MonoBehaviour
                 Debug.Log("Product database loaded for QA1 type checking");
             }
         }
-    }
-    
-    // NEW: Unsubscribe from events
-    void OnDisable()
-    {
-        // Note: For UnityEvents, we don't need to unsubscribe since they're component-specific
-        // If using C# events, unsubscribe here
     }
 }
