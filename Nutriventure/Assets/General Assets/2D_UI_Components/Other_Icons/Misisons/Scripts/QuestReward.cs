@@ -38,6 +38,9 @@ public class QuestTask
     public int currentAmount = 0;
     public bool isOptional = false;
 
+    // NEW: Boolean to track if task is completed
+    public bool isCompleted = false;
+
     public enum TaskType
     {
         Collect,
@@ -48,16 +51,36 @@ public class QuestTask
         Custom
     }
 
-    public bool IsComplete => currentAmount >= requiredAmount;
+    // UPDATED: Property now uses isCompleted bool
+    public bool IsComplete => isCompleted;
 
     public void UpdateProgress(int amount = 1)
     {
         currentAmount = Mathf.Min(currentAmount + amount, requiredAmount);
+
+        // NEW: Update isCompleted when requirements are met
+        if (currentAmount >= requiredAmount && !isCompleted)
+        {
+            isCompleted = true;
+        }
     }
 
     public void ResetProgress()
     {
         currentAmount = 0;
+        isCompleted = false;
+    }
+
+    public void MarkAsComplete()
+    {
+        currentAmount = requiredAmount;
+        isCompleted = true;
+    }
+
+    public void MarkAsIncomplete()
+    {
+        currentAmount = Mathf.Min(currentAmount, requiredAmount - 1);
+        isCompleted = false;
     }
 
     public float ProgressPercentage => (float)currentAmount / requiredAmount * 100f;
@@ -73,7 +96,6 @@ public class Quest
     [TextArea(3, 5)]
     public string longDescription;
 
-    public Kingdom kingdom;
     public QuestCategory category;
 
     [Header("Requirements")]
@@ -106,7 +128,7 @@ public class Quest
             int count = 0;
             foreach (var task in tasks)
             {
-                if (task.IsComplete) count++;
+                if (task.isCompleted) count++;
             }
             return count;
         }
@@ -137,6 +159,12 @@ public class Quest
             {
                 reward.GrantReward();
             }
+
+            // Mark all tasks as completed
+            foreach (var task in tasks)
+            {
+                task.MarkAsComplete();
+            }
         }
     }
 
@@ -161,6 +189,14 @@ public class Quest
     {
         return tasks.Find(t => t.taskID == taskID);
     }
+
+    public void MarkAllTasksComplete()
+    {
+        foreach (var task in tasks)
+        {
+            task.MarkAsComplete();
+        }
+    }
 }
 
 [System.Serializable]
@@ -170,7 +206,23 @@ public class Kingdom
     public string kingdomName;
     public Sprite kingdomIcon;
     public Color kingdomColor = Color.white;
-    public List<string> questIDs = new List<string>();
+
+    public List<Quest> quests = new List<Quest>();
+
+    // Helper properties
+    public int TotalQuestCount => quests.Count;
+    public int CompletedQuestCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (var quest in quests)
+            {
+                if (quest.status == QuestStatus.Completed) count++;
+            }
+            return count;
+        }
+    }
 }
 
 public enum QuestStatus

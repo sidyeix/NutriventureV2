@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,12 +11,16 @@ public class QuestManager : MonoBehaviour
     [Header("Database")]
     [SerializeField] private QuestDatabase questDatabase;
 
+    [Header("Player")]
+    [SerializeField] private int playerLevel = 1;
+
     [Header("Events")]
     public UnityEvent<Quest> onQuestStarted;
     public UnityEvent<Quest> onQuestProgressUpdated;
     public UnityEvent<Quest> onQuestCompleted;
     public UnityEvent<QuestTask> onTaskProgressUpdated;
     public UnityEvent<string> onKingdomQuestsUpdated; // Kingdom ID
+    public UnityEvent<List<Kingdom>> onKingdomsUpdated;
 
     private void Awake()
     {
@@ -36,6 +41,7 @@ public class QuestManager : MonoBehaviour
         if (questDatabase != null)
         {
             questDatabase.InitializeDatabase();
+            onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
         }
         else
         {
@@ -53,6 +59,12 @@ public class QuestManager : MonoBehaviour
         quest.StartQuest();
         onQuestStarted?.Invoke(quest);
         onQuestProgressUpdated?.Invoke(quest);
+
+        Kingdom questKingdom = questDatabase.GetKingdomForQuest(questID);
+        if (questKingdom != null)
+        {
+            onKingdomQuestsUpdated?.Invoke(questKingdom.kingdomID);
+        }
 
         return true;
     }
@@ -78,12 +90,13 @@ public class QuestManager : MonoBehaviour
                 if (quest.status == QuestStatus.Completed)
                 {
                     onQuestCompleted?.Invoke(quest);
-                }
 
-                // Notify kingdom update
-                if (quest.kingdom != null)
-                {
-                    onKingdomQuestsUpdated?.Invoke(quest.kingdom.kingdomID);
+                    Kingdom questKingdom = questDatabase.GetKingdomForQuest(questID);
+                    if (questKingdom != null)
+                    {
+                        onKingdomQuestsUpdated?.Invoke(questKingdom.kingdomID);
+                        onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
+                    }
                 }
             }
         }
@@ -110,6 +123,13 @@ public class QuestManager : MonoBehaviour
         quest.AbandonQuest();
         onQuestProgressUpdated?.Invoke(quest);
 
+        Kingdom questKingdom = questDatabase.GetKingdomForQuest(questID);
+        if (questKingdom != null)
+        {
+            onKingdomQuestsUpdated?.Invoke(questKingdom.kingdomID);
+            onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
+        }
+
         return true;
     }
 
@@ -122,7 +142,7 @@ public class QuestManager : MonoBehaviour
         return questDatabase.GetQuestsByKingdom(kingdomID);
     }
 
-    public List<Quest> GetAvailableQuests(int playerLevel)
+    public List<Quest> GetAvailableQuests()
     {
         return questDatabase.GetAvailableQuests(playerLevel);
     }
@@ -151,6 +171,46 @@ public class QuestManager : MonoBehaviour
     {
         return questDatabase.GetAllKingdoms();
     }
+
+    public Kingdom GetKingdomForQuest(string questID)
+    {
+        return questDatabase.GetKingdomForQuest(questID);
+    }
+
+    public List<Kingdom> GetKingdomsWithAvailableQuests()
+    {
+        var kingdomsWithQuests = new List<Kingdom>();
+
+        foreach (var kingdom in GetAllKingdoms())
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                if (quest.status == QuestStatus.NotStarted &&
+                    quest.requiredLevel <= playerLevel &&
+                    ArePrerequisitesMet(quest))
+                {
+                    kingdomsWithQuests.Add(kingdom);
+                    break; // Found at least one available quest
+                }
+            }
+        }
+
+        return kingdomsWithQuests;
+    }
+
+    private bool ArePrerequisitesMet(Quest quest)
+    {
+        foreach (var requiredID in quest.requiredQuestIDs)
+        {
+            Quest requiredQuest = GetQuest(requiredID);
+            if (requiredQuest == null || requiredQuest.status != QuestStatus.Completed)
+                return false;
+        }
+        return true;
+    }
+
+    public int GetPlayerLevel() => playerLevel;
+    public void SetPlayerLevel(int level) => playerLevel = level;
 
     #endregion
 
@@ -184,6 +244,7 @@ public class QuestManager : MonoBehaviour
         string json = JsonUtility.ToJson(new Wrapper<List<QuestDatabase.QuestSaveData>>(saveData));
         PlayerPrefs.SetString(saveKey, json);
         PlayerPrefs.Save();
+        Debug.Log("Quests saved!");
     }
 
     public void LoadQuests(string saveKey = "quest_save_data")
@@ -193,7 +254,29 @@ public class QuestManager : MonoBehaviour
             string json = PlayerPrefs.GetString(saveKey);
             var wrapper = JsonUtility.FromJson<Wrapper<List<QuestDatabase.QuestSaveData>>>(json);
             questDatabase.LoadSaveData(wrapper.items);
+            onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
+            Debug.Log("Quests loaded!");
         }
+        else
+        {
+            Debug.Log("No saved quest data found.");
+        }
+    }
+
+    public void ResetAllQuests()
+    {
+        foreach (var kingdom in GetAllKingdoms())
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                quest.status = QuestStatus.NotStarted;
+                quest.startTime = DateTime.MinValue;
+                quest.completionTime = null;
+                quest.ResetAllTasks();
+            }
+        }
+        onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
+        Debug.Log("All quests reset!");
     }
 
     // Wrapper class for JSON serialization of lists
@@ -206,22 +289,4 @@ public class QuestManager : MonoBehaviour
 
     #endregion
 
-    #region Debug Methods
-
-    [ContextMenu("Debug: Print All Quests")]
-    public void DebugPrintAllQuests()
-    {
-        foreach (var kingdom in GetAllKingdoms())
-        {
-            Debug.Log($"=== {kingdom.kingdomName} ===");
-            var kingdomQuests = GetQuestsByKingdom(kingdom.kingdomID);
-
-            foreach (var quest in kingdomQuests)
-            {
-                Debug.Log($"[{quest.status}] {quest.questName}: {quest.CompletedTaskCount}/{quest.TotalTaskCount} tasks");
-            }
-        }
-    }
-
-    #endregion
 }
