@@ -51,16 +51,8 @@ public class KartTrigger : MonoBehaviour
         }
 
         // Ensure all UIs are in correct state at start
-        playerUI?.SetActive(true);
         driveUI?.SetActive(false);
         kartDrivingUI?.SetActive(false);
-
-        // Set first destination if available
-        if (destinations != null && destinations.Length > 0 && kartController != null)
-        {
-            kartController.SetDestination(destinations[0]);
-            UpdateDestinationUI();
-        }
     }
 
     private void Update()

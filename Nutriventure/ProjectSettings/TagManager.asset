@@ -16,6 +16,9 @@ TagManager:
   - Destination
   - Fence
   - SpawnPoint
+  - Allergen
+  - Milk
+  - Inverted
   layers:
   - Default
   - TransparentFX
