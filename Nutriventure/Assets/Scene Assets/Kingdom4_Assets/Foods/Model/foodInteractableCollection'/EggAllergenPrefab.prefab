@@ -32,6 +32,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6945434904453869393}
+  - {fileID: 7854918636351594834}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &4823542281847690251
@@ -81,6 +82,96 @@ MonoBehaviour:
     children. Both egg white and yolk can cause reactions, but egg white allergies
     are more common. Many vaccines contain egg proteins.
   ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+--- !u!1001 &1591104033511418769
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 403756966500449111}
+    m_Modifications:
+    - target: {fileID: 2524498655426155686, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2879452947444175344, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 0.0001
+      objectReference: {fileID: 0}
+    - target: {fileID: 5019140395468067580, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6174688938575746661, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6414953239637031926, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_Name
+      value: Crystal effect red
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.54038
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.54038
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.54038
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9966502
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.08178267
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+--- !u!4 &7854918636351594834 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8869551745399163587, guid: 8c49b35febea4514b87b37f643064ed4, type: 3}
+  m_PrefabInstance: {fileID: 1591104033511418769}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5898059805303502790
 PrefabInstance:
   m_ObjectHideFlags: 0
