@@ -4,7 +4,6 @@ namespace StarterAssets
 {
     public class UICanvasControllerInput : MonoBehaviour
     {
-
         [Header("Output")]
         public StarterAssetsInputs starterAssetsInputs;
 
@@ -27,7 +26,10 @@ namespace StarterAssets
         {
             starterAssetsInputs.SprintInput(virtualSprintState);
         }
-        
-    }
 
+        public void VirtualCrawlInput(bool virtualCrawlState)
+        {
+            starterAssetsInputs.CrawlInput(virtualCrawlState);
+        }
+    }
 }

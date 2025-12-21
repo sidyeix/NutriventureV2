@@ -12,13 +12,8 @@ TagManager:
   - K2_ParticleSystem
   - K2_Monster
   - NutriHeart
-  - Interactable
-  - Destination
-  - Fence
-  - SpawnPoint
-  - Allergen
-  - Milk
-  - Inverted
+  - DummyProduct
+  - QA2SpawnedProduct
   layers:
   - Default
   - TransparentFX

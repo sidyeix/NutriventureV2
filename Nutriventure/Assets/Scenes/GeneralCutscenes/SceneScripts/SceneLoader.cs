@@ -3,51 +3,67 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using UnityEngine.InputSystem; // Add this
+using UnityEngine.InputSystem;
 
 public class SceneLoader : MonoBehaviour
 {
     [Header("Progress UI")]
-    public Image progressFill;      // Filled image
-    public TextMeshProUGUI loadingText; // Percentage text
+    public Image progressFill;
+    public TextMeshProUGUI loadingText;
 
     [Header("Tips")]
-    public TextMeshProUGUI tipText; // Tip display
+    public TextMeshProUGUI tipText;
     [TextArea]
-    public string[] tips;           // Add tips in Inspector
-    public float tipInterval = 3f;  // Change tip every 3 seconds
+    public string[] tips;
+    public float tipInterval = 3f;
 
     [Header("Background")]
-    public Image backgroundImage;   // Background image
-    public Sprite[] backgroundSprites; // Random backgrounds
+    public Image backgroundImage;
+    public Sprite[] backgroundSprites;
 
     [Header("Loading Settings")]
-    public float minLoadingTime = 5f; // Minimum 5 seconds loading
+    public float minLoadingTime = 5f;
+
+    [Header("Multi-Scene Preloading")]
+    [Tooltip("Scene to load immediately (usually Cutscene)")]
+    public string immediateScene = "Cutscene";
+
+    [Tooltip("Scene to preload for later (usually Kingdom1)")]
+    public string preloadForLater = "Kingdom1";
+
+    [Tooltip("Should we preload the next scene?")]
+    public bool enablePreloading = true;
 
     private int currentTipIndex = 0;
     private float loadingTimer = 0f;
+    private AsyncOperation immediateLoad;
+    private AsyncOperation preloadedScene;
+    private bool isPreloading = false;
 
     void Start()
     {
-        // 1. Set random background
+        // Setup visuals
+        SetupVisuals();
+
+        // Start multi-scene loading
+        StartCoroutine(LoadMultipleScenes());
+    }
+
+    void SetupVisuals()
+    {
+        // Random background
         if (backgroundSprites != null && backgroundSprites.Length > 0)
         {
-            int randomIndex = Random.Range(0, backgroundSprites.Length);
-            backgroundImage.sprite = backgroundSprites[randomIndex];
+            backgroundImage.sprite = backgroundSprites[Random.Range(0, backgroundSprites.Length)];
         }
 
-        // 2. Set random starting tip
+        // Random starting tip
         if (tips != null && tips.Length > 0)
         {
             currentTipIndex = Random.Range(0, tips.Length);
             tipText.text = tips[currentTipIndex];
-
-            // Start changing tips
             StartCoroutine(ChangeTips());
         }
-
-        // 3. Start loading
-        StartCoroutine(LoadScene());
     }
 
     IEnumerator ChangeTips()
@@ -58,36 +74,34 @@ public class SceneLoader : MonoBehaviour
 
             if (tips != null && tips.Length > 0)
             {
-                // Move to next tip
-                currentTipIndex++;
-                if (currentTipIndex >= tips.Length)
-                    currentTipIndex = 0;
-
+                currentTipIndex = (currentTipIndex + 1) % tips.Length;
                 tipText.text = tips[currentTipIndex];
             }
         }
     }
 
-    IEnumerator LoadScene()
+    IEnumerator LoadMultipleScenes()
     {
-        // Reset progress
         progressFill.fillAmount = 0f;
         loadingTimer = 0f;
 
-        // Get which scene to load
-        string sceneToLoad = PlayerPrefs.GetString("NextScene", "PlayerProfile");
+        // 1. Start loading the immediate scene (cutscene)
+        immediateLoad = SceneManager.LoadSceneAsync(immediateScene);
+        immediateLoad.allowSceneActivation = false;
 
-        // Start loading in background
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneToLoad);
-        asyncLoad.allowSceneActivation = false; // Don't switch yet
+        // 2. If enabled, start preloading the next scene (kingdom1)
+        if (enablePreloading && !string.IsNullOrEmpty(preloadForLater))
+        {
+            StartCoroutine(PreloadNextScene());
+        }
 
-        // Loading loop for minimum 5 seconds
+        // Show loading progress for minimum time
         while (loadingTimer < minLoadingTime)
         {
             loadingTimer += Time.deltaTime;
 
-            // Calculate progress (0 to 1 over 5 seconds)
-            float progress = loadingTimer / minLoadingTime;
+            // Calculate combined progress
+            float progress = CalculateCombinedProgress();
 
             // Update UI
             progressFill.fillAmount = progress;
@@ -96,52 +110,92 @@ public class SceneLoader : MonoBehaviour
             yield return null;
         }
 
-        // Wait for async loading to complete
-        while (!asyncLoad.isDone)
+        // Minimum time reached, wait for immediate scene to be ready
+        while (!IsImmediateSceneReady())
         {
-            // Keep progress at 100%
-            progressFill.fillAmount = 1f;
-            loadingText.text = "Loading... 100%";
-
-            if (asyncLoad.progress >= 0.9f)
-            {
-                // Small delay for smooth transition
-                yield return new WaitForSeconds(0.5f);
-
-                // Switch to PlayerProfile scene
-                asyncLoad.allowSceneActivation = true;
-            }
+            float progress = CalculateCombinedProgress();
+            progressFill.fillAmount = Mathf.Max(0.95f, progress);
+            loadingText.text = "Loading... 99%";
 
             yield return null;
         }
+
+        // Everything ready! Show final state
+        progressFill.fillAmount = 1f;
+        loadingText.text = "Ready! 100%";
+
+        // Small delay for visual polish
+        yield return new WaitForSeconds(0.5f);
+
+        // Activate the immediate scene (cutscene)
+        immediateLoad.allowSceneActivation = true;
+    }
+
+    IEnumerator PreloadNextScene()
+    {
+        if (isPreloading) yield break;
+
+        isPreloading = true;
+
+        // Wait a bit before starting preload
+        yield return new WaitForSeconds(1f);
+
+        // Load the next scene in background
+        preloadedScene = SceneManager.LoadSceneAsync(preloadForLater, LoadSceneMode.Additive);
+        preloadedScene.allowSceneActivation = false;
+        preloadedScene.priority = 0; // Lower priority than immediate scene
+
+        // Wait for it to load
+        while (preloadedScene != null && preloadedScene.progress < 0.9f)
+        {
+            yield return null;
+        }
+
+        // Scene is now preloaded and ready in memory!
+        Debug.Log($"{preloadForLater} scene preloaded and ready!");
+    }
+
+    float CalculateCombinedProgress()
+    {
+        float timeProgress = loadingTimer / minLoadingTime;
+
+        // Start with immediate scene progress
+        float immediateProgress = immediateLoad != null ? immediateLoad.progress / 0.9f : 0f;
+
+        // Add preloaded scene progress (weighted less)
+        float preloadProgress = preloadedScene != null ? preloadedScene.progress / 0.9f : 0f;
+
+        // Weighted average (immediate scene more important)
+        float sceneProgress = (immediateProgress * 0.7f) + (preloadProgress * 0.3f);
+
+        // Blend time progress with actual loading progress
+        return Mathf.Lerp(sceneProgress * 0.8f, 1f, timeProgress * 0.2f);
+    }
+
+    bool IsImmediateSceneReady()
+    {
+        return immediateLoad != null && immediateLoad.progress >= 0.9f;
     }
 
     // Input System compatible skip
     void Update()
     {
-        // Allow skipping after 5 seconds
         if (loadingTimer >= minLoadingTime)
         {
-            // Check for ANY input using Input System
             bool anyInput = false;
 
-            // Check keyboard
             if (Keyboard.current != null)
                 anyInput |= Keyboard.current.anyKey.wasPressedThisFrame;
 
-            // Check mouse click
             if (Mouse.current != null)
                 anyInput |= Mouse.current.leftButton.wasPressedThisFrame;
 
-            // Check touch
             if (Touchscreen.current != null)
                 anyInput |= Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
 
-            // Skip if any input
-            if (anyInput)
+            if (anyInput && IsImmediateSceneReady())
             {
-                string sceneToLoad = PlayerPrefs.GetString("NextScene", "PlayerProfile");
-                SceneManager.LoadScene(sceneToLoad);
+                immediateLoad.allowSceneActivation = true;
             }
         }
     }

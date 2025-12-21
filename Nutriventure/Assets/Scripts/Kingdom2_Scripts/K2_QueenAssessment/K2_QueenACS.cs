@@ -1,0 +1,911 @@
+using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using System.Collections;
+using StarterAssets;
+using UnityEngine.Events; // Added for Unity Events
+
+public class K2_QueenACS : MonoBehaviour
+{
+    [Header("Cutscene References")]
+    [SerializeField] private GameObject cutsceneParentObject; // "CutsceneQueen" parent object
+    [SerializeField] private PlayableDirector npcCutsceneDirector; // "Queen_Timeline" PlayableDirector
+    
+    [Header("UI References")]
+    [SerializeField] private GameObject arrowIndicator; // Arrow indicator UI
+    [SerializeField] private GameObject dialogueCanvas; // "K2_QueenACV" dialogue canvas
+    [SerializeField] private bool showDialogueDuringCutscene = true; // Toggle for dialogue visibility
+    
+    [Header("Skip Button")]
+    [SerializeField] private Button skipButton; // Button to skip the cutscene
+    [SerializeField] private bool enableSkipButton = true; // Whether skip button is enabled
+    [SerializeField] private float skipButtonDelay = 2f; // Delay before skip button appears
+    
+    [Header("Player Reference")]
+    [SerializeField] private GameObject playerObject; // Reference to player (with ThirdPersonController)
+    
+    [Header("Game Systems to Control")]
+    [SerializeField] private GameObject audioHandler; // "Audio_Handler" GameObject
+    [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
+    
+    [Header("Collider Settings")]
+    [SerializeField] private string playerTag = "Player";
+    [SerializeField] private bool oneTimeInteraction = true; // Can only trigger once
+    
+    [Header("Events")]
+    public UnityEvent onCutsceneStart;
+    public UnityEvent onCutsceneEnd;
+    public UnityEvent onCutsceneSkipped; // Event fired when cutscene is skipped
+    
+    private bool isCutscenePlaying = false;
+    private bool hasTriggered = false;
+    private Transform playerTransform;
+    private ThirdPersonController playerController; // Reference to the controller
+    private Animator playerAnimator; // Reference to player's Animator
+    private AudioSource playerAudioSource; // Reference to player's AudioSource
+    private StarterAssetsInputs playerInputs; // Reference to player inputs
+    
+    // Store original states
+    private bool wasControllerEnabled = true;
+    private bool wasAnimatorEnabled = true;
+    private bool wasAudioSourceEnabled = true;
+    private Vector2 originalMoveInput;
+    private bool originalSprintState;
+    private bool originalJumpState;
+    private float originalAnimatorSpeed;
+    
+    // Skip button timer
+    private float skipButtonTimer = 0f;
+    private bool skipButtonReady = false;
+    
+    // Input System reference
+    private PlayerInput playerInputComponent;
+    private bool playerInputWasEnabled = true;
+    
+    void Start()
+    {
+        InitializeComponents();
+    }
+    
+    void InitializeComponents()
+    {
+        // Ensure cutscene parent is disabled initially
+        if (cutsceneParentObject != null)
+        {
+            cutsceneParentObject.SetActive(false);
+            Debug.Log("Cutscene parent disabled");
+        }
+        else
+        {
+            Debug.LogError("Cutscene parent object not assigned!");
+        }
+        
+        // Ensure PlayableDirector is stopped
+        if (npcCutsceneDirector != null)
+        {
+            npcCutsceneDirector.Stop();
+            npcCutsceneDirector.stopped += OnCutsceneFinished;
+            
+            // Subscribe to timeline events - CRITICAL FOR DIALOGUE
+            npcCutsceneDirector.played += OnCutscenePlayed;
+            npcCutsceneDirector.paused += OnCutscenePaused;
+            Debug.Log("Timeline director initialized with event subscriptions");
+        }
+        else
+        {
+            Debug.LogError("Timeline director not assigned!");
+        }
+        
+        // Ensure arrow indicator is visible initially
+        if (arrowIndicator != null)
+        {
+            arrowIndicator.SetActive(true);
+            Debug.Log("Arrow indicator enabled");
+        }
+        
+        // Initialize dialogue canvas
+        if (dialogueCanvas != null)
+        {
+            // Hide dialogue canvas initially
+            dialogueCanvas.SetActive(false);
+            Debug.Log("Dialogue canvas initialized and hidden");
+        }
+        else
+        {
+            Debug.LogWarning("Dialogue canvas not assigned!");
+        }
+        
+        // Initialize skip button
+        if (skipButton != null)
+        {
+            skipButton.onClick.AddListener(OnSkipButtonClicked);
+            skipButton.gameObject.SetActive(false); // Hidden by default
+            Debug.Log("Skip button initialized");
+        }
+        
+        // Ensure game UI canvas is enabled initially (if reference exists)
+        if (gameUICanvas != null)
+        {
+            gameUICanvas.SetActive(true);
+            Debug.Log("Game UI enabled");
+        }
+        
+        // Ensure audio handler is enabled initially (if reference exists)
+        if (audioHandler != null)
+        {
+            audioHandler.SetActive(true);
+            Debug.Log("Audio handler enabled");
+        }
+        
+        // Get player component references
+        if (playerObject != null)
+        {
+            playerController = playerObject.GetComponent<ThirdPersonController>();
+            playerAnimator = playerObject.GetComponent<Animator>();
+            playerAudioSource = playerObject.GetComponent<AudioSource>();
+            playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
+            playerInputComponent = playerObject.GetComponent<PlayerInput>();
+            
+            if (playerController == null)
+            {
+                Debug.LogWarning("ThirdPersonController not found on player object!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Player object not assigned! Will try to find on trigger.");
+        }
+        
+        Debug.Log("Queen cutscene manager initialized successfully");
+    }
+    
+    void OnDestroy()
+    {
+        if (npcCutsceneDirector != null)
+        {
+            npcCutsceneDirector.stopped -= OnCutsceneFinished;
+            npcCutsceneDirector.played -= OnCutscenePlayed;
+            npcCutsceneDirector.paused -= OnCutscenePaused;
+            Debug.Log("Unsubscribed from timeline events");
+        }
+        
+        // Remove skip button listener
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveListener(OnSkipButtonClicked);
+        }
+    }
+    
+    void Update()
+    {
+        // Handle skip button timer
+        if (isCutscenePlaying && enableSkipButton && !skipButtonReady)
+        {
+            skipButtonTimer += Time.deltaTime;
+            
+            if (skipButtonTimer >= skipButtonDelay)
+            {
+                skipButtonReady = true;
+                ShowSkipButton();
+                Debug.Log("Skip button ready");
+            }
+        }
+    }
+    
+    void OnTriggerEnter(Collider other)
+    {
+        // Auto-trigger when player enters trigger collider
+        if (other.CompareTag(playerTag) && !hasTriggered && !isCutscenePlaying)
+        {
+            playerTransform = other.transform;
+            
+            // If player object not assigned, get it from the collider
+            if (playerObject == null)
+            {
+                playerObject = other.gameObject;
+                InitializePlayerComponents();
+                Debug.Log($"Found player from trigger: {playerObject.name}");
+            }
+            
+            TriggerCutscene();
+        }
+    }
+    
+    void InitializePlayerComponents()
+    {
+        if (playerObject != null)
+        {
+            playerController = playerObject.GetComponent<ThirdPersonController>();
+            playerAnimator = playerObject.GetComponent<Animator>();
+            playerAudioSource = playerObject.GetComponent<AudioSource>();
+            playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
+            playerInputComponent = playerObject.GetComponent<PlayerInput>();
+            Debug.Log("Player components initialized");
+        }
+    }
+    
+    public void TriggerCutscene()
+    {
+        if (hasTriggered || isCutscenePlaying) return;
+        
+        hasTriggered = true;
+        isCutscenePlaying = true;
+        skipButtonTimer = 0f;
+        skipButtonReady = false;
+        
+        // Store original player states
+        StoreOriginalPlayerStates();
+        
+        // Completely freeze the player
+        FreezePlayerCompletely();
+        
+        // Hide arrow indicator
+        if (arrowIndicator != null)
+        {
+            arrowIndicator.SetActive(false);
+            Debug.Log("Arrow indicator disabled");
+        }
+        
+        // Enable cutscene parent object
+        if (cutsceneParentObject != null)
+        {
+            cutsceneParentObject.SetActive(true);
+            Debug.Log("Cutscene parent enabled");
+        }
+        
+        // Disable game UI during cutscene
+        if (gameUICanvas != null)
+        {
+            gameUICanvas.SetActive(false);
+            Debug.Log("Game UI disabled");
+        }
+        
+        // Disable audio handler during cutscene
+        if (audioHandler != null)
+        {
+            audioHandler.SetActive(false);
+            Debug.Log("Audio handler disabled");
+        }
+        
+        // Play the cutscene
+        if (npcCutsceneDirector != null)
+        {
+            npcCutsceneDirector.Play();
+            Debug.Log("Timeline started playing");
+        }
+        else
+        {
+            Debug.LogError("Cannot play cutscene: Director is null!");
+        }
+        
+        // Invoke start event
+        onCutsceneStart?.Invoke();
+        
+        Debug.Log("Queen cutscene triggered - Player completely frozen");
+    }
+    
+    private void StoreOriginalPlayerStates()
+    {
+        if (playerController != null)
+        {
+            wasControllerEnabled = playerController.enabled;
+            Debug.Log($"Stored controller state: {wasControllerEnabled}");
+        }
+        
+        if (playerAnimator != null)
+        {
+            wasAnimatorEnabled = playerAnimator.enabled;
+            originalAnimatorSpeed = playerAnimator.speed;
+            Debug.Log($"Stored animator state: {wasAnimatorEnabled}");
+        }
+        
+        if (playerAudioSource != null)
+        {
+            wasAudioSourceEnabled = playerAudioSource.enabled;
+            Debug.Log($"Stored audio source state: {wasAudioSourceEnabled}");
+        }
+        
+        if (playerInputs != null)
+        {
+            originalMoveInput = playerInputs.move;
+            originalSprintState = playerInputs.sprint;
+            originalJumpState = playerInputs.jump;
+            Debug.Log("Stored input states");
+        }
+        
+        // Store PlayerInput state
+        if (playerInputComponent != null)
+        {
+            playerInputWasEnabled = playerInputComponent.enabled;
+            Debug.Log($"Stored PlayerInput state: {playerInputWasEnabled}");
+        }
+    }
+    
+    private void FreezePlayerCompletely()
+    {
+        if (playerObject == null) 
+        {
+            Debug.LogError("Cannot freeze player: Player object is null!");
+            return;
+        }
+        
+        // 1. Disable the ThirdPersonController
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+            Debug.Log("Player controller disabled");
+        }
+        else
+        {
+            Debug.LogWarning("ThirdPersonController not found on player!");
+        }
+        
+        // 2. Stop all animations completely
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = false;
+            Debug.Log("Player animator disabled");
+        }
+        
+        // 3. Stop all audio
+        if (playerAudioSource != null)
+        {
+            playerAudioSource.enabled = false;
+            playerAudioSource.Stop();
+            Debug.Log("Player audio source stopped");
+            
+            // Also stop any AudioSource components on children
+            AudioSource[] allAudioSources = playerObject.GetComponentsInChildren<AudioSource>();
+            foreach (AudioSource audioSource in allAudioSources)
+            {
+                audioSource.enabled = false;
+                audioSource.Stop();
+            }
+        }
+        
+        // 4. Reset all player inputs
+        if (playerInputs != null)
+        {
+            playerInputs.move = Vector2.zero;
+            playerInputs.look = Vector2.zero;
+            playerInputs.sprint = false;
+            playerInputs.jump = false;
+            
+            // Disable the input component
+            playerInputs.enabled = false;
+            Debug.Log("Player inputs reset and disabled");
+        }
+        
+        // 5. Stop any physics movement
+        Rigidbody rb = playerObject.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            Debug.Log("Player physics stopped");
+        }
+        
+        // 6. Disable CharacterController movement
+        CharacterController characterController = playerObject.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+            Debug.Log("CharacterController disabled");
+        }
+        
+        // 7. Disable PlayerInput component (Input System)
+        if (playerInputComponent != null)
+        {
+            playerInputComponent.enabled = false;
+            Debug.Log("PlayerInput component disabled");
+        }
+        
+        // 8. Find and disable any additional movement scripts
+        MonoBehaviour[] allScripts = playerObject.GetComponents<MonoBehaviour>();
+        foreach (MonoBehaviour script in allScripts)
+        {
+            if (script != null && script.enabled && script != this)
+            {
+                // Skip specific scripts we don't want to disable
+                if (script.GetType().Name.Contains("Camera") || 
+                    script.GetType().Name.Contains("UI") ||
+                    script.GetType().Name.Contains("Canvas"))
+                {
+                    continue;
+                }
+                
+                // Disable anything that might affect movement
+                script.enabled = false;
+            }
+        }
+        
+        Debug.Log("Player completely frozen - Controller, Animator, Audio, and Inputs disabled");
+    }
+    
+    // Event handler when cutscene starts playing - THIS IS CRITICAL FOR DIALOGUE
+    private void OnCutscenePlayed(PlayableDirector director)
+    {
+        Debug.Log("Queen cutscene started playing event received");
+        
+        // Show dialogue canvas when cutscene starts
+        if (showDialogueDuringCutscene && dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(true);
+            Debug.Log("Dialogue canvas ACTIVATED - This should make it visible");
+        }
+        else if (!showDialogueDuringCutscene)
+        {
+            Debug.Log("Dialogue canvas disabled by setting (showDialogueDuringCutscene = false)");
+        }
+        else
+        {
+            Debug.LogWarning("Dialogue canvas is null!");
+        }
+    }
+    
+    // Event handler when cutscene is paused
+    private void OnCutscenePaused(PlayableDirector director)
+    {
+        Debug.Log("Cutscene paused");
+        
+        // Hide dialogue canvas when cutscene is paused
+        if (dialogueCanvas != null && dialogueCanvas.activeSelf)
+        {
+            dialogueCanvas.SetActive(false);
+            Debug.Log("Dialogue canvas deactivated on pause");
+        }
+    }
+    
+    private void OnCutsceneFinished(PlayableDirector director)
+    {
+        // Check if this was triggered by skip (to avoid double-finishing)
+        if (isCutscenePlaying)
+        {
+            Debug.Log("Queen cutscene finished playing");
+            FinishCutscene(false); // false = not skipped
+        }
+    }
+    
+    // Skip button click handler
+    private void OnSkipButtonClicked()
+    {
+        if (isCutscenePlaying)
+        {
+            SkipCutscene();
+        }
+    }
+    
+    // Show skip button with delay
+    private void ShowSkipButton()
+    {
+        if (skipButton != null && enableSkipButton)
+        {
+            skipButton.gameObject.SetActive(true);
+            Debug.Log("Skip button activated");
+        }
+    }
+    
+    // Hide skip button
+    private void HideSkipButton()
+    {
+        if (skipButton != null)
+        {
+            skipButton.gameObject.SetActive(false);
+            Debug.Log("Skip button hidden");
+        }
+    }
+    
+    // Public method to skip cutscene
+    public void SkipCutscene()
+    {
+        if (isCutscenePlaying && npcCutsceneDirector != null)
+        {
+            Debug.Log("Queen cutscene skipped by player");
+            
+            // FAST FORWARD TO END: Set timeline to the end before stopping
+            double currentTime = npcCutsceneDirector.time;
+            double duration = npcCutsceneDirector.duration;
+            
+            if (duration > 0)
+            {
+                Debug.Log($"Fast-forwarding from {currentTime} to {duration}");
+                
+                // Fast forward to the end
+                npcCutsceneDirector.time = duration;
+                
+                // Evaluate the timeline at the end time
+                npcCutsceneDirector.Evaluate();
+                
+                // Trigger all bindings that should happen at the end
+                TriggerAllBindings(npcCutsceneDirector);
+            }
+            
+            // Stop the director
+            npcCutsceneDirector.Stop();
+            
+            // Finish the cutscene with skipped flag
+            FinishCutscene(true); // true = skipped
+            
+            // Invoke skipped event
+            onCutsceneSkipped?.Invoke();
+        }
+    }
+    
+    // NEW: Trigger all timeline bindings to ensure end-of-timeline events fire
+    private void TriggerAllBindings(PlayableDirector director)
+    {
+        if (director == null) return;
+        
+        // Get all PlayableBindings
+        var bindings = director.playableAsset.outputs;
+        
+        foreach (var binding in bindings)
+        {
+            try
+            {
+                // Get the bound object
+                var boundObject = director.GetGenericBinding(binding.sourceObject);
+                
+                if (boundObject != null)
+                {
+                    // If it's an animation track, force it to evaluate at the end
+                    if (binding.outputTargetType == typeof(Animator))
+                    {
+                        Animator animator = boundObject as Animator;
+                        if (animator != null)
+                        {
+                            // Ensure the animator is updated
+                            animator.Update(0f);
+                        }
+                    }
+                    
+                    // You can add more specific handling for other track types here
+                    // For example, Activation tracks, Audio tracks, etc.
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Error evaluating binding: {e.Message}");
+            }
+        }
+        
+        // Force evaluation of all playables
+        director.Evaluate();
+        
+        Debug.Log("Timeline bindings triggered for skip");
+    }
+    
+    private void FinishCutscene(bool wasSkipped = false)
+    {
+        isCutscenePlaying = false;
+        
+        // Hide skip button
+        HideSkipButton();
+        
+        // Hide dialogue canvas when cutscene ends
+        if (dialogueCanvas != null && dialogueCanvas.activeSelf)
+        {
+            dialogueCanvas.SetActive(false);
+            Debug.Log("Dialogue canvas deactivated");
+        }
+        
+        // Disable cutscene parent object
+        if (cutsceneParentObject != null)
+        {
+            cutsceneParentObject.SetActive(false);
+            Debug.Log("Cutscene parent disabled");
+        }
+        
+        // Re-enable game UI after cutscene
+        if (gameUICanvas != null)
+        {
+            gameUICanvas.SetActive(true);
+            Debug.Log("Game UI enabled");
+        }
+        
+        // Re-enable audio handler after cutscene
+        if (audioHandler != null)
+        {
+            audioHandler.SetActive(true);
+            Debug.Log("Audio handler enabled");
+        }
+        
+        // Unfreeze the player
+        UnfreezePlayer();
+        
+        // Note: Arrow indicator stays hidden after cutscene
+        // If you want it to reappear (for repeatable interactions), use this:
+        if (!oneTimeInteraction && arrowIndicator != null)
+        {
+            arrowIndicator.SetActive(true);
+            hasTriggered = false; // Reset trigger for repeat interactions
+            Debug.Log("Arrow indicator re-enabled for repeat interaction");
+        }
+        
+        // Invoke end event
+        onCutsceneEnd?.Invoke();
+        
+        if (wasSkipped)
+        {
+            Debug.Log("Queen cutscene skipped - Player unfrozen");
+        }
+        else
+        {
+            Debug.Log("Queen cutscene finished - Player unfrozen");
+        }
+    }
+    
+    private void UnfreezePlayer()
+    {
+        if (playerObject == null) 
+        {
+            Debug.LogError("Cannot unfreeze player: Player object is null!");
+            return;
+        }
+        
+        // 1. Re-enable the ThirdPersonController (if it was enabled before)
+        if (playerController != null)
+        {
+            playerController.enabled = wasControllerEnabled;
+            Debug.Log($"Player controller re-enabled: {wasControllerEnabled}");
+        }
+        
+        // 2. Re-enable animator
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = wasAnimatorEnabled;
+            
+            // Reset animation states
+            if (wasAnimatorEnabled)
+            {
+                playerAnimator.SetFloat("Speed", 0f);
+                playerAnimator.SetFloat("MotionSpeed", 0f);
+                playerAnimator.SetBool("Grounded", true);
+                playerAnimator.SetBool("Jump", false);
+                playerAnimator.SetBool("FreeFall", false);
+                Debug.Log("Player animator re-enabled and reset");
+            }
+        }
+        
+        // 3. Re-enable audio
+        if (playerAudioSource != null)
+        {
+            playerAudioSource.enabled = wasAudioSourceEnabled;
+            Debug.Log($"Player audio re-enabled: {wasAudioSourceEnabled}");
+            
+            // Re-enable AudioSource components on children
+            AudioSource[] allAudioSources = playerObject.GetComponentsInChildren<AudioSource>();
+            foreach (AudioSource audioSource in allAudioSources)
+            {
+                audioSource.enabled = wasAudioSourceEnabled;
+            }
+        }
+        
+        // 4. Re-enable and restore inputs
+        if (playerInputs != null)
+        {
+            playerInputs.enabled = true;
+            playerInputs.move = Vector2.zero; // Start with zero input
+            playerInputs.look = Vector2.zero;
+            playerInputs.sprint = false;
+            playerInputs.jump = false;
+            Debug.Log("Player inputs re-enabled");
+        }
+        
+        // 5. Re-enable physics
+        Rigidbody rb = playerObject.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            Debug.Log("Player physics re-enabled");
+        }
+        
+        // 6. Re-enable CharacterController
+        CharacterController characterController = playerObject.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+            Debug.Log("CharacterController re-enabled");
+        }
+        
+        // 7. Re-enable PlayerInput component (Input System)
+        if (playerInputComponent != null)
+        {
+            playerInputComponent.enabled = playerInputWasEnabled;
+            Debug.Log($"PlayerInput component re-enabled: {playerInputWasEnabled}");
+        }
+        
+        // 8. Re-enable all other scripts
+        MonoBehaviour[] allScripts = playerObject.GetComponents<MonoBehaviour>();
+        foreach (MonoBehaviour script in allScripts)
+        {
+            if (script != null && script != this)
+            {
+                // Skip specific scripts
+                if (script.GetType().Name.Contains("Camera") || 
+                    script.GetType().Name.Contains("UI") ||
+                    script.GetType().Name.Contains("Canvas"))
+                {
+                    continue;
+                }
+                
+                // Re-enable the script
+                script.enabled = true;
+            }
+        }
+        
+        Debug.Log("Player unfrozen - All components restored");
+    }
+    
+    // Reset the interaction (for debugging or game reset)
+    public void ResetInteraction()
+    {
+        hasTriggered = false;
+        isCutscenePlaying = false;
+        skipButtonReady = false;
+        skipButtonTimer = 0f;
+        
+        // Hide skip button
+        HideSkipButton();
+        
+        if (arrowIndicator != null)
+        {
+            arrowIndicator.SetActive(true);
+            Debug.Log("Arrow indicator re-enabled on reset");
+        }
+        
+        // Hide dialogue canvas on reset
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(false);
+            Debug.Log("Dialogue canvas hidden on reset");
+        }
+        
+        // Ensure cutscene parent is disabled
+        if (cutsceneParentObject != null)
+        {
+            cutsceneParentObject.SetActive(false);
+        }
+        
+        // Ensure player is unfrozen on reset
+        UnfreezePlayer();
+        
+        Debug.Log("Queen interaction reset");
+    }
+    
+    // Public method to manually trigger cutscene from other scripts
+    public void ManualTriggerCutscene()
+    {
+        if (!hasTriggered && !isCutscenePlaying)
+        {
+            TriggerCutscene();
+        }
+    }
+    
+    // Enable/disable skip button functionality
+    public void SetSkipButtonEnabled(bool enabled)
+    {
+        enableSkipButton = enabled;
+        
+        if (!enabled && skipButton != null)
+        {
+            HideSkipButton();
+        }
+        
+        Debug.Log($"Skip button functionality {(enabled ? "enabled" : "disabled")}");
+    }
+    
+    // Set skip button delay
+    public void SetSkipButtonDelay(float delay)
+    {
+        skipButtonDelay = Mathf.Max(0f, delay);
+        Debug.Log($"Skip button delay set to: {skipButtonDelay} seconds");
+    }
+    
+    // Check if skip button is ready/visible
+    public bool IsSkipButtonReady()
+    {
+        return skipButtonReady;
+    }
+    
+    // Get remaining time until skip button appears
+    public float GetSkipButtonTimeRemaining()
+    {
+        if (skipButtonReady) return 0f;
+        return Mathf.Max(0f, skipButtonDelay - skipButtonTimer);
+    }
+    
+    // Check if cutscene is currently playing
+    public bool IsCutscenePlaying()
+    {
+        return isCutscenePlaying;
+    }
+    
+    // Editor helper
+    #if UNITY_EDITOR
+    [ContextMenu("Auto-Find References")]
+    public void AutoFindReferences()
+    {
+        // Find player
+        GameObject foundPlayer = GameObject.FindGameObjectWithTag("Player");
+        if (foundPlayer != null)
+        {
+            playerObject = foundPlayer;
+            Debug.Log("Auto-found player: " + playerObject.name);
+        }
+        
+        // Find audio handler
+        if (audioHandler == null)
+        {
+            audioHandler = GameObject.Find("Audio_Handler");
+            if (audioHandler != null)
+            {
+                Debug.Log("Auto-found Audio Handler");
+            }
+        }
+        
+        // Find game UI canvas
+        if (gameUICanvas == null)
+        {
+            gameUICanvas = GameObject.Find("UI_Canvas_StarterAssetsInputs_Joysticks");
+            if (gameUICanvas != null)
+            {
+                Debug.Log("Auto-found Game UI Canvas");
+            }
+        }
+        
+        // Try to find dialogue canvas
+        if (dialogueCanvas == null)
+        {
+            GameObject foundDialogueCanvas = GameObject.Find("K2_QueenACV");
+            if (foundDialogueCanvas != null)
+            {
+                dialogueCanvas = foundDialogueCanvas;
+                Debug.Log("Auto-found Dialogue Canvas");
+            }
+        }
+        
+        UnityEditor.EditorUtility.SetDirty(this);
+    }
+    #endif
+    
+    // Debug methods
+    [ContextMenu("Test Trigger Cutscene")]
+    public void TestTriggerCutscene()
+    {
+        if (!hasTriggered)
+        {
+            Debug.Log("Testing trigger cutscene...");
+            TriggerCutscene();
+        }
+        else
+        {
+            Debug.Log("Cutscene already triggered! Use ResetInteraction() first.");
+        }
+    }
+    
+    [ContextMenu("Test Skip Cutscene")]
+    public void TestSkipCutscene()
+    {
+        if (isCutscenePlaying)
+        {
+            Debug.Log("Testing skip cutscene...");
+            SkipCutscene();
+        }
+        else
+        {
+            Debug.Log("No cutscene is currently playing!");
+        }
+    }
+    
+    [ContextMenu("Test Reset Interaction")]
+    public void TestResetInteraction()
+    {
+        Debug.Log("Testing reset interaction...");
+        ResetInteraction();
+    }
+}
