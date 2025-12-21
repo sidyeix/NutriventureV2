@@ -257,7 +257,7 @@ public class MainMenu_Manager : MonoBehaviour
         Debug.Log("Returned to menu mode");
     }
 
-    private void SwitchToPlayerCamera()
+    public void SwitchToPlayerCamera()
     {
         if (playerFollowCamera != null)
         {
