@@ -29,7 +29,7 @@ MonoBehaviour:
         something
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     - skinName: AJ Summer Vibes
@@ -42,7 +42,7 @@ MonoBehaviour:
         something
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     - skinName: Snowmanny
@@ -55,7 +55,7 @@ MonoBehaviour:
         something
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     speedMultiplier: 0
@@ -85,7 +85,7 @@ MonoBehaviour:
       skinDescription: sgsagasgaga
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     - skinName: Summer Vibes Amy
@@ -109,15 +109,15 @@ MonoBehaviour:
       skinDescription: asdgags
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     speedMultiplier: 0
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
-    coinsToUnlock: 0
+    unlockedByDefault: 0
+    coinsToUnlock: 10000
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
     selectionSound: {fileID: 0}
@@ -137,7 +137,7 @@ MonoBehaviour:
       skinDescription: asgasgasgfas
       skinColor: {r: 0, g: 0, b: 0, a: 0}
       selectionSound: {fileID: 0}
-      unlockedByDefault: 1
+      unlockedByDefault: 0
       coinsToUnlock: 0
       levelRequirement: 0
     - skinName: SummerVibes Claire
@@ -156,7 +156,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 0
+    unlockedByDefault: 1
     coinsToUnlock: 0
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
@@ -208,7 +208,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
+    unlockedByDefault: 0
     coinsToUnlock: 0
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
@@ -224,7 +224,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
+    unlockedByDefault: 0
     coinsToUnlock: 0
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
@@ -276,7 +276,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
+    unlockedByDefault: 0
     coinsToUnlock: 0
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
@@ -328,7 +328,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
+    unlockedByDefault: 0
     coinsToUnlock: 0
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}

@@ -353,6 +353,18 @@ public class CharacterSelectionPanel : MonoBehaviour
 
         CharacterDatabase.CharacterData characterData = characterDatabase.characters[buttonData.characterIndex];
 
+        // DEBUG THE IDS
+        Debug.Log($"=== Character Check ===");
+        Debug.Log($"Button characterIndex: {buttonData.characterIndex}");
+        Debug.Log($"Button characterID: {buttonData.characterID}");
+        Debug.Log($"Database character ID: {characterData.characterID}");
+        Debug.Log($"Character Name: {characterData.characterName}");
+        Debug.Log($"unlockedByDefault: {characterData.unlockedByDefault}");
+
+        // Are we getting the right character from the database?
+        CharacterDatabase.CharacterData charFromID = characterDatabase.GetCharacterByID(buttonData.characterID);
+        Debug.Log($"GetCharacterByID({buttonData.characterID}) found: {charFromID?.characterName ?? "NULL"}");
+
         // Check unlock status using database method (checks unlockedByDefault)
         bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterData.characterID, GameDataManager.Instance.CurrentGameData);
         bool isSelected = (currentSelectedCharacterID == characterData.characterID);

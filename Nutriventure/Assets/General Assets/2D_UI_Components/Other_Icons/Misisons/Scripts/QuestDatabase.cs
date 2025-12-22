@@ -12,9 +12,6 @@ public class QuestDatabase : ScriptableObject
     [Header("Kingdoms")]
     public List<Kingdom> kingdoms = new List<Kingdom>();
 
-    [Header("All Quests")]
-    public List<Quest> allQuests = new List<Quest>();
-
     private Dictionary<string, Quest> questDictionary = new Dictionary<string, Quest>();
     private Dictionary<string, Kingdom> kingdomDictionary = new Dictionary<string, Kingdom>();
 
@@ -23,12 +20,7 @@ public class QuestDatabase : ScriptableObject
     public void InitializeDatabase()
     {
         BuildDictionaries();
-
-        // Validate quest references
-        foreach (var quest in allQuests)
-        {
-            ValidateQuest(quest);
-        }
+        ValidateAllQuests();
     }
 
     private void BuildDictionaries()
@@ -36,19 +28,30 @@ public class QuestDatabase : ScriptableObject
         questDictionary.Clear();
         kingdomDictionary.Clear();
 
-        foreach (var quest in allQuests)
-        {
-            if (!string.IsNullOrEmpty(quest.questID))
-            {
-                questDictionary[quest.questID] = quest;
-            }
-        }
-
         foreach (var kingdom in kingdoms)
         {
             if (!string.IsNullOrEmpty(kingdom.kingdomID))
             {
                 kingdomDictionary[kingdom.kingdomID] = kingdom;
+
+                foreach (var quest in kingdom.quests)
+                {
+                    if (!string.IsNullOrEmpty(quest.questID))
+                    {
+                        questDictionary[quest.questID] = quest;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ValidateAllQuests()
+    {
+        foreach (var kingdom in kingdoms)
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                ValidateQuest(quest);
             }
         }
     }
@@ -80,37 +83,33 @@ public class QuestDatabase : ScriptableObject
 
     public Quest GetQuest(string questID)
     {
-        if (questDictionary.ContainsKey(questID))
-            return questDictionary[questID];
-
-        Debug.LogWarning($"Quest not found: {questID}");
-        return null;
+        questDictionary.TryGetValue(questID, out Quest quest);
+        if (quest == null)
+            Debug.LogWarning($"Quest not found: {questID}");
+        return quest;
     }
 
     public List<Quest> GetQuestsByKingdom(string kingdomID)
     {
-        List<Quest> kingdomQuests = new List<Quest>();
+        if (kingdomDictionary.TryGetValue(kingdomID, out Kingdom kingdom))
+            return new List<Quest>(kingdom.quests);
 
-        foreach (var quest in allQuests)
-        {
-            if (quest.kingdom != null && quest.kingdom.kingdomID == kingdomID)
-            {
-                kingdomQuests.Add(quest);
-            }
-        }
-
-        return kingdomQuests;
+        Debug.LogWarning($"Kingdom not found: {kingdomID}");
+        return new List<Quest>();
     }
 
     public List<Quest> GetQuestsByStatus(QuestStatus status)
     {
         List<Quest> filteredQuests = new List<Quest>();
 
-        foreach (var quest in allQuests)
+        foreach (var kingdom in kingdoms)
         {
-            if (quest.status == status)
+            foreach (var quest in kingdom.quests)
             {
-                filteredQuests.Add(quest);
+                if (quest.status == status)
+                {
+                    filteredQuests.Add(quest);
+                }
             }
         }
 
@@ -121,13 +120,16 @@ public class QuestDatabase : ScriptableObject
     {
         List<Quest> availableQuests = new List<Quest>();
 
-        foreach (var quest in allQuests)
+        foreach (var kingdom in kingdoms)
         {
-            if (quest.status == QuestStatus.NotStarted &&
-                quest.requiredLevel <= playerLevel &&
-                ArePrerequisitesMet(quest))
+            foreach (var quest in kingdom.quests)
             {
-                availableQuests.Add(quest);
+                if (quest.status == QuestStatus.NotStarted &&
+                    quest.requiredLevel <= playerLevel &&
+                    ArePrerequisitesMet(quest))
+                {
+                    availableQuests.Add(quest);
+                }
             }
         }
 
@@ -180,7 +182,7 @@ public class QuestDatabase : ScriptableObject
         if (task == null)
             return false;
 
-        task.currentAmount = task.requiredAmount;
+        task.MarkAsComplete(); // Use the new method
 
         if (quest.AllTasksComplete)
         {
@@ -196,16 +198,30 @@ public class QuestDatabase : ScriptableObject
 
     public Kingdom GetKingdom(string kingdomID)
     {
-        if (kingdomDictionary.ContainsKey(kingdomID))
-            return kingdomDictionary[kingdomID];
-
-        Debug.LogWarning($"Kingdom not found: {kingdomID}");
-        return null;
+        kingdomDictionary.TryGetValue(kingdomID, out Kingdom kingdom);
+        if (kingdom == null)
+            Debug.LogWarning($"Kingdom not found: {kingdomID}");
+        return kingdom;
     }
 
     public List<Kingdom> GetAllKingdoms()
     {
         return new List<Kingdom>(kingdoms);
+    }
+
+    public Kingdom GetKingdomForQuest(string questID)
+    {
+        foreach (var kingdom in kingdoms)
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                if (quest.questID == questID)
+                {
+                    return kingdom;
+                }
+            }
+        }
+        return null;
     }
 
     #endregion
@@ -227,32 +243,37 @@ public class QuestDatabase : ScriptableObject
     {
         public string taskID;
         public int currentAmount;
+        public bool isCompleted; // NEW: Save completion status
     }
 
     public List<QuestSaveData> GetSaveData()
     {
         List<QuestSaveData> saveData = new List<QuestSaveData>();
 
-        foreach (var quest in allQuests)
+        foreach (var kingdom in kingdoms)
         {
-            var questData = new QuestSaveData
+            foreach (var quest in kingdom.quests)
             {
-                questID = quest.questID,
-                status = quest.status,
-                startTime = quest.startTime.ToString("o"),
-                completionTime = quest.completionTime?.ToString("o")
-            };
-
-            foreach (var task in quest.tasks)
-            {
-                questData.tasks.Add(new TaskSaveData
+                var questData = new QuestSaveData
                 {
-                    taskID = task.taskID,
-                    currentAmount = task.currentAmount
-                });
-            }
+                    questID = quest.questID,
+                    status = quest.status,
+                    startTime = quest.startTime.ToString("o"),
+                    completionTime = quest.completionTime?.ToString("o")
+                };
 
-            saveData.Add(questData);
+                foreach (var task in quest.tasks)
+                {
+                    questData.tasks.Add(new TaskSaveData
+                    {
+                        taskID = task.taskID,
+                        currentAmount = task.currentAmount,
+                        isCompleted = task.isCompleted
+                    });
+                }
+
+                saveData.Add(questData);
+            }
         }
 
         return saveData;
@@ -280,6 +301,13 @@ public class QuestDatabase : ScriptableObject
                     if (task != null)
                     {
                         task.currentAmount = taskData.currentAmount;
+                        task.isCompleted = taskData.isCompleted;
+
+                        // Ensure consistency
+                        if (task.currentAmount >= task.requiredAmount && !task.isCompleted)
+                        {
+                            task.isCompleted = true;
+                        }
                     }
                 }
             }
@@ -291,41 +319,68 @@ public class QuestDatabase : ScriptableObject
     #region Editor Helpers
 
 #if UNITY_EDITOR
-    public void AddNewQuest()
-    {
-        Quest newQuest = new Quest
-        {
-            questID = $"quest_{allQuests.Count + 1}",
-            questName = "New Quest",
-            description = "Quest description here"
-        };
-
-        allQuests.Add(newQuest);
-        EditorUtility.SetDirty(this);
-    }
-
     public void AddNewKingdom()
     {
         Kingdom newKingdom = new Kingdom
         {
             kingdomID = $"kingdom_{kingdoms.Count + 1}",
-            kingdomName = "New Kingdom"
+            kingdomName = "New Kingdom",
+            quests = new List<Quest>()
         };
 
         kingdoms.Add(newKingdom);
+        BuildDictionaries();
         EditorUtility.SetDirty(this);
     }
 
-    public void SortQuestsByKingdom()
+    public void AddNewQuestToKingdom(string kingdomID)
     {
-        allQuests.Sort((a, b) =>
+        if (kingdomDictionary.TryGetValue(kingdomID, out Kingdom kingdom))
         {
-            if (a.kingdom == null && b.kingdom == null) return 0;
-            if (a.kingdom == null) return 1;
-            if (b.kingdom == null) return -1;
-            return a.kingdom.kingdomName.CompareTo(b.kingdom.kingdomName);
-        });
+            Quest newQuest = new Quest
+            {
+                questID = $"{kingdomID}_quest_{kingdom.quests.Count + 1}",
+                questName = "New Quest",
+                description = "Quest description here",
+                tasks = new List<QuestTask>()
+            };
 
+            kingdom.quests.Add(newQuest);
+            questDictionary[newQuest.questID] = newQuest;
+            EditorUtility.SetDirty(this);
+        }
+    }
+
+    public void AddNewTaskToQuest(string questID)
+    {
+        Quest quest = GetQuest(questID);
+        if (quest != null)
+        {
+            QuestTask newTask = new QuestTask
+            {
+                taskID = $"{questID}_task_{quest.tasks.Count + 1}",
+                description = "New Task",
+                requiredAmount = 1,
+                isCompleted = false // Initialize as false
+            };
+
+            quest.tasks.Add(newTask);
+            EditorUtility.SetDirty(this);
+        }
+    }
+
+    public void OrganizeByKingdoms()
+    {
+        // Sort kingdoms by name
+        kingdoms.Sort((a, b) => a.kingdomName.CompareTo(b.kingdomName));
+
+        // Sort quests within each kingdom
+        foreach (var kingdom in kingdoms)
+        {
+            kingdom.quests.Sort((a, b) => a.questName.CompareTo(b.questName));
+        }
+
+        BuildDictionaries();
         EditorUtility.SetDirty(this);
     }
 #endif
