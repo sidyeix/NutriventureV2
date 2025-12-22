@@ -79,3 +79,41 @@ MonoBehaviour:
       status: 1
       questIcon: {fileID: 0}
       questColor: {r: 0, g: 0, b: 0, a: 0}
+  - kingdomID: 22222
+    kingdomName: Nutri Kingdom
+    kingdomIcon: {fileID: 0}
+    kingdomColor: {r: 0, g: 0, b: 0, a: 0}
+    quests:
+    - questID: 1101
+      questName: Finish the assessment
+      description: Go to the guard and ask
+      longDescription: blablabla
+      category: 0
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: Finish the Story with 3 Stars
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 1
+      - taskID: 110102
+        description: Get the Key
+        type: 5
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 100
+        type: 1
+      timelineAsset: {fileID: 11400000, guid: 0d49505ae1be69840bd7a2eaf5f2283f, type: 2}
+      status: 0
+      questIcon: {fileID: 0}
+      questColor: {r: 0, g: 0, b: 0, a: 0}
