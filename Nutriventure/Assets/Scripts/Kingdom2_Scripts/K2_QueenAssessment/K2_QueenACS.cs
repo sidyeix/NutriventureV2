@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
 using StarterAssets;
-using UnityEngine.Events; // Added for Unity Events
+using UnityEngine.Events;
 
 public class K2_QueenACS : MonoBehaviour
 {
@@ -62,6 +62,9 @@ public class K2_QueenACS : MonoBehaviour
     // Input System reference
     private PlayerInput playerInputComponent;
     private bool playerInputWasEnabled = true;
+    
+    // FIXED: Track if we have stored player references
+    private bool hasPlayerReferences = false;
     
     void Start()
     {
@@ -138,19 +141,10 @@ public class K2_QueenACS : MonoBehaviour
             Debug.Log("Audio handler enabled");
         }
         
-        // Get player component references
+        // Try to get player component references if player object is assigned
         if (playerObject != null)
         {
-            playerController = playerObject.GetComponent<ThirdPersonController>();
-            playerAnimator = playerObject.GetComponent<Animator>();
-            playerAudioSource = playerObject.GetComponent<AudioSource>();
-            playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
-            playerInputComponent = playerObject.GetComponent<PlayerInput>();
-            
-            if (playerController == null)
-            {
-                Debug.LogWarning("ThirdPersonController not found on player object!");
-            }
+            InitializePlayerComponents();
         }
         else
         {
@@ -221,7 +215,16 @@ public class K2_QueenACS : MonoBehaviour
             playerAudioSource = playerObject.GetComponent<AudioSource>();
             playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
             playerInputComponent = playerObject.GetComponent<PlayerInput>();
-            Debug.Log("Player components initialized");
+            
+            hasPlayerReferences = playerController != null || playerAnimator != null || 
+                                 playerInputs != null || playerInputComponent != null;
+            
+            Debug.Log($"Player components initialized: {hasPlayerReferences}");
+        }
+        else
+        {
+            Debug.LogWarning("Cannot initialize player components: playerObject is null!");
+            hasPlayerReferences = false;
         }
     }
     
@@ -234,11 +237,21 @@ public class K2_QueenACS : MonoBehaviour
         skipButtonTimer = 0f;
         skipButtonReady = false;
         
-        // Store original player states
-        StoreOriginalPlayerStates();
+        // Store original player states (if we have player references)
+        if (hasPlayerReferences)
+        {
+            StoreOriginalPlayerStates();
+        }
         
-        // Completely freeze the player
-        FreezePlayerCompletely();
+        // Completely freeze the player (if we have player references)
+        if (hasPlayerReferences)
+        {
+            FreezePlayerCompletely();
+        }
+        else
+        {
+            Debug.LogWarning("No player references found, skipping freeze logic");
+        }
         
         // Hide arrow indicator
         if (arrowIndicator != null)
@@ -326,7 +339,7 @@ public class K2_QueenACS : MonoBehaviour
     {
         if (playerObject == null) 
         {
-            Debug.LogError("Cannot freeze player: Player object is null!");
+            Debug.LogWarning("Cannot freeze player: Player object is null!");
             return;
         }
         
@@ -533,7 +546,7 @@ public class K2_QueenACS : MonoBehaviour
         }
     }
     
-    // NEW: Trigger all timeline bindings to ensure end-of-timeline events fire
+    // Trigger all timeline bindings to ensure end-of-timeline events fire
     private void TriggerAllBindings(PlayableDirector director)
     {
         if (director == null) return;
@@ -560,9 +573,6 @@ public class K2_QueenACS : MonoBehaviour
                             animator.Update(0f);
                         }
                     }
-                    
-                    // You can add more specific handling for other track types here
-                    // For example, Activation tracks, Audio tracks, etc.
                 }
             }
             catch (System.Exception e)
@@ -612,8 +622,15 @@ public class K2_QueenACS : MonoBehaviour
             Debug.Log("Audio handler enabled");
         }
         
-        // Unfreeze the player
-        UnfreezePlayer();
+        // Unfreeze the player (if we have player references)
+        if (hasPlayerReferences)
+        {
+            UnfreezePlayer();
+        }
+        else
+        {
+            Debug.LogWarning("No player references found, skipping unfreeze logic");
+        }
         
         // Note: Arrow indicator stays hidden after cutscene
         // If you want it to reappear (for repeatable interactions), use this:
@@ -641,7 +658,7 @@ public class K2_QueenACS : MonoBehaviour
     {
         if (playerObject == null) 
         {
-            Debug.LogError("Cannot unfreeze player: Player object is null!");
+            Debug.LogWarning("Cannot unfreeze player: Player object is null!");
             return;
         }
         
@@ -771,8 +788,15 @@ public class K2_QueenACS : MonoBehaviour
             cutsceneParentObject.SetActive(false);
         }
         
-        // Ensure player is unfrozen on reset
-        UnfreezePlayer();
+        // Ensure player is unfrozen on reset (only if we have references)
+        if (hasPlayerReferences)
+        {
+            UnfreezePlayer();
+        }
+        else
+        {
+            Debug.LogWarning("No player references found during reset");
+        }
         
         Debug.Log("Queen interaction reset");
     }
@@ -825,7 +849,30 @@ public class K2_QueenACS : MonoBehaviour
         return isCutscenePlaying;
     }
     
-    // Editor helper
+    // Check if we have player references
+    public bool HasPlayerReferences()
+    {
+        return hasPlayerReferences;
+    }
+    
+    // Try to find player if not already set
+    public void FindPlayer()
+    {
+        if (playerObject == null)
+        {
+            playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                InitializePlayerComponents();
+                Debug.Log("Found player: " + playerObject.name);
+            }
+            else
+            {
+                Debug.LogWarning("Could not find player object!");
+            }
+        }
+    }
+    
     #if UNITY_EDITOR
     [ContextMenu("Auto-Find References")]
     public void AutoFindReferences()
@@ -836,6 +883,7 @@ public class K2_QueenACS : MonoBehaviour
         {
             playerObject = foundPlayer;
             Debug.Log("Auto-found player: " + playerObject.name);
+            InitializePlayerComponents();
         }
         
         // Find audio handler

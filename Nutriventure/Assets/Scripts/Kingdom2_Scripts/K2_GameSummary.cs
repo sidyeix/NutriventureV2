@@ -4,6 +4,8 @@ using TMPro;
 using System.Collections;
 using StarterAssets;
 using Cinemachine;
+using UnityEngine.Playables;
+using System.Collections.Generic;
 
 public class K2_GameSummary : MonoBehaviour
 {
@@ -32,6 +34,8 @@ public class K2_GameSummary : MonoBehaviour
     public AudioClip loseSound;
     public float soundVolume = 0.7f;
     public AudioSource backgroundMusicSource; // Direct reference to background music AudioSource
+    public float backgroundMusicVolumeDuringSummary = 0.2f; // Lower volume during summary
+    private float originalBackgroundMusicVolume = 1.0f;
     
     [Header("Key Status Colors")]
     public Color unlockedColor = Color.green;
@@ -48,8 +52,30 @@ public class K2_GameSummary : MonoBehaviour
     public ProductSpawner productSpawner; // Assign your ProductSpawner script here
     
     [Header("Camera References")]
-    public CinemachineVirtualCamera menuVirtualCamera;
+    public CinemachineVirtualCamera summaryVirtualCamera; // Dedicated camera for summary
     public CinemachineVirtualCamera playerFollowCamera;
+    private CinemachineBrain cinemachineBrain; // Reference to the CinemachineBrain
+    
+    [Header("Character Animation")]
+    public CharacterVisualSwapper characterVisualSwapper; // Reference to CharacterVisualSwapper
+    public string lookAroundParameter = "LookAround"; // Animation parameter name
+    
+    [Header("QA Panel References")]
+    public GameObject qa1Panel; // Drag QA1 assessment panel here
+    public GameObject qa2Panel; // Drag QA2 assessment panel here
+    
+    [Header("Timeline References")]
+    public K2_DummypTimeline timelineManager; // Reference to the timeline manager
+    public PlayableDirector cutscene2Timeline; // Reference to second cutscene timeline
+    public PlayableDirector cutscene3Timeline; // Reference to third cutscene timeline (Queen timeline)
+    public GameObject cutscene2ParentObject; // "Cutscene2Things" parent object
+    public GameObject cutscene3ParentObject; // "Cutscene3" parent object (Queen timeline)
+    
+    [Header("QA2 Completion Settings")]
+    [Tooltip("Enable summary panel when QA2 is completed (all 5 products answered correctly)")]
+    public bool showSummaryOnQA2Completion = true;
+    [Tooltip("Required correct answers in QA2 to trigger summary")]
+    [Range(1, 5)] public int requiredQA2CorrectAnswers = 5;
     
     [Header("References - Auto Found")]
     private SugariaPlayerStat playerHealth;
@@ -60,6 +86,11 @@ public class K2_GameSummary : MonoBehaviour
     private GameObject playerObject;
     private CollectProducts collectProductsScript;
     private K2_QA2system qa2System;
+    private K2_QA1system qa1System; // Added reference to QA1 system
+    private Animator playerAnimator; // Reference to player's animator
+    
+    // Store original timeline object positions
+    private Dictionary<Transform, TransformData> originalTimelineObjectPositions = new Dictionary<Transform, TransformData>();
     
     private bool isGameOver = false;
     private bool isVictory = false;
@@ -71,6 +102,24 @@ public class K2_GameSummary : MonoBehaviour
     private Quaternion originalPlayerRotation;
     private AudioSource audioSource;
     private int healthBeforeDeath = 0; // Store health before death for star calculation
+    
+    // Helper class to store transform data
+    [System.Serializable]
+    public class TransformData
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 scale;
+        public bool isActive;
+        
+        public TransformData(Vector3 pos, Quaternion rot, Vector3 scl, bool active)
+        {
+            position = pos;
+            rotation = rot;
+            scale = scl;
+            isActive = active;
+        }
+    }
     
     void Awake()
     {
@@ -91,6 +140,9 @@ public class K2_GameSummary : MonoBehaviour
         // Store player's original position and rotation
         StorePlayerOriginalTransform();
         
+        // Store original timeline object positions
+        StoreTimelineObjectPositions();
+        
         // Hide panel at start
         if (gameSummaryPanel != null)
         {
@@ -103,7 +155,25 @@ public class K2_GameSummary : MonoBehaviour
             confirmButton.onClick.AddListener(OnConfirmButtonClicked);
         }
         
-        Debug.Log("GameSummaryManager initialized");
+        // Find CinemachineBrain on main camera
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
+            if (cinemachineBrain != null)
+            {
+                Debug.Log($"Found CinemachineBrain: {cinemachineBrain.gameObject.name}");
+            }
+        }
+        
+        // Store original background music volume
+        if (backgroundMusicSource != null)
+        {
+            originalBackgroundMusicVolume = backgroundMusicSource.volume;
+            Debug.Log($"Original background music volume: {originalBackgroundMusicVolume}");
+        }
+        
+        Debug.Log($"GameSummaryManager initialized - QA2 Completion Summary: {showSummaryOnQA2Completion}");
     }
     
     void Update()
@@ -111,14 +181,14 @@ public class K2_GameSummary : MonoBehaviour
         // Check for game over condition (lose) - health reaches 0
         if (!isGameOver && playerHealth != null && playerHealth.currentHealth <= 0)
         {
-            // Store actual health value before death (FIXED: was always setting to 1)
+            // Store actual health value before death
             healthBeforeDeath = playerHealth.currentHealth;
             isVictory = false;
             StartCoroutine(ShowSummaryPanel());
         }
         
-        // Check for victory condition (QA2 completed)
-        if (!isGameOver && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
+        // Check for victory condition (QA2 completed) - ONLY if enabled
+        if (showSummaryOnQA2Completion && !isGameOver && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
         {
             isVictory = true;
             StartCoroutine(ShowSummaryPanel());
@@ -135,57 +205,79 @@ public class K2_GameSummary : MonoBehaviour
         playerObject = GameObject.FindGameObjectWithTag("Player");
         collectProductsScript = FindObjectOfType<CollectProducts>();
         qa2System = FindObjectOfType<K2_QA2system>();
+        qa1System = FindObjectOfType<K2_QA1system>();
+        
+        // Find timeline manager
+        if (timelineManager == null)
+        {
+            timelineManager = FindObjectOfType<K2_DummypTimeline>();
+            if (timelineManager != null)
+            {
+                Debug.Log($"Found timeline manager: {timelineManager.gameObject.name}");
+            }
+        }
+        
+        // Find CharacterVisualSwapper
+        if (characterVisualSwapper == null)
+        {
+            characterVisualSwapper = FindObjectOfType<CharacterVisualSwapper>();
+            if (characterVisualSwapper != null)
+            {
+                Debug.Log($"Found CharacterVisualSwapper: {characterVisualSwapper.gameObject.name}");
+                // Get the animator from the swapper
+                playerAnimator = characterVisualSwapper.playerAnimator;
+            }
+        }
+        
+        // Try to find animator on player object if not found via swapper
+        if (playerAnimator == null && playerObject != null)
+        {
+            playerAnimator = playerObject.GetComponentInChildren<Animator>();
+            if (playerAnimator != null)
+            {
+                Debug.Log($"Found animator on player: {playerAnimator.gameObject.name}");
+            }
+        }
         
         // Find background music AudioSource if not assigned
         if (backgroundMusicSource == null)
         {
-            // Look for AudioHandler first
             AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
             if (audioHandler != null)
             {
-                // Try to get AudioSource from AudioHandler
                 backgroundMusicSource = audioHandler.GetComponent<AudioSource>();
                 if (backgroundMusicSource != null)
                 {
                     Debug.Log($"Found background music AudioSource on AudioHandler: {audioHandler.gameObject.name}");
                 }
-                else
-                {
-                    // If no AudioSource on AudioHandler, look for any AudioSource playing music
-                    AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>();
-                    foreach (AudioSource source in allAudioSources)
-                    {
-                        if (source.isPlaying && source != audioSource)
-                        {
-                            backgroundMusicSource = source;
-                            Debug.Log($"Found playing AudioSource: {source.gameObject.name}");
-                            break;
-                        }
-                    }
-                }
             }
             
-            // If still not found, look for any AudioSource tagged as background music
             if (backgroundMusicSource == null)
             {
                 GameObject bgMusicObj = GameObject.FindGameObjectWithTag("BackgroundMusic");
                 if (bgMusicObj != null)
                 {
                     backgroundMusicSource = bgMusicObj.GetComponent<AudioSource>();
-                    if (backgroundMusicSource != null)
-                    {
-                        Debug.Log($"Found AudioSource on BackgroundMusic tagged object: {bgMusicObj.name}");
-                    }
                 }
             }
-            
-            if (backgroundMusicSource == null)
+        }
+        
+        // Try to find QA panels if not assigned
+        if (qa1Panel == null && qa1System != null)
+        {
+            if (qa1System.assessmentCanvas != null)
             {
-                Debug.LogWarning("Background music AudioSource not found! Music will not stop/start with panel.");
+                qa1Panel = qa1System.assessmentCanvas;
+                Debug.Log($"Found QA1 panel: {qa1Panel.name}");
             }
-            else
+        }
+        
+        if (qa2Panel == null && qa2System != null)
+        {
+            if (qa2System.assessmentCanvas != null)
             {
-                Debug.Log($"Background music source found: {backgroundMusicSource.gameObject.name}, playing: {backgroundMusicSource.isPlaying}");
+                qa2Panel = qa2System.assessmentCanvas;
+                Debug.Log($"Found QA2 panel: {qa2Panel.name}");
             }
         }
         
@@ -196,7 +288,6 @@ public class K2_GameSummary : MonoBehaviour
         
         if (playerObject == null)
         {
-            // Try to find player by name
             playerObject = GameObject.Find("PlayerArmature");
         }
         
@@ -208,14 +299,10 @@ public class K2_GameSummary : MonoBehaviour
             {
                 Debug.Log($"Found ProductSpawner: {productSpawner.gameObject.name}");
             }
-            else
-            {
-                Debug.LogWarning("ProductSpawner not found! Products may not respawn.");
-            }
         }
         
         // Find cameras if not assigned
-        if (menuVirtualCamera == null || playerFollowCamera == null)
+        if (summaryVirtualCamera == null || playerFollowCamera == null)
         {
             FindCameraReferences();
         }
@@ -226,16 +313,242 @@ public class K2_GameSummary : MonoBehaviour
             FindSpawnPoint();
         }
         
-        Debug.Log($"References found - Player: {playerObject != null}, Health: {playerHealth != null}, " +
-                 $"Spawn: {playerSpawnPoint != null}, ProductSpawner: {productSpawner != null}, " +
-                 $"QA2: {qa2System != null}, BGM Source: {backgroundMusicSource != null}");
+        // Find timeline cutscene objects if not assigned
+        if (cutscene2ParentObject == null)
+        {
+            cutscene2ParentObject = GameObject.Find("Cutscene2Things");
+            if (cutscene2ParentObject != null)
+            {
+                Debug.Log($"Found Cutscene2Things: {cutscene2ParentObject.name}");
+            }
+        }
+        
+        if (cutscene3ParentObject == null)
+        {
+            cutscene3ParentObject = GameObject.Find("Cutscene3");
+            if (cutscene3ParentObject != null)
+            {
+                Debug.Log($"Found Cutscene3: {cutscene3ParentObject.name}");
+            }
+        }
+        
+        // Find timeline directors if not assigned
+        if (cutscene2Timeline == null)
+        {
+            cutscene2Timeline = FindTimelineDirector("NPC_Cutscene2");
+        }
+        
+        if (cutscene3Timeline == null)
+        {
+            cutscene3Timeline = FindTimelineDirector("NPC_Timeline3");
+        }
+        
+        Debug.Log($"References found - Player: {playerObject != null}, Animator: {playerAnimator != null}, " +
+                 $"CharacterSwapper: {characterVisualSwapper != null}, Spawn: {playerSpawnPoint != null}, " +
+                 $"SummaryCamera: {summaryVirtualCamera != null}, TimelineManager: {timelineManager != null}, " +
+                 $"QA2 Summary Enabled: {showSummaryOnQA2Completion}");
+    }
+    
+    private PlayableDirector FindTimelineDirector(string name)
+    {
+        PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>();
+        foreach (PlayableDirector director in allDirectors)
+        {
+            if (director.name.Contains(name))
+            {
+                Debug.Log($"Found timeline director: {director.name}");
+                return director;
+            }
+        }
+        return null;
+    }
+    
+    // Store original positions of timeline objects
+    private void StoreTimelineObjectPositions()
+    {
+        originalTimelineObjectPositions.Clear();
+        
+        // Store positions for Cutscene2 objects
+        if (cutscene2ParentObject != null)
+        {
+            StoreTransformAndChildren(cutscene2ParentObject.transform);
+        }
+        
+        // Store positions for Cutscene3 objects
+        if (cutscene3ParentObject != null)
+        {
+            StoreTransformAndChildren(cutscene3ParentObject.transform);
+        }
+        
+        Debug.Log($"Stored original positions for {originalTimelineObjectPositions.Count} timeline objects");
+    }
+    
+    private void StoreTransformAndChildren(Transform parent)
+    {
+        if (parent == null) return;
+        
+        // Store this transform
+        if (!originalTimelineObjectPositions.ContainsKey(parent))
+        {
+            originalTimelineObjectPositions[parent] = new TransformData(
+                parent.position,
+                parent.rotation,
+                parent.localScale,
+                parent.gameObject.activeSelf
+            );
+        }
+        
+        // Store all children
+        foreach (Transform child in parent)
+        {
+            if (!originalTimelineObjectPositions.ContainsKey(child))
+            {
+                originalTimelineObjectPositions[child] = new TransformData(
+                    child.position,
+                    child.rotation,
+                    child.localScale,
+                    child.gameObject.activeSelf
+                );
+            }
+            
+            // Recursively store grandchildren
+            if (child.childCount > 0)
+            {
+                StoreTransformAndChildren(child);
+            }
+        }
+    }
+    
+    // Restore timeline object positions
+    private void RestoreTimelineObjectPositions()
+    {
+        Debug.Log($"Restoring timeline object positions...");
+        
+        // FIRST: Stop and reset all timeline directors
+        ResetAllTimelineDirectors();
+        
+        // SECOND: Force evaluate timelines at time 0 to clear any animation state
+        PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>();
+        foreach (PlayableDirector director in allDirectors)
+        {
+            if (director != null)
+            {
+                director.time = 0;
+                director.Evaluate(); // This applies the "time 0" state
+            }
+        }
+        
+        // THIRD: Restore original positions from our stored data
+        foreach (var kvp in originalTimelineObjectPositions)
+        {
+            if (kvp.Key != null)
+            {
+                TransformData data = kvp.Value;
+                
+                // IMPORTANT: Disable animator components before restoring
+                Animator animator = kvp.Key.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    animator.enabled = false; // Disable to prevent override
+                }
+                
+                // Also check for Animation components
+                Animation animation = kvp.Key.GetComponent<Animation>();
+                if (animation != null)
+                {
+                    animation.Stop();
+                    animation.enabled = false;
+                }
+                
+                // Restore transform
+                kvp.Key.position = data.position;
+                kvp.Key.rotation = data.rotation;
+                kvp.Key.localScale = data.scale;
+                kvp.Key.gameObject.SetActive(data.isActive);
+                
+                // Re-enable animator after restoring
+                if (animator != null)
+                {
+                    animator.enabled = true;
+                    animator.Rebind(); // Reset to initial state
+                    animator.Update(0f); // Force update
+                }
+                
+                // Re-enable animation if exists
+                if (animation != null)
+                {
+                    animation.enabled = true;
+                }
+            }
+        }
+        
+        // FOURTH: Rebind all animators in the timeline objects
+        Animator[] allAnimators = FindObjectsOfType<Animator>();
+        foreach (Animator animator in allAnimators)
+        {
+            if (animator != null)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
+        }
+        
+        // FIFTH: Ensure timeline parent objects are disabled
+        if (cutscene2ParentObject != null)
+        {
+            cutscene2ParentObject.SetActive(false);
+        }
+        
+        if (cutscene3ParentObject != null)
+        {
+            cutscene3ParentObject.SetActive(false);
+        }
+        
+        // SIXTH: Clear any remaining animation state
+        StartCoroutine(ClearAnimationStateNextFrame());
+        
+        Debug.Log($"Restored {originalTimelineObjectPositions.Count} timeline object positions");
+    }
+    
+    private IEnumerator ClearAnimationStateNextFrame()
+    {
+        yield return null; // Wait one frame
+        
+        // Force another evaluation to ensure timeline state is cleared
+        PlayableDirector[] directors = FindObjectsOfType<PlayableDirector>();
+        foreach (PlayableDirector director in directors)
+        {
+            if (director != null)
+            {
+                director.Evaluate();
+            }
+        }
+    }
+    
+    // Call this AFTER timeline finishes playing to update stored positions
+    public void UpdateTimelinePositionsAfterChanges()
+    {
+        // Clear and re-store positions to capture current state
+        originalTimelineObjectPositions.Clear();
+        
+        // Store current positions (which might have been changed by timeline)
+        if (cutscene2ParentObject != null)
+        {
+            StoreTransformAndChildren(cutscene2ParentObject.transform);
+        }
+        
+        if (cutscene3ParentObject != null)
+        {
+            StoreTransformAndChildren(cutscene3ParentObject.transform);
+        }
+        
+        Debug.Log($"Updated timeline positions after changes. Stored {originalTimelineObjectPositions.Count} positions.");
     }
     
     private bool IsQA2Completed()
     {
         if (qa2System == null) return false;
         
-        // Check if all 5 products have been correctly answered in QA2
         int correctlyAnswered = qa2System.GetCorrectlyAnsweredCount();
         
         // Check if QA2 panel is currently active - if so, wait for it to close
@@ -246,14 +559,14 @@ public class K2_GameSummary : MonoBehaviour
             return false;
         }
         
-        return correctlyAnswered >= 5; // All 5 products completed
+        // Use the inspector setting for required correct answers
+        return correctlyAnswered >= requiredQA2CorrectAnswers;
     }
     
     private IEnumerator WaitForLastQA2PanelToClose()
     {
         Debug.Log("Waiting for last QA2 panel to close before showing summary...");
         
-        // Wait for the panel to close
         while (qa2System != null && qa2System.IsPanelActive())
         {
             yield return null;
@@ -262,16 +575,45 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("QA2 panel closed, checking for completion...");
         waitingForLastQA2Panel = false;
         
-        // Check again if QA2 is completed now that panel is closed
-        if (qa2System != null && !isGameOver)
+        if (qa2System != null && !isGameOver && showSummaryOnQA2Completion)
         {
             int correctlyAnswered = qa2System.GetCorrectlyAnsweredCount();
-            if (correctlyAnswered >= 5)
+            if (correctlyAnswered >= requiredQA2CorrectAnswers)
             {
                 isVictory = true;
                 StartCoroutine(ShowSummaryPanel());
             }
         }
+    }
+    
+    // NEW: Public method to manually trigger summary from QA2 completion
+    public void TriggerSummaryFromQA2()
+    {
+        if (!isGameOver && showSummaryOnQA2Completion)
+        {
+            isVictory = true;
+            StartCoroutine(ShowSummaryPanel());
+        }
+    }
+    
+    // NEW: Public method to check if QA2 summary is enabled
+    public bool IsQA2SummaryEnabled()
+    {
+        return showSummaryOnQA2Completion;
+    }
+    
+    // NEW: Public method to enable/disable QA2 summary at runtime
+    public void SetQA2SummaryEnabled(bool enabled)
+    {
+        showSummaryOnQA2Completion = enabled;
+        Debug.Log($"QA2 Summary Trigger {(enabled ? "ENABLED" : "DISABLED")}");
+    }
+    
+    // NEW: Public method to set required correct answers
+    public void SetRequiredQA2Answers(int requiredAnswers)
+    {
+        requiredQA2CorrectAnswers = Mathf.Clamp(requiredAnswers, 1, 5);
+        Debug.Log($"Required QA2 answers set to: {requiredQA2CorrectAnswers}");
     }
     
     private void StorePlayerOriginalTransform()
@@ -286,27 +628,34 @@ public class K2_GameSummary : MonoBehaviour
     
     private void FindCameraReferences()
     {
-        // Find all Cinemachine virtual cameras
         CinemachineVirtualCamera[] allCams = FindObjectsOfType<CinemachineVirtualCamera>();
         
         foreach (var cam in allCams)
         {
-            if (cam.name.Contains("Menu", System.StringComparison.OrdinalIgnoreCase) || 
-                cam.name.Contains("UI", System.StringComparison.OrdinalIgnoreCase))
+            // Look for summary camera
+            if (cam.name.Contains("Summary", System.StringComparison.OrdinalIgnoreCase) || 
+                cam.name.Contains("Result", System.StringComparison.OrdinalIgnoreCase))
             {
-                menuVirtualCamera = cam;
+                summaryVirtualCamera = cam;
+                Debug.Log($"Found summary camera: {cam.name}");
             }
             else if (cam.name.Contains("Player", System.StringComparison.OrdinalIgnoreCase) || 
                     cam.name.Contains("Follow", System.StringComparison.OrdinalIgnoreCase))
             {
                 playerFollowCamera = cam;
+                Debug.Log($"Found player camera: {cam.name}");
             }
+        }
+        
+        // If no summary camera found, create one or use menu camera
+        if (summaryVirtualCamera == null)
+        {
+            Debug.LogWarning("No summary camera found! Please assign a dedicated camera for the summary view.");
         }
     }
     
     private void FindSpawnPoint()
     {
-        // Look for spawn point by tag or name
         GameObject spawnObj = GameObject.FindGameObjectWithTag("SpawnPoint");
         if (spawnObj == null)
         {
@@ -340,14 +689,29 @@ public class K2_GameSummary : MonoBehaviour
         // Pause the game
         Time.timeScale = 0f;
         
-        // Stop background music when panel activates (SIMPLE STOP)
-        StopBackgroundMusic();
+        // Disable CinemachineBrain blending to avoid camera movement
+        DisableCinemachineBlending();
         
-        // Switch to menu camera for summary view
-        SwitchToMenuCamera();
+        // Move player to spawn point BEFORE showing summary
+        MovePlayerToSpawnPoint();
         
-        // Wait for one frame to ensure everything is processed
+        // Disable player input BEFORE showing summary
+        DisablePlayerInput();
+        
+        // Close all QA panels
+        CloseAllQAPanels();
+        
+        // Lower background music volume instead of stopping it
+        LowerBackgroundMusicVolume();
+        
+        // Switch to summary camera IMMEDIATELY with no blend
+        SwitchToSummaryCameraImmediate();
+        
+        // Wait for one frame to ensure camera is positioned
         yield return null;
+        
+        // Trigger LookAround animation - FIXED to work during pause
+        yield return StartCoroutine(TriggerLookAroundAnimationDuringPause());
         
         // Play appropriate sound
         PlayResultSound();
@@ -386,7 +750,242 @@ public class K2_GameSummary : MonoBehaviour
             }
         }
         
-        Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown");
+        Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown, player at spawn point. Triggered by: {(isVictory ? "QA2 Completion" : "Health Depletion")}");
+    }
+    
+    // Trigger LookAround animation during pause
+    private IEnumerator TriggerLookAroundAnimationDuringPause()
+    {
+        if (playerAnimator != null)
+        {
+            // Force animator to use unscaled time so it works during pause
+            playerAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            
+            // Set the look around parameter to true
+            if (!string.IsNullOrEmpty(lookAroundParameter))
+            {
+                playerAnimator.SetBool(lookAroundParameter, true);
+            }
+            
+            // Also use CharacterVisualSwapper if available
+            if (characterVisualSwapper != null)
+            {
+                characterVisualSwapper.TriggerLookAroundAnimation();
+            }
+            
+            // Force an immediate update
+            playerAnimator.Update(0f);
+            
+            Debug.Log("LookAround animation triggered during pause (using UnscaledTime)");
+        }
+        
+        // Small delay to ensure animation starts
+        yield return new WaitForSecondsRealtime(0.1f);
+    }
+    
+    // Stop LookAround animation properly when panel closes
+    private void StopLookAroundAnimationDuringPause()
+    {
+        if (playerAnimator != null)
+        {
+            // Set the look around parameter to false
+            if (!string.IsNullOrEmpty(lookAroundParameter))
+            {
+                playerAnimator.SetBool(lookAroundParameter, false);
+            }
+            
+            // Force an immediate update
+            playerAnimator.Update(0f);
+            
+            // Restore animator update mode to normal
+            playerAnimator.updateMode = AnimatorUpdateMode.Normal;
+            
+            Debug.Log("LookAround animation stopped and animator restored to Normal mode");
+        }
+        
+        // Also use CharacterVisualSwapper if available
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.StopLookAroundAnimation();
+        }
+    }
+    
+    // Lower background music volume
+    private void LowerBackgroundMusicVolume()
+    {
+        if (backgroundMusicSource != null && backgroundMusicSource.isPlaying)
+        {
+            backgroundMusicSource.volume = backgroundMusicVolumeDuringSummary;
+            Debug.Log($"Background music volume lowered to: {backgroundMusicSource.volume}");
+        }
+    }
+    
+    // Restore background music volume
+    private void RestoreBackgroundMusicVolume()
+    {
+        if (backgroundMusicSource != null)
+        {
+            backgroundMusicSource.volume = originalBackgroundMusicVolume;
+            Debug.Log($"Background music volume restored to: {backgroundMusicSource.volume}");
+        }
+    }
+    
+    // Disable Cinemachine blending to avoid camera movement
+    private void DisableCinemachineBlending()
+    {
+        if (cinemachineBrain != null)
+        {
+            // Store original blend style and time
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+            cinemachineBrain.m_DefaultBlend.m_Time = 0f;
+            Debug.Log("Disabled Cinemachine blending - using instant cut");
+        }
+    }
+    
+    // Enable Cinemachine blending for normal gameplay
+    private void EnableCinemachineBlending()
+    {
+        if (cinemachineBrain != null)
+        {
+            // Restore smooth blending
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
+            cinemachineBrain.m_DefaultBlend.m_Time = 0.5f; // Adjust as needed
+            Debug.Log("Enabled Cinemachine blending");
+        }
+    }
+    
+    // Immediate camera switch with no blending
+    private void SwitchToSummaryCameraImmediate()
+    {
+        if (summaryVirtualCamera != null)
+        {
+            // Set summary camera to highest priority
+            summaryVirtualCamera.Priority = 100;
+            
+            // Ensure player camera has lower priority
+            if (playerFollowCamera != null)
+            {
+                playerFollowCamera.Priority = 0;
+            }
+            
+            // Force the CinemachineBrain to update immediately
+            if (cinemachineBrain != null)
+            {
+                cinemachineBrain.ManualUpdate();
+            }
+            
+            Debug.Log("Switched to Summary Camera (immediate)");
+        }
+        else
+        {
+            Debug.LogWarning("Summary Virtual Camera not assigned!");
+        }
+    }
+    
+    // Switch back to player camera with blending enabled
+    private void SwitchToPlayerCameraWithBlend()
+    {
+        // Re-enable blending first
+        EnableCinemachineBlending();
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = 100;
+            Debug.Log("Switched to Player Follow Camera");
+        }
+
+        if (summaryVirtualCamera != null)
+        {
+            summaryVirtualCamera.Priority = 0;
+        }
+        
+        // Force a manual update to ensure the switch happens
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.ManualUpdate();
+        }
+    }
+    
+    private void MovePlayerToSpawnPoint()
+    {
+        if (playerObject != null)
+        {
+            // Use spawn point if available, otherwise use original position
+            if (playerSpawnPoint != null)
+            {
+                playerObject.transform.position = playerSpawnPoint.position;
+                playerObject.transform.rotation = playerSpawnPoint.rotation;
+                Debug.Log($"Player moved to spawn point: {playerSpawnPoint.position}");
+            }
+            else
+            {
+                playerObject.transform.position = originalPlayerPosition;
+                playerObject.transform.rotation = originalPlayerRotation;
+                Debug.Log($"Player moved to original position: {originalPlayerPosition}");
+            }
+            
+            // Reset character controller if it exists
+            CharacterController charController = playerObject.GetComponent<CharacterController>();
+            if (charController != null)
+            {
+                charController.enabled = false;
+                charController.enabled = true;
+            }
+        }
+    }
+    
+    private void CloseAllQAPanels()
+    {
+        Debug.Log("Closing all QA panels before showing summary...");
+        
+        // Close QA1 panel if it exists and is active
+        if (qa1Panel != null && qa1Panel.activeInHierarchy)
+        {
+            Debug.Log($"Closing QA1 panel: {qa1Panel.name}");
+            qa1Panel.SetActive(false);
+            
+            if (qa1System != null)
+            {
+                System.Reflection.MethodInfo closeMethod = qa1System.GetType().GetMethod("ClosePanel");
+                if (closeMethod != null)
+                {
+                    closeMethod.Invoke(qa1System, null);
+                    Debug.Log("Called QA1 ClosePanel method");
+                }
+            }
+        }
+        
+        // Close QA2 panel if it exists and is active
+        if (qa2Panel != null && qa2Panel.activeInHierarchy)
+        {
+            Debug.Log($"Closing QA2 panel: {qa2Panel.name}");
+            qa2Panel.SetActive(false);
+            
+            if (qa2System != null)
+            {
+                System.Reflection.MethodInfo closeMethod = qa2System.GetType().GetMethod("OnCloseButtonClicked");
+                if (closeMethod != null)
+                {
+                    closeMethod.Invoke(qa2System, null);
+                    Debug.Log("Called QA2 OnCloseButtonClicked method");
+                }
+            }
+        }
+        
+        // Also close any other active UI panels that might interfere
+        GameObject[] allCanvases = GameObject.FindObjectsOfType<GameObject>();
+        foreach (GameObject obj in allCanvases)
+        {
+            if (obj.activeInHierarchy && obj != gameSummaryPanel && 
+                (obj.name.Contains("Assessment") || obj.name.Contains("QA") || 
+                 obj.name.Contains("Nutrition") || obj.name.Contains("Menu")))
+            {
+                Debug.Log($"Found and closing interfering panel: {obj.name}");
+                obj.SetActive(false);
+            }
+        }
+        
+        Debug.Log("All QA panels and interfering UI closed");
     }
     
     private void PlayResultSound()
@@ -471,13 +1070,6 @@ public class K2_GameSummary : MonoBehaviour
             
             keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
             keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
-            
-            // Optional: Add visual effects
-            if (isUnlocked)
-            {
-                // You could add animation or particle effects here
-                // For example: StartCoroutine(PulseTextEffect(keyStatusText));
-            }
         }
     }
     
@@ -617,72 +1209,12 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("Player input enabled for gameplay");
     }
     
-    private void SwitchToMenuCamera()
-    {
-        if (menuVirtualCamera != null)
-        {
-            menuVirtualCamera.Priority = 10;
-            Debug.Log("Switched to Menu Camera for summary");
-        }
-        else
-        {
-            Debug.LogWarning("Menu Virtual Camera not assigned!");
-        }
-
-        if (playerFollowCamera != null)
-        {
-            playerFollowCamera.Priority = 0;
-        }
-    }
-    
-    private void SwitchToPlayerCamera()
-    {
-        if (playerFollowCamera != null)
-        {
-            playerFollowCamera.Priority = 10;
-            Debug.Log("Switched to Player Follow Camera");
-        }
-        else
-        {
-            Debug.LogWarning("Player Follow Camera not assigned!");
-        }
-
-        if (menuVirtualCamera != null)
-        {
-            menuVirtualCamera.Priority = 0;
-        }
-    }
-    
-    // SIMPLE Audio Control Methods - Just Stop and Start
-    private void StopBackgroundMusic()
-    {
-        if (backgroundMusicSource != null && backgroundMusicSource.isPlaying)
-        {
-            backgroundMusicSource.Stop();
-            Debug.Log("Background music STOPPED");
-        }
-        else if (backgroundMusicSource != null)
-        {
-            Debug.Log("Background music source exists but isn't playing");
-        }
-    }
-    
-    private void StartBackgroundMusic()
-    {
-        if (backgroundMusicSource != null)
-        {
-            backgroundMusicSource.Play();
-            Debug.Log("Background music STARTED");
-        }
-    }
-    
     public void OnConfirmButtonClicked()
     {
         // Play button sound if available
         AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
         if (audioHandler != null)
         {
-            // Try to play button click sound
             System.Reflection.MethodInfo clickMethod = audioHandler.GetType().GetMethod("PlayButtonClick");
             if (clickMethod != null)
             {
@@ -691,10 +1223,7 @@ public class K2_GameSummary : MonoBehaviour
             }
         }
         
-        // Start background music when confirm is pressed (SIMPLE START)
-        StartBackgroundMusic();
-        
-        // Add coins to database before restarting
+        // ADD COINS TO DATABASE BEFORE RESTARTING
         AddCoinsToDatabase();
         
         // Start fade out and restart game
@@ -722,6 +1251,12 @@ public class K2_GameSummary : MonoBehaviour
             gameSummaryPanel.SetActive(false);
         }
         
+        // Stop LookAround animation before restarting
+        StopLookAroundAnimationDuringPause();
+        
+        // Restore background music volume
+        RestoreBackgroundMusicVolume();
+        
         // Restore time scale
         Time.timeScale = originalTimeScale;
         
@@ -735,14 +1270,22 @@ public class K2_GameSummary : MonoBehaviour
     {
         Debug.Log("Restarting game...");
         
-        // Switch back to player camera
-        SwitchToPlayerCamera();
+        // Switch back to player camera with blending enabled
+        SwitchToPlayerCameraWithBlend();
         
         // Reset all game systems
         ResetGameState();
         
-        // Reset player position to spawn point
-        ResetPlayerPosition();
+        // Player is already at spawn point (moved there before summary)
+        // Just ensure any necessary position corrections
+        if (playerObject != null && playerSpawnPoint != null)
+        {
+            playerObject.transform.position = playerSpawnPoint.position;
+            playerObject.transform.rotation = playerSpawnPoint.rotation;
+        }
+        
+        // Restore timeline object positions
+        RestoreTimelineObjectPositions();
         
         // Respawn all products
         RespawnAllProducts();
@@ -765,38 +1308,6 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("Game restarted - Ready to play again!");
     }
     
-    private void ResetPlayerPosition()
-    {
-        if (playerObject != null)
-        {
-            // Use spawn point if available, otherwise use original position
-            if (playerSpawnPoint != null)
-            {
-                playerObject.transform.position = playerSpawnPoint.position;
-                playerObject.transform.rotation = playerSpawnPoint.rotation;
-                Debug.Log($"Player reset to spawn point: {playerSpawnPoint.position}");
-            }
-            else
-            {
-                playerObject.transform.position = originalPlayerPosition;
-                playerObject.transform.rotation = originalPlayerRotation;
-                Debug.Log($"Player reset to original position: {originalPlayerPosition}");
-            }
-            
-            // Also reset character controller if it exists
-            CharacterController charController = playerObject.GetComponent<CharacterController>();
-            if (charController != null)
-            {
-                charController.enabled = false;
-                charController.enabled = true;
-            }
-        }
-        else
-        {
-            Debug.LogWarning("Player object not found! Cannot reset position.");
-        }
-    }
-    
     private void RespawnAllProducts()
     {
         // Use the ProductSpawner script to respawn products
@@ -804,7 +1315,6 @@ public class K2_GameSummary : MonoBehaviour
         {
             Debug.Log("Calling ProductSpawner to respawn products...");
             
-            // Try different methods that might exist
             System.Reflection.MethodInfo respawnMethod = productSpawner.GetType().GetMethod("RespawnProducts");
             if (respawnMethod != null)
             {
@@ -821,7 +1331,6 @@ public class K2_GameSummary : MonoBehaviour
                 }
                 else
                 {
-                    // Try to call directly if it's a public method
                     productSpawner.SpawnProducts();
                     Debug.Log("Directly called SpawnProducts()");
                 }
@@ -880,7 +1389,6 @@ public class K2_GameSummary : MonoBehaviour
         // Reset timer
         if (gameplayProgression != null)
         {
-            // We need to access the ResetTimer method if it exists
             System.Reflection.MethodInfo resetMethod = gameplayProgression.GetType().GetMethod("ResetTimer");
             if (resetMethod != null)
             {
@@ -889,7 +1397,6 @@ public class K2_GameSummary : MonoBehaviour
             }
             else
             {
-                // Try manual reset
                 gameplayProgression.ManualGameStart();
                 Debug.Log("Game timer manually reset");
             }
@@ -898,7 +1405,6 @@ public class K2_GameSummary : MonoBehaviour
         // Reset QA2 system if it exists
         if (qa2System != null)
         {
-            // Try to call a reset method if it exists
             System.Reflection.MethodInfo qa2ResetMethod = qa2System.GetType().GetMethod("ClearScannedProducts");
             if (qa2ResetMethod != null)
             {
@@ -906,6 +1412,16 @@ public class K2_GameSummary : MonoBehaviour
                 Debug.Log("QA2 scanned products cleared");
             }
         }
+        
+        // Reset timeline manager if it exists
+        if (timelineManager != null)
+        {
+            timelineManager.ResetAllCutscenes();
+            Debug.Log("Timeline manager reset");
+        }
+        
+        // Reset all timeline directors
+        ResetAllTimelineDirectors();
         
         // Find and reset all monsters
         ResetAllMonsters();
@@ -920,6 +1436,53 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("Game state fully reset");
     }
     
+    // Reset all timeline directors with proper cleanup
+    private void ResetAllTimelineDirectors()
+    {
+        PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>();
+        foreach (PlayableDirector director in allDirectors)
+        {
+            if (director != null)
+            {
+                // Stop and reset
+                director.Stop();
+                director.time = 0;
+                director.Evaluate(); // Force evaluation at time 0
+                
+                // Get all animators bound to this timeline and reset them
+                var bindings = director.playableAsset.outputs;
+                foreach (var binding in bindings)
+                {
+                    var boundObject = director.GetGenericBinding(binding.sourceObject);
+                    if (boundObject is Animator animator)
+                    {
+                        // IMPORTANT: Stop any playing animation
+                        animator.enabled = false;
+                        animator.Rebind(); // Reset to initial state
+                        animator.enabled = true;
+                        animator.Update(0f);
+                    }
+                    
+                    // Also handle GameObject activations
+                    if (boundObject is GameObject gameObj)
+                    {
+                        // Check if this GameObject has an animator
+                        Animator objAnimator = gameObj.GetComponent<Animator>();
+                        if (objAnimator != null)
+                        {
+                            objAnimator.enabled = false;
+                            objAnimator.Rebind();
+                            objAnimator.enabled = true;
+                            objAnimator.Update(0f);
+                        }
+                    }
+                }
+            }
+        }
+        
+        Debug.Log($"Reset {allDirectors.Length} timeline directors");
+    }
+    
     private void ResetAllMonsters()
     {
         // Find all monsters and reset them
@@ -932,18 +1495,10 @@ public class K2_GameSummary : MonoBehaviour
                 // Reset monster to starting state
                 monster.gameObject.SetActive(true);
                 
-                // Call reset method if it exists
                 System.Reflection.MethodInfo resetMethod = monster.GetType().GetMethod("ResetMonster");
                 if (resetMethod != null)
                 {
                     resetMethod.Invoke(monster, null);
-                }
-                
-                // Also try Reset method
-                System.Reflection.MethodInfo simpleReset = monster.GetType().GetMethod("Reset");
-                if (simpleReset != null)
-                {
-                    simpleReset.Invoke(monster, null);
                 }
             }
         }
@@ -961,6 +1516,38 @@ public class K2_GameSummary : MonoBehaviour
         healthBeforeDeath = 0;
         
         Debug.Log("GameSummaryManager reset for new game");
+    }
+    
+    // Method to manually restore timeline positions
+    public void RestoreTimelinePositions()
+    {
+        RestoreTimelineObjectPositions();
+        Debug.Log("Timeline positions manually restored");
+    }
+    
+    // Method to re-store positions
+    public void RefreshTimelinePositions()
+    {
+        originalTimelineObjectPositions.Clear();
+        StoreTimelineObjectPositions();
+        Debug.Log("Timeline positions refreshed");
+    }
+    
+    // For manual button to revert timeline changes
+    public void OnRevertTimelineButtonClicked()
+    {
+        Debug.Log("Manual timeline revert button clicked");
+        
+        // 1. Stop all timelines
+        ResetAllTimelineDirectors();
+        
+        // 2. Restore positions
+        RestoreTimelineObjectPositions();
+        
+        // 3. Optionally refresh stored positions
+        RefreshTimelinePositions();
+        
+        Debug.Log("Timeline positions manually reverted");
     }
     
     // Public method to manually trigger win (for testing)
@@ -1000,6 +1587,26 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log($"Test coin calculation: {calculatedCoinsEarned} coins");
     }
     
+    // Test QA2 summary trigger
+    [ContextMenu("Test QA2 Summary Trigger")]
+    public void TestQA2Summary()
+    {
+        if (!isGameOver)
+        {
+            Debug.Log($"Testing QA2 Summary Trigger (Enabled: {showSummaryOnQA2Completion})");
+            isVictory = true;
+            StartCoroutine(ShowSummaryPanel());
+        }
+    }
+    
+    // Toggle QA2 summary at runtime
+    [ContextMenu("Toggle QA2 Summary")]
+    public void ToggleQA2Summary()
+    {
+        showSummaryOnQA2Completion = !showSummaryOnQA2Completion;
+        Debug.Log($"QA2 Summary Trigger {(showSummaryOnQA2Completion ? "ENABLED" : "DISABLED")}");
+    }
+    
     // Debug info
     [ContextMenu("Debug Summary Info")]
     public void DebugSummaryInfo()
@@ -1007,50 +1614,42 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("=== GAME SUMMARY MANAGER DEBUG ===");
         Debug.Log($"Game Over State: {isGameOver}");
         Debug.Log($"Victory State: {isVictory}");
-        Debug.Log($"Waiting for QA2 Panel: {waitingForLastQA2Panel}");
         Debug.Log($"Player Object: {playerObject != null}");
-        Debug.Log($"Player Health: {(playerHealth != null ? playerHealth.currentHealth.ToString() : "N/A")}");
-        Debug.Log($"Max Health: {(playerHealth != null ? playerHealth.maxHealth.ToString() : "N/A")}");
-        Debug.Log($"Health Before Death: {healthBeforeDeath}");
+        Debug.Log($"Player at Spawn: {(playerObject != null && playerSpawnPoint != null ? (Vector3.Distance(playerObject.transform.position, playerSpawnPoint.position) < 0.1f).ToString() : "N/A")}");
+        Debug.Log($"Character Visual Swapper: {characterVisualSwapper != null}");
+        Debug.Log($"Player Animator: {playerAnimator != null}");
+        Debug.Log($"LookAround Parameter: {lookAroundParameter}");
+        Debug.Log($"Summary Camera: {summaryVirtualCamera != null}");
         Debug.Log($"Spawn Point: {playerSpawnPoint != null}");
         Debug.Log($"Spawn Position: {(playerSpawnPoint != null ? playerSpawnPoint.position.ToString() : "N/A")}");
-        Debug.Log($"ProductSpawner: {productSpawner != null}");
-        Debug.Log($"QA2 System: {qa2System != null}");
-        Debug.Log($"Background Music Source: {backgroundMusicSource != null}");
-        if (backgroundMusicSource != null)
-        {
-            Debug.Log($"BGM Playing: {backgroundMusicSource.isPlaying}");
-            Debug.Log($"BGM Game Object: {backgroundMusicSource.gameObject.name}");
-        }
-        Debug.Log($"Key Status Text: {keyStatusText != null}");
+        Debug.Log($"QA2 Summary Enabled: {showSummaryOnQA2Completion}");
+        Debug.Log($"Required QA2 Answers: {requiredQA2CorrectAnswers}");
         
-        if (qa2System != null)
+        if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
         {
-            Debug.Log($"QA2 Correctly Answered: {qa2System.GetCorrectlyAnsweredCount()}/5");
-            Debug.Log($"QA2 Panel Active: {qa2System.IsPanelActive()}");
-            Debug.Log($"QA2 Completed: {IsQA2Completed()}");
+            Debug.Log($"LookAround bool value: {playerAnimator.GetBool(lookAroundParameter)}");
         }
         
-        if (productSpawner != null)
+        Debug.Log("=== END DEBUG ===");
+    }
+    
+    [ContextMenu("Debug Timeline Positions")]
+    public void DebugTimelinePositions()
+    {
+        Debug.Log("=== TIMELINE POSITIONS DEBUG ===");
+        Debug.Log($"Stored positions: {originalTimelineObjectPositions.Count}");
+        
+        int i = 0;
+        foreach (var kvp in originalTimelineObjectPositions)
         {
-            Debug.Log($"ProductSpawner initialized: {productSpawner.IsGameInitialized()}");
-            Debug.Log($"ProductSpawner spawned count: {productSpawner.GetSpawnedProductCount()}");
+            if (kvp.Key != null)
+            {
+                Debug.Log($"{i}: {kvp.Key.name} - Active: {kvp.Value.isActive}, Position: {kvp.Value.position}");
+                i++;
+            }
         }
         
-        if (gameplayProgression != null)
-        {
-            Debug.Log($"Time Played: {gameplayProgression.GetCurrentTime():F1}s");
-        }
-        
-        if (productManager != null)
-        {
-            Debug.Log($"Products Collected: {productManager.GetCollectedCount()}/8");
-        }
-        
-        int stars = CalculateStars();
-        Debug.Log($"Stars Calculation: {stars}/3");
-        Debug.Log($"Key Status: {(stars >= 2 ? "UNLOCKED" : "LOCKED")}");
-        Debug.Log($"Calculated Coins: {calculatedCoinsEarned}");
+        Debug.Log("=== END TIMELINE DEBUG ===");
     }
     
     void OnDestroy()
@@ -1061,30 +1660,16 @@ public class K2_GameSummary : MonoBehaviour
             Time.timeScale = originalTimeScale;
         }
         
+        // Restore background music volume
+        if (backgroundMusicSource != null)
+        {
+            backgroundMusicSource.volume = originalBackgroundMusicVolume;
+        }
+        
         // Remove button listener
         if (confirmButton != null)
         {
             confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
         }
-    }
-    
-    // Optional: Text pulse animation for unlocked key status
-    private IEnumerator PulseTextEffect(TextMeshProUGUI text)
-    {
-        if (text == null) yield break;
-        
-        float pulseDuration = 0.5f;
-        float elapsedTime = 0f;
-        Color originalColor = text.color;
-        
-        while (elapsedTime < pulseDuration)
-        {
-            elapsedTime += Time.unscaledDeltaTime;
-            float alpha = Mathf.PingPong(elapsedTime / pulseDuration, 0.3f) + 0.7f;
-            text.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
-            yield return null;
-        }
-        
-        text.color = originalColor;
     }
 }
