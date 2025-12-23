@@ -67,6 +67,8 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
+        InitializeDefaultCharacters();
+
         // Initialize default skins for new saves
         InitializeDefaultSkins();
 
@@ -222,6 +224,30 @@ public class GameDataManager : MonoBehaviour
 
     void OnApplicationQuit()
     {
+        SaveGameData();
+    }
+
+    private void InitializeDefaultCharacters()
+    {
+        if (characterDatabase == null)
+        {
+            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
+            return;
+        }
+
+        // Add default unlocked characters to GameData
+        foreach (var character in characterDatabase.characters)
+        {
+            if (character.unlockedByDefault)
+            {
+                if (!CurrentGameData.unlockedCharacterIDs.Contains(character.characterID))
+                {
+                    CurrentGameData.unlockedCharacterIDs.Add(character.characterID);
+                    Debug.Log($"Added default character {character.characterID} ({character.characterName}) to unlocked list");
+                }
+            }
+        }
+
         SaveGameData();
     }
 }

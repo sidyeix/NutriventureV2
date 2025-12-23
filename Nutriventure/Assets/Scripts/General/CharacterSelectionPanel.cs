@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Collections;
 
 public class CharacterButtonData : MonoBehaviour
 {
@@ -20,6 +21,16 @@ public class CharacterSelectionPanel : MonoBehaviour
     public Transform characterButtonContainer;
     public GameObject characterButtonPrefab;
     public ScrollRect scrollRect;
+    public TextMeshProUGUI characterNameText;
+    public TextMeshProUGUI characterTaglineText;
+    public Image characterLogoImage;  // ADDED FOR CHARACTER LOGO
+
+    [Header("Locked Character Feedback")]
+    public CanvasGroup lockedFeedbackCanvasGroup; // Drag your CanvasGroup here
+    public float fadeInDuration = 0.3f;
+    public float fadeOutDuration = 0.5f;
+    public float displayDuration = 2f;
+    public TMPro.TextMeshProUGUI lockedMessageText; // Optional: For showing "Locked!" message
 
     [Header("Layout Settings")]
     public int maxColumns = 3;
@@ -42,6 +53,8 @@ public class CharacterSelectionPanel : MonoBehaviour
 
     private List<GameObject> characterButtons = new List<GameObject>();
     private int currentSelectedCharacterID = -1;
+    private Coroutine lockedFeedbackCoroutine;
+    private bool isShowingLockedFeedback = false;
 
     void Start()
     {
@@ -55,6 +68,13 @@ public class CharacterSelectionPanel : MonoBehaviour
         if (GameDataManager.Instance != null)
         {
             currentSelectedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+        }
+
+        // Initialize the locked feedback canvas group
+        if (lockedFeedbackCanvasGroup != null)
+        {
+            lockedFeedbackCanvasGroup.alpha = 0f;
+            lockedFeedbackCanvasGroup.gameObject.SetActive(false);
         }
 
         // Initialize the panel
@@ -237,15 +257,46 @@ public class CharacterSelectionPanel : MonoBehaviour
         CharacterDatabase.CharacterData selectedCharacter = characterDatabase.characters[characterIndex];
         int characterID = selectedCharacter.characterID;
 
-        Debug.Log($"Character {selectedCharacter.characterName} (ID: {characterID}) selected for preview");
+        Debug.Log($"=== Character Button Clicked ===");
+        Debug.Log($"Character: {selectedCharacter.characterName} (ID: {characterID})");
 
-        // Check if character is unlocked using database method (checks unlockedByDefault)
-        bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData);
-        if (!isUnlocked)
+        // Get GameData
+        GameData gameData = GameDataManager.Instance?.CurrentGameData;
+
+        if (gameData == null)
         {
-            Debug.Log($"Character {selectedCharacter.characterName} is locked!");
+            Debug.LogError("GameData is null! Cannot check unlock status.");
             return;
         }
+
+        // Debug: Show all unlocked IDs
+        string unlockedIDs = "Currently unlocked IDs: ";
+        foreach (int id in gameData.unlockedCharacterIDs)
+        {
+            unlockedIDs += id + ", ";
+        }
+        Debug.Log(unlockedIDs);
+
+        // Check unlock status - FIXED LOGIC
+        bool isUnlockedByDefault = selectedCharacter.unlockedByDefault;
+        bool isUnlockedInGameData = gameData.unlockedCharacterIDs.Contains(characterID);
+        bool isUnlocked = isUnlockedByDefault || isUnlockedInGameData;
+
+        Debug.Log($"unlockedByDefault: {isUnlockedByDefault}");
+        Debug.Log($"in unlockedCharacterIDs: {isUnlockedInGameData}");
+        Debug.Log($"Final isUnlocked: {isUnlocked}");
+
+        if (!isUnlocked)
+        {
+            Debug.Log($"Character {selectedCharacter.characterName} is locked! Showing feedback...");
+
+            // Show locked feedback instead of swapping character
+            ShowLockedCharacterFeedback(selectedCharacter);
+            return; // Don't proceed with character swap
+        }
+
+        // Only proceed if character is unlocked
+        Debug.Log($"Character {selectedCharacter.characterName} is unlocked, proceeding...");
 
         // Don't do anything if same character is selected
         if (characterID == currentSelectedCharacterID)
@@ -253,6 +304,9 @@ public class CharacterSelectionPanel : MonoBehaviour
             Debug.Log("Same character selected, ignoring");
             return;
         }
+
+        // UPDATE CHARACTER INFO DISPLAY
+        UpdateCharacterInfoDisplay(selectedCharacter);
 
         // Update local selection
         currentSelectedCharacterID = characterID;
@@ -297,6 +351,98 @@ public class CharacterSelectionPanel : MonoBehaviour
         }
 
         Debug.Log($"Character preview changed to: {selectedCharacter.characterName} (ID: {characterID})");
+    }
+
+    // UPDATED METHOD: Now also displays character logo
+    public void UpdateCharacterInfoDisplay(CharacterDatabase.CharacterData characterData)
+    {
+        if (characterNameText != null)
+        {
+            characterNameText.text = characterData.characterName;
+        }
+
+        if (characterTaglineText != null)
+        {
+            characterTaglineText.text = characterData.characterTagline;
+        }
+
+        if (characterLogoImage != null)  // ADDED LOGO DISPLAY
+        {
+            if (characterData.characterLogo != null)
+            {
+                characterLogoImage.sprite = characterData.characterLogo;
+                characterLogoImage.gameObject.SetActive(true);
+                characterLogoImage.preserveAspect = true;
+            }
+            else
+            {
+                characterLogoImage.gameObject.SetActive(false);
+                Debug.LogWarning($"No logo assigned for character: {characterData.characterName}");
+            }
+        }
+    }
+
+    // New method: Show locked character feedback
+    public void ShowLockedCharacterFeedback(CharacterDatabase.CharacterData lockedCharacter)
+    {
+        // Stop any existing feedback coroutine
+        if (lockedFeedbackCoroutine != null)
+        {
+            StopCoroutine(lockedFeedbackCoroutine);
+        }
+
+        // Start new feedback coroutine
+        lockedFeedbackCoroutine = StartCoroutine(ShowLockedFeedbackCoroutine(lockedCharacter));
+    }
+
+    private IEnumerator ShowLockedFeedbackCoroutine(CharacterDatabase.CharacterData lockedCharacter)
+    {
+        isShowingLockedFeedback = true;
+
+        // Set message text if available
+        if (lockedMessageText != null)
+        {
+            lockedMessageText.text = $"{lockedCharacter.characterName} is locked!\nPurchase it from Sir Fuego's Wagon";
+        }
+
+        // Fade in
+        if (lockedFeedbackCanvasGroup != null)
+        {
+            lockedFeedbackCanvasGroup.gameObject.SetActive(true);
+            yield return StartCoroutine(FadeCanvasGroup(lockedFeedbackCanvasGroup, 0f, 1f, fadeInDuration));
+        }
+
+        // Wait for display duration
+        yield return new WaitForSeconds(displayDuration);
+
+        // Fade out
+        if (lockedFeedbackCanvasGroup != null)
+        {
+            yield return StartCoroutine(FadeCanvasGroup(lockedFeedbackCanvasGroup, 1f, 0f, fadeOutDuration));
+            lockedFeedbackCanvasGroup.gameObject.SetActive(false);
+        }
+
+        isShowingLockedFeedback = false;
+        lockedFeedbackCoroutine = null;
+    }
+
+    // Helper method for fading CanvasGroup
+    private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
+    {
+        if (canvasGroup == null) yield break;
+
+        float elapsedTime = 0f;
+        canvasGroup.alpha = startAlpha;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsedTime / duration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
+            yield return null;
+        }
+
+        canvasGroup.alpha = endAlpha;
     }
 
     private void SetupGridLayout()
@@ -353,78 +499,54 @@ public class CharacterSelectionPanel : MonoBehaviour
 
         CharacterDatabase.CharacterData characterData = characterDatabase.characters[buttonData.characterIndex];
 
-        // DEBUG THE IDS
-        Debug.Log($"=== Character Check ===");
-        Debug.Log($"Button characterIndex: {buttonData.characterIndex}");
-        Debug.Log($"Button characterID: {buttonData.characterID}");
-        Debug.Log($"Database character ID: {characterData.characterID}");
-        Debug.Log($"Character Name: {characterData.characterName}");
-        Debug.Log($"unlockedByDefault: {characterData.unlockedByDefault}");
+        // Get current GameData
+        GameData gameData = GameDataManager.Instance?.CurrentGameData;
 
-        // Are we getting the right character from the database?
-        CharacterDatabase.CharacterData charFromID = characterDatabase.GetCharacterByID(buttonData.characterID);
-        Debug.Log($"GetCharacterByID({buttonData.characterID}) found: {charFromID?.characterName ?? "NULL"}");
-
-        // Check unlock status using database method (checks unlockedByDefault)
-        bool isUnlocked = characterDatabase.IsCharacterUnlocked(characterData.characterID, GameDataManager.Instance.CurrentGameData);
-        bool isSelected = (currentSelectedCharacterID == characterData.characterID);
-
-        Button button = buttonGO.GetComponent<Button>();
-        if (button != null)
+        if (gameData == null)
         {
-            button.interactable = isUnlocked;
+            Debug.LogError("GameData is null! Using fallback logic.");
+
+            // Fallback: Just use unlockedByDefault
+            bool isUnlocked = characterData.unlockedByDefault;
+
+            if (buttonData.lockIcon != null)
+                buttonData.lockIcon.gameObject.SetActive(!isUnlocked);
+            if (buttonData.lockedOverlay != null)
+                buttonData.lockedOverlay.SetActive(!isUnlocked);
+
+            Debug.Log($"{characterData.characterName}: GameData null, using fallback - unlocked: {isUnlocked}");
+            return;
         }
 
-        // Update lock icon (show when locked)
+        // Debug: Print all unlocked character IDs
+        string unlockedIDs = "Unlocked IDs: ";
+        foreach (int id in gameData.unlockedCharacterIDs)
+        {
+            unlockedIDs += id + ", ";
+        }
+        Debug.Log(unlockedIDs);
+
+        // Check both conditions
+        bool isUnlockedByDefault = characterData.unlockedByDefault;
+        bool isUnlockedInGameData = gameData.unlockedCharacterIDs.Contains(characterData.characterID);
+        bool finalIsUnlocked = isUnlockedByDefault || isUnlockedInGameData;
+
+        Debug.Log($"{characterData.characterName} (ID: {characterData.characterID}): " +
+                  $"unlockedByDefault={isUnlockedByDefault}, " +
+                  $"inGameData={isUnlockedInGameData}, " +
+                  $"FINAL={finalIsUnlocked}");
+
+        // Set UI elements
         if (buttonData.lockIcon != null)
         {
-            buttonData.lockIcon.gameObject.SetActive(!isUnlocked);
+            buttonData.lockIcon.gameObject.SetActive(!finalIsUnlocked);
+            Debug.Log($"LockIcon active: {buttonData.lockIcon.gameObject.activeSelf}");
         }
 
-        // Update locked overlay (show when locked)
         if (buttonData.lockedOverlay != null)
         {
-            buttonData.lockedOverlay.SetActive(!isUnlocked);
-        }
-
-        // Update selection highlight
-        if (buttonData.selectedHighlight != null)
-        {
-            buttonData.selectedHighlight.gameObject.SetActive(isSelected);
-        }
-
-        // Update character icon color based on selection and lock state
-        if (buttonData.characterIcon != null)
-        {
-            if (!isUnlocked)
-            {
-                // Character is locked - use locked color (#313131)
-                buttonData.characterIcon.color = lockedIconColor;
-            }
-            else if (isSelected)
-            {
-                // Character is selected and unlocked - use selected color (white)
-                buttonData.characterIcon.color = selectedIconColor;
-            }
-            else
-            {
-                // Character is unlocked but not selected - use deselected color (#9A9A9A)
-                buttonData.characterIcon.color = deselectedIconColor;
-            }
-        }
-
-        // Debug log for unlock status
-        if (characterData.unlockedByDefault)
-        {
-            Debug.Log($"Character {characterData.characterName} is unlocked by default in database");
-        }
-        else if (isUnlocked)
-        {
-            Debug.Log($"Character {characterData.characterName} is unlocked via GameData");
-        }
-        else
-        {
-            Debug.Log($"Character {characterData.characterName} is LOCKED");
+            buttonData.lockedOverlay.SetActive(!finalIsUnlocked);
+            Debug.Log($"LockedOverlay active: {buttonData.lockedOverlay.activeSelf}");
         }
     }
 
@@ -440,6 +562,7 @@ public class CharacterSelectionPanel : MonoBehaviour
             var charData = characterDatabase.characters[i];
             Debug.Log($"Character {i}: {charData.characterName} - " +
                      $"Icon: {charData.characterIcon?.name ?? "NULL"}, " +
+                     $"Logo: {charData.characterLogo?.name ?? "NULL"}, " +  // ADDED LOGO DEBUG
                      $"UnlockedByDefault: {charData.unlockedByDefault}");
         }
 
@@ -538,6 +661,53 @@ public class CharacterSelectionPanel : MonoBehaviour
     // Method to check if a specific character is unlocked
     public bool CheckCharacterUnlocked(int characterID)
     {
+        // Use the database's method which should handle both conditions
         return characterDatabase.IsCharacterUnlocked(characterID, GameDataManager.Instance.CurrentGameData);
+    }
+
+    // Optional: Add a method to manually hide the feedback
+    public void HideLockedFeedbackImmediately()
+    {
+        if (lockedFeedbackCoroutine != null)
+        {
+            StopCoroutine(lockedFeedbackCoroutine);
+            lockedFeedbackCoroutine = null;
+        }
+
+        if (lockedFeedbackCanvasGroup != null)
+        {
+            lockedFeedbackCanvasGroup.alpha = 0f;
+            lockedFeedbackCanvasGroup.gameObject.SetActive(false);
+        }
+
+        isShowingLockedFeedback = false;
+    }
+
+    [ContextMenu("Debug: Reset Unlocked Characters")]
+    public void DebugResetUnlockedCharacters()
+    {
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            Debug.Log("BEFORE Reset: " + string.Join(", ", GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs));
+
+            // Keep only truly default characters
+            List<int> newUnlockedList = new List<int>();
+            foreach (var character in characterDatabase.characters)
+            {
+                if (character.unlockedByDefault)
+                {
+                    newUnlockedList.Add(character.characterID);
+                }
+            }
+
+            GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs = newUnlockedList;
+            GameDataManager.Instance.SaveGameData();
+
+            Debug.Log("AFTER Reset: " + string.Join(", ", GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs));
+            Debug.Log("Only truly default characters kept!");
+
+            // Refresh the panel
+            UpdateAllButtonAppearances();
+        }
     }
 }

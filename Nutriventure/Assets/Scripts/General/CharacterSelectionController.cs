@@ -71,6 +71,9 @@ public class CharacterSelectionController : MonoBehaviour
             lastSavedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(lastSavedCharacterID);
             Debug.Log($"Loaded saved character: {lastSavedCharacterID}, skin: {lastSavedSkinID}");
         }
+
+        // Initialize with the saved character as pending selection
+        pendingCharacterSelection = lastSavedCharacterID;
     }
 
     void InitializeUIElements()
@@ -195,7 +198,11 @@ public class CharacterSelectionController : MonoBehaviour
             characterRotationController.ResetRotation();
         }
 
-        pendingCharacterSelection = -1;
+        // IMPORTANT: Set pending selection to the last saved character if not already set
+        if (pendingCharacterSelection == -1)
+        {
+            pendingCharacterSelection = lastSavedCharacterID;
+        }
 
         // Load current character
         if (characterVisualSwapper != null)
@@ -203,8 +210,18 @@ public class CharacterSelectionController : MonoBehaviour
             characterVisualSwapper.LoadCharacterWithSavedSkin(lastSavedCharacterID);
         }
 
-        if (selectCharacterButton != null) selectCharacterButton.interactable = true;
-        if (previewSelectButton != null) previewSelectButton.interactable = true;
+        // ENABLE THE BUTTONS - FIX
+        if (selectCharacterButton != null)
+        {
+            selectCharacterButton.interactable = true;
+            Debug.Log("Select button enabled on enter");
+        }
+
+        if (previewSelectButton != null)
+        {
+            previewSelectButton.interactable = true;
+            Debug.Log("Preview select button enabled on enter");
+        }
 
         Debug.Log("Entered Character Selection Mode");
     }
@@ -236,13 +253,23 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnFirstSelectButtonClicked()
     {
+        Debug.Log("First select button clicked");
+        Debug.Log($"Pending character selection: {pendingCharacterSelection}");
+        Debug.Log($"Last saved character ID: {lastSavedCharacterID}");
+
         int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
+        Debug.Log($"Confirming character: {characterToSelect}");
         OnSelectCharacterConfirmed(characterToSelect);
     }
 
     public void OnSecondSelectButtonClicked()
     {
+        Debug.Log("Second select button clicked");
+        Debug.Log($"Pending character selection: {pendingCharacterSelection}");
+        Debug.Log($"Last saved character ID: {lastSavedCharacterID}");
+
         int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
+        Debug.Log($"Confirming character: {characterToSelect}");
         OnSelectCharacterConfirmed(characterToSelect);
     }
 
@@ -360,12 +387,37 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnSelectCharacterConfirmed(int characterID = -1)
     {
+        Debug.Log($"=== OnSelectCharacterConfirmed called ===");
+        Debug.Log($"Character ID parameter: {characterID}");
+        Debug.Log($"Pending character selection: {pendingCharacterSelection}");
+        Debug.Log($"Last saved character ID: {lastSavedCharacterID}");
+
         if (skinSelectionController != null && skinSelectionController.skinTimelineBridge != null)
         {
             skinSelectionController.skinTimelineBridge.StopTimelineAndReturn();
         }
 
-        int characterToSave = characterID != -1 ? characterID : (pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID);
+        // Determine which character to save
+        int characterToSave;
+
+        if (characterID != -1)
+        {
+            // Use the parameter if provided
+            characterToSave = characterID;
+            Debug.Log($"Using parameter character ID: {characterToSave}");
+        }
+        else if (pendingCharacterSelection != -1)
+        {
+            // Use pending selection if set
+            characterToSave = pendingCharacterSelection;
+            Debug.Log($"Using pending character selection: {characterToSave}");
+        }
+        else
+        {
+            // Fall back to last saved character
+            characterToSave = lastSavedCharacterID;
+            Debug.Log($"Using last saved character ID: {characterToSave}");
+        }
 
         // Update last saved character
         lastSavedCharacterID = characterToSave;
@@ -469,7 +521,8 @@ public class CharacterSelectionController : MonoBehaviour
     {
         isInCharacterSelection = false;
         isInSkinSelection = false;
-        pendingCharacterSelection = -1;
+        // Don't reset pendingCharacterSelection here - keep it for next time
+        // pendingCharacterSelection = -1; // REMOVED THIS LINE
 
         if (selectCharacterButton != null) selectCharacterButton.interactable = true;
         if (previewSelectButton != null) previewSelectButton.interactable = true;
@@ -481,7 +534,9 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnCharacterPreviewSelected(int characterID)
     {
+        // CRITICAL FIX: Set the pendingCharacterSelection when a character is previewed
         pendingCharacterSelection = characterID;
+        Debug.Log($"Character {characterID} selected for preview. Pending selection updated.");
 
         if (characterRotationController != null)
         {
@@ -558,7 +613,8 @@ public class CharacterSelectionController : MonoBehaviour
 
         isInSkinSelection = false;
         isInCharacterSelection = true;
-        pendingCharacterSelection = -1;
+        // Don't reset pendingCharacterSelection here - keep the current selection
+        // pendingCharacterSelection = -1; // REMOVED THIS LINE
 
         if (selectCharacterButton != null) selectCharacterButton.interactable = true;
         if (previewSelectButton != null) previewSelectButton.interactable = true;
