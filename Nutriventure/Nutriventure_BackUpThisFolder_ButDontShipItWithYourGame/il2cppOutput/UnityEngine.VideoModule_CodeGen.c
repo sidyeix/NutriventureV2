@@ -10,7 +10,6 @@
 extern void VideoClipPlayable_GetHandle_m1D990903234220E9FE756F2DA895650EBDC1415D (void);
 extern void VideoClipPlayable_Equals_mDBA2CCE1368B628829B065EA8DEDE84512B2723E (void);
 extern void VideoClip__ctor_m0D5152E4073E1D970B8A947BC16309696AAF084A (void);
-extern void VideoPlayer_get_clip_m08BCE17C4E685C87151B418AA3CE88294F6A96E9 (void);
 extern void VideoPlayer_set_clip_m85C09C15E184E9AAE117C1A534D8AC25175C8DC9 (void);
 extern void VideoPlayer_set_renderMode_m22880E02710AF2C055E27CDE2C96EAC8BA4CEFC0 (void);
 extern void VideoPlayer_set_targetCamera_m0B4C68A63EC585A69A87F9EA26DBD5FEF92E3A79 (void);
@@ -34,7 +33,6 @@ extern void VideoPlayer_InvokeErrorReceivedCallback_Internal_m91E59ED70189824AB2
 extern void VideoPlayer_InvokeSeekCompletedCallback_Internal_m62AEB9826ACE95B88CC60220375C1C7EF5EEEE1F (void);
 extern void VideoPlayer_InvokeClockResyncOccurredCallback_Internal_m743B8421E9538761141364EBDCEBC673BA58D8C6 (void);
 extern void VideoPlayer__ctor_m309536693DD1F20C0D1E6ABBF5FC48858746C6B6 (void);
-extern void VideoPlayer_get_clip_Injected_m147ADE7F512FB33047CD945BCDDB734F444AFC7E (void);
 extern void VideoPlayer_set_clip_Injected_m4B305EC48C31024B66AD6C641DF75F79AA9BE2C7 (void);
 extern void VideoPlayer_set_renderMode_Injected_m10EA4CC1A5F79D0BB472031B5C413FFB2AB53FAE (void);
 extern void VideoPlayer_set_targetCamera_Injected_mDCAD2F68A4243F16E98C75C0C40C00A6C2CD0A31 (void);
@@ -57,12 +55,11 @@ extern void FrameReadyEventHandler__ctor_mD875F736BCA2A2128427AB0546B5081ED3B22D
 extern void FrameReadyEventHandler_Invoke_m73FF71F81A620194421226D8A98C64FB82E7B235 (void);
 extern void TimeEventHandler__ctor_m7BF78A616C8FF71B3A7CA62B1A03446A5C581309 (void);
 extern void TimeEventHandler_Invoke_m2327761543815FB7181FFF73E87FC5EC0F84349D (void);
-static Il2CppMethodPointer s_methodPointers[50] = 
+static Il2CppMethodPointer s_methodPointers[48] = 
 {
 	VideoClipPlayable_GetHandle_m1D990903234220E9FE756F2DA895650EBDC1415D,
 	VideoClipPlayable_Equals_mDBA2CCE1368B628829B065EA8DEDE84512B2723E,
 	VideoClip__ctor_m0D5152E4073E1D970B8A947BC16309696AAF084A,
-	VideoPlayer_get_clip_m08BCE17C4E685C87151B418AA3CE88294F6A96E9,
 	VideoPlayer_set_clip_m85C09C15E184E9AAE117C1A534D8AC25175C8DC9,
 	VideoPlayer_set_renderMode_m22880E02710AF2C055E27CDE2C96EAC8BA4CEFC0,
 	VideoPlayer_set_targetCamera_m0B4C68A63EC585A69A87F9EA26DBD5FEF92E3A79,
@@ -86,7 +83,6 @@ static Il2CppMethodPointer s_methodPointers[50] =
 	VideoPlayer_InvokeSeekCompletedCallback_Internal_m62AEB9826ACE95B88CC60220375C1C7EF5EEEE1F,
 	VideoPlayer_InvokeClockResyncOccurredCallback_Internal_m743B8421E9538761141364EBDCEBC673BA58D8C6,
 	VideoPlayer__ctor_m309536693DD1F20C0D1E6ABBF5FC48858746C6B6,
-	VideoPlayer_get_clip_Injected_m147ADE7F512FB33047CD945BCDDB734F444AFC7E,
 	VideoPlayer_set_clip_Injected_m4B305EC48C31024B66AD6C641DF75F79AA9BE2C7,
 	VideoPlayer_set_renderMode_Injected_m10EA4CC1A5F79D0BB472031B5C413FFB2AB53FAE,
 	VideoPlayer_set_targetCamera_Injected_mDCAD2F68A4243F16E98C75C0C40C00A6C2CD0A31,
@@ -117,64 +113,62 @@ static Il2CppTokenAdjustorThunkPair s_adjustorThunks[2] =
 	{ 0x06000001, VideoClipPlayable_GetHandle_m1D990903234220E9FE756F2DA895650EBDC1415D_AdjustorThunk },
 	{ 0x06000002, VideoClipPlayable_Equals_mDBA2CCE1368B628829B065EA8DEDE84512B2723E_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[50] = 
+static const int32_t s_InvokerIndices[48] = 
 {
-	16594,
-	9287,
-	16804,
-	16568,
-	12752,
-	12686,
-	12752,
-	12752,
-	16804,
-	16338,
-	12520,
-	12520,
-	16804,
-	16804,
-	16338,
-	12520,
-	12520,
-	12686,
-	27143,
-	24222,
-	27143,
-	27143,
-	27143,
-	24229,
-	27143,
-	24214,
-	16804,
-	26638,
-	24019,
-	24018,
-	24019,
-	24019,
-	27141,
-	26379,
-	24015,
-	24015,
-	27141,
-	27141,
-	26379,
-	24015,
-	24015,
-	24018,
-	6624,
-	12752,
-	6624,
-	6631,
-	6624,
-	6622,
-	6624,
-	6613,
+	16610,
+	9301,
+	16820,
+	12766,
+	12700,
+	12766,
+	12766,
+	16820,
+	16354,
+	12534,
+	12534,
+	16820,
+	16820,
+	16354,
+	12534,
+	12534,
+	12700,
+	27175,
+	24248,
+	27175,
+	27175,
+	27175,
+	24255,
+	27175,
+	24240,
+	16820,
+	24045,
+	24044,
+	24045,
+	24045,
+	27173,
+	26406,
+	24041,
+	24041,
+	27173,
+	27173,
+	26406,
+	24041,
+	24041,
+	24044,
+	6638,
+	12766,
+	6638,
+	6645,
+	6638,
+	6636,
+	6638,
+	6627,
 };
 IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_VideoModule_CodeGenModule;
 const Il2CppCodeGenModule g_UnityEngine_VideoModule_CodeGenModule = 
 {
 	"UnityEngine.VideoModule.dll",
-	50,
+	48,
 	s_methodPointers,
 	2,
 	s_adjustorThunks,

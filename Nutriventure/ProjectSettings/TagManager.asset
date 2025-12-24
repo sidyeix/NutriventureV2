@@ -14,6 +14,8 @@ TagManager:
   - NutriHeart
   - DummyProduct
   - QA2SpawnedProduct
+  - Allergen
+  - NutriKey
   layers:
   - Default
   - TransparentFX
