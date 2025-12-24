@@ -1059,9 +1059,6 @@ public class K2_QA2system : MonoBehaviour
             LogDebug("Player controls enabled");
         }
         
-        // Hide cursor
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
     }
     
     private void DisablePlayerControls()
