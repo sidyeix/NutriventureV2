@@ -3,7 +3,8 @@ using UnityEngine.Playables;
 using UnityEngine.Events;
 using StarterAssets;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // Added for new Input System
+using UnityEngine.InputSystem;
+using TMPro; // Added for TextMeshPro
 
 public class K2_NPCtrigInstructs : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class K2_NPCtrigInstructs : MonoBehaviour
     [Header("Dialogue Canvas")]
     [SerializeField] private GameObject dialogueCanvas; // NPC dialogue box canvas
     [SerializeField] private bool showDialogueDuringCutscene = true; // Toggle for dialogue visibility
+    [SerializeField] private TMP_Text npcNameText; // NEW: TextMeshPro for NPC name
     
     [Header("Skip Button")]
     [SerializeField] private Button skipButton; // Button to skip the cutscene
@@ -70,6 +72,9 @@ public class K2_NPCtrigInstructs : MonoBehaviour
     private PlayerInput playerInputComponent;
     private bool playerInputWasEnabled = true;
     
+    // NPC name text state
+    private bool npcNameTextWasActive = false;
+    
     void Start()
     {
         InitializeComponents();
@@ -113,6 +118,20 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         {
             // Hide dialogue canvas initially
             dialogueCanvas.SetActive(false);
+        }
+        
+        // Initialize NPC name text
+        if (npcNameText != null)
+        {
+            // Store whether it was active before initialization
+            npcNameTextWasActive = npcNameText.gameObject.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            npcNameText.gameObject.SetActive(false);
+            Debug.Log($"NPC name text initialized: {npcNameText.name}, was active: {npcNameTextWasActive}");
+        }
+        else
+        {
+            Debug.Log("No NPC name text assigned - skipping NPC name display");
         }
         
         // Initialize skip button
@@ -260,6 +279,17 @@ public class K2_NPCtrigInstructs : MonoBehaviour
     
     public void TriggerCutscene()
     {
+        TriggerCutsceneWithNPCName(null); // Default call without custom name
+    }
+    
+    // NEW: Overload method to trigger cutscene with custom NPC name
+    public void TriggerCutscene(string customNPCName = null)
+    {
+        TriggerCutsceneWithNPCName(customNPCName);
+    }
+    
+    private void TriggerCutsceneWithNPCName(string customNPCName = null)
+    {
         if (hasTriggered || isCutscenePlaying) return;
         
         hasTriggered = true;
@@ -300,6 +330,23 @@ public class K2_NPCtrigInstructs : MonoBehaviour
             audioHandler.SetActive(false);
         }
         
+        // Enable NPC name text
+        if (npcNameText != null)
+        {
+            npcNameText.gameObject.SetActive(true);
+            
+            // Set custom NPC name if provided
+            if (!string.IsNullOrEmpty(customNPCName))
+            {
+                npcNameText.text = customNPCName;
+                Debug.Log($"NPC name text set to: '{customNPCName}'");
+            }
+            else
+            {
+                Debug.Log($"NPC name text activated: {npcNameText.name}");
+            }
+        }
+        
         // Play the cutscene
         if (npcCutsceneDirector != null)
         {
@@ -309,7 +356,8 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         // Invoke start event
         onCutsceneStart?.Invoke();
         
-        Debug.Log("NPC Cutscene triggered - Player completely frozen");
+        Debug.Log("NPC Cutscene triggered - Player completely frozen, NPC name: " + 
+                 (npcNameText != null && npcNameText.gameObject.activeSelf ? "SHOWN" : "HIDDEN"));
     }
     
     private void StoreOriginalPlayerStates()
@@ -481,6 +529,12 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         {
             dialogueCanvas.SetActive(false);
         }
+        
+        // Hide NPC name text when cutscene is paused
+        if (npcNameText != null && npcNameText.gameObject.activeSelf)
+        {
+            npcNameText.gameObject.SetActive(false);
+        }
     }
     
     private void OnCutsceneFinished(PlayableDirector director)
@@ -552,6 +606,13 @@ public class K2_NPCtrigInstructs : MonoBehaviour
             Debug.Log("Dialogue canvas deactivated");
         }
         
+        // Disable NPC name text after cutscene
+        if (npcNameText != null)
+        {
+            npcNameText.gameObject.SetActive(false);
+            Debug.Log("NPC name text disabled after cutscene");
+        }
+        
         // Disable cutscene parent object
         if (cutsceneParentObject != null)
         {
@@ -586,11 +647,11 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         
         if (wasSkipped)
         {
-            Debug.Log("NPC Cutscene skipped - Player unfrozen, dummy item remains visible");
+            Debug.Log("NPC Cutscene skipped - Player unfrozen, NPC name text disabled");
         }
         else
         {
-            Debug.Log("NPC Cutscene finished - Player unfrozen, dummy item remains visible");
+            Debug.Log("NPC Cutscene finished - Player unfrozen, NPC name text disabled");
         }
     }
     
@@ -685,6 +746,62 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         Debug.Log("Player unfrozen - All components restored");
     }
     
+    // NEW: Method to update NPC name text during cutscene
+    public void UpdateNPCName(string newName)
+    {
+        if (npcNameText != null && isCutscenePlaying)
+        {
+            npcNameText.text = newName;
+            Debug.Log($"NPC name updated to: '{newName}'");
+        }
+        else if (npcNameText == null)
+        {
+            Debug.LogWarning("Cannot update NPC name - no NPC name text assigned!");
+        }
+        else if (!isCutscenePlaying)
+        {
+            Debug.LogWarning("Cannot update NPC name - cutscene is not playing!");
+        }
+    }
+    
+    // NEW: Method to show/hide NPC name text during cutscene
+    public void SetNPCNameActive(bool active)
+    {
+        if (npcNameText != null && isCutscenePlaying)
+        {
+            npcNameText.gameObject.SetActive(active);
+            Debug.Log($"NPC name text {(active ? "shown" : "hidden")}");
+        }
+        else if (npcNameText == null)
+        {
+            Debug.LogWarning("Cannot show/hide NPC name - no NPC name text assigned!");
+        }
+    }
+    
+    // NEW: Method to assign NPC name text at runtime
+    public void SetNPCNameText(TMP_Text newNameText)
+    {
+        // Disable old name if exists
+        if (npcNameText != null && npcNameText.gameObject.activeSelf)
+        {
+            npcNameText.gameObject.SetActive(false);
+        }
+        
+        npcNameText = newNameText;
+        
+        if (npcNameText != null)
+        {
+            npcNameText.gameObject.SetActive(isCutscenePlaying);
+            Debug.Log($"NPC name text assigned: {npcNameText.name}");
+        }
+    }
+    
+    // NEW: Method to get current NPC name
+    public string GetCurrentNPCName()
+    {
+        return npcNameText != null ? npcNameText.text : "";
+    }
+    
     // Reset the interaction (for debugging or game reset)
     public void ResetInteraction()
     {
@@ -710,6 +827,12 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(false);
+        }
+        
+        // Hide NPC name text on reset
+        if (npcNameText != null)
+        {
+            npcNameText.gameObject.SetActive(false);
         }
         
         // Ensure player is unfrozen on reset
@@ -769,6 +892,12 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         return isCutscenePlaying;
     }
     
+    // NEW: Check if NPC name text is active
+    public bool IsNPCNameActive()
+    {
+        return npcNameText != null && npcNameText.gameObject.activeSelf;
+    }
+    
     // Check if skip button is ready/visible
     public bool IsSkipButtonReady()
     {
@@ -797,5 +926,53 @@ public class K2_NPCtrigInstructs : MonoBehaviour
                 TriggerCutscene();
             }
         }
+    }
+    
+    // NEW: Context menu for testing
+    [ContextMenu("Test Trigger Cutscene")]
+    public void TestTriggerCutscene()
+    {
+        TriggerCutscene();
+    }
+    
+    [ContextMenu("Test Trigger Cutscene with Custom Name")]
+    public void TestTriggerCutsceneWithCustomName()
+    {
+        TriggerCutscene("SIR KALEB");
+    }
+    
+    [ContextMenu("Test Skip Cutscene")]
+    public void TestSkipCutscene()
+    {
+        SkipCutscene();
+    }
+    
+    [ContextMenu("Update NPC Name to 'TEST NPC'")]
+    public void TestUpdateNPCName()
+    {
+        UpdateNPCName("TEST NPC");
+    }
+    
+    [ContextMenu("Toggle NPC Name Visibility")]
+    public void TestToggleNPCName()
+    {
+        SetNPCNameActive(!IsNPCNameActive());
+    }
+    
+    [ContextMenu("Debug Current State")]
+    public void DebugCurrentState()
+    {
+        Debug.Log($"=== NPC CUTSCENE DEBUG ===");
+        Debug.Log($"Is Cutscene Playing: {isCutscenePlaying}");
+        Debug.Log($"Has Triggered: {hasTriggered}");
+        Debug.Log($"Dialogue Canvas Active: {(dialogueCanvas != null ? dialogueCanvas.activeSelf : false)}");
+        Debug.Log($"NPC Name Text Assigned: {npcNameText != null}");
+        Debug.Log($"NPC Name Text Active: {IsNPCNameActive()}");
+        Debug.Log($"Current NPC Name: {(npcNameText != null ? $"'{npcNameText.text}'" : "N/A")}");
+        Debug.Log($"Skip Button Ready: {skipButtonReady}");
+        Debug.Log($"Time Until Skip: {GetSkipButtonTimeRemaining():F1}s");
+        Debug.Log($"Timeline Director State: {(npcCutsceneDirector != null ? npcCutsceneDirector.state.ToString() : "NULL")}");
+        Debug.Log($"Cutscene Parent Active: {(cutsceneParentObject != null ? cutsceneParentObject.activeSelf : "NULL")}");
+        Debug.Log($"=== END DEBUG ===");
     }
 }
