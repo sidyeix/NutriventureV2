@@ -91,7 +91,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 0d49505ae1be69840bd7a2eaf5f2283f, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-  - kingdomID: 22222
+  - kingdomID: Sugaria
     kingdomName: Nutri Kingdom
     kingdomIcon: {fileID: 0}
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
