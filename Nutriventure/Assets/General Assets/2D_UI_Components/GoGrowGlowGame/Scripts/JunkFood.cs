@@ -6,7 +6,7 @@ public class JunkFood : MonoBehaviour
     public int pointsDeduction = 120;
 
     [Header("Optional Visual Effects")]
-    public GameObject negativeEffect; // GameObject with ParticleSystem
+    public GameObject negativeEffect;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -18,12 +18,12 @@ public class JunkFood : MonoBehaviour
 
     private void CollectJunkFood()
     {
-        // Play optional visual effect (if assigned on prefab)
+        // Play optional visual effect
         if (negativeEffect != null)
         {
             negativeEffect.SetActive(true);
             negativeEffect.transform.SetParent(null);
-            Destroy(negativeEffect, 3f); // Destroy after 3 seconds
+            Destroy(negativeEffect, 3f);
         }
 
         // Notify GameManager

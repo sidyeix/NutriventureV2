@@ -6,7 +6,7 @@ public class GoFood : MonoBehaviour
     public int points = 100;
 
     [Header("Optional Visual Effects")]
-    public GameObject collectionEffect; // GameObject with ParticleSystem
+    public GameObject collectionEffect;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -18,12 +18,12 @@ public class GoFood : MonoBehaviour
 
     private void CollectFood()
     {
-        // Play optional visual effect (if assigned on prefab)
+        // Play optional visual effect
         if (collectionEffect != null)
         {
             collectionEffect.SetActive(true);
             collectionEffect.transform.SetParent(null);
-            Destroy(collectionEffect, 3f); // Destroy after 3 seconds
+            Destroy(collectionEffect, 3f);
         }
 
         // Notify GameManager
