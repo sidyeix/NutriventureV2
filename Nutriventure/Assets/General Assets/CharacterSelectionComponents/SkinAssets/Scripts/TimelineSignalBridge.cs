@@ -23,22 +23,23 @@ public class TimelineSignalBridge : MonoBehaviour
         pendingSkinID = skinID;
 
         // Switch to skin environment BEFORE playing timeline
-        // This will automatically hide all other skin environments first
         if (environmentController != null)
         {
-            environmentController.SwitchToSkinEnvironment(); // Uses default (first environment)
+            environmentController.SwitchToSkinEnvironment();
         }
+
 
         director.playableAsset = timeline;
         director.Play();
     }
 
-    // Called by timeline signal
+    // Called by timeline signal - UPDATED
     public void ExecuteSkinSwap()
     {
         if (visualSwapper != null && pendingSkinID != -1)
         {
-            visualSwapper.ApplySkinToCurrentCharacter(pendingSkinID);
+            // Use the new timeline-specific method
+            //visualSwapper.ApplySkinViaTimeline(pendingSkinID);
         }
 
         // Reset pending values
@@ -55,10 +56,15 @@ public class TimelineSignalBridge : MonoBehaviour
         }
 
         // ALWAYS switch back to main environment when timeline stops
-        // This will automatically hide all skin environments
         if (environmentController != null)
         {
             environmentController.SwitchToMainEnvironment();
+        }
+
+        // Reset character position
+        if (visualSwapper != null)
+        {
+            //visualSwapper.ResetCharacterPosition();
         }
 
         // Reset
@@ -69,10 +75,15 @@ public class TimelineSignalBridge : MonoBehaviour
     private void ApplySkinImmediately(int skinID)
     {
         // Ensure we're in main environment first
-        // This will automatically hide all skin environments
         if (environmentController != null)
         {
             environmentController.SwitchToMainEnvironment();
+        }
+
+        // Reset character position
+        if (visualSwapper != null)
+        {
+            //visualSwapper.ResetCharacterPosition();
         }
 
         // Then apply the skin

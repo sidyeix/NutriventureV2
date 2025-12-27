@@ -3,29 +3,30 @@ using System.Collections.Generic;
 
 public class EnvironmentController : MonoBehaviour
 {
-    [Header("Environment Parents")]
-    public GameObject mainMenuEnvironment;
-    public List<GameObject> skinShowcaseEnvironments = new List<GameObject>();
+    [Header("Environment Switching")]
+    public List<GameObject> mainEnvironmentObjects = new List<GameObject>(); // Objects to show in main environment
+    public List<GameObject> skinShowcaseEnvironments = new List<GameObject>(); // Skin-specific environments
 
-    [Header("Platform Object")]
-    public GameObject mainMenuPlatform;
+    [Header("Objects to Hide During Timelines")]
+    public List<GameObject> objectsToHideDuringTimeline = new List<GameObject>(); // Objects to hide when timeline plays
+
+    private List<GameObject> currentlyHiddenObjects = new List<GameObject>();
 
     public bool IsInSkinEnvironment { get; private set; }
 
     void Start()
     {
-        // Start with main menu
+        // Start with main environment
         SwitchToMainEnvironment();
     }
 
     public void SwitchToSkinEnvironment(int environmentIndex = 0)
     {
-        // Hide main environment and platform
-        if (mainMenuEnvironment != null)
-            mainMenuEnvironment.SetActive(false);
+        // Hide main environment objects
+        SetMainEnvironmentObjectsActive(false);
 
-        if (mainMenuPlatform != null)
-            mainMenuPlatform.SetActive(false);
+        // Hide objects for timeline
+        HideTimelineObjects();
 
         // Deactivate all skin environments first
         ForceHideAllSkinEnvironments();
@@ -48,21 +49,51 @@ public class EnvironmentController : MonoBehaviour
 
     public void SwitchToMainEnvironment()
     {
+        // Show all hidden objects
+        ShowAllHiddenObjects();
+
         // Hide all skin environments
         ForceHideAllSkinEnvironments();
 
-        // Show main environment and platform
-        if (mainMenuEnvironment != null)
-            mainMenuEnvironment.SetActive(true);
-
-        if (mainMenuPlatform != null)
-            mainMenuPlatform.SetActive(true);
+        // Show main environment objects
+        SetMainEnvironmentObjectsActive(true);
 
         IsInSkinEnvironment = false;
         Debug.Log("Now in MAIN environment");
     }
 
-    // NEW: Public method to force hide all skin environments
+    // NEW: Hide specific objects during timeline
+    private void HideTimelineObjects()
+    {
+        currentlyHiddenObjects.Clear();
+
+        foreach (var obj in objectsToHideDuringTimeline)
+        {
+            if (obj != null && obj.activeSelf)
+            {
+                obj.SetActive(false);
+                currentlyHiddenObjects.Add(obj);
+            }
+        }
+
+        Debug.Log($"Hid {currentlyHiddenObjects.Count} objects for timeline");
+    }
+
+    // NEW: Show all previously hidden objects
+    private void ShowAllHiddenObjects()
+    {
+        foreach (var obj in currentlyHiddenObjects)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(true);
+            }
+        }
+        currentlyHiddenObjects.Clear();
+        Debug.Log($"Restored {currentlyHiddenObjects.Count} hidden objects");
+    }
+
+    // Public method to force hide all skin environments
     public void ForceHideAllSkinEnvironments()
     {
         foreach (var env in skinShowcaseEnvironments)
@@ -74,7 +105,19 @@ public class EnvironmentController : MonoBehaviour
         }
     }
 
-    // NEW: Simple method to ensure we're in main environment for normal skins
+    // Set main environment objects active/inactive
+    private void SetMainEnvironmentObjectsActive(bool active)
+    {
+        foreach (var obj in mainEnvironmentObjects)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(active);
+            }
+        }
+    }
+
+    // Method to ensure we're in main environment for normal skins
     public void EnsureMainEnvironmentForNormalSkin()
     {
         if (IsInSkinEnvironment)
@@ -85,29 +128,8 @@ public class EnvironmentController : MonoBehaviour
         {
             // Double-check no skin environments are active
             ForceHideAllSkinEnvironments();
-            // Ensure main environment is active
-            if (mainMenuEnvironment != null)
-                mainMenuEnvironment.SetActive(true);
-            if (mainMenuPlatform != null)
-                mainMenuPlatform.SetActive(true);
+            // Ensure main environment objects are active
+            SetMainEnvironmentObjectsActive(true);
         }
-    }
-
-    // Method to switch to a specific skin environment by GameObject reference
-    public void SwitchToSpecificSkinEnvironment(GameObject specificEnvironment)
-    {
-        SwitchToMainEnvironment(); // Reset first
-        SwitchToSkinEnvironment(); // Then show skin environment
-
-        // Or if you want to activate a specific one:
-        /*
-        if (specificEnvironment != null && skinShowcaseEnvironments.Contains(specificEnvironment))
-        {
-            SwitchToMainEnvironment(); // Reset
-            ForceHideAllSkinEnvironments();
-            specificEnvironment.SetActive(true);
-            IsInSkinEnvironment = true;
-        }
-        */
     }
 }

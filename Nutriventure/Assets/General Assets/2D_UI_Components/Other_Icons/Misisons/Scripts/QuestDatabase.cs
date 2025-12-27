@@ -147,6 +147,44 @@ public class QuestDatabase : ScriptableObject
         return true;
     }
 
+    // NEW: Get quests by category
+    public List<Quest> GetQuestsByCategory(QuestCategory category)
+    {
+        List<Quest> filteredQuests = new List<Quest>();
+
+        foreach (var kingdom in kingdoms)
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                if (quest.category == category)
+                {
+                    filteredQuests.Add(quest);
+                }
+            }
+        }
+
+        return filteredQuests;
+    }
+
+    // NEW: Get quests by category and status
+    public List<Quest> GetQuestsByCategoryAndStatus(QuestCategory category, QuestStatus status)
+    {
+        List<Quest> filteredQuests = new List<Quest>();
+
+        foreach (var kingdom in kingdoms)
+        {
+            foreach (var quest in kingdom.quests)
+            {
+                if (quest.category == category && quest.status == status)
+                {
+                    filteredQuests.Add(quest);
+                }
+            }
+        }
+
+        return filteredQuests;
+    }
+
     #endregion
 
     #region Task Management
@@ -243,7 +281,7 @@ public class QuestDatabase : ScriptableObject
     {
         public string taskID;
         public int currentAmount;
-        public bool isCompleted; // NEW: Save completion status
+        public bool isCompleted;
     }
 
     public List<QuestSaveData> GetSaveData()
@@ -342,6 +380,8 @@ public class QuestDatabase : ScriptableObject
                 questID = $"{kingdomID}_quest_{kingdom.quests.Count + 1}",
                 questName = "New Quest",
                 description = "Quest description here",
+                questIcon = null,
+                category = QuestCategory.MainStory,
                 tasks = new List<QuestTask>()
             };
 
@@ -361,7 +401,7 @@ public class QuestDatabase : ScriptableObject
                 taskID = $"{questID}_task_{quest.tasks.Count + 1}",
                 description = "New Task",
                 requiredAmount = 1,
-                isCompleted = false // Initialize as false
+                isCompleted = false
             };
 
             quest.tasks.Add(newTask);
@@ -382,6 +422,130 @@ public class QuestDatabase : ScriptableObject
 
         BuildDictionaries();
         EditorUtility.SetDirty(this);
+    }
+
+    // NEW: Add General Quests Kingdom
+    [ContextMenu("Add General Quests Kingdom")]
+    public void AddGeneralQuestsKingdom()
+    {
+        // Check if General Quests kingdom already exists
+        foreach (var kingdom in kingdoms)
+        {
+            if (kingdom.kingdomID == "general_quests")
+            {
+                Debug.Log("General Quests kingdom already exists!");
+                return;
+            }
+        }
+
+        Kingdom generalKingdom = new Kingdom
+        {
+            kingdomID = "general_quests",
+            kingdomName = "General Quests",
+            kingdomIcon = null,
+            quests = new List<Quest>()
+        };
+
+        kingdoms.Add(generalKingdom);
+        BuildDictionaries();
+        EditorUtility.SetDirty(this);
+        Debug.Log("General Quests kingdom added!");
+    }
+
+    // NEW: Add example General Quest
+    [ContextMenu("Add Example General Quest")]
+    public void AddExampleGeneralQuest()
+    {
+        Kingdom generalKingdom = GetKingdom("general_quests");
+        if (generalKingdom == null)
+        {
+            Debug.LogWarning("General Quests kingdom not found. Run 'Add General Quests Kingdom' first.");
+            return;
+        }
+
+        Quest newQuest = new Quest
+        {
+            questID = $"general_quest_{generalKingdom.quests.Count + 1}",
+            questName = "Example General Quest",
+            description = "Complete this example general quest",
+            longDescription = "This is a longer description for the example general quest.",
+            category = QuestCategory.GeneralQuest,
+            questIcon = null,
+            requiredLevel = 1,
+            status = QuestStatus.NotStarted,
+            rewards = new List<QuestReward>()
+        };
+
+        // Add a task
+        newQuest.tasks.Add(new QuestTask
+        {
+            taskID = $"{newQuest.questID}_task_1",
+            description = "Example task",
+            requiredAmount = 5,
+            currentAmount = 0
+        });
+
+        // Add a reward
+        newQuest.rewards.Add(new QuestReward
+        {
+            rewardName = "Coins",
+            rewardIcon = null,
+            amount = 100
+        });
+
+        generalKingdom.quests.Add(newQuest);
+        questDictionary[newQuest.questID] = newQuest;
+        EditorUtility.SetDirty(this);
+        Debug.Log("Example General Quest added!");
+    }
+
+    // NEW: Add example Kingdom Quest
+    [ContextMenu("Add Example Kingdom Quest")]
+    public void AddExampleKingdomQuest()
+    {
+        if (kingdoms.Count == 0)
+        {
+            Debug.LogWarning("No kingdoms exist. Add a kingdom first.");
+            return;
+        }
+
+        // Use the first kingdom
+        Kingdom firstKingdom = kingdoms[0];
+
+        Quest newQuest = new Quest
+        {
+            questID = $"{firstKingdom.kingdomID}_quest_{firstKingdom.quests.Count + 1}",
+            questName = "Example Kingdom Quest",
+            description = "Complete this example kingdom quest",
+            longDescription = "This is a longer description for the example kingdom quest.",
+            category = QuestCategory.MainStory,
+            questIcon = null,
+            requiredLevel = 1,
+            status = QuestStatus.InProgress,
+            rewards = new List<QuestReward>()
+        };
+
+        // Add a task
+        newQuest.tasks.Add(new QuestTask
+        {
+            taskID = $"{newQuest.questID}_task_1",
+            description = "Example task",
+            requiredAmount = 3,
+            currentAmount = 1
+        });
+
+        // Add a reward
+        newQuest.rewards.Add(new QuestReward
+        {
+            rewardName = "Experience",
+            rewardIcon = null,
+            amount = 50
+        });
+
+        firstKingdom.quests.Add(newQuest);
+        questDictionary[newQuest.questID] = newQuest;
+        EditorUtility.SetDirty(this);
+        Debug.Log("Example Kingdom Quest added!");
     }
 #endif
 

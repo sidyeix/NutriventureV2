@@ -24,9 +24,11 @@ public class CharacterDatabase : ScriptableObject
         public AudioClip selectionSound;
 
         [Header("Unlock Requirements")]
-        public bool unlockedByDefault = false;
-        public int coinsToUnlock = 0;
-        public int levelRequirement = 1;
+        public bool unlock = false; // Changed from unlockedByDefault to unlock
+        public bool isSkinReward = false; // NEW: Added skin reward flag
+        public int nutrigemsToUnlock = 0; // NEW: Changed from coinsToUnlock to nutrigemsToUnlock
+        public string taskToUnlock = "Complete challenges to unlock"; // NEW: Task description for reward skins
+        // Removed levelRequirement
     }
 
     [System.Serializable]
@@ -148,9 +150,10 @@ public class CharacterDatabase : ScriptableObject
         SkinData skin = GetSkinByID(characterID, skinID);
         if (skin == null) return false;
 
-        if (skin.unlockedByDefault) return true;
+        // Check if skin is marked as unlock=true in database
+        if (skin.unlock) return true;
 
-        // Check if skin is unlocked in game data (you'll need to extend GameData)
-        return true; // Placeholder - implement your own logic
+        // Check if skin is unlocked in game data
+        return gameData.IsSkinUnlocked(characterID, skinID);
     }
 }

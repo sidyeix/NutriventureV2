@@ -7,6 +7,7 @@ public class Player_Data : MonoBehaviour
 {
     [Header("UI References")]
     public TextMeshProUGUI coinsText;
+    public TextMeshProUGUI gemsText; // NEW: Added for NutriGems
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI xpText;
     public TextMeshProUGUI nameText;
@@ -24,7 +25,9 @@ public class Player_Data : MonoBehaviour
 
     [Header("Animation Settings")]
     public bool animateCoinCounter = true;
+    public bool animateGemCounter = true; // NEW: Added for NutriGems
     public float coinCountSpeed = 10f; // Coins per second
+    public float gemCountSpeed = 10f; // NEW: Added for NutriGems
     public float xpFillSpeed = 1f; // Speed of XP bar fill animation
 
     [Header("Color Settings")]
@@ -34,13 +37,16 @@ public class Player_Data : MonoBehaviour
 
     // Private variables
     private int displayedCoins = 0;
+    private int displayedGems = 0; // NEW: Added for NutriGems
     private int targetCoins = 0;
+    private int targetGems = 0; // NEW: Added for NutriGems
     private float displayedXP = 0f;
     private float targetXP = 0f;
     private int displayedLevel = 1;
     private int targetLevel = 1;
 
     private bool isAnimatingCoins = false;
+    private bool isAnimatingGems = false; // NEW: Added for NutriGems
     private bool isAnimatingXP = false;
 
     // Cached references
@@ -82,6 +88,9 @@ public class Player_Data : MonoBehaviour
         targetCoins = gameDataManager.CurrentGameData.nutriCoins;
         displayedCoins = targetCoins;
 
+        targetGems = gameDataManager.CurrentGameData.nutriGems; // NEW: Initialize gems
+        displayedGems = targetGems;
+
         targetLevel = gameDataManager.CurrentGameData.playerLevel;
         displayedLevel = targetLevel;
 
@@ -90,6 +99,7 @@ public class Player_Data : MonoBehaviour
 
         // Update all displays immediately
         UpdateCoinDisplayImmediate();
+        UpdateGemDisplayImmediate(); // NEW: Added
         UpdateLevelDisplayImmediate();
         UpdateXPDisplayImmediate();
         UpdateNameDisplay();
@@ -134,6 +144,25 @@ public class Player_Data : MonoBehaviour
             UpdateCoinDisplay();
         }
 
+        // NEW: Smooth animations for gems
+        if (isAnimatingGems && displayedGems != targetGems)
+        {
+            int difference = targetGems - displayedGems;
+            int change = Mathf.CeilToInt(Mathf.Sign(difference) * gemCountSpeed * Time.deltaTime);
+
+            if (Mathf.Abs(difference) <= Mathf.Abs(change))
+            {
+                displayedGems = targetGems;
+                isAnimatingGems = false;
+            }
+            else
+            {
+                displayedGems += change;
+            }
+
+            UpdateGemDisplay();
+        }
+
         // Smooth animations for XP
         if (isAnimatingXP && Mathf.Abs(displayedXP - targetXP) > 0.01f)
         {
@@ -175,6 +204,22 @@ public class Player_Data : MonoBehaviour
             {
                 displayedCoins = targetCoins;
                 UpdateCoinDisplayImmediate();
+            }
+        }
+
+        // NEW: Update gems
+        int newGems = gameDataManager.CurrentGameData.nutriGems;
+        if (newGems != targetGems)
+        {
+            targetGems = newGems;
+            if (animateGemCounter)
+            {
+                isAnimatingGems = true;
+            }
+            else
+            {
+                displayedGems = targetGems;
+                UpdateGemDisplayImmediate();
             }
         }
 
@@ -251,6 +296,40 @@ public class Player_Data : MonoBehaviour
         if (coinsText != null)
         {
             StartCoroutine(HighlightText(coinsText));
+        }
+    }
+
+    #endregion
+
+    #region NEW: Gem Methods
+
+    public void UpdateGemDisplay()
+    {
+        if (gemsText != null)
+        {
+            gemsText.text = displayedGems.ToString();
+        }
+    }
+
+    public void UpdateGemDisplayImmediate()
+    {
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
+        {
+            displayedGems = gameDataManager.CurrentGameData.nutriGems;
+            targetGems = displayedGems;
+        }
+        UpdateGemDisplay();
+    }
+
+    public void OnGemCollected(int amount = 1)
+    {
+        // This method can be called when a gem is collected
+        UpdateGemDisplayImmediate();
+
+        // Optional: Play gem collection effect
+        if (gemsText != null)
+        {
+            StartCoroutine(HighlightText(gemsText));
         }
     }
 
@@ -385,6 +464,7 @@ public class Player_Data : MonoBehaviour
     public void ForceUpdateAllUI()
     {
         UpdateCoinDisplayImmediate();
+        UpdateGemDisplayImmediate(); // NEW: Added
         UpdateLevelDisplayImmediate();
         UpdateXPDisplayImmediate();
         UpdateNameDisplay();
@@ -398,6 +478,12 @@ public class Player_Data : MonoBehaviour
     public void NotifyCoinCollected(int amount = 1)
     {
         OnCoinCollected(amount);
+    }
+
+    // NEW: Call this when a gem is collected
+    public void NotifyGemCollected(int amount = 1)
+    {
+        OnGemCollected(amount);
     }
 
     // Call this when XP is gained
@@ -414,6 +500,7 @@ public class Player_Data : MonoBehaviour
 
     // Get current displayed values (for other scripts)
     public int GetDisplayedCoins() => displayedCoins;
+    public int GetDisplayedGems() => displayedGems; // NEW: Added
     public int GetDisplayedLevel() => displayedLevel;
     public float GetDisplayedXP() => displayedXP;
     public string GetPlayerName() => nameText != null ? nameText.text : string.Empty;
@@ -446,6 +533,17 @@ public class Player_Data : MonoBehaviour
             gameDataManager.CurrentGameData.nutriCoins += 10;
             gameDataManager.SaveGameData();
             UpdateCoinDisplayImmediate();
+        }
+    }
+
+    [ContextMenu("Debug: Add 5 Gems")]
+    public void DebugAddGems()
+    {
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
+        {
+            gameDataManager.CurrentGameData.nutriGems += 5;
+            gameDataManager.SaveGameData();
+            UpdateGemDisplayImmediate();
         }
     }
 
