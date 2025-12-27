@@ -103,6 +103,9 @@ public class K2_GameSummary : MonoBehaviour
     private AudioSource audioSource;
     private int healthBeforeDeath = 0; // Store health before death for star calculation
     
+    // NEW: Flag to prevent multiple summary triggers
+    private bool isSummaryActive = false;
+    
     // Helper class to store transform data
     [System.Serializable]
     public class TransformData
@@ -179,7 +182,7 @@ public class K2_GameSummary : MonoBehaviour
     void Update()
     {
         // Check for game over condition (lose) - health reaches 0
-        if (!isGameOver && playerHealth != null && playerHealth.currentHealth <= 0)
+        if (!isGameOver && !isSummaryActive && playerHealth != null && playerHealth.currentHealth <= 0)
         {
             // Store actual health value before death
             healthBeforeDeath = playerHealth.currentHealth;
@@ -188,7 +191,7 @@ public class K2_GameSummary : MonoBehaviour
         }
         
         // Check for victory condition (QA2 completed) - ONLY if enabled
-        if (showSummaryOnQA2Completion && !isGameOver && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
+        if (showSummaryOnQA2Completion && !isGameOver && !isSummaryActive && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
         {
             isVictory = true;
             StartCoroutine(ShowSummaryPanel());
@@ -575,7 +578,7 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("QA2 panel closed, checking for completion...");
         waitingForLastQA2Panel = false;
         
-        if (qa2System != null && !isGameOver && showSummaryOnQA2Completion)
+        if (qa2System != null && !isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
         {
             int correctlyAnswered = qa2System.GetCorrectlyAnsweredCount();
             if (correctlyAnswered >= requiredQA2CorrectAnswers)
@@ -586,30 +589,49 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
     
-    // NEW: Public method to manually trigger summary from QA2 completion
+    private bool IsSummaryAlreadyActive()
+    {
+        return isGameOver || isSummaryActive;
+    }
+
+    // Update the TriggerSummaryFromQA2 method:
     public void TriggerSummaryFromQA2()
     {
-        if (!isGameOver && showSummaryOnQA2Completion)
+        if (!isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
         {
-            isVictory = true;
-            StartCoroutine(ShowSummaryPanel());
+            // Check if any other system has already triggered summary (like key collection)
+            bool shouldTrigger = true;
+            
+            // Check K2_CollectKey if it exists
+            K2_CollectKey collectKey = FindObjectOfType<K2_CollectKey>();
+            if (collectKey != null && collectKey.HasTriggeredSummary())
+            {
+                Debug.Log("Key collection already triggered summary - skipping QA2 trigger to avoid double summary.");
+                shouldTrigger = false;
+            }
+            
+            if (shouldTrigger)
+            {
+                isVictory = true;
+                StartCoroutine(ShowSummaryPanel());
+            }
         }
     }
     
-    // NEW: Public method to check if QA2 summary is enabled
+    // Public method to check if QA2 summary is enabled
     public bool IsQA2SummaryEnabled()
     {
         return showSummaryOnQA2Completion;
     }
     
-    // NEW: Public method to enable/disable QA2 summary at runtime
+    // Public method to enable/disable QA2 summary at runtime
     public void SetQA2SummaryEnabled(bool enabled)
     {
         showSummaryOnQA2Completion = enabled;
         Debug.Log($"QA2 Summary Trigger {(enabled ? "ENABLED" : "DISABLED")}");
     }
     
-    // NEW: Public method to set required correct answers
+    // Public method to set required correct answers
     public void SetRequiredQA2Answers(int requiredAnswers)
     {
         requiredQA2CorrectAnswers = Mathf.Clamp(requiredAnswers, 1, 5);
@@ -679,9 +701,16 @@ public class K2_GameSummary : MonoBehaviour
     
     private IEnumerator ShowSummaryPanel()
     {
-        if (isGameOver) yield break;
+        if (isGameOver || isSummaryActive) 
+        {
+            Debug.LogWarning("Summary panel already shown or in progress! Skipping.");
+            yield break;
+        }
         
         isGameOver = true;
+        isSummaryActive = true;
+        
+        Debug.Log($"Starting ShowSummaryPanel() - Victory: {isVictory}, Triggered by: {(isVictory ? "Key collection or QA2" : "Health depletion")}");
         
         // Store original time scale
         originalTimeScale = Time.timeScale;
@@ -749,8 +778,12 @@ public class K2_GameSummary : MonoBehaviour
                 panelCanvasGroup.alpha = 1f;
             }
         }
+        else
+        {
+            Debug.LogError("Game Summary Panel is not assigned in the inspector!");
+        }
         
-        Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown, player at spawn point. Triggered by: {(isVictory ? "QA2 Completion" : "Health Depletion")}");
+        Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown, player at spawn point. Triggered by: {(isVictory ? "Key collection or QA2 Completion" : "Health Depletion")}");
     }
     
     // Trigger LookAround animation during pause
@@ -1206,11 +1239,26 @@ public class K2_GameSummary : MonoBehaviour
             inputs.enabled = true;
         }
         
+        // Show joystick UI
+        if (mainMenuManager != null && mainMenuManager.joystickCanvas != null)
+        {
+            mainMenuManager.joystickCanvas.SetActive(true);
+        }
+        
         Debug.Log("Player input enabled for gameplay");
     }
     
     public void OnConfirmButtonClicked()
     {
+        Debug.Log("Confirm button clicked. Checking if we can proceed...");
+        
+        // Prevent multiple clicks
+        if (!isSummaryActive || !isGameOver)
+        {
+            Debug.LogWarning("Confirm button clicked but summary is not active. Ignoring.");
+            return;
+        }
+        
         // Play button sound if available
         AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
         if (audioHandler != null)
@@ -1226,12 +1274,20 @@ public class K2_GameSummary : MonoBehaviour
         // ADD COINS TO DATABASE BEFORE RESTARTING
         AddCoinsToDatabase();
         
+        // Disable the confirm button to prevent multiple clicks
+        if (confirmButton != null)
+        {
+            confirmButton.interactable = false;
+        }
+        
         // Start fade out and restart game
         StartCoroutine(HidePanelAndRestartGame());
     }
     
     private IEnumerator HidePanelAndRestartGame()
     {
+        Debug.Log("Starting HidePanelAndRestartGame()...");
+        
         // Fade out panel if CanvasGroup exists
         if (panelCanvasGroup != null)
         {
@@ -1262,6 +1318,12 @@ public class K2_GameSummary : MonoBehaviour
         
         // Restart the game
         RestartGame();
+        
+        // Re-enable confirm button for next time
+        if (confirmButton != null)
+        {
+            confirmButton.interactable = true;
+        }
         
         yield return null;
     }
@@ -1365,6 +1427,8 @@ public class K2_GameSummary : MonoBehaviour
     
     private void ResetGameState()
     {
+        Debug.Log("Resetting game state...");
+        
         // Reset player health
         if (playerHealth != null)
         {
@@ -1433,7 +1497,58 @@ public class K2_GameSummary : MonoBehaviour
             Debug.Log("Dummy product collection reset");
         }
         
+        // FIXED: PROPERLY RESET KEY SYSTEM
+        ResetKeySystem();
+        
+        // Call global reset for keys
+        System.Reflection.MethodInfo globalResetMethod = typeof(K2_CollectKey).GetMethod("GlobalResetAllKeys", 
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        if (globalResetMethod != null)
+        {
+            globalResetMethod.Invoke(null, null);
+            Debug.Log("Called global key reset");
+        }
+        
         Debug.Log("Game state fully reset");
+    }
+    
+    // NEW: Method to properly reset the key system
+    private void ResetKeySystem()
+    {
+        Debug.Log("Resetting key system...");
+        
+        // Find and reset all K2_CollectKey scripts
+        K2_CollectKey[] allKeyScripts = FindObjectsOfType<K2_CollectKey>();
+        foreach (K2_CollectKey keyScript in allKeyScripts)
+        {
+            if (keyScript != null)
+            {
+                // Call the ResetKey method
+                keyScript.ResetKey();
+                Debug.Log($"Reset key script on {keyScript.gameObject.name}");
+                
+                // Also try to call ForceFullReset if it exists
+                System.Reflection.MethodInfo forceResetMethod = keyScript.GetType().GetMethod("ForceFullReset");
+                if (forceResetMethod != null)
+                {
+                    forceResetMethod.Invoke(keyScript, null);
+                    Debug.Log($"Called ForceFullReset on {keyScript.gameObject.name}");
+                }
+            }
+        }
+        
+        // Also try to find and destroy any remaining key objects
+        GameObject[] remainingKeys = GameObject.FindGameObjectsWithTag("NutriKey");
+        foreach (GameObject key in remainingKeys)
+        {
+            if (key != null)
+            {
+                Destroy(key);
+                Debug.Log($"Destroyed remaining key object: {key.name}");
+            }
+        }
+        
+        Debug.Log($"Key system reset: {allKeyScripts.Length} key scripts reset, {remainingKeys.Length} key objects destroyed");
     }
     
     // Reset all timeline directors with proper cleanup
@@ -1511,50 +1626,19 @@ public class K2_GameSummary : MonoBehaviour
         isGameOver = false;
         isVictory = false;
         waitingForLastQA2Panel = false;
+        isSummaryActive = false; // NEW: Reset this flag
         coinsAddedToDatabase = false;
         calculatedCoinsEarned = 0;
         healthBeforeDeath = 0;
         
-        Debug.Log("GameSummaryManager reset for new game");
+        Debug.Log("GameSummaryManager reset for new game - isGameOver: " + isGameOver + ", isVictory: " + isVictory + ", isSummaryActive: " + isSummaryActive);
     }
     
-    // Method to manually restore timeline positions
-    public void RestoreTimelinePositions()
-    {
-        RestoreTimelineObjectPositions();
-        Debug.Log("Timeline positions manually restored");
-    }
-    
-    // Method to re-store positions
-    public void RefreshTimelinePositions()
-    {
-        originalTimelineObjectPositions.Clear();
-        StoreTimelineObjectPositions();
-        Debug.Log("Timeline positions refreshed");
-    }
-    
-    // For manual button to revert timeline changes
-    public void OnRevertTimelineButtonClicked()
-    {
-        Debug.Log("Manual timeline revert button clicked");
-        
-        // 1. Stop all timelines
-        ResetAllTimelineDirectors();
-        
-        // 2. Restore positions
-        RestoreTimelineObjectPositions();
-        
-        // 3. Optionally refresh stored positions
-        RefreshTimelinePositions();
-        
-        Debug.Log("Timeline positions manually reverted");
-    }
-    
-    // Public method to manually trigger win (for testing)
+    // Public method to manually trigger win (for testing) - UPDATED
     [ContextMenu("Test Win")]
     public void TestWin()
     {
-        if (!isGameOver)
+        if (!isGameOver && !isSummaryActive)
         {
             isVictory = true;
             // Set health for testing star calculation
@@ -1564,18 +1648,26 @@ public class K2_GameSummary : MonoBehaviour
             }
             StartCoroutine(ShowSummaryPanel());
         }
+        else
+        {
+            Debug.LogWarning("Cannot test win - summary already active!");
+        }
     }
     
-    // Public method to manually trigger lose (for testing)
+    // Public method to manually trigger lose (for testing) - UPDATED
     [ContextMenu("Test Lose")]
     public void TestLose()
     {
-        if (!isGameOver)
+        if (!isGameOver && !isSummaryActive)
         {
             isVictory = false;
             // Set health before death for testing star calculation
             healthBeforeDeath = 0; // 0 stars (to test the fix)
             StartCoroutine(ShowSummaryPanel());
+        }
+        else
+        {
+            Debug.LogWarning("Cannot test lose - summary already active!");
         }
     }
     
@@ -1591,11 +1683,15 @@ public class K2_GameSummary : MonoBehaviour
     [ContextMenu("Test QA2 Summary Trigger")]
     public void TestQA2Summary()
     {
-        if (!isGameOver)
+        if (!isGameOver && !isSummaryActive)
         {
             Debug.Log($"Testing QA2 Summary Trigger (Enabled: {showSummaryOnQA2Completion})");
             isVictory = true;
             StartCoroutine(ShowSummaryPanel());
+        }
+        else
+        {
+            Debug.LogWarning("Cannot test QA2 summary - summary already active!");
         }
     }
     
@@ -1614,6 +1710,7 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("=== GAME SUMMARY MANAGER DEBUG ===");
         Debug.Log($"Game Over State: {isGameOver}");
         Debug.Log($"Victory State: {isVictory}");
+        Debug.Log($"Summary Active: {isSummaryActive}");
         Debug.Log($"Player Object: {playerObject != null}");
         Debug.Log($"Player at Spawn: {(playerObject != null && playerSpawnPoint != null ? (Vector3.Distance(playerObject.transform.position, playerSpawnPoint.position) < 0.1f).ToString() : "N/A")}");
         Debug.Log($"Character Visual Swapper: {characterVisualSwapper != null}");

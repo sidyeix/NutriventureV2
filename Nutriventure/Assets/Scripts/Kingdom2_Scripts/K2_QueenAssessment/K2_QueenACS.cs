@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using StarterAssets;
 using UnityEngine.Events;
+using TMPro; // Added for TextMeshPro
 
 public class K2_QueenACS : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class K2_QueenACS : MonoBehaviour
     [SerializeField] private GameObject arrowIndicator; // Arrow indicator UI
     [SerializeField] private GameObject dialogueCanvas; // "K2_QueenACV" dialogue canvas
     [SerializeField] private bool showDialogueDuringCutscene = true; // Toggle for dialogue visibility
+    [SerializeField] private TMP_Text queenNameText; // NEW: TextMeshPro for Queen's name
     
     [Header("Skip Button")]
     [SerializeField] private Button skipButton; // Button to skip the cutscene
@@ -65,6 +67,9 @@ public class K2_QueenACS : MonoBehaviour
     
     // FIXED: Track if we have stored player references
     private bool hasPlayerReferences = false;
+    
+    // Queen name text state
+    private bool queenNameTextWasActive = false;
     
     void Start()
     {
@@ -117,6 +122,20 @@ public class K2_QueenACS : MonoBehaviour
         else
         {
             Debug.LogWarning("Dialogue canvas not assigned!");
+        }
+        
+        // Initialize queen name text
+        if (queenNameText != null)
+        {
+            // Store whether it was active before initialization
+            queenNameTextWasActive = queenNameText.gameObject.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            queenNameText.gameObject.SetActive(false);
+            Debug.Log($"Queen name text initialized: {queenNameText.name}, was active: {queenNameTextWasActive}");
+        }
+        else
+        {
+            Debug.Log("No queen name text assigned - skipping queen name display");
         }
         
         // Initialize skip button
@@ -230,6 +249,17 @@ public class K2_QueenACS : MonoBehaviour
     
     public void TriggerCutscene()
     {
+        TriggerCutsceneWithQueenName(null); // Default call without custom name
+    }
+    
+    // NEW: Overload method to trigger cutscene with custom queen name
+    public void TriggerCutscene(string customQueenName = null)
+    {
+        TriggerCutsceneWithQueenName(customQueenName);
+    }
+    
+    private void TriggerCutsceneWithQueenName(string customQueenName = null)
+    {
         if (hasTriggered || isCutscenePlaying) return;
         
         hasTriggered = true;
@@ -281,6 +311,23 @@ public class K2_QueenACS : MonoBehaviour
             Debug.Log("Audio handler disabled");
         }
         
+        // Enable queen name text
+        if (queenNameText != null)
+        {
+            queenNameText.gameObject.SetActive(true);
+            
+            // Set custom queen name if provided
+            if (!string.IsNullOrEmpty(customQueenName))
+            {
+                queenNameText.text = customQueenName;
+                Debug.Log($"Queen name text set to: '{customQueenName}'");
+            }
+            else
+            {
+                Debug.Log($"Queen name text activated: {queenNameText.name}");
+            }
+        }
+        
         // Play the cutscene
         if (npcCutsceneDirector != null)
         {
@@ -295,7 +342,8 @@ public class K2_QueenACS : MonoBehaviour
         // Invoke start event
         onCutsceneStart?.Invoke();
         
-        Debug.Log("Queen cutscene triggered - Player completely frozen");
+        Debug.Log("Queen cutscene triggered - Player completely frozen, Queen name: " + 
+                 (queenNameText != null && queenNameText.gameObject.activeSelf ? "SHOWN" : "HIDDEN"));
     }
     
     private void StoreOriginalPlayerStates()
@@ -469,6 +517,12 @@ public class K2_QueenACS : MonoBehaviour
             dialogueCanvas.SetActive(false);
             Debug.Log("Dialogue canvas deactivated on pause");
         }
+        
+        // Hide queen name text when cutscene is paused
+        if (queenNameText != null && queenNameText.gameObject.activeSelf)
+        {
+            queenNameText.gameObject.SetActive(false);
+        }
     }
     
     private void OnCutsceneFinished(PlayableDirector director)
@@ -601,6 +655,13 @@ public class K2_QueenACS : MonoBehaviour
             Debug.Log("Dialogue canvas deactivated");
         }
         
+        // Disable queen name text after cutscene
+        if (queenNameText != null)
+        {
+            queenNameText.gameObject.SetActive(false);
+            Debug.Log("Queen name text disabled after cutscene");
+        }
+        
         // Disable cutscene parent object
         if (cutsceneParentObject != null)
         {
@@ -652,6 +713,62 @@ public class K2_QueenACS : MonoBehaviour
         {
             Debug.Log("Queen cutscene finished - Player unfrozen");
         }
+    }
+    
+    // NEW: Method to update queen name during cutscene
+    public void UpdateQueenName(string newName)
+    {
+        if (queenNameText != null && isCutscenePlaying)
+        {
+            queenNameText.text = newName;
+            Debug.Log($"Queen name updated to: '{newName}'");
+        }
+        else if (queenNameText == null)
+        {
+            Debug.LogWarning("Cannot update queen name - no queen name text assigned!");
+        }
+        else if (!isCutscenePlaying)
+        {
+            Debug.LogWarning("Cannot update queen name - cutscene is not playing!");
+        }
+    }
+    
+    // NEW: Method to show/hide queen name during cutscene
+    public void SetQueenNameActive(bool active)
+    {
+        if (queenNameText != null && isCutscenePlaying)
+        {
+            queenNameText.gameObject.SetActive(active);
+            Debug.Log($"Queen name text {(active ? "shown" : "hidden")}");
+        }
+        else if (queenNameText == null)
+        {
+            Debug.LogWarning("Cannot show/hide queen name - no queen name text assigned!");
+        }
+    }
+    
+    // NEW: Method to assign queen name text at runtime
+    public void SetQueenNameText(TMP_Text newQueenText)
+    {
+        // Disable old queen name if exists
+        if (queenNameText != null && queenNameText.gameObject.activeSelf)
+        {
+            queenNameText.gameObject.SetActive(false);
+        }
+        
+        queenNameText = newQueenText;
+        
+        if (queenNameText != null)
+        {
+            queenNameText.gameObject.SetActive(isCutscenePlaying);
+            Debug.Log($"Queen name text assigned: {queenNameText.name}");
+        }
+    }
+    
+    // NEW: Method to get current queen name
+    public string GetCurrentQueenName()
+    {
+        return queenNameText != null ? queenNameText.text : "";
     }
     
     private void UnfreezePlayer()
@@ -782,6 +899,13 @@ public class K2_QueenACS : MonoBehaviour
             Debug.Log("Dialogue canvas hidden on reset");
         }
         
+        // Hide queen name text on reset
+        if (queenNameText != null)
+        {
+            queenNameText.gameObject.SetActive(false);
+            Debug.Log("Queen name text hidden on reset");
+        }
+        
         // Ensure cutscene parent is disabled
         if (cutsceneParentObject != null)
         {
@@ -834,6 +958,12 @@ public class K2_QueenACS : MonoBehaviour
     public bool IsSkipButtonReady()
     {
         return skipButtonReady;
+    }
+    
+    // NEW: Check if queen name text is active
+    public bool IsQueenNameActive()
+    {
+        return queenNameText != null && queenNameText.gameObject.activeSelf;
     }
     
     // Get remaining time until skip button appears
@@ -936,6 +1066,20 @@ public class K2_QueenACS : MonoBehaviour
         }
     }
     
+    [ContextMenu("Test Trigger Cutscene with Custom Name")]
+    public void TestTriggerCutsceneWithCustomName()
+    {
+        if (!hasTriggered)
+        {
+            Debug.Log("Testing trigger cutscene with custom name...");
+            TriggerCutscene("QUEEN SUGARIA");
+        }
+        else
+        {
+            Debug.Log("Cutscene already triggered! Use ResetInteraction() first.");
+        }
+    }
+    
     [ContextMenu("Test Skip Cutscene")]
     public void TestSkipCutscene()
     {
@@ -950,10 +1094,39 @@ public class K2_QueenACS : MonoBehaviour
         }
     }
     
+    [ContextMenu("Test Update Queen Name")]
+    public void TestUpdateQueenName()
+    {
+        if (isCutscenePlaying)
+        {
+            UpdateQueenName("QUEEN ELIZABETH");
+        }
+        else
+        {
+            Debug.Log("Cannot update queen name - no cutscene playing!");
+        }
+    }
+    
     [ContextMenu("Test Reset Interaction")]
     public void TestResetInteraction()
     {
         Debug.Log("Testing reset interaction...");
         ResetInteraction();
+    }
+    
+    [ContextMenu("Debug Current State")]
+    public void DebugCurrentState()
+    {
+        Debug.Log($"=== QUEEN CUTSCENE DEBUG ===");
+        Debug.Log($"Is Cutscene Playing: {isCutscenePlaying}");
+        Debug.Log($"Has Triggered: {hasTriggered}");
+        Debug.Log($"Dialogue Canvas Active: {(dialogueCanvas != null ? dialogueCanvas.activeSelf : false)}");
+        Debug.Log($"Queen Name Text Assigned: {queenNameText != null}");
+        Debug.Log($"Queen Name Text Active: {IsQueenNameActive()}");
+        Debug.Log($"Current Queen Name: {(queenNameText != null ? $"'{queenNameText.text}'" : "N/A")}");
+        Debug.Log($"Skip Button Ready: {skipButtonReady}");
+        Debug.Log($"Time Until Skip: {GetSkipButtonTimeRemaining():F1}s");
+        Debug.Log($"Player References: {hasPlayerReferences}");
+        Debug.Log($"=== END DEBUG ===");
     }
 }

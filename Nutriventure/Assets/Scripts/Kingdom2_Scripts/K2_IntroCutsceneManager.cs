@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // Add this namespace
+using UnityEngine.InputSystem;
+using TMPro; // Add this namespace for TextMeshPro
 using System.Collections;
 
 public class K2_IntroCutsceneManager : MonoBehaviour
@@ -21,6 +22,11 @@ public class K2_IntroCutsceneManager : MonoBehaviour
     [Header("UI Canvas")]
     [SerializeField] private GameObject gameUICanvas;
     
+    [Header("Dialogue Canvas - Subtitle System")]
+    [SerializeField] private GameObject dialogueCanvas; // Add this field for subtitle canvas
+    [SerializeField] private bool enableDialogueCanvas = true; // Toggle to enable/disable dialogue canvas
+    [SerializeField] private TMP_Text titleText; // NEW: TextMeshPro title to activate
+    
     [Header("Audio Handler")]
     [SerializeField] private GameObject audioHandler;
     
@@ -29,9 +35,11 @@ public class K2_IntroCutsceneManager : MonoBehaviour
     [SerializeField] private float skipDelay = 1.0f;
     
     [Header("Input Actions")]
-    [SerializeField] private InputAction skipAction; // Define input action for skipping
+    [SerializeField] private InputAction skipAction;
     
     private bool isCutscenePlaying = false;
+    private bool dialogueCanvasWasActive = false; // Track previous state
+    private bool titleTextWasActive = false; // Track title's previous state
     
     void Start()
     {
@@ -55,7 +63,7 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             skipAction.AddBinding("<Keyboard>/space");
             skipAction.AddBinding("<Keyboard>/escape");
             skipAction.AddBinding("<Keyboard>/enter");
-            skipAction.AddBinding("<Gamepad>/buttonSouth"); // A button on Xbox, Cross on PlayStation
+            skipAction.AddBinding("<Gamepad>/buttonSouth");
             skipAction.performed += ctx => SkipCutscene();
         }
     }
@@ -87,6 +95,29 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             gameUICanvas.SetActive(false);
         }
         
+        // Initialize dialogue canvas
+        if (dialogueCanvas != null)
+        {
+            // Store whether it was active before initialization
+            dialogueCanvasWasActive = dialogueCanvas.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            dialogueCanvas.SetActive(false);
+        }
+        
+        // Initialize title text
+        if (titleText != null)
+        {
+            // Store whether it was active before initialization
+            titleTextWasActive = titleText.gameObject.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            titleText.gameObject.SetActive(false);
+            Debug.Log($"Title text initialized: {titleText.name}, was active: {titleTextWasActive}");
+        }
+        else
+        {
+            Debug.Log("No title text assigned - skipping title display");
+        }
+        
         // Ensure skip button is disabled initially
         if (skipButton != null)
         {
@@ -98,6 +129,8 @@ public class K2_IntroCutsceneManager : MonoBehaviour
         {
             audioHandler.SetActive(true);
         }
+        
+        Debug.Log("Cutscene Manager initialized - Dialogue Canvas control: " + (enableDialogueCanvas ? "ENABLED" : "DISABLED"));
     }
     
     void OnEnable()
@@ -132,12 +165,47 @@ public class K2_IntroCutsceneManager : MonoBehaviour
 
     public void PlayCutscene()
     {
+        PlayCutsceneWithTitle(null); // Default call without custom title
+    }
+    
+    // NEW: Overload method to play cutscene with custom title text
+    public void PlayCutscene(string customTitleText = null)
+    {
+        PlayCutsceneWithTitle(customTitleText);
+    }
+    
+    private void PlayCutsceneWithTitle(string customTitleText = null)
+    {
         if (timelineParentObject != null && timelineDirector != null)
         {
             isCutscenePlaying = true;
             
             // Enable the timeline parent object
             timelineParentObject.SetActive(true);
+            
+            // Enable dialogue canvas if configured
+            if (enableDialogueCanvas && dialogueCanvas != null)
+            {
+                dialogueCanvas.SetActive(true);
+                Debug.Log("Dialogue canvas enabled for cutscene");
+            }
+            
+            // Enable and set title text if assigned
+            if (titleText != null)
+            {
+                titleText.gameObject.SetActive(true);
+                
+                // Set custom title text if provided
+                if (!string.IsNullOrEmpty(customTitleText))
+                {
+                    titleText.text = customTitleText;
+                    Debug.Log($"Title text set to: '{customTitleText}'");
+                }
+                else
+                {
+                    Debug.Log($"Title text activated: {titleText.name}");
+                }
+            }
             
             // Play the timeline
             timelineDirector.Play();
@@ -160,7 +228,9 @@ public class K2_IntroCutsceneManager : MonoBehaviour
                 StartCoroutine(ShowSkipButtonAfterDelay());
             }
             
-            Debug.Log("Cutscene started - Audio handler disabled");
+            Debug.Log("Cutscene started - Audio handler disabled, Dialogue canvas: " + 
+                     (enableDialogueCanvas && dialogueCanvas != null && dialogueCanvas.activeSelf ? "ON" : "OFF") +
+                     ", Title text: " + (titleText != null && titleText.gameObject.activeSelf ? "ON" : "OFF"));
         }
         else
         {
@@ -210,6 +280,20 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             timelineParentObject.SetActive(false);
         }
         
+        // Disable dialogue canvas after cutscene
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(false);
+            Debug.Log("Dialogue canvas disabled after cutscene");
+        }
+        
+        // Disable title text after cutscene
+        if (titleText != null)
+        {
+            titleText.gameObject.SetActive(false);
+            Debug.Log("Title text disabled after cutscene");
+        }
+        
         // Enable the player follow camera
         if (playerFollowCamera != null)
         {
@@ -234,6 +318,150 @@ public class K2_IntroCutsceneManager : MonoBehaviour
             skipButton.gameObject.SetActive(false);
         }
         
-        Debug.Log("Cutscene finished/skipped - UI enabled, audio handler re-enabled");
+        Debug.Log("Cutscene finished/skipped - UI enabled, audio handler re-enabled, dialogue canvas and title disabled");
+    }
+    
+    // NEW: Method to update title text during cutscene
+    public void UpdateTitleText(string newText)
+    {
+        if (titleText != null && isCutscenePlaying)
+        {
+            titleText.text = newText;
+            Debug.Log($"Title text updated to: '{newText}'");
+        }
+        else if (titleText == null)
+        {
+            Debug.LogWarning("Cannot update title text - no title text assigned!");
+        }
+        else if (!isCutscenePlaying)
+        {
+            Debug.LogWarning("Cannot update title text - cutscene is not playing!");
+        }
+    }
+    
+    // NEW: Method to show/hide title text during cutscene
+    public void SetTitleTextActive(bool active)
+    {
+        if (titleText != null)
+        {
+            titleText.gameObject.SetActive(active && isCutscenePlaying);
+            Debug.Log($"Title text {(active ? "shown" : "hidden")}");
+        }
+    }
+    
+    // Public method to manually enable/disable dialogue canvas
+    public void SetDialogueCanvasEnabled(bool enabled)
+    {
+        enableDialogueCanvas = enabled;
+        
+        if (dialogueCanvas != null)
+        {
+            if (enabled && isCutscenePlaying)
+            {
+                dialogueCanvas.SetActive(true);
+            }
+            else if (!enabled)
+            {
+                dialogueCanvas.SetActive(false);
+            }
+        }
+        
+        Debug.Log($"Dialogue canvas control {(enabled ? "ENABLED" : "DISABLED")}");
+    }
+    
+    // NEW: Method to assign title text at runtime
+    public void SetTitleText(TMP_Text newTitleText)
+    {
+        // Disable old title if exists
+        if (titleText != null && titleText.gameObject.activeSelf)
+        {
+            titleText.gameObject.SetActive(false);
+        }
+        
+        titleText = newTitleText;
+        
+        if (titleText != null)
+        {
+            titleText.gameObject.SetActive(isCutscenePlaying);
+            Debug.Log($"Title text assigned: {titleText.name}");
+        }
+    }
+    
+    // NEW: Method to get current title text
+    public string GetCurrentTitleText()
+    {
+        return titleText != null ? titleText.text : "";
+    }
+    
+    // Method to check if cutscene is playing
+    public bool IsCutscenePlaying()
+    {
+        return isCutscenePlaying;
+    }
+    
+    // Method to get dialogue canvas state
+    public bool IsDialogueCanvasActive()
+    {
+        return dialogueCanvas != null && dialogueCanvas.activeSelf;
+    }
+    
+    // NEW: Method to get title text state
+    public bool IsTitleTextActive()
+    {
+        return titleText != null && titleText.gameObject.activeSelf;
+    }
+    
+    // Context menu for testing
+    [ContextMenu("Test Play Cutscene")]
+    public void TestPlayCutscene()
+    {
+        PlayCutscene();
+    }
+    
+    [ContextMenu("Test Play Cutscene with Custom Title")]
+    public void TestPlayCutsceneWithCustomTitle()
+    {
+        PlayCutscene("CUSTOM TITLE - TEST");
+    }
+    
+    [ContextMenu("Test Skip Cutscene")]
+    public void TestSkipCutscene()
+    {
+        SkipCutscene();
+    }
+    
+    [ContextMenu("Toggle Dialogue Canvas Control")]
+    public void ToggleDialogueCanvasControl()
+    {
+        SetDialogueCanvasEnabled(!enableDialogueCanvas);
+    }
+    
+    [ContextMenu("Update Title to 'TEST TITLE'")]
+    public void TestUpdateTitle()
+    {
+        UpdateTitleText("TEST TITLE - UPDATED");
+    }
+    
+    [ContextMenu("Toggle Title Visibility")]
+    public void TestToggleTitle()
+    {
+        SetTitleTextActive(!IsTitleTextActive());
+    }
+    
+    [ContextMenu("Debug Current State")]
+    public void DebugCurrentState()
+    {
+        Debug.Log($"=== CUTSCENE MANAGER DEBUG ===");
+        Debug.Log($"Is Cutscene Playing: {isCutscenePlaying}");
+        Debug.Log($"Dialogue Canvas Control Enabled: {enableDialogueCanvas}");
+        Debug.Log($"Dialogue Canvas Active: {IsDialogueCanvasActive()}");
+        Debug.Log($"Title Text Assigned: {titleText != null}");
+        Debug.Log($"Title Text Active: {IsTitleTextActive()}");
+        Debug.Log($"Current Title: {(titleText != null ? $"'{titleText.text}'" : "N/A")}");
+        Debug.Log($"Timeline Director State: {(timelineDirector != null ? timelineDirector.state.ToString() : "NULL")}");
+        Debug.Log($"Timeline Parent Active: {(timelineParentObject != null ? timelineParentObject.activeSelf : "NULL")}");
+        Debug.Log($"Game UI Canvas Active: {(gameUICanvas != null ? gameUICanvas.activeSelf : "NULL")}");
+        Debug.Log($"Player Camera Active: {(playerFollowCamera != null ? playerFollowCamera.activeSelf : "NULL")}");
+        Debug.Log($"=== END DEBUG ===");
     }
 }
