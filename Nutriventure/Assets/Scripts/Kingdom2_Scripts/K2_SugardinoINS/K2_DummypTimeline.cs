@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using TMPro; // Added for TextMeshPro
 
 public class K2_DummypTimeline : MonoBehaviour
 {
@@ -29,8 +30,14 @@ public class K2_DummypTimeline : MonoBehaviour
     [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
     
     [Header("Dialogue Canvas")]
-    [SerializeField] private GameObject dialogueCanvas; // Dialogue box canvas for second timeline
-    [SerializeField] private GameObject dialogueCanvas3; // Dialogue box canvas for third timeline
+    [SerializeField] private GameObject dialogueCanvas; // SINGLE dialogue box canvas for BOTH timelines
+    
+    [Header("NPC Name Texts")]
+    [SerializeField] private TMP_Text secondCutsceneNPCText; // TextMeshPro for second cutscene NPC name
+    [SerializeField] private TMP_Text thirdCutsceneNPCText; // TextMeshPro for third cutscene NPC name
+    
+    [Header("Subtitle Controller")]
+    [SerializeField] private K2_SubtitleController subtitleController; // Reference to subtitle controller
     
     [Header("Skip Button Settings")]
     [SerializeField] private Button skipButton; // Skip button for cutscenes
@@ -57,12 +64,37 @@ public class K2_DummypTimeline : MonoBehaviour
     private float skipButtonTimer = 0f;
     private bool skipButtonReady = false;
     
+    // NPC text states
+    private bool secondNPCTextWasActive = false;
+    private bool thirdNPCTextWasActive = false;
+    
+    // Player components cache
+    private ThirdPersonController cachedController;
+    private Animator cachedAnimator;
+    private StarterAssetsInputs cachedInputs;
+    private PlayerInput cachedPlayerInput;
+    private AudioSource cachedAudioSource;
+    private Rigidbody cachedRigidbody;
+    
+    // NEW: Track original states
+    private bool dialogueCanvasOriginalState = false;
+    private bool subtitleControllerOriginalState = false;
+    private bool secondNPCTextOriginalState = false;
+    private bool thirdNPCTextOriginalState = false;
+    
+    // NEW: Protection system
+    private Coroutine protectionCoroutine = null;
+    private const float PROTECTION_CHECK_INTERVAL = 0.1f; // Check every 0.1 seconds
+    
     void Start()
     {
         Debug.Log("K2_DummypTimeline Start called");
         
         // Initialize everything in a safe way
         SafeInitialize();
+        
+        // Cache player components
+        CachePlayerComponents();
     }
     
     void Update()
@@ -73,7 +105,7 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("DEBUG: All products collected but not waiting for panel. Checking conditions...");
         }
 
-            // ENFORCE: Gameplay UI & Audio must stay OFF during any cutscene
+        // ENFORCE: Gameplay UI & Audio must stay OFF during any cutscene
         if (isSecondCutscenePlaying || isThirdCutscenePlaying)
         {
             if (gameUICanvas != null && gameUICanvas.activeSelf)
@@ -100,6 +132,23 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         // Find all monsters in the scene
         FindAllMonsters();
+        
+        // Find subtitle controller if not assigned
+        if (subtitleController == null)
+        {
+            subtitleController = FindObjectOfType<K2_SubtitleController>();
+            if (subtitleController != null)
+            {
+                Debug.Log("Found K2_SubtitleController");
+            }
+            else
+            {
+                Debug.LogWarning("K2_SubtitleController not found in scene!");
+            }
+        }
+        
+        // Store original states BEFORE doing anything
+        StoreOriginalStates();
         
         // Disable cutscene parent at start
         if (cutscene2ParentObject != null)
@@ -167,18 +216,39 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("Skip button not assigned in Inspector!");
         }
         
-        // Disable dialogue canvas
+        // Disable dialogue canvas (SINGLE CANVAS FOR BOTH)
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(false);
             Debug.Log("Dialogue canvas disabled");
         }
         
-        // Disable third dialogue canvas
-        if (dialogueCanvas3 != null)
+        // Initialize second cutscene NPC text
+        if (secondCutsceneNPCText != null)
         {
-            dialogueCanvas3.SetActive(false);
-            Debug.Log("Dialogue canvas3 disabled");
+            // Store whether it was active before initialization
+            secondNPCTextWasActive = secondCutsceneNPCText.gameObject.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            secondCutsceneNPCText.gameObject.SetActive(false);
+            Debug.Log($"Second cutscene NPC text initialized: {secondCutsceneNPCText.name}, was active: {secondNPCTextWasActive}");
+        }
+        else
+        {
+            Debug.Log("No second cutscene NPC text assigned - skipping NPC name display");
+        }
+        
+        // Initialize third cutscene NPC text
+        if (thirdCutsceneNPCText != null)
+        {
+            // Store whether it was active before initialization
+            thirdNPCTextWasActive = thirdCutsceneNPCText.gameObject.activeSelf;
+            // Disable it initially (will be enabled when cutscene plays)
+            thirdCutsceneNPCText.gameObject.SetActive(false);
+            Debug.Log($"Third cutscene NPC text initialized: {thirdCutsceneNPCText.name}, was active: {thirdNPCTextWasActive}");
+        }
+        else
+        {
+            Debug.Log("No third cutscene NPC text assigned - skipping NPC name display");
         }
         
         // Find player if not assigned
@@ -188,6 +258,8 @@ public class K2_DummypTimeline : MonoBehaviour
             if (playerObject != null)
             {
                 Debug.Log($"Found player: {playerObject.name}");
+                // Cache components after finding player
+                CachePlayerComponents();
             }
         }
         
@@ -247,6 +319,103 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log("K2_DummypTimeline initialized successfully");
     }
     
+    // NEW: Store original states
+    private void StoreOriginalStates()
+    {
+        if (dialogueCanvas != null)
+            dialogueCanvasOriginalState = dialogueCanvas.activeSelf;
+        
+        if (subtitleController != null)
+            subtitleControllerOriginalState = subtitleController.gameObject.activeSelf;
+        
+        if (secondCutsceneNPCText != null)
+            secondNPCTextOriginalState = secondCutsceneNPCText.gameObject.activeSelf;
+        
+        if (thirdCutsceneNPCText != null)
+            thirdNPCTextOriginalState = thirdCutsceneNPCText.gameObject.activeSelf;
+        
+        Debug.Log($"Original states stored: Dialogue={dialogueCanvasOriginalState}, Subtitle={subtitleControllerOriginalState}");
+    }
+    
+    // NEW: Start protection system
+    private void StartProtectionSystem()
+    {
+        if (protectionCoroutine != null)
+        {
+            StopCoroutine(protectionCoroutine);
+        }
+        protectionCoroutine = StartCoroutine(ProtectionSystemCoroutine());
+    }
+    
+    // NEW: Stop protection system
+    private void StopProtectionSystem()
+    {
+        if (protectionCoroutine != null)
+        {
+            StopCoroutine(protectionCoroutine);
+            protectionCoroutine = null;
+        }
+    }
+    
+    // NEW: Protection system coroutine
+    private IEnumerator ProtectionSystemCoroutine()
+    {
+        Debug.Log("Starting protection system for cutscene...");
+        
+        while (isSecondCutscenePlaying || isThirdCutscenePlaying)
+        {
+            yield return new WaitForSeconds(PROTECTION_CHECK_INTERVAL);
+            
+            // FORCE critical components to stay active during cutscene
+            ForceComponentsActive();
+        }
+        
+        Debug.Log("Protection system stopped");
+    }
+    
+    // NEW: Force components to stay active
+    private void ForceComponentsActive()
+    {
+        bool anyComponentWasFixed = false;
+        
+        // Dialogue canvas MUST stay active
+        if (dialogueCanvas != null && !dialogueCanvas.activeSelf)
+        {
+            dialogueCanvas.SetActive(true);
+            Debug.LogWarning("DIALOGUE CANVAS WAS DEACTIVATED! Forced back active.");
+            anyComponentWasFixed = true;
+        }
+        
+        // Subtitle controller MUST stay active
+        if (subtitleController != null && !subtitleController.gameObject.activeSelf)
+        {
+            subtitleController.gameObject.SetActive(true);
+            Debug.LogWarning("SUBTITLE CONTROLLER WAS DEACTIVATED! Forced back active.");
+            anyComponentWasFixed = true;
+        }
+        
+        // If any component was fixed, log a warning
+        if (anyComponentWasFixed)
+        {
+            Debug.LogWarning("Timeline is deactivating critical components! Protection system is keeping them active.");
+        }
+    }
+    
+    // Cache player components to avoid GetComponent calls during cutscene
+    private void CachePlayerComponents()
+    {
+        if (playerObject == null) return;
+        
+        cachedController = playerObject.GetComponent<ThirdPersonController>();
+        cachedAnimator = playerObject.GetComponent<Animator>();
+        cachedInputs = playerObject.GetComponent<StarterAssetsInputs>();
+        cachedPlayerInput = playerObject.GetComponent<PlayerInput>();
+        cachedAudioSource = playerObject.GetComponent<AudioSource>();
+        cachedRigidbody = playerObject.GetComponent<Rigidbody>();
+        
+        Debug.Log($"Cached player components for {playerObject.name}");
+    }
+    
     void OnEnable()
     {
         Debug.Log("K2_DummypTimeline enabled");
@@ -289,14 +458,20 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Unsubscribe from panel events
-        ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
-        Debug.Log("Unsubscribed from ProductInformationManager.OnProductPanelHidden event");
+        if (productInfoManager != null)
+        {
+            ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
+            Debug.Log("Unsubscribed from ProductInformationManager.OnProductPanelHidden event");
+        }
         
         // Remove skip button listener
         if (skipButton != null)
         {
             skipButton.onClick.RemoveListener(OnSkipButtonClicked);
         }
+        
+        // Stop protection system
+        StopProtectionSystem();
     }
     
     void OnDestroy()
@@ -306,6 +481,15 @@ public class K2_DummypTimeline : MonoBehaviour
         {
             skipButton.onClick.RemoveListener(OnSkipButtonClicked);
         }
+        
+        // Unsubscribe from panel events
+        if (productInfoManager != null)
+        {
+            ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
+        }
+        
+        // Stop protection system
+        StopProtectionSystem();
     }
     
     // Find all monsters in the scene
@@ -452,6 +636,17 @@ public class K2_DummypTimeline : MonoBehaviour
     // Call this from ProductInformationManager when dummy product info panel is confirmed
     public void StartSecondCutscene()
     {
+        StartSecondCutsceneWithNPCName(null); // Default call without custom name
+    }
+    
+    // NEW: Overload method to start second cutscene with custom NPC name
+    public void StartSecondCutscene(string customNPCName = null)
+    {
+        StartSecondCutsceneWithNPCName(customNPCName);
+    }
+    
+    private void StartSecondCutsceneWithNPCName(string customNPCName = null)
+    {
         Debug.Log("=== STARTING SECOND CUTSCENE ===");
         
         if (isSecondCutscenePlaying || isThirdCutscenePlaying)
@@ -471,6 +666,12 @@ public class K2_DummypTimeline : MonoBehaviour
         
         // Reset skip button state
         ResetSkipButtonState();
+        
+        // Start protection system BEFORE anything else
+        StartProtectionSystem();
+        
+        // Ensure subtitle controller is active
+        ActivateSubtitleController();
         
         // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
@@ -502,6 +703,23 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Audio handler disabled");
         }
         
+        // Enable second cutscene NPC text
+        if (secondCutsceneNPCText != null)
+        {
+            secondCutsceneNPCText.gameObject.SetActive(true);
+            
+            // Set custom NPC name if provided
+            if (!string.IsNullOrEmpty(customNPCName))
+            {
+                secondCutsceneNPCText.text = customNPCName;
+                Debug.Log($"Second cutscene NPC name text set to: '{customNPCName}'");
+            }
+            else
+            {
+                Debug.Log($"Second cutscene NPC name text activated: {secondCutsceneNPCText.name}");
+            }
+        }
+        
         // IMPORTANT: Wait one frame before playing timeline
         // This ensures everything is properly activated
         StartCoroutine(PlayTimelineAfterFrame(npcCutscene2Director, true));
@@ -509,6 +727,17 @@ public class K2_DummypTimeline : MonoBehaviour
     
     // Public method to start the third cutscene
     public void StartThirdCutscene()
+    {
+        StartThirdCutsceneWithNPCName(null); // Default call without custom name
+    }
+    
+    // NEW: Overload method to start third cutscene with custom NPC name
+    public void StartThirdCutscene(string customNPCName = null)
+    {
+        StartThirdCutsceneWithNPCName(customNPCName);
+    }
+    
+    private void StartThirdCutsceneWithNPCName(string customNPCName = null)
     {
         Debug.Log("=== STARTING THIRD CUTSCENE ===");
         
@@ -529,6 +758,12 @@ public class K2_DummypTimeline : MonoBehaviour
         
         // Reset skip button state
         ResetSkipButtonState();
+        
+        // Start protection system BEFORE anything else
+        StartProtectionSystem();
+        
+        // Ensure subtitle controller is active
+        ActivateSubtitleController();
         
         // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
@@ -560,9 +795,43 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Audio handler disabled");
         }
         
+        // Enable third cutscene NPC text
+        if (thirdCutsceneNPCText != null)
+        {
+            thirdCutsceneNPCText.gameObject.SetActive(true);
+            
+            // Set custom NPC name if provided
+            if (!string.IsNullOrEmpty(customNPCName))
+            {
+                thirdCutsceneNPCText.text = customNPCName;
+                Debug.Log($"Third cutscene NPC name text set to: '{customNPCName}'");
+            }
+            else
+            {
+                Debug.Log($"Third cutscene NPC name text activated: {thirdCutsceneNPCText.name}");
+            }
+        }
+        
         // IMPORTANT: Wait one frame before playing timeline
         // This ensures everything is properly activated
         StartCoroutine(PlayTimelineAfterFrame(npcTimeline3Director, false));
+    }
+    
+    // Ensure subtitle controller is active before playing timeline
+    private void ActivateSubtitleController()
+    {
+        if (subtitleController != null)
+        {
+            if (!subtitleController.gameObject.activeSelf)
+            {
+                subtitleController.gameObject.SetActive(true);
+                Debug.Log("Activated subtitle controller");
+            }
+            else
+            {
+                Debug.Log("Subtitle controller was already active");
+            }
+        }
     }
     
     private IEnumerator PlayTimelineAfterFrame(PlayableDirector director, bool isSecondCutscene)
@@ -572,6 +841,9 @@ public class K2_DummypTimeline : MonoBehaviour
         
         // Additional small delay to ensure all components are ready
         yield return new WaitForSeconds(0.1f);
+        
+        // CRITICAL: Force components active one more time before playing
+        ForceComponentsActive();
         
         // Now play the timeline
         if (director != null)
@@ -692,10 +964,9 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Disable ThirdPersonController
-        ThirdPersonController controller = playerObject.GetComponent<ThirdPersonController>();
-        if (controller != null)
+        if (cachedController != null)
         {
-            controller.enabled = false;
+            cachedController.enabled = false;
             Debug.Log("Player controller disabled");
         }
         else
@@ -704,10 +975,9 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Disable Animator
-        Animator animator = playerObject.GetComponent<Animator>();
-        if (animator != null)
+        if (cachedAnimator != null)
         {
-            animator.enabled = false;
+            cachedAnimator.enabled = false;
             Debug.Log("Player animator disabled");
         }
         else
@@ -716,13 +986,12 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Reset inputs
-        StarterAssetsInputs inputs = playerObject.GetComponent<StarterAssetsInputs>();
-        if (inputs != null)
+        if (cachedInputs != null)
         {
-            inputs.move = Vector2.zero;
-            inputs.look = Vector2.zero;
-            inputs.sprint = false;
-            inputs.jump = false;
+            cachedInputs.move = Vector2.zero;
+            cachedInputs.look = Vector2.zero;
+            cachedInputs.sprint = false;
+            cachedInputs.jump = false;
             Debug.Log("Player inputs reset");
         }
         else
@@ -731,10 +1000,9 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Disable PlayerInput (Input System)
-        PlayerInput playerInput = playerObject.GetComponent<PlayerInput>();
-        if (playerInput != null)
+        if (cachedPlayerInput != null)
         {
-            playerInput.enabled = false;
+            cachedPlayerInput.enabled = false;
             Debug.Log("Player input system disabled");
         }
         else
@@ -743,19 +1011,17 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         // Stop audio
-        AudioSource audioSource = playerObject.GetComponent<AudioSource>();
-        if (audioSource != null)
+        if (cachedAudioSource != null)
         {
-            audioSource.Stop();
+            cachedAudioSource.Stop();
             Debug.Log("Player audio stopped");
         }
         
         // Stop physics movement
-        Rigidbody rb = playerObject.GetComponent<Rigidbody>();
-        if (rb != null)
+        if (cachedRigidbody != null)
         {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            cachedRigidbody.linearVelocity = Vector3.zero;
+            cachedRigidbody.angularVelocity = Vector3.zero;
             Debug.Log("Player physics stopped");
         }
         
@@ -770,10 +1036,11 @@ public class K2_DummypTimeline : MonoBehaviour
         if (gameUICanvas != null) gameUICanvas.SetActive(false);
         if (audioHandler != null) audioHandler.SetActive(false);
 
+        // Enable SINGLE dialogue canvas for both cutscenes
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(true);
-            Debug.Log("Dialogue canvas enabled");
+            Debug.Log("Dialogue canvas enabled for second cutscene");
         }
     }
     
@@ -785,10 +1052,11 @@ public class K2_DummypTimeline : MonoBehaviour
         if (gameUICanvas != null) gameUICanvas.SetActive(false);
         if (audioHandler != null) audioHandler.SetActive(false);
 
-        if (dialogueCanvas3 != null)
+        // Enable SINGLE dialogue canvas for both cutscenes
+        if (dialogueCanvas != null)
         {
-            dialogueCanvas3.SetActive(true);
-            Debug.Log("Dialogue canvas3 enabled");
+            dialogueCanvas.SetActive(true);
+            Debug.Log("Dialogue canvas enabled for third cutscene");
         }
     }
     
@@ -816,14 +1084,31 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log($"=== FINISHING SECOND CUTSCENE (Skipped: {wasSkipped}) ===");
         
+        // Stop protection system
+        StopProtectionSystem();
+        
         // Hide skip button
         HideSkipButton();
         
-        // Hide dialogue canvas
+        // Hide dialogue canvas (SINGLE CANVAS FOR BOTH)
         if (dialogueCanvas != null)
         {
-            dialogueCanvas.SetActive(false);
-            Debug.Log("Dialogue canvas disabled");
+            dialogueCanvas.SetActive(dialogueCanvasOriginalState);
+            Debug.Log($"Dialogue canvas restored to original state: {(dialogueCanvasOriginalState ? "active" : "inactive")}");
+        }
+        
+        // Restore subtitle controller
+        if (subtitleController != null)
+        {
+            subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
+            Debug.Log($"Subtitle controller restored to original state: {(subtitleControllerOriginalState ? "active" : "inactive")}");
+        }
+        
+        // Disable second cutscene NPC text
+        if (secondCutsceneNPCText != null)
+        {
+            secondCutsceneNPCText.gameObject.SetActive(secondNPCTextOriginalState);
+            Debug.Log("Second cutscene NPC text disabled");
         }
         
         // Resume monsters BEFORE unfreezing player
@@ -872,14 +1157,31 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log($"=== FINISHING THIRD CUTSCENE (Skipped: {wasSkipped}) ===");
         
+        // Stop protection system
+        StopProtectionSystem();
+        
         // Hide skip button
         HideSkipButton();
         
-        // Hide dialogue canvas
-        if (dialogueCanvas3 != null)
+        // Hide dialogue canvas (SINGLE CANVAS FOR BOTH)
+        if (dialogueCanvas != null)
         {
-            dialogueCanvas3.SetActive(false);
-            Debug.Log("Dialogue canvas3 disabled");
+            dialogueCanvas.SetActive(dialogueCanvasOriginalState);
+            Debug.Log($"Dialogue canvas restored to original state: {(dialogueCanvasOriginalState ? "active" : "inactive")}");
+        }
+        
+        // Restore subtitle controller
+        if (subtitleController != null)
+        {
+            subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
+            Debug.Log($"Subtitle controller restored to original state: {(subtitleControllerOriginalState ? "active" : "inactive")}");
+        }
+        
+        // Disable third cutscene NPC text
+        if (thirdCutsceneNPCText != null)
+        {
+            thirdCutsceneNPCText.gameObject.SetActive(thirdNPCTextOriginalState);
+            Debug.Log("Third cutscene NPC text disabled");
         }
         
         // Resume monsters BEFORE unfreezing player
@@ -928,39 +1230,113 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         if (playerObject == null) 
         {
-            Debug.LogError("Cannot unfreeze player: Player object is null!");
-            return;
+            Debug.LogError("Cannot unfreeze player: Player object is null! Trying to find player...");
+            
+            // Try to find player again
+            playerObject = GameObject.FindGameObjectWithTag("Player");
+            if (playerObject != null)
+            {
+                Debug.Log($"Found player: {playerObject.name}");
+                // Re-cache components
+                CachePlayerComponents();
+            }
+            else
+            {
+                Debug.LogError("Player not found even after search!");
+                return;
+            }
         }
         
         // Re-enable ThirdPersonController
-        ThirdPersonController controller = playerObject.GetComponent<ThirdPersonController>();
-        if (controller != null)
+        if (cachedController != null)
         {
-            controller.enabled = true;
+            cachedController.enabled = true;
             Debug.Log("Player controller enabled");
         }
         
         // Re-enable Animator
-        Animator animator = playerObject.GetComponent<Animator>();
-        if (animator != null)
+        if (cachedAnimator != null)
         {
-            animator.enabled = true;
+            cachedAnimator.enabled = true;
             
             // Reset animation states
-            animator.SetFloat("Speed", 0f);
-            animator.SetFloat("MotionSpeed", 0f);
+            cachedAnimator.SetFloat("Speed", 0f);
+            cachedAnimator.SetFloat("MotionSpeed", 0f);
             Debug.Log("Player animator enabled and reset");
         }
         
         // Re-enable PlayerInput
-        PlayerInput playerInput = playerObject.GetComponent<PlayerInput>();
-        if (playerInput != null)
+        if (cachedPlayerInput != null)
         {
-            playerInput.enabled = true;
+            cachedPlayerInput.enabled = true;
             Debug.Log("Player input system enabled");
         }
         
         Debug.Log("Player unfrozen successfully");
+    }
+    
+    // NEW: Method to update second cutscene NPC name during cutscene
+    public void UpdateSecondCutsceneNPCName(string newName)
+    {
+        if (secondCutsceneNPCText != null && isSecondCutscenePlaying)
+        {
+            secondCutsceneNPCText.text = newName;
+            Debug.Log($"Second cutscene NPC name updated to: '{newName}'");
+        }
+        else if (secondCutsceneNPCText == null)
+        {
+            Debug.LogWarning("Cannot update second cutscene NPC name - no text assigned!");
+        }
+        else if (!isSecondCutscenePlaying)
+        {
+            Debug.LogWarning("Cannot update second cutscene NPC name - cutscene is not playing!");
+        }
+    }
+    
+    // NEW: Method to update third cutscene NPC name during cutscene
+    public void UpdateThirdCutsceneNPCName(string newName)
+    {
+        if (thirdCutsceneNPCText != null && isThirdCutscenePlaying)
+        {
+            thirdCutsceneNPCText.text = newName;
+            Debug.Log($"Third cutscene NPC name updated to: '{newName}'");
+        }
+        else if (thirdCutsceneNPCText == null)
+        {
+            Debug.LogWarning("Cannot update third cutscene NPC name - no text assigned!");
+        }
+        else if (!isThirdCutscenePlaying)
+        {
+            Debug.LogWarning("Cannot update third cutscene NPC name - cutscene is not playing!");
+        }
+    }
+    
+    // NEW: Method to show/hide second cutscene NPC name during cutscene
+    public void SetSecondCutsceneNPCNameActive(bool active)
+    {
+        if (secondCutsceneNPCText != null && isSecondCutscenePlaying)
+        {
+            secondCutsceneNPCText.gameObject.SetActive(active);
+            Debug.Log($"Second cutscene NPC name text {(active ? "shown" : "hidden")}");
+        }
+        else if (secondCutsceneNPCText == null)
+        {
+            Debug.LogWarning("Cannot show/hide second cutscene NPC name - no text assigned!");
+        }
+    }
+    
+    // NEW: Method to show/hide third cutscene NPC name during cutscene
+    public void SetThirdCutsceneNPCNameActive(bool active)
+    {
+        if (thirdCutsceneNPCText != null && isThirdCutscenePlaying)
+        {
+            thirdCutsceneNPCText.gameObject.SetActive(active);
+            Debug.Log($"Third cutscene NPC name text {(active ? "shown" : "hidden")}");
+        }
+        else if (thirdCutsceneNPCText == null)
+        {
+            Debug.LogWarning("Cannot show/hide third cutscene NPC name - no text assigned!");
+        }
     }
     
     // Skip button click handler
@@ -1120,6 +1496,18 @@ public class K2_DummypTimeline : MonoBehaviour
         return isSecondCutscenePlaying || isThirdCutscenePlaying;
     }
     
+    // NEW: Check if second cutscene NPC name is active
+    public bool IsSecondCutsceneNPCNameActive()
+    {
+        return secondCutsceneNPCText != null && secondCutsceneNPCText.gameObject.activeSelf;
+    }
+    
+    // NEW: Check if third cutscene NPC name is active
+    public bool IsThirdCutsceneNPCNameActive()
+    {
+        return thirdCutsceneNPCText != null && thirdCutsceneNPCText.gameObject.activeSelf;
+    }
+    
     // Reset all cutscenes
     public void ResetAllCutscenes()
     {
@@ -1130,15 +1518,30 @@ public class K2_DummypTimeline : MonoBehaviour
         // Reset skip button state
         ResetSkipButtonState();
         
-        // Hide dialogue canvases
+        // Stop protection system
+        StopProtectionSystem();
+        
+        // Hide dialogue canvas (SINGLE CANVAS)
         if (dialogueCanvas != null)
         {
-            dialogueCanvas.SetActive(false);
+            dialogueCanvas.SetActive(dialogueCanvasOriginalState);
         }
         
-        if (dialogueCanvas3 != null)
+        // Restore subtitle controller
+        if (subtitleController != null)
         {
-            dialogueCanvas3.SetActive(false);
+            subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
+        }
+        
+        // Hide NPC name texts
+        if (secondCutsceneNPCText != null)
+        {
+            secondCutsceneNPCText.gameObject.SetActive(secondNPCTextOriginalState);
+        }
+        
+        if (thirdCutsceneNPCText != null)
+        {
+            thirdCutsceneNPCText.gameObject.SetActive(thirdNPCTextOriginalState);
         }
         
         // Resume monsters
@@ -1249,6 +1652,31 @@ public class K2_DummypTimeline : MonoBehaviour
         StartThirdCutscene();
     }
     
+    // NEW: Test methods for NPC names
+    [ContextMenu("Test Start Second Cutscene with Custom Name")]
+    public void TestStartSecondCutsceneWithCustomName()
+    {
+        StartSecondCutscene("SIR KALEB");
+    }
+    
+    [ContextMenu("Test Start Third Cutscene with Custom Name")]
+    public void TestStartThirdCutsceneWithCustomName()
+    {
+        StartThirdCutscene("QUEEN SUGARIA");
+    }
+    
+    [ContextMenu("Update Second Cutscene NPC Name")]
+    public void TestUpdateSecondCutsceneNPCName()
+    {
+        UpdateSecondCutsceneNPCName("UPDATED NPC NAME");
+    }
+    
+    [ContextMenu("Update Third Cutscene NPC Name")]
+    public void TestUpdateThirdCutsceneNPCName()
+    {
+        UpdateThirdCutsceneNPCName("UPDATED QUEEN");
+    }
+    
     [ContextMenu("Test Simulate Last Product Collected")]
     public void TestSimulateLastProductCollected()
     {
@@ -1271,7 +1699,13 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log($"Waiting for Final Panel: {waitingForFinalPanelConfirm}");
         Debug.Log($"Is Second Cutscene Playing: {isSecondCutscenePlaying}");
         Debug.Log($"Is Third Cutscene Playing: {isThirdCutscenePlaying}");
+        Debug.Log($"Second Cutscene NPC Text: {(secondCutsceneNPCText != null ? secondCutsceneNPCText.name : "NOT ASSIGNED")}");
+        Debug.Log($"Third Cutscene NPC Text: {(thirdCutsceneNPCText != null ? thirdCutsceneNPCText.name : "NOT ASSIGNED")}");
         Debug.Log($"Monster Count: {allMonsters.Count}");
+        Debug.Log($"Subtitle Controller: {(subtitleController != null ? "FOUND" : "NOT FOUND")}");
+        Debug.Log($"Player Object: {(playerObject != null ? playerObject.name : "NULL")}");
+        Debug.Log($"Dialogue Canvas: {(dialogueCanvas != null ? dialogueCanvas.name : "NOT ASSIGNED")}");
+        Debug.Log($"Protection System: {(protectionCoroutine != null ? "ACTIVE" : "INACTIVE")}");
     }
     
     // Editor method to auto-find references
@@ -1282,12 +1716,20 @@ public class K2_DummypTimeline : MonoBehaviour
         // Find all monsters
         FindAllMonsters();
         
+        // Find subtitle controller
+        subtitleController = FindObjectOfType<K2_SubtitleController>();
+        if (subtitleController != null)
+        {
+            Debug.Log("Auto-found subtitle controller: " + subtitleController.name);
+        }
+        
         // Find player
         GameObject foundPlayer = GameObject.FindGameObjectWithTag("Player");
         if (foundPlayer != null)
         {
             playerObject = foundPlayer;
             Debug.Log("Auto-found player: " + playerObject.name);
+            CachePlayerComponents();
         }
         
         // Find CollectProducts script
@@ -1320,6 +1762,38 @@ public class K2_DummypTimeline : MonoBehaviour
         {
             gameUICanvas = foundGameUICanvas;
             Debug.Log("Auto-found Game UI Canvas");
+        }
+        
+        // Try to find Dialogue Canvas
+        if (dialogueCanvas == null)
+        {
+            // Look for common dialogue canvas names
+            string[] canvasNames = { "DialogueCanvas", "Dialogue_Canvas", "DialogueBox", "DialogCanvas", "SubtitleCanvas" };
+            foreach (string canvasName in canvasNames)
+            {
+                GameObject foundCanvas = GameObject.Find(canvasName);
+                if (foundCanvas != null)
+                {
+                    dialogueCanvas = foundCanvas;
+                    Debug.Log($"Auto-found Dialogue Canvas: {dialogueCanvas.name}");
+                    break;
+                }
+            }
+            
+            // If still not found, look for any canvas with "dialogue" in the name
+            if (dialogueCanvas == null)
+            {
+                Canvas[] allCanvases = FindObjectsOfType<Canvas>();
+                foreach (Canvas canvas in allCanvases)
+                {
+                    if (canvas.name.ToLower().Contains("dialogue"))
+                    {
+                        dialogueCanvas = canvas.gameObject;
+                        Debug.Log($"Auto-found Dialogue Canvas by name: {dialogueCanvas.name}");
+                        break;
+                    }
+                }
+            }
         }
         
         // Try to find cutscene3 parent object
