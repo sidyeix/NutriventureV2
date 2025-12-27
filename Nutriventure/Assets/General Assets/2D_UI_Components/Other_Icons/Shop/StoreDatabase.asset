@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bea025e961823cb43a57912cf450ec68, type: 3}
+  m_Name: StoreDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::StoreItemDatabase
+  allItems:
+  - itemName: Amy
+    itemIcon: {fileID: 21300000, guid: b287061be5907e541bbc8c0a7170bd2d, type: 3}
+    coinCost: 500
+    description: '-'
+    characterID: 2
+  - itemName: Jackie
+    itemIcon: {fileID: 21300000, guid: 9af038af9de831c41849ff71d6dabacb, type: 3}
+    coinCost: 600
+    description: '-'
+    characterID: 3
+  - itemName: Kaya
+    itemIcon: {fileID: 21300000, guid: 7f1164583cf4aff40a9551cad7198ee6, type: 3}
+    coinCost: 500
+    description: '-'
+    characterID: 4
+  - itemName: Michelle
+    itemIcon: {fileID: 21300000, guid: 5cd243fd481aa634ca4106498b27a51c, type: 3}
+    coinCost: 1100
+    description: '-'
+    characterID: 5
+  - itemName: Albert
+    itemIcon: {fileID: 21300000, guid: 541213e8a79fc5d4899da29b4d1a3841, type: 3}
+    coinCost: 800
+    description: '-'
+    characterID: 6

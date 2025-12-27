@@ -2,7 +2,7 @@ using UnityEngine;
 using Cinemachine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.InputSystem; // Add this namespace
+using UnityEngine.InputSystem;
 
 public class ShopControllerWithUIFade : MonoBehaviour
 {
@@ -15,7 +15,7 @@ public class ShopControllerWithUIFade : MonoBehaviour
     [SerializeField] private CanvasGroup uiControllerCanvasGroup;
 
     [Header("Input Settings")]
-    [SerializeField] private InputActionReference closeShopAction; // New Input System reference
+    [SerializeField] private InputActionReference closeShopAction;
 
     [Header("Fade Settings")]
     [SerializeField] private float fadeDuration = 0.3f;
@@ -56,7 +56,6 @@ public class ShopControllerWithUIFade : MonoBehaviour
 
     private void OnEnable()
     {
-        // Enable the input action when script is enabled
         if (closeShopAction != null)
         {
             closeShopAction.action.Enable();
@@ -65,7 +64,6 @@ public class ShopControllerWithUIFade : MonoBehaviour
 
     private void OnDisable()
     {
-        // Disable the input action when script is disabled
         if (closeShopAction != null)
         {
             closeShopAction.action.Disable();
@@ -78,6 +76,12 @@ public class ShopControllerWithUIFade : MonoBehaviour
         if (isShopOpen) return;
 
         isShopOpen = true;
+
+        if (SimpleStoreUI.Instance != null)
+        {
+            SimpleStoreUI.Instance.OnShopOpened();
+            SimpleStoreUI.Instance.UpdateResourceDisplay();
+        }
 
         // Fade out main UI controller
         if (uiControllerCanvasGroup != null)
@@ -132,14 +136,12 @@ public class ShopControllerWithUIFade : MonoBehaviour
 
     private void Update()
     {
-        // Check for Escape key using new Input System
         if (isShopOpen && closeShopAction != null && closeShopAction.action.triggered)
         {
             CloseShop();
         }
     }
 
-    // Fade for UIController
     private IEnumerator FadeUIController(float startAlpha, float endAlpha)
     {
         float time = 0f;
@@ -154,7 +156,6 @@ public class ShopControllerWithUIFade : MonoBehaviour
 
         uiControllerCanvasGroup.alpha = endAlpha;
 
-        // Update interactivity
         if (endAlpha > 0.5f)
         {
             uiControllerCanvasGroup.interactable = true;
@@ -169,13 +170,11 @@ public class ShopControllerWithUIFade : MonoBehaviour
         fadeCoroutine = null;
     }
 
-    // Smooth fade effect for CanvasGroup
     private IEnumerator FadeCanvasGroup(CanvasGroup group, float startAlpha, float endAlpha)
     {
         float time = 0f;
 
-        // Enable/disable interaction at the beginning
-        if (endAlpha > startAlpha) // Fading in
+        if (endAlpha > startAlpha)
         {
             group.interactable = true;
             group.blocksRaycasts = true;
@@ -191,8 +190,7 @@ public class ShopControllerWithUIFade : MonoBehaviour
 
         group.alpha = endAlpha;
 
-        // Disable interaction when fully faded out
-        if (endAlpha < startAlpha) // Fading out
+        if (endAlpha < startAlpha)
         {
             group.interactable = false;
             group.blocksRaycasts = false;
