@@ -42,6 +42,7 @@ public class K2_CollectKey : MonoBehaviour
     private GameObject currentNearbyKey = null;
     private AudioSource audioSource;
     private int pickupHash;
+    private int healthAtKeyCollection = 0;
     
     // Static flag for global reset
     private static bool globalResetFlag = false;
@@ -232,6 +233,14 @@ public class K2_CollectKey : MonoBehaviour
         // Mark key as collected
         hasKey = true;
         
+        // Record health at moment of key collection
+        SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
+        if (playerHealth != null)
+        {
+            healthAtKeyCollection = playerHealth.currentHealth;
+            Debug.Log($"Health at key collection recorded: {healthAtKeyCollection}");
+        }
+        
         // Show key indicator in UI
         if (keyIndicator != null)
         {
@@ -292,28 +301,17 @@ public class K2_CollectKey : MonoBehaviour
         Debug.Log("TriggerGameSummaryIfNeeded() called from key collection");
         Debug.Log($"Current state - hasTriggeredSummary: {hasTriggeredSummary}, gameSummaryManager: {gameSummaryManager != null}");
         
-        // Always trigger summary when key is collected (key is an alternate win condition)
-        if (gameSummaryManager != null && !hasTriggeredSummary)
+        // Check if summary is already active
+        if (gameSummaryManager != null && !hasTriggeredSummary && !gameSummaryManager.IsSummaryActive())
         {
-            Debug.Log("Key collected! Triggering game summary via TestWin()...");
+            Debug.Log("Key collected! Triggering game summary...");
             
             // Mark that we've triggered the summary
             hasTriggeredSummary = true;
             
-            // IMPORTANT: Set the victory state BEFORE calling TestWin
-            // Use reflection to set isVictory to true
-            System.Reflection.FieldInfo victoryField = gameSummaryManager.GetType().GetField("isVictory", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (victoryField != null)
-            {
-                victoryField.SetValue(gameSummaryManager, true);
-                Debug.Log("Set isVictory to true for key collection win");
-            }
-            
-            // Call TestWin method - this will show the summary panel
-            gameSummaryManager.TestWin();
-            
-            // DO NOT re-enable player movement - GameSummary will handle disabling/enabling
+            // IMPORTANT: Instead of calling TestWin(), directly trigger the summary
+            // This prevents double triggers
+            StartCoroutine(TriggerSummaryDirectly());
         }
         else if (hasTriggeredSummary)
         {
@@ -322,12 +320,131 @@ public class K2_CollectKey : MonoBehaviour
         else if (gameSummaryManager == null)
         {
             Debug.LogError("GameSummary manager is null! Cannot trigger summary.");
-            
             // Re-enable player movement as fallback
             if (playerMovementScript != null)
             {
                 playerMovementScript.enabled = true;
             }
+        }
+    }
+    
+    private IEnumerator TriggerSummaryDirectly()
+    {
+        yield return new WaitForEndOfFrame(); // Small delay to ensure everything is ready
+        
+        if (gameSummaryManager != null && !gameSummaryManager.IsSummaryActive())
+        {
+            Debug.Log("Triggering summary from key collection...");
+            
+            // Disable QA2 completion check temporarily
+            bool originalQA2Setting = gameSummaryManager.IsQA2SummaryEnabled();
+            gameSummaryManager.SetQA2SummaryEnabled(false);
+            
+            // Use the public method if available
+            var methodInfo = gameSummaryManager.GetType().GetMethod("TriggerSummaryFromKey", 
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            
+            if (methodInfo != null)
+            {
+                methodInfo.Invoke(gameSummaryManager, null);
+            }
+            else
+            {
+                // Fallback to setting victory and calling TestWin
+                System.Reflection.FieldInfo victoryField = gameSummaryManager.GetType().GetField("isVictory", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (victoryField != null)
+                {
+                    victoryField.SetValue(gameSummaryManager, true);
+                }
+                
+                // Ensure player has enough health for stars
+                SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
+                if (playerHealth != null)
+                {
+                    int originalHealth = playerHealth.currentHealth;
+                    if (originalHealth < 5)
+                    {
+                        // Temporarily boost health for star calculation
+                        playerHealth.currentHealth = 5;
+                        gameSummaryManager.TestWin();
+                        playerHealth.currentHealth = originalHealth;
+                    }
+                    else
+                    {
+                        gameSummaryManager.TestWin();
+                    }
+                }
+                else
+                {
+                    gameSummaryManager.TestWin();
+                }
+            }
+            
+            // Restore QA2 setting after a delay
+            yield return new WaitForSeconds(1f);
+            gameSummaryManager.SetQA2SummaryEnabled(originalQA2Setting);
+        }
+    }
+        private IEnumerator TriggerSummaryWithDirectCall()
+    {
+        yield return new WaitForEndOfFrame(); // Wait one frame
+        
+        // Direct call approach - create a simplified version that works
+        if (gameSummaryManager != null && !gameSummaryManager.IsSummaryActive())
+        {
+            Debug.Log("Calling ShowSummaryPanelDirectly via direct approach...");
+            
+            // Get the method using a simpler approach
+            var methodInfo = gameSummaryManager.GetType().GetMethod("ShowSummaryPanelDirectly", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            if (methodInfo != null)
+            {
+                Debug.Log("Found ShowSummaryPanelDirectly method via reflection");
+                methodInfo.Invoke(gameSummaryManager, null);
+            }
+            else
+            {
+                Debug.LogWarning("Could not find ShowSummaryPanelDirectly method. Trying alternative...");
+                
+                // Alternative approach: Try to call a public method
+                var altMethodInfo = gameSummaryManager.GetType().GetMethod("TriggerSummaryFromKey", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                
+                if (altMethodInfo != null)
+                {
+                    Debug.Log("Found TriggerSummaryFromKey method");
+                    altMethodInfo.Invoke(gameSummaryManager, null);
+                }
+                else
+                {
+                    Debug.LogError("No suitable summary trigger method found! Using TestWin as fallback...");
+                    
+                    // Fallback to TestWin with proper setup
+                    if (!gameSummaryManager.IsSummaryActive())
+                    {
+                        // Set health to 6 to ensure 3 stars
+                        SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
+                        if (playerHealth != null)
+                        {
+                            // Temporarily set health to max for star calculation
+                            int originalHealth = playerHealth.currentHealth;
+                            playerHealth.currentHealth = 6;
+                            gameSummaryManager.TestWin();
+                            playerHealth.currentHealth = originalHealth;
+                        }
+                        else
+                        {
+                            gameSummaryManager.TestWin();
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("GameSummary is already active or null. Cannot trigger summary.");
         }
     }
     
@@ -359,6 +476,7 @@ public class K2_CollectKey : MonoBehaviour
         isPickingUp = false;
         pickupTimer = 0f;
         currentNearbyKey = null;
+        healthAtKeyCollection = 0;
         
         // Reset animator if needed
         if (playerAnimator != null)
@@ -420,6 +538,12 @@ public class K2_CollectKey : MonoBehaviour
     public bool IsPickingUp()
     {
         return isPickingUp;
+    }
+    
+    // Get health at key collection
+    public int GetHealthAtKeyCollection()
+    {
+        return healthAtKeyCollection > 0 ? healthAtKeyCollection : 0;
     }
     
     // Force reset all states (for GameSummary to call)

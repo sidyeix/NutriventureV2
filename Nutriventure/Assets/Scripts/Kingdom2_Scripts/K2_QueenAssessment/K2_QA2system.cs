@@ -978,7 +978,7 @@ public class K2_QA2system : MonoBehaviour
         canvasGroup.alpha = endAlpha;
     }
     
-    private void OnCloseButtonClicked()
+    public void OnCloseButtonClicked()
     {
         LogDebug("Close button clicked");
         
