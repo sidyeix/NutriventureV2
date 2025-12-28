@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class ProductSpawner : MonoBehaviour
@@ -8,57 +7,42 @@ public class ProductSpawner : MonoBehaviour
     public GameObject[] spawnPoints; // Assign your 10 spawn point GameObjects here
     public GameObject[] productPrefabs; // Assign your 8 product prefabs here
     
-    [Header("UI References")]
-    public Button startButton; // Assign your Start Button here in Inspector
-    
     [Header("Spawn Behavior")]
+    public bool spawnOnStart = true; // Automatically spawn when the game starts
     public bool respawnOnDemand = true;
-    public bool disableButtonAfterClick = true;
+    public bool randomizeSpawnLocations = true;
+    
+    [Header("Debug Settings")]
+    public bool enableDebugLogs = true;
     
     private List<GameObject> spawnedProducts = new List<GameObject>();
     private bool isInitialized = false;
     
     void Start()
     {
-        // Set up the button click listener
-        if (startButton != null)
+        if (spawnOnStart)
         {
-            startButton.onClick.AddListener(OnStartButtonClicked);
-            Debug.Log("Start button listener added");
+            InitializeAndSpawn();
         }
         else
         {
-            Debug.LogError("Start Button not assigned in Inspector!");
+            Debug.LogWarning("Auto-spawning disabled. Products will not spawn automatically.");
         }
     }
     
-    // This method is called when the start button is clicked
-    private void OnStartButtonClicked()
+    // Automatically initialize and spawn products
+    public void InitializeAndSpawn()
     {
         if (!isInitialized)
         {
-            InitializeGame();
+            SpawnProducts();
+            isInitialized = true;
+            LogDebug("Game initialized with automatic product spawning!");
         }
         else
         {
-            Debug.LogWarning("Game already initialized!");
+            LogDebug("Products already spawned!");
         }
-    }
-    
-    public void InitializeGame()
-    {
-        SpawnProducts();
-        isInitialized = true;
-        
-        // Handle button state after click
-        if (disableButtonAfterClick && startButton != null)
-        {
-            startButton.interactable = false;
-            // Optional: Hide the button completely
-            // startButton.gameObject.SetActive(false);
-        }
-        
-        Debug.Log("Game initialized with product spawning!");
     }
     
     [ContextMenu("Spawn Products")]
@@ -71,34 +55,44 @@ public class ProductSpawner : MonoBehaviour
         if (!ValidateSpawnSetup())
             return;
         
-        // Create a list of available spawn points
+        // Create lists for spawn points and products
         List<GameObject> availableSpawnPoints = new List<GameObject>(spawnPoints);
-        
-        // Create a list of products to spawn
         List<GameObject> productsToSpawn = new List<GameObject>(productPrefabs);
         
-        // Randomize the order of products
-        ShuffleList(productsToSpawn);
+        // Randomize if enabled
+        if (randomizeSpawnLocations)
+        {
+            ShuffleList(availableSpawnPoints);
+            ShuffleList(productsToSpawn);
+        }
         
-        // Spawn products at random spawn points
+        // Spawn products
         for (int i = 0; i < productsToSpawn.Count; i++)
         {
             if (availableSpawnPoints.Count == 0)
             {
-                Debug.LogWarning("Not enough spawn points for all products!");
+                LogWarning("Not enough spawn points for all products!");
                 break;
             }
             
-            // Pick a random spawn point
-            int randomIndex = Random.Range(0, availableSpawnPoints.Count);
-            GameObject spawnPoint = availableSpawnPoints[randomIndex];
-            availableSpawnPoints.RemoveAt(randomIndex);
+            // Get spawn point (random or sequential based on setting)
+            GameObject spawnPoint = randomizeSpawnLocations 
+                ? availableSpawnPoints[Random.Range(0, availableSpawnPoints.Count)] 
+                : availableSpawnPoints[i % availableSpawnPoints.Count];
+            
+            if (spawnPoint == null) continue;
             
             // Spawn the product
             SpawnProduct(productsToSpawn[i], spawnPoint.transform.position, spawnPoint.transform.rotation);
+            
+            // Remove used spawn point if randomizing
+            if (randomizeSpawnLocations)
+            {
+                availableSpawnPoints.Remove(spawnPoint);
+            }
         }
         
-        Debug.Log($"Successfully spawned {spawnedProducts.Count} products at random locations. {availableSpawnPoints.Count} spawn points remain empty.");
+        LogDebug($"Successfully spawned {spawnedProducts.Count} products. Empty spawn points: {availableSpawnPoints.Count}");
     }
     
     [ContextMenu("Clear Products")]
@@ -112,7 +106,7 @@ public class ProductSpawner : MonoBehaviour
             }
         }
         spawnedProducts.Clear();
-        Debug.Log("Cleared all spawned products");
+        LogDebug("Cleared all spawned products");
     }
     
     [ContextMenu("Respawn Products")]
@@ -124,54 +118,46 @@ public class ProductSpawner : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Respawn on demand is disabled. Enable it in the inspector or use SpawnProducts instead.");
+            LogWarning("Respawn on demand is disabled. Enable it in the inspector or use SpawnProducts instead.");
         }
     }
     
-    // Call this to reset the game completely and re-enable the start button
+    // Call this to reset the game completely
     public void ResetGame()
     {
         ClearSpawnedProducts();
         isInitialized = false;
-        
-        // Re-enable the start button if it was disabled
-        if (startButton != null)
-        {
-            startButton.interactable = true;
-            startButton.gameObject.SetActive(true);
-        }
-        
-        Debug.Log("Game reset - start button re-enabled");
+        LogDebug("Game reset - ready for new spawning");
     }
     
     private void SpawnProduct(GameObject productPrefab, Vector3 position, Quaternion rotation)
     {
+        if (productPrefab == null)
+        {
+            LogError($"Attempted to spawn null prefab at position {position}");
+            return;
+        }
+        
         GameObject spawnedProduct = Instantiate(productPrefab, position, rotation);
         spawnedProducts.Add(spawnedProduct);
         
         // Optional: Name the spawned product for better organization in hierarchy
         spawnedProduct.name = $"{productPrefab.name}_Spawned";
         
-        Debug.Log($"Spawned {productPrefab.name} at position {position}");
+        LogDebug($"Spawned {productPrefab.name} at position {position}");
     }
     
     private bool ValidateSpawnSetup()
     {
         if (spawnPoints == null || spawnPoints.Length == 0)
         {
-            Debug.LogError("No spawn points assigned! Please assign spawn points in the inspector.");
+            LogError("No spawn points assigned! Please assign spawn points in the inspector.");
             return false;
         }
         
         if (productPrefabs == null || productPrefabs.Length == 0)
         {
-            Debug.LogError("No product prefabs assigned! Please assign product prefabs in the inspector.");
-            return false;
-        }
-        
-        if (spawnPoints.Length < productPrefabs.Length)
-        {
-            Debug.LogError($"Not enough spawn points! Have {spawnPoints.Length}, need at least {productPrefabs.Length}");
+            LogError("No product prefabs assigned! Please assign product prefabs in the inspector.");
             return false;
         }
         
@@ -180,7 +166,7 @@ public class ProductSpawner : MonoBehaviour
         {
             if (spawnPoint == null)
             {
-                Debug.LogError("One or more spawn points are null! Please check your spawn points assignment.");
+                LogError("One or more spawn points are null! Please check your spawn points assignment.");
                 return false;
             }
         }
@@ -190,9 +176,15 @@ public class ProductSpawner : MonoBehaviour
         {
             if (prefab == null)
             {
-                Debug.LogError("One or more product prefabs are null! Please check your prefabs assignment.");
+                LogError("One or more product prefabs are null! Please check your prefabs assignment.");
                 return false;
             }
+        }
+        
+        // Warn if not enough spawn points
+        if (spawnPoints.Length < productPrefabs.Length)
+        {
+            LogWarning($"More products ({productPrefabs.Length}) than spawn points ({spawnPoints.Length}). Some products may not spawn.");
         }
         
         return true;
@@ -200,6 +192,8 @@ public class ProductSpawner : MonoBehaviour
     
     private void ShuffleList<T>(List<T> list)
     {
+        if (list == null || list.Count <= 1) return;
+        
         for (int i = 0; i < list.Count; i++)
         {
             T temp = list[i];
@@ -209,7 +203,8 @@ public class ProductSpawner : MonoBehaviour
         }
     }
     
-    // Public methods for external control
+    #region Public Methods for External Control
+    
     public int GetSpawnedProductCount()
     {
         return spawnedProducts.Count;
@@ -236,7 +231,7 @@ public class ProductSpawner : MonoBehaviour
         {
             spawnedProducts.Remove(product);
             Destroy(product);
-            Debug.Log($"Product {product.name} removed from spawn system");
+            LogDebug($"Product {product.name} removed from spawn system");
         }
     }
     
@@ -246,7 +241,32 @@ public class ProductSpawner : MonoBehaviour
         SpawnProducts();
     }
     
-    // Editor visualization
+    #endregion
+    
+    #region Debug Logging Methods
+    
+    private void LogDebug(string message)
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[ProductSpawner] {message}", this);
+        }
+    }
+    
+    private void LogWarning(string message)
+    {
+        Debug.LogWarning($"[ProductSpawner] {message}", this);
+    }
+    
+    private void LogError(string message)
+    {
+        Debug.LogError($"[ProductSpawner] {message}", this);
+    }
+    
+    #endregion
+    
+    #region Editor Visualization
+    
     private void OnDrawGizmosSelected()
     {
         if (spawnPoints != null)
@@ -263,13 +283,26 @@ public class ProductSpawner : MonoBehaviour
         }
     }
     
-    // Clean up
-    private void OnDestroy()
+    #endregion
+    
+    #region Context Menu Commands
+    
+    [ContextMenu("Check Setup")]
+    public void CheckSetup()
     {
-        // Remove the button listener to prevent memory leaks
-        if (startButton != null)
-        {
-            startButton.onClick.RemoveListener(OnStartButtonClicked);
-        }
+        ValidateSpawnSetup();
+        LogDebug($"Spawn Points: {spawnPoints?.Length ?? 0}");
+        LogDebug($"Product Prefabs: {productPrefabs?.Length ?? 0}");
+        LogDebug($"Currently Spawned: {spawnedProducts.Count}");
+        LogDebug($"Is Initialized: {isInitialized}");
     }
+    
+    [ContextMenu("Toggle Debug Logs")]
+    public void ToggleDebugLogs()
+    {
+        enableDebugLogs = !enableDebugLogs;
+        LogDebug($"Debug logs {(enableDebugLogs ? "ENABLED" : "DISABLED")}");
+    }
+    
+    #endregion
 }
