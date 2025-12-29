@@ -269,9 +269,39 @@ public class K2_CollectKey : MonoBehaviour
             }
             return;
         }
-        
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+            GameDataManager.Instance.SaveGameData();
+            Debug.Log("SugariaKey saved to GameData");
+        }
+        // Disable timeline after key collection
+        DisableTimelineAfterKeyCollection();
         // Trigger Game Summary when key is collected
         TriggerGameSummaryIfNeeded();
+    }
+
+        private void DisableTimelineAfterKeyCollection()
+    {
+        // Find and disable timeline
+        string timelineObjectName = "K2_QueenACS2"; // Adjust if different
+        GameObject timelineObj = GameObject.Find(timelineObjectName);
+        
+        if (timelineObj != null)
+        {
+            // Disable the GameObject
+            timelineObj.SetActive(false);
+            Debug.Log($"Disabled timeline GameObject: {timelineObjectName}");
+            
+            // Also disable the K2_QueenACS2 component
+            K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
+            if (queenCutscene != null)
+            {
+                queenCutscene.enabled = false;
+                Debug.Log("Disabled K2_QueenACS2 component");
+            }
+        }
     }
     
     private void EndPickupAnimation()

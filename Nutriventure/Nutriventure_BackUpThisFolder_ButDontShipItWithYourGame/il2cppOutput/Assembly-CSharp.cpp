@@ -1796,6 +1796,7 @@ struct GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6  : public RuntimeObjec
 	int32_t ___nutriGems;
 	int32_t ___currentEnergy;
 	DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D ___lastEnergyUpdateTime;
+	bool ___sugariaKeyCollected;
 	int32_t ___selectedCharacterID;
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* ___unlockedCharacterIDs;
 	SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* ___selectedSkinForCharacter;
@@ -30537,7 +30538,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 80863
+// Method Definition Index: 80943
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ButtonClickedEvent_t8EA72E90B3BD1392FB3B3EF167D5121C23569E4C* Button_get_onClick_m701712A7F7F000CC80D517C4510697E15722C35C_inline (Button_t6786514A57F7AFDEE5431112FEA0CAB24F5AE098* __this, const RuntimeMethod* method) 
 {
 	{
@@ -30561,7 +30562,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR QuestManager_tBFF05D31B190577A168
 		return L_0;
 	}
 }
-// Method Definition Index: 76601
+// Method Definition Index: 76681
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void CinemachineVirtualCameraBase_set_Priority_m233ED0376CE0BD1244CCA52DF4532C8988DC05AC_inline (CinemachineVirtualCameraBase_tAD070AA799E9D3990F0B2DA9AC5889CF138261DE* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -30571,7 +30572,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void CinemachineVirtualCameraBase
 		return;
 	}
 }
-// Method Definition Index: 76600
+// Method Definition Index: 76680
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t CinemachineVirtualCameraBase_get_Priority_m273769ED137982DE43BB658BBE704BCAA55E5246_inline (CinemachineVirtualCameraBase_tAD070AA799E9D3990F0B2DA9AC5889CF138261DE* __this, const RuntimeMethod* method) 
 {
 	{
@@ -30821,7 +30822,7 @@ IL_002d:
 		return L_5;
 	}
 }
-// Method Definition Index: 48986
+// Method Definition Index: 48989
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927_inline (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
