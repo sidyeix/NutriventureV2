@@ -246,11 +246,11 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (summaryLocked) return;
         
-        // Check for lose condition (health reaches 0)
+        // Check for lose condition (health reaches 0) - 0 STARS
         if (!isGameOver && !isSummaryActive && playerHealth != null && playerHealth.currentHealth <= 0)
         {
             healthBeforeDeath = playerHealth.currentHealth;
-            isVictory = false;
+            isVictory = false; // This is a LOSE
             StartCoroutine(ShowSummaryPanel());
             return; // Exit early after triggering lose
         }
@@ -258,6 +258,8 @@ public class K2_GameSummary : MonoBehaviour
         // Check for win condition (QA2 completed)
         if (showSummaryOnQA2Completion && !isGameOver && !isSummaryActive && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
         {
+            int currentHealth = playerHealth != null ? playerHealth.currentHealth : 0;
+            
             // Check if key is already collected
             bool keyAlreadyCollected = GameDataManager.Instance != null && 
                                     GameDataManager.Instance.CurrentGameData.HasSugariaKey();
@@ -268,19 +270,37 @@ public class K2_GameSummary : MonoBehaviour
                 keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
             }
             
-            Debug.Log($"QA2 Completed Check - Key Collected: {keyAlreadyCollected}, QA2 Answers: {qa2System.GetCorrectlyAnsweredCount()}/{requiredQA2CorrectAnswers}");
+            Debug.Log($"QA2 Completed - Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
             
-            if (keyAlreadyCollected)
+            // Health determines what kind of victory
+            if (currentHealth <= 0)
             {
-                Debug.Log("QA2 completed AND key already collected. Triggering victory summary directly.");
-                isVictory = true;
+                // Should have been caught above, but just in case
+                Debug.Log("QA2 completed but health is 0. This should be a lose.");
+                isVictory = false;
                 StartCoroutine(ShowSummaryPanel());
             }
-            else
+            else if (currentHealth <= 2)
             {
-                Debug.Log("QA2 completed but key NOT collected. Timeline should trigger.");
-                // Don't trigger summary - let timeline handle it
-                // Timeline will trigger, then key collection, then summary
+                // Health 1-2: Victory but NO KEY
+                Debug.Log("QA2 completed with 1-2 hearts. Victory but NO KEY.");
+                isVictory = true; // VICTORY
+                StartCoroutine(ShowSummaryPanel());
+            }
+            else if (currentHealth >= 3)
+            {
+                // Health 3+: Can get key
+                if (keyAlreadyCollected)
+                {
+                    Debug.Log("QA2 completed AND key already collected. Triggering victory summary with KEY.");
+                    isVictory = true;
+                    StartCoroutine(ShowSummaryPanel());
+                }
+                else
+                {
+                    Debug.Log("QA2 completed, key not collected yet. Timeline should trigger.");
+                    // Timeline will trigger, then key collection, then summary
+                }
             }
         }
 
@@ -304,44 +324,39 @@ public class K2_GameSummary : MonoBehaviour
         
         Debug.Log($"Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
         
-        // Heart = 0: Lose Summary (only at 0 hearts)
+        // Heart = 0: Lose Summary (only at 0 hearts) - 0 STARS
         if (currentHealth <= 0)
         {
-            Debug.Log($"Health ({currentHealth}) = 0. Triggering LOSE summary...");
+            Debug.Log($"Health ({currentHealth}) = 0. Triggering LOSE summary with 0 stars...");
             healthBeforeDeath = currentHealth;
-            isVictory = false;
+            isVictory = false; // This is a LOSE
             StartCoroutine(ShowSummaryPanel());
             return;
         }
         
-        // Heart ≤ 2 (but > 0): Timeline will not play → Automatic Summary
+        // Heart 1-2: Player can still complete but NO KEY
+        // Timeline will not play, but it's NOT a lose - it's a limited victory
         if (currentHealth <= 2 && currentHealth > 0)
         {
-            Debug.Log($"Health ({currentHealth}) ≤ 2. Checking for timeline/summary...");
+            Debug.Log($"Health ({currentHealth}) = 1-2. Checking QA2 completion...");
             
-            // Check if timeline exists and is active
-            GameObject timelineObj = GameObject.Find(timelineObjectName);
-            if (timelineObj != null && timelineObj.activeInHierarchy)
-            {
-                // Try to disable the timeline if it's active
-                timelineObj.SetActive(false);
-                Debug.Log($"Disabled timeline: {timelineObjectName}");
-            }
+            // Check if QA2 is completed
+            bool qa2Completed = qa2System != null && qa2System.GetCorrectlyAnsweredCount() >= requiredQA2CorrectAnswers;
             
-            // Check if key is already collected via GameData
-            if (!keyAlreadyCollected)
+            if (qa2Completed && !isGameOver && !isSummaryActive)
             {
-                Debug.Log($"Health ≤ 2 and key not collected. Triggering summary...");
-                healthBeforeDeath = currentHealth;
-                isVictory = false;
+                // Player completed QA2 with 1-2 hearts - VICTORY but NO KEY
+                Debug.Log($"QA2 completed with {currentHealth} hearts. Victory but NO KEY.");
+                isVictory = true; // This is a VICTORY (not lose!)
                 StartCoroutine(ShowSummaryPanel());
             }
-            else
+            else if (!qa2Completed)
             {
-                Debug.Log($"Health ≤ 2 but key already collected. Skipping summary.");
+                Debug.Log($"Health 1-2 but QA2 not completed ({qa2System?.GetCorrectlyAnsweredCount() ?? 0}/{requiredQA2CorrectAnswers}). Player can continue playing.");
+                // Player can still play to complete QA2
             }
         }
-        // Heart ≥ 3: Timeline conditions
+        // Heart ≥ 3: Timeline conditions - can get KEY
         else if (currentHealth >= 3)
         {
             Debug.Log($"Health ({currentHealth}) ≥ 3, checking timeline conditions...");
@@ -358,8 +373,8 @@ public class K2_GameSummary : MonoBehaviour
                 }
                 else if (qa2Completed)
                 {
-                    Debug.Log("QA2 completed and key not collected. Timeline should play.");
-                    // Timeline should play
+                    Debug.Log("QA2 completed and key not collected. Timeline should play for key.");
+                    // Timeline should play - player gets key after timeline
                     TryActivateTimeline();
                 }
                 else
@@ -373,10 +388,10 @@ public class K2_GameSummary : MonoBehaviour
                 // Ensure timeline is disabled if it exists
                 DisableTimelineIfExists();
                 
-                // NEW: If QA2 is also completed, trigger summary
+                // NEW: If QA2 is also completed, trigger VICTORY summary with KEY
                 if (qa2Completed && !isGameOver && !isSummaryActive)
                 {
-                    Debug.Log("Key already collected AND QA2 completed. Triggering victory summary.");
+                    Debug.Log("Key already collected AND QA2 completed. Triggering VICTORY summary with KEY.");
                     isVictory = true;
                     StartCoroutine(ShowSummaryPanel());
                 }
@@ -939,23 +954,13 @@ public class K2_GameSummary : MonoBehaviour
         
         if (isVictory)
         {
-            // Check if we won via key collection
-            if (collectKeyScript != null && collectKeyScript.HasTriggeredSummary())
-            {
-                // Use health at key collection if available
-                health = collectKeyScript.GetHealthAtKeyCollection();
-                Debug.Log($"Using health at key collection: {health}");
-            }
-            else
-            {
-                // Use current health for QA2 completion wins
-                health = playerHealth?.currentHealth ?? 0;
-                Debug.Log($"Using current health for QA2 win: {health}");
-            }
+            // For victory, use current health
+            health = playerHealth?.currentHealth ?? 0;
+            Debug.Log($"Using current health for victory stars: {health}");
         }
         else
         {
-            // For lose condition
+            // For lose condition (only at 0 hearts)
             health = Mathf.Max(0, healthBeforeDeath);
             Debug.Log($"Using health before death for lose: {health}");
         }
@@ -965,6 +970,7 @@ public class K2_GameSummary : MonoBehaviour
         if (health >= 5) stars = 3;
         else if (health >= 3) stars = 2;
         else if (health >= 1) stars = 1;
+        // 0 hearts = 0 stars (already 0)
         
         Debug.Log($"=== CALCULATE STARS ===");
         Debug.Log($"Health: {health}");
@@ -1079,6 +1085,7 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (keyStatusText != null)
         {
+            // Key is unlocked only if player has 2+ stars (3+ hearts)
             bool isUnlocked = (stars >= 2);
             keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
             keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
@@ -1087,6 +1094,7 @@ public class K2_GameSummary : MonoBehaviour
         if (keyImageObject != null)
             keyImageObject.SetActive(stars >= 2);
     }
+
 
     private void CalculateCoinReward()
     {

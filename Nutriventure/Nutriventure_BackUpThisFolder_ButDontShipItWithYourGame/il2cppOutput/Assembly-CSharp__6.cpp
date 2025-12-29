@@ -6107,26 +6107,26 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CFadePanelU3Ed__84_MoveNext_m22E6C1EE5
 IL_0017:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:582>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:597>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		CanvasGroup_t048C1461B14628CFAEBE6E7353093ADB04EBC094* L_5 = L_4->___panelCanvasGroup;
 		float L_6 = __this->___startAlpha;
 		NullCheck(L_5);
 		CanvasGroup_set_alpha_m5C06839316D948BB4F75ED72C87FA1F1A20C333F(L_5, L_6, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:583>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:598>
 		__this->___U3CelapsedTimeU3E5__2 = (0.0f);
 		goto IL_008e;
 	}
 
 IL_003c:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:587>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:602>
 		float L_7 = __this->___U3CelapsedTimeU3E5__2;
 		float L_8;
 		L_8 = Time_get_unscaledDeltaTime_mF057EECA857E5C0F90A3F910D26D3EE59F27C4B5(NULL);
 		__this->___U3CelapsedTimeU3E5__2 = ((float)il2cpp_codegen_add(L_7, L_8));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:588>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:603>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_9 = V_1;
 		NullCheck(L_9);
 		CanvasGroup_t048C1461B14628CFAEBE6E7353093ADB04EBC094* L_10 = L_9->___panelCanvasGroup;
@@ -6138,7 +6138,7 @@ IL_003c:
 		L_15 = Mathf_Lerp_m47EF2FFB7647BD0A1FDC26DC03E28B19812139B5_inline(L_11, L_12, ((float)(L_13/L_14)), NULL);
 		NullCheck(L_10);
 		CanvasGroup_set_alpha_m5C06839316D948BB4F75ED72C87FA1F1A20C333F(L_10, L_15, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:589>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:604>
 		__this->___U3CU3E2__current = NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___U3CU3E2__current), (void*)NULL);
 		__this->___U3CU3E1__state = 1;
@@ -6152,7 +6152,7 @@ IL_0087:
 
 IL_008e:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:585>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:600>
 		float L_16 = __this->___U3CelapsedTimeU3E5__2;
 		float L_17 = __this->___duration;
 		if ((((float)L_16) < ((float)L_17)))
@@ -6161,14 +6161,14 @@ IL_008e:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:592>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:607>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_18 = V_1;
 		NullCheck(L_18);
 		CanvasGroup_t048C1461B14628CFAEBE6E7353093ADB04EBC094* L_19 = L_18->___panelCanvasGroup;
 		float L_20 = __this->___endAlpha;
 		NullCheck(L_19);
 		CanvasGroup_set_alpha_m5C06839316D948BB4F75ED72C87FA1F1A20C333F(L_19, L_20, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:593>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:608>
 		return (bool)0;
 	}
 }
@@ -6258,7 +6258,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CHidePanelAndRestartGameU3Ed__119_Move
 IL_0017:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1138>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1146>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		CanvasGroup_t048C1461B14628CFAEBE6E7353093ADB04EBC094* L_5 = L_4->___panelCanvasGroup;
@@ -6271,7 +6271,7 @@ IL_0017:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1139>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1147>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_7 = V_1;
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_8 = V_1;
 		NullCheck(L_8);
@@ -6292,7 +6292,7 @@ IL_0051:
 
 IL_0058:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1141>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1149>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_11 = V_1;
 		NullCheck(L_11);
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_12 = L_11->___gameSummaryPanel;
@@ -6305,7 +6305,7 @@ IL_0058:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1142>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1150>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_14 = V_1;
 		NullCheck(L_14);
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_15 = L_14->___gameSummaryPanel;
@@ -6315,28 +6315,28 @@ IL_0058:
 
 IL_0072:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1144>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1152>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_16 = V_1;
 		NullCheck(L_16);
 		K2_GameSummary_StopLookAroundAnimationDuringPause_m376C7D9C6DE7BD184FCC8A4994ABCDB6A8A0EBA4(L_16, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1145>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1153>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_17 = V_1;
 		NullCheck(L_17);
 		K2_GameSummary_RestoreBackgroundMusicVolume_mE73270FA94D1F40DEFBD2A14B30643438DACF842(L_17, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1146>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1154>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_18 = V_1;
 		NullCheck(L_18);
 		float L_19 = L_18->___originalTimeScale;
 		Time_set_timeScale_mEF84EE4B2376A458387648079B426B267862D331(L_19, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1148>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1156>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_20 = V_1;
 		NullCheck(L_20);
 		K2_GameSummary_RestartGame_mCC69344FDBF0D5F014E365D2EFC503AAF947183E(L_20, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1151>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1159>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_21 = V_1;
 		NullCheck(L_21);
 		L_21->___isProcessingConfirm = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1153>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1161>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_22 = V_1;
 		NullCheck(L_22);
 		Button_t6786514A57F7AFDEE5431112FEA0CAB24F5AE098* L_23 = L_22->___confirmButton;
@@ -6349,7 +6349,7 @@ IL_0072:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1154>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1162>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_25 = V_1;
 		NullCheck(L_25);
 		Button_t6786514A57F7AFDEE5431112FEA0CAB24F5AE098* L_26 = L_25->___confirmButton;
@@ -6359,7 +6359,7 @@ IL_0072:
 
 IL_00b0:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1155>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1163>
 		return (bool)0;
 	}
 }
@@ -6463,7 +6463,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CPlayStarAnimationAfterResetU3Ed__112_
 IL_0022:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1015>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1021>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_3 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_3, (0.100000001f), NULL);
 		__this->___U3CU3E2__current = L_3;
@@ -6475,7 +6475,7 @@ IL_0022:
 IL_0042:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1018>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1024>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_5 = L_4->___starAnimator;
@@ -6487,13 +6487,13 @@ IL_0042:
 		int32_t L_9 = L_8->___currentStars;
 		NullCheck(L_5);
 		Animator_SetInteger_m7B4BB5FD5BD8DE3F713D8E9AD2870C1AAF8E19EF(L_5, L_7, L_9, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1019>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1025>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_10 = V_1;
 		NullCheck(L_10);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_11 = L_10->___starAnimator;
 		NullCheck(L_11);
 		Animator_Update_mBF5E8B2869FD05AF4A5963C39203D85BD62E8E65(L_11, (0.0f), NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1022>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1028>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_12 = V_1;
 		NullCheck(L_12);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_13 = L_12->___starAnimator;
@@ -6504,7 +6504,7 @@ IL_0042:
 		int32_t L_16;
 		L_16 = Animator_GetInteger_m8DA635E4373A1E7D649B2BA2DEF382D87EFE603C(L_13, L_15, NULL);
 		V_2 = L_16;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1023>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1029>
 		int32_t L_17 = V_2;
 		int32_t L_18 = L_17;
 		RuntimeObject* L_19 = Box(il2cpp_defaults.int32_class, &L_18);
@@ -6517,7 +6517,7 @@ IL_0042:
 		L_24 = String_Format_mFB7DA489BD99F4670881FF50EC017BFB0A5C0987(_stringLiteral21A63027F4696ECF8A20E4EDD76736062ADC7B7D, L_19, L_23, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_24, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1026>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1032>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_25 = V_1;
 		NullCheck(L_25);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_26 = L_25->___starAnimator;
@@ -6525,7 +6525,7 @@ IL_0042:
 		AnimatorStateInfo_t1F47379289C7CE7FD588FBC3BBD79A777243B6B2 L_27;
 		L_27 = Animator_GetCurrentAnimatorStateInfo_mD5B526FA605F6CFBC31B7DE36740F6AD1E534CAD(L_26, 0, NULL);
 		V_3 = L_27;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1027>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1033>
 		int32_t L_28;
 		L_28 = AnimatorStateInfo_get_fullPathHash_m583FA8FAAC28BF65A65166D100949833E515210F((&V_3), NULL);
 		int32_t L_29 = L_28;
@@ -6533,7 +6533,7 @@ IL_0042:
 		String_t* L_31;
 		L_31 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteral5C2F79D7C9F23EF40B0E1B82393D814B3DF0C0C6, L_30, NULL);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_31, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1028>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1034>
 		float L_32;
 		L_32 = AnimatorStateInfo_get_normalizedTime_m087C7E5A72122ADF18EBB4AC8391103B9119CCC6((&V_3), NULL);
 		float L_33 = L_32;
@@ -6541,7 +6541,7 @@ IL_0042:
 		String_t* L_35;
 		L_35 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteralC060DC0E89512D826715418BF027EBDE5C1E71E8, L_34, NULL);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_35, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1029>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1035>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_36 = V_1;
 		NullCheck(L_36);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_37 = L_36->___starAnimator;
@@ -6553,7 +6553,7 @@ IL_0042:
 		String_t* L_41;
 		L_41 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteralC83BBBCDFFF87601674A7037B79ADCBC30A15149, L_40, NULL);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_41, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1032>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1038>
 		float L_42;
 		L_42 = AnimatorStateInfo_get_normalizedTime_m087C7E5A72122ADF18EBB4AC8391103B9119CCC6((&V_3), NULL);
 		if ((!(((float)L_42) == ((float)(0.0f)))))
@@ -6571,10 +6571,10 @@ IL_0042:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1034>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1040>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral8D025EB11E9D9776928A3C3BDFDD7DEDA75013E3, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1035>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1041>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_45 = V_1;
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_46 = V_1;
 		NullCheck(L_46);
@@ -6585,7 +6585,7 @@ IL_0042:
 
 IL_0132:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1039>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1045>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_48 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_48, (0.100000001f), NULL);
 		__this->___U3CU3E2__current = L_48;
@@ -6597,7 +6597,7 @@ IL_0132:
 IL_014b:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1040>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1046>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_49 = V_1;
 		NullCheck(L_49);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_50 = L_49->___starAnimator;
@@ -6605,7 +6605,7 @@ IL_014b:
 		AnimatorStateInfo_t1F47379289C7CE7FD588FBC3BBD79A777243B6B2 L_51;
 		L_51 = Animator_GetCurrentAnimatorStateInfo_mD5B526FA605F6CFBC31B7DE36740F6AD1E534CAD(L_50, 0, NULL);
 		V_3 = L_51;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1041>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1047>
 		float L_52;
 		L_52 = AnimatorStateInfo_get_normalizedTime_m087C7E5A72122ADF18EBB4AC8391103B9119CCC6((&V_3), NULL);
 		float L_53 = L_52;
@@ -6614,7 +6614,7 @@ IL_014b:
 		L_55 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteral5EB6665C5691CCAEB897B38EBC912ECF6AD556B3, L_54, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_55, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1042>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1048>
 		return (bool)0;
 	}
 }
@@ -6723,7 +6723,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CShowSummaryPanelU3Ed__81_MoveNext_m9E
 IL_0026:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:521>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:536>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_3 = V_1;
 		NullCheck(L_3);
 		bool L_4 = L_3->___isGameOver;
@@ -6744,28 +6744,28 @@ IL_0026:
 
 IL_003d:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:523>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:538>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_LogWarning_m33EF1B897E0C7C6FF538989610BFAFFEF4628CA9(_stringLiteral955E051C232CB9930F2ED851391E7CA34237011F, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:524>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:539>
 		return (bool)0;
 	}
 
 IL_0049:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:527>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:542>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_7 = V_1;
 		NullCheck(L_7);
 		L_7->___isGameOver = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:528>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:543>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_8 = V_1;
 		NullCheck(L_8);
 		L_8->___isSummaryActive = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:529>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:544>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_9 = V_1;
 		NullCheck(L_9);
 		L_9->___summaryLocked = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:531>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:546>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_10 = V_1;
 		NullCheck(L_10);
 		bool L_11 = L_10->___isVictory;
@@ -6775,19 +6775,19 @@ IL_0049:
 		L_14 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteral6D6E66D941BEEC215890229955889193C4935DAA, L_13, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_14, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:533>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:548>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_15 = V_1;
 		float L_16;
 		L_16 = Time_get_timeScale_m1F45A413D4EEA08B1E0988022512C137F6C1E616(NULL);
 		NullCheck(L_15);
 		L_15->___originalTimeScale = L_16;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:534>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:549>
 		Time_set_timeScale_mEF84EE4B2376A458387648079B426B267862D331((0.0f), NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:536>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:551>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_17 = V_1;
 		NullCheck(L_17);
 		K2_GameSummary_PrepareGameForSummary_m7FFB933EC2D1EBC45F7C7D629A528D9C4A64BDAF(L_17, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:537>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:552>
 		__this->___U3CU3E2__current = NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___U3CU3E2__current), (void*)NULL);
 		__this->___U3CU3E1__state = 1;
@@ -6797,7 +6797,7 @@ IL_0049:
 IL_00a3:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:539>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:554>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_18 = V_1;
 		NullCheck(L_18);
 		RuntimeObject* L_19;
@@ -6811,23 +6811,23 @@ IL_00a3:
 IL_00bf:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:540>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:555>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_20 = V_1;
 		NullCheck(L_20);
 		K2_GameSummary_PlayResultSound_m795158D904BA9E408C2A6C02AC30DD7FF4A7EB18(L_20, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:542>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:557>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_21 = V_1;
 		NullCheck(L_21);
 		K2_GameSummary_CalculateCoinReward_mCA5FCE5F87D8DC9A7F6DC133C63DB8E2A15163C9(L_21, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:543>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:558>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_22 = V_1;
 		NullCheck(L_22);
 		K2_GameSummary_UpdateSummaryData_m63CF677CB2B66C028A32CE238CFB81C8E55AB7B8(L_22, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:545>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:560>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_23 = V_1;
 		NullCheck(L_23);
 		K2_GameSummary_ShowPanelWithAnimation_m1AAB18D484AA91BD504D5729E79CEB0B40D1A282(L_23, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:547>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:562>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_24 = V_1;
 		NullCheck(L_24);
 		bool L_25 = L_24->___isVictory;
@@ -6856,7 +6856,7 @@ IL_00f7:
 		L_26 = String_Concat_m8855A6DE10F84DA7F4EC113CADDB59873A25573B(G_B10_1, G_B10_0, _stringLiteral5BED4CAEEB751F90CA793B9355A09B0567CF3723, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_26, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:550>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:565>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_27 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_27, (0.5f), NULL);
 		__this->___U3CU3E2__current = L_27;
@@ -6868,11 +6868,11 @@ IL_00f7:
 IL_011f:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:551>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:566>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_28 = V_1;
 		NullCheck(L_28);
 		K2_GameSummary_PlayStarAnimationDirect_m4051A35F8624CCADD4F05CC0D1FDDC44EC8692E4(L_28, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:552>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:567>
 		return (bool)0;
 	}
 }
@@ -6974,7 +6974,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CShowSummaryPanelDirectlyU3Ed__134_Mov
 IL_0026:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1384>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1392>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_3 = V_1;
 		NullCheck(L_3);
 		bool L_4 = L_3->___isGameOver;
@@ -6995,33 +6995,33 @@ IL_0026:
 
 IL_003d:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1386>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1394>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_LogWarning_m33EF1B897E0C7C6FF538989610BFAFFEF4628CA9(_stringLiteralF894E31B01E96A798B83B832949034DB61398FAD, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1387>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1395>
 		return (bool)0;
 	}
 
 IL_0049:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1390>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1398>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_7 = V_1;
 		NullCheck(L_7);
 		L_7->___summaryLocked = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1391>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1399>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_8 = V_1;
 		NullCheck(L_8);
 		L_8->___isGameOver = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1392>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1400>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_9 = V_1;
 		NullCheck(L_9);
 		L_9->___isSummaryActive = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1393>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1401>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_10 = V_1;
 		bool L_11 = __this->___isWin;
 		NullCheck(L_10);
 		L_10->___isVictory = L_11;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1395>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1403>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_12 = V_1;
 		NullCheck(L_12);
 		bool L_13 = L_12->___isVictory;
@@ -7031,19 +7031,19 @@ IL_0049:
 		L_16 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteralE2C011BCC4FE67620E8106E27CF3493DA6FD6F79, L_15, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_16, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1397>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1405>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_17 = V_1;
 		float L_18;
 		L_18 = Time_get_timeScale_m1F45A413D4EEA08B1E0988022512C137F6C1E616(NULL);
 		NullCheck(L_17);
 		L_17->___originalTimeScale = L_18;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1398>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1406>
 		Time_set_timeScale_mEF84EE4B2376A458387648079B426B267862D331((0.0f), NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1400>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1408>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_19 = V_1;
 		NullCheck(L_19);
 		K2_GameSummary_PrepareGameForSummary_m7FFB933EC2D1EBC45F7C7D629A528D9C4A64BDAF(L_19, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1401>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1409>
 		__this->___U3CU3E2__current = NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___U3CU3E2__current), (void*)NULL);
 		__this->___U3CU3E1__state = 1;
@@ -7053,7 +7053,7 @@ IL_0049:
 IL_00af:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1403>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1411>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_20 = V_1;
 		NullCheck(L_20);
 		RuntimeObject* L_21;
@@ -7067,26 +7067,26 @@ IL_00af:
 IL_00cb:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1404>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1412>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_22 = V_1;
 		NullCheck(L_22);
 		K2_GameSummary_PlayResultSound_m795158D904BA9E408C2A6C02AC30DD7FF4A7EB18(L_22, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1406>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1414>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_23 = V_1;
 		NullCheck(L_23);
 		K2_GameSummary_CalculateCoinReward_mCA5FCE5F87D8DC9A7F6DC133C63DB8E2A15163C9(L_23, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1407>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1415>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_24 = V_1;
 		NullCheck(L_24);
 		K2_GameSummary_UpdateSummaryData_m63CF677CB2B66C028A32CE238CFB81C8E55AB7B8(L_24, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1409>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1417>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_25 = V_1;
 		NullCheck(L_25);
 		K2_GameSummary_ShowPanelWithAnimation_m1AAB18D484AA91BD504D5729E79CEB0B40D1A282(L_25, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1411>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1419>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral8B2FE0079E2C10D506A42BF0EAFC976F132CD9DC, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1414>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1422>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_26 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_26, (0.5f), NULL);
 		__this->___U3CU3E2__current = L_26;
@@ -7098,11 +7098,11 @@ IL_00cb:
 IL_010d:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1415>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1423>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_27 = V_1;
 		NullCheck(L_27);
 		K2_GameSummary_PlayStarAnimationDirect_m4051A35F8624CCADD4F05CC0D1FDDC44EC8692E4(L_27, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1416>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1424>
 		return (bool)0;
 	}
 }
@@ -7195,30 +7195,30 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CTestStarsDirectCoroutineU3Ed__141_Mov
 IL_001a:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1488>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1496>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteralB34D29C1E852C4AF06E02449C1E9B8DB57ABD4CC, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1490>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1498>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		L_4->___isGameOver = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1491>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1499>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_5 = V_1;
 		NullCheck(L_5);
 		L_5->___isSummaryActive = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1492>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1500>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_6 = V_1;
 		NullCheck(L_6);
 		L_6->___summaryLocked = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1494>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1502>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_7 = V_1;
 		float L_8;
 		L_8 = Time_get_timeScale_m1F45A413D4EEA08B1E0988022512C137F6C1E616(NULL);
 		NullCheck(L_7);
 		L_7->___originalTimeScale = L_8;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1495>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1503>
 		Time_set_timeScale_mEF84EE4B2376A458387648079B426B267862D331((0.0f), NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1498>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1506>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_9 = V_1;
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_10 = V_1;
 		NullCheck(L_10);
@@ -7226,11 +7226,11 @@ IL_001a:
 		L_11 = K2_GameSummary_CalculateStars_mE25CFF680FEEC4ABA34FD7FBBC2BF225E75C4312(L_10, NULL);
 		NullCheck(L_9);
 		L_9->___currentStars = L_11;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1499>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1507>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_12 = V_1;
 		NullCheck(L_12);
 		K2_GameSummary_UpdateStarsEarnedText_mC10CFF53450C3C0F368690509736A053EB331425(L_12, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1501>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1509>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_13 = V_1;
 		NullCheck(L_13);
 		int32_t L_14 = L_13->___currentStars;
@@ -7239,11 +7239,11 @@ IL_001a:
 		String_t* L_17;
 		L_17 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteralE84FC4BC9DDE96D1A05B3FCDD999B05EF4E347EE, L_16, NULL);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_17, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1504>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1512>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_18 = V_1;
 		NullCheck(L_18);
 		K2_GameSummary_PlayStarAnimationDirect_m4051A35F8624CCADD4F05CC0D1FDDC44EC8692E4(L_18, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1506>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1514>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_19 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_19, (2.0f), NULL);
 		__this->___U3CU3E2__current = L_19;
@@ -7255,24 +7255,24 @@ IL_001a:
 IL_00a0:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1508>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1516>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_20 = V_1;
 		NullCheck(L_20);
 		float L_21 = L_20->___originalTimeScale;
 		Time_set_timeScale_mEF84EE4B2376A458387648079B426B267862D331(L_21, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1509>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1517>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_22 = V_1;
 		NullCheck(L_22);
 		L_22->___isGameOver = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1510>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1518>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_23 = V_1;
 		NullCheck(L_23);
 		L_23->___isSummaryActive = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1511>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1519>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_24 = V_1;
 		NullCheck(L_24);
 		L_24->___summaryLocked = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1512>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1520>
 		return (bool)0;
 	}
 }
@@ -7363,7 +7363,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CTriggerLookAroundAnimationDuringPause
 IL_001a:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:786>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:801>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_5 = L_4->___playerAnimator;
@@ -7376,13 +7376,13 @@ IL_001a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:788>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:803>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_7 = V_1;
 		NullCheck(L_7);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_8 = L_7->___playerAnimator;
 		NullCheck(L_8);
 		Animator_set_updateMode_mA21CC888FEEBC5A06099E5D33A6C7ACCC266B056(L_8, 2, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:790>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:805>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_9 = V_1;
 		NullCheck(L_9);
 		String_t* L_10 = L_9->___lookAroundParameter;
@@ -7394,7 +7394,7 @@ IL_001a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:791>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:806>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_12 = V_1;
 		NullCheck(L_12);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_13 = L_12->___playerAnimator;
@@ -7407,7 +7407,7 @@ IL_001a:
 
 IL_005a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:793>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:808>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_16 = V_1;
 		NullCheck(L_16);
 		CharacterVisualSwapper_tCA8BB079CE1D5D2E33E1E61524EE0F31E6AD725A* L_17 = L_16->___characterVisualSwapper;
@@ -7420,7 +7420,7 @@ IL_005a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:794>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:809>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_19 = V_1;
 		NullCheck(L_19);
 		CharacterVisualSwapper_tCA8BB079CE1D5D2E33E1E61524EE0F31E6AD725A* L_20 = L_19->___characterVisualSwapper;
@@ -7430,7 +7430,7 @@ IL_005a:
 
 IL_0073:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:796>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:811>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_21 = V_1;
 		NullCheck(L_21);
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_22 = L_21->___playerAnimator;
@@ -7440,7 +7440,7 @@ IL_0073:
 
 IL_0083:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:799>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:814>
 		WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01* L_23 = (WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01*)il2cpp_codegen_object_new(WaitForSecondsRealtime_tA8CE0AAB4B0C872B843E7973637037D17682BA01_il2cpp_TypeInfo_var);
 		WaitForSecondsRealtime__ctor_mBFC1E4F0E042D5EC6E7EEB211A2FE5193A8F6D6F(L_23, (0.100000001f), NULL);
 		__this->___U3CU3E2__current = L_23;
@@ -7452,7 +7452,7 @@ IL_0083:
 IL_009c:
 	{
 		__this->___U3CU3E1__state = (-1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:800>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:815>
 		return (bool)0;
 	}
 }
@@ -7553,7 +7553,7 @@ IL_0017:
 
 IL_0020:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:481>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:496>
 		__this->___U3CU3E2__current = NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___U3CU3E2__current), (void*)NULL);
 		__this->___U3CU3E1__state = 1;
@@ -7567,7 +7567,7 @@ IL_0030:
 
 IL_0037:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:480>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:495>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_4 = V_1;
 		NullCheck(L_4);
 		K2_QA2system_tBE6EC3CA721B3479EBD961D20C5A2849FE15B43B* L_5 = L_4->___qa2System;
@@ -7594,11 +7594,11 @@ IL_0037:
 
 IL_0052:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:483>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:498>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_10 = V_1;
 		NullCheck(L_10);
 		L_10->___waitingForLastQA2Panel = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:485>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:500>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_11 = V_1;
 		NullCheck(L_11);
 		K2_QA2system_tBE6EC3CA721B3479EBD961D20C5A2849FE15B43B* L_12 = L_11->___qa2System;
@@ -7638,14 +7638,14 @@ IL_0052:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:487>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:502>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_20 = V_1;
 		NullCheck(L_20);
 		K2_QA2system_tBE6EC3CA721B3479EBD961D20C5A2849FE15B43B* L_21 = L_20->___qa2System;
 		NullCheck(L_21);
 		int32_t L_22;
 		L_22 = K2_QA2system_GetCorrectlyAnsweredCount_m4B8219EB45FE40845B64E23D0612C83AAC9ABA98(L_21, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:488>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:503>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_23 = V_1;
 		NullCheck(L_23);
 		int32_t L_24 = L_23->___requiredQA2CorrectAnswers;
@@ -7655,8 +7655,8 @@ IL_0052:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:491>
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:492>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:506>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:507>
 		GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* L_25 = ((GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4_StaticFields*)il2cpp_codegen_static_fields_for(GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4_il2cpp_TypeInfo_var))->___Instance;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_26;
@@ -7686,7 +7686,7 @@ IL_00b9:
 IL_00ba:
 	{
 		V_2 = (bool)G_B16_0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:495>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:510>
 		bool L_30 = V_2;
 		if (L_30)
 		{
@@ -7706,7 +7706,7 @@ IL_00ba:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:497>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:512>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_34 = V_1;
 		NullCheck(L_34);
 		K2_CollectKey_tDCCB9D4375B57051FB2D7ECAA7E4BBB014025CE8* L_35 = L_34->___collectKeyScript;
@@ -7718,7 +7718,7 @@ IL_00ba:
 
 IL_00d8:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:500>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:515>
 		bool L_37 = V_2;
 		if (!L_37)
 		{
@@ -7726,14 +7726,14 @@ IL_00d8:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:502>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:517>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral22B66F0561082BD7771495E6C3F7FAD4866FF1C0, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:503>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:518>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_38 = V_1;
 		NullCheck(L_38);
 		L_38->___isVictory = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:504>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:519>
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_39 = V_1;
 		K2_GameSummary_t0E2E8EEB5E7E58132F6C1BCFD0DA99400A2BA285* L_40 = V_1;
 		NullCheck(L_40);
@@ -7747,14 +7747,14 @@ IL_00d8:
 
 IL_00fb:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:508>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:523>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral5DBB2664CEC089832E3448210E2F640CEC34BE63, NULL);
 	}
 
 IL_0105:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:513>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:528>
 		return (bool)0;
 	}
 }
@@ -7798,7 +7798,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool AnimatorExtensions_HasParameterOfType_mA
 	int32_t V_1 = 0;
 	AnimatorControllerParameter_t1FA67485445446540D4F2857762C960AE6980E02* V_2 = NULL;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1682>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1690>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_0 = ___0_animator;
 		NullCheck(L_0);
 		AnimatorControllerParameterU5BU5D_tAB05125F5DC0D98F59351CD7D8C9880DFFA8EA21* L_1;
@@ -7810,14 +7810,14 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool AnimatorExtensions_HasParameterOfType_mA
 
 IL_000b:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1682>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1690>
 		AnimatorControllerParameterU5BU5D_tAB05125F5DC0D98F59351CD7D8C9880DFFA8EA21* L_2 = V_0;
 		int32_t L_3 = V_1;
 		NullCheck(L_2);
 		int32_t L_4 = L_3;
 		AnimatorControllerParameter_t1FA67485445446540D4F2857762C960AE6980E02* L_5 = (L_2)->GetAt(static_cast<il2cpp_array_size_t>(L_4));
 		V_2 = L_5;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1684>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1692>
 		AnimatorControllerParameter_t1FA67485445446540D4F2857762C960AE6980E02* L_6 = V_2;
 		NullCheck(L_6);
 		String_t* L_7;
@@ -7842,7 +7842,7 @@ IL_000b:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1685>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1693>
 		return (bool)1;
 	}
 
@@ -7854,7 +7854,7 @@ IL_0028:
 
 IL_002c:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1682>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1690>
 		int32_t L_14 = V_1;
 		AnimatorControllerParameterU5BU5D_tAB05125F5DC0D98F59351CD7D8C9880DFFA8EA21* L_15 = V_0;
 		NullCheck(L_15);
@@ -7864,7 +7864,7 @@ IL_002c:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1687>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/Kingdom2_Scripts/K2_GameSummary.cs:1695>
 		return (bool)0;
 	}
 }
