@@ -16,6 +16,12 @@ TagManager:
   - QA2SpawnedProduct
   - Allergen
   - NutriKey
+  - SpawnPoint
+  - Fence
+  - Destination
+  - Inverted
+  - Interactable
+  - NPC
   layers:
   - Default
   - TransparentFX
