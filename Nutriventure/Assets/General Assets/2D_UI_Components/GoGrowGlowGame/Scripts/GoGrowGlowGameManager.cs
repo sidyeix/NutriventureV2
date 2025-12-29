@@ -14,14 +14,30 @@ public class GoGrowGlowGameManager : MonoBehaviour
     [Header("Player Settings")]
     public ThirdPersonController playerController;
     public Transform playerTransform;
-    public Transform playerArmature; // Reference to player's armature for scaling
+    public Transform playerArmature;
     public int maxLives = 5;
     private int currentLives;
     private float currentLifeAmount;
 
     [Header("Initial Player Settings")]
-    public float initialPlayerSpeed = 5f;    // Speed set in ThirdPersonController inspector
-    public float initialPlayerSize = 1f;     // Normal scale of player (for Go zone)
+    public float initialPlayerSpeed = 5f;
+    public float initialPlayerSize = 1f;
+
+    [Header("Knockback Settings")]
+    public bool enableKnockback = true;
+    public float defaultKnockbackForce = 3f;
+    public float knockbackDuration = 0.3f;
+    private bool isKnockbackActive = false;
+    private Vector3 knockbackDirection;
+    private float knockbackForce;
+    private Coroutine knockbackCoroutine;
+    private Vector3 currentKnockbackVelocity;
+
+    [Header("Global Damage Cooldown")]
+    public bool enableGlobalDamageCooldown = true;
+    public float globalDamageCooldown = 1f;
+    private float lastDamageTime = 0f;
+    private bool isDamageOnCooldown = false;
 
     [Header("Slider/Energy Settings")]
     public Slider energySlider;
@@ -32,8 +48,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float growFoodEnergyGain = 22f;
     public float glowFoodEnergyGain = 22f;
     public float junkFoodEnergyDeduction = 20f;
-    public float healingZoneEnergyGain = 5f;
     private float currentEnergy = 0f;
+    private float targetEnergy = 0f;
+
+    [Header("Smooth Transition Settings")]
+    public float energyTransitionSpeed = 5f;
+    public float sizeTransitionSpeed = 5f;
+    public float speedTransitionSpeed = 5f;
 
     [Header("Speed Settings - Go Mechanics")]
     public float minSpeed = 2f;
@@ -42,6 +63,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float speedBoostDuration = 3f;
     private float speedBoostTimer = 0f;
     private bool isSpeedBoosted = false;
+    private float targetSpeed = 0f;
 
     [Header("Size Settings - Grow Mechanics")]
     public float minSize = 0.56f;
@@ -49,6 +71,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private bool isSizeBoosted = false;
     private float sizeBoostTimer = 0f;
     public float sizeBoostDuration = 3f;
+    private float targetSize = 1f;
 
     [Header("UI Elements")]
     public List<GameObject> uiElementsToDisable = new List<GameObject>();
@@ -56,7 +79,18 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public TMP_Text scoreText;
     public TMP_Text livesText;
     public Button startButton;
-    public Canvas gameCanvas; // Reference to the main game canvas
+    public Canvas gameCanvas;
+
+    [Header("Damage UI")]
+    public GameObject damagePanel; // Drag your damage panel UI GameObject here
+    public float damagePanelDuration = 1f;
+    private Coroutine damagePanelCoroutine;
+
+    [Header("One Life UI")]
+    public GameObject oneLifePanel;
+    public float oneLifeCheckInterval = 0.5f;
+    private Coroutine oneLifeCheckCoroutine;
+    private bool wasOneLifeLastCheck = false;
 
     [Header("Heart System")]
     public Transform heartContainer;
@@ -78,8 +112,20 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private int score = 0;
     private FoodType currentFoodZone = FoodType.Go;
 
-    [Header("Respawn Points")]
-    public Transform[] spawnPoints;
+    [Header("Checkpoint System")]
+    public Checkpoint startCheckpoint;
+    private Checkpoint currentCheckpoint;
+    private bool isRespawning = false;
+
+    [Header("Respawn Settings")]
+    public float deathAnimationDuration = 1f;
+    public float respawnDelay = 2f;
+    private Coroutine respawnCoroutine;
+
+    [Header("Respawn Effect")]
+    public GameObject respawnEffect;
+    public float respawnEffectDuration = 1f;
+    private Coroutine respawnEffectCoroutine;
 
     [Header("Food Settings")]
     public int foodPoints = 100;
@@ -94,6 +140,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public string stomachAcheTrigger = "isStomachAche";
     public string strongTrigger = "isStrong";
     public string glowTrigger = "isGlow";
+    public string damageTrigger = "isDamaged";
+    public string deathTrigger = "isDead";
+    private Coroutine resetDamageCoroutine;
 
     [Header("Player Visual Effects")]
     public GameObject foodReactionEffect;
@@ -116,31 +165,31 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public AudioClip sizeBoostSound;
     public AudioClip glowBoostSound;
     public AudioClip loseLifeSound;
-    public AudioClip healingZoneSound;
     public AudioClip collectionSound;
+    public AudioClip respawnSound;
+    public AudioClip knockbackSound;
+    public AudioClip damageSound;
+    public AudioClip deathSound;
 
     [Header("Boost Effects")]
     public GameObject speedBoostEffect;
     public GameObject sizeBoostEffect;
     public GameObject glowBoostEffect;
 
-    // Healing zone tracking
-    private bool inHealingZone = false;
-    private AudioSource healingZoneAudioSource;
+    [Header("Food Feedback UI")]
+    public FoodFeedbackUI foodFeedbackUI;
 
-    // Animation coroutine tracking
+    private bool inHealingZone = false;
     private Coroutine resetExciteCoroutine;
     private Coroutine resetStomachAcheCoroutine;
     private Coroutine resetStrongCoroutine;
     private Coroutine resetGlowCoroutine;
     private Coroutine spriteDisplayCoroutine;
-
-    // Effect tracking coroutines
     private Coroutine stopFoodReactionCoroutine;
     private Coroutine stopBadEffectCoroutine;
-
-    // Track if we've initialized player settings
     private bool playerSettingsInitialized = false;
+    private CharacterController characterController;
+    private float originalSpeed;
 
     private void Awake()
     {
@@ -156,13 +205,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private void Start()
     {
-        // Hide game canvas at start if assigned
-        if (gameCanvas != null)
-        {
-            gameCanvas.gameObject.SetActive(false);
-        }
-
-        // Initialize UI
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(false);
         if (energySlider != null)
         {
             energySlider.maxValue = 100f;
@@ -170,43 +213,342 @@ public class GoGrowGlowGameManager : MonoBehaviour
             energySlider.value = currentEnergy;
         }
 
-        // Initialize player settings from inspector
-        InitializePlayerSettings();
-
-        // Initialize heart system
-        InitializeHeartSystem();
-
-        // Hide visual effects at start
-        HideAllVisualEffects();
-
-        // Hide boost UI at start
-        HideAllBoostUI();
-
-        // Create healing zone audio source
-        if (healingZoneSound != null)
+        if (playerController != null)
         {
-            healingZoneAudioSource = gameObject.AddComponent<AudioSource>();
-            healingZoneAudioSource.clip = healingZoneSound;
-            healingZoneAudioSource.loop = true;
-            healingZoneAudioSource.volume = 0.5f;
+            characterController = playerController.GetComponent<CharacterController>();
+            originalSpeed = playerController.MoveSpeed;
+        }
+
+        InitializePlayerSettings();
+        InitializeHeartSystem();
+        HideAllVisualEffects();
+        HideAllBoostUI();
+        if (oneLifePanel != null) oneLifePanel.SetActive(false);
+
+        // Hide damage panel at start
+        if (damagePanel != null) damagePanel.SetActive(false);
+
+        targetEnergy = currentEnergy;
+        targetSpeed = initialPlayerSpeed;
+        targetSize = initialPlayerSize;
+
+        if (startCheckpoint != null)
+        {
+            currentCheckpoint = startCheckpoint;
+            startCheckpoint.Activate();
         }
 
         UpdateUI();
         SetGameActive(false);
     }
 
+    private void Update()
+    {
+        if (!gameIsActive) return;
+
+        gameTimer += Time.deltaTime;
+        UpdateTimerDisplay();
+
+        if (!inHealingZone && !isSpeedBoosted && !isSizeBoosted)
+        {
+            targetEnergy -= energyDecreaseRate * Time.deltaTime;
+            targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+        }
+
+        if (Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
+        {
+            currentEnergy = Mathf.Lerp(currentEnergy, targetEnergy, energyTransitionSpeed * Time.deltaTime);
+            if (energySlider != null) energySlider.value = currentEnergy;
+        }
+        else currentEnergy = targetEnergy;
+
+        if (currentEnergy <= 0f) LoseLife();
+
+        if (isKnockbackActive && characterController != null)
+        {
+            characterController.Move(currentKnockbackVelocity * Time.deltaTime);
+        }
+
+        switch (currentFoodZone)
+        {
+            case FoodType.Go: UpdatePlayerSpeed(); break;
+            case FoodType.Grow: UpdatePlayerSize(); break;
+        }
+
+        if (isSpeedBoosted)
+        {
+            speedBoostTimer -= Time.deltaTime;
+            if (speedBoostTimer <= 0f) EndSpeedBoost();
+        }
+
+        if (isSizeBoosted)
+        {
+            sizeBoostTimer -= Time.deltaTime;
+            if (sizeBoostTimer <= 0f) EndSizeBoost();
+        }
+    }
+
+    // ====== DAMAGE PANEL SYSTEM ======
+    public void ShowDamagePanel()
+    {
+        if (damagePanel == null)
+        {
+            Debug.LogError("Damage panel is NULL! Assign it in the inspector!");
+            return;
+        }
+
+        if (!gameIsActive)
+        {
+            Debug.LogWarning("Game is not active!");
+            return;
+        }
+
+        // Stop any existing panel coroutine
+        if (damagePanelCoroutine != null)
+        {
+            StopCoroutine(damagePanelCoroutine);
+        }
+
+        // Show the panel - MAKE IT BRIGHT RED SO YOU CAN SEE IT
+        damagePanel.SetActive(true);
+
+        // Make sure it's visible
+        Image panelImage = damagePanel.GetComponent<Image>();
+        if (panelImage != null)
+        {
+            panelImage.color = Color.red;
+        }
+
+        Debug.Log("DAMAGE PANEL SHOWN!");
+
+        // Start hiding it after duration
+        damagePanelCoroutine = StartCoroutine(HideDamagePanelAfterDelay());
+    }
+
+    private IEnumerator HideDamagePanelAfterDelay()
+    {
+        yield return new WaitForSeconds(damagePanelDuration);
+
+        if (damagePanel != null)
+        {
+            damagePanel.SetActive(false);
+            Debug.Log("Damage panel hidden");
+        }
+
+        damagePanelCoroutine = null;
+    }
+
+    public void ForceHideDamagePanel()
+    {
+        if (damagePanelCoroutine != null)
+        {
+            StopCoroutine(damagePanelCoroutine);
+            damagePanelCoroutine = null;
+        }
+
+        if (damagePanel != null)
+        {
+            damagePanel.SetActive(false);
+        }
+    }
+
+    // ====== GLOBAL DAMAGE COOLDOWN ======
+    public bool CanTakeDamage()
+    {
+        if (!enableGlobalDamageCooldown || !gameIsActive) return true;
+
+        if (isDamageOnCooldown || Time.time - lastDamageTime < globalDamageCooldown)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void StartDamageCooldown()
+    {
+        if (!enableGlobalDamageCooldown) return;
+
+        lastDamageTime = Time.time;
+        isDamageOnCooldown = true;
+        Invoke(nameof(ResetDamageCooldown), globalDamageCooldown);
+    }
+
+    private void ResetDamageCooldown()
+    {
+        isDamageOnCooldown = false;
+    }
+
+    // ====== KNOCKBACK SYSTEM ======
+    public void ApplyKnockback(Vector3 direction, float force, float duration)
+    {
+        if (!enableKnockback || isRespawning || !gameIsActive || playerTransform == null) return;
+
+        if (knockbackCoroutine != null) StopCoroutine(knockbackCoroutine);
+        knockbackCoroutine = StartCoroutine(PerformKnockback(direction, force, duration));
+    }
+
+    private IEnumerator PerformKnockback(Vector3 direction, float force, float duration)
+    {
+        isKnockbackActive = true;
+        knockbackDirection = direction.normalized;
+        knockbackForce = force;
+
+        currentKnockbackVelocity = knockbackDirection * force;
+
+        if (knockbackSound != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(knockbackSound);
+
+        float elapsedTime = 0f;
+        while (elapsedTime < duration && playerTransform != null)
+        {
+            float t = elapsedTime / duration;
+            float currentForce = Mathf.Lerp(force, 0f, t);
+            currentKnockbackVelocity = knockbackDirection * currentForce;
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        currentKnockbackVelocity = Vector3.zero;
+        isKnockbackActive = false;
+        knockbackCoroutine = null;
+    }
+
+    public void StopKnockback()
+    {
+        if (knockbackCoroutine != null)
+        {
+            StopCoroutine(knockbackCoroutine);
+            knockbackCoroutine = null;
+        }
+        currentKnockbackVelocity = Vector3.zero;
+        isKnockbackActive = false;
+    }
+
+    // ====== ONE LIFE UI SYSTEM ======
+    public void StartOneLifeCheck()
+    {
+        if (oneLifeCheckCoroutine != null) StopCoroutine(oneLifeCheckCoroutine);
+        oneLifeCheckCoroutine = StartCoroutine(CheckOneLifeStatus());
+    }
+
+    public void StopOneLifeCheck()
+    {
+        if (oneLifeCheckCoroutine != null)
+        {
+            StopCoroutine(oneLifeCheckCoroutine);
+            oneLifeCheckCoroutine = null;
+        }
+        if (oneLifePanel != null) oneLifePanel.SetActive(false);
+        wasOneLifeLastCheck = false;
+    }
+
+    private IEnumerator CheckOneLifeStatus()
+    {
+        while (gameIsActive)
+        {
+            CheckAndUpdateOneLifeUI();
+            yield return new WaitForSeconds(oneLifeCheckInterval);
+        }
+    }
+
+    private void CheckAndUpdateOneLifeUI()
+    {
+        if (oneLifePanel == null) return;
+        bool isOneLifeNow = currentLifeAmount <= 1f && currentLifeAmount > 0f;
+
+        if (isOneLifeNow != wasOneLifeLastCheck)
+        {
+            oneLifePanel.SetActive(isOneLifeNow);
+            wasOneLifeLastCheck = isOneLifeNow;
+        }
+    }
+
+    // ====== DAMAGE ANIMATION SYSTEM ======
+    public void TriggerDamageAnimation(string triggerName, float duration = 1f)
+    {
+        if (characterAnimator != null && !string.IsNullOrEmpty(triggerName))
+        {
+            if (resetDamageCoroutine != null) StopCoroutine(resetDamageCoroutine);
+            characterAnimator.SetBool(triggerName, true);
+            resetDamageCoroutine = StartCoroutine(ResetDamageAnimation(triggerName, duration));
+
+            // SHOW DAMAGE PANEL WHEN DAMAGE ANIMATION TRIGGERS
+            ShowDamagePanelWithAnimation();
+        }
+    }
+
+
+    private void ShowDamagePanelWithAnimation()
+    {
+        Debug.Log("=== SHOWING DAMAGE PANEL WITH ANIMATION ===");
+
+        if (damagePanel == null)
+        {
+            Debug.LogError("Damage panel is NULL!");
+            return;
+        }
+
+        Debug.Log("Panel exists: " + damagePanel.name);
+        Debug.Log("Setting panel ACTIVE = true");
+
+        // DIRECT SET - NO COROUTINE
+        damagePanel.SetActive(true);
+
+        // Hide after 1 second
+        StartCoroutine(HidePanelAfterOneSecond());
+    }
+
+    private IEnumerator HidePanelAfterOneSecond()
+    {
+        yield return new WaitForSeconds(1f);
+
+        if (damagePanel != null)
+        {
+            Debug.Log("Setting panel ACTIVE = false");
+            damagePanel.SetActive(false);
+        }
+    }
+
+
+    private IEnumerator ResetDamageAnimation(string triggerName, float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
+        resetDamageCoroutine = null;
+    }
+
+    // ====== DEATH ANIMATION SYSTEM ======
+    private void TriggerDeathAnimation()
+    {
+        if (characterAnimator != null && !string.IsNullOrEmpty(deathTrigger))
+        {
+            characterAnimator.SetBool(deathTrigger, true);
+            if (deathSound != null && AudioHandler.Instance != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(deathSound);
+        }
+    }
+
+    private void ResetDeathAnimation()
+    {
+        if (characterAnimator != null && !string.IsNullOrEmpty(deathTrigger))
+            characterAnimator.SetBool(deathTrigger, false);
+    }
+
+    // ====== INITIALIZATION ======
     private void InitializePlayerSettings()
     {
-        // Set player speed to initial value (from inspector)
         if (playerController != null)
         {
             playerController.MoveSpeed = initialPlayerSpeed;
+            targetSpeed = initialPlayerSpeed;
         }
 
-        // Set player size to initial value (normal size = 1)
         if (playerArmature != null)
         {
             playerArmature.localScale = Vector3.one * initialPlayerSize;
+            targetSize = initialPlayerSize;
         }
 
         playerSettingsInitialized = true;
@@ -216,14 +558,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (heartContainer == null || heartPrefab == null) return;
 
-        // Clear existing hearts
-        foreach (Transform child in heartContainer)
-        {
-            Destroy(child.gameObject);
-        }
+        foreach (Transform child in heartContainer) Destroy(child.gameObject);
         heartImages.Clear();
 
-        // Create hearts based on maxLives
         for (int i = 0; i < maxLives; i++)
         {
             GameObject heartObj = Instantiate(heartPrefab, heartContainer);
@@ -240,526 +577,271 @@ public class GoGrowGlowGameManager : MonoBehaviour
         UpdateHeartUI();
     }
 
-    private void Update()
+    // ====== GAME FLOW ======
+    public void StartGame()
     {
-        if (!gameIsActive) return;
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
+        gameIsActive = true;
+        currentLives = maxLives;
+        currentLifeAmount = maxLives;
+        currentEnergy = 0f;
+        targetEnergy = 0f;
+        score = 0;
+        gameTimer = 0f;
+        currentFoodZone = FoodType.Go;
 
-        // Update timer
-        gameTimer += Time.deltaTime;
-        UpdateTimerDisplay();
+        Checkpoint[] allCheckpoints = FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
+        foreach (Checkpoint checkpoint in allCheckpoints) checkpoint.ResetCheckpoint();
 
-        // Handle energy decrease (if not in boost)
-        if (!isSpeedBoosted && !isSizeBoosted && !inHealingZone)
+        if (startCheckpoint != null)
         {
-            UpdateEnergy();
+            currentCheckpoint = startCheckpoint;
+            startCheckpoint.Activate();
         }
 
-        // Update player mechanics based on current zone
-        switch (currentFoodZone)
+        if (playerController != null)
         {
-            case FoodType.Go:
-                UpdatePlayerSpeed();
-                break;
-            case FoodType.Grow:
-                UpdatePlayerSize();
-                break;
-            case FoodType.Glow:
-                // We'll implement glow mechanics later
-                break;
+            playerController.MoveSpeed = minSpeed;
+            targetSpeed = minSpeed;
         }
 
-        // Handle boost timers
-        if (isSpeedBoosted)
-        {
-            speedBoostTimer -= Time.deltaTime;
-            if (speedBoostTimer <= 0f)
-            {
-                EndSpeedBoost();
-            }
-        }
-
-        if (isSizeBoosted)
-        {
-            sizeBoostTimer -= Time.deltaTime;
-            if (sizeBoostTimer <= 0f)
-            {
-                EndSizeBoost();
-            }
-        }
-
-        // Handle healing zone
-        if (inHealingZone)
-        {
-            HealPlayer();
-        }
-    }
-
-    public void SetCurrentFoodZone(FoodType zoneType, Color fillColor, Sprite handleSprite)
-    {
-        if (!gameIsActive) return; // Only allow zone switching during active game
-
-        currentFoodZone = zoneType;
-
-        // Update UI colors
-        if (sliderFillImage != null)
-        {
-            sliderFillImage.color = fillColor;
-        }
-
-        if (sliderHandleImage != null && handleSprite != null)
-        {
-            sliderHandleImage.sprite = handleSprite;
-        }
-
-        // If switching to Grow zone, initialize size based on current energy
-        if (zoneType == FoodType.Grow && playerArmature != null)
-        {
-            UpdatePlayerSize();
-        }
-        // If switching to Go zone, set player back to initial size
-        else if (zoneType == FoodType.Go && playerArmature != null)
+        if (playerArmature != null)
         {
             playerArmature.localScale = Vector3.one * initialPlayerSize;
+            targetSize = initialPlayerSize;
         }
 
-        Debug.Log($"Switched to {zoneType} zone");
-    }
-
-    private void UpdateEnergy()
-    {
-        currentEnergy -= energyDecreaseRate * Time.deltaTime;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
-
-        if (energySlider != null)
-            energySlider.value = currentEnergy;
-
-        if (currentEnergy <= 0f)
+        if (characterAnimator != null)
         {
-            LoseLife();
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+            characterAnimator.SetBool(deathTrigger, false);
         }
+
+        isRespawning = false;
+        StopKnockback();
+        UpdateHeartUI();
+        HideAllVisualEffects();
+        HideAllBoostUI();
+        StartOneLifeCheck();
+
+        foreach (GameObject uiElement in uiElementsToDisable)
+            if (uiElement != null) uiElement.SetActive(false);
+
+        if (startButton != null) startButton.gameObject.SetActive(false);
+        if (foodSpawner != null) foodSpawner.StartSpawning();
+        else Debug.LogError("FoodSpawner not assigned to GameManager!");
+
+        UpdateUI();
+        RespawnPlayer();
+        Debug.Log("Game Started!");
     }
 
+    public void EndGame()
+    {
+        gameIsActive = false;
+        StopOneLifeCheck();
+        StopKnockback();
+
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(false);
+        if (foodSpawner != null) foodSpawner.StopSpawning();
+
+        StopAllCoroutines();
+        if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
+        if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
+
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+            characterAnimator.SetBool(deathTrigger, false);
+        }
+
+        isRespawning = false;
+
+        if (playerSettingsInitialized)
+        {
+            if (playerController != null)
+            {
+                playerController.MoveSpeed = initialPlayerSpeed;
+                targetSpeed = initialPlayerSpeed;
+            }
+
+            if (playerArmature != null)
+            {
+                playerArmature.localScale = Vector3.one * initialPlayerSize;
+                targetSize = initialPlayerSize;
+            }
+        }
+
+        currentEnergy = 0f;
+        targetEnergy = 0f;
+        inHealingZone = false;
+        HideAllVisualEffects();
+        HideAllBoostUI();
+
+        foreach (GameObject uiElement in uiElementsToDisable)
+            if (uiElement != null) uiElement.SetActive(true);
+
+        if (startButton != null) startButton.gameObject.SetActive(true);
+        Debug.Log("Game Ended!");
+    }
+
+    // ====== PLAYER MECHANICS ======
     private void UpdatePlayerSpeed()
     {
         if (playerController == null) return;
 
-        if (isSpeedBoosted)
-        {
-            playerController.MoveSpeed = speedBoostAmount;
-        }
-        else
-        {
-            float energyPercentage = currentEnergy / 100f;
-            playerController.MoveSpeed = Mathf.Lerp(minSpeed, maxSpeed, energyPercentage);
-        }
+        if (isSpeedBoosted) targetSpeed = speedBoostAmount;
+        else targetSpeed = Mathf.Lerp(minSpeed, maxSpeed, currentEnergy / 100f);
+
+        if (Mathf.Abs(playerController.MoveSpeed - targetSpeed) > 0.01f)
+            playerController.MoveSpeed = Mathf.Lerp(playerController.MoveSpeed, targetSpeed, speedTransitionSpeed * Time.deltaTime);
+        else playerController.MoveSpeed = targetSpeed;
     }
 
     private void UpdatePlayerSize()
     {
         if (playerArmature == null) return;
 
-        if (isSizeBoosted)
+        if (isSizeBoosted) targetSize = maxSize;
+        else targetSize = Mathf.Lerp(minSize, maxSize, currentEnergy / 100f);
+
+        if (Mathf.Abs(playerArmature.localScale.x - targetSize) > 0.01f)
         {
-            playerArmature.localScale = Vector3.one * maxSize;
+            float newSize = Mathf.Lerp(playerArmature.localScale.x, targetSize, sizeTransitionSpeed * Time.deltaTime);
+            playerArmature.localScale = Vector3.one * newSize;
         }
-        else
-        {
-            float energyPercentage = currentEnergy / 100f;
-            float currentSize = Mathf.Lerp(minSize, maxSize, energyPercentage);
-            playerArmature.localScale = Vector3.one * currentSize;
-        }
+        else playerArmature.localScale = Vector3.one * targetSize;
     }
 
-    public void StartGame()
+    public void SetCurrentFoodZone(FoodType zoneType, Color fillColor, Sprite handleSprite)
     {
-        // Show game canvas
-        if (gameCanvas != null)
-        {
-            gameCanvas.gameObject.SetActive(true);
-        }
+        if (!gameIsActive) return;
 
-        gameIsActive = true;
-        currentLives = maxLives;
-        currentLifeAmount = maxLives;
-        currentEnergy = 0f; // Start with 0 energy
-        score = 0;
-        gameTimer = 0f;
-        currentFoodZone = FoodType.Go; // Start with Go mechanics
+        currentFoodZone = zoneType;
+        if (sliderFillImage != null) sliderFillImage.color = fillColor;
+        if (sliderHandleImage != null && handleSprite != null) sliderHandleImage.sprite = handleSprite;
 
-        // Set initial player speed to minimum (when game starts in Go zone)
-        if (playerController != null)
-        {
-            playerController.MoveSpeed = minSpeed;
-        }
+        if (zoneType == FoodType.Grow && playerArmature != null) UpdatePlayerSize();
+        else if (zoneType == FoodType.Go && playerArmature != null) targetSize = initialPlayerSize;
 
-        // Player stays at initial size (1) for Go zone
-        if (playerArmature != null)
-        {
-            playerArmature.localScale = Vector3.one * initialPlayerSize;
-        }
-
-        // Reset animation state
-        if (characterAnimator != null)
-        {
-            characterAnimator.SetBool(exciteTrigger, false);
-            characterAnimator.SetBool(stomachAcheTrigger, false);
-            characterAnimator.SetBool(strongTrigger, false);
-            characterAnimator.SetBool(glowTrigger, false);
-        }
-
-        // Update hearts
-        UpdateHeartUI();
-
-        // Hide all visual effects
-        HideAllVisualEffects();
-
-        // Hide all boost UI
-        HideAllBoostUI();
-
-        // Disable UI elements
-        foreach (GameObject uiElement in uiElementsToDisable)
-        {
-            if (uiElement != null)
-                uiElement.SetActive(false);
-        }
-
-        // Disable start button
-        if (startButton != null)
-            startButton.gameObject.SetActive(false);
-
-        // START FOOD SPAWNING
-        if (foodSpawner != null)
-        {
-            foodSpawner.StartSpawning();
-        }
-        else
-        {
-            Debug.LogError("FoodSpawner not assigned to GameManager!");
-        }
-
-        UpdateUI();
-        RespawnPlayer();
-
-        Debug.Log("Game Started! Timer started, Energy: 0, Player at normal scale: " + initialPlayerSize);
+        Debug.Log($"Switched to {zoneType} zone");
     }
 
-    public void EndGame()
+    // ====== FOOD COLLECTION ======
+    public void CollectHealing(float amount)
     {
-        gameIsActive = false;
-
-        // Hide game canvas
-        if (gameCanvas != null)
-        {
-            gameCanvas.gameObject.SetActive(false);
-        }
-
-        // STOP FOOD SPAWNING
-        if (foodSpawner != null)
-        {
-            foodSpawner.StopSpawning();
-        }
-
-        // Stop all running coroutines
-        StopAllCoroutines();
-
-        // Reset animation state
-        if (characterAnimator != null)
-        {
-            characterAnimator.SetBool(exciteTrigger, false);
-            characterAnimator.SetBool(stomachAcheTrigger, false);
-            characterAnimator.SetBool(strongTrigger, false);
-            characterAnimator.SetBool(glowTrigger, false);
-        }
-
-        // Reset player to initial settings
-        if (playerSettingsInitialized)
-        {
-            if (playerController != null)
-            {
-                playerController.MoveSpeed = initialPlayerSpeed;
-            }
-
-            if (playerArmature != null)
-            {
-                playerArmature.localScale = Vector3.one * initialPlayerSize;
-            }
-        }
-
-        // Hide all visual effects
-        HideAllVisualEffects();
-
-        // Hide all boost UI
-        HideAllBoostUI();
-
-        // Stop healing zone audio
-        if (healingZoneAudioSource != null && healingZoneAudioSource.isPlaying)
-        {
-            healingZoneAudioSource.Stop();
-        }
-
-        // Re-enable UI elements
-        foreach (GameObject uiElement in uiElementsToDisable)
-        {
-            if (uiElement != null)
-                uiElement.SetActive(true);
-        }
-
-        // Re-enable start button
-        if (startButton != null)
-            startButton.gameObject.SetActive(true);
-
-        Debug.Log("Game Ended! Player returned to initial settings");
-    }
-
-    private void HideAllVisualEffects()
-    {
-        // Hide feedback sprite
-        if (feedbackSpriteObject != null)
-        {
-            feedbackSpriteObject.SetActive(false);
-        }
-
-        // Hide player effects
-        if (foodReactionEffect != null)
-        {
-            foodReactionEffect.SetActive(false);
-        }
-        if (badEffect != null)
-        {
-            badEffect.SetActive(false);
-        }
-
-        // Hide boost effects
-        if (speedBoostEffect != null)
-        {
-            speedBoostEffect.SetActive(false);
-        }
-        if (sizeBoostEffect != null)
-        {
-            sizeBoostEffect.SetActive(false);
-        }
-        if (glowBoostEffect != null)
-        {
-            glowBoostEffect.SetActive(false);
-        }
-    }
-
-    private void HideAllBoostUI()
-    {
-        // Hide speed lines
-        if (speedLinesCanvas != null)
-        {
-            speedLinesCanvas.gameObject.SetActive(false);
-        }
-
-        // Hide boost indicators
-        if (speedBoostIndicator != null)
-            speedBoostIndicator.SetActive(false);
-        if (sizeBoostIndicator != null)
-            sizeBoostIndicator.SetActive(false);
-        if (glowBoostIndicator != null)
-            glowBoostIndicator.SetActive(false);
-    }
-
-    private void ShowBoostUI(FoodType boostType)
-    {
-        HideAllBoostUI(); // Hide all first
-
-        switch (boostType)
-        {
-            case FoodType.Go:
-                if (speedLinesCanvas != null)
-                    speedLinesCanvas.gameObject.SetActive(true);
-                if (speedBoostIndicator != null)
-                    speedBoostIndicator.SetActive(true);
-                break;
-            case FoodType.Grow:
-                if (sizeBoostIndicator != null)
-                    sizeBoostIndicator.SetActive(true);
-                break;
-            case FoodType.Glow:
-                if (glowBoostIndicator != null)
-                    glowBoostIndicator.SetActive(true);
-                break;
-        }
+        if (!gameIsActive || !inHealingZone) return;
+        targetEnergy += amount;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
     }
 
     public void CollectGoFood(GameObject foodObject = null)
     {
-        if (!gameIsActive) return; // Only collect food during active game
+        if (!gameIsActive) return;
 
-        // Play generic collection sound
         PlayCollectionSound();
-
-        currentEnergy += goFoodEnergyGain;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
+        targetEnergy += goFoodEnergyGain;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         score += foodPoints;
 
-        // Trigger animation
         TriggerExciteAnimation();
-
-        // Show player effect
         ShowFoodReactionEffect();
-
-        // Show feedback sprite
         ShowFeedbackSprite(goFoodSprite);
 
-        // Check for speed boost (only in Go zone)
         if (currentFoodZone == FoodType.Go)
         {
-            if (currentEnergy >= 100f && !isSpeedBoosted)
-            {
-                StartSpeedBoost();
-            }
-            else if (isSpeedBoosted)
-            {
-                speedBoostTimer += 2f;
-                Debug.Log("Speed boost extended by 2 seconds!");
-            }
-            else
-            {
-                PlayGoFoodSound();
-            }
+            if (targetEnergy >= 100f && !isSpeedBoosted) StartSpeedBoost();
+            else if (isSpeedBoosted) speedBoostTimer += 2f;
+            else PlayGoFoodSound();
         }
 
         UpdateUI();
-        Debug.Log($"Go Food Collected! Energy: {currentEnergy}, Score: {score}");
     }
 
     public void CollectGrowFood(GameObject foodObject = null)
     {
         if (!gameIsActive) return;
 
-        // Play generic collection sound
         PlayCollectionSound();
-
-        currentEnergy += growFoodEnergyGain;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
+        targetEnergy += growFoodEnergyGain;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         score += foodPoints;
 
-        // Trigger animation
         TriggerStrongAnimation();
-
-        // Show player effect
         ShowFoodReactionEffect();
-
-        // Show feedback sprite
         ShowFeedbackSprite(growFoodSprite);
 
-        // Check for size boost (only in Grow zone)
         if (currentFoodZone == FoodType.Grow)
         {
-            if (currentEnergy >= 100f && !isSizeBoosted)
-            {
-                StartSizeBoost();
-            }
-            else if (isSizeBoosted)
-            {
-                sizeBoostTimer += 2f;
-                Debug.Log("Size boost extended by 2 seconds!");
-            }
-            else
-            {
-                PlayGrowFoodSound();
-            }
+            if (targetEnergy >= 100f && !isSizeBoosted) StartSizeBoost();
+            else if (isSizeBoosted) sizeBoostTimer += 2f;
+            else PlayGrowFoodSound();
         }
 
         UpdateUI();
-        Debug.Log($"Grow Food Collected! Energy: {currentEnergy}, Score: {score}");
     }
 
     public void CollectGlowFood(GameObject foodObject = null)
     {
         if (!gameIsActive) return;
 
-        // Play generic collection sound
         PlayCollectionSound();
-
-        currentEnergy += glowFoodEnergyGain;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
+        targetEnergy += glowFoodEnergyGain;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         score += foodPoints;
 
-        // Trigger animation
         TriggerGlowAnimation();
-
-        // Show player effect
         ShowFoodReactionEffect();
-
-        // Show feedback sprite
         ShowFeedbackSprite(glowFoodSprite);
-
-        // We'll implement glow boost mechanics later
         PlayGlowFoodSound();
 
         UpdateUI();
-        Debug.Log($"Glow Food Collected! Energy: {currentEnergy}, Score: {score}");
     }
 
     public void CollectJunkFood(GameObject foodObject = null)
     {
         if (!gameIsActive) return;
 
-        // Play generic collection sound
         PlayCollectionSound();
-
-        currentEnergy -= junkFoodEnergyDeduction;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
+        targetEnergy -= junkFoodEnergyDeduction;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         score = Mathf.Max(0, score - junkFoodPointsDeduction);
 
-        // Play sound
         PlayJunkFoodSound();
-
-        // Trigger stomach ache animation
         TriggerStomachAcheAnimation();
-
-        // Show bad effect
         ShowBadEffect();
-
-        // Show feedback sprite
         ShowFeedbackSprite(junkFoodSprite);
 
         UpdateUI();
-        Debug.Log($"Junk Food Collected! Energy: {currentEnergy}, Score: {score}");
     }
 
+    // ====== BOOSTS ======
     private void StartSpeedBoost()
     {
         isSpeedBoosted = true;
         speedBoostTimer = speedBoostDuration;
 
-        // Play speed boost sound
         if (AudioHandler.Instance != null && speedBoostSound != null)
-        {
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(speedBoostSound);
-        }
 
-        // Show speed boost effect
-        if (speedBoostEffect != null)
-        {
-            speedBoostEffect.SetActive(true);
-        }
-
-        // Show speed UI
+        if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Go);
-
-        Debug.Log("Speed Boost Activated for " + speedBoostDuration + " seconds!");
     }
 
     private void EndSpeedBoost()
     {
         isSpeedBoosted = false;
         speedBoostTimer = 0f;
-
-        // Hide speed boost effect
-        if (speedBoostEffect != null)
-        {
-            speedBoostEffect.SetActive(false);
-        }
-
-        // Hide speed UI
+        if (speedBoostEffect != null) speedBoostEffect.SetActive(false);
         HideAllBoostUI();
-
-        Debug.Log("Speed Boost Ended!");
     }
 
     private void StartSizeBoost()
@@ -767,114 +849,210 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isSizeBoosted = true;
         sizeBoostTimer = sizeBoostDuration;
 
-        // Play size boost sound
         if (AudioHandler.Instance != null && sizeBoostSound != null)
-        {
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
-        }
 
-        // Show size boost effect
-        if (sizeBoostEffect != null)
-        {
-            sizeBoostEffect.SetActive(true);
-        }
-
-        // Show size UI
+        if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Grow);
-
-        Debug.Log("Size Boost Activated for " + sizeBoostDuration + " seconds!");
     }
 
     private void EndSizeBoost()
     {
         isSizeBoosted = false;
         sizeBoostTimer = 0f;
-
-        // Hide size boost effect
-        if (sizeBoostEffect != null)
-        {
-            sizeBoostEffect.SetActive(false);
-        }
-
-        // Hide size UI
+        if (sizeBoostEffect != null) sizeBoostEffect.SetActive(false);
         HideAllBoostUI();
-
-        Debug.Log("Size Boost Ended!");
     }
 
+    // ====== DAMAGE & LIFE LOSS ======
     public void LoseLifeAmount(float amount, bool respawnAtCheckpoint = true)
     {
-        if (!gameIsActive) return;
+        if (!gameIsActive || isRespawning) return;
 
-        currentLifeAmount -= amount;
-        currentLifeAmount = Mathf.Max(0f, currentLifeAmount);
+        // DON'T show panel here - DamageObject will show it when contact happens
+        StartDamageCooldown();
 
-        // Update currentLives (integer part)
-        currentLives = Mathf.CeilToInt(currentLifeAmount);
-
-        // Play lose life sound
-        if (AudioHandler.Instance != null && loseLifeSound != null)
+        if (respawnAtCheckpoint)
         {
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(loseLifeSound);
-        }
-
-        UpdateHeartUI();
-
-        if (currentLifeAmount <= 0f)
-        {
-            EndGame();
-            Debug.Log("Game Over! No lives left.");
+            LoseLife();
         }
         else
         {
-            if (respawnAtCheckpoint)
+            currentLifeAmount -= amount;
+            currentLifeAmount = Mathf.Max(0f, currentLifeAmount);
+            currentLives = Mathf.CeilToInt(currentLifeAmount);
+
+            CheckAndUpdateOneLifeUI();
+
+            if (damageSound != null && AudioHandler.Instance != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(damageSound);
+
+            UpdateHeartUI();
+
+            if (currentLifeAmount <= 0f)
             {
-                RespawnPlayer();
-                currentEnergy = 50f;
+                EndGame();
             }
-
-            // Reset animation state
-            if (characterAnimator != null)
+            else
             {
-                characterAnimator.SetBool(exciteTrigger, false);
-                characterAnimator.SetBool(stomachAcheTrigger, false);
-                characterAnimator.SetBool(strongTrigger, false);
-                characterAnimator.SetBool(glowTrigger, false);
+                if (characterAnimator != null)
+                {
+                    characterAnimator.SetBool(exciteTrigger, false);
+                    characterAnimator.SetBool(stomachAcheTrigger, false);
+                    characterAnimator.SetBool(strongTrigger, false);
+                    characterAnimator.SetBool(glowTrigger, false);
+                }
+
+                HideAllVisualEffects();
+                HideAllBoostUI();
+                isSpeedBoosted = false;
+                isSizeBoosted = false;
+                speedBoostTimer = 0f;
+                sizeBoostTimer = 0f;
             }
-
-            // Hide all visual effects
-            HideAllVisualEffects();
-
-            // Hide all boost UI
-            HideAllBoostUI();
-
-            // Reset boosts
-            isSpeedBoosted = false;
-            isSizeBoosted = false;
-            speedBoostTimer = 0f;
-            sizeBoostTimer = 0f;
-
-            // Stop any running coroutines
-            StopAllCoroutines();
-
-            Debug.Log($"Lost {amount} life! Current life: {currentLifeAmount}");
         }
     }
 
     public void LoseLife()
     {
-        LoseLifeAmount(1f, true);
+        if (!gameIsActive || isRespawning) return;
+
+        // DON'T show panel here - DamageObject will show it when contact happens
+        StartDamageCooldown();
+
+        if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
+        respawnCoroutine = StartCoroutine(RespawnProcess());
     }
 
+    private IEnumerator RespawnProcess()
+    {
+        isRespawning = true;
+        StopKnockback();
+
+        if (playerController != null) playerController.enabled = false;
+
+        if (AudioHandler.Instance != null && loseLifeSound != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(loseLifeSound);
+
+        TriggerDeathAnimation();
+        yield return new WaitForSeconds(deathAnimationDuration);
+        ResetDeathAnimation();
+        yield return new WaitForSeconds(respawnDelay);
+
+        RespawnPlayer();
+        currentEnergy = 50f;
+        targetEnergy = 50f;
+        currentLifeAmount -= 1f;
+        currentLifeAmount = Mathf.Max(0f, currentLifeAmount);
+        currentLives = Mathf.CeilToInt(currentLifeAmount);
+
+        UpdateHeartUI();
+        CheckAndUpdateOneLifeUI();
+
+        if (currentLifeAmount <= 0f)
+        {
+            EndGame();
+            yield break;
+        }
+
+        ShowRespawnEffect();
+
+        if (respawnSound != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(respawnSound);
+
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+        }
+
+        if (playerController != null) playerController.enabled = true;
+
+        HideAllVisualEffects();
+        HideAllBoostUI();
+        isSpeedBoosted = false;
+        isSizeBoosted = false;
+        speedBoostTimer = 0f;
+        sizeBoostTimer = 0f;
+
+        isRespawning = false;
+        Debug.Log("Respawn complete!");
+    }
+
+    // ====== VISUAL EFFECTS ======
+    private void HideAllVisualEffects()
+    {
+        if (feedbackSpriteObject != null) feedbackSpriteObject.SetActive(false);
+        if (foodReactionEffect != null) foodReactionEffect.SetActive(false);
+        if (badEffect != null) badEffect.SetActive(false);
+        if (speedBoostEffect != null) speedBoostEffect.SetActive(false);
+        if (sizeBoostEffect != null) sizeBoostEffect.SetActive(false);
+        if (glowBoostEffect != null) glowBoostEffect.SetActive(false);
+
+        // Also hide damage panel
+        ForceHideDamagePanel();
+    }
+
+    private void HideRespawnEffect()
+    {
+        if (respawnEffect != null) respawnEffect.SetActive(false);
+    }
+
+    private void HideAllBoostUI()
+    {
+        if (speedLinesCanvas != null) speedLinesCanvas.gameObject.SetActive(false);
+        if (speedBoostIndicator != null) speedBoostIndicator.SetActive(false);
+        if (sizeBoostIndicator != null) sizeBoostIndicator.SetActive(false);
+        if (glowBoostIndicator != null) glowBoostIndicator.SetActive(false);
+    }
+
+    private void ShowBoostUI(FoodType boostType)
+    {
+        HideAllBoostUI();
+
+        switch (boostType)
+        {
+            case FoodType.Go:
+                if (speedLinesCanvas != null) speedLinesCanvas.gameObject.SetActive(true);
+                if (speedBoostIndicator != null) speedBoostIndicator.SetActive(true);
+                break;
+            case FoodType.Grow:
+                if (sizeBoostIndicator != null) sizeBoostIndicator.SetActive(true);
+                break;
+            case FoodType.Glow:
+                if (glowBoostIndicator != null) glowBoostIndicator.SetActive(true);
+                break;
+        }
+    }
+
+    private void ShowRespawnEffect()
+    {
+        if (respawnEffect != null)
+        {
+            respawnEffect.transform.position = playerTransform.position;
+            respawnEffect.SetActive(true);
+
+            if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
+            respawnEffectCoroutine = StartCoroutine(HideRespawnEffectAfterDelay());
+        }
+    }
+
+    private IEnumerator HideRespawnEffectAfterDelay()
+    {
+        yield return new WaitForSeconds(respawnEffectDuration);
+        HideRespawnEffect();
+        respawnEffectCoroutine = null;
+    }
+
+    // ====== ANIMATIONS ======
     private void TriggerExciteAnimation()
     {
         if (characterAnimator != null)
         {
-            if (resetExciteCoroutine != null)
-            {
-                StopCoroutine(resetExciteCoroutine);
-            }
-
+            if (resetExciteCoroutine != null) StopCoroutine(resetExciteCoroutine);
             characterAnimator.SetBool(exciteTrigger, true);
             resetExciteCoroutine = StartCoroutine(ResetAnimation(exciteTrigger));
         }
@@ -884,11 +1062,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (characterAnimator != null)
         {
-            if (resetStomachAcheCoroutine != null)
-            {
-                StopCoroutine(resetStomachAcheCoroutine);
-            }
-
+            if (resetStomachAcheCoroutine != null) StopCoroutine(resetStomachAcheCoroutine);
             characterAnimator.SetBool(stomachAcheTrigger, true);
             resetStomachAcheCoroutine = StartCoroutine(ResetAnimation(stomachAcheTrigger));
         }
@@ -898,11 +1072,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (characterAnimator != null)
         {
-            if (resetStrongCoroutine != null)
-            {
-                StopCoroutine(resetStrongCoroutine);
-            }
-
+            if (resetStrongCoroutine != null) StopCoroutine(resetStrongCoroutine);
             characterAnimator.SetBool(strongTrigger, true);
             resetStrongCoroutine = StartCoroutine(ResetAnimation(strongTrigger));
         }
@@ -912,11 +1082,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (characterAnimator != null)
         {
-            if (resetGlowCoroutine != null)
-            {
-                StopCoroutine(resetGlowCoroutine);
-            }
-
+            if (resetGlowCoroutine != null) StopCoroutine(resetGlowCoroutine);
             characterAnimator.SetBool(glowTrigger, true);
             resetGlowCoroutine = StartCoroutine(ResetAnimation(glowTrigger));
         }
@@ -925,27 +1091,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private IEnumerator ResetAnimation(string triggerName)
     {
         yield return new WaitForSeconds(1f);
+        if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
 
-        if (characterAnimator != null)
-        {
-            characterAnimator.SetBool(triggerName, false);
-        }
-
-        // Reset the appropriate coroutine reference
         switch (triggerName)
         {
-            case "isExcite":
-                resetExciteCoroutine = null;
-                break;
-            case "isStomachAche":
-                resetStomachAcheCoroutine = null;
-                break;
-            case "isStrong":
-                resetStrongCoroutine = null;
-                break;
-            case "isGlow":
-                resetGlowCoroutine = null;
-                break;
+            case "isExcite": resetExciteCoroutine = null; break;
+            case "isStomachAche": resetStomachAcheCoroutine = null; break;
+            case "isStrong": resetStrongCoroutine = null; break;
+            case "isGlow": resetGlowCoroutine = null; break;
         }
     }
 
@@ -953,11 +1106,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (foodReactionEffect != null)
         {
-            if (stopFoodReactionCoroutine != null)
-            {
-                StopCoroutine(stopFoodReactionCoroutine);
-            }
-
+            if (stopFoodReactionCoroutine != null) StopCoroutine(stopFoodReactionCoroutine);
             foodReactionEffect.SetActive(true);
             stopFoodReactionCoroutine = StartCoroutine(HideEffectAfterTime(foodReactionEffect, 2f));
         }
@@ -967,11 +1116,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (badEffect != null)
         {
-            if (stopBadEffectCoroutine != null)
-            {
-                StopCoroutine(stopBadEffectCoroutine);
-            }
-
+            if (stopBadEffectCoroutine != null) StopCoroutine(stopBadEffectCoroutine);
             badEffect.SetActive(true);
             stopBadEffectCoroutine = StartCoroutine(HideEffectAfterTime(badEffect, 2f));
         }
@@ -980,11 +1125,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private IEnumerator HideEffectAfterTime(GameObject effect, float duration)
     {
         yield return new WaitForSeconds(duration);
-
-        if (effect != null)
-        {
-            effect.SetActive(false);
-        }
+        if (effect != null) effect.SetActive(false);
     }
 
     private void ShowFeedbackSprite(Sprite sprite)
@@ -994,11 +1135,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
             SpriteRenderer spriteRenderer = feedbackSpriteObject.GetComponent<SpriteRenderer>();
             if (spriteRenderer != null)
             {
-                if (spriteDisplayCoroutine != null)
-                {
-                    StopCoroutine(spriteDisplayCoroutine);
-                }
-
+                if (spriteDisplayCoroutine != null) StopCoroutine(spriteDisplayCoroutine);
                 spriteRenderer.sprite = sprite;
                 feedbackSpriteObject.SetActive(true);
                 spriteDisplayCoroutine = StartCoroutine(HideFeedbackSprite());
@@ -1009,132 +1146,51 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private IEnumerator HideFeedbackSprite()
     {
         yield return new WaitForSeconds(spriteDisplayTime);
-
-        if (feedbackSpriteObject != null)
-        {
-            feedbackSpriteObject.SetActive(false);
-        }
+        if (feedbackSpriteObject != null) feedbackSpriteObject.SetActive(false);
         spriteDisplayCoroutine = null;
     }
 
+    // ====== AUDIO ======
     private void PlayGoFoodSound()
     {
         if (AudioHandler.Instance != null && goFoodSounds.Length > 0)
-        {
-            AudioClip randomClip = goFoodSounds[Random.Range(0, goFoodSounds.Length)];
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(randomClip);
-        }
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(goFoodSounds[Random.Range(0, goFoodSounds.Length)]);
     }
 
     private void PlayGrowFoodSound()
     {
         if (AudioHandler.Instance != null && growFoodSounds.Length > 0)
-        {
-            AudioClip randomClip = growFoodSounds[Random.Range(0, growFoodSounds.Length)];
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(randomClip);
-        }
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(growFoodSounds[Random.Range(0, growFoodSounds.Length)]);
     }
 
     private void PlayGlowFoodSound()
     {
         if (AudioHandler.Instance != null && glowFoodSounds.Length > 0)
-        {
-            AudioClip randomClip = glowFoodSounds[Random.Range(0, glowFoodSounds.Length)];
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(randomClip);
-        }
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(glowFoodSounds[Random.Range(0, glowFoodSounds.Length)]);
     }
 
     private void PlayJunkFoodSound()
     {
         if (AudioHandler.Instance != null && junkFoodSounds.Length > 0)
-        {
-            AudioClip randomClip = junkFoodSounds[Random.Range(0, junkFoodSounds.Length)];
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(randomClip);
-        }
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(junkFoodSounds[Random.Range(0, junkFoodSounds.Length)]);
     }
 
     private void PlayCollectionSound()
     {
         if (AudioHandler.Instance != null && collectionSound != null)
-        {
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(collectionSound);
-        }
     }
 
-    public void EnterHealingZone()
-    {
-        if (!gameIsActive) return;
-
-        inHealingZone = true;
-
-        if (healingZoneAudioSource != null && !healingZoneAudioSource.isPlaying)
-        {
-            healingZoneAudioSource.Play();
-        }
-
-        Debug.Log("Entered Healing Zone");
-    }
-
-    public void ExitHealingZone()
-    {
-        if (!gameIsActive) return;
-
-        inHealingZone = false;
-
-        if (healingZoneAudioSource != null && healingZoneAudioSource.isPlaying)
-        {
-            healingZoneAudioSource.Stop();
-        }
-
-        Debug.Log("Exited Healing Zone");
-    }
-
-    private void HealPlayer()
-    {
-        currentEnergy += healingZoneEnergyGain * Time.deltaTime;
-        currentEnergy = Mathf.Clamp(currentEnergy, 0f, 100f);
-
-        if (energySlider != null)
-            energySlider.value = currentEnergy;
-    }
-
-    private void RespawnPlayer()
-    {
-        if (playerTransform == null || spawnPoints.Length == 0) return;
-
-        Transform nearestSpawn = spawnPoints[0];
-        float nearestDistance = Vector3.Distance(playerTransform.position, nearestSpawn.position);
-
-        for (int i = 1; i < spawnPoints.Length; i++)
-        {
-            float distance = Vector3.Distance(playerTransform.position, spawnPoints[i].position);
-            if (distance < nearestDistance)
-            {
-                nearestDistance = distance;
-                nearestSpawn = spawnPoints[i];
-            }
-        }
-
-        playerTransform.position = nearestSpawn.position;
-        Debug.Log($"Respawned at {nearestSpawn.name}");
-    }
-
+    // ====== UI ======
     private void UpdateUI()
     {
-        if (scoreText != null)
-            scoreText.text = $"Score: {score}";
-
-        if (livesText != null)
-            livesText.text = $"Lives: {Mathf.CeilToInt(currentLifeAmount)}";
-
-        if (energySlider != null)
-            energySlider.value = currentEnergy;
+        if (scoreText != null) scoreText.text = $"Score: {score}";
+        if (livesText != null) livesText.text = $"Lives: {Mathf.CeilToInt(currentLifeAmount)}";
     }
 
     private void UpdateHeartUI()
     {
         if (heartImages.Count == 0) return;
-
         float remainingLife = currentLifeAmount;
 
         for (int i = 0; i < heartImages.Count; i++)
@@ -1143,21 +1199,15 @@ public class GoGrowGlowGameManager : MonoBehaviour
             {
                 if (remainingLife >= 1f)
                 {
-                    // Full heart
                     heartImages[i].sprite = fullHeart;
                     remainingLife -= 1f;
                 }
                 else if (remainingLife >= 0.5f)
                 {
-                    // Half heart
                     heartImages[i].sprite = halfHeart;
                     remainingLife -= 0.5f;
                 }
-                else
-                {
-                    // Empty heart
-                    heartImages[i].sprite = emptyHeart;
-                }
+                else heartImages[i].sprite = emptyHeart;
             }
         }
     }
@@ -1175,22 +1225,41 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private void SetGameActive(bool active)
     {
         gameIsActive = active;
+        if (playerController != null) playerController.enabled = active;
+    }
 
-        if (playerController != null)
-        {
-            playerController.enabled = active;
-        }
+    // ====== PUBLIC METHODS ======
+    public void EnterHealingZone() { if (!gameIsActive) return; inHealingZone = true; }
+    public void ExitHealingZone() { if (!gameIsActive) return; inHealingZone = false; }
+
+    public void SetCurrentCheckpoint(Checkpoint checkpoint)
+    {
+        if (checkpoint == null || !checkpoint.IsActivated()) return;
+        currentCheckpoint = checkpoint;
+        Debug.Log($"Checkpoint set to: {checkpoint.gameObject.name}");
+    }
+
+    private void RespawnPlayer()
+    {
+        if (playerTransform == null || currentCheckpoint == null) return;
+        playerTransform.position = currentCheckpoint.GetSpawnPosition();
+        playerTransform.rotation = currentCheckpoint.GetSpawnRotation();
+        Debug.Log($"Respawned at: {currentCheckpoint.gameObject.name}");
     }
 
     public void RespawnAllFood()
     {
         if (foodSpawner != null && foodSpawner.IsSpawningEnabled())
-        {
             foodSpawner.RespawnAllFood();
-        }
     }
 
-    // Public getters
+    public void ShowFoodFeedback(Sprite foodSprite)
+    {
+        if (foodFeedbackUI != null && foodSprite != null)
+            foodFeedbackUI.ShowFoodFeedback(foodSprite);
+    }
+
+    // ====== PUBLIC GETTERS ======
     public float GetCurrentLifeAmount() => currentLifeAmount;
     public int GetCurrentLives() => currentLives;
     public float GetCurrentEnergy() => currentEnergy;
@@ -1199,4 +1268,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public bool IsSpeedBoosted() => isSpeedBoosted;
     public bool IsSizeBoosted() => isSizeBoosted;
     public FoodType GetCurrentFoodZone() => currentFoodZone;
+    public bool IsInHealingZone() => inHealingZone;
+    public Slider GetEnergySlider() => energySlider;
+    public bool IsRespawning() => isRespawning;
+    public bool IsKnockbackActive() => isKnockbackActive;
+    public bool IsDamageOnCooldown() => isDamageOnCooldown;
 }
