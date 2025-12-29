@@ -24016,8 +24016,10 @@ MonoBehaviour:
   starsEarnedText: {fileID: 1797930875}
   starAnimator: {fileID: 1620517386}
   starParameterName: star
-  keyImageObject: {fileID: 1779641468}
-  KeyUnlocked: {fileID: 1779641468}
+  KeyImageunlocking: {fileID: 1779641468}
+  failGameObject1: {fileID: 528345827}
+  failGameObject2: {fileID: 2013962994}
+  failGameObject3: {fileID: 239831739}
   confirmButton: {fileID: 816168632}
   fadeInDuration: 1
   fadeOutDuration: 0.5
