@@ -2039,6 +2039,7 @@ struct GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6  : public RuntimeObjec
 	int32_t ___nutriGems;
 	int32_t ___currentEnergy;
 	DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D ___lastEnergyUpdateTime;
+	bool ___sugariaKeyCollected;
 	int32_t ___selectedCharacterID;
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* ___unlockedCharacterIDs;
 	SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* ___selectedSkinForCharacter;
@@ -26695,24 +26696,24 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData__ctor_mA9048174D2C20A10AD865A4B
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:22>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:25>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_0 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
 		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_0, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
 		__this->___unlockedCharacterIDs = L_0;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedCharacterIDs), (void*)L_0);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:31>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:34>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_1 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_1, NULL);
 		__this->___selectedSkinForCharacter = L_1;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___selectedSkinForCharacter), (void*)L_1);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:32>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:35>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_2 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_2, NULL);
 		__this->___unlockedSkinsForCharacter = L_2;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedSkinsForCharacter), (void*)L_2);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:36>
-		__this->___isChestAvailable = (bool)1;
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:39>
+		__this->___isChestAvailable = (bool)1;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:42>
 		List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A* L_3 = (List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A*)il2cpp_codegen_object_new(List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A_il2cpp_TypeInfo_var);
 		List_1__ctor_m87539832B82A3453971F3BCC702C7346E8D3F953(L_3, List_1__ctor_m87539832B82A3453971F3BCC702C7346E8D3F953_RuntimeMethod_var);
 		List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A* L_4 = L_3;
@@ -26729,71 +26730,73 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData__ctor_mA9048174D2C20A10AD865A4B
 		List_1_Add_m5AAB6DCB6C30EB5769B4E8DB8170E50319F0A9ED_inline(L_7, (bool)0, List_1_Add_m5AAB6DCB6C30EB5769B4E8DB8170E50319F0A9ED_RuntimeMethod_var);
 		__this->___unlockedKingdoms = L_7;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedKingdoms), (void*)L_7);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:42>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:45>
 		StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B* L_8 = (StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B*)il2cpp_codegen_object_new(StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B_il2cpp_TypeInfo_var);
 		StringBoolDictionary__ctor_m4E3601F1B238ACB41CA6E921D094F8D54467529E(L_8, NULL);
 		__this->___completedMinigames = L_8;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___completedMinigames), (void*)L_8);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:46>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:49>
 		StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418* L_9 = (StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418*)il2cpp_codegen_object_new(StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418_il2cpp_TypeInfo_var);
 		StringIntDictionary__ctor_m7BA1EF37BF94ADB83449A2891825580B78D65389(L_9, NULL);
 		__this->___minigameStars = L_9;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___minigameStars), (void*)L_9);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:49>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:52>
 		List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD* L_10 = (List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD*)il2cpp_codegen_object_new(List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD_il2cpp_TypeInfo_var);
 		List_1__ctor_mCA8DD57EAC70C2B5923DBB9D5A77CEAC22E7068E(L_10, List_1__ctor_mCA8DD57EAC70C2B5923DBB9D5A77CEAC22E7068E_RuntimeMethod_var);
 		__this->___unlockedEnerlings = L_10;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedEnerlings), (void*)L_10);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:52>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:55>
 		StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9* L_11 = (StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9*)il2cpp_codegen_object_new(StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9_il2cpp_TypeInfo_var);
 		StringBoolDictionary2__ctor_mC65C5D5F6B825E4664F6664E50C506E2B00CE207(L_11, NULL);
 		__this->___scannedIngredients = L_11;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___scannedIngredients), (void*)L_11);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:55>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:58>
 		__this->___musicVolume = (1.0f);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:56>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:59>
 		__this->___soundVolume = (1.0f);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:57>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:60>
 		__this->___language = _stringLiteralDCCF22B1EB35EC58FFEB04A8C396594903C38127;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___language), (void*)_stringLiteralDCCF22B1EB35EC58FFEB04A8C396594903C38127);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:59>
-		Object__ctor_mE837C6B9FA8C6D5D109F4B2EC885D79919AC0EA2(__this, NULL);
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:62>
+		Object__ctor_mE837C6B9FA8C6D5D109F4B2EC885D79919AC0EA2(__this, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:65>
 		__this->___playerName = _stringLiteralB9E52729272AFB32F339830BBBEA3DC70676C06E;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___playerName), (void*)_stringLiteralB9E52729272AFB32F339830BBBEA3DC70676C06E);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:63>
-		__this->___playerLevel = 1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:64>
-		__this->___currentXP = (0.0f);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:65>
-		__this->___xpToNextLevel = (100.0f);
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:66>
-		__this->___nutriCoins = 0;
+		__this->___playerLevel = 1;
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:67>
-		__this->___nutriGems = 0;
+		__this->___currentXP = (0.0f);
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:68>
-		__this->___currentEnergy = ((int32_t)10);
+		__this->___xpToNextLevel = (100.0f);
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:69>
+		__this->___nutriCoins = 0;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:70>
+		__this->___nutriGems = 0;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:71>
+		__this->___currentEnergy = ((int32_t)10);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:72>
 		il2cpp_codegen_runtime_class_init_inline(DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D_il2cpp_TypeInfo_var);
 		DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D L_12;
 		L_12 = DateTime_get_Now_m636CB9651A9099D20BA1CF813A0C69637317325C(NULL);
 		__this->___lastEnergyUpdateTime = L_12;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:70>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:73>
 		DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D L_13 = ((DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D_StaticFields*)il2cpp_codegen_static_fields_for(DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D_il2cpp_TypeInfo_var))->___MinValue;
 		__this->___lastChestClaimTime = L_13;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:71>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:74>
 		__this->___isChestAvailable = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:72>
-		__this->___selectedCharacterID = 0;
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:75>
+		__this->___selectedCharacterID = 0;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:78>
+		__this->___sugariaKeyCollected = (bool)0;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:81>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_14 = __this->___unlockedCharacterIDs;
 		if (L_14)
 		{
-			goto IL_0120;
+			goto IL_0127;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:76>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:82>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_15 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
 		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_15, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_16 = L_15;
@@ -26801,68 +26804,68 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData__ctor_mA9048174D2C20A10AD865A4B
 		List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_inline(L_16, 0, List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_RuntimeMethod_var);
 		__this->___unlockedCharacterIDs = L_16;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedCharacterIDs), (void*)L_16);
-		goto IL_012b;
+		goto IL_0132;
 	}
 
-IL_0120:
+IL_0127:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:78>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:84>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_17 = __this->___unlockedCharacterIDs;
 		NullCheck(L_17);
 		List_1_Clear_mF6795DE5F49C1D0B91D6A0955F448B22970D67A9_inline(L_17, List_1_Clear_mF6795DE5F49C1D0B91D6A0955F448B22970D67A9_RuntimeMethod_var);
 	}
 
-IL_012b:
+IL_0132:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:79>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:85>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_18 = __this->___unlockedCharacterIDs;
 		NullCheck(L_18);
 		List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_inline(L_18, 0, List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_RuntimeMethod_var);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:82>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:88>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_19 = __this->___selectedSkinForCharacter;
 		if (L_19)
 		{
-			goto IL_014a;
+			goto IL_0151;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:83>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:89>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_20 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_20, NULL);
 		__this->___selectedSkinForCharacter = L_20;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___selectedSkinForCharacter), (void*)L_20);
 	}
 
-IL_014a:
+IL_0151:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:85>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:91>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_21 = __this->___unlockedSkinsForCharacter;
 		if (L_21)
 		{
-			goto IL_015d;
+			goto IL_0164;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:86>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:92>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_22 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_22, NULL);
 		__this->___unlockedSkinsForCharacter = L_22;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedSkinsForCharacter), (void*)L_22);
 	}
 
-IL_015d:
+IL_0164:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:89>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:95>
 		GameData_InitializeDefaultSkinForCharacter_mD865932EEA0D89194C1712781614C3FD16014D5C(__this, 0, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:92>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:98>
 		List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A* L_23 = __this->___unlockedKingdoms;
 		if (L_23)
 		{
-			goto IL_0193;
+			goto IL_019a;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:94>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:100>
 		List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A* L_24 = (List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A*)il2cpp_codegen_object_new(List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A_il2cpp_TypeInfo_var);
 		List_1__ctor_m87539832B82A3453971F3BCC702C7346E8D3F953(L_24, List_1__ctor_m87539832B82A3453971F3BCC702C7346E8D3F953_RuntimeMethod_var);
 		List_1_t01207CE5982A7640E56B1F9F672A06F96B09367A* L_25 = L_24;
@@ -26881,97 +26884,126 @@ IL_015d:
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedKingdoms), (void*)L_28);
 	}
 
-IL_0193:
+IL_019a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:97>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:103>
 		StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B* L_29 = __this->___completedMinigames;
 		if (L_29)
 		{
-			goto IL_01a6;
+			goto IL_01ad;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:98>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:104>
 		StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B* L_30 = (StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B*)il2cpp_codegen_object_new(StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B_il2cpp_TypeInfo_var);
 		StringBoolDictionary__ctor_m4E3601F1B238ACB41CA6E921D094F8D54467529E(L_30, NULL);
 		__this->___completedMinigames = L_30;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___completedMinigames), (void*)L_30);
 	}
 
-IL_01a6:
+IL_01ad:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:100>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:106>
 		StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418* L_31 = __this->___minigameStars;
 		if (L_31)
 		{
-			goto IL_01b9;
+			goto IL_01c0;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:101>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:107>
 		StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418* L_32 = (StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418*)il2cpp_codegen_object_new(StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418_il2cpp_TypeInfo_var);
 		StringIntDictionary__ctor_m7BA1EF37BF94ADB83449A2891825580B78D65389(L_32, NULL);
 		__this->___minigameStars = L_32;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___minigameStars), (void*)L_32);
 	}
 
-IL_01b9:
+IL_01c0:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:103>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:109>
 		List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD* L_33 = __this->___unlockedEnerlings;
 		if (L_33)
 		{
-			goto IL_01cc;
+			goto IL_01d3;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:104>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:110>
 		List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD* L_34 = (List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD*)il2cpp_codegen_object_new(List_1_tF470A3BE5C1B5B68E1325EF3F109D172E60BD7CD_il2cpp_TypeInfo_var);
 		List_1__ctor_mCA8DD57EAC70C2B5923DBB9D5A77CEAC22E7068E(L_34, List_1__ctor_mCA8DD57EAC70C2B5923DBB9D5A77CEAC22E7068E_RuntimeMethod_var);
 		__this->___unlockedEnerlings = L_34;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedEnerlings), (void*)L_34);
 	}
 
-IL_01cc:
+IL_01d3:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:106>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:112>
 		StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9* L_35 = __this->___scannedIngredients;
 		if (L_35)
 		{
-			goto IL_01df;
+			goto IL_01e6;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:107>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:113>
 		StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9* L_36 = (StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9*)il2cpp_codegen_object_new(StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9_il2cpp_TypeInfo_var);
 		StringBoolDictionary2__ctor_mC65C5D5F6B825E4664F6664E50C506E2B00CE207(L_36, NULL);
 		__this->___scannedIngredients = L_36;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___scannedIngredients), (void*)L_36);
 	}
 
-IL_01df:
+IL_01e6:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:108>
-		return;
-	}
-}
-// Method Definition Index: 48966
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_AddNutriGems_m224E8D6CE5D73B1BBE724ADA61AFED752B3F825A (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_amount, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:113>
-		int32_t L_0 = __this->___nutriGems;
-		int32_t L_1 = ___0_amount;
-		__this->___nutriGems = ((int32_t)il2cpp_codegen_add(L_0, L_1));
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:114>
 		return;
 	}
 }
-// Method Definition Index: 48967
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_SpendNutriGems_m1C50F1F7A81873F2B641462E0C06BB1B91F9947D (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_amount, const RuntimeMethod* method) 
+// Method Definition Index: 48966
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_HasSugariaKey_mEA2C07FD79096D79EF31AD73DBF0633B4C523395 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, const RuntimeMethod* method) 
 {
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:118>
+		bool L_0 = __this->___sugariaKeyCollected;
+		return L_0;
+	}
+}
+// Method Definition Index: 48967
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_CollectSugariaKey_m21393AED1F26156F1CC8CDBF61EBF23D73B4F729 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:123>
+		__this->___sugariaKeyCollected = (bool)1;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:124>
+		return;
+	}
+}
+// Method Definition Index: 48968
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_ResetSugariaKey_m4280EC929C03FC576C8B2F73359823F3FCA96D0C (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:128>
+		__this->___sugariaKeyCollected = (bool)0;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:129>
+		return;
+	}
+}
+// Method Definition Index: 48969
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_AddNutriGems_m224E8D6CE5D73B1BBE724ADA61AFED752B3F825A (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_amount, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:134>
+		int32_t L_0 = __this->___nutriGems;
+		int32_t L_1 = ___0_amount;
+		__this->___nutriGems = ((int32_t)il2cpp_codegen_add(L_0, L_1));
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:135>
+		return;
+	}
+}
+// Method Definition Index: 48970
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_SpendNutriGems_m1C50F1F7A81873F2B641462E0C06BB1B91F9947D (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_amount, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:139>
 		int32_t L_0 = __this->___nutriGems;
 		int32_t L_1 = ___0_amount;
 		if ((((int32_t)L_0) < ((int32_t)L_1)))
@@ -26980,30 +27012,30 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_SpendNutriGems_m1C50F1F7A81873F
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:120>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:141>
 		int32_t L_2 = __this->___nutriGems;
 		int32_t L_3 = ___0_amount;
 		__this->___nutriGems = ((int32_t)il2cpp_codegen_subtract(L_2, L_3));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:121>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:142>
 		return (bool)1;
 	}
 
 IL_0019:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:123>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:144>
 		return (bool)0;
 	}
 }
-// Method Definition Index: 48968
+// Method Definition Index: 48971
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t GameData_GetNutriGems_m31654D594A3AB92C20FB8F5A5CD904732AAA7770 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, const RuntimeMethod* method) 
 {
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:128>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:149>
 		int32_t L_0 = __this->___nutriGems;
 		return L_0;
 	}
 }
-// Method Definition Index: 48969
+// Method Definition Index: 48972
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_InitializeDefaultSkinForCharacter_mD865932EEA0D89194C1712781614C3FD16014D5C (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27017,100 +27049,6 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_InitializeDefaultSkinForCharact
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:134>
-		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_0 = __this->___selectedSkinForCharacter;
-		if (L_0)
-		{
-			goto IL_0013;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:135>
-		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_1 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
-		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_1, NULL);
-		__this->___selectedSkinForCharacter = L_1;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___selectedSkinForCharacter), (void*)L_1);
-	}
-
-IL_0013:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:137>
-		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_2 = __this->___selectedSkinForCharacter;
-		int32_t L_3 = ___0_characterID;
-		NullCheck(L_2);
-		bool L_4;
-		L_4 = Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9(L_2, L_3, Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9_RuntimeMethod_var);
-		if (L_4)
-		{
-			goto IL_002e;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:139>
-		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_5 = __this->___selectedSkinForCharacter;
-		int32_t L_6 = ___0_characterID;
-		NullCheck(L_5);
-		Dictionary_2_set_Item_m420CFC153320557E6823B06767710D1E636E5BDF(L_5, L_6, (-1), Dictionary_2_set_Item_m420CFC153320557E6823B06767710D1E636E5BDF_RuntimeMethod_var);
-	}
-
-IL_002e:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:142>
-		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_7 = __this->___unlockedSkinsForCharacter;
-		if (L_7)
-		{
-			goto IL_0041;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:143>
-		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_8 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
-		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_8, NULL);
-		__this->___unlockedSkinsForCharacter = L_8;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedSkinsForCharacter), (void*)L_8);
-	}
-
-IL_0041:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:145>
-		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_9 = __this->___unlockedSkinsForCharacter;
-		int32_t L_10 = ___0_characterID;
-		NullCheck(L_9);
-		bool L_11;
-		L_11 = Dictionary_2_ContainsKey_m5954448913BB3B240F70DB03F772F26912A85B1B(L_9, L_10, Dictionary_2_ContainsKey_m5954448913BB3B240F70DB03F772F26912A85B1B_RuntimeMethod_var);
-		if (L_11)
-		{
-			goto IL_0060;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:147>
-		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_12 = __this->___unlockedSkinsForCharacter;
-		int32_t L_13 = ___0_characterID;
-		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_14 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
-		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_14, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
-		NullCheck(L_12);
-		Dictionary_2_set_Item_mFB04096FA66BB2004B1593B70E5DA59DBD38A68D(L_12, L_13, L_14, Dictionary_2_set_Item_mFB04096FA66BB2004B1593B70E5DA59DBD38A68D_RuntimeMethod_var);
-	}
-
-IL_0060:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:150>
-		return;
-	}
-}
-// Method Definition Index: 48970
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t GameData_GetSelectedSkinForCharacter_m9BD9DBC1AA6DC12C9A414822292E1FDC84914269 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, const RuntimeMethod* method) 
-{
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
-	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9_RuntimeMethod_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Dictionary_2_get_Item_m8B87B804DF06D6420B1DCE028675738AA8F3310F_RuntimeMethod_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		s_Il2CppMethodInitialized = true;
 	}
 	{
@@ -27137,13 +27075,107 @@ IL_0013:
 		NullCheck(L_2);
 		bool L_4;
 		L_4 = Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9(L_2, L_3, Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9_RuntimeMethod_var);
-		if (!L_4)
+		if (L_4)
 		{
 			goto IL_002e;
 		}
 	}
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:160>
+		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_5 = __this->___selectedSkinForCharacter;
+		int32_t L_6 = ___0_characterID;
+		NullCheck(L_5);
+		Dictionary_2_set_Item_m420CFC153320557E6823B06767710D1E636E5BDF(L_5, L_6, (-1), Dictionary_2_set_Item_m420CFC153320557E6823B06767710D1E636E5BDF_RuntimeMethod_var);
+	}
+
+IL_002e:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:163>
+		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_7 = __this->___unlockedSkinsForCharacter;
+		if (L_7)
+		{
+			goto IL_0041;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:164>
+		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_8 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
+		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_8, NULL);
+		__this->___unlockedSkinsForCharacter = L_8;
+		Il2CppCodeGenWriteBarrier((void**)(&__this->___unlockedSkinsForCharacter), (void*)L_8);
+	}
+
+IL_0041:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:166>
+		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_9 = __this->___unlockedSkinsForCharacter;
+		int32_t L_10 = ___0_characterID;
+		NullCheck(L_9);
+		bool L_11;
+		L_11 = Dictionary_2_ContainsKey_m5954448913BB3B240F70DB03F772F26912A85B1B(L_9, L_10, Dictionary_2_ContainsKey_m5954448913BB3B240F70DB03F772F26912A85B1B_RuntimeMethod_var);
+		if (L_11)
+		{
+			goto IL_0060;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:168>
+		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_12 = __this->___unlockedSkinsForCharacter;
+		int32_t L_13 = ___0_characterID;
+		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_14 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
+		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_14, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
+		NullCheck(L_12);
+		Dictionary_2_set_Item_mFB04096FA66BB2004B1593B70E5DA59DBD38A68D(L_12, L_13, L_14, Dictionary_2_set_Item_mFB04096FA66BB2004B1593B70E5DA59DBD38A68D_RuntimeMethod_var);
+	}
+
+IL_0060:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:171>
+		return;
+	}
+}
+// Method Definition Index: 48973
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t GameData_GetSelectedSkinForCharacter_m9BD9DBC1AA6DC12C9A414822292E1FDC84914269 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, const RuntimeMethod* method) 
+{
+	static bool s_Il2CppMethodInitialized;
+	if (!s_Il2CppMethodInitialized)
+	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9_RuntimeMethod_var);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Dictionary_2_get_Item_m8B87B804DF06D6420B1DCE028675738AA8F3310F_RuntimeMethod_var);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
+		s_Il2CppMethodInitialized = true;
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:176>
+		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_0 = __this->___selectedSkinForCharacter;
+		if (L_0)
+		{
+			goto IL_0013;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:177>
+		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_1 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
+		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_1, NULL);
+		__this->___selectedSkinForCharacter = L_1;
+		Il2CppCodeGenWriteBarrier((void**)(&__this->___selectedSkinForCharacter), (void*)L_1);
+	}
+
+IL_0013:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:179>
+		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_2 = __this->___selectedSkinForCharacter;
+		int32_t L_3 = ___0_characterID;
+		NullCheck(L_2);
+		bool L_4;
+		L_4 = Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9(L_2, L_3, Dictionary_2_ContainsKey_m050AC0D9D6F681C25C12FBBC7DD71F926D206ED9_RuntimeMethod_var);
+		if (!L_4)
+		{
+			goto IL_002e;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:181>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_5 = __this->___selectedSkinForCharacter;
 		int32_t L_6 = ___0_characterID;
 		NullCheck(L_5);
@@ -27154,10 +27186,10 @@ IL_0013:
 
 IL_002e:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:164>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:185>
 		int32_t L_8 = ___0_characterID;
 		GameData_InitializeDefaultSkinForCharacter_mD865932EEA0D89194C1712781614C3FD16014D5C(__this, L_8, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:165>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:186>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_9 = __this->___selectedSkinForCharacter;
 		int32_t L_10 = ___0_characterID;
 		NullCheck(L_9);
@@ -27166,7 +27198,7 @@ IL_002e:
 		return L_11;
 	}
 }
-// Method Definition Index: 48971
+// Method Definition Index: 48974
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_SetSelectedSkinForCharacter_mA619E68272AEAFBA6145E25B206CA3BC1A987685 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, int32_t ___1_skinID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27180,7 +27212,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_SetSelectedSkinForCharacter_mA6
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:171>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:192>
 		int32_t L_0 = ___1_skinID;
 		if ((((int32_t)L_0) >= ((int32_t)(-1))))
 		{
@@ -27188,13 +27220,13 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_SetSelectedSkinForCharacter_mA6
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:171>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:192>
 		return;
 	}
 
 IL_0005:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:173>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:194>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_1 = __this->___selectedSkinForCharacter;
 		if (L_1)
 		{
@@ -27202,7 +27234,7 @@ IL_0005:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:174>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:195>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_2 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_2, NULL);
 		__this->___selectedSkinForCharacter = L_2;
@@ -27211,7 +27243,7 @@ IL_0005:
 
 IL_0018:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:176>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:197>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_3 = __this->___selectedSkinForCharacter;
 		int32_t L_4 = ___0_characterID;
 		NullCheck(L_3);
@@ -27223,7 +27255,7 @@ IL_0018:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:178>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:199>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_6 = __this->___selectedSkinForCharacter;
 		int32_t L_7 = ___0_characterID;
 		int32_t L_8 = ___1_skinID;
@@ -27234,7 +27266,7 @@ IL_0018:
 
 IL_0035:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:182>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:203>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_9 = __this->___selectedSkinForCharacter;
 		int32_t L_10 = ___0_characterID;
 		int32_t L_11 = ___1_skinID;
@@ -27244,7 +27276,7 @@ IL_0035:
 
 IL_0042:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:186>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:207>
 		int32_t L_12 = ___1_skinID;
 		if ((((int32_t)L_12) == ((int32_t)(-1))))
 		{
@@ -27252,7 +27284,7 @@ IL_0042:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:188>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:209>
 		int32_t L_13 = ___0_characterID;
 		int32_t L_14 = ___1_skinID;
 		GameData_UnlockSkinForCharacter_m7E2854181A74143319889D7EE253CA2EE2DA4156(__this, L_13, L_14, NULL);
@@ -27260,7 +27292,7 @@ IL_0042:
 
 IL_004e:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:191>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:212>
 		int32_t L_15 = ___1_skinID;
 		int32_t L_16 = L_15;
 		RuntimeObject* L_17 = Box(il2cpp_defaults.int32_class, &L_16);
@@ -27271,11 +27303,11 @@ IL_004e:
 		L_21 = String_Format_mFB7DA489BD99F4670881FF50EC017BFB0A5C0987(_stringLiteralC72405D7220E30EFCCA7EC39B4FB765B28AE861D, L_17, L_20, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_21, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:192>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:213>
 		return;
 	}
 }
-// Method Definition Index: 48972
+// Method Definition Index: 48975
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_IsSkinUnlocked_m025DDABB863C22B2DE86C8F21446B5210B2F3AA8 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, int32_t ___1_skinID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27289,7 +27321,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_IsSkinUnlocked_m025DDABB863C22B
 	}
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* V_0 = NULL;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:198>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:219>
 		int32_t L_0 = ___1_skinID;
 		if ((!(((uint32_t)L_0) == ((uint32_t)(-1)))))
 		{
@@ -27297,13 +27329,13 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_IsSkinUnlocked_m025DDABB863C22B
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:198>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:219>
 		return (bool)1;
 	}
 
 IL_0006:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:200>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:221>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_1 = __this->___unlockedSkinsForCharacter;
 		if (L_1)
 		{
@@ -27311,7 +27343,7 @@ IL_0006:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:201>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:222>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_2 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_2, NULL);
 		__this->___unlockedSkinsForCharacter = L_2;
@@ -27320,7 +27352,7 @@ IL_0006:
 
 IL_0019:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:204>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:225>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_3 = __this->___unlockedSkinsForCharacter;
 		int32_t L_4 = ___0_characterID;
 		NullCheck(L_3);
@@ -27332,14 +27364,14 @@ IL_0019:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:206>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:227>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_6 = __this->___unlockedSkinsForCharacter;
 		int32_t L_7 = ___0_characterID;
 		NullCheck(L_6);
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_8;
 		L_8 = Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC(L_6, L_7, Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC_RuntimeMethod_var);
 		V_0 = L_8;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:207>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:228>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_9 = V_0;
 		if (!L_9)
 		{
@@ -27347,7 +27379,7 @@ IL_0019:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:209>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:230>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_10 = V_0;
 		int32_t L_11 = ___1_skinID;
 		NullCheck(L_10);
@@ -27358,11 +27390,11 @@ IL_0019:
 
 IL_003f:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:213>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:234>
 		return (bool)0;
 	}
 }
-// Method Definition Index: 48973
+// Method Definition Index: 48976
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_UnlockSkinForCharacter_m7E2854181A74143319889D7EE253CA2EE2DA4156 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, int32_t ___1_skinID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27382,7 +27414,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_UnlockSkinForCharacter_m7E28541
 	}
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* V_0 = NULL;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:219>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:240>
 		int32_t L_0 = ___1_skinID;
 		if ((!(((uint32_t)L_0) == ((uint32_t)(-1)))))
 		{
@@ -27390,13 +27422,13 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_UnlockSkinForCharacter_m7E28541
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:219>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:240>
 		return;
 	}
 
 IL_0005:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:221>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:242>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_1 = __this->___unlockedSkinsForCharacter;
 		if (L_1)
 		{
@@ -27404,7 +27436,7 @@ IL_0005:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:222>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:243>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_2 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_2, NULL);
 		__this->___unlockedSkinsForCharacter = L_2;
@@ -27413,7 +27445,7 @@ IL_0005:
 
 IL_0018:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:224>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:245>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_3 = __this->___unlockedSkinsForCharacter;
 		int32_t L_4 = ___0_characterID;
 		NullCheck(L_3);
@@ -27425,7 +27457,7 @@ IL_0018:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:226>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:247>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_6 = __this->___unlockedSkinsForCharacter;
 		int32_t L_7 = ___0_characterID;
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_8 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
@@ -27436,14 +27468,14 @@ IL_0018:
 
 IL_0037:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:229>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:250>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_9 = __this->___unlockedSkinsForCharacter;
 		int32_t L_10 = ___0_characterID;
 		NullCheck(L_9);
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_11;
 		L_11 = Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC(L_9, L_10, Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC_RuntimeMethod_var);
 		V_0 = L_11;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:230>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:251>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_12 = V_0;
 		if (L_12)
 		{
@@ -27451,11 +27483,11 @@ IL_0037:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:232>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:253>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_13 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
 		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_13, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
 		V_0 = L_13;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:233>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:254>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_14 = __this->___unlockedSkinsForCharacter;
 		int32_t L_15 = ___0_characterID;
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_16 = V_0;
@@ -27465,7 +27497,7 @@ IL_0037:
 
 IL_005a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:236>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:257>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_17 = V_0;
 		int32_t L_18 = ___1_skinID;
 		NullCheck(L_17);
@@ -27477,12 +27509,12 @@ IL_005a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:238>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:259>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_20 = V_0;
 		int32_t L_21 = ___1_skinID;
 		NullCheck(L_20);
 		List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_inline(L_20, L_21, List_1_Add_m0248A96C5334E9A93E6994B7780478BCD994EA3D_RuntimeMethod_var);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:239>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:260>
 		int32_t L_22 = ___1_skinID;
 		int32_t L_23 = L_22;
 		RuntimeObject* L_24 = Box(il2cpp_defaults.int32_class, &L_23);
@@ -27497,11 +27529,11 @@ IL_005a:
 
 IL_0085:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:241>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:262>
 		return;
 	}
 }
-// Method Definition Index: 48974
+// Method Definition Index: 48977
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* GameData_GetUnlockedSkinsForCharacter_mD9B73ECC821C916B667F7E6E756EFA75D91412AE (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27516,7 +27548,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR List_1_t05915E9237850A58106982B7FE4BC5DA4E872
 	}
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* V_0 = NULL;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:246>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:267>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_0 = __this->___unlockedSkinsForCharacter;
 		if (L_0)
 		{
@@ -27524,7 +27556,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR List_1_t05915E9237850A58106982B7FE4BC5DA4E872
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:247>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:268>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_1 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_1, NULL);
 		__this->___unlockedSkinsForCharacter = L_1;
@@ -27533,7 +27565,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR List_1_t05915E9237850A58106982B7FE4BC5DA4E872
 
 IL_0013:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:249>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:270>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_2 = __this->___unlockedSkinsForCharacter;
 		int32_t L_3 = ___0_characterID;
 		NullCheck(L_2);
@@ -27545,14 +27577,14 @@ IL_0013:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:251>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:272>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_5 = __this->___unlockedSkinsForCharacter;
 		int32_t L_6 = ___0_characterID;
 		NullCheck(L_5);
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_7;
 		L_7 = Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC(L_5, L_6, Dictionary_2_get_Item_m73FCA59D80BFDAFBF320F97A352248A68190C9DC_RuntimeMethod_var);
 		V_0 = L_7;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:252>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:273>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_8 = V_0;
 		if (!L_8)
 		{
@@ -27560,20 +27592,20 @@ IL_0013:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:254>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:275>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_9 = V_0;
 		return L_9;
 	}
 
 IL_0033:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:258>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:279>
 		List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_10 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
 		List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8(L_10, List_1__ctor_m17F501B5A5C289ECE1B4F3D6EBF05DFA421433F8_RuntimeMethod_var);
 		return L_10;
 	}
 }
-// Method Definition Index: 48975
+// Method Definition Index: 48978
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_HasUnlockedSkins_m9A3C0DA52DB2075B6E7C55D2CD3246A9F7457274 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, int32_t ___0_characterID, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27586,7 +27618,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_HasUnlockedSkins_m9A3C0DA52DB20
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:264>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:285>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_0 = __this->___unlockedSkinsForCharacter;
 		if (L_0)
 		{
@@ -27594,7 +27626,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_HasUnlockedSkins_m9A3C0DA52DB20
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:265>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:286>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_1 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_1, NULL);
 		__this->___unlockedSkinsForCharacter = L_1;
@@ -27603,9 +27635,9 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameData_HasUnlockedSkins_m9A3C0DA52DB20
 
 IL_0013:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:267>
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:268>
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:269>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:288>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:289>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:290>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_2 = __this->___unlockedSkinsForCharacter;
 		int32_t L_3 = ___0_characterID;
 		NullCheck(L_2);
@@ -27644,7 +27676,7 @@ IL_0044:
 		return (bool)0;
 	}
 }
-// Method Definition Index: 48976
+// Method Definition Index: 48979
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_InitializeAllCharactersSkins_m3F347908A59048ABCF876E390EBE5878568DCA12 (GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* __this, CharacterDatabase_t449DEDE309A2E3658D00F86E2304DE45B17819C6* ___0_characterDatabase, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27669,7 +27701,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_InitializeAllCharactersSkins_m3
 	memset((&V_0), 0, sizeof(V_0));
 	int32_t V_1 = 0;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:275>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:296>
 		CharacterDatabase_t449DEDE309A2E3658D00F86E2304DE45B17819C6* L_0 = ___0_characterDatabase;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -27680,13 +27712,13 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameData_InitializeAllCharactersSkins_m3
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:275>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:296>
 		return;
 	}
 
 IL_000a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:277>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:298>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_2 = __this->___selectedSkinForCharacter;
 		if (L_2)
 		{
@@ -27694,7 +27726,7 @@ IL_000a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:278>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:299>
 		SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_3 = (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A*)il2cpp_codegen_object_new(SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A_il2cpp_TypeInfo_var);
 		SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477(L_3, NULL);
 		__this->___selectedSkinForCharacter = L_3;
@@ -27703,7 +27735,7 @@ IL_000a:
 
 IL_001d:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:280>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:301>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_4 = __this->___unlockedSkinsForCharacter;
 		if (L_4)
 		{
@@ -27711,7 +27743,7 @@ IL_001d:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:281>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:302>
 		UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_5 = (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5*)il2cpp_codegen_object_new(UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5_il2cpp_TypeInfo_var);
 		UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED(L_5, NULL);
 		__this->___unlockedSkinsForCharacter = L_5;
@@ -27720,7 +27752,7 @@ IL_001d:
 
 IL_0030:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:283>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:304>
 		CharacterDatabase_t449DEDE309A2E3658D00F86E2304DE45B17819C6* L_6 = ___0_characterDatabase;
 		NullCheck(L_6);
 		List_1_tC5DA172B4104007E0D4153BE33E646C4296D7F6E* L_7 = L_6->___characters;
@@ -27747,14 +27779,14 @@ FINALLY_0090:
 
 IL_003e_1:
 			{
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:283>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:304>
 				CharacterData_t6FE4FDE21646685D0EB3D66F767FBF2BC038AB0D* L_9;
 				L_9 = Enumerator_get_Current_mBD05E9A19EA9224BA6A5CF985AB98038BFCDB5DB_inline((&V_0), Enumerator_get_Current_mBD05E9A19EA9224BA6A5CF985AB98038BFCDB5DB_RuntimeMethod_var);
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:285>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:306>
 				NullCheck(L_9);
 				int32_t L_10 = L_9->___characterID;
 				V_1 = L_10;
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:288>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:309>
 				SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_11 = __this->___selectedSkinForCharacter;
 				int32_t L_12 = V_1;
 				NullCheck(L_11);
@@ -27766,7 +27798,7 @@ IL_003e_1:
 				}
 			}
 			{
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:290>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:311>
 				SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* L_14 = __this->___selectedSkinForCharacter;
 				int32_t L_15 = V_1;
 				NullCheck(L_14);
@@ -27775,7 +27807,7 @@ IL_003e_1:
 
 IL_0066_1:
 			{
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:294>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:315>
 				UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_16 = __this->___unlockedSkinsForCharacter;
 				int32_t L_17 = V_1;
 				NullCheck(L_16);
@@ -27787,7 +27819,7 @@ IL_0066_1:
 				}
 			}
 			{
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:296>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:317>
 				UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* L_19 = __this->___unlockedSkinsForCharacter;
 				int32_t L_20 = V_1;
 				List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* L_21 = (List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73*)il2cpp_codegen_object_new(List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73_il2cpp_TypeInfo_var);
@@ -27798,7 +27830,7 @@ IL_0066_1:
 
 IL_0085_1:
 			{
-				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:283>
+				//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:304>
 				bool L_22;
 				L_22 = Enumerator_MoveNext_m8AD2A59085D113550BB51E657B323F2E44DC2656((&V_0), Enumerator_MoveNext_m8AD2A59085D113550BB51E657B323F2E44DC2656_RuntimeMethod_var);
 				if (L_22)
@@ -27818,7 +27850,7 @@ IL_0085_1:
 
 IL_009e:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:299>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/Scripts/General/GameData.cs:320>
 		return;
 	}
 }
@@ -27830,7 +27862,7 @@ IL_009e:
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48977
+// Method Definition Index: 48980
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SkinDictionary__ctor_m58E2A5CE3F34185459AE72370BBA69FBB18AC477 (SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27852,7 +27884,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SkinDictionary__ctor_m58E2A5CE3F34185459
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48978
+// Method Definition Index: 48981
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void UnlockedSkinsDictionary__ctor_m9541149290B0CDC5A1E9DA38E987A605A9FEE6ED (UnlockedSkinsDictionary_tA5C542B42BB9D39A5CB580AB3802ECB1BD5629A5* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27874,7 +27906,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void UnlockedSkinsDictionary__ctor_m954114929
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48979
+// Method Definition Index: 48982
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringBoolDictionary__ctor_m4E3601F1B238ACB41CA6E921D094F8D54467529E (StringBoolDictionary_tDFFCF72CA51C4E7863246981A86B831A98BC3C6B* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27896,7 +27928,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringBoolDictionary__ctor_m4E3601F1B238
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48980
+// Method Definition Index: 48983
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringIntDictionary__ctor_m7BA1EF37BF94ADB83449A2891825580B78D65389 (StringIntDictionary_t14BD41FD9ED6928BE5240536127BBEA7F3BBD418* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27918,7 +27950,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringIntDictionary__ctor_m7BA1EF37BF94A
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48981
+// Method Definition Index: 48984
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringBoolDictionary2__ctor_mC65C5D5F6B825E4664F6664E50C506E2B00CE207 (StringBoolDictionary2_tFF0D0C765E10BB5DDA74281DF5819B50A58E41B9* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -27940,7 +27972,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StringBoolDictionary2__ctor_mC65C5D5F6B8
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 48986
+// Method Definition Index: 48989
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -27949,7 +27981,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE4D943BDA16FB
 		return L_0;
 	}
 }
-// Method Definition Index: 48987
+// Method Definition Index: 48990
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_set_CurrentGameData_m10308975CC01760707932FA27BCE478D3617BC48 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -27960,7 +27992,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_set_CurrentGameData_m103
 		return;
 	}
 }
-// Method Definition Index: 48988
+// Method Definition Index: 48991
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_Awake_m287668C30AC3D82B9FBAD1E5C1371D9EC25AA0B5 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28006,7 +28038,7 @@ IL_0025:
 		return;
 	}
 }
-// Method Definition Index: 48989
+// Method Definition Index: 48992
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_InitializeData_m7DC3A5B2015D4D7875C822B9773A604704AB9271 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28033,7 +28065,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_InitializeData_m7DC3A5B2
 		return;
 	}
 }
-// Method Definition Index: 48990
+// Method Definition Index: 48993
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_SaveGameData_m060D2CD76EB8431C45F0FA376EA86A177BC417A5 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28099,7 +28131,7 @@ IL_003d:
 		return;
 	}
 }
-// Method Definition Index: 48991
+// Method Definition Index: 48994
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_LoadGameData_mB2050A57EA2DC265B58D00FA2AF1847D5639D24B (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28192,7 +28224,7 @@ IL_0055:
 		return;
 	}
 }
-// Method Definition Index: 48992
+// Method Definition Index: 48995
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_CreateNewGameData_mDBDAD83D1F4696B5D056040E15531601FDC681E8 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28212,7 +28244,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_CreateNewGameData_mDBDAD
 		return;
 	}
 }
-// Method Definition Index: 48993
+// Method Definition Index: 48996
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_InitializeDefaultSkins_m2E33EDDAC04C0D3A5E1230A74504A353F24FE307 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28260,7 +28292,7 @@ IL_0019:
 		return;
 	}
 }
-// Method Definition Index: 48994
+// Method Definition Index: 48997
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_ResetGameData_m6C8AA9FA97CC56BDD872A501676075E462A250CF (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28318,7 +28350,7 @@ IL_0048:
 		return;
 	}
 }
-// Method Definition Index: 48995
+// Method Definition Index: 48998
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_UpdateEnergyBasedOnTime_mD0F13783E3114DF2A4D1249789AEED355D357104 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28386,7 +28418,7 @@ IL_0062:
 		return;
 	}
 }
-// Method Definition Index: 48996
+// Method Definition Index: 48999
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_UpdateChestAvailability_mC4BC7BFD6ED71B52130E242C3F86BED5DB75D799 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28457,7 +28489,7 @@ IL_0052:
 		return;
 	}
 }
-// Method Definition Index: 48997
+// Method Definition Index: 49000
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameDataManager_CanClaimChest_m559B502D38C887AD524155CC307296FB8D03A9EA (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -28469,7 +28501,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool GameDataManager_CanClaimChest_m559B502D3
 		return L_1;
 	}
 }
-// Method Definition Index: 48998
+// Method Definition Index: 49001
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR TimeSpan_t8195C5B013A2C532FEBDF0B64B6911982E750F5A GameDataManager_GetTimeUntilNextChest_mA3B134DC3992CF1501C1A5BEE58DEF1EE298DBC0 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28544,7 +28576,7 @@ IL_0051:
 		return L_14;
 	}
 }
-// Method Definition Index: 48999
+// Method Definition Index: 49002
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_ClaimChestReward_mEB86CD1E26D8E199BAF05BC4121138FF325B617F (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28611,7 +28643,7 @@ IL_000e:
 		return;
 	}
 }
-// Method Definition Index: 49000
+// Method Definition Index: 49003
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_InitializeDefaultCharacters_mCA3C5D856CE86569FA7B8968243811143C4AC2A7 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -28764,7 +28796,7 @@ IL_00a3:
 		return;
 	}
 }
-// Method Definition Index: 49001
+// Method Definition Index: 49004
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_OnApplicationPause_m78500F31DB30A96F2921CB375A431DF38EDB33A1 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, bool ___0_pauseStatus, const RuntimeMethod* method) 
 {
 	{
@@ -28786,7 +28818,7 @@ IL_0009:
 		return;
 	}
 }
-// Method Definition Index: 49002
+// Method Definition Index: 49005
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_OnApplicationQuit_mEAEDDB9833DD59FEB79DFD1C50EB0561EF656902 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -28796,7 +28828,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager_OnApplicationQuit_mEAEDD
 		return;
 	}
 }
-// Method Definition Index: 49003
+// Method Definition Index: 49006
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GameDataManager__ctor_m34DC68468C1F66683C0622DBB497DC365A29D720 (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29007,7 +29039,7 @@ IL_001b:
 		return L_6;
 	}
 }
-// Method Definition Index: 80863
+// Method Definition Index: 80943
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ButtonClickedEvent_t8EA72E90B3BD1392FB3B3EF167D5121C23569E4C* Button_get_onClick_m701712A7F7F000CC80D517C4510697E15722C35C_inline (Button_t6786514A57F7AFDEE5431112FEA0CAB24F5AE098* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29016,7 +29048,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ButtonClickedEvent_t8EA72E90B3BD1
 		return L_0;
 	}
 }
-// Method Definition Index: 74770
+// Method Definition Index: 74850
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR OnChangeEvent_tDBB13012ABF81899E4DFDD82258EB7E9BB7A9F1D* TMP_InputField_get_onValueChanged_m407B5F5BFD1F4B04032F6B90B06F5072F5993407_inline (TMP_InputField_t3488E0EE8C3DF56C6A328EC95D1BEEA2DF4A7D5F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29025,7 +29057,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR OnChangeEvent_tDBB13012ABF81899E4
 		return L_0;
 	}
 }
-// Method Definition Index: 48986
+// Method Definition Index: 48989
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927_inline (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29034,7 +29066,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE
 		return L_0;
 	}
 }
-// Method Definition Index: 74733
+// Method Definition Index: 74813
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR String_t* TMP_InputField_get_text_mA4ACBF52435893D9DFD822A492454301740B3C6A_inline (TMP_InputField_t3488E0EE8C3DF56C6A328EC95D1BEEA2DF4A7D5F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29410,7 +29442,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Color__ctor_m3786F0D6E510D9C
 		return;
 	}
 }
-// Method Definition Index: 82459
+// Method Definition Index: 82539
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector2_t1FD6F485C871E832B347AB2DC8CBA08B739D8DF7 PointerEventData_get_position_m5BE71C28EB72EFB8435749E4E6E839213AEF458C_inline (PointerEventData_t9670F3C7D823CCB738A1604C72A1EB90292396FB* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29488,7 +29520,7 @@ IL_000c:
 		return L_1;
 	}
 }
-// Method Definition Index: 76601
+// Method Definition Index: 76681
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void CinemachineVirtualCameraBase_set_Priority_m233ED0376CE0BD1244CCA52DF4532C8988DC05AC_inline (CinemachineVirtualCameraBase_tAD070AA799E9D3990F0B2DA9AC5889CF138261DE* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29527,7 +29559,7 @@ IL_0030:
 		return L_11;
 	}
 }
-// Method Definition Index: 49023
+// Method Definition Index: 49026
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool InputManager_IsInputEnabled_mA92BE27A6A3812ED073E8E8D1DDE61B8CCE86E47_inline (InputManager_t29A2200021AE0E0EB6F34CB1B9DF031B3AE02677* __this, const RuntimeMethod* method) 
 {
 	{
@@ -29547,7 +29579,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Vector2__ctor_m9525B79969AFF
 		return;
 	}
 }
-// Method Definition Index: 81824
+// Method Definition Index: 81904
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_vertical_m972088E788E72690AAE139E7C0F8F634C325E7CE_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, bool ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29558,7 +29590,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_vertical_m972
 		return;
 	}
 }
-// Method Definition Index: 81822
+// Method Definition Index: 81902
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_horizontal_m99C076AF2B2B596C87435E1465EF0B104281B150_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, bool ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29569,7 +29601,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_horizontal_m9
 		return;
 	}
 }
-// Method Definition Index: 81826
+// Method Definition Index: 81906
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_movementType_m2A900C10E6C005FD6866EFF1DA2DF78AA957534A_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29580,7 +29612,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_movementType_
 		return;
 	}
 }
-// Method Definition Index: 81830
+// Method Definition Index: 81910
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_inertia_m8A17589561A5E7A2F5F543B8F2F6149458C68AC2_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, bool ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29591,7 +29623,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_inertia_m8A17
 		return;
 	}
 }
-// Method Definition Index: 81832
+// Method Definition Index: 81912
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_decelerationRate_m7DB02F71AC6E7C519ADB3FA88F9B46EF187FCD61_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29602,7 +29634,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_decelerationR
 		return;
 	}
 }
-// Method Definition Index: 81834
+// Method Definition Index: 81914
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void ScrollRect_set_scrollSensitivity_m07A6D8B94625BC52775BED72633CCBEA41E27E1D_inline (ScrollRect_t17D2F2939CA8953110180DF53164CFC3DC88D70E* __this, float ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -29808,7 +29840,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 48987
+// Method Definition Index: 48990
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void GameDataManager_set_CurrentGameData_m10308975CC01760707932FA27BCE478D3617BC48_inline (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* ___0_value, const RuntimeMethod* method) 
 {
 	{
