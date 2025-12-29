@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using StarterAssets;
 using Cinemachine;
+using UnityEngine.SceneManagement; // Add this for scene reloading
 
 public class K2_GameSummary : MonoBehaviour
 {
@@ -35,9 +36,9 @@ public class K2_GameSummary : MonoBehaviour
     public GameObject failGameObject2;
     public GameObject failGameObject3;
     
-
     [Header("Buttons")]
     public Button confirmButton;
+    public Button restartButton; // Add a dedicated restart button if needed
 
     [Header("Panel Animation")]
     public float fadeInDuration = 1.0f;
@@ -86,6 +87,10 @@ public class K2_GameSummary : MonoBehaviour
     [Header("Timeline Settings")]
     public GameObject timelineController; // Reference to timeline controller GameObject
     public string timelineObjectName = "K2_QueenACS2"; // Name of the timeline GameObject
+
+    [Header("Complete Restart Settings")]
+    public bool completeRestartOnConfirm = true; // NEW: Toggle for complete restart
+    public string sceneToReload = ""; // Leave empty to reload current scene
 
     // Star animation states
     private string[] starStateNames = new string[] { "Empty", "Star1", "Star2", "Star3" };
@@ -216,6 +221,10 @@ public class K2_GameSummary : MonoBehaviour
         if (confirmButton != null)
             confirmButton.onClick.AddListener(OnConfirmButtonClicked);
 
+        // Add restart button listener if exists
+        if (restartButton != null)
+            restartButton.onClick.AddListener(OnConfirmButtonClicked);
+
         if (backgroundMusicSource != null)
             originalBackgroundMusicVolume = backgroundMusicSource.volume;
 
@@ -229,7 +238,7 @@ public class K2_GameSummary : MonoBehaviour
         // NEW: Check and disable timeline if key is already collected
         CheckAndDisableTimelineOnStart();
 
-        Debug.Log($"GameSummary initialized - QA2 Completion Summary: {showSummaryOnQA2Completion}");
+        Debug.Log($"GameSummary initialized - Complete Restart: {completeRestartOnConfirm}");
     }
 
     private void CheckAndDisableTimelineOnStart()
@@ -1146,7 +1155,17 @@ public class K2_GameSummary : MonoBehaviour
         if (confirmButton != null)
             confirmButton.interactable = false;
 
-        StartCoroutine(HidePanelAndRestartGame());
+        // NEW: Option to completely restart the game
+        if (completeRestartOnConfirm)
+        {
+            Debug.Log("Complete restart requested - reloading scene");
+            StartCoroutine(CompleteRestartGame());
+        }
+        else
+        {
+            // Original behavior - soft reset
+            StartCoroutine(HidePanelAndRestartGame());
+        }
     }
 
     private IEnumerator HidePanelAndRestartGame()
@@ -1168,6 +1187,29 @@ public class K2_GameSummary : MonoBehaviour
 
         if (confirmButton != null)
             confirmButton.interactable = true;
+    }
+
+    // NEW: Complete restart method
+    private IEnumerator CompleteRestartGame()
+    {
+        Debug.Log("Starting complete game restart...");
+        
+        // Fade out panel if available
+        if (panelCanvasGroup != null)
+            yield return FadePanel(1f, 0f, fadeOutDuration);
+        
+        // Hide the summary panel
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+        
+        // Reset time scale
+        Time.timeScale = originalTimeScale;
+        
+        // Add a small delay to ensure UI is hidden
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        // Reload the scene
+        ReloadCurrentScene();
     }
 
     private void PlayButtonClickSound()
@@ -1325,6 +1367,44 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
+    #region Complete Scene Reload
+
+    // NEW: Method to reload the current scene
+    private void ReloadCurrentScene()
+    {
+        Debug.Log("Reloading scene for complete restart...");
+        
+        // Get the current scene name
+        string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
+            SceneManager.GetActiveScene().name : sceneToReload;
+        
+        // Reset all static flags and persistent data if needed
+        ResetPersistentData();
+        
+        // Load the scene
+        SceneManager.LoadScene(sceneName);
+    }
+
+    // NEW: Reset any persistent data that should be cleared on restart
+    private void ResetPersistentData()
+    {
+        Debug.Log("Resetting persistent data...");
+        
+        // Reset global key flags
+        K2_CollectKey.GlobalResetAllKeys();
+        
+        // Optionally reset SugariaKey if you want fresh start
+        // Uncomment the next line if you want to reset the key on complete restart
+        // if (GameDataManager.Instance != null) ResetSugariaKey();
+        
+        // Clear any static variables or flags
+        // Add any other static resets here
+        
+        Debug.Log("Persistent data reset complete");
+    }
+
+    #endregion
+
     #region Public Methods
 
     // Add this method to manually trigger QA2 completion summary
@@ -1466,6 +1546,20 @@ public class K2_GameSummary : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
             Debug.Log("SugariaKey reset in GameData");
         }
+    }
+
+    // NEW: Toggle complete restart
+    public void SetCompleteRestart(bool enabled)
+    {
+        completeRestartOnConfirm = enabled;
+        Debug.Log($"Complete restart on confirm: {enabled}");
+    }
+
+    // NEW: Set scene to reload
+    public void SetSceneToReload(string sceneName)
+    {
+        sceneToReload = sceneName;
+        Debug.Log($"Scene to reload set to: {sceneName}");
     }
 
     #endregion
@@ -1688,6 +1782,27 @@ public class K2_GameSummary : MonoBehaviour
         ResetSugariaKey();
     }
 
+    [ContextMenu("Test Complete Restart")]
+    public void TestCompleteRestart()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            isVictory = true;
+            summaryTriggeredByKeyCollection = true;
+            if (playerHealth != null) playerHealth.currentHealth = 6;
+            StartCoroutine(ShowSummaryPanel());
+            
+            // After showing summary, trigger complete restart
+            StartCoroutine(TestCompleteRestartCoroutine());
+        }
+    }
+
+    private IEnumerator TestCompleteRestartCoroutine()
+    {
+        yield return new WaitForSecondsRealtime(3f);
+        OnConfirmButtonClicked();
+    }
+
     #endregion
 
     void OnDestroy()
@@ -1700,6 +1815,9 @@ public class K2_GameSummary : MonoBehaviour
 
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
+        
+        if (restartButton != null)
+            restartButton.onClick.RemoveListener(OnConfirmButtonClicked);
         
         // Ensure KeyImageunlocking is not left active
         if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
