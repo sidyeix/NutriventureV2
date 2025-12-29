@@ -289,4 +289,29 @@ public class QuestManager : MonoBehaviour
 
     #endregion
 
+    public bool ClaimQuest(string questID)
+    {
+        Quest quest = questDatabase.GetQuest(questID);
+        if (quest == null) return false;
+
+        bool success = quest.ClaimQuest();
+
+        if (success)
+        {
+            onQuestProgressUpdated?.Invoke(quest);
+
+            Kingdom questKingdom = questDatabase.GetKingdomForQuest(questID);
+            if (questKingdom != null)
+            {
+                onKingdomQuestsUpdated?.Invoke(questKingdom.kingdomID);
+                onKingdomsUpdated?.Invoke(questDatabase.GetAllKingdoms());
+            }
+
+            Debug.Log($"Quest claimed: {quest.questName}");
+        }
+
+        return success;
+    }
+
+
 }

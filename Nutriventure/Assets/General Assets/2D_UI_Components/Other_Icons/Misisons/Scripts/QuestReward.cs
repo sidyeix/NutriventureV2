@@ -33,12 +33,10 @@ public class QuestTask
     public string taskID;
     public string description;
     public TaskType type = TaskType.Collect;
-    public string targetID; // Could be item ID, enemy ID, location ID, etc.
+    public string targetID;
     public int requiredAmount = 1;
     public int currentAmount = 0;
     public bool isOptional = false;
-
-    // NEW: Boolean to track if task is completed
     public bool isCompleted = false;
 
     public enum TaskType
@@ -51,14 +49,12 @@ public class QuestTask
         Custom
     }
 
-    // UPDATED: Property now uses isCompleted bool
     public bool IsComplete => isCompleted;
 
     public void UpdateProgress(int amount = 1)
     {
         currentAmount = Mathf.Min(currentAmount + amount, requiredAmount);
 
-        // NEW: Update isCompleted when requirements are met
         if (currentAmount >= requiredAmount && !isCompleted)
         {
             isCompleted = true;
@@ -97,9 +93,10 @@ public class Quest
     public string longDescription;
 
     public QuestCategory category;
+    public Sprite questIcon; // NEW: Added quest icon field
 
     [Header("Requirements")]
-    public List<string> requiredQuestIDs = new List<string>(); // Quests that must be completed first
+    public List<string> requiredQuestIDs = new List<string>();
     public int requiredLevel = 1;
 
     [Header("Tasks")]
@@ -109,7 +106,7 @@ public class Quest
     public List<QuestReward> rewards = new List<QuestReward>();
 
     [Header("Timeline")]
-    public PlayableAsset timelineAsset; // Optional timeline for quest
+    public PlayableAsset timelineAsset;
 
     [Header("Status")]
     public QuestStatus status = QuestStatus.NotStarted;
@@ -117,7 +114,6 @@ public class Quest
     public DateTime? completionTime;
 
     [Header("UI")]
-    public Sprite questIcon;
     public Color questColor = Color.white;
 
     // Progress tracking
@@ -154,18 +150,26 @@ public class Quest
             status = QuestStatus.Completed;
             completionTime = DateTime.Now;
 
+            // Don't grant rewards here - they'll be granted when claimed
+        }
+    }
+
+    // NEW: Method to claim quest rewards
+    public bool ClaimQuest()
+    {
+        if (status == QuestStatus.Completed)
+        {
+            status = QuestStatus.Claimed;
+
             // Grant rewards
             foreach (var reward in rewards)
             {
                 reward.GrantReward();
             }
 
-            // Mark all tasks as completed
-            foreach (var task in tasks)
-            {
-                task.MarkAsComplete();
-            }
+            return true;
         }
+        return false;
     }
 
     public void AbandonQuest()
@@ -196,6 +200,11 @@ public class Quest
         {
             task.MarkAsComplete();
         }
+
+        if (AllTasksComplete)
+        {
+            CompleteQuest();
+        }
     }
 }
 
@@ -209,7 +218,6 @@ public class Kingdom
 
     public List<Quest> quests = new List<Quest>();
 
-    // Helper properties
     public int TotalQuestCount => quests.Count;
     public int CompletedQuestCount
     {
@@ -223,20 +231,37 @@ public class Kingdom
             return count;
         }
     }
+
+    public int ClaimedQuestCount
+    {
+        get
+        {
+            int count = 0;
+            foreach (var quest in quests)
+            {
+                if (quest.status == QuestStatus.Claimed) count++;
+            }
+            return count;
+        }
+    }
 }
 
+// UPDATED: Added Claimed status
 public enum QuestStatus
 {
     NotStarted,
     InProgress,
     Completed,
+    Claimed,
     Failed,
     Abandoned
 }
 
+// UPDATED: Added GeneralQuest category
 public enum QuestCategory
 {
     MainStory,
+    GeneralQuest,
     SideQuest,
     Daily,
     Weekly,

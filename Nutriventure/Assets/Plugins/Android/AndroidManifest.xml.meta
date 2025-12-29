@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Nutriventure/Assets/Plugins/Android/AndroidManifest.xml.meta
 guid: 3b5d00057482caf4bba90a2293754e30
 TextScriptImporter:
+========
+guid: 16a576367d7cbc44fbf817b7d4321ff5
+DefaultImporter:
+>>>>>>>> Cao_Updates2:Nutriventure/Assets/_Recovery/0 (8).unity.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

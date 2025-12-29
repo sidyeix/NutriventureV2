@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Nutriventure/Assets/Plugins/Android/proguard-user.txt.meta
 guid: 64a21a95d96b14946a839961c0d3cbb6
 TextScriptImporter:
+========
+guid: 096baf72c79bd7742aa763391675883c
+PrefabImporter:
+>>>>>>>> Cao_Updates2:Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Prefabs/CarretSpikerSingle.prefab.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
