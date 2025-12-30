@@ -22,7 +22,7 @@ public class DamageObject : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            Debug.Log("=== PLAYER TOUCHED DAMAGE ===");
+            Debug.Log("=== PLAYER TOUCHED DAMAGE OBJECT ===");
             ApplyDamage(other.transform);
         }
     }
@@ -31,13 +31,17 @@ public class DamageObject : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            Debug.Log("=== PLAYER COLLIDED WITH DAMAGE ===");
+            Debug.Log("=== PLAYER COLLIDED WITH DAMAGE OBJECT ===");
             ApplyDamage(collision.transform);
         }
     }
 
     private void ApplyDamage(Transform playerTransform = null)
     {
+        // 1. FIRST - SHOW THE DAMAGE PANEL
+        ShowDamagePanel();
+
+        // 2. Check if GameManager exists
         if (GoGrowGlowGameManager.Instance == null)
         {
             Debug.LogError("GameManager is NULL!");
@@ -50,12 +54,7 @@ public class DamageObject : MonoBehaviour
             return;
         }
 
-        // 1. TRIGGER DAMAGE ANIMATION (THIS WILL SHOW PANEL)
-        GoGrowGlowGameManager.Instance.TriggerDamageAnimation("isDamaged", 1f);
-
-        Debug.Log("Damage animation triggered - panel should show!");
-
-        // 2. Calculate knockback direction
+        // 3. Calculate knockback direction
         Vector3 knockbackDirection = Vector3.zero;
         if (playerTransform != null && applyKnockback)
         {
@@ -64,13 +63,13 @@ public class DamageObject : MonoBehaviour
             knockbackDirection.Normalize();
         }
 
-        // 3. Apply knockback if enabled
+        // 4. Apply knockback if enabled
         if (applyKnockback && knockbackForce > 0 && playerTransform != null)
         {
             GoGrowGlowGameManager.Instance.ApplyKnockback(knockbackDirection, knockbackForce, knockbackDuration);
         }
 
-        // 4. Apply damage through GameManager
+        // 5. Apply damage through GameManager
         if (respawnPlayer && damageAmount >= 1f)
         {
             GoGrowGlowGameManager.Instance.LoseLife();
@@ -80,7 +79,7 @@ public class DamageObject : MonoBehaviour
             GoGrowGlowGameManager.Instance.LoseLifeAmount(damageAmount, false);
         }
 
-        // 5. Visual effect
+        // 6. Visual effect
         if (damageEffect != null)
         {
             GameObject effect = Instantiate(damageEffect, transform.position, Quaternion.identity);
@@ -88,18 +87,41 @@ public class DamageObject : MonoBehaviour
             Destroy(effect, 3f);
         }
 
-        // 6. Sound
+        // 7. Sound
         if (damageSound != null && AudioHandler.Instance != null)
         {
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(damageSound);
         }
 
-        // 7. Destroy if needed
+        // 8. Destroy if needed
         if (destroyOnContact)
         {
             Destroy(gameObject);
         }
 
         Debug.Log($"Damage applied: {damageAmount}");
+    }
+
+    private void ShowDamagePanel()
+    {
+        if (DamagePanelController.Instance != null)
+        {
+            DamagePanelController.Instance.ShowDamagePanel();
+        }
+        else
+        {
+            Debug.LogError("DamagePanelController not found! Make sure the script is attached to your damage panel UI.");
+
+            // Try to find it anyway as a fallback
+            DamagePanelController panelController = FindObjectOfType<DamagePanelController>();
+            if (panelController != null)
+            {
+                panelController.ShowDamagePanel();
+            }
+            else
+            {
+                Debug.LogError("Could not find DamagePanelController in the scene!");
+            }
+        }
     }
 }

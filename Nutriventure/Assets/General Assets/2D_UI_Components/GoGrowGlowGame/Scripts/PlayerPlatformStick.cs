@@ -4,10 +4,15 @@ public class PlayerPlatformStick : MonoBehaviour
 {
     private Transform currentPlatform;
     private CharacterController controller;
+    private Transform platformParent;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+
+        // Create an empty GameObject to use as parent
+        platformParent = new GameObject("PlatformParent").transform;
+        platformParent.localScale = Vector3.one; // Always scale 1
     }
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -18,7 +23,13 @@ public class PlayerPlatformStick : MonoBehaviour
             if (currentPlatform != hit.collider.transform)
             {
                 currentPlatform = hit.collider.transform;
-                transform.SetParent(currentPlatform);
+
+                // Position the parent at the platform
+                platformParent.position = currentPlatform.position;
+                platformParent.rotation = currentPlatform.rotation;
+
+                // Parent to our empty object (not directly to platform)
+                transform.SetParent(platformParent);
             }
         }
     }
@@ -30,6 +41,13 @@ public class PlayerPlatformStick : MonoBehaviour
         {
             transform.SetParent(null);
             currentPlatform = null;
+        }
+
+        // If we're on a platform, update our parent's position to follow it
+        if (currentPlatform != null)
+        {
+            platformParent.position = currentPlatform.position;
+            platformParent.rotation = currentPlatform.rotation;
         }
     }
 }

@@ -50,6 +50,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float junkFoodEnergyDeduction = 20f;
     private float currentEnergy = 0f;
     private float targetEnergy = 0f;
+    private bool isEnergyDecreasePaused = false; // New flag for pausing energy decrease
 
     [Header("Smooth Transition Settings")]
     public float energyTransitionSpeed = 5f;
@@ -80,11 +81,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public TMP_Text livesText;
     public Button startButton;
     public Canvas gameCanvas;
-
-    [Header("Damage UI")]
-    public GameObject damagePanel; // Drag your damage panel UI GameObject here
-    public float damagePanelDuration = 1f;
-    private Coroutine damagePanelCoroutine;
 
     [Header("One Life UI")]
     public GameObject oneLifePanel;
@@ -225,9 +221,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
         HideAllBoostUI();
         if (oneLifePanel != null) oneLifePanel.SetActive(false);
 
-        // Hide damage panel at start
-        if (damagePanel != null) damagePanel.SetActive(false);
-
         targetEnergy = currentEnergy;
         targetSpeed = initialPlayerSpeed;
         targetSize = initialPlayerSize;
@@ -249,7 +242,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
         gameTimer += Time.deltaTime;
         UpdateTimerDisplay();
 
-        if (!inHealingZone && !isSpeedBoosted && !isSizeBoosted)
+        // Only decrease energy if not paused and not in healing zone/boosted states
+        if (!isEnergyDecreasePaused && !inHealingZone && !isSpeedBoosted && !isSizeBoosted)
         {
             targetEnergy -= energyDecreaseRate * Time.deltaTime;
             targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
@@ -288,68 +282,22 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
     }
 
-    // ====== DAMAGE PANEL SYSTEM ======
-    public void ShowDamagePanel()
+    // ====== ENERGY SLIDER PAUSE/RESUME LOGIC ======
+    public void PauseEnergyDecrease()
     {
-        if (damagePanel == null)
-        {
-            Debug.LogError("Damage panel is NULL! Assign it in the inspector!");
-            return;
-        }
-
-        if (!gameIsActive)
-        {
-            Debug.LogWarning("Game is not active!");
-            return;
-        }
-
-        // Stop any existing panel coroutine
-        if (damagePanelCoroutine != null)
-        {
-            StopCoroutine(damagePanelCoroutine);
-        }
-
-        // Show the panel - MAKE IT BRIGHT RED SO YOU CAN SEE IT
-        damagePanel.SetActive(true);
-
-        // Make sure it's visible
-        Image panelImage = damagePanel.GetComponent<Image>();
-        if (panelImage != null)
-        {
-            panelImage.color = Color.red;
-        }
-
-        Debug.Log("DAMAGE PANEL SHOWN!");
-
-        // Start hiding it after duration
-        damagePanelCoroutine = StartCoroutine(HideDamagePanelAfterDelay());
+        isEnergyDecreasePaused = true;
+        Debug.Log("Energy decrease paused");
     }
 
-    private IEnumerator HideDamagePanelAfterDelay()
+    public void ResumeEnergyDecrease()
     {
-        yield return new WaitForSeconds(damagePanelDuration);
-
-        if (damagePanel != null)
-        {
-            damagePanel.SetActive(false);
-            Debug.Log("Damage panel hidden");
-        }
-
-        damagePanelCoroutine = null;
+        isEnergyDecreasePaused = false;
+        Debug.Log("Energy decrease resumed");
     }
 
-    public void ForceHideDamagePanel()
+    public bool IsEnergyDecreasePaused()
     {
-        if (damagePanelCoroutine != null)
-        {
-            StopCoroutine(damagePanelCoroutine);
-            damagePanelCoroutine = null;
-        }
-
-        if (damagePanel != null)
-        {
-            damagePanel.SetActive(false);
-        }
+        return isEnergyDecreasePaused;
     }
 
     // ====== GLOBAL DAMAGE COOLDOWN ======
@@ -473,44 +421,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (resetDamageCoroutine != null) StopCoroutine(resetDamageCoroutine);
             characterAnimator.SetBool(triggerName, true);
             resetDamageCoroutine = StartCoroutine(ResetDamageAnimation(triggerName, duration));
-
-            // SHOW DAMAGE PANEL WHEN DAMAGE ANIMATION TRIGGERS
-            ShowDamagePanelWithAnimation();
         }
     }
-
-
-    private void ShowDamagePanelWithAnimation()
-    {
-        Debug.Log("=== SHOWING DAMAGE PANEL WITH ANIMATION ===");
-
-        if (damagePanel == null)
-        {
-            Debug.LogError("Damage panel is NULL!");
-            return;
-        }
-
-        Debug.Log("Panel exists: " + damagePanel.name);
-        Debug.Log("Setting panel ACTIVE = true");
-
-        // DIRECT SET - NO COROUTINE
-        damagePanel.SetActive(true);
-
-        // Hide after 1 second
-        StartCoroutine(HidePanelAfterOneSecond());
-    }
-
-    private IEnumerator HidePanelAfterOneSecond()
-    {
-        yield return new WaitForSeconds(1f);
-
-        if (damagePanel != null)
-        {
-            Debug.Log("Setting panel ACTIVE = false");
-            damagePanel.SetActive(false);
-        }
-    }
-
 
     private IEnumerator ResetDamageAnimation(string triggerName, float duration)
     {
@@ -582,6 +494,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
         gameIsActive = true;
+        isEnergyDecreasePaused = false; // Reset pause state
         currentLives = maxLives;
         currentLifeAmount = maxLives;
         currentEnergy = 0f;
@@ -643,6 +556,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public void EndGame()
     {
         gameIsActive = false;
+        isEnergyDecreasePaused = false; // Reset pause state
         StopOneLifeCheck();
         StopKnockback();
 
@@ -869,7 +783,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (!gameIsActive || isRespawning) return;
 
-        // DON'T show panel here - DamageObject will show it when contact happens
         StartDamageCooldown();
 
         if (respawnAtCheckpoint)
@@ -917,7 +830,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (!gameIsActive || isRespawning) return;
 
-        // DON'T show panel here - DamageObject will show it when contact happens
         StartDamageCooldown();
 
         if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
@@ -991,9 +903,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (speedBoostEffect != null) speedBoostEffect.SetActive(false);
         if (sizeBoostEffect != null) sizeBoostEffect.SetActive(false);
         if (glowBoostEffect != null) glowBoostEffect.SetActive(false);
-
-        // Also hide damage panel
-        ForceHideDamagePanel();
     }
 
     private void HideRespawnEffect()
@@ -1257,6 +1166,92 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (foodFeedbackUI != null && foodSprite != null)
             foodFeedbackUI.ShowFoodFeedback(foodSprite);
+    }
+
+    public void AddPoints(int points)
+    {
+        if (!gameIsActive) return;
+
+        score += points;
+        score = Mathf.Max(0, score); // Ensure score doesn't go negative
+        UpdateUI();
+    }
+
+    public void AddEnergy(float amount)
+    {
+        if (!gameIsActive) return;
+
+        targetEnergy += amount;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+        Debug.Log($"Energy added: {amount}. New target: {targetEnergy}");
+    }
+
+    public void RemoveEnergy(float amount)
+    {
+        if (!gameIsActive) return;
+
+        targetEnergy -= amount;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+        Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}");
+    }
+
+    public void SetEnergy(float amount)
+    {
+        if (!gameIsActive) return;
+
+        targetEnergy = Mathf.Clamp(amount, 0f, 100f);
+        currentEnergy = targetEnergy;
+
+        if (energySlider != null)
+            energySlider.value = currentEnergy;
+
+        Debug.Log($"Energy set to: {targetEnergy}");
+    }
+
+    // ====== BOOST METHODS ======
+    public void TriggerSpeedBoost(float duration = 10f)
+    {
+        if (!gameIsActive || isRespawning) return;
+
+        isSpeedBoosted = true;
+        speedBoostTimer = duration;
+
+        if (AudioHandler.Instance != null && speedBoostSound != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(speedBoostSound);
+
+        if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
+        ShowBoostUI(FoodType.Go);
+
+        Debug.Log($"Speed boost activated for {duration} seconds");
+    }
+
+    public void TriggerSizeBoost(float duration = 10f)
+    {
+        if (!gameIsActive || isRespawning) return;
+
+        isSizeBoosted = true;
+        sizeBoostTimer = duration;
+
+        if (AudioHandler.Instance != null && sizeBoostSound != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
+
+        if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
+        ShowBoostUI(FoodType.Grow);
+
+        Debug.Log($"Size boost activated for {duration} seconds");
+    }
+
+    public void TriggerGlowBoost(float duration = 10f)
+    {
+        if (!gameIsActive || isRespawning) return;
+
+        if (AudioHandler.Instance != null && glowBoostSound != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(glowBoostSound);
+
+        if (glowBoostEffect != null) glowBoostEffect.SetActive(true);
+        ShowBoostUI(FoodType.Glow);
+
+        Debug.Log($"Glow boost activated for {duration} seconds");
     }
 
     // ====== PUBLIC GETTERS ======
