@@ -44,6 +44,7 @@ GameObject:
   m_Component:
   - component: {fileID: 212858735570210138}
   - component: {fileID: 1397984337604658676}
+  - component: {fileID: -2785587790389555226}
   m_Layer: 0
   m_Name: Calcium
   m_TagString: Untagged
@@ -90,6 +91,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-2785587790389555226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790790307989994943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb22f82390503fa4788ce87807bd194c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnerlingAnimationManager
+  ingredientDatabase: {fileID: 11400000, guid: d70f73ee91d427e47b1e44293813d4e4, type: 2}
+  animationConfig: {fileID: 11400000, guid: c84b783f20fd48b43a88d5f8846372ba, type: 2}
+  enerlingName: Calcium
+  animator: {fileID: 0}
 --- !u!1 &2471666492878358067
 GameObject:
   m_ObjectHideFlags: 0
