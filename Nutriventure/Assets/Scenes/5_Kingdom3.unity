@@ -9099,6 +9099,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3240a1fa09a639e4dab0567f01053844, type: 3}
+--- !u!1001 &309713743
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 43.50941
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.046538353
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 105.22379
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: m_Name
+      value: Calcium
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
 --- !u!1001 &311871241
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12860,13 +12917,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e22dfb235ed8a214e84eb5daea018dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionController
-  menuCamera: {fileID: 834278260}
-  characterSelectionCamera: {fileID: 1218677823}
+  menuCamera: {fileID: 0}
+  characterSelectionCamera: {fileID: 0}
   skinSelectionCamera: {fileID: 1938859889}
   characterSelectionCanvas: {fileID: 641576474}
-  characterPreviewCanvas: {fileID: 1477035710}
+  characterPreviewCanvas: {fileID: 0}
   characterSelectionPanel: {fileID: 641576472}
-  mainMenuCanvasesParent: {fileID: 1057973874}
+  mainMenuCanvasesParent: {fileID: 0}
   selectCharacterButton: {fileID: 2022504402}
   previewSelectButton: {fileID: 366650511}
   skinButton: {fileID: 1053241513}
@@ -12878,14 +12935,10 @@ MonoBehaviour:
   canvasShowDelay: 1
   panelEntryPosition: {x: -466.3313, y: -72.66703, z: 0.000012334688}
   panelExitPosition: {x: -2000, y: -72.66703, z: 0.000012334688}
-  characterSelectionAnimator: {fileID: 970895810}
+  characterSelectionAnimator: {fileID: 0}
   characterRotationController: {fileID: 1252794581}
-  playerArmature: {fileID: 1922194119}
-  colorizableImages:
-  - {fileID: 1403515811}
-  - {fileID: 182238889}
-  - {fileID: 1476014160}
-  - {fileID: 606056654}
+  playerArmature: {fileID: 0}
+  colorizableImages: []
   colorizableTexts: []
   skinSelectionController: {fileID: 2137998982}
   characterVisualSwapper: {fileID: 1922194129}
@@ -62522,7 +62575,7 @@ MonoBehaviour:
   - {fileID: 69552022}
   - {fileID: 1771237619}
   - {fileID: 149215238}
-  mainMenuPlatform: {fileID: 808081565}
+  mainMenuPlatform: {fileID: 0}
 --- !u!4 &2045678558
 Transform:
   m_ObjectHideFlags: 0
@@ -63176,6 +63229,7 @@ GameObject:
   - component: {fileID: 2072090883}
   - component: {fileID: 2072090882}
   - component: {fileID: 2072090881}
+  - component: {fileID: 2072090884}
   m_Layer: 0
   m_Name: Terrain (1)
   m_TagString: Untagged
@@ -63258,6 +63312,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1946029654}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &2072090884
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2072090880}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 0ccf2a82178d6c947b4c694d91e32d9d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &2077347121
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -64537,17 +64613,17 @@ MonoBehaviour:
   characterSelectionController: {fileID: 458180561}
   characterVisualSwapper: {fileID: 1922194129}
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
-  skinTimelineBridge: {fileID: 189214965}
-  skinGridLayout: {fileID: 1067520796}
+  skinTimelineBridge: {fileID: 0}
+  skinGridLayout: {fileID: 0}
   skinButtonPrefab: {fileID: 6683282478652706255, guid: 27f8d9282daef754abc87fe8edd4b451, type: 3}
   noSkinsText: {fileID: 0}
   skinSelectionPanel: {fileID: 705884194}
-  characterIconImage: {fileID: 1184101941}
+  characterIconImage: {fileID: 0}
   characterNameText: {fileID: 203000205}
   characterDescriptionText: {fileID: 1545440592}
   skinNameText: {fileID: 0}
-  lockedSkinColor: {r: 1, g: 0, b: 0, a: 0}
-  unlockedSkinColor: {r: 0, g: 0, b: 0, a: 0}
+  lockedSkinColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+  unlockedSkinColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &2137998983
 Transform:
   m_ObjectHideFlags: 0
@@ -64637,6 +64713,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1de5083244ecdb64995ead4f839d08f8, type: 3}
+--- !u!1001 &1084380494278805442
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 262242009005726678, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001375668628606984, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1001375668628606984, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440148696383731439, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+      propertyPath: m_Name
+      value: Shrimp powder
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -64649,3 +64790,5 @@ SceneRoots:
   - {fileID: 1618782043}
   - {fileID: 784021935}
   - {fileID: 553686493}
+  - {fileID: 309713743}
+  - {fileID: 1084380494278805442}
