@@ -12,4 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71148dd90905f564b906661d29a2d4be, type: 3}
   m_Name: IngredientDatabase
   m_EditorClassIdentifier: Assembly-CSharp::IngredientDatabase
-  ingredients: []
+  ingredients:
+  - ingredientName: Calcium
+    modelPrefab: {fileID: 8877414909686671166, guid: 96acaf02ea93f52469e871bf776296a8, type: 3}
+    animatorController: {fileID: 0}
+    idleTrigger: 
+    attackTrigger: 
+    hitTrigger: 
+    blockTrigger: 
+    deathTrigger: 
+    liverDamage: 0
+    heartDamage: 0
+    kidneyDamage: 0
+    hitParticlePrefab: {fileID: 0}
+    blockParticlePrefab: {fileID: 0}
