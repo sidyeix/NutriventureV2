@@ -47,12 +47,12 @@ Material:
     m_Ints: []
     m_Floats:
     - Vector1_01339ea4c1b6474f964296aa80cd5808: 0
-    - Vector1_03c8afa2c9e34a21a4914f305016714e: 0
-    - Vector1_1db546aa63e1444fb58b61b0246e473b: 0
-    - Vector1_1e250e24948e481d93475228af1ce542: 0
-    - Vector1_24957d9a1a1a4032827e7c50f0247939: 3
-    - Vector1_6bea09b150814251ab1a36d62b5b8c6d: 0.8
-    - Vector1_94dcfc32c454499d8af1946d3f75e139: 0
+    - Vector1_03c8afa2c9e34a21a4914f305016714e: 0.03
+    - Vector1_1db546aa63e1444fb58b61b0246e473b: 13.44
+    - Vector1_1e250e24948e481d93475228af1ce542: 0.06
+    - Vector1_24957d9a1a1a4032827e7c50f0247939: 2.45
+    - Vector1_6bea09b150814251ab1a36d62b5b8c6d: 0.807
+    - Vector1_94dcfc32c454499d8af1946d3f75e139: 2.89
     - _QueueControl: 0
     - _QueueOffset: 0
     - _XRMotionVectorsPass: 1

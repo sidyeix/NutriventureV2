@@ -103,6 +103,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JunkFood
   pointsDeduction: 120
+  foodSprite: {fileID: 21300000, guid: 89d76a97a84a3a14ab9426eb4e359e24, type: 3}
   negativeEffect: {fileID: 0}
 --- !u!135 &1944214174256609849
 SphereCollider:
