@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IngredientDatabase
   ingredients:
   - ingredientName: Calcium
+    isUnlocked: 0
+    enerlingSprite: {fileID: 0}
     modelPrefab: {fileID: 8877414909686671166, guid: 96acaf02ea93f52469e871bf776296a8, type: 3}
     animatorController: {fileID: 0}
     idleTrigger: 
@@ -21,8 +23,27 @@ MonoBehaviour:
     hitTrigger: 
     blockTrigger: 
     deathTrigger: 
-    liverDamage: 0
-    heartDamage: 0
-    kidneyDamage: 0
-    hitParticlePrefab: {fileID: 0}
-    blockParticlePrefab: {fileID: 0}
+    liverHealth: 0
+    heartHealth: 0
+    kidneyHealth: 0
+    skill1:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill2:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill3:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
