@@ -81,6 +81,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoFood
   points: 100
+  foodSprite: {fileID: 21300000, guid: 0ab6303537ac52340b7a90be19921bb2, type: 3}
   collectionEffect: {fileID: 0}
 --- !u!135 &4281531132902258869
 SphereCollider:
@@ -258,19 +259,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3565387922645062801, guid: db2597f3ca712c341bcbdc58716e1491, type: 3}
       propertyPath: m_LocalScale.x
-      value: 11.826035
+      value: 14.752977
       objectReference: {fileID: 0}
     - target: {fileID: 3565387922645062801, guid: db2597f3ca712c341bcbdc58716e1491, type: 3}
       propertyPath: m_LocalScale.y
-      value: 11.826035
+      value: 14.752977
       objectReference: {fileID: 0}
     - target: {fileID: 3565387922645062801, guid: db2597f3ca712c341bcbdc58716e1491, type: 3}
       propertyPath: m_LocalScale.z
-      value: 11.826035
+      value: 14.752977
       objectReference: {fileID: 0}
     - target: {fileID: 3565387922645062801, guid: db2597f3ca712c341bcbdc58716e1491, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.0000000036879
       objectReference: {fileID: 0}
     - target: {fileID: 3565387922645062801, guid: db2597f3ca712c341bcbdc58716e1491, type: 3}
       propertyPath: m_LocalPosition.y

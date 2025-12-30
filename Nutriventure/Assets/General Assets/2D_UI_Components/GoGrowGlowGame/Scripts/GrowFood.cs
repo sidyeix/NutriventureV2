@@ -5,6 +5,7 @@ public class GrowFood : MonoBehaviour
     [Header("Food Settings")]
     public int points = 100;
     public float growEnergyGain = 22f;
+    public Sprite foodSprite; // Add this field
 
     [Header("Optional Visual Effects")]
     public GameObject collectionEffect;
@@ -31,6 +32,12 @@ public class GrowFood : MonoBehaviour
         if (GoGrowGlowGameManager.Instance != null)
         {
             GoGrowGlowGameManager.Instance.CollectGrowFood(gameObject);
+
+            // Show food feedback UI with this food's sprite
+            if (foodSprite != null)
+            {
+                GoGrowGlowGameManager.Instance.ShowFoodFeedback(foodSprite);
+            }
         }
 
         // Destroy the food object
