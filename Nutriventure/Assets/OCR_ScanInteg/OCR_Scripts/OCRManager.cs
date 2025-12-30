@@ -4,6 +4,8 @@ using System.Collections;
 using System;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
+
 public class OCRManager : MonoBehaviour
 {
     [Header("UI References")]
@@ -11,7 +13,7 @@ public class OCRManager : MonoBehaviour
     public TMP_Text statusText;
     public TMP_Text resultsTextIngredient;
     public TMP_Text resultsTextCategory;
-    public TMP_Text resultsTextType; // Changed from Rarity
+    public TMP_Text resultsTextType;
     public TMP_Text resultsTextScan;
     public TMP_Text resultsTextChance;
     public GameObject resultsPanel;
@@ -44,7 +46,7 @@ public class OCRManager : MonoBehaviour
     public ModelManager modelManager;
 
     [Header("Capture Cooldown")]
-    public float captureCooldownDuration = 2f; // 2 seconds cooldown
+    public float captureCooldownDuration = 2f;
 
     private Texture2D currentImage;
     private bool isProcessing = false;
@@ -55,7 +57,6 @@ public class OCRManager : MonoBehaviour
     private bool isCaptureOnCooldown = false;
     private Coroutine captureCooldownCoroutine;
     
-    // ==================== TUTORIAL SUPPORT ====================
     public bool IsTutorialActive { get; set; } = false;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -131,7 +132,6 @@ public class OCRManager : MonoBehaviour
         isCaptureOnCooldown = true;
         UpdateButtonStates();
        
-        // Visual feedback for cooldown
         if (captureButton != null)
         {
             Image buttonImage = captureButton.GetComponent<Image>();
@@ -157,7 +157,6 @@ public class OCRManager : MonoBehaviour
             yield return null;
         }
 
-        // Restore button appearance
         if (captureButton != null)
         {
             Image buttonImage = captureButton.GetComponent<Image>();
@@ -318,18 +317,10 @@ public class OCRManager : MonoBehaviour
     IEnumerator StartCameraPreview()
     {
         UpdateStatus("Requesting camera permission...");
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            Permission.RequestUserPermission(Permission.Camera);
-            yield return new WaitForSeconds(0.8f);
-        }
-
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            UpdateStatus("Camera permission denied");
-            yield break;
-        }
-
+        
+        // Request camera permission for Android
+        yield return RequestCameraPermission();
+        
         WebCamDevice[] devices = WebCamTexture.devices;
         if (devices == null || devices.Length == 0)
         {
@@ -355,6 +346,49 @@ public class OCRManager : MonoBehaviour
         }
     }
 
+    IEnumerator RequestCameraPermission()
+    {
+        // Check if we already have permission
+        if (!HasCameraPermission())
+        {
+            // Request permission
+            yield return RequestPermission("android.permission.CAMERA");
+            
+            // Check again
+            if (!HasCameraPermission())
+            {
+                UpdateStatus("Camera permission denied");
+                yield break;
+            }
+        }
+    }
+
+    bool HasCameraPermission()
+    {
+        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+        using (var packageManager = currentActivity.Call<AndroidJavaObject>("getPackageManager"))
+        using (var packageName = currentActivity.Call<AndroidJavaObject>("getPackageName"))
+        {
+            int permissionGranted = packageManager.Call<int>("checkPermission", 
+                "android.permission.CAMERA", packageName);
+            return permissionGranted == 0; // 0 = granted, -1 = denied
+        }
+    }
+
+    IEnumerator RequestPermission(string permission)
+    {
+        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+        {
+            string[] permissions = new string[] { permission };
+            currentActivity.Call("requestPermissions", permissions, 0);
+        }
+        
+        // Wait for permission dialog
+        yield return new WaitForSeconds(1f);
+    }
+
     IEnumerator RestartCameraPreview()
     {
         if (liveCameraTexture != null)
@@ -376,13 +410,10 @@ public class OCRManager : MonoBehaviour
     {
         UpdateStatus("Preparing capture...");
 
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            Permission.RequestUserPermission(Permission.Camera);
-            yield return new WaitForSeconds(0.5f);
-        }
-
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
+        // Check camera permission
+        yield return RequestCameraPermission();
+        
+        if (!HasCameraPermission())
         {
             UpdateStatus("Camera permission required");
             ResetProcessingState();
@@ -522,18 +553,6 @@ public class OCRManager : MonoBehaviour
             yield break;
         }
 
-        // Note: CooldownSystem.GetGlobalCooldown() doesn't exist in provided code
-        // If you have a CooldownSystem class, keep it. If not, remove or comment this section.
-        /*
-        TimeSpan globalCooldown = CooldownSystem.GetGlobalCooldown();
-        if (globalCooldown.TotalSeconds > 0)
-        {
-            UpdateStatus($"Please wait {globalCooldown:ss}s");
-            ResetProcessingState();
-            yield break;
-        }
-        */
-
         UpdateStatus("Processing image with OCR...");
         byte[] imageBytes = currentImage.EncodeToJPG(80);
         string base64Image = Convert.ToBase64String(imageBytes);
@@ -582,22 +601,18 @@ public class OCRManager : MonoBehaviour
         currentIngredientData = ingredientData;
         currentProductFingerprint = ingredientData.fingerprint;
 
-        // FIXED: No more rarity check
-        // Case 1: No ingredient or invalid result
         if (!ingredientData.IsValid())
         {
             ShowErrorUI("No Ingredient/s detected... Please try again");
             yield break;
         }
 
-        // Case 2: OCR failed
         if (ingredientData.status != "success")
         {
             ShowErrorUI("Scan failed: " + ingredientData.status);
             yield break;
         }
 
-        // Case 3: Product already scanned 3 times
         if (ingredientData.IsDuplicateProduct())
         {
             TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
@@ -614,7 +629,6 @@ public class OCRManager : MonoBehaviour
             yield break;
         }
 
-        // Case 4: Success
         ProductManager.RecordProductScan(ingredientData.fingerprint, ingredientData.ingredient);
         ClearErrorUI();
         currentProductFingerprint = null;
@@ -644,6 +658,10 @@ public class OCRManager : MonoBehaviour
     {
         yield return StartCoroutine(FadeOut());
         ingredientSoundEffects();
+        
+        // Debug log the ingredient name
+        Debug.Log($"ScanSuccessSequence - Raw ingredient from JSON: '{ingredientData.ingredient}'");
+        
         DisplayIngredient(ingredientData);
         yield return new WaitForSeconds(0.1f);
         yield return StartCoroutine(FadeIn());
@@ -660,12 +678,19 @@ public class OCRManager : MonoBehaviour
         if (battleButton != null) battleButton.gameObject.SetActive(true);
 
         int productScanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint);
+        
+        // Debug: Log the ingredient name received
+        Debug.Log($"DisplayIngredient - Received ingredient: '{ingredientData.ingredient}'");
+        
         string category = IngredientCategory.GetCategory(ingredientData.ingredient);
         Color categoryColor = IngredientCategory.GetCategoryColor(category);
         
+        // Debug: Log the determined category
+        Debug.Log($"DisplayIngredient - Category determined: '{category}' for ingredient '{ingredientData.ingredient}'");
+        
         resultsTextIngredient.text = $"{ingredientData.ingredient}";
         resultsTextCategory.text = $"<color=#{ColorUtility.ToHtmlStringRGB(categoryColor)}>{category}</color>";
-        resultsTextType.text = "Ingredient"; // Changed from rarity
+        resultsTextType.text = "Ingredient";
         
         TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
         resultsTextScan.text = cooldown.TotalSeconds > 0 ? $"Product: {productScanCount}/3 scans"
@@ -835,8 +860,22 @@ public class OCRManager : MonoBehaviour
     IEnumerator MockProcessImage()
     {
         yield return new WaitForSeconds(1.5f);
-        string mockJson = "{\"ingredient\":\"Calcium\",\"status\":\"success\"," +
-                        "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3}";
+        
+        // Test different ingredients
+        string[] testIngredients = {
+            "Calcium",
+            "Sugar", 
+            "fructose",  // This should map to Sugar -> SWEETENER
+            "ascorbic acid", // This should map to Vitamin C -> NUTRIFICANT
+            "corn syrup" // This should map to Corn -> ALLERGEN
+        };
+        
+        string randomIngredient = testIngredients[UnityEngine.Random.Range(0, testIngredients.Length)];
+        
+        string mockJson = $"{{\"ingredient\":\"{randomIngredient}\",\"status\":\"success\"," +
+                         "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3}";
+        
+        Debug.Log($"Mock test with ingredient: {randomIngredient}");
         OnOCRResult(mockJson);
     }
 

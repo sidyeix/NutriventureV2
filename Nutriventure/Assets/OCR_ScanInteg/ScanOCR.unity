@@ -2972,7 +2972,7 @@ MonoBehaviour:
   statusText: {fileID: 446285386}
   resultsTextIngredient: {fileID: 558713637}
   resultsTextCategory: {fileID: 188178111}
-  resultsTextRarity: {fileID: 2131906944}
+  resultsTextType: {fileID: 0}
   resultsTextScan: {fileID: 1826311160}
   resultsTextChance: {fileID: 719714587}
   resultsPanel: {fileID: 21421027}
