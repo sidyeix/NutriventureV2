@@ -30458,7 +30458,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool IntPtr_op_Equality_m7D9CDCDE
 		return (bool)((((intptr_t)L_0) == ((intptr_t)L_1))? 1 : 0);
 	}
 }
-// Method Definition Index: 60423
+// Method Definition Index: 60916
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m452D21510717D0961119C89A72BBB8D84DCD49F4_inline (int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A* __this, int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	{
@@ -30472,7 +30472,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m452D21510717D096
 		return;
 	}
 }
-// Method Definition Index: 54733
+// Method Definition Index: 55226
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A math_int2_m0A9A8113022D7954E7DA5BE5436989C2DF01650D_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	{
@@ -30485,7 +30485,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B9
 		return L_2;
 	}
 }
-// Method Definition Index: 60434
+// Method Definition Index: 60927
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A int2_op_Implicit_m8CFB0C58F0EE9CF236FC42E64F57838140AF7D46_inline (int32_t ___0_v, const RuntimeMethod* method) 
 {
 	{
@@ -30571,7 +30571,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t Comparison_1_Invoke_m399E
 	typedef int32_t (*FunctionPointerType) (RuntimeObject*, RecordingItem_t5CE44E9AB838D651799847F74609435470D50A1E, RecordingItem_t5CE44E9AB838D651799847F74609435470D50A1E, const RuntimeMethod*);
 	return ((FunctionPointerType)__this->___invoke_impl)((Il2CppObject*)__this->___method_code, ___0_x, ___1_y, reinterpret_cast<RuntimeMethod*>(__this->___method));
 }
-// Method Definition Index: 40984
+// Method Definition Index: 45411
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_m1589AA18BC64ECF5AA79D95DCE5D7887E98B70AA_gshared_inline (NativeArray_1_t453E3DEA4CC9F1056F24E417C3308C35174BC184* __this, const RuntimeMethod* method) 
 {
 	{
@@ -30579,7 +30579,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_
 		return (bool)((((int32_t)((((intptr_t)L_0) == ((intptr_t)((uintptr_t)0)))? 1 : 0)) == ((int32_t)0))? 1 : 0);
 	}
 }
-// Method Definition Index: 40984
+// Method Definition Index: 45411
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_m0441C0AFD5A79DF48A448142A34321039F7C9A64_gshared_inline (NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05* __this, const RuntimeMethod* method) 
 {
 	{
@@ -30587,7 +30587,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_
 		return (bool)((((int32_t)((((intptr_t)L_0) == ((intptr_t)((uintptr_t)0)))? 1 : 0)) == ((int32_t)0))? 1 : 0);
 	}
 }
-// Method Definition Index: 40984
+// Method Definition Index: 45411
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_mDFD5C1E178B396223B04A604617C07F295915EB8_gshared_inline (NativeArray_1_tC66166E8C80DAD221B27A4758AA52409D2C667C0* __this, const RuntimeMethod* method) 
 {
 	{
@@ -30831,7 +30831,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool BaseField_1_get_showMixedVal
 		return L_0;
 	}
 }
-// Method Definition Index: 60425
+// Method Definition Index: 60918
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m1F683444787E63F08971693F833BBF8012827CE6_inline (int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A* __this, int32_t ___0_v, const RuntimeMethod* method) 
 {
 	{
