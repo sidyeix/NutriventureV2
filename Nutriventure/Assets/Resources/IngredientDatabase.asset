@@ -12,4 +12,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71148dd90905f564b906661d29a2d4be, type: 3}
   m_Name: IngredientDatabase
   m_EditorClassIdentifier: Assembly-CSharp::IngredientDatabase
-  ingredients: []
+  ingredients:
+  - ingredientName: Calcium
+    isUnlocked: 0
+    enerlingSprite: {fileID: 0}
+    modelPrefab: {fileID: 8877414909686671166, guid: 96acaf02ea93f52469e871bf776296a8, type: 3}
+    animatorController: {fileID: 0}
+    idleTrigger: 
+    attackTrigger: 
+    hitTrigger: 
+    blockTrigger: 
+    deathTrigger: 
+    liverHealth: 0
+    heartHealth: 0
+    kidneyHealth: 0
+    skill1:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill2:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill3:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
