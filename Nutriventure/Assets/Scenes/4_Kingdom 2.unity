@@ -7616,7 +7616,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.0013427734, y: 0}
+  m_AnchoredPosition: {x: 0.0014648438, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &223848116
@@ -7752,7 +7752,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.00012207031, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1820, y: 980}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &231329820
@@ -23969,6 +23969,7 @@ GameObject:
   m_Component:
   - component: {fileID: 648784592}
   - component: {fileID: 648784593}
+  - component: {fileID: 648784594}
   m_Layer: 0
   m_Name: K2_GameSummary
   m_TagString: Untagged
@@ -23984,7 +23985,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 648784591}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -24015,7 +24016,10 @@ MonoBehaviour:
   starsEarnedText: {fileID: 1797930875}
   starAnimator: {fileID: 1620517386}
   starParameterName: star
-  keyImageObject: {fileID: 1779641468}
+  KeyImageunlocking: {fileID: 1779641468}
+  failGameObject1: {fileID: 528345827}
+  failGameObject2: {fileID: 2013962994}
+  failGameObject3: {fileID: 239831739}
   confirmButton: {fileID: 816168632}
   fadeInDuration: 1
   fadeOutDuration: 0.5
@@ -24039,8 +24043,26 @@ MonoBehaviour:
   joystickCanvas: {fileID: 1701459691}
   qa1Panel: {fileID: 1289851606}
   qa2Panel: {fileID: 1065128625}
-  showSummaryOnQA2Completion: 0
+  showSummaryOnQA2Completion: 1
   requiredQA2CorrectAnswers: 5
+  timelineController: {fileID: 1072496350}
+  timelineObjectName: K2_QueenACS2
+--- !u!114 &648784594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 648784591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d2adfa733f8a8147b91df5f2ed29a9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QA2_CompletionHandler
+  qa2System: {fileID: 2022236838}
+  gameSummary: {fileID: 648784593}
+  queenCutscene: {fileID: 1072496352}
+  requiredAnswers: 5
 --- !u!1001 &654390892
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -42471,7 +42493,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1072496350}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -42503,6 +42525,7 @@ MonoBehaviour:
   gameUICanvas: {fileID: 1701459691}
   qa2System: {fileID: 2022236838}
   requiredCorrectAnswers: 5
+  gameSummary: {fileID: 0}
   onCutsceneStart:
     m_PersistentCalls:
       m_Calls: []
@@ -43682,7 +43705,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1103448837}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -51906,7 +51929,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 'Collected Product: 0/8'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 79d4841c143b63041bec933de27e41ac, type: 2}
   m_sharedMaterial: {fileID: 1144216624639284884, guid: 79d4841c143b63041bec933de27e41ac, type: 2}
@@ -51933,7 +51956,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 31.05
   m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -58231,7 +58254,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 300.3, y: -68.05}
+  m_AnchoredPosition: {x: 300.3, y: -116.65}
   m_SizeDelta: {x: 600.6, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1486957293
@@ -73103,7 +73126,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1779641469
 RectTransform:
   m_ObjectHideFlags: 0
@@ -73118,9 +73141,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1552370743}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 300.3, y: -165.25}
   m_SizeDelta: {x: 444.6, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1779641470
@@ -78546,6 +78569,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UI_Virtual_Button_Crawl
       objectReference: {fileID: 0}
+    - target: {fileID: 4091757288130996202, guid: 9e55d9b4642484f41be20c69a9b48063, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5282399414295180930, guid: 9e55d9b4642484f41be20c69a9b48063, type: 3}
       propertyPath: m_SizeDelta.x
       value: 150
@@ -81587,7 +81614,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2022236836}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

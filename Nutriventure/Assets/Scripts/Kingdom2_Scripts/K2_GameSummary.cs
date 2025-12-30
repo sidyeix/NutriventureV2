@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using StarterAssets;
 using Cinemachine;
+using UnityEngine.SceneManagement; // Add this for scene reloading
 
 public class K2_GameSummary : MonoBehaviour
 {
@@ -28,11 +29,16 @@ public class K2_GameSummary : MonoBehaviour
     public string starParameterName = "star";
     private int currentStars = 0;
 
-    [Header("Key Display")]
-    public GameObject keyImageObject;
-
+    [Header("Key Image Display")]
+    public GameObject KeyImageunlocking; // Game object that shows key image (initially disabled)
+    [Header("Fail Game Objects (Disabled on Lose)")]
+    public GameObject failGameObject1;
+    public GameObject failGameObject2;
+    public GameObject failGameObject3;
+    
     [Header("Buttons")]
     public Button confirmButton;
+    public Button restartButton; // Add a dedicated restart button if needed
 
     [Header("Panel Animation")]
     public float fadeInDuration = 1.0f;
@@ -78,6 +84,14 @@ public class K2_GameSummary : MonoBehaviour
     public bool showSummaryOnQA2Completion = true;
     [Range(1, 5)] public int requiredQA2CorrectAnswers = 5;
 
+    [Header("Timeline Settings")]
+    public GameObject timelineController; // Reference to timeline controller GameObject
+    public string timelineObjectName = "K2_QueenACS2"; // Name of the timeline GameObject
+
+    [Header("Complete Restart Settings")]
+    public bool completeRestartOnConfirm = true; // NEW: Toggle for complete restart
+    public string sceneToReload = ""; // Leave empty to reload current scene
+
     // Star animation states
     private string[] starStateNames = new string[] { "Empty", "Star1", "Star2", "Star3" };
 
@@ -93,6 +107,7 @@ public class K2_GameSummary : MonoBehaviour
     private K2_QA1system qa1System;
     private Animator playerAnimator;
     private AudioSource audioSource;
+    private K2_CollectKey collectKeyScript;
 
     // Game state
     private bool isGameOver = false;
@@ -105,6 +120,9 @@ public class K2_GameSummary : MonoBehaviour
     private int healthBeforeDeath = 0;
     private bool isProcessingConfirm = false;
     private bool summaryLocked = false;
+
+    // Key tracking
+    private bool summaryTriggeredByKeyCollection = false;
 
     void Awake()
     {
@@ -141,6 +159,7 @@ public class K2_GameSummary : MonoBehaviour
         collectProductsScript = FindObjectOfType<CollectProducts>();
         qa2System = FindObjectOfType<K2_QA2system>();
         qa1System = FindObjectOfType<K2_QA1system>();
+        collectKeyScript = FindObjectOfType<K2_CollectKey>();
 
         if (characterVisualSwapper == null)
             characterVisualSwapper = FindObjectOfType<CharacterVisualSwapper>();
@@ -202,10 +221,36 @@ public class K2_GameSummary : MonoBehaviour
         if (confirmButton != null)
             confirmButton.onClick.AddListener(OnConfirmButtonClicked);
 
+        // Add restart button listener if exists
+        if (restartButton != null)
+            restartButton.onClick.AddListener(OnConfirmButtonClicked);
+
         if (backgroundMusicSource != null)
             originalBackgroundMusicVolume = backgroundMusicSource.volume;
 
-        Debug.Log($"GameSummary initialized - QA2 Completion Summary: {showSummaryOnQA2Completion}");
+        // Initialize KeyImageunlocking - disable by default
+        if (KeyImageunlocking != null)
+        {
+            KeyImageunlocking.SetActive(false);
+            Debug.Log("KeyImageunlocking initialized as DISABLED");
+        }
+
+        // NEW: Check and disable timeline if key is already collected
+        CheckAndDisableTimelineOnStart();
+
+        Debug.Log($"GameSummary initialized - Complete Restart: {completeRestartOnConfirm}");
+    }
+
+    private void CheckAndDisableTimelineOnStart()
+    {
+        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        
+        if (keyAlreadyCollected && !string.IsNullOrEmpty(timelineObjectName))
+        {
+            DisableTimelineIfExists();
+            Debug.Log("Timeline disabled on start (key already collected)");
+        }
     }
 
     #endregion
@@ -215,19 +260,232 @@ public class K2_GameSummary : MonoBehaviour
     private void CheckGameConditions()
     {
         if (summaryLocked) return;
-        // Check for lose condition (health reaches 0)
+        
+        // Check for lose condition (health reaches 0) - 0 STARS
         if (!isGameOver && !isSummaryActive && playerHealth != null && playerHealth.currentHealth <= 0)
         {
             healthBeforeDeath = playerHealth.currentHealth;
-            isVictory = false;
+            isVictory = false; // This is a LOSE
             StartCoroutine(ShowSummaryPanel());
+            return; // Exit early after triggering lose
         }
 
         // Check for win condition (QA2 completed)
         if (showSummaryOnQA2Completion && !isGameOver && !isSummaryActive && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
         {
-            isVictory = true;
+            int currentHealth = playerHealth != null ? playerHealth.currentHealth : 0;
+            
+            // Check if key is already collected
+            bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            
+            // NEW: Also check if key was just collected in this session
+            if (!keyAlreadyCollected && collectKeyScript != null)
+            {
+                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
+            }
+            
+            Debug.Log($"QA2 Completed - Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
+            
+            // Health determines what kind of victory
+            if (currentHealth <= 0)
+            {
+                // Should have been caught above, but just in case
+                Debug.Log("QA2 completed but health is 0. This should be a lose.");
+                isVictory = false;
+                StartCoroutine(ShowSummaryPanel());
+            }
+            else if (currentHealth <= 2)
+            {
+                // Health 1-2: Victory but NO KEY
+                Debug.Log("QA2 completed with 1-2 hearts. Victory but NO KEY.");
+                isVictory = true; // VICTORY
+                StartCoroutine(ShowSummaryPanel());
+            }
+            else if (currentHealth >= 3)
+            {
+                // Health 3+: Can get key
+                if (keyAlreadyCollected)
+                {
+                    Debug.Log("QA2 completed AND key already collected. Triggering victory summary.");
+                    isVictory = true;
+                    StartCoroutine(ShowSummaryPanel());
+                }
+                else
+                {
+                    Debug.Log("QA2 completed, key not collected yet. Timeline should trigger.");
+                    // Timeline will trigger, then key collection, then summary
+                }
+            }
+        }
+
+        // Check for timeline conditions
+        CheckTimelineConditions();
+    }
+
+    private void CheckTimelineConditions()
+    {
+        if (playerHealth == null || isSummaryActive || isGameOver) return;
+
+        int currentHealth = playerHealth.currentHealth;
+        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        
+        // NEW: Also check if key was just collected in this session
+        if (!keyAlreadyCollected && collectKeyScript != null)
+        {
+            keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
+        }
+        
+        Debug.Log($"Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
+        
+        // Heart = 0: Lose Summary (only at 0 hearts) - 0 STARS
+        if (currentHealth <= 0)
+        {
+            Debug.Log($"Health ({currentHealth}) = 0. Triggering LOSE summary with 0 stars...");
+            healthBeforeDeath = currentHealth;
+            isVictory = false; // This is a LOSE
             StartCoroutine(ShowSummaryPanel());
+            return;
+        }
+        
+        // Heart 1-2: Player can still complete but NO KEY
+        // Timeline will not play, but it's NOT a lose - it's a limited victory
+        if (currentHealth <= 2 && currentHealth > 0)
+        {
+            Debug.Log($"Health ({currentHealth}) = 1-2. Checking QA2 completion...");
+            
+            // Check if QA2 is completed
+            bool qa2Completed = qa2System != null && qa2System.GetCorrectlyAnsweredCount() >= requiredQA2CorrectAnswers;
+            
+            if (qa2Completed && !isGameOver && !isSummaryActive)
+            {
+                // Player completed QA2 with 1-2 hearts - VICTORY but NO KEY
+                Debug.Log($"QA2 completed with {currentHealth} hearts. Victory but NO KEY.");
+                isVictory = true; // This is a VICTORY (not lose!)
+                StartCoroutine(ShowSummaryPanel());
+            }
+            else if (!qa2Completed)
+            {
+                Debug.Log($"Health 1-2 but QA2 not completed ({qa2System?.GetCorrectlyAnsweredCount() ?? 0}/{requiredQA2CorrectAnswers}). Player can continue playing.");
+                // Player can still play to complete QA2
+            }
+        }
+        // Heart ≥ 3: Timeline conditions - can get KEY
+        else if (currentHealth >= 3)
+        {
+            Debug.Log($"Health ({currentHealth}) ≥ 3, checking timeline conditions...");
+            
+            // NEW: Check if QA2 is completed
+            bool qa2Completed = qa2System != null && qa2System.GetCorrectlyAnsweredCount() >= requiredQA2CorrectAnswers;
+            
+            if (!keyAlreadyCollected)
+            {
+                // Check if collectKeyScript has triggered summary
+                if (collectKeyScript != null && collectKeyScript.HasTriggeredSummary())
+                {
+                    Debug.Log("Key collection already triggered summary. Skipping timeline.");
+                }
+                else if (qa2Completed)
+                {
+                    Debug.Log("QA2 completed and key not collected. Timeline should play for key.");
+                    // Timeline should play - player gets key after timeline
+                    TryActivateTimeline();
+                }
+                else
+                {
+                    Debug.Log("Key not collected and QA2 not completed. No timeline yet.");
+                }
+            }
+            else
+            {
+                Debug.Log("Key already collected in GameData. Timeline will not play.");
+                // Ensure timeline is disabled if it exists
+                DisableTimelineIfExists();
+                
+                // NEW: If QA2 is also completed, trigger VICTORY summary
+                if (qa2Completed && !isGameOver && !isSummaryActive)
+                {
+                    Debug.Log("Key already collected AND QA2 completed. Triggering VICTORY summary.");
+                    isVictory = true;
+                    StartCoroutine(ShowSummaryPanel());
+                }
+            }
+        }
+    }
+
+    // Add this new method to disable timeline:
+    private void DisableTimelineIfExists()
+    {
+        if (string.IsNullOrEmpty(timelineObjectName)) return;
+        
+        GameObject timelineObj = GameObject.Find(timelineObjectName);
+        if (timelineObj != null && timelineObj.activeInHierarchy)
+        {
+            timelineObj.SetActive(false);
+            Debug.Log($"Disabled timeline (key already collected): {timelineObjectName}");
+            
+            // Also disable K2_QueenACS2 component
+            K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
+            if (queenCutscene != null)
+            {
+                queenCutscene.enabled = false;
+                Debug.Log("Disabled K2_QueenACS2 component");
+            }
+        }
+    }
+
+    private void TryActivateTimeline()
+    {
+        if (string.IsNullOrEmpty(timelineObjectName)) return;
+        
+        // Check if key is already collected
+        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        
+        if (keyAlreadyCollected)
+        {
+            Debug.Log("Key already collected. Timeline will not play.");
+            DisableTimelineIfExists();
+            return;
+        }
+        
+        GameObject timelineObj = GameObject.Find(timelineObjectName);
+        if (timelineObj != null)
+        {
+            // Check if timeline has already been played or is active
+            if (!timelineObj.activeInHierarchy)
+            {
+                Debug.Log($"Activating timeline: {timelineObjectName}");
+                timelineObj.SetActive(true);
+                
+                // Make sure K2_QueenACS2 is enabled
+                K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
+                if (queenCutscene != null && !queenCutscene.enabled)
+                {
+                    queenCutscene.enabled = true;
+                    Debug.Log("Enabled K2_QueenACS2 component for timeline");
+                }
+                
+                // Get timeline controller component if exists
+                if (timelineController != null)
+                {
+                    // Try to play timeline
+                    System.Reflection.MethodInfo playMethod = timelineController.GetType().GetMethod("PlayTimeline");
+                    if (playMethod != null)
+                    {
+                        playMethod.Invoke(timelineController, null);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"Timeline {timelineObjectName} is already active.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"Timeline object '{timelineObjectName}' not found in scene.");
         }
     }
 
@@ -259,8 +517,27 @@ public class K2_GameSummary : MonoBehaviour
             int correctlyAnswered = qa2System.GetCorrectlyAnsweredCount();
             if (correctlyAnswered >= requiredQA2CorrectAnswers)
             {
-                isVictory = true;
-                StartCoroutine(ShowSummaryPanel());
+                // Check if key is already collected
+                bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                        GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+                
+                // NEW: Also check if key was just collected in this session
+                if (!keyAlreadyCollected && collectKeyScript != null)
+                {
+                    keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
+                }
+                
+                if (keyAlreadyCollected)
+                {
+                    Debug.Log("After QA2 panel closed: Key already collected, triggering victory summary.");
+                    isVictory = true;
+                    StartCoroutine(ShowSummaryPanel());
+                }
+                else
+                {
+                    Debug.Log("After QA2 panel closed: Key not collected yet. Waiting for timeline.");
+                    // Don't trigger summary - timeline will handle it
+                }
             }
         }
     }
@@ -404,9 +681,11 @@ public class K2_GameSummary : MonoBehaviour
         {
             if (obj.activeInHierarchy && obj != gameSummaryPanel &&
                 (obj.name.Contains("Assessment") || obj.name.Contains("QA") ||
-                 obj.name.Contains("Nutrition") || obj.name.Contains("Menu")))
+                 obj.name.Contains("Nutrition") || obj.name.Contains("Menu") ||
+                 obj.name.Contains("Timeline") || obj.name == timelineObjectName))
             {
                 obj.SetActive(false);
+                Debug.Log($"Closed interfering UI: {obj.name}");
             }
         }
     }
@@ -602,10 +881,49 @@ public class K2_GameSummary : MonoBehaviour
         UpdateScore();
         UpdateCoinsEarned();
         UpdateStarsEarnedText();
+        UpdateKeyImageDisplay();
+        
+        // NEW: Disable fail game objects only when losing
+        if (!isVictory)
+        {
+            // This is a lose summary, disable the fail game objects
+            if (failGameObject1 != null && failGameObject1.activeSelf)
+                failGameObject1.SetActive(false);
+            
+            if (failGameObject2 != null && failGameObject2.activeSelf)
+                failGameObject2.SetActive(false);
+            
+            if (failGameObject3 != null && failGameObject3.activeSelf)
+                failGameObject3.SetActive(false);
+        }
         
         Debug.Log($"=== UPDATE SUMMARY DATA ===");
         Debug.Log($"Current stars calculated: {currentStars}");
         Debug.Log($"Stars earned text will show: {currentStars}/3");
+        Debug.Log($"Summary triggered by key collection: {summaryTriggeredByKeyCollection}");
+    }
+
+    // NEW METHOD: Update the KeyImageunlocking display
+    private void UpdateKeyImageDisplay()
+    {
+        if (KeyImageunlocking != null)
+        {
+            // Key image should ONLY be shown when:
+            // 1. Summary is active
+            // 2. Summary was triggered by key collection (not by other means like QA2 completion or losing)
+            // 3. AND player has at least 2 stars (3+ hearts)
+            
+            bool shouldShowKeyImage = isSummaryActive && 
+                                     summaryTriggeredByKeyCollection && 
+                                     currentStars >= 2;
+            
+            KeyImageunlocking.SetActive(shouldShowKeyImage);
+            
+            Debug.Log($"KeyImageunlocking: {(shouldShowKeyImage ? "SHOWN" : "HIDDEN")} " +
+                     $"- SummaryActive: {isSummaryActive} " +
+                     $"- TriggeredByKey: {summaryTriggeredByKeyCollection} " +
+                     $"- Stars: {currentStars}");
+        }
     }
 
     private void UpdateStarsEarnedText()
@@ -657,24 +975,13 @@ public class K2_GameSummary : MonoBehaviour
         
         if (isVictory)
         {
-            // Check if we won via key collection
-            K2_CollectKey collectKey = FindObjectOfType<K2_CollectKey>();
-            if (collectKey != null && collectKey.HasTriggeredSummary())
-            {
-                // Use health at key collection if available
-                health = collectKey.GetHealthAtKeyCollection();
-                Debug.Log($"Using health at key collection: {health}");
-            }
-            else
-            {
-                // Use current health for QA2 completion wins
-                health = playerHealth?.currentHealth ?? 0;
-                Debug.Log($"Using current health for QA2 win: {health}");
-            }
+            // For victory, use current health
+            health = playerHealth?.currentHealth ?? 0;
+            Debug.Log($"Using current health for victory stars: {health}");
         }
         else
         {
-            // For lose condition
+            // For lose condition (only at 0 hearts)
             health = Mathf.Max(0, healthBeforeDeath);
             Debug.Log($"Using health before death for lose: {health}");
         }
@@ -684,6 +991,7 @@ public class K2_GameSummary : MonoBehaviour
         if (health >= 5) stars = 3;
         else if (health >= 3) stars = 2;
         else if (health >= 1) stars = 1;
+        // 0 hearts = 0 stars (already 0)
         
         Debug.Log($"=== CALCULATE STARS ===");
         Debug.Log($"Health: {health}");
@@ -798,13 +1106,11 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (keyStatusText != null)
         {
+            // Key is unlocked only if player has 2+ stars (3+ hearts)
             bool isUnlocked = (stars >= 2);
             keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
             keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
         }
-
-        if (keyImageObject != null)
-            keyImageObject.SetActive(stars >= 2);
     }
 
     private void CalculateCoinReward()
@@ -849,7 +1155,17 @@ public class K2_GameSummary : MonoBehaviour
         if (confirmButton != null)
             confirmButton.interactable = false;
 
-        StartCoroutine(HidePanelAndRestartGame());
+        // NEW: Option to completely restart the game
+        if (completeRestartOnConfirm)
+        {
+            Debug.Log("Complete restart requested - reloading scene");
+            StartCoroutine(CompleteRestartGame());
+        }
+        else
+        {
+            // Original behavior - soft reset
+            StartCoroutine(HidePanelAndRestartGame());
+        }
     }
 
     private IEnumerator HidePanelAndRestartGame()
@@ -871,6 +1187,29 @@ public class K2_GameSummary : MonoBehaviour
 
         if (confirmButton != null)
             confirmButton.interactable = true;
+    }
+
+    // NEW: Complete restart method
+    private IEnumerator CompleteRestartGame()
+    {
+        Debug.Log("Starting complete game restart...");
+        
+        // Fade out panel if available
+        if (panelCanvasGroup != null)
+            yield return FadePanel(1f, 0f, fadeOutDuration);
+        
+        // Hide the summary panel
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+        
+        // Reset time scale
+        Time.timeScale = originalTimeScale;
+        
+        // Add a small delay to ensure UI is hidden
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        // Reload the scene
+        ReloadCurrentScene();
     }
 
     private void PlayButtonClickSound()
@@ -911,7 +1250,7 @@ public class K2_GameSummary : MonoBehaviour
         // Reset monsters
         ResetAllMonsters();
 
-        // Reset key system
+        // Reset key system (BUT NOT THE PERSISTENT SUGARIAKEY)
         ResetKeySystem();
 
         // Reset collectibles
@@ -936,7 +1275,7 @@ public class K2_GameSummary : MonoBehaviour
 
     private void ResetKeySystem()
     {
-        // Reset all key scripts
+        // Reset all key scripts (session-specific only)
         K2_CollectKey[] allKeyScripts = FindObjectsOfType<K2_CollectKey>();
         foreach (K2_CollectKey keyScript in allKeyScripts)
         {
@@ -1010,7 +1349,15 @@ public class K2_GameSummary : MonoBehaviour
         calculatedCoinsEarned = 0;
         healthBeforeDeath = 0;
         currentStars = 0;
+        summaryTriggeredByKeyCollection = false; // Reset this flag
         ResetStarAnimator();
+
+        // Ensure KeyImageunlocking is hidden when resetting
+        if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
+        {
+            KeyImageunlocking.SetActive(false);
+            Debug.Log("KeyImageunlocking hidden during manager reset");
+        }
 
         if (starsEarnedText != null)
             starsEarnedText.text = "0/3";
@@ -1020,21 +1367,96 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
+    #region Complete Scene Reload
+
+    // NEW: Method to reload the current scene
+    private void ReloadCurrentScene()
+    {
+        Debug.Log("Reloading scene for complete restart...");
+        
+        // Get the current scene name
+        string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
+            SceneManager.GetActiveScene().name : sceneToReload;
+        
+        // Reset all static flags and persistent data if needed
+        ResetPersistentData();
+        
+        // Load the scene
+        SceneManager.LoadScene(sceneName);
+    }
+
+    // NEW: Reset any persistent data that should be cleared on restart
+    private void ResetPersistentData()
+    {
+        Debug.Log("Resetting persistent data...");
+        
+        // Reset global key flags
+        K2_CollectKey.GlobalResetAllKeys();
+        
+        // Optionally reset SugariaKey if you want fresh start
+        // Uncomment the next line if you want to reset the key on complete restart
+        // if (GameDataManager.Instance != null) ResetSugariaKey();
+        
+        // Clear any static variables or flags
+        // Add any other static resets here
+        
+        Debug.Log("Persistent data reset complete");
+    }
+
+    #endregion
+
     #region Public Methods
 
+    // Add this method to manually trigger QA2 completion summary
+    public void TriggerQA2CompletionSummary()
+    {
+        if (!isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
+        {
+            bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            
+            // NEW: Also check if key was just collected in this session
+            if (!keyAlreadyCollected && collectKeyScript != null)
+            {
+                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
+            }
+            
+            if (keyAlreadyCollected)
+            {
+                Debug.Log("Manual QA2 completion summary trigger - Key already collected.");
+                isVictory = true;
+                StartCoroutine(ShowSummaryPanel());
+            }
+            else
+            {
+                Debug.Log("Manual QA2 completion summary trigger - Key not collected yet. Waiting for timeline.");
+            }
+        }
+    }
+
+    // Update the existing TriggerSummaryFromQA2 method:
     public void TriggerSummaryFromQA2()
     {
         if (!isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
         {
-            bool shouldTrigger = true;
-            K2_CollectKey collectKey = FindObjectOfType<K2_CollectKey>();
-            if (collectKey != null && collectKey.HasTriggeredSummary())
-                shouldTrigger = false;
-
-            if (shouldTrigger)
+            bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            
+            // NEW: Also check if key was just collected in this session
+            if (!keyAlreadyCollected && collectKeyScript != null)
             {
+                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
+            }
+            
+            if (keyAlreadyCollected)
+            {
+                Debug.Log("TriggerSummaryFromQA2 - Key already collected, triggering victory.");
                 isVictory = true;
                 StartCoroutine(ShowSummaryPanel());
+            }
+            else
+            {
+                Debug.Log("TriggerSummaryFromQA2 - Key not collected yet. Not triggering summary.");
             }
         }
     }
@@ -1050,8 +1472,9 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (!isGameOver && !isSummaryActive)
         {
-            Debug.Log("TriggerSummaryFromKey called");
+            Debug.Log("TriggerSummaryFromKey called - marking summary as triggered by key collection");
             isVictory = true;
+            summaryTriggeredByKeyCollection = true; // Set the flag
             StartCoroutine(ShowSummaryPanel());
         }
         else
@@ -1074,7 +1497,10 @@ public class K2_GameSummary : MonoBehaviour
         isSummaryActive = true;
         isVictory = isWin;
         
-        Debug.Log($"Starting ShowSummaryPanelDirectly() - Victory: {isVictory}");
+        // If calling directly, assume not triggered by key collection unless specified
+        summaryTriggeredByKeyCollection = false;
+        
+        Debug.Log($"Starting ShowSummaryPanelDirectly() - Victory: {isVictory}, TriggeredByKey: {summaryTriggeredByKeyCollection}");
         
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -1105,16 +1531,60 @@ public class K2_GameSummary : MonoBehaviour
         return isSummaryActive;
     }
 
+    // Method to check if SugariaKey is collected (persistent)
+    public bool HasSugariaKey()
+    {
+        return GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+    }
+
+    // Method to reset SugariaKey (for testing or new game)
+    public void ResetSugariaKey()
+    {
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.ResetSugariaKey();
+            GameDataManager.Instance.SaveGameData();
+            Debug.Log("SugariaKey reset in GameData");
+        }
+    }
+
+    // NEW: Toggle complete restart
+    public void SetCompleteRestart(bool enabled)
+    {
+        completeRestartOnConfirm = enabled;
+        Debug.Log($"Complete restart on confirm: {enabled}");
+    }
+
+    // NEW: Set scene to reload
+    public void SetSceneToReload(string sceneName)
+    {
+        sceneToReload = sceneName;
+        Debug.Log($"Scene to reload set to: {sceneName}");
+    }
+
     #endregion
 
     #region Debug & Testing
 
-    [ContextMenu("Test Win")]
-    public void TestWin()
+    [ContextMenu("Test Win with Key")]
+    public void TestWinWithKey()
     {
         if (!isGameOver && !isSummaryActive)
         {
             isVictory = true;
+            summaryTriggeredByKeyCollection = true; // Simulate key collection trigger
+            if (playerHealth != null) playerHealth.currentHealth = 6;
+            StartCoroutine(ShowSummaryPanel());
+        }
+    }
+
+    [ContextMenu("Test Win without Key")]
+    public void TestWinWithoutKey()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            isVictory = true;
+            summaryTriggeredByKeyCollection = false; // Not triggered by key
             if (playerHealth != null) playerHealth.currentHealth = 6;
             StartCoroutine(ShowSummaryPanel());
         }
@@ -1126,6 +1596,7 @@ public class K2_GameSummary : MonoBehaviour
         if (!isGameOver && !isSummaryActive)
         {
             isVictory = false;
+            summaryTriggeredByKeyCollection = false; // Lose is never triggered by key
             healthBeforeDeath = 0;
             StartCoroutine(ShowSummaryPanel());
         }
@@ -1287,6 +1758,51 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
+    [ContextMenu("Check SugariaKey Status")]
+    public void CheckSugariaKeyStatus()
+    {
+        bool hasKey = HasSugariaKey();
+        Debug.Log($"SugariaKey status: {(hasKey ? "COLLECTED" : "NOT COLLECTED")}");
+    }
+
+    [ContextMenu("Collect SugariaKey (Test)")]
+    public void TestCollectSugariaKey()
+    {
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+            GameDataManager.Instance.SaveGameData();
+            Debug.Log("SugariaKey collected and saved to GameData");
+        }
+    }
+
+    [ContextMenu("Reset SugariaKey (Test)")]
+    public void TestResetSugariaKey()
+    {
+        ResetSugariaKey();
+    }
+
+    [ContextMenu("Test Complete Restart")]
+    public void TestCompleteRestart()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            isVictory = true;
+            summaryTriggeredByKeyCollection = true;
+            if (playerHealth != null) playerHealth.currentHealth = 6;
+            StartCoroutine(ShowSummaryPanel());
+            
+            // After showing summary, trigger complete restart
+            StartCoroutine(TestCompleteRestartCoroutine());
+        }
+    }
+
+    private IEnumerator TestCompleteRestartCoroutine()
+    {
+        yield return new WaitForSecondsRealtime(3f);
+        OnConfirmButtonClicked();
+    }
+
     #endregion
 
     void OnDestroy()
@@ -1299,6 +1815,15 @@ public class K2_GameSummary : MonoBehaviour
 
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
+        
+        if (restartButton != null)
+            restartButton.onClick.RemoveListener(OnConfirmButtonClicked);
+        
+        // Ensure KeyImageunlocking is not left active
+        if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
+        {
+            KeyImageunlocking.SetActive(false);
+        }
     }
 }
 

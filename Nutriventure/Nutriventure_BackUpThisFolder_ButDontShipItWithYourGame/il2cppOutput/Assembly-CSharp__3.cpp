@@ -1685,6 +1685,7 @@ struct GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6  : public RuntimeObjec
 	int32_t ___nutriGems;
 	int32_t ___currentEnergy;
 	DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D ___lastEnergyUpdateTime;
+	bool ___sugariaKeyCollected;
 	int32_t ___selectedCharacterID;
 	List_1_t05915E9237850A58106982B7FE4BC5DA4E872E73* ___unlockedCharacterIDs;
 	SkinDictionary_t3F6DBE5466A10F7C5C316611411336E654AA3A1A* ___selectedSkinForCharacter;
@@ -27259,7 +27260,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 48986
+// Method Definition Index: 48989
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameData_t857DCFA51343FE2611A88BE4D943BDA16FBCE8B6* GameDataManager_get_CurrentGameData_m7CD9BEC04B83A28666BF459ACEDDB55B24716927_inline (GameDataManager_t334227F400FA22E9A3C850D53CDD5D746466B7F4* __this, const RuntimeMethod* method) 
 {
 	{
@@ -28094,7 +28095,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void BookInteractable_set_Instanc
 		return;
 	}
 }
-// Method Definition Index: 80863
+// Method Definition Index: 80956
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ButtonClickedEvent_t8EA72E90B3BD1392FB3B3EF167D5121C23569E4C* Button_get_onClick_m701712A7F7F000CC80D517C4510697E15722C35C_inline (Button_t6786514A57F7AFDEE5431112FEA0CAB24F5AE098* __this, const RuntimeMethod* method) 
 {
 	{
@@ -28211,7 +28212,7 @@ IL_000c:
 		return L_2;
 	}
 }
-// Method Definition Index: 81171
+// Method Definition Index: 81264
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t Image_get_type_m7CE3AA14B38E1C50AC8362176AE842992DA8C639_inline (Image_tBC1D03F63BF71132E9A5E472B8742F172A011E7E* __this, const RuntimeMethod* method) 
 {
 	{

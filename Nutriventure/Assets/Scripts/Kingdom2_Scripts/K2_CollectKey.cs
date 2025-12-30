@@ -47,6 +47,9 @@ public class K2_CollectKey : MonoBehaviour
     // Static flag for global reset
     private static bool globalResetFlag = false;
     
+    // FIX: Add a flag to prevent double triggering
+    private bool isCompletingPickup = false;
+    
     void Start()
     {
         // Check global reset flag first
@@ -123,8 +126,8 @@ public class K2_CollectKey : MonoBehaviour
         {
             pickupTimer += Time.deltaTime;
             
-            // End animation after duration
-            if (pickupTimer >= pickupAnimationDuration)
+            // End animation after duration - FIXED: Don't call CompleteKeyPickup here
+            if (pickupTimer >= pickupAnimationDuration && !isCompletingPickup)
             {
                 EndPickupAnimation();
             }
@@ -174,7 +177,7 @@ public class K2_CollectKey : MonoBehaviour
     
     void OnPickupButtonClicked()
     {
-        if (isPickingUp || currentNearbyKey == null || hasKey || hasTriggeredSummary) return;
+        if (isPickingUp || currentNearbyKey == null || hasKey || hasTriggeredSummary || isCompletingPickup) return;
         
         StartCoroutine(PickupKey());
     }
@@ -182,6 +185,9 @@ public class K2_CollectKey : MonoBehaviour
     private IEnumerator PickupKey()
     {
         Debug.Log($"Starting key pickup: {currentNearbyKey.name}");
+        
+        // Set the completion flag to prevent double triggers
+        isCompletingPickup = true;
         
         // Disable player movement
         if (playerMovementScript != null)
@@ -211,6 +217,9 @@ public class K2_CollectKey : MonoBehaviour
         
         // Complete the key pickup
         CompleteKeyPickup();
+        
+        // Reset the completion flag
+        isCompletingPickup = false;
     }
     
     private IEnumerator PlayPickupSoundWithDelay()
@@ -221,6 +230,11 @@ public class K2_CollectKey : MonoBehaviour
     
     private void CompleteKeyPickup()
     {
+        // FIX: Check if already completed to prevent double execution
+        if (hasKey) return;
+        
+        Debug.Log("CompleteKeyPickup called");
+        
         // End animation
         if (playerAnimator != null)
         {
@@ -258,25 +272,59 @@ public class K2_CollectKey : MonoBehaviour
             currentNearbyKey = null;
         }
         
-        // DEBUG: Check if summary manager is available
-        if (gameSummaryManager == null)
+        // Save key to GameData
+        if (GameDataManager.Instance != null)
         {
-            Debug.LogError("GameSummary manager is null! Cannot trigger summary.");
-            // Re-enable player movement as fallback
-            if (playerMovementScript != null)
-            {
-                playerMovementScript.enabled = true;
-            }
-            return;
+            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+            GameDataManager.Instance.SaveGameData();
+            Debug.Log("SugariaKey saved to GameData");
         }
+        
+        // Disable timeline after key collection
+        DisableTimelineAfterKeyCollection();
         
         // Trigger Game Summary when key is collected
         TriggerGameSummaryIfNeeded();
     }
     
+    private void DisableTimelineAfterKeyCollection()
+    {
+        // Find and disable timeline
+        string timelineObjectName = "K2_QueenACS2"; // Adjust if different
+        GameObject timelineObj = GameObject.Find(timelineObjectName);
+        
+        if (timelineObj != null)
+        {
+            // Disable the GameObject
+            timelineObj.SetActive(false);
+            Debug.Log($"Disabled timeline GameObject: {timelineObjectName}");
+            
+            // Also disable the K2_QueenACS2 component
+            K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
+            if (queenCutscene != null)
+            {
+                queenCutscene.enabled = false;
+                Debug.Log("Disabled K2_QueenACS2 component");
+            }
+        }
+    }
+    
     private void EndPickupAnimation()
     {
-        CompleteKeyPickup();
+        // FIX: Simply end the animation state without triggering completion again
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetBool(pickupHash, false);
+        }
+        
+        isPickingUp = false;
+        pickupTimer = 0f;
+        
+        // If for some reason the key wasn't collected yet, complete it now
+        if (!hasKey && currentNearbyKey != null)
+        {
+            CompleteKeyPickup();
+        }
     }
     
     void ShowPickupButton()
@@ -336,115 +384,8 @@ public class K2_CollectKey : MonoBehaviour
         {
             Debug.Log("Triggering summary from key collection...");
             
-            // Disable QA2 completion check temporarily
-            bool originalQA2Setting = gameSummaryManager.IsQA2SummaryEnabled();
-            gameSummaryManager.SetQA2SummaryEnabled(false);
-            
-            // Use the public method if available
-            var methodInfo = gameSummaryManager.GetType().GetMethod("TriggerSummaryFromKey", 
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            
-            if (methodInfo != null)
-            {
-                methodInfo.Invoke(gameSummaryManager, null);
-            }
-            else
-            {
-                // Fallback to setting victory and calling TestWin
-                System.Reflection.FieldInfo victoryField = gameSummaryManager.GetType().GetField("isVictory", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (victoryField != null)
-                {
-                    victoryField.SetValue(gameSummaryManager, true);
-                }
-                
-                // Ensure player has enough health for stars
-                SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
-                if (playerHealth != null)
-                {
-                    int originalHealth = playerHealth.currentHealth;
-                    if (originalHealth < 5)
-                    {
-                        // Temporarily boost health for star calculation
-                        playerHealth.currentHealth = 5;
-                        gameSummaryManager.TestWin();
-                        playerHealth.currentHealth = originalHealth;
-                    }
-                    else
-                    {
-                        gameSummaryManager.TestWin();
-                    }
-                }
-                else
-                {
-                    gameSummaryManager.TestWin();
-                }
-            }
-            
-            // Restore QA2 setting after a delay
-            yield return new WaitForSeconds(1f);
-            gameSummaryManager.SetQA2SummaryEnabled(originalQA2Setting);
-        }
-    }
-        private IEnumerator TriggerSummaryWithDirectCall()
-    {
-        yield return new WaitForEndOfFrame(); // Wait one frame
-        
-        // Direct call approach - create a simplified version that works
-        if (gameSummaryManager != null && !gameSummaryManager.IsSummaryActive())
-        {
-            Debug.Log("Calling ShowSummaryPanelDirectly via direct approach...");
-            
-            // Get the method using a simpler approach
-            var methodInfo = gameSummaryManager.GetType().GetMethod("ShowSummaryPanelDirectly", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            if (methodInfo != null)
-            {
-                Debug.Log("Found ShowSummaryPanelDirectly method via reflection");
-                methodInfo.Invoke(gameSummaryManager, null);
-            }
-            else
-            {
-                Debug.LogWarning("Could not find ShowSummaryPanelDirectly method. Trying alternative...");
-                
-                // Alternative approach: Try to call a public method
-                var altMethodInfo = gameSummaryManager.GetType().GetMethod("TriggerSummaryFromKey", 
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                
-                if (altMethodInfo != null)
-                {
-                    Debug.Log("Found TriggerSummaryFromKey method");
-                    altMethodInfo.Invoke(gameSummaryManager, null);
-                }
-                else
-                {
-                    Debug.LogError("No suitable summary trigger method found! Using TestWin as fallback...");
-                    
-                    // Fallback to TestWin with proper setup
-                    if (!gameSummaryManager.IsSummaryActive())
-                    {
-                        // Set health to 6 to ensure 3 stars
-                        SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
-                        if (playerHealth != null)
-                        {
-                            // Temporarily set health to max for star calculation
-                            int originalHealth = playerHealth.currentHealth;
-                            playerHealth.currentHealth = 6;
-                            gameSummaryManager.TestWin();
-                            playerHealth.currentHealth = originalHealth;
-                        }
-                        else
-                        {
-                            gameSummaryManager.TestWin();
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            Debug.LogWarning("GameSummary is already active or null. Cannot trigger summary.");
+            // Use the dedicated method to trigger summary from key
+            gameSummaryManager.TriggerSummaryFromKey();
         }
     }
     
@@ -477,6 +418,7 @@ public class K2_CollectKey : MonoBehaviour
         pickupTimer = 0f;
         currentNearbyKey = null;
         healthAtKeyCollection = 0;
+        isCompletingPickup = false; // Reset the completion flag
         
         // Reset animator if needed
         if (playerAnimator != null)
@@ -513,6 +455,7 @@ public class K2_CollectKey : MonoBehaviour
             
             isPickingUp = false;
             pickupTimer = 0f;
+            isCompletingPickup = false;
             
             // Re-enable movement
             if (playerMovementScript != null)

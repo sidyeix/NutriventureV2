@@ -73,6 +73,7 @@ public class K2_QA2system : MonoBehaviour
     public float particleSoundVolume = 0.5f;
     public float soundDelay = 0.1f; // Delay before playing completion sound
     
+    
     [Header("Debug")]
     public bool debugMode = true;
     public bool alwaysShowScanButton = false; // For testing

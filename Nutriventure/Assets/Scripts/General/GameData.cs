@@ -16,6 +16,9 @@ public class GameData
     public int nutriGems; // NEW: Added NutriGems
     public int currentEnergy;
     public DateTime lastEnergyUpdateTime;
+    
+    // Key Kingdom Collections
+    public bool sugariaKeyCollected = false;
 
     // Character System
     public int selectedCharacterID = 0;
@@ -71,6 +74,9 @@ public class GameData
         isChestAvailable = true;
         selectedCharacterID = 0;
 
+        // Kingdom Keys
+        sugariaKeyCollected = false;
+
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
             unlockedCharacterIDs = new List<int>() { 0 };
@@ -105,6 +111,21 @@ public class GameData
 
         if (scannedIngredients == null)
             scannedIngredients = new StringBoolDictionary2();
+    }
+
+    public bool HasSugariaKey()
+    {
+        return sugariaKeyCollected;
+    }
+    
+    public void CollectSugariaKey()
+    {
+        sugariaKeyCollected = true;
+    }
+    
+    public void ResetSugariaKey()
+    {
+        sugariaKeyCollected = false;
     }
 
     // NEW: Add NutriGems methods
