@@ -520,7 +520,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -965,7 +964,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1289,7 +1287,6 @@ MonoBehaviour:
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -5951,7 +5948,6 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -6730,7 +6726,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7236,7 +7231,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -7435,7 +7429,6 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -9107,6 +9100,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -2785587790389555226, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+      propertyPath: animator
+      value: 
+      objectReference: {fileID: 309713744}
     - target: {fileID: 212858735570210138, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 43.50941
@@ -9156,6 +9153,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+--- !u!95 &309713744 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1397984337604658676, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+  m_PrefabInstance: {fileID: 309713743}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &311871241
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9598,7 +9600,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -12711,7 +12712,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: -21.55
   m_lineSpacingMax: 0
@@ -12917,32 +12917,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e22dfb235ed8a214e84eb5daea018dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectionController
-  menuCamera: {fileID: 0}
-  characterSelectionCamera: {fileID: 0}
+  characterChangeCamera: {fileID: 0}
   skinSelectionCamera: {fileID: 1938859889}
   characterSelectionCanvas: {fileID: 641576474}
-  characterPreviewCanvas: {fileID: 0}
-  characterSelectionPanel: {fileID: 641576472}
-  mainMenuCanvasesParent: {fileID: 0}
+  skinSelectionCanvas: {fileID: 0}
+  characterControlsCanvas: {fileID: 0}
   selectCharacterButton: {fileID: 2022504402}
   previewSelectButton: {fileID: 366650511}
   skinButton: {fileID: 1053241513}
   backButton: {fileID: 1128667653}
   characterButton: {fileID: 406014555}
+  characterSelectionPanel: {fileID: 641576472}
   fadeDuration: 0.65
-  slideDuration: 0.3
-  menuShowDelay: 1.5
-  canvasShowDelay: 1
-  panelEntryPosition: {x: -466.3313, y: -72.66703, z: 0.000012334688}
-  panelExitPosition: {x: -2000, y: -72.66703, z: 0.000012334688}
-  characterSelectionAnimator: {fileID: 0}
+  elementFadeDelay: 0.1
   characterRotationController: {fileID: 1252794581}
-  playerArmature: {fileID: 0}
-  colorizableImages: []
-  colorizableTexts: []
-  skinSelectionController: {fileID: 2137998982}
   characterVisualSwapper: {fileID: 1922194129}
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
+  skinSelectionController: {fileID: 2137998982}
+  platformTrigger: {fileID: 0}
+  playerArmatureAnimator: {fileID: 0}
 --- !u!4 &458180562
 Transform:
   m_ObjectHideFlags: 0
@@ -14956,7 +14949,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18443,7 +18435,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -18580,7 +18571,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -21160,7 +21150,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -22278,7 +22267,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -22713,7 +22701,6 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -24985,7 +24972,6 @@ MonoBehaviour:
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -25242,7 +25228,6 @@ MonoBehaviour:
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -26383,7 +26368,6 @@ MonoBehaviour:
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -28263,7 +28247,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -32015,7 +31998,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -33141,7 +33123,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -34468,7 +34449,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -36861,7 +36841,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -38243,7 +38222,6 @@ MonoBehaviour:
   m_VerticalAlignment: 1024
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -39262,7 +39240,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -42282,7 +42259,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -45092,7 +45068,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -46049,7 +46024,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -46264,7 +46238,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -47157,7 +47130,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -48897,7 +48869,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -49699,7 +49670,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -51959,7 +51929,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -53700,9 +53669,20 @@ MonoBehaviour:
   characterButtonContainer: {fileID: 745643799}
   characterButtonPrefab: {fileID: 3028024640959149799, guid: 824ea118bc3bda541ae18260e1178bb8, type: 3}
   scrollRect: {fileID: 1779928185}
+  characterNameText: {fileID: 0}
+  characterTaglineText: {fileID: 0}
+  characterLogoImage: {fileID: 0}
+  lockedFeedbackCanvasGroup: {fileID: 0}
+  fadeInDuration: 0.3
+  fadeOutDuration: 0.5
+  displayDuration: 2
+  lockedMessageText: {fileID: 0}
   maxColumns: 3
   buttonSpacing: 20
   buttonSize: {x: 350, y: 450}
+  selectedIconColor: {r: 1, g: 1, b: 1, a: 1}
+  deselectedIconColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  lockedIconColor: {r: 0.192, g: 0.192, b: 0.192, a: 1}
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
   characterVisualSwapper: {fileID: 1922194129}
   inputManager: {fileID: 818839278}
@@ -55493,7 +55473,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -56666,7 +56645,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -57875,6 +57853,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crawl: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -57909,6 +57888,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveSpeed: 7
   SprintSpeed: 7
+  CrawlSpeed: 1.5
   RotationSmoothTime: 0.12
   SpeedChangeRate: 10
   LandingAudioClip: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
@@ -57925,6 +57905,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: a3194b8bbc96ef84fab1f98f4b7dae3e, type: 3}
   FootstepAudioVolume: 0.3
   JumpHeight: 1.2
+  CrawlJumpHeight: 0.8
   Gravity: -15
   JumpTimeout: 0.3
   FallTimeout: 0.15
@@ -57939,6 +57920,15 @@ MonoBehaviour:
   BottomClamp: -30
   CameraAngleOverride: 0
   LockCameraPosition: 0
+  CrawlHeightRatio: 0.5
+  HeightChangeSpeed: 5
+  CrawlRadius: 0.2
+  CrawlCameraYOffset: -0.5
+  CameraOffsetSmoothSpeed: 5
+  AllowJumpWhileCrawling: 1
+  AutoStandAfterCrawlJump: 1
+  AutoStandDelay: 0.5
+  _isCrawling: 0
 --- !u!143 &1922194127
 CharacterController:
   m_ObjectHideFlags: 0
@@ -58001,6 +57991,7 @@ MonoBehaviour:
   initializationDelay: 0.2
   swapDelay: 0.05
   hideDuration: 0.05
+  lookAroundDelay: 0.3
 --- !u!1 &1922404885
 GameObject:
   m_ObjectHideFlags: 0
@@ -58096,7 +58087,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -58668,7 +58658,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -59698,7 +59687,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -60573,7 +60561,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 62823032}
   m_HandleRect: {fileID: 62823031}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -61825,7 +61813,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: -21.55
   m_lineSpacingMax: 0
@@ -62247,7 +62234,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -62565,7 +62551,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c700ff1ba23b99a48ac7a671c3d5509a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnvironmentController
-  mainMenuEnvironment: {fileID: 0}
+  mainEnvironmentObjects: []
   skinShowcaseEnvironments:
   - {fileID: 1560619810}
   - {fileID: 154073342}
@@ -62575,7 +62561,7 @@ MonoBehaviour:
   - {fileID: 69552022}
   - {fileID: 1771237619}
   - {fileID: 149215238}
-  mainMenuPlatform: {fileID: 0}
+  objectsToHideDuringTimeline: []
 --- !u!4 &2045678558
 Transform:
   m_ObjectHideFlags: 0
@@ -62851,7 +62837,6 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
-  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -64613,17 +64598,43 @@ MonoBehaviour:
   characterSelectionController: {fileID: 458180561}
   characterVisualSwapper: {fileID: 1922194129}
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
-  skinTimelineBridge: {fileID: 0}
-  skinGridLayout: {fileID: 0}
+  playerData: {fileID: 0}
+  skinHorizontalLayout: {fileID: 0}
   skinButtonPrefab: {fileID: 6683282478652706255, guid: 27f8d9282daef754abc87fe8edd4b451, type: 3}
   noSkinsText: {fileID: 0}
   skinSelectionPanel: {fileID: 705884194}
-  characterIconImage: {fileID: 0}
+  characterLogoImage: {fileID: 0}
   characterNameText: {fileID: 203000205}
+  characterTaglineText: {fileID: 0}
   characterDescriptionText: {fileID: 1545440592}
   skinNameText: {fileID: 0}
-  lockedSkinColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
-  unlockedSkinColor: {r: 1, g: 1, b: 1, a: 1}
+  backButton: {fileID: 0}
+  selectButton: {fileID: 0}
+  buyButton: {fileID: 0}
+  lockedButton: {fileID: 0}
+  buyButtonText: {fileID: 0}
+  lockedButtonText: {fileID: 0}
+  previewSelectButton: {fileID: 0}
+  confirmationPanel: {fileID: 0}
+  confirmationText: {fileID: 0}
+  confirmYesButton: {fileID: 0}
+  confirmNoButton: {fileID: 0}
+  coinsText: {fileID: 0}
+  gemsText: {fileID: 0}
+  selectedColor: {r: 1, g: 1, b: 1, a: 1}
+  deselectedColor: {r: 0.588, g: 0.588, b: 0.588, a: 1}
+  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+  defaultSkinIcon: {fileID: 0}
+  skinErrorCanvasGroup: {fileID: 0}
+  skinErrorMessageText: {fileID: 0}
+  errorFadeInDuration: 0.3
+  errorFadeOutDuration: 0.5
+  errorDisplayDuration: 2
+  characterSelectionCamera: {fileID: 0}
+  skinSelectionCamera: {fileID: 0}
+  characterSelectionCanvas: {fileID: 0}
+  skinSelectionCanvas: {fileID: 0}
+  characterControlsCanvas: {fileID: 0}
 --- !u!4 &2137998983
 Transform:
   m_ObjectHideFlags: 0
