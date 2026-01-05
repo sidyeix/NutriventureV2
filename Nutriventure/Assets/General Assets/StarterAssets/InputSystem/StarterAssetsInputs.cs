@@ -13,6 +13,7 @@ namespace StarterAssets
         public bool jump;
         public bool sprint;
         public bool crawl;
+        public bool push; // ADD THIS LINE
 
         [Header("Movement Settings")]
         public bool analogMovement;
@@ -47,10 +48,21 @@ namespace StarterAssets
 
         public void OnCrawl(InputValue value)
         {
-            // For keyboard/mouse, this will be true when key is pressed
             CrawlInput(value.isPressed);
         }
+
+        // ADD THIS METHOD for keyboard push input
+        public void OnPush(InputValue value)
+        {
+            PushInput(value.isPressed);
+        }
 #endif
+
+        // ADD THIS METHOD for UI push input
+        public void PushInput(bool newPushState)
+        {
+            push = newPushState;
+        }
 
         public void MoveInput(Vector2 newMoveDirection)
         {
