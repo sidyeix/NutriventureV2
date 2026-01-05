@@ -12,16 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c25b89b0ecde9634187aabdb35cec35f, type: 3}
   m_Name: EnerlingAnimations
   m_EditorClassIdentifier: Assembly-CSharp::SkillAnimationConfig
-  animationSets:
-  - enerlingName: Calcium
+  animationMaps:
+  - enerlingName: 
     skill1Animation: 0
-    skill2Animation: 1
-    skill3Animation: 2
-    defendAnimation: 4
-    getHitAnimation: 3
-    useCustomTriggers: 0
-    skill1Trigger: 
-    skill2Trigger: 
-    skill3Trigger: 
-    defendTrigger: 
-    getHitTrigger: 
+    skill2Animation: 0
+    skill3Animation: 0
+    defendAnimation: 0
+    getHitAnimation: 0
+    skill1AnimationName: 
+    skill2AnimationName: 
+    skill3AnimationName: 
+    defendAnimationName: 
+    getHitAnimationName: 

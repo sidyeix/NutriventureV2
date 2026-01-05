@@ -15,9 +15,77 @@ MonoBehaviour:
   ingredients:
   - ingredientName: Calcium
     isUnlocked: 0
-    enerlingSprite: {fileID: 0}
-    modelPrefab: {fileID: 8877414909686671166, guid: 96acaf02ea93f52469e871bf776296a8, type: 3}
-    animatorController: {fileID: 0}
+    enerlingSprite: {fileID: 21300000, guid: 35491a1560452e24282ad6aa197ce23f, type: 3}
+    modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+    animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
+    idleTrigger: 
+    attackTrigger: 
+    hitTrigger: 
+    blockTrigger: 
+    deathTrigger: 
+    liverHealth: 0
+    heartHealth: 0
+    kidneyHealth: 0
+    skill1:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill2:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill3:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+  - ingredientName: Sugar
+    isUnlocked: 1
+    enerlingSprite: {fileID: 21300000, guid: 384a3807ae6dd9c4fb8fd79b91cd16ff, type: 3}
+    modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+    animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
+    idleTrigger: 
+    attackTrigger: 
+    hitTrigger: 
+    blockTrigger: 
+    deathTrigger: 
+    liverHealth: 0
+    heartHealth: 0
+    kidneyHealth: 0
+    skill1:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill2:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+    skill3:
+      type: 1
+      damageValue: 0
+      liverDamage: 0
+      heartDamage: 0
+      kidneyDamage: 0
+      skillSprite: {fileID: 0}
+  - ingredientName: Peanuts
+    isUnlocked: 0
+    enerlingSprite: {fileID: 21300000, guid: 35491a1560452e24282ad6aa197ce23f, type: 3}
+    modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+    animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     idleTrigger: 
     attackTrigger: 
     hitTrigger: 
