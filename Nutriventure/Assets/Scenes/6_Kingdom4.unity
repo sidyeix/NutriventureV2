@@ -10759,7 +10759,6 @@ Transform:
   - {fileID: 389003394}
   - {fileID: 1248646886}
   - {fileID: 908390044}
-  - {fileID: 927685610}
   - {fileID: 1650699988}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -19282,7 +19281,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 812587666}
-  - {fileID: 561675143}
   - {fileID: 2101186363}
   - {fileID: 692574220}
   - {fileID: 153983390}
@@ -22094,55 +22092,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1193021441}
   m_SourcePrefab: {fileID: 100100000, guid: 4d4f3743a7b39904aa665563fe459249, type: 3}
---- !u!1 &561675142
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 561675143}
-  - component: {fileID: 561675144}
-  m_Layer: 5
-  m_Name: SubtitleController
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!224 &561675143
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561675142}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 500705391}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1266, y: 585}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &561675144
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561675142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a87aa5adaf149c248bef0eff841f293d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::K2_SubtitleController
-  subtitleTextUI: {fileID: 921335843}
 --- !u!1 &562591605
 GameObject:
   m_ObjectHideFlags: 0
@@ -23249,6 +23198,71 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aefd51d59fe02b947a6cd26dfb5768b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VerifySpawnPoints
+--- !u!1001 &593925021
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -30.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 159.18898
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1556079267199716494, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2221292170306541108, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_Name
+      value: Ingredient_Peanut
+      objectReference: {fileID: 0}
+    - target: {fileID: 6290806343265172407, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6628159755615540772, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
 --- !u!1 &593947076
 GameObject:
   m_ObjectHideFlags: 0
@@ -35924,12 +35938,11 @@ MonoBehaviour:
     ingredientIcon: {fileID: 21300000, guid: 7b0e50bd76de45b4d9da95ca78d8ae4d, type: 3}
     silhouetteSprite: {fileID: 0}
   gateOpenSound: {fileID: 0}
-  dialogueCanvas: {fileID: 0}
-  dialogueText: {fileID: 0}
   audioSource: {fileID: 0}
+  subtitleController: {fileID: 1381992823}
+  dialogueCanvas: {fileID: 1959983173}
   narrationDisplayTime: 6
-  fadeInTime: 0.5
-  fadeOutTime: 0.5
+  typingSpeed: 0.05
 --- !u!4 &908390044
 Transform:
   m_ObjectHideFlags: 0
@@ -36933,52 +36946,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: f54bdb463f46eee4bb8cb513069cd0f5, type: 3}
---- !u!1 &927685609
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 927685610}
-  - component: {fileID: 927685611}
-  m_Layer: 0
-  m_Name: CanvasManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &927685610
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 927685609}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 288225130}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &927685611
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 927685609}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0cf7797592480d439f675743af8e156, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CanvasCoordinator
-  dialogueCanvas: {fileID: 1959983176}
-  dialogueText: {fileID: 1345214406}
 --- !u!1001 &927927622
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -39837,7 +39804,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8944336655422409496, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: field of view
-      value: 60.000004
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409496, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: far clip plane
@@ -39861,31 +39828,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 65.24062
+      value: 2.7158332
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5199704
+      value: 0.80539036
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 64.42775
+      value: 16.169872
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.8938726
+      value: 0.9967266
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.03299552
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.4468009
+      value: -0.08084684
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.016492756
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -59643,10 +59610,34 @@ MonoBehaviour:
   npcArrowIndicator: {fileID: 0}
   dialogueCanvas: {fileID: 1959983173}
   showDialogueDuringCutscene: 1
-  subtitleText: {fileID: 1345214406}
-  welcomeMessage: Welcome to the Kingdom of Allerthria!
-  questMessage: Our kingdom faces a great threat from the dark forces...
-  acceptQuestMessage: Will you accept this quest to save our kingdom?
+  subtitleController: {fileID: 1381992823}
+  typingSpeed: 0.05
+  maxCharsPerLine: 60
+  welcomeMessageLines:
+  - When the Enerlings vanished, chaos consumed Allerthria.
+  - Dangerous foods spread, allergen knowledge was lost.
+  - Fear followed every careless meal in the kingdom.
+  questMessageLines:
+  - Now, Traveler, the kingdom calls upon you.
+  - Journey through Allerthria, reclaim the Big Nine.
+  - Milk, Egg, Fish, Shellfish, Tree Nuts, Peanuts...
+  dangerMessageLines:
+  - Wheat, Soybeans, and Sesame complete the Nine.
+  - Guide the wagon safely to Queen Alergica.
+  - Beware moving stone trials with food choices.
+  finalMessageLines:
+  - Choose safe foods, or lose a heart.
+  - Succeed for the Scroll of Allergenia.
+  - Restore protection to the kingdom.
+  acceptQuestLines:
+  - The fate of Allerthria is in your hands.
+  - Will you accept the challenge?
+  - 
+  narrationClips: []
+  narrationDelayAfterTimeline: 1
+  playNarrationAudio: 1
+  lineDisplayDuration: 3
+  pauseBetweenParagraphs: 1
   interactiveItem: {fileID: 0}
   kingdomGate: {fileID: 1099681758}
   npcModel: {fileID: 0}
@@ -59663,6 +59654,7 @@ MonoBehaviour:
   enableSkip: 1
   skipButtonDelay: 2
   audioManagerObject: {fileID: 0}
+  narrationAudioSource: {fileID: 0}
   reTriggerDelay: 5
   showReTriggerCountdown: 1
   OnCutsceneBegin:
@@ -69284,7 +69276,7 @@ MonoBehaviour:
   - m_Script
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
-  m_Priority: 11
+  m_Priority: 9
   m_StandbyUpdate: 2
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 0}
@@ -88107,3 +88099,4 @@ SceneRoots:
   - {fileID: 1959983177}
   - {fileID: 500705391}
   - {fileID: 729334444}
+  - {fileID: 593925021}
