@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
 using TMPro;
+using Cinemachine; // Added for camera control
 
 public class NPCGuardController : MonoBehaviour
 {
@@ -22,7 +23,7 @@ public class NPCGuardController : MonoBehaviour
     [SerializeField] private GameObject npcArrowIndicator;
     [SerializeField] private GameObject dialogueCanvas;
     [SerializeField] private bool showDialogueDuringCutscene = true;
-    [SerializeField] private TMP_Text subtitleText; // Add TMP_Text for subtitles
+    [SerializeField] private TMP_Text subtitleText;
     [SerializeField] private string welcomeMessage = "Welcome to the Kingdom of Allerthria!";
     [SerializeField] private string questMessage = "Our kingdom faces a great threat from the dark forces...";
     [SerializeField] private string acceptQuestMessage = "Will you accept this quest to save our kingdom?";
@@ -33,16 +34,16 @@ public class NPCGuardController : MonoBehaviour
     private Quaternion itemOriginalRotation;
 
     [Header("Quest Objects")]
-    [SerializeField] private GameObject kingdomGate; // The gate that will be removed
-    [SerializeField] private GameObject npcModel; // The NPC model that will disappear
+    [SerializeField] private GameObject kingdomGate;
+    [SerializeField] private GameObject npcModel;
     [SerializeField] private bool hideNpcAfterAccept = true;
     [SerializeField] private bool removeGateAfterAccept = true;
 
     [Header("Decision UI")]
-    [SerializeField] private GameObject decisionCanvas; // UI for Yes/No choice
+    [SerializeField] private GameObject decisionCanvas;
     [SerializeField] private Button acceptButton;
     [SerializeField] private Button declineButton;
-    [SerializeField] private float decisionDisplayDelay = 2f; // Time before showing decision buttons
+    [SerializeField] private float decisionDisplayDelay = 2f;
 
     [Header("Player Control")]
     [SerializeField] private GameObject playerObject;
@@ -58,15 +59,15 @@ public class NPCGuardController : MonoBehaviour
     [SerializeField] private GameObject audioManagerObject;
     
     [Header("Re-Trigger Settings")]
-    [SerializeField] private float reTriggerDelay = 5f; // Delay before NPC can be triggered again after decline
-    [SerializeField] private bool showReTriggerCountdown = true; // Show countdown on NPC indicator
+    [SerializeField] private float reTriggerDelay = 5f;
+    [SerializeField] private bool showReTriggerCountdown = true;
     
     [Header("Events")]
     public UnityEvent OnCutsceneBegin;
     public UnityEvent OnCutsceneComplete;
     public UnityEvent OnCutsceneSkipped;
-    public UnityEvent OnQuestAccepted; // New event for quest acceptance
-    public UnityEvent OnQuestDeclined; // New event for quest decline
+    public UnityEvent OnQuestAccepted;
+    public UnityEvent OnQuestDeclined;
 
     // State tracking
     private bool hasTriggered = false;
@@ -88,6 +89,10 @@ public class NPCGuardController : MonoBehaviour
     private bool wasAnimatorEnabled;
     private bool wasAudioEnabled;
     private bool wasInputEnabled;
+    
+    // Camera control
+    private CinemachineVirtualCamera playerVCam;
+    private int playerOriginalPriority = 10;
     
     // Skip button tracking
     private float skipTimer = 0f;
@@ -138,7 +143,6 @@ public class NPCGuardController : MonoBehaviour
         {
             npcArrowIndicator.SetActive(!autoTrigger);
             
-            // Get text component for countdown if available
             if (showReTriggerCountdown)
             {
                 arrowIndicatorText = npcArrowIndicator.GetComponentInChildren<TMP_Text>(true);
@@ -165,6 +169,13 @@ public class NPCGuardController : MonoBehaviour
         // Ensure audio manager is active
         if (audioManagerObject != null)
             audioManagerObject.SetActive(true);
+        
+        // Find player camera
+        playerVCam = FindAnyObjectByType<CinemachineVirtualCamera>();
+        if (playerVCam != null)
+        {
+            playerOriginalPriority = playerVCam.Priority;
+        }
     }
     
     void OnDestroy()
@@ -181,7 +192,6 @@ public class NPCGuardController : MonoBehaviour
         if (declineButton != null)
             declineButton.onClick.RemoveListener(DeclineQuest);
             
-        // Stop any running coroutines
         if (reTriggerCoroutine != null)
         {
             StopCoroutine(reTriggerCoroutine);
@@ -211,27 +221,19 @@ public class NPCGuardController : MonoBehaviour
             }
         }
         
-        // Auto-trigger check - Only trigger if we haven't made a decision yet OR it's not a one-time trigger
+        // Auto-trigger check
         if (autoTrigger && !isCutsceneActive && !isReTriggerDelayed && playerTransform != null)
         {
             if (Vector3.Distance(transform.position, playerTransform.position) <= interactionRange)
             {
                 if (!requireFacing || IsPlayerFacingNPC())
                 {
-                    // Check if we can trigger based on one-time trigger rules
                     if (!oneTimeTrigger || !hasTriggered || !hasMadeDecision)
                     {
                         StartCutsceneSequence();
                     }
                 }
             }
-        }
-        
-        // Handle input for quest decision
-        if (isQuestDecisionActive && !hasMadeDecision)
-        {
-            // You can add keyboard shortcuts here if needed
-            // For example: Space for accept, Escape for decline
         }
     }
 
@@ -245,7 +247,6 @@ public class NPCGuardController : MonoBehaviour
                 
             CachePlayerComponents();
             
-            // Check if we can interact based on trigger rules
             if (!oneTimeTrigger || !hasTriggered || !hasMadeDecision)
             {
                 if (autoTrigger)
@@ -263,7 +264,6 @@ public class NPCGuardController : MonoBehaviour
             if (!autoTrigger && npcArrowIndicator != null)
             {
                 npcArrowIndicator.SetActive(false);
-                // Hide countdown text when leaving
                 if (arrowIndicatorText != null)
                     arrowIndicatorText.gameObject.SetActive(false);
             }
@@ -294,13 +294,11 @@ public class NPCGuardController : MonoBehaviour
         if (npcArrowIndicator != null)
         {
             npcArrowIndicator.SetActive(true);
-            // Hide countdown text when showing normal prompt
             if (arrowIndicatorText != null)
                 arrowIndicatorText.gameObject.SetActive(false);
         }
     }
 
-    // Public method to trigger from UI button
     public void TriggerCutsceneFromUI()
     {
         if (!isCutsceneActive && !isReTriggerDelayed && playerTransform != null)
@@ -322,13 +320,13 @@ public class NPCGuardController : MonoBehaviour
         
         hasTriggered = true;
         isCutsceneActive = true;
-        hasMadeDecision = false; // Reset decision state when starting new cutscene
-        isQuestDecisionActive = false; // Reset decision UI state
+        hasMadeDecision = false;
+        isQuestDecisionActive = false;
         
         // Store original states
         SavePlayerState();
         
-        // Freeze player if required
+        // Freeze player
         if (freezePlayerCompletely)
             FreezePlayer();
         
@@ -339,10 +337,6 @@ public class NPCGuardController : MonoBehaviour
             if (arrowIndicatorText != null)
                 arrowIndicatorText.gameObject.SetActive(false);
         }
-        
-        // Activate cutscene objects
-        if (cutsceneObjectParent != null)
-            cutsceneObjectParent.SetActive(true);
         
         // Setup interactive item
         if (interactiveItem != null)
@@ -360,42 +354,152 @@ public class NPCGuardController : MonoBehaviour
         if (audioManagerObject != null)
             audioManagerObject.SetActive(false);
         
-        // Start timeline
-        if (timelineDirector != null)
-            timelineDirector.Play();
-        
-        // Show dialogue if enabled
+        // Show dialogue
         if (showDialogueDuringCutscene && dialogueCanvas != null)
             dialogueCanvas.SetActive(true);
-        
-        // Start showing subtitles
-        StartCoroutine(ShowSubtitlesSequence());
         
         // Invoke begin event
         OnCutsceneBegin?.Invoke();
         
-        Debug.Log("Cutscene sequence started - Decision reset");
+        // Start the NPC conversation sequence
+        StartCoroutine(NPCConversationSequence());
+        
+        Debug.Log("NPC conversation started");
     }
 
-    IEnumerator ShowSubtitlesSequence()
+    IEnumerator NPCConversationSequence()
     {
-        // Welcome message
-        if (subtitleText != null)
+        // Step 1: Initial greeting
+        ShowNarration("Greetings, traveler! I am a guard of Allerthria.", 2f);
+        yield return new WaitForSeconds(2f);
+        
+        // Step 2: Context setting
+        ShowNarration("Let me show you what we're facing...", 2f);
+        yield return new WaitForSeconds(2f);
+        
+        // Step 3: Activate cutscene objects
+        if (cutsceneObjectParent != null)
+            cutsceneObjectParent.SetActive(true);
+        
+        // Setup cutscene cameras
+        SetupCutsceneCameras();
+        
+        // Start timeline with narration
+        yield return StartCoroutine(PlayTimelineWithNarration());
+    }
+
+    void ShowNarration(string message, float duration)
+    {
+        if (CanvasCoordinator.Instance != null)
         {
-            subtitleText.text = welcomeMessage;
-            yield return new WaitForSeconds(3f); // Display for 3 seconds
+            CanvasCoordinator.Instance.ShowNPCNarration(message, duration);
+        }
+        else if (subtitleText != null)
+        {
+            subtitleText.text = message;
+            if (duration > 0)
+            {
+                StartCoroutine(ClearSubtitleAfterDelay(duration));
+            }
+        }
+    }
+
+    IEnumerator ClearSubtitleAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (subtitleText != null)
+            subtitleText.text = "";
+    }
+
+    void SetupCutsceneCameras()
+    {
+        // Lower priority of player camera
+        if (playerVCam != null)
+        {
+            playerVCam.Priority = 0;
+        }
+        
+        // Enable all cameras in cutscene
+        Camera[] cutsceneCams = cutsceneObjectParent.GetComponentsInChildren<Camera>(true);
+        foreach (Camera cam in cutsceneCams)
+        {
+            cam.enabled = true;
+        }
+        
+        // Set high priority for timeline cameras
+        CinemachineVirtualCamera[] timelineCams = cutsceneObjectParent.GetComponentsInChildren<CinemachineVirtualCamera>(true);
+        foreach (CinemachineVirtualCamera vcam in timelineCams)
+        {
+            vcam.enabled = true;
+            vcam.Priority = 11;
+        }
+    }
+
+    void RestorePlayerCamera()
+    {
+        // Restore player camera priority
+        if (playerVCam != null)
+        {
+            playerVCam.Priority = playerOriginalPriority;
+        }
+        
+        // Disable cutscene cameras
+        if (cutsceneObjectParent != null)
+        {
+            Camera[] cutsceneCams = cutsceneObjectParent.GetComponentsInChildren<Camera>();
+            foreach (Camera cam in cutsceneCams)
+            {
+                cam.enabled = false;
+            }
+            
+            CinemachineVirtualCamera[] timelineCams = cutsceneObjectParent.GetComponentsInChildren<CinemachineVirtualCamera>();
+            foreach (CinemachineVirtualCamera vcam in timelineCams)
+            {
+                vcam.enabled = false;
+            }
+        }
+    }
+
+    IEnumerator PlayTimelineWithNarration()
+    {
+        if (timelineDirector != null)
+        {
+            // Start timeline
+            timelineDirector.Play();
+            
+            // Wait for establishing shot
+            yield return new WaitForSeconds(1f);
+            
+            // Welcome message during cinematic
+            ShowNarration(welcomeMessage, 3f);
+            yield return new WaitForSeconds(3f);
             
             // Quest message
-            subtitleText.text = questMessage;
-            yield return new WaitForSeconds(4f); // Display for 4 seconds
+            ShowNarration(questMessage, 4f);
+            yield return new WaitForSeconds(4f);
             
-            // Decision prompt
-            subtitleText.text = acceptQuestMessage;
+            // Calculate when to show decision (last 5 seconds of timeline)
+            float timelineLength = (float)timelineDirector.duration;
+            float timeUntilDecision = timelineLength - 5f;
             
-            // Wait a moment before showing decision UI
-            yield return new WaitForSeconds(decisionDisplayDelay);
+            // Wait until decision time
+            while (timelineDirector.time < timeUntilDecision)
+            {
+                yield return null;
+            }
             
-            // Show decision UI
+            // Final call to action
+            ShowNarration(acceptQuestMessage, 2f);
+            yield return new WaitForSeconds(2f);
+            
+            // Pause timeline and show decision
+            ShowQuestDecision();
+        }
+        else
+        {
+            // Fallback if no timeline
+            ShowNarration(acceptQuestMessage, 2f);
+            yield return new WaitForSeconds(2f);
             ShowQuestDecision();
         }
     }
@@ -406,12 +510,16 @@ public class NPCGuardController : MonoBehaviour
         
         if (decisionCanvas != null)
             decisionCanvas.SetActive(true);
-            
-        // Optionally pause the timeline here
-        if (timelineDirector != null && timelineDirector.playableGraph.IsValid())
+        
+        // Pause timeline if playing
+        if (timelineDirector != null && timelineDirector.state == PlayState.Playing)
         {
-            timelineDirector.playableGraph.GetRootPlayable(0).SetSpeed(0); // Pause timeline
+            timelineDirector.Pause();
         }
+        
+        // Clear subtitles
+        if (subtitleText != null)
+            subtitleText.text = "";
     }
 
     void HideQuestDecision()
@@ -420,15 +528,6 @@ public class NPCGuardController : MonoBehaviour
         
         if (decisionCanvas != null)
             decisionCanvas.SetActive(false);
-            
-        if (subtitleText != null)
-            subtitleText.text = "";
-            
-        // Resume timeline if it was paused
-        if (timelineDirector != null && timelineDirector.playableGraph.IsValid())
-        {
-            timelineDirector.playableGraph.GetRootPlayable(0).SetSpeed(1); // Resume timeline
-        }
     }
 
     public void AcceptQuest()
@@ -438,6 +537,15 @@ public class NPCGuardController : MonoBehaviour
             hasMadeDecision = true;
             HideQuestDecision();
             
+            // Resume timeline briefly for completion
+            if (timelineDirector != null && timelineDirector.state == PlayState.Paused)
+            {
+                timelineDirector.Resume();
+            }
+            
+            // Show acceptance message
+            ShowNarration("Thank you for accepting our quest! The gate is now open.", 2f);
+            
             // Remove gate
             if (removeGateAfterAccept && kingdomGate != null)
                 kingdomGate.SetActive(false);
@@ -446,7 +554,7 @@ public class NPCGuardController : MonoBehaviour
             if (hideNpcAfterAccept && npcModel != null)
                 npcModel.SetActive(false);
             
-            // Disable NPC interaction for future
+            // Hide NPC indicator
             if (npcArrowIndicator != null)
             {
                 npcArrowIndicator.SetActive(false);
@@ -454,22 +562,11 @@ public class NPCGuardController : MonoBehaviour
                     arrowIndicatorText.gameObject.SetActive(false);
             }
             
-            // Show acceptance message
-            if (subtitleText != null)
-            {
-                subtitleText.text = "Thank you for accepting our quest! The gate is now open.";
-                StartCoroutine(HideSubtitleAfterDelay(3f));
-            }
-            
-            // Restore game UI immediately
-            if (gameUICanvas != null)
-                gameUICanvas.SetActive(true);
-            
-            // Trigger quest accepted event
+            // Trigger event
             OnQuestAccepted?.Invoke();
             
-            // Complete the cutscene
-            StartCoroutine(CompleteCutsceneAfterDelay(3f, false));
+            // Complete after short delay
+            StartCoroutine(CompleteCutsceneAfterDelay(2f, false));
             
             Debug.Log("Quest accepted");
         }
@@ -482,33 +579,30 @@ public class NPCGuardController : MonoBehaviour
             hasMadeDecision = true;
             HideQuestDecision();
             
-            // Show decline message
-            if (subtitleText != null)
+            // Resume timeline briefly
+            if (timelineDirector != null && timelineDirector.state == PlayState.Paused)
             {
-                subtitleText.text = "Perhaps you need more time to consider...";
-                StartCoroutine(HideSubtitleAfterDelay(3f));
+                timelineDirector.Resume();
             }
             
-            // Restore game UI immediately
-            if (gameUICanvas != null)
-                gameUICanvas.SetActive(true);
+            // Show decline message
+            ShowNarration("Perhaps you need more time to consider...", 2f);
             
-            // Trigger quest declined event
+            // Trigger event
             OnQuestDeclined?.Invoke();
             
-            // Start re-trigger delay coroutine
+            // Start re-trigger delay
             if (reTriggerCoroutine != null)
                 StopCoroutine(reTriggerCoroutine);
             reTriggerCoroutine = StartCoroutine(ReTriggerDelayCoroutine());
             
-            // Complete the cutscene (but keep gate and NPC)
-            StartCoroutine(CompleteCutsceneAfterDelay(3f, false));
+            // Complete after short delay
+            StartCoroutine(CompleteCutsceneAfterDelay(2f, false));
             
-            // Reset decision state so player can try again (after delay)
-            hasMadeDecision = false; // Allow player to make decision again
-            isQuestDecisionActive = false; // Reset decision state
+            // Reset for re-trigger
+            hasMadeDecision = false;
             
-            Debug.Log("Quest declined - Starting re-trigger delay");
+            Debug.Log("Quest declined");
         }
     }
 
@@ -517,7 +611,7 @@ public class NPCGuardController : MonoBehaviour
         isReTriggerDelayed = true;
         reTriggerTimer = 0f;
         
-        // Show countdown on arrow indicator if available
+        // Show countdown on arrow indicator
         if (!autoTrigger && npcArrowIndicator != null && arrowIndicatorText != null && showReTriggerCountdown)
         {
             npcArrowIndicator.SetActive(true);
@@ -528,7 +622,6 @@ public class NPCGuardController : MonoBehaviour
         {
             reTriggerTimer += Time.deltaTime;
             
-            // Update countdown text
             if (arrowIndicatorText != null && arrowIndicatorText.gameObject.activeSelf)
             {
                 float timeLeft = reTriggerDelay - reTriggerTimer;
@@ -541,13 +634,11 @@ public class NPCGuardController : MonoBehaviour
         // Delay complete
         isReTriggerDelayed = false;
         
-        // Hide countdown text and show normal indicator
         if (!autoTrigger && npcArrowIndicator != null)
         {
             if (arrowIndicatorText != null)
                 arrowIndicatorText.gameObject.SetActive(false);
             
-            // Only show arrow if player is in range
             if (playerTransform != null && 
                 Vector3.Distance(transform.position, playerTransform.position) <= interactionRange)
             {
@@ -555,14 +646,7 @@ public class NPCGuardController : MonoBehaviour
             }
         }
         
-        Debug.Log("Re-trigger delay complete - NPC can be interacted with again");
-    }
-
-    IEnumerator HideSubtitleAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (subtitleText != null)
-            subtitleText.text = "";
+        Debug.Log("Re-trigger delay complete");
     }
 
     IEnumerator CompleteCutsceneAfterDelay(float delay, bool wasSkipped)
@@ -634,7 +718,7 @@ public class NPCGuardController : MonoBehaviour
 
     void OnTimelineFinished(PlayableDirector director)
     {
-        // Only auto-complete if no decision needs to be made
+        // If timeline finishes naturally (not paused for decision), complete cutscene
         if (!isQuestDecisionActive)
             CompleteCutscene(false);
     }
@@ -650,7 +734,6 @@ public class NPCGuardController : MonoBehaviour
 
     IEnumerator AnimateSkipButton()
     {
-        // Simple fade-in animation
         CanvasGroup cg = skipButton.GetComponent<CanvasGroup>();
         if (cg != null)
         {
@@ -670,17 +753,17 @@ public class NPCGuardController : MonoBehaviour
 
     public void SkipCurrentCutscene()
     {
-        if (isCutsceneActive && timelineDirector != null)
+        if (isCutsceneActive)
         {
-            timelineDirector.Stop();
+            if (timelineDirector != null)
+                timelineDirector.Stop();
             
-            // Hide decision UI if active
             if (isQuestDecisionActive)
                 HideQuestDecision();
                 
             CompleteCutscene(true);
             OnCutsceneSkipped?.Invoke();
-            Debug.Log("Cutscene skipped by user");
+            Debug.Log("Cutscene skipped");
         }
     }
 
@@ -690,11 +773,10 @@ public class NPCGuardController : MonoBehaviour
         skipAvailable = false;
         skipTimer = 0f;
         
-        // Hide skip button
+        // Hide UI elements
         if (skipButton != null)
             skipButton.gameObject.SetActive(false);
         
-        // Hide dialogue and subtitles
         if (dialogueCanvas != null)
             dialogueCanvas.SetActive(false);
             
@@ -704,6 +786,9 @@ public class NPCGuardController : MonoBehaviour
         // Deactivate cutscene objects
         if (cutsceneObjectParent != null)
             cutsceneObjectParent.SetActive(false);
+        
+        // Restore player camera
+        RestorePlayerCamera();
         
         // Restore game UI
         if (gameUICanvas != null)
@@ -716,18 +801,16 @@ public class NPCGuardController : MonoBehaviour
         // Unfreeze player
         RestorePlayer();
         
-        // IMPORTANT: If quest was declined OR this is a one-time trigger that hasn't been completed,
-        // reset the trigger so player can interact again (after delay if declined)
+        // Handle trigger reset
         if (!hasMadeDecision || !oneTimeTrigger)
         {
             hasTriggered = false;
             
-            // Don't show arrow indicator immediately if we're in re-trigger delay
             if (!autoTrigger && npcArrowIndicator != null && !isReTriggerDelayed)
                 npcArrowIndicator.SetActive(true);
         }
         
-        // If quest was accepted and NPC should be hidden, keep indicator off
+        // If quest was accepted, keep indicator off
         if (hasMadeDecision && hideNpcAfterAccept && npcArrowIndicator != null)
         {
             npcArrowIndicator.SetActive(false);
@@ -735,13 +818,13 @@ public class NPCGuardController : MonoBehaviour
                 arrowIndicatorText.gameObject.SetActive(false);
         }
         
-        // Invoke completion event
+        // Invoke events
         if (wasSkipped)
             OnCutsceneSkipped?.Invoke();
         else
             OnCutsceneComplete?.Invoke();
         
-        Debug.Log($"Cutscene {(wasSkipped ? "skipped" : "completed")} - hasMadeDecision: {hasMadeDecision}");
+        Debug.Log($"Cutscene {(wasSkipped ? "skipped" : "completed")}");
     }
 
     void RestorePlayer()
@@ -800,7 +883,6 @@ public class NPCGuardController : MonoBehaviour
         hasMadeDecision = false;
         isReTriggerDelayed = false;
         
-        // Stop any running re-trigger coroutines
         if (reTriggerCoroutine != null)
         {
             StopCoroutine(reTriggerCoroutine);
@@ -829,77 +911,41 @@ public class NPCGuardController : MonoBehaviour
         if (skipButton != null)
             skipButton.gameObject.SetActive(false);
         
-        // Restore NPC and gate if they were disabled
+        // Restore NPC and gate
         if (npcModel != null)
             npcModel.SetActive(true);
             
         if (kingdomGate != null)
             kingdomGate.SetActive(true);
         
+        RestorePlayerCamera();
         RestorePlayer();
         
         Debug.Log("Cutscene trigger reset");
     }
 
     // Utility methods
-    public bool IsCutscenePlaying()
-    {
-        return isCutsceneActive;
-    }
-    
-    public bool HasAcceptedQuest()
-    {
-        return hasMadeDecision;
-    }
-    
-    public float GetSkipButtonTimeRemaining()
-    {
-        return Mathf.Max(0, skipButtonDelay - skipTimer);
-    }
-    
-    public void SetSkipEnabled(bool enabled)
-    {
-        enableSkip = enabled;
-        if (!enabled && skipButton != null)
-            skipButton.gameObject.SetActive(false);
-    }
-    
-    public void SetSkipDelay(float delay)
-    {
-        skipButtonDelay = Mathf.Max(0, delay);
-    }
-    
-    public void SetReTriggerDelay(float delay)
-    {
-        reTriggerDelay = Mathf.Max(0, delay);
-    }
-    
-    public float GetReTriggerTimeRemaining()
-    {
-        if (!isReTriggerDelayed) return 0f;
-        return Mathf.Max(0, reTriggerDelay - reTriggerTimer);
-    }
-    
-    public bool IsReTriggerDelayed()
-    {
-        return isReTriggerDelayed;
-    }
+    public bool IsCutscenePlaying() => isCutsceneActive;
+    public bool HasAcceptedQuest() => hasMadeDecision;
+    public float GetSkipButtonTimeRemaining() => Mathf.Max(0, skipButtonDelay - skipTimer);
+    public void SetSkipEnabled(bool enabled) => enableSkip = enabled;
+    public void SetSkipDelay(float delay) => skipButtonDelay = Mathf.Max(0, delay);
+    public void SetReTriggerDelay(float delay) => reTriggerDelay = Mathf.Max(0, delay);
+    public float GetReTriggerTimeRemaining() => !isReTriggerDelayed ? 0f : Mathf.Max(0, reTriggerDelay - reTriggerTimer);
+    public bool IsReTriggerDelayed() => isReTriggerDelayed;
 
     #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
-        // Draw interaction range
         Gizmos.color = new Color(1, 0.5f, 0, 0.3f);
         Gizmos.DrawWireSphere(transform.position, interactionRange);
         
-        // Draw facing direction
         if (requireFacing)
         {
             Gizmos.color = Color.cyan;
             Vector3 direction = transform.forward * interactionRange;
             Gizmos.DrawRay(transform.position, direction);
             
-            // Draw arc
             UnityEditor.Handles.color = new Color(0, 1, 1, 0.1f);
             UnityEditor.Handles.DrawSolidArc(transform.position, Vector3.up, 
                 Quaternion.Euler(0, -facingThreshold, 0) * transform.forward, 

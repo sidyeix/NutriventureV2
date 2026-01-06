@@ -4,7 +4,6 @@ using System.Collections;
 using System;
 using TMPro;
 using UnityEngine.SceneManagement;
-using UnityEngine.Android;
 using System.Collections.Generic;
 
 public class OCRManager : MonoBehaviour
@@ -14,9 +13,7 @@ public class OCRManager : MonoBehaviour
     public TMP_Text statusText;
     public TMP_Text resultsTextIngredient;
     public TMP_Text resultsTextCategory;
-    public TMP_Text resultsTextRarity;
     public TMP_Text resultsTextScan;
-    public TMP_Text resultsTextChance;
     public GameObject resultsPanel;
     public TMP_Text warningText;
     public GameObject blurPanel;
@@ -47,7 +44,7 @@ public class OCRManager : MonoBehaviour
     public ModelManager modelManager;
 
     [Header("Capture Cooldown")]
-    public float captureCooldownDuration = 2f; // 2 seconds cooldown
+    public float captureCooldownDuration = 2f;
 
     private Texture2D currentImage;
     private bool isProcessing = false;
@@ -55,10 +52,9 @@ public class OCRManager : MonoBehaviour
     private IngredientData currentIngredientData;
     private Coroutine cooldownUpdateCoroutine;
     private string currentProductFingerprint;
-    private bool isCaptureOnCooldown = false; // New flag for capture cooldown
-    private Coroutine captureCooldownCoroutine; // Cooldown coroutine reference
+    private bool isCaptureOnCooldown = false;
+    private Coroutine captureCooldownCoroutine;
     
-    // ==================== TUTORIAL SUPPORT ====================
     public bool IsTutorialActive { get; set; } = false;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -69,23 +65,29 @@ public class OCRManager : MonoBehaviour
     void Start()
     {
         SetupUI();
-        resultsPanel.SetActive(false);
+        
+        if (resultsPanel != null)
+            resultsPanel.SetActive(false);
 
-        captureButton.onClick.AddListener(OnCaptureButtonClicked);
-        galleryButton.onClick.AddListener(OnGalleryButtonClicked);
-        exitButton.onClick.AddListener(OnExitButtonClicked);
-
-        // ADD BATTLE BUTTON LISTENER
-        /* if (battleButton != null)
-        {
-            battleButton.onClick.AddListener(OnBattleButtonClicked);
-            battleButton.gameObject.SetActive(false); // Hide initially
-        } */
+        if (captureButton != null)
+            captureButton.onClick.AddListener(OnCaptureButtonClicked);
+        
+        if (galleryButton != null)
+            galleryButton.onClick.AddListener(OnGalleryButtonClicked);
+        
+        if (exitButton != null)
+            exitButton.onClick.AddListener(OnExitButtonClicked);
 
         if (retryButton != null)
         {
             retryButton.onClick.AddListener(OnRetryButtonClicked);
             retryButton.gameObject.SetActive(false);
+        }
+
+        if (battleButton != null)
+        {
+            battleButton.onClick.AddListener(OnBattleButtonClicked);
+            battleButton.gameObject.SetActive(false);
         }
 
         StartCooldownUpdates();
@@ -106,8 +108,24 @@ public class OCRManager : MonoBehaviour
             imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
         }
 
-        if (blurPanel != null) blurPanel.SetActive(false);
-        if (noIngredientText != null) noIngredientText.gameObject.SetActive(false);
+        if (blurPanel != null) 
+            blurPanel.SetActive(false);
+        
+        if (noIngredientText != null) 
+            noIngredientText.gameObject.SetActive(false);
+        
+        if (resultsPanel != null)
+        {
+            // Ensure results panel is properly set up
+            CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+            if (panelGroup == null)
+            {
+                panelGroup = resultsPanel.AddComponent<CanvasGroup>();
+            }
+            panelGroup.interactable = true;
+            panelGroup.blocksRaycasts = true;
+        }
+        
         UpdateButtonStates();
     }
 
@@ -116,47 +134,33 @@ public class OCRManager : MonoBehaviour
         bool resultsActive = resultsPanel != null && resultsPanel.activeSelf;
         bool canInteract = !isProcessing && !isCapturing && !resultsActive && !isCaptureOnCooldown;
        
-        if (captureButton != null) captureButton.interactable = canInteract;
-        if (galleryButton != null) galleryButton.interactable = !isProcessing && !resultsActive;
-        if (instructionsButton != null) instructionsButton.interactable = !isProcessing && !resultsActive;
-        if (exitButton != null) exitButton.interactable = !isProcessing && !isCapturing;
+        if (captureButton != null) 
+            captureButton.interactable = canInteract;
+        
+        if (galleryButton != null) 
+            galleryButton.interactable = !isProcessing && !resultsActive;
+        
+        if (instructionsButton != null) 
+            instructionsButton.interactable = !isProcessing && !resultsActive;
+        
+        if (exitButton != null) 
+            exitButton.interactable = !isProcessing && !isCapturing;
     }
 
     void UpdateStatus(string message)
     {
-        if (statusText != null) statusText.text = message;
+        if (statusText != null) 
+            statusText.text = message;
     }
 
-    // ==================== BATTLE SCENE TRANSITION ====================
-    /* public void OnBattleButtonClicked()
+    // ==================== BATTLE BUTTON ====================
+    private void OnBattleButtonClicked()
     {
-        if (currentIngredientData != null && !string.IsNullOrEmpty(currentIngredientData.ingredient))
+        if (!string.IsNullOrEmpty(battleSceneName))
         {
-            StartBattleWithIngredient(currentIngredientData.ingredient);
-        }
-        else
-        {
-            Debug.LogError("No ingredient data available for battle!");
-        }
-    } */
-
-    /* private void StartBattleWithIngredient(string ingredientName)
-    {
-        // Pass the ingredient to GameManager
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnIngredientScanned(ingredientName);
-            GameManager.Instance.StartEncounter();
-        }
-        else
-        {
-            Debug.LogError("GameManager instance not found! Cannot start battle.");
-            // Fallback: Load scene directly and use PlayerPrefs
-            PlayerPrefs.SetString("ScannedIngredient", ingredientName);
-            PlayerPrefs.Save();
             SceneManager.LoadScene(battleSceneName);
         }
-    } */
+    }
 
     // ==================== CAPTURE COOLDOWN MANAGEMENT ====================
     private void StartCaptureCooldown()
@@ -172,7 +176,6 @@ public class OCRManager : MonoBehaviour
         isCaptureOnCooldown = true;
         UpdateButtonStates();
        
-        // Optional: Visual feedback for cooldown
         if (captureButton != null)
         {
             Image buttonImage = captureButton.GetComponent<Image>();
@@ -189,17 +192,18 @@ public class OCRManager : MonoBehaviour
         {
             cooldownTimer -= Time.deltaTime;
            
-            // Optional: Update button text with cooldown timer
-            TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
-            if (buttonText != null)
+            if (captureButton != null)
             {
-                buttonText.text = $"Wait {cooldownTimer:F1}s";
+                TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
+                if (buttonText != null)
+                {
+                    buttonText.text = $"Wait {cooldownTimer:F1}s";
+                }
             }
            
             yield return null;
         }
 
-        // Restore button appearance
         if (captureButton != null)
         {
             Image buttonImage = captureButton.GetComponent<Image>();
@@ -255,18 +259,21 @@ public class OCRManager : MonoBehaviour
             if (noIngredientText != null && noIngredientText.gameObject.activeInHierarchy)
                 noIngredientText.text = $"Product maxed out!\nAvailable again in:\n{cooldown:hh\\:mm\\:ss}";
            
-            if (statusText != null) statusText.text = timeText;
+            if (statusText != null) 
+                statusText.text = timeText;
         }
         else if (cooldown.TotalSeconds <= 0 && currentProductFingerprint == fingerprint)
         {
             if (noIngredientText != null && noIngredientText.gameObject.activeInHierarchy)
             {
                 noIngredientText.text = "Product ready to scan again!";
-                if (retryButton != null) retryButton.gameObject.SetActive(false);
-                if (blurPanel != null) blurPanel.SetActive(false);
+                if (retryButton != null) 
+                    retryButton.gameObject.SetActive(false);
+                if (blurPanel != null) 
+                    blurPanel.SetActive(false);
             }
            
-            if (statusText != null && !resultsPanel.activeInHierarchy)
+            if (statusText != null && resultsPanel != null && !resultsPanel.activeInHierarchy)
                 statusText.text = "Ready - Take photo or select from gallery";
            
             currentProductFingerprint = null;
@@ -276,15 +283,19 @@ public class OCRManager : MonoBehaviour
     // ==================== BUTTON HANDLERS ====================
     public void OnRetryButtonClicked()
     {
-        if (blurPanel != null) blurPanel.SetActive(false);
-        if (noIngredientText != null) noIngredientText.gameObject.SetActive(false);
-        if (retryButton != null) retryButton.gameObject.SetActive(false);
+        if (blurPanel != null) 
+            blurPanel.SetActive(false);
+        
+        if (noIngredientText != null) 
+            noIngredientText.gameObject.SetActive(false);
+        
+        if (retryButton != null) 
+            retryButton.gameObject.SetActive(false);
 
         currentProductFingerprint = null;
         UpdateStatus("Restarting camera...");
         UpdateButtonStates();
 
-        // Clear any current image
         if (currentImage != null)
         {
             Destroy(currentImage);
@@ -295,32 +306,29 @@ public class OCRManager : MonoBehaviour
         StartCoroutine(RestartCameraPreview());
     #else
         UpdateStatus("Ready - Take photo or select from gallery");
-        imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        if (imagePreview != null)
+            imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
     #endif
     }
 
     public void OnCaptureButtonClicked()
     {
-        // ADD THIS CHECK: Prevent capture during tutorial
         if (IsTutorialActive)
         {
             Debug.Log("Capture blocked - Tutorial active");
             return;
         }
    
-        // COMPREHENSIVE CHECK: Prevent any capture if already processing, capturing, results showing, or on cooldown
         if (isProcessing || isCapturing || (resultsPanel != null && resultsPanel.activeSelf) || isCaptureOnCooldown)
         {
-            Debug.Log($"Capture blocked - Processing: {isProcessing}, Capturing: {isCapturing}, ResultsActive: {resultsPanel.activeSelf}, OnCooldown: {isCaptureOnCooldown}");
+            Debug.Log($"Capture blocked - Processing: {isProcessing}, Capturing: {isCapturing}, ResultsActive: {resultsPanel != null && resultsPanel.activeSelf}, OnCooldown: {isCaptureOnCooldown}");
             return;
         }
        
-        // IMMEDIATELY SET STATE: Prevent any other clicks
         isCapturing = true;
         isProcessing = true;
         UpdateButtonStates();
        
-        // Start the capture cooldown timer
         StartCaptureCooldown();
        
         #if UNITY_ANDROID && !UNITY_EDITOR
@@ -332,14 +340,14 @@ public class OCRManager : MonoBehaviour
 
     public void OnGalleryButtonClicked()
     {
-        // ADD THIS CHECK: Prevent gallery during tutorial
         if (IsTutorialActive)
         {
             Debug.Log("Gallery blocked - Tutorial active");
             return;
         }
    
-        if (isProcessing || isCapturing || (resultsPanel != null && resultsPanel.activeSelf)) return;
+        if (isProcessing || isCapturing || (resultsPanel != null && resultsPanel.activeSelf)) 
+            return;
        
         #if UNITY_ANDROID && !UNITY_EDITOR
         StartCoroutine(PickImageViaNativeGallery());
@@ -350,14 +358,12 @@ public class OCRManager : MonoBehaviour
 
     public void OnExitButtonClicked()
     {
-        // If results panel is active, close it only
         if (resultsPanel != null && resultsPanel.activeSelf)
         {
             ClosePanel();
         }
         else
         {
-            // Otherwise, exit to main menu
             CloseAndGoToScene();
         }
     }
@@ -368,18 +374,9 @@ public class OCRManager : MonoBehaviour
     IEnumerator StartCameraPreview()
     {
         UpdateStatus("Requesting camera permission...");
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            Permission.RequestUserPermission(Permission.Camera);
-            yield return new WaitForSeconds(0.8f);
-        }
-
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            UpdateStatus("Camera permission denied");
-            yield break;
-        }
-
+        
+        yield return RequestCameraPermission();
+        
         WebCamDevice[] devices = WebCamTexture.devices;
         if (devices == null || devices.Length == 0)
         {
@@ -394,8 +391,11 @@ public class OCRManager : MonoBehaviour
         try
         {
             liveCameraTexture = new WebCamTexture(chosenName, 1280, 720);
-            imagePreview.texture = liveCameraTexture;
-            imagePreview.color = Color.white;
+            if (imagePreview != null)
+            {
+                imagePreview.texture = liveCameraTexture;
+                imagePreview.color = Color.white;
+            }
             liveCameraTexture.Play();
             UpdateStatus("Camera preview active - Tap Capture to scan");
         }
@@ -405,20 +405,75 @@ public class OCRManager : MonoBehaviour
         }
     }
 
+    IEnumerator RequestCameraPermission()
+    {
+        if (!HasCameraPermission())
+        {
+            yield return RequestPermission("android.permission.CAMERA");
+            
+            if (!HasCameraPermission())
+            {
+                UpdateStatus("Camera permission denied");
+                yield break;
+            }
+        }
+    }
+
+    bool HasCameraPermission()
+    {
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var packageManager = currentActivity.Call<AndroidJavaObject>("getPackageManager"))
+            using (var packageName = currentActivity.Call<AndroidJavaObject>("getPackageName"))
+            {
+                int permissionGranted = packageManager.Call<int>("checkPermission", 
+                    "android.permission.CAMERA", packageName);
+                return permissionGranted == 0;
+            }
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    IEnumerator RequestPermission(string permission)
+    {
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+            {
+                string[] permissions = new string[] { permission };
+                currentActivity.Call("requestPermissions", permissions, 0);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("Permission request error: " + e.Message);
+        }
+        
+        yield return new WaitForSeconds(1f);
+    }
+
     IEnumerator RestartCameraPreview()
     {
-        // Stop existing camera if any
         if (liveCameraTexture != null)
         {
-            if (liveCameraTexture.isPlaying) liveCameraTexture.Stop();
+            if (liveCameraTexture.isPlaying) 
+                liveCameraTexture.Stop();
             liveCameraTexture = null;
         }
 
         yield return new WaitForSeconds(0.3f);
        
-        // Clear the preview while restarting
-        imagePreview.texture = null;
-        imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        if (imagePreview != null)
+        {
+            imagePreview.texture = null;
+            imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        }
        
         yield return StartCoroutine(StartCameraPreview());
         UpdateStatus("Camera preview active - Tap Capture to scan");
@@ -426,16 +481,11 @@ public class OCRManager : MonoBehaviour
 
     IEnumerator TakePhotoCoroutine()
     {
-        // State already set in OnCaptureButtonClicked
         UpdateStatus("Preparing capture...");
 
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
-        {
-            Permission.RequestUserPermission(Permission.Camera);
-            yield return new WaitForSeconds(0.5f);
-        }
-
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
+        yield return RequestCameraPermission();
+        
+        if (!HasCameraPermission())
         {
             UpdateStatus("Camera permission required");
             ResetProcessingState();
@@ -462,15 +512,19 @@ public class OCRManager : MonoBehaviour
             try
             {
                 tempWebcam = new WebCamTexture(cameraName, 1280, 720);
-                imagePreview.texture = tempWebcam;
-                imagePreview.color = Color.white;
+                if (imagePreview != null)
+                {
+                    imagePreview.texture = tempWebcam;
+                    imagePreview.color = Color.white;
+                }
                 tempWebcam.Play();
             }
             catch (Exception e)
             {
                 UpdateStatus("Camera error: " + e.Message);
                 ResetProcessingState();
-                if (tempWebcam != null && tempWebcam.isPlaying) tempWebcam.Stop();
+                if (tempWebcam != null && tempWebcam.isPlaying) 
+                    tempWebcam.Stop();
                 yield break;
             }
             yield return new WaitForSeconds(1.2f);
@@ -492,17 +546,23 @@ public class OCRManager : MonoBehaviour
         catch (Exception e)
         {
             UpdateStatus("Capture error: " + e.Message);
-            if (tempWebcam != null && tempWebcam.isPlaying) tempWebcam.Stop();
+            if (tempWebcam != null && tempWebcam.isPlaying) 
+                tempWebcam.Stop();
             ResetProcessingState();
             yield break;
         }
 
-        if (currentImage != null) Destroy(currentImage);
+        if (currentImage != null) 
+            Destroy(currentImage);
+        
         currentImage = photo;
-        imagePreview.texture = currentImage;
-        imagePreview.color = Color.white;
+        
+        if (imagePreview != null)
+        {
+            imagePreview.texture = currentImage;
+            imagePreview.color = Color.white;
+        }
 
-        // Process the captured image
         yield return StartCoroutine(ProcessCurrentImage());
 
         if (tempWebcam != null && tempWebcam.isPlaying)
@@ -510,8 +570,11 @@ public class OCRManager : MonoBehaviour
             tempWebcam.Stop();
             if (liveCameraTexture != null && liveCameraTexture.isPlaying)
             {
-                imagePreview.texture = liveCameraTexture;
-                imagePreview.color = Color.white;
+                if (imagePreview != null)
+                {
+                    imagePreview.texture = liveCameraTexture;
+                    imagePreview.color = Color.white;
+                }
             }
         }
     }
@@ -549,21 +612,33 @@ public class OCRManager : MonoBehaviour
 
             if (texture.LoadImage(imageData))
             {
-                if (currentImage != null) Destroy(currentImage);
+                if (currentImage != null) 
+                    Destroy(currentImage);
+                
                 currentImage = texture;
-                imagePreview.texture = currentImage;
-                imagePreview.color = Color.white;
+                
+                if (imagePreview != null)
+                {
+                    imagePreview.texture = currentImage;
+                    imagePreview.color = Color.white;
+                }
+                
                 UpdateStatus("Image loaded - Processing...");
                 success = true;
             }
-            else UpdateStatus("Failed to load image");
+            else 
+                UpdateStatus("Failed to load image");
         }
-        catch (Exception e) { UpdateStatus("Error loading image: " + e.Message); }
+        catch (Exception e) 
+        { 
+            UpdateStatus("Error loading image: " + e.Message); 
+        }
 
         isProcessing = false;
         UpdateButtonStates();
 
-        if (success) yield return StartCoroutine(ProcessCurrentImage());
+        if (success) 
+            yield return StartCoroutine(ProcessCurrentImage());
     }
 
     // ==================== OCR PROCESSING ====================
@@ -572,14 +647,6 @@ public class OCRManager : MonoBehaviour
         if (currentImage == null)
         {
             UpdateStatus("No image to process");
-            ResetProcessingState();
-            yield break;
-        }
-
-        TimeSpan globalCooldown = CooldownSystem.GetGlobalCooldown();
-        if (globalCooldown.TotalSeconds > 0)
-        {
-            UpdateStatus($"Please wait {globalCooldown:ss}s");
             ResetProcessingState();
             yield break;
         }
@@ -599,7 +666,10 @@ public class OCRManager : MonoBehaviour
                 ocrStarted = true;
             }
         }
-        catch (Exception e) { ocrError = e.Message; }
+        catch (Exception e) 
+        { 
+            ocrError = e.Message; 
+        }
 
         if (!ocrStarted)
         {
@@ -608,7 +678,6 @@ public class OCRManager : MonoBehaviour
         }
     }
 
-    // FIXED: Single method to reset ALL processing states
     private void ResetProcessingState()
     {
         isProcessing = false;
@@ -625,47 +694,55 @@ public class OCRManager : MonoBehaviour
 
     IEnumerator HandleOCRResultCoroutine(string jsonResult)
     {
-        // RESET STATE FIRST: This is critical to prevent multiple captures
         ResetProcessingState();
        
         yield return null;
 
         IngredientData ingredientData = JsonParser.ParseIngredientResponse(jsonResult);
+        
+        if (ingredientData == null)
+        {
+            Debug.LogError("Failed to parse OCR result: " + jsonResult);
+            ShowErrorUI("Failed to parse scan results");
+            yield break;
+        }
+        
         currentIngredientData = ingredientData;
         currentProductFingerprint = ingredientData.fingerprint;
 
-        // Case 1: No ingredient or invalid result
-        if (!ingredientData.IsValid() || ingredientData.rarity == -1)
+        if (!ingredientData.IsValid())
         {
             ShowErrorUI("No Ingredient/s detected... Please try again");
             yield break;
         }
 
-        // Case 2: OCR failed
         if (ingredientData.status != "success")
         {
             ShowErrorUI("Scan failed: " + ingredientData.status);
             yield break;
         }
 
-        // Case 3: Product already scanned 3 times
         if (ingredientData.IsDuplicateProduct())
         {
             TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
             currentProductFingerprint = ingredientData.fingerprint;
             UpdateProductCooldownUI(ingredientData.fingerprint);
 
-            if (blurPanel != null) blurPanel.SetActive(true);
+            if (blurPanel != null) 
+                blurPanel.SetActive(true);
+            
             if (noIngredientText != null)
             {
                 noIngredientText.text = $"Product maxed out!\nAvailable again in:\n{cooldown:hh\\:mm\\:ss}";
                 noIngredientText.gameObject.SetActive(true);
             }
-            if (retryButton != null) retryButton.gameObject.SetActive(true);
+            
+            if (retryButton != null) 
+                retryButton.gameObject.SetActive(true);
+            
             yield break;
         }
 
-        // Case 4: Success
         ProductManager.RecordProductScan(ingredientData.fingerprint, ingredientData.ingredient);
         ClearErrorUI();
         currentProductFingerprint = null;
@@ -675,167 +752,161 @@ public class OCRManager : MonoBehaviour
     void ShowErrorUI(string message)
     {
         UpdateStatus(message);
-        if (blurPanel != null) blurPanel.SetActive(true);
+        if (blurPanel != null) 
+            blurPanel.SetActive(true);
+        
         if (noIngredientText != null)
         {
             noIngredientText.text = message;
             noIngredientText.gameObject.SetActive(true);
         }
-        if (retryButton != null) retryButton.gameObject.SetActive(true);
+        
+        if (retryButton != null) 
+            retryButton.gameObject.SetActive(true);
     }
 
     void ClearErrorUI()
     {
-        if (blurPanel != null) blurPanel.SetActive(false);
-        if (noIngredientText != null) noIngredientText.gameObject.SetActive(false);
-        if (retryButton != null) retryButton.gameObject.SetActive(false);
+        if (blurPanel != null) 
+            blurPanel.SetActive(false);
+        
+        if (noIngredientText != null) 
+            noIngredientText.gameObject.SetActive(false);
+        
+        if (retryButton != null) 
+            retryButton.gameObject.SetActive(false);
     }
 
-        IEnumerator ScanSuccessSequence(IngredientData ingredientData)
+    IEnumerator ScanSuccessSequence(IngredientData ingredientData)
     {
+        if (ingredientData == null)
+        {
+            Debug.LogError("ScanSuccessSequence: ingredientData is null!");
+            ShowErrorUI("Failed to process ingredient data");
+            yield break;
+        }
+    
+        if (string.IsNullOrEmpty(ingredientData.ingredient))
+        {
+            Debug.LogError("ScanSuccessSequence: ingredient name is null or empty!");
+            ShowErrorUI("No ingredient detected");
+            yield break;
+        }
+    
         yield return StartCoroutine(FadeOut());
         ingredientSoundEffects();
-        DisplayIngredient(ingredientData);
-        yield return new WaitForSeconds(0.1f);
-        yield return StartCoroutine(FadeIn());
         
-        // ADD THIS: Automatically store in GameManager
-        // if (GameManager.Instance != null && !string.IsNullOrEmpty(ingredientData.ingredient))
-        // {
-        //    GameManager.Instance.OnIngredientScanned(ingredientData.ingredient);
-        //    Debug.Log($"Automatically stored {ingredientData.ingredient} in GameManager");
-        // }
-    }
-
-    // ==================== RARITY & CHANCE CALCULATION ====================
-    void DisplayIngredient(IngredientData ingredientData)
-    {
-        resultsPanel.SetActive(true);
-        if (galleryButton != null) galleryButton.gameObject.SetActive(false);
-        if (captureButton != null) captureButton.gameObject.SetActive(false);
-        if (instructionsButton != null) instructionsButton.gameObject.SetActive(false);
-
-        // SHOW BATTLE BUTTON
-        if (battleButton != null) battleButton.gameObject.SetActive(true);
-
-        int productScanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint);
-        string category = IngredientCategory.GetCategory(ingredientData.ingredient);
-        Color categoryColor = IngredientCategory.GetCategoryColor(category);
-        string rarityName = ingredientData.GetRarityName();
-        Color rarityColor = ingredientData.GetRarityColor();
-
-        resultsTextIngredient.text = $"{ingredientData.ingredient}";
-        resultsTextCategory.text = $"<color=#{ColorUtility.ToHtmlStringRGB(categoryColor)}>{category}</color>";
-        resultsTextRarity.text = $"<color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>{rarityName}</color>";
-       
-        TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
-        resultsTextScan.text = cooldown.TotalSeconds > 0 ? $"Product: {productScanCount}/3 scans"
-                                                        : $"Product Scanned: {productScanCount}/3 times";
-       
-        float chance = CalculateIngredientChance(ingredientData);
-        resultsTextChance.text = $"{chance}% Chance to unlock";
-
-        if (ingredientData.totalDetected > 1)
+        Debug.Log($"ScanSuccessSequence - Raw ingredient from JSON: '{ingredientData.ingredient}'");
+        
+        if (ingredientData.IsValid())
         {
-            string rarityInfo = GetRarityBreakdownDescription(ingredientData.rarityBreakdown);
-            warningText.text = $"{ingredientData.totalDetected} ingredients detected!\n" +
-                              $"{rarityInfo}\n" +
-                              $"Scans remaining: {3 - productScanCount}";
-            warningText.color = Color.yellow;
+            DisplayIngredient(ingredientData);
         }
         else
         {
-            warningText.text = $"Single {rarityName.ToLower()} ingredient detected\n" +
-                              $"Scans remaining: {3 - productScanCount}";
-            warningText.color = Color.green;
+            Debug.LogError($"ScanSuccessSequence: Invalid ingredient data. Status: {ingredientData.status}");
+            ShowErrorUI("Invalid ingredient data received");
+            yield break;
         }
+        
+        yield return new WaitForSeconds(0.1f);
+        yield return StartCoroutine(FadeIn());
+    }
 
-        var info = ingredientDatabase.GetIngredientInfo(ingredientData.ingredient);
-        if (info != null) modelManager.DisplayModel(info.modelPrefab);
-        else modelManager.DisplayModel(null);
-
+    // ==================== DISPLAY INGREDIENT ====================
+    void DisplayIngredient(IngredientData ingredientData)
+    {
+        if (resultsPanel == null)
+        {
+            Debug.LogError("ResultsPanel is null!");
+            return;
+        }
+        
+        // Clear any error UI before showing results
         ClearErrorUI();
-    }
-
-    float CalculateIngredientChance(IngredientData ingredientData)
-    {
-        if (string.IsNullOrEmpty(ingredientData.rarityBreakdown))
+        
+        // Ensure the results panel is interactable
+        CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+        if (panelGroup == null)
         {
-            switch (ingredientData.rarity)
+            panelGroup = resultsPanel.AddComponent<CanvasGroup>();
+        }
+        panelGroup.interactable = true;
+        panelGroup.blocksRaycasts = true;
+        
+        resultsPanel.SetActive(true);
+        
+        if (galleryButton != null) 
+            galleryButton.gameObject.SetActive(false);
+        
+        if (captureButton != null) 
+            captureButton.gameObject.SetActive(false);
+        
+        if (instructionsButton != null) 
+            instructionsButton.gameObject.SetActive(false);
+
+        if (battleButton != null) 
+            battleButton.gameObject.SetActive(true);
+
+        if (ingredientData == null)
+        {
+            Debug.LogError("IngredientData is null!");
+            return;
+        }
+        
+        int productScanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint);
+        
+        Debug.Log($"DisplayIngredient - Received ingredient: '{ingredientData.ingredient}'");
+        
+        string category = IngredientCategory.GetCategory(ingredientData.ingredient);
+        Color categoryColor = IngredientCategory.GetCategoryColor(category);
+        
+        Debug.Log($"DisplayIngredient - Category determined: '{category}' for ingredient '{ingredientData.ingredient}'");
+        
+        if (resultsTextIngredient != null) 
+            resultsTextIngredient.text = $"{ingredientData.ingredient}";
+        
+        if (resultsTextCategory != null) 
+            resultsTextCategory.text = $"<color=#{ColorUtility.ToHtmlStringRGB(categoryColor)}>{category}</color>";
+        
+        TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
+        
+        if (resultsTextScan != null)
+        {
+            resultsTextScan.text = cooldown.TotalSeconds > 0 ? $"Product: {productScanCount}/3 scans"
+                                                            : $"Product Scanned: {productScanCount}/3 times";
+        }
+
+        if (warningText != null)
+        {
+            if (ingredientData.totalDetected > 1)
             {
-                case 0: return 90f;
-                case 1: return 60f;
-                case 2: return 30f;
-                default: return 0f;
+                warningText.text = $"{ingredientData.totalDetected} ingredients detected!\n" +
+                                $"Scans remaining: {3 - productScanCount}";
+                warningText.color = Color.yellow;
+            }
+            else
+            {
+                warningText.text = $"Single ingredient detected\n" +
+                                $"Scans remaining: {3 - productScanCount}";
+                warningText.color = Color.green;
             }
         }
 
-        var breakdown = ParseRarityBreakdown(ingredientData.rarityBreakdown);
-        int commonCount = breakdown.common;
-        int rareCount = breakdown.rare;
-        int ultraRareCount = breakdown.ultraRare;
-
-        if (commonCount > 0 && rareCount == 0 && ultraRareCount == 0)
+        if (ingredientDatabase != null && modelManager != null)
         {
-            return ingredientData.rarity == 0 ? 100f : 0f;
+            var info = ingredientDatabase.GetIngredientInfo(ingredientData.ingredient);
+            if (info != null && info.modelPrefab != null) 
+                modelManager.DisplayModel(info.modelPrefab);
+            else if (modelManager != null) 
+                modelManager.DisplayModel(null);
         }
-        else if (commonCount == 0 && rareCount > 0 && ultraRareCount == 0)
+        else
         {
-            return ingredientData.rarity == 1 ? 100f : 0f;
-        }
-        else if (commonCount == 0 && rareCount == 0 && ultraRareCount > 0)
-        {
-            return ingredientData.rarity == 2 ? 100f : 0f;
-        }
-        else if (commonCount > 0 && rareCount > 0 && ultraRareCount == 0)
-        {
-            return ingredientData.rarity == 0 ? 95f : (ingredientData.rarity == 1 ? 90f : 0f);
-        }
-        else if (commonCount > 0 && ultraRareCount > 0 && rareCount == 0)
-        {
-            return ingredientData.rarity == 0 ? 95f : (ingredientData.rarity == 2 ? 90f : 0f);
-        }
-        else if (rareCount > 0 && ultraRareCount > 0 && commonCount == 0)
-        {
-            return ingredientData.rarity == 1 ? 95f : (ingredientData.rarity == 2 ? 90f : 0f);
-        }
-        else if (commonCount > 0 && rareCount > 0 && ultraRareCount > 0)
-        {
-            return ingredientData.rarity == 0 ? 85f : (ingredientData.rarity == 1 ? 90f : 95f);
+            Debug.LogWarning("IngredientDatabase or ModelManager is not assigned in the inspector!");
         }
 
-        return 0f;
-    }
-
-    (int common, int rare, int ultraRare) ParseRarityBreakdown(string breakdown)
-    {
-        int common = 0, rare = 0, ultraRare = 0;
-        if (!string.IsNullOrEmpty(breakdown))
-        {
-            string[] parts = breakdown.Split(',');
-            foreach (string part in parts)
-            {
-                if (part.StartsWith("C:")) int.TryParse(part.Substring(2), out common);
-                else if (part.StartsWith("R:")) int.TryParse(part.Substring(2), out rare);
-                else if (part.StartsWith("UR:")) int.TryParse(part.Substring(3), out ultraRare);
-            }
-        }
-        return (common, rare, ultraRare);
-    }
-
-    string GetRarityBreakdownDescription(string breakdown)
-    {
-        if (string.IsNullOrEmpty(breakdown)) return "Mixed rarities detected";
-        var counts = ParseRarityBreakdown(breakdown);
-       
-        List<string> parts = new List<string>();
-        if (counts.common > 0) parts.Add($"{counts.common} common");
-        if (counts.rare > 0) parts.Add($"{counts.rare} rare");
-        if (counts.ultraRare > 0) parts.Add($"{counts.ultraRare} ultra rare");
-
-        if (parts.Count == 0) return "No ingredients";
-        if (parts.Count == 1) return $"Only {parts[0]} ingredients";
-        return string.Join(", ", parts) + " ingredients";
+        UpdateButtonStates();
     }
 
     // ==================== UI EFFECTS & CLEANUP ====================
@@ -846,7 +917,10 @@ public class OCRManager : MonoBehaviour
             using (AndroidJavaClass pluginClass = new AndroidJavaClass("com.nutriventure.mlkit.MLKitOcr"))
                 pluginClass.CallStatic("cleanup");
         }
-        catch (Exception e) { Debug.LogWarning("Cleanup error: " + e.Message); }
+        catch (Exception e) 
+        { 
+            Debug.LogWarning("Cleanup error: " + e.Message); 
+        }
 
         #if UNITY_ANDROID && !UNITY_EDITOR
         if (liveCameraTexture != null && liveCameraTexture.isPlaying)
@@ -858,14 +932,33 @@ public class OCRManager : MonoBehaviour
 
     public void ClosePanel()
     {
-        resultsPanel.SetActive(false);
-        if (galleryButton != null) galleryButton.gameObject.SetActive(true);
-        if (captureButton != null) captureButton.gameObject.SetActive(true);
-        if (instructionsButton != null) instructionsButton.gameObject.SetActive(true);
+        if (resultsPanel != null)
+        {
+            // Make sure panel is interactable before closing
+            CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+            if (panelGroup != null)
+            {
+                panelGroup.interactable = false;
+                panelGroup.blocksRaycasts = false;
+            }
+            resultsPanel.SetActive(false);
+        }
+        
+        if (galleryButton != null) 
+            galleryButton.gameObject.SetActive(true);
+        
+        if (captureButton != null) 
+            captureButton.gameObject.SetActive(true);
+        
+        if (instructionsButton != null) 
+            instructionsButton.gameObject.SetActive(true);
 
-        // HIDE BATTLE BUTTON
-        if (battleButton != null) battleButton.gameObject.SetActive(false);
+        if (battleButton != null) 
+            battleButton.gameObject.SetActive(false);
 
+        // Clear any error UI
+        ClearErrorUI();
+        
         UpdateButtonStates();
 
         if (currentIngredientData != null && currentIngredientData.totalDetected > 1)
@@ -873,49 +966,53 @@ public class OCRManager : MonoBehaviour
         else
             UpdateStatus("Ready - Take photo or select from gallery");
 
-        // Clear the current image but restart camera preview
-        if (currentImage != null)
-        {
-            Destroy(currentImage);
-            currentImage = null;
-        }
-
-        // Restart camera preview instead of showing blank
         #if UNITY_ANDROID && !UNITY_EDITOR
         StartCoroutine(RestartCameraPreviewAfterClose());
         #else
-        // For editor, just show the ready status
-        imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        if (imagePreview != null)
+        {
+            imagePreview.texture = null;
+            imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        }
         #endif
     }
 
     #if UNITY_ANDROID && !UNITY_EDITOR
     IEnumerator RestartCameraPreviewAfterClose()
     {
-        // Wait a frame to ensure UI has updated
         yield return null;
-       
-        // Check if camera is already running
-        if (liveCameraTexture != null && liveCameraTexture.isPlaying)
+        
+        if (imagePreview != null)
         {
-            // Camera is already running, just show it
-            imagePreview.texture = liveCameraTexture;
-            imagePreview.color = Color.white;
+            imagePreview.texture = null;
+            imagePreview.color = new Color(0.2f, 0.2f, 0.2f);
+        }
+        
+        if (liveCameraTexture == null || !liveCameraTexture.isPlaying)
+        {
+            yield return StartCoroutine(RestartCameraPreview());
         }
         else
         {
-            // Camera needs to be restarted
-            yield return StartCoroutine(RestartCameraPreview());
+            if (imagePreview != null)
+            {
+                imagePreview.texture = liveCameraTexture;
+                imagePreview.color = Color.white;
+            }
+            UpdateStatus("Camera preview active - Tap Capture to scan");
         }
     }
     #endif
 
     IEnumerator FadeOut()
     {
-        if (fadePanel == null) yield break;
+        if (fadePanel == null) 
+            yield break;
+        
         fadePanel.SetActive(true);
         Image panelImage = fadePanel.GetComponent<Image>();
-        if (panelImage == null) yield break;
+        if (panelImage == null) 
+            yield break;
 
         float elapsedTime = 0f;
         Color c = panelImage.color;
@@ -935,42 +1032,50 @@ public class OCRManager : MonoBehaviour
 
     IEnumerator FadeIn()
     {
-        if (fadePanel == null) yield break;
+        if (fadePanel == null) 
+            yield break;
+        
         Image panelImage = fadePanel.GetComponent<Image>();
-        if (panelImage == null) yield break;
-
-        float elapsedTime = 0f;
-        Color c = panelImage.color;
-        c.a = 1;
-
-        while (elapsedTime < fadeDuration)
+        if (panelImage != null)
         {
-            c.a = Mathf.Lerp(1, 0, elapsedTime / fadeDuration);
+            float elapsedTime = 0f;
+            Color c = panelImage.color;
+            c.a = 1;
+
+            while (elapsedTime < fadeDuration)
+            {
+                c.a = Mathf.Lerp(1, 0, elapsedTime / fadeDuration);
+                panelImage.color = c;
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+            c.a = 0;
             panelImage.color = c;
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            fadePanel.SetActive(false);
         }
-        c.a = 0;
-        panelImage.color = c;
-        fadePanel.SetActive(false);
     }
 
     public void ingredientSoundEffects()
     {
         #if UNITY_ANDROID || UNITY_IOS
-        if (SystemInfo.supportsVibration) Handheld.Vibrate();
+        if (SystemInfo.supportsVibration) 
+            Handheld.Vibrate();
         #endif
-        if (audioSource != null && scanSound != null) audioSource.PlayOneShot(scanSound);
+        
+        if (audioSource != null && scanSound != null) 
+            audioSource.PlayOneShot(scanSound);
     }
 
     // ==================== EDITOR MOCKS ====================
     void MockImageCapture()
     {
-        // State already set in OnCaptureButtonClicked
         UpdateStatus("Mock: Taking photo...");
         currentImage = new Texture2D(512, 512);
-        imagePreview.texture = currentImage;
-        imagePreview.color = Color.white;
+        if (imagePreview != null)
+        {
+            imagePreview.texture = currentImage;
+            imagePreview.color = Color.white;
+        }
         StartCoroutine(MockProcessImage());
     }
 
@@ -980,28 +1085,45 @@ public class OCRManager : MonoBehaviour
         UpdateButtonStates();
         UpdateStatus("Mock: Selecting from gallery...");
         currentImage = new Texture2D(512, 512);
-        imagePreview.texture = currentImage;
-        imagePreview.color = Color.white;
+        if (imagePreview != null)
+        {
+            imagePreview.texture = currentImage;
+            imagePreview.color = Color.white;
+        }
         StartCoroutine(MockProcessImage());
     }
 
     IEnumerator MockProcessImage()
     {
         yield return new WaitForSeconds(1.5f);
-        string mockJson = "{\"ingredient\":\"Maltodextrin\",\"rarity\":0,\"status\":\"success\"," +
-                         "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3," +
-                         "\"rarity_breakdown\":\"C:2,R:1,UR:0\"}";
+        
+        string[] testIngredients = {
+            "Calcium"
+        };
+        
+        string randomIngredient = testIngredients[UnityEngine.Random.Range(0, testIngredients.Length)];
+        
+        string mockJson = $"{{\"ingredient\":\"{randomIngredient}\",\"status\":\"success\"," +
+                         "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3}";
+        
+        Debug.Log($"Mock test with ingredient: {randomIngredient}");
         OnOCRResult(mockJson);
     }
 
     void OnDestroy()
     {
-        if (cooldownUpdateCoroutine != null) StopCoroutine(cooldownUpdateCoroutine);
-        if (captureCooldownCoroutine != null) StopCoroutine(captureCooldownCoroutine);
-        if (currentImage != null) Destroy(currentImage);
+        if (cooldownUpdateCoroutine != null) 
+            StopCoroutine(cooldownUpdateCoroutine);
+        
+        if (captureCooldownCoroutine != null) 
+            StopCoroutine(captureCooldownCoroutine);
+        
+        if (currentImage != null) 
+            Destroy(currentImage);
        
         #if UNITY_ANDROID && !UNITY_EDITOR
-        if (liveCameraTexture != null && liveCameraTexture.isPlaying) liveCameraTexture.Stop();
+        if (liveCameraTexture != null && liveCameraTexture.isPlaying) 
+            liveCameraTexture.Stop();
         #endif
 
         try
@@ -1009,6 +1131,9 @@ public class OCRManager : MonoBehaviour
             using (AndroidJavaClass pluginClass = new AndroidJavaClass("com.nutriventure.mlkit.MLKitOcr"))
                 pluginClass.CallStatic("cleanup");
         }
-        catch (Exception e) { Debug.LogWarning("Cleanup error: " + e.Message); }
+        catch (Exception e) 
+        { 
+            Debug.LogWarning("Cleanup error: " + e.Message); 
+        }
     }
 }

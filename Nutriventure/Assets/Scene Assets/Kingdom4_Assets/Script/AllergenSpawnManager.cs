@@ -165,17 +165,6 @@ public class AllergenSpawnManager : MonoBehaviour
         GameObject prefab = allergenPrefabMap[allergenId];
         GameObject allergen = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
         
-        // Apply random rotation for variety
-        allergen.transform.rotation = Quaternion.Euler(
-            Random.Range(-10f, 10f), // Slight tilt
-            Random.Range(0f, 360f),   // Full rotation
-            Random.Range(-10f, 10f)   // Slight tilt
-        );
-        
-        // Optional: Random scale variation
-        float randomScale = Random.Range(0.8f, 1.2f);
-        allergen.transform.localScale = Vector3.one * randomScale;
-        
         // Set as child of spawn point for organization
         allergen.transform.SetParent(spawnPoint);
         
