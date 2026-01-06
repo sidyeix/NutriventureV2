@@ -13,9 +13,7 @@ public class OCRManager : MonoBehaviour
     public TMP_Text statusText;
     public TMP_Text resultsTextIngredient;
     public TMP_Text resultsTextCategory;
-    public TMP_Text resultsTextType;
     public TMP_Text resultsTextScan;
-    public TMP_Text resultsTextChance;
     public GameObject resultsPanel;
     public TMP_Text warningText;
     public GameObject blurPanel;
@@ -86,6 +84,12 @@ public class OCRManager : MonoBehaviour
             retryButton.gameObject.SetActive(false);
         }
 
+        if (battleButton != null)
+        {
+            battleButton.onClick.AddListener(OnBattleButtonClicked);
+            battleButton.gameObject.SetActive(false);
+        }
+
         StartCooldownUpdates();
         UpdateStatus("Initializing...");
 
@@ -109,6 +113,18 @@ public class OCRManager : MonoBehaviour
         
         if (noIngredientText != null) 
             noIngredientText.gameObject.SetActive(false);
+        
+        if (resultsPanel != null)
+        {
+            // Ensure results panel is properly set up
+            CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+            if (panelGroup == null)
+            {
+                panelGroup = resultsPanel.AddComponent<CanvasGroup>();
+            }
+            panelGroup.interactable = true;
+            panelGroup.blocksRaycasts = true;
+        }
         
         UpdateButtonStates();
     }
@@ -135,6 +151,15 @@ public class OCRManager : MonoBehaviour
     {
         if (statusText != null) 
             statusText.text = message;
+    }
+
+    // ==================== BATTLE BUTTON ====================
+    private void OnBattleButtonClicked()
+    {
+        if (!string.IsNullOrEmpty(battleSceneName))
+        {
+            SceneManager.LoadScene(battleSceneName);
+        }
     }
 
     // ==================== CAPTURE COOLDOWN MANAGEMENT ====================
@@ -248,7 +273,7 @@ public class OCRManager : MonoBehaviour
                     blurPanel.SetActive(false);
             }
            
-            if (statusText != null && !resultsPanel.activeInHierarchy)
+            if (statusText != null && resultsPanel != null && !resultsPanel.activeInHierarchy)
                 statusText.text = "Ready - Take photo or select from gallery";
            
             currentProductFingerprint = null;
@@ -797,6 +822,18 @@ public class OCRManager : MonoBehaviour
             return;
         }
         
+        // Clear any error UI before showing results
+        ClearErrorUI();
+        
+        // Ensure the results panel is interactable
+        CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+        if (panelGroup == null)
+        {
+            panelGroup = resultsPanel.AddComponent<CanvasGroup>();
+        }
+        panelGroup.interactable = true;
+        panelGroup.blocksRaycasts = true;
+        
         resultsPanel.SetActive(true);
         
         if (galleryButton != null) 
@@ -832,9 +869,6 @@ public class OCRManager : MonoBehaviour
         if (resultsTextCategory != null) 
             resultsTextCategory.text = $"<color=#{ColorUtility.ToHtmlStringRGB(categoryColor)}>{category}</color>";
         
-        if (resultsTextType != null) 
-            resultsTextType.text = "Ingredient";
-        
         TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
         
         if (resultsTextScan != null)
@@ -842,9 +876,6 @@ public class OCRManager : MonoBehaviour
             resultsTextScan.text = cooldown.TotalSeconds > 0 ? $"Product: {productScanCount}/3 scans"
                                                             : $"Product Scanned: {productScanCount}/3 times";
         }
-        
-        if (resultsTextChance != null)
-            resultsTextChance.text = "100% Chance to unlock";
 
         if (warningText != null)
         {
@@ -875,7 +906,7 @@ public class OCRManager : MonoBehaviour
             Debug.LogWarning("IngredientDatabase or ModelManager is not assigned in the inspector!");
         }
 
-        ClearErrorUI();
+        UpdateButtonStates();
     }
 
     // ==================== UI EFFECTS & CLEANUP ====================
@@ -902,7 +933,16 @@ public class OCRManager : MonoBehaviour
     public void ClosePanel()
     {
         if (resultsPanel != null)
+        {
+            // Make sure panel is interactable before closing
+            CanvasGroup panelGroup = resultsPanel.GetComponent<CanvasGroup>();
+            if (panelGroup != null)
+            {
+                panelGroup.interactable = false;
+                panelGroup.blocksRaycasts = false;
+            }
             resultsPanel.SetActive(false);
+        }
         
         if (galleryButton != null) 
             galleryButton.gameObject.SetActive(true);
@@ -916,6 +956,9 @@ public class OCRManager : MonoBehaviour
         if (battleButton != null) 
             battleButton.gameObject.SetActive(false);
 
+        // Clear any error UI
+        ClearErrorUI();
+        
         UpdateButtonStates();
 
         if (currentIngredientData != null && currentIngredientData.totalDetected > 1)
@@ -1055,11 +1098,7 @@ public class OCRManager : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
         
         string[] testIngredients = {
-            "Calcium",
-            "Sugar", 
-            "fructose",
-            "ascorbic acid",
-            "corn syrup"
+            "Calcium"
         };
         
         string randomIngredient = testIngredients[UnityEngine.Random.Range(0, testIngredients.Length)];
