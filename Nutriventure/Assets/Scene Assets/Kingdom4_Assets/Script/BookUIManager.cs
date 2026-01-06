@@ -31,20 +31,20 @@ public class BookUIManager : MonoBehaviour
     public AudioClip gateOpenSound; // Audio for when gate opens
     
     // ASSIGN THESE MANUALLY IN INSPECTOR
-    public Canvas dialogueCanvas; 
-    public TextMeshProUGUI dialogueText; 
     public AudioSource audioSource; 
+    public K2_SubtitleController subtitleController; // Reference to your subtitle controller
     
-    [Header("Narration Timing")]
+    [Header("Dialogue Canvas (for subtitle display)")]
+    public GameObject dialogueCanvas; // The canvas that contains subtitle UI - like NPCGuardController
+    
+    [Header("Subtitle Timing")]
     public float narrationDisplayTime = 6f; 
-    public float fadeInTime = 0.5f;
-    public float fadeOutTime = 0.5f;
+    public float typingSpeed = 0.05f; // Speed for subtitle typing
     
     private BookInteractable mainBook;
     private GameObject currentBookUIEntry;
     private bool gateNarrationPlayed = false;
     private Coroutine currentNarration;
-    private CanvasGroup dialogueCanvasGroup;
     
     [System.Serializable]
     public class IngredientDefinition
@@ -72,21 +72,6 @@ public class BookUIManager : MonoBehaviour
             closeBookButton.onClick.AddListener(CloseBook);
         }
         
-        // Set up dialogue canvas (MANUAL ASSIGNMENT REQUIRED)
-        if (dialogueCanvas != null)
-        {
-            dialogueCanvasGroup = dialogueCanvas.GetComponent<CanvasGroup>();
-            if (dialogueCanvasGroup == null)
-            {
-                dialogueCanvasGroup = dialogueCanvas.gameObject.AddComponent<CanvasGroup>();
-            }
-            dialogueCanvasGroup.alpha = 0f;
-        }
-        else
-        {
-            Debug.LogWarning("BookUIManager: No dialogue canvas assigned! Assign in Inspector.");
-        }
-        
         // Set up audio source
         if (audioSource == null)
         {
@@ -96,9 +81,34 @@ public class BookUIManager : MonoBehaviour
                 audioSource = gameObject.AddComponent<AudioSource>();
             }
         }
+        
+        // Initialize dialogue canvas
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(false);
+            Debug.Log("BookUIManager: Dialogue canvas initialized (set inactive)");
+        }
+        else
+        {
+            Debug.LogWarning("BookUIManager: No dialogue canvas assigned! Subtitle display will fail.");
+        }
+        
+        // Check for subtitle controller
+        if (subtitleController == null)
+        {
+            Debug.LogWarning("BookUIManager: No subtitle controller assigned! Assign K2_SubtitleController in Inspector.");
+        }
+        else
+        {
+            // Make sure subtitle controller is initially disabled if it's on the dialogue canvas
+            if (subtitleController.gameObject == dialogueCanvas)
+            {
+                subtitleController.enabled = false;
+            }
+        }
     }
     
-     public void SetMainBook(BookInteractable book)
+    public void SetMainBook(BookInteractable book)
     {
         mainBook = book;
         Debug.Log($"BookUIManager: Book set: {book.bookName}");
@@ -219,108 +229,100 @@ public class BookUIManager : MonoBehaviour
     }
     
     private void ShowNarrationMessage()
-{
-    string message = "Congratulations on finding all 9 allergies! The gate to the wagon is now open. Proceed with it to heal the kingdom of Allerthria.";
-    
-    // Use CanvasCoordinator if available
-    if (CanvasCoordinator.Instance != null)
     {
-        CanvasCoordinator.Instance.ShowBookNarration(message, gateOpenSound);
-    }
-    else
-    {
-        // Fallback to original method
-        Debug.Log("CanvasCoordinator not found, using fallback narration");
+        string message = "Congratulations on finding all 9 allergies! The gate to the wagon is now open. Proceed with it to heal the kingdom of Allerthria.";
         
-        // Stop any existing narration
         if (currentNarration != null)
         {
             StopCoroutine(currentNarration);
         }
         
-        // Start new narration
-        currentNarration = StartCoroutine(ShowDialogueCoroutine(message, gateOpenSound));
+        // Start new narration using subtitle controller
+        currentNarration = StartCoroutine(ShowSubtitleNarration(message, gateOpenSound));
+        
+        Debug.Log("🎉 BookUIManager: NARRATION TRIGGERED!");
     }
     
-    Debug.Log("🎉 BookUIManager: NARRATION TRIGGERED!");
-}
-    
-    private IEnumerator ShowDialogueCoroutine(string message, AudioClip soundClip = null)
+    private IEnumerator ShowSubtitleNarration(string message, AudioClip soundClip = null)
     {
-        // If no canvas or text, skip
-        if (dialogueCanvas == null || dialogueText == null)
+        // Check if we have required components
+        if (subtitleController == null)
         {
-            Debug.LogError("BookUIManager: Canvas or Text is null! Cannot show narration.");
+            Debug.LogError("BookUIManager: Subtitle controller is null! Cannot show narration.");
             currentNarration = null;
             yield break;
         }
         
-        // Make sure canvas is active
-        if (!dialogueCanvas.gameObject.activeSelf)
+        if (dialogueCanvas == null)
         {
-            dialogueCanvas.gameObject.SetActive(true);
+            Debug.LogError("BookUIManager: Dialogue canvas is null! Cannot show subtitle UI.");
+            currentNarration = null;
+            yield break;
         }
         
-        // Make sure CanvasGroup exists
-        if (dialogueCanvasGroup == null)
+        // ACTIVATE THE DIALOGUE CANVAS FIRST
+        if (!dialogueCanvas.activeInHierarchy)
         {
-            dialogueCanvasGroup = dialogueCanvas.GetComponent<CanvasGroup>();
-            if (dialogueCanvasGroup == null)
-            {
-                dialogueCanvasGroup = dialogueCanvas.gameObject.AddComponent<CanvasGroup>();
-            }
-        }
-        
-        // Set the text
-        dialogueText.text = message;
-        
-        // Fade in
-        float timer = 0f;
-        while (timer < fadeInTime)
-        {
-            if (dialogueCanvasGroup != null)
-            {
-                dialogueCanvasGroup.alpha = Mathf.Lerp(0f, 1f, timer / fadeInTime);
-            }
-            timer += Time.deltaTime;
+            dialogueCanvas.SetActive(true);
+            Debug.Log("BookUIManager: Activated dialogue canvas for narration");
+            
+            // Wait for the canvas to be fully activated
             yield return null;
         }
         
-        if (dialogueCanvasGroup != null)
+        // Ensure the subtitle controller script is enabled
+        if (!subtitleController.enabled)
         {
-            dialogueCanvasGroup.alpha = 1f;
+            subtitleController.enabled = true;
+            Debug.Log("BookUIManager: Enabled subtitle controller script");
         }
+        
+        // Check if subtitleTextUI is properly set up
+        if (subtitleController.subtitleTextUI == null)
+        {
+            Debug.LogError("BookUIManager: Subtitle Text UI is null! Check K2_SubtitleController setup.");
+            currentNarration = null;
+            yield break;
+        }
+        
+        // Ensure the Text UI is active
+        if (!subtitleController.subtitleTextUI.gameObject.activeInHierarchy)
+        {
+            subtitleController.subtitleTextUI.gameObject.SetActive(true);
+            Debug.Log("BookUIManager: Activated subtitle text UI");
+        }
+        
+        // Now show the subtitle
+        Debug.Log($"BookUIManager: Showing subtitle: {message}");
+        subtitleController.ShowSubtitle(message, typingSpeed);
         
         // Play audio if provided
         if (soundClip != null && audioSource != null)
         {
+            Debug.Log($"BookUIManager: Playing audio clip: {soundClip.name}");
             audioSource.PlayOneShot(soundClip);
-            yield return new WaitForSeconds(Mathf.Max(soundClip.length, narrationDisplayTime));
+            float clipDuration = soundClip.length;
+            float waitTime = Mathf.Max(clipDuration, narrationDisplayTime);
+            Debug.Log($"BookUIManager: Waiting for {waitTime} seconds");
+            yield return new WaitForSeconds(waitTime);
         }
         else
         {
+            Debug.Log($"BookUIManager: No audio, waiting {narrationDisplayTime} seconds");
             yield return new WaitForSeconds(narrationDisplayTime);
         }
         
-        // Fade out
-        timer = 0f;
-        while (timer < fadeOutTime)
-        {
-            if (dialogueCanvasGroup != null)
-            {
-                dialogueCanvasGroup.alpha = Mathf.Lerp(1f, 0f, timer / fadeOutTime);
-            }
-            timer += Time.deltaTime;
-            yield return null;
-        }
+        // Clear subtitle
+        subtitleController.ClearSubtitle();
+        Debug.Log("BookUIManager: Cleared subtitle");
         
-        if (dialogueCanvasGroup != null)
+        // Deactivate the dialogue canvas after narration is complete
+        // (This matches what NPCGuardController does)
+        if (dialogueCanvas.activeInHierarchy)
         {
-            dialogueCanvasGroup.alpha = 0f;
+            dialogueCanvas.SetActive(false);
+            Debug.Log("BookUIManager: Deactivated dialogue canvas after narration");
         }
-        
-        // Clear text
-        dialogueText.text = "";
         
         currentNarration = null;
     }
@@ -393,18 +395,32 @@ public class BookUIManager : MonoBehaviour
             StopCoroutine(currentNarration);
         }
         
-        // Hide dialogue
-        if (dialogueCanvasGroup != null)
+        // Clear subtitle and deactivate canvas if needed
+        if (subtitleController != null)
         {
-            dialogueCanvasGroup.alpha = 0f;
+            subtitleController.ClearSubtitle();
         }
         
-        if (dialogueText != null)
+        if (dialogueCanvas != null && dialogueCanvas.activeInHierarchy)
         {
-            dialogueText.text = "";
+            dialogueCanvas.SetActive(false);
         }
         
         Debug.Log("BookUIManager: Gate narration reset - will trigger again at 9 ingredients");
     }
     
+    // Clean up when this object is destroyed
+    void OnDestroy()
+    {
+        if (currentNarration != null)
+        {
+            StopCoroutine(currentNarration);
+        }
+        
+        // Ensure dialogue canvas is deactivated
+        if (dialogueCanvas != null && dialogueCanvas.activeInHierarchy)
+        {
+            dialogueCanvas.SetActive(false);
+        }
+    }
 }

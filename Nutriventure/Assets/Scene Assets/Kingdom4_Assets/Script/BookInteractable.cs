@@ -127,7 +127,6 @@ public class BookInteractable : Interactable
         
         if (bookManager != null)
         {
-            bookManager.ResetGateNarration();
             bookManager.UpdateBookUI();
         }
     }

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
 using TMPro;
-using Cinemachine; // Added for camera control
+using Cinemachine;
 
 public class NPCGuardController : MonoBehaviour
 {
@@ -23,11 +23,60 @@ public class NPCGuardController : MonoBehaviour
     [SerializeField] private GameObject npcArrowIndicator;
     [SerializeField] private GameObject dialogueCanvas;
     [SerializeField] private bool showDialogueDuringCutscene = true;
-    [SerializeField] private TMP_Text subtitleText;
-    [SerializeField] private string welcomeMessage = "Welcome to the Kingdom of Allerthria!";
-    [SerializeField] private string questMessage = "Our kingdom faces a great threat from the dark forces...";
-    [SerializeField] private string acceptQuestMessage = "Will you accept this quest to save our kingdom?";
+    
+    [Header("Subtitle Controller")]
+    [SerializeField] private K2_SubtitleController subtitleController;
+    [SerializeField] private float typingSpeed = 0.05f;
+    [SerializeField] private int maxCharsPerLine = 60;
+    
+    [Header("Allergthria-Specific Dialogue")]
+    [TextArea(3, 6)]
+    [SerializeField] private string[] welcomeMessageLines = new string[]
+    {
+        "When the Enerlings vanished, chaos consumed Allerthria.",
+        "Dangerous foods spread, allergen knowledge was lost.",
+        "Fear followed every careless meal in the kingdom."
+    };
+    
+    [TextArea(3, 6)]
+    [SerializeField] private string[] questMessageLines = new string[]
+    {
+        "Now, Traveler, the kingdom calls upon you.",
+        "Journey through Allerthria, reclaim the Big Nine.",
+        "Milk, Egg, Fish, Shellfish, Tree Nuts, Peanuts..."
+    };
+    
+    [TextArea(3, 6)]
+    [SerializeField] private string[] dangerMessageLines = new string[]
+    {
+        "Wheat, Soybeans, and Sesame complete the Nine.",
+        "Guide the wagon safely to Queen Alergica.",
+        "Beware moving stone trials with food choices."
+    };
+    
+    [TextArea(3, 6)]
+    [SerializeField] private string[] finalMessageLines = new string[]
+    {
+        "Choose safe foods, or lose a heart.",
+        "Succeed for the Scroll of Allergenia.",
+        "Restore protection to the kingdom."
+    };
+    
+    [TextArea(3, 6)]
+    [SerializeField] private string[] acceptQuestLines = new string[]
+    {
+        "The fate of Allerthria is in your hands.",
+        "Will you accept the challenge?",
+        ""
+    };
 
+    [Header("Narration Settings")]
+    [SerializeField] private AudioClip[] narrationClips;
+    [SerializeField] private float narrationDelayAfterTimeline = 1f;
+    [SerializeField] private bool playNarrationAudio = true;
+    [SerializeField] private float lineDisplayDuration = 3f;
+    [SerializeField] private float pauseBetweenParagraphs = 1f;
+    
     [Header("Interactive Props")]
     [SerializeField] private GameObject interactiveItem;
     private Vector3 itemOriginalPosition;
@@ -57,6 +106,7 @@ public class NPCGuardController : MonoBehaviour
     
     [Header("Audio Management")]
     [SerializeField] private GameObject audioManagerObject;
+    [SerializeField] private AudioSource narrationAudioSource;
     
     [Header("Re-Trigger Settings")]
     [SerializeField] private float reTriggerDelay = 5f;
@@ -76,6 +126,7 @@ public class NPCGuardController : MonoBehaviour
     private bool hasMadeDecision = false;
     private bool isReTriggerDelayed = false;
     private Transform playerTransform;
+    private bool isTimelinePlaying = false;
     
     // Player component references
     private ThirdPersonController playerController;
@@ -102,6 +153,9 @@ public class NPCGuardController : MonoBehaviour
     private float reTriggerTimer = 0f;
     private Coroutine reTriggerCoroutine;
     private TMP_Text arrowIndicatorText;
+    
+    // Narration tracking
+    private Coroutine currentNarrationCoroutine;
 
     void Awake()
     {
@@ -154,7 +208,9 @@ public class NPCGuardController : MonoBehaviour
         }
             
         if (dialogueCanvas != null)
+        {
             dialogueCanvas.SetActive(false);
+        }
             
         if (skipButton != null)
         {
@@ -169,6 +225,13 @@ public class NPCGuardController : MonoBehaviour
         // Ensure audio manager is active
         if (audioManagerObject != null)
             audioManagerObject.SetActive(true);
+        
+        // Setup narration audio source
+        if (narrationAudioSource == null)
+        {
+            narrationAudioSource = gameObject.AddComponent<AudioSource>();
+            narrationAudioSource.playOnAwake = false;
+        }
         
         // Find player camera
         playerVCam = FindAnyObjectByType<CinemachineVirtualCamera>();
@@ -195,6 +258,11 @@ public class NPCGuardController : MonoBehaviour
         if (reTriggerCoroutine != null)
         {
             StopCoroutine(reTriggerCoroutine);
+        }
+        
+        if (currentNarrationCoroutine != null)
+        {
+            StopCoroutine(currentNarrationCoroutine);
         }
     }
 
@@ -354,61 +422,117 @@ public class NPCGuardController : MonoBehaviour
         if (audioManagerObject != null)
             audioManagerObject.SetActive(false);
         
-        // Show dialogue
+        // Show dialogue canvas (turn it ON and keep it ON)
         if (showDialogueDuringCutscene && dialogueCanvas != null)
+        {
             dialogueCanvas.SetActive(true);
+        }
+        
+        // Clear any existing subtitles
+        if (subtitleController != null)
+        {
+            subtitleController.ClearSubtitle();
+        }
         
         // Invoke begin event
         OnCutsceneBegin?.Invoke();
         
-        // Start the NPC conversation sequence
-        StartCoroutine(NPCConversationSequence());
+        // Start the narration sequence
+        currentNarrationCoroutine = StartCoroutine(NarrationSequence());
         
-        Debug.Log("NPC conversation started");
+        Debug.Log("NPC narration sequence started");
     }
 
-    IEnumerator NPCConversationSequence()
-    {
-        // Step 1: Initial greeting
-        ShowNarration("Greetings, traveler! I am a guard of Allerthria.", 2f);
-        yield return new WaitForSeconds(2f);
-        
-        // Step 2: Context setting
-        ShowNarration("Let me show you what we're facing...", 2f);
-        yield return new WaitForSeconds(2f);
-        
-        // Step 3: Activate cutscene objects
+    IEnumerator NarrationSequence()
+    {   
+        // Activate cutscene objects if available
         if (cutsceneObjectParent != null)
             cutsceneObjectParent.SetActive(true);
         
         // Setup cutscene cameras
         SetupCutsceneCameras();
         
-        // Start timeline with narration
-        yield return StartCoroutine(PlayTimelineWithNarration());
+        // Start timeline if available
+        if (timelineDirector != null && timelineDirector.playableAsset != null)
+        {
+            yield return StartCoroutine(PlayTimelineWithNarration());
+        }
+        else
+        {
+            // Fallback: just play narration
+            yield return StartCoroutine(PlayNarrationOnly());
+        }
     }
 
-    void ShowNarration(string message, float duration)
+    IEnumerator ShowNarrationLine(string message)
     {
-        if (CanvasCoordinator.Instance != null)
+        // Format the message to fit within maxCharsPerLine
+        string formattedMessage = FormatMessageForLines(message, maxCharsPerLine);
+        
+        // Clear any existing subtitles
+        if (subtitleController != null)
         {
-            CanvasCoordinator.Instance.ShowNPCNarration(message, duration);
+            subtitleController.ClearSubtitle();
         }
-        else if (subtitleText != null)
+        
+        // Show subtitle with typing effect
+        if (subtitleController != null)
         {
-            subtitleText.text = message;
-            if (duration > 0)
+            subtitleController.ShowSubtitle(formattedMessage, typingSpeed);
+        }
+        
+        // Play narration audio if available
+        if (playNarrationAudio && narrationAudioSource != null && narrationClips != null && narrationClips.Length > 0)
+        {
+            if (!narrationAudioSource.isPlaying)
             {
-                StartCoroutine(ClearSubtitleAfterDelay(duration));
+                narrationAudioSource.PlayOneShot(narrationClips[0]);
             }
         }
+        
+        // Calculate typing duration
+        float typingDuration = formattedMessage.Length * typingSpeed;
+        
+        // Wait for typing to complete plus display time
+        yield return new WaitForSeconds(typingDuration + lineDisplayDuration);
+        
+        // Clear subtitle after display
+        if (subtitleController != null)
+        {
+            subtitleController.ClearSubtitle();
+        }
+        
+        // Small pause between lines
+        yield return new WaitForSeconds(0.5f);
     }
 
-    IEnumerator ClearSubtitleAfterDelay(float delay)
+    string FormatMessageForLines(string message, int maxCharsPerLine)
     {
-        yield return new WaitForSeconds(delay);
-        if (subtitleText != null)
-            subtitleText.text = "";
+        // Simple formatting to ensure text fits
+        if (message.Length <= maxCharsPerLine)
+            return message;
+        
+        // Try to break at natural points
+        int breakPoint = message.LastIndexOf(' ', maxCharsPerLine);
+        if (breakPoint > 0)
+        {
+            return message.Substring(0, breakPoint) + "\n" + message.Substring(breakPoint + 1);
+        }
+        
+        return message;
+    }
+
+    IEnumerator ShowNarrationParagraph(string[] lines)
+    {
+        foreach (string line in lines)
+        {
+            if (!string.IsNullOrEmpty(line.Trim()))
+            {
+                yield return StartCoroutine(ShowNarrationLine(line));
+            }
+        }
+        // Pause between paragraphs
+        yield return new WaitForSeconds(pauseBetweenParagraphs);
     }
 
     void SetupCutsceneCameras()
@@ -420,18 +544,21 @@ public class NPCGuardController : MonoBehaviour
         }
         
         // Enable all cameras in cutscene
-        Camera[] cutsceneCams = cutsceneObjectParent.GetComponentsInChildren<Camera>(true);
-        foreach (Camera cam in cutsceneCams)
+        if (cutsceneObjectParent != null)
         {
-            cam.enabled = true;
-        }
-        
-        // Set high priority for timeline cameras
-        CinemachineVirtualCamera[] timelineCams = cutsceneObjectParent.GetComponentsInChildren<CinemachineVirtualCamera>(true);
-        foreach (CinemachineVirtualCamera vcam in timelineCams)
-        {
-            vcam.enabled = true;
-            vcam.Priority = 11;
+            Camera[] cutsceneCams = cutsceneObjectParent.GetComponentsInChildren<Camera>(true);
+            foreach (Camera cam in cutsceneCams)
+            {
+                cam.enabled = true;
+            }
+            
+            // Set high priority for timeline cameras
+            CinemachineVirtualCamera[] timelineCams = cutsceneObjectParent.GetComponentsInChildren<CinemachineVirtualCamera>(true);
+            foreach (CinemachineVirtualCamera vcam in timelineCams)
+            {
+                vcam.enabled = true;
+                vcam.Priority = 11;
+            }
         }
     }
 
@@ -462,46 +589,60 @@ public class NPCGuardController : MonoBehaviour
 
     IEnumerator PlayTimelineWithNarration()
     {
-        if (timelineDirector != null)
+        isTimelinePlaying = true;
+        
+        // Start timeline
+        timelineDirector.Play();
+        
+        // Wait for establishing shot
+        yield return new WaitForSeconds(narrationDelayAfterTimeline);
+        
+        // Paragraph 1: The problem (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(welcomeMessageLines));
+        
+        // Paragraph 2: The call to action (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(questMessageLines));
+        
+        // Paragraph 3: The dangers (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(dangerMessageLines));
+        
+        // Paragraph 4: The goal (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(finalMessageLines));
+        
+        // Wait for timeline to finish
+        while (timelineDirector.state == PlayState.Playing)
         {
-            // Start timeline
-            timelineDirector.Play();
-            
-            // Wait for establishing shot
-            yield return new WaitForSeconds(1f);
-            
-            // Welcome message during cinematic
-            ShowNarration(welcomeMessage, 3f);
-            yield return new WaitForSeconds(3f);
-            
-            // Quest message
-            ShowNarration(questMessage, 4f);
-            yield return new WaitForSeconds(4f);
-            
-            // Calculate when to show decision (last 5 seconds of timeline)
-            float timelineLength = (float)timelineDirector.duration;
-            float timeUntilDecision = timelineLength - 5f;
-            
-            // Wait until decision time
-            while (timelineDirector.time < timeUntilDecision)
-            {
-                yield return null;
-            }
-            
-            // Final call to action
-            ShowNarration(acceptQuestMessage, 2f);
-            yield return new WaitForSeconds(2f);
-            
-            // Pause timeline and show decision
-            ShowQuestDecision();
+            yield return null;
         }
-        else
-        {
-            // Fallback if no timeline
-            ShowNarration(acceptQuestMessage, 2f);
-            yield return new WaitForSeconds(2f);
-            ShowQuestDecision();
-        }
+        
+        isTimelinePlaying = false;
+        
+        // Final call to action (2 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(acceptQuestLines));
+        
+        // Show decision
+        ShowQuestDecision();
+    }
+
+    IEnumerator PlayNarrationOnly()
+    {
+        // Paragraph 1: The problem (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(welcomeMessageLines));
+        
+        // Paragraph 2: The call to action (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(questMessageLines));
+        
+        // Paragraph 3: The dangers (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(dangerMessageLines));
+        
+        // Paragraph 4: The goal (3 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(finalMessageLines));
+        
+        // Final call to action (2 lines)
+        yield return StartCoroutine(ShowNarrationParagraph(acceptQuestLines));
+        
+        // Show decision
+        ShowQuestDecision();
     }
 
     void ShowQuestDecision()
@@ -517,9 +658,11 @@ public class NPCGuardController : MonoBehaviour
             timelineDirector.Pause();
         }
         
-        // Clear subtitles
-        if (subtitleText != null)
-            subtitleText.text = "";
+        // Clear subtitles before showing decision
+        if (subtitleController != null)
+        {
+            subtitleController.ClearSubtitle();
+        }
     }
 
     void HideQuestDecision()
@@ -537,14 +680,14 @@ public class NPCGuardController : MonoBehaviour
             hasMadeDecision = true;
             HideQuestDecision();
             
-            // Resume timeline briefly for completion
+            // Resume timeline briefly for completion if it was playing
             if (timelineDirector != null && timelineDirector.state == PlayState.Paused)
             {
                 timelineDirector.Resume();
             }
             
             // Show acceptance message
-            ShowNarration("Thank you for accepting our quest! The gate is now open.", 2f);
+            StartCoroutine(ShowAcceptanceMessage());
             
             // Remove gate
             if (removeGateAfterAccept && kingdomGate != null)
@@ -565,11 +708,23 @@ public class NPCGuardController : MonoBehaviour
             // Trigger event
             OnQuestAccepted?.Invoke();
             
-            // Complete after short delay
-            StartCoroutine(CompleteCutsceneAfterDelay(2f, false));
-            
             Debug.Log("Quest accepted");
         }
+    }
+
+    IEnumerator ShowAcceptanceMessage()
+    {
+        string[] acceptanceLines = new string[]
+        {
+            "Thank you for accepting our quest!",
+            "The gate is now open.",
+            ""
+        };
+        
+        yield return StartCoroutine(ShowNarrationParagraph(acceptanceLines));
+        
+        // Complete after short delay
+        StartCoroutine(CompleteCutsceneAfterDelay(1f, false));
     }
 
     public void DeclineQuest()
@@ -579,31 +734,43 @@ public class NPCGuardController : MonoBehaviour
             hasMadeDecision = true;
             HideQuestDecision();
             
-            // Resume timeline briefly
+            // Resume timeline briefly if it was playing
             if (timelineDirector != null && timelineDirector.state == PlayState.Paused)
             {
                 timelineDirector.Resume();
             }
             
             // Show decline message
-            ShowNarration("Perhaps you need more time to consider...", 2f);
-            
-            // Trigger event
-            OnQuestDeclined?.Invoke();
-            
-            // Start re-trigger delay
-            if (reTriggerCoroutine != null)
-                StopCoroutine(reTriggerCoroutine);
-            reTriggerCoroutine = StartCoroutine(ReTriggerDelayCoroutine());
-            
-            // Complete after short delay
-            StartCoroutine(CompleteCutsceneAfterDelay(2f, false));
-            
-            // Reset for re-trigger
-            hasMadeDecision = false;
+            StartCoroutine(ShowDeclineMessage());
             
             Debug.Log("Quest declined");
         }
+    }
+
+    IEnumerator ShowDeclineMessage()
+    {
+        string[] declineLines = new string[]
+        {
+            "Perhaps you need more time to consider...",
+            "",
+            ""
+        };
+        
+        yield return StartCoroutine(ShowNarrationParagraph(declineLines));
+        
+        // Trigger event
+        OnQuestDeclined?.Invoke();
+        
+        // Start re-trigger delay
+        if (reTriggerCoroutine != null)
+            StopCoroutine(reTriggerCoroutine);
+        reTriggerCoroutine = StartCoroutine(ReTriggerDelayCoroutine());
+        
+        // Reset for re-trigger
+        hasMadeDecision = false;
+        
+        // Complete after short delay
+        StartCoroutine(CompleteCutsceneAfterDelay(1f, false));
     }
 
     IEnumerator ReTriggerDelayCoroutine()
@@ -720,7 +887,23 @@ public class NPCGuardController : MonoBehaviour
     {
         // If timeline finishes naturally (not paused for decision), complete cutscene
         if (!isQuestDecisionActive)
-            CompleteCutscene(false);
+        {
+            isTimelinePlaying = false;
+            // Show decision after timeline finishes
+            StartCoroutine(ShowDecisionAfterTimeline());
+        }
+    }
+
+    IEnumerator ShowDecisionAfterTimeline()
+    {
+        // Small delay before showing decision
+        yield return new WaitForSeconds(1f);
+        
+        if (isCutsceneActive && !isQuestDecisionActive && !hasMadeDecision)
+        {
+            yield return StartCoroutine(ShowNarrationParagraph(acceptQuestLines));
+            ShowQuestDecision();
+        }
     }
 
     void ShowSkipButton()
@@ -760,6 +943,24 @@ public class NPCGuardController : MonoBehaviour
             
             if (isQuestDecisionActive)
                 HideQuestDecision();
+            
+            // Stop any ongoing narration
+            if (currentNarrationCoroutine != null)
+            {
+                StopCoroutine(currentNarrationCoroutine);
+            }
+            
+            // Stop narration audio
+            if (narrationAudioSource != null && narrationAudioSource.isPlaying)
+            {
+                narrationAudioSource.Stop();
+            }
+            
+            // Clear subtitle
+            if (subtitleController != null)
+            {
+                subtitleController.ClearSubtitle();
+            }
                 
             CompleteCutscene(true);
             OnCutsceneSkipped?.Invoke();
@@ -772,16 +973,21 @@ public class NPCGuardController : MonoBehaviour
         isCutsceneActive = false;
         skipAvailable = false;
         skipTimer = 0f;
+        isTimelinePlaying = false;
         
         // Hide UI elements
         if (skipButton != null)
             skipButton.gameObject.SetActive(false);
         
+        // Hide dialogue canvas when cutscene is done
         if (dialogueCanvas != null)
             dialogueCanvas.SetActive(false);
-            
-        if (subtitleText != null)
-            subtitleText.text = "";
+        
+        // Clear subtitle
+        if (subtitleController != null)
+        {
+            subtitleController.ClearSubtitle();
+        }
         
         // Deactivate cutscene objects
         if (cutsceneObjectParent != null)
@@ -816,6 +1022,12 @@ public class NPCGuardController : MonoBehaviour
             npcArrowIndicator.SetActive(false);
             if (arrowIndicatorText != null)
                 arrowIndicatorText.gameObject.SetActive(false);
+        }
+        
+        // Stop any narration audio
+        if (narrationAudioSource != null && narrationAudioSource.isPlaying)
+        {
+            narrationAudioSource.Stop();
         }
         
         // Invoke events
@@ -882,11 +1094,17 @@ public class NPCGuardController : MonoBehaviour
         isCutsceneActive = false;
         hasMadeDecision = false;
         isReTriggerDelayed = false;
+        isTimelinePlaying = false;
         
         if (reTriggerCoroutine != null)
         {
             StopCoroutine(reTriggerCoroutine);
             reTriggerCoroutine = null;
+        }
+        
+        if (currentNarrationCoroutine != null)
+        {
+            StopCoroutine(currentNarrationCoroutine);
         }
         
         if (npcArrowIndicator != null)
@@ -904,9 +1122,9 @@ public class NPCGuardController : MonoBehaviour
         
         if (decisionCanvas != null)
             decisionCanvas.SetActive(false);
-            
-        if (subtitleText != null)
-            subtitleText.text = "";
+        
+        if (subtitleController != null)
+            subtitleController.ClearSubtitle();
         
         if (skipButton != null)
             skipButton.gameObject.SetActive(false);
