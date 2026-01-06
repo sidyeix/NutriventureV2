@@ -17,6 +17,7 @@ TagManager:
   - Allergen
   - NutriKey
   - Button
+  - Pushable
   layers:
   - Default
   - TransparentFX

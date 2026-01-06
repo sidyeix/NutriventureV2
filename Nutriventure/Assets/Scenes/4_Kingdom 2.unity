@@ -28511,7 +28511,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 1124365077}
-  m_PathPosition: 1.99371
+  m_PathPosition: 1.994349
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -39208,7 +39208,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 975690512}
-  m_PathPosition: 0.001104899
+  m_PathPosition: 0.00009236021
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -44499,7 +44499,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 971426185}
-  m_PathPosition: 1.987591
+  m_PathPosition: 2
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -58138,7 +58138,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 430064053}
-  m_PathPosition: 0.999997
+  m_PathPosition: 1
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -74429,6 +74429,7 @@ MonoBehaviour:
   jump: 0
   sprint: 0
   crawl: 0
+  push: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -74503,7 +74504,12 @@ MonoBehaviour:
   AllowJumpWhileCrawling: 1
   AutoStandAfterCrawlJump: 1
   AutoStandDelay: 0.5
+  PushSpeed: 1.5
+  PushRange: 1.5
+  PushForce: 5
+  PushAngleThreshold: 45
   _isCrawling: 0
+  _isPushing: 0
 --- !u!4 &1809557556
 Transform:
   m_ObjectHideFlags: 0

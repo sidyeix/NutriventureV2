@@ -94287,7 +94287,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &606669562
 Transform:
   m_ObjectHideFlags: 0
@@ -165614,6 +165614,7 @@ MonoBehaviour:
   jump: 0
   sprint: 0
   crawl: 0
+  push: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -165688,7 +165689,12 @@ MonoBehaviour:
   AllowJumpWhileCrawling: 1
   AutoStandAfterCrawlJump: 1
   AutoStandDelay: 0.5
+  PushSpeed: 1.5
+  PushRange: 1.5
+  PushForce: 5
+  PushAngleThreshold: 45
   _isCrawling: 0
+  _isPushing: 0
 --- !u!143 &1104011031
 CharacterController:
   m_ObjectHideFlags: 0
@@ -172890,7 +172896,7 @@ RectTransform:
   m_Father: {fileID: 1704147616}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -203877,7 +203883,7 @@ RectTransform:
   m_Father: {fileID: 70314650}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -269924,6 +269930,7 @@ MonoBehaviour:
   jump: 0
   sprint: 0
   crawl: 0
+  push: 0
   analogMovement: 0
   cursorLocked: 0
   cursorInputForLook: 0
@@ -269998,7 +270005,12 @@ MonoBehaviour:
   AllowJumpWhileCrawling: 1
   AutoStandAfterCrawlJump: 1
   AutoStandDelay: 0.5
+  PushSpeed: 1.5
+  PushRange: 1.5
+  PushForce: 5
+  PushAngleThreshold: 45
   _isCrawling: 0
+  _isPushing: 0
 --- !u!143 &1826493992
 CharacterController:
   m_ObjectHideFlags: 0
