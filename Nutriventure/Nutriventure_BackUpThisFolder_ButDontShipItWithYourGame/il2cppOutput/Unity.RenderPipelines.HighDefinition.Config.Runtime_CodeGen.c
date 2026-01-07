@@ -24,12 +24,12 @@ static Il2CppMethodPointer s_methodPointers[6] =
 };
 static const int32_t s_InvokerIndices[6] = 
 {
-	28612,
-	16860,
-	16860,
-	28560,
-	16860,
-	28560,
+	29180,
+	17188,
+	17188,
+	29127,
+	17188,
+	29127,
 };
 IL2CPP_EXTERN_C const Il2CppCodeGenModule g_Unity_RenderPipelines_HighDefinition_Config_Runtime_CodeGenModule;
 const Il2CppCodeGenModule g_Unity_RenderPipelines_HighDefinition_Config_Runtime_CodeGenModule = 
