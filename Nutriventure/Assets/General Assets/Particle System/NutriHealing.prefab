@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6563114561247709728}
   - component: {fileID: 3377627762462100681}
   - component: {fileID: 615704550510459709}
+  - component: {fileID: 9206480778633317851}
   m_Layer: 0
   m_Name: NutriHealing
   m_TagString: Untagged
@@ -4927,6 +4928,28 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!64 &9206480778633317851
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337812718767351473}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &1782474503818486660
 GameObject:
   m_ObjectHideFlags: 0

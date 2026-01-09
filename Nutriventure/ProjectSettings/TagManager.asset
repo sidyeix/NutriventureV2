@@ -22,6 +22,8 @@ TagManager:
   - Inverted
   - Interactable
   - NPC
+  - K3_OxidantScroll
+  - K3_MicrobeScroll
   layers:
   - Default
   - TransparentFX
