@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1997395514975719868}
   - component: {fileID: 3303549463876374694}
   - component: {fileID: 5551831949176128439}
+  - component: {fileID: 6594581642157339256}
   m_Layer: 0
   m_Name: BOX COLLIDER
   m_TagString: Untagged
@@ -73,9 +74,34 @@ MonoBehaviour:
   attackParticlePrefab: {fileID: 6823302871133167919, guid: 3138a83bedbd6ad4481ba0b061da2eb6, type: 3}
   particleDuration: 0.5
   particleOffset: {x: 0, y: 0, z: 0}
-  attackSound: {fileID: 8300000, guid: 3b7d4efabe66f4c4cb2d454f655ba13c, type: 3}
+  attackSound: {fileID: 8300000, guid: 71e291ff22d42174cb11f364810ef09f, type: 3}
   soundVolume: 1
   showDebugMessages: 1
+--- !u!114 &6594581642157339256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100907136724984489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbf2200ed25343e4fae10e7327e56549, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::K3_MonsterProximityAudio
+  proximitySound: {fileID: 8300000, guid: 85c19291918bd9c4fbe32569db900668, type: 3}
+  detectionRange: 12
+  minSoundInterval: 3
+  maxSoundInterval: 8
+  soundVolume: 1
+  distanceBasedVolume: 1
+  minVolumeAtRange: 0.2
+  audioSource: {fileID: 0}
+  loopSound: 0
+  spatialBlend: 1
+  showDebugMessages: 1
+  drawGizmos: 1
+  gizmoColor: {r: 0.5, g: 0, b: 0.5, a: 0.3}
 --- !u!1 &185385660370923533
 GameObject:
   m_ObjectHideFlags: 0
