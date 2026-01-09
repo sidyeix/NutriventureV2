@@ -6,13 +6,58 @@ public class AnimationSound : MonoBehaviour
     public AudioClip star;
     public AudioClip swoosh;
 
+    void Start()
+    {
+        // Automatically assign AudioSource if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+
+            // If still null, add AudioSource component
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                Debug.Log("Added AudioSource component to " + gameObject.name);
+            }
+
+            Debug.Log("AudioSource assigned: " + audioSource.name);
+        }
+    }
+
     public void PlayStarSFX()
     {
-        audioSource.PlayOneShot(star);
+        if (audioSource == null)
+        {
+            Debug.LogError("AudioSource is not assigned for PlayStarSFX!");
+            return;
+        }
+
+        if (star != null)
+        {
+            audioSource.PlayOneShot(star);
+        }
+        else
+        {
+            Debug.LogWarning("Star AudioClip is not assigned!");
+        }
     }
 
     public void PlayWhoosh()
     {
-        audioSource.PlayOneShot(swoosh);
+        if (audioSource == null)
+        {
+            Debug.LogError("AudioSource is not assigned for PlayWhoosh!");
+            return;
+        }
+
+        if (swoosh != null)
+        {
+            audioSource.PlayOneShot(swoosh);
+        }
+        else
+        {
+            Debug.LogWarning("Swoosh AudioClip is not assigned!");
+        }
     }
 }
