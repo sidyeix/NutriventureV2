@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 100907136724984489}
   serializedVersion: 2
   m_LocalRotation: {x: 0.83038425, y: -0.0037535091, z: 0.0018857684, w: 0.55717546}
-  m_LocalPosition: {x: 0.00485, y: -0.0008, z: -0.00851}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.00205, y: 0.00409, z: -0.01427}
+  m_LocalScale: {x: 1, y: 1, z: 0.6573507}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8508363749314641899}
@@ -53,7 +53,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.002, y: 0.002, z: 0.02}
+  m_Size: {x: 0.007, y: -0.01, z: 0.02}
   m_Center: {x: 0, y: 0.01, z: -0.002}
 --- !u!114 &5551831949176128439
 MonoBehaviour:
@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbf2200ed25343e4fae10e7327e56549, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::K3_MonsterProximityAudio
-  proximitySound: {fileID: 8300000, guid: 85c19291918bd9c4fbe32569db900668, type: 3}
+  proximitySound: {fileID: 8300000, guid: 06847b62349a79343a560a22373247b5, type: 3}
   detectionRange: 12
   minSoundInterval: 3
   maxSoundInterval: 8
