@@ -22,8 +22,9 @@ TagManager:
   - Inverted
   - Interactable
   - NPC
-  - K3_OxidantScroll
-  - K3_MicrobeScroll
+  - FxTemporaire
+  - K3_MicrobeGEM
+  - K3_OxidantGEM
   layers:
   - Default
   - TransparentFX
