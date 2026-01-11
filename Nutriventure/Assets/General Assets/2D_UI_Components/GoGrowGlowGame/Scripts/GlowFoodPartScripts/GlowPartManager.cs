@@ -21,6 +21,14 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private TMP_Text transferButtonText;
     [SerializeField] private Image warningPanelImage;
 
+    [Header("Energy Slider Indicator")]
+    [SerializeField] private GameObject energySliderIndicator;
+    [SerializeField] private Slider energySlider;
+    [SerializeField] private TMP_Text energySliderText;
+    [SerializeField] private float energyPanelSlideDuration = 0.5f;
+    [SerializeField] private float energyPanelSlideDistance = 300f;
+    [SerializeField] private CanvasGroup energySliderCanvasGroup; // For fade effect
+
     [Header("Character Animation")]
     [SerializeField] private Animator characterAnimator;
     [SerializeField] private string transferEnergyParam = "transferEnergy";
@@ -52,6 +60,7 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private AudioClip transferStopSound;
     [SerializeField] private AudioClip towerLitSound;
     [SerializeField] private AudioClip warningSound;
+    [SerializeField] private AudioClip fillingUpSound; // NEW: Filling up sound
 
     [Header("Energy Transfer Settings")]
     [SerializeField] private float transferRate = 5f;
@@ -68,8 +77,9 @@ public class GlowPartManager : MonoBehaviour
 
     [Header("Camera Settings")]
     [SerializeField] private CinemachineVirtualCamera towerFocusVirtualCamera;
-    [SerializeField] private float playerRotationSpeed = 8f; // Increased speed for faster rotation
-    [SerializeField] private float lookAtAngleThreshold = 10f; // Angle threshold for "looking at" tower
+    [SerializeField] private float playerRotationSpeed = 8f;
+    [SerializeField] private float lookAtAngleThreshold = 10f;
+
 
     // State
     private bool isGlowPartActive = false;
@@ -79,21 +89,28 @@ public class GlowPartManager : MonoBehaviour
     private int litTowersCount = 0;
     private Vector3 trackerPanelHiddenPosition;
     private Vector3 trackerPanelVisiblePosition;
+    private bool isWarningActive = false;
+
+    // Energy Slider Indicator positions
+    private Vector3 energyPanelHiddenPosition;
+    private Vector3 energyPanelVisiblePosition;
+
     private Coroutine panelSlideCoroutine;
+    private Coroutine energyPanelAnimationCoroutine; // For combined slide+fade
     private Coroutine transferCoroutine;
     private Coroutine warningBlinkCoroutine;
     private AudioSource audioSource;
     private AudioSource transferAudioSource;
+    private AudioSource fillingAudioSource; // NEW: Separate AudioSource for filling sound
     private Coroutine warningCheckCoroutine;
     private ButtonPressHandler buttonPressHandler;
     private List<TowerProximityDetector> proximityDetectors = new List<TowerProximityDetector>();
     private Transform playerTransform;
     private bool wasEnergyPaused = false;
 
-    // NEW: Rotation state
+    // Rotation state
     private bool isRotatingToTower = false;
     private bool isLookingAtTower = false;
-    private Coroutine rotationCheckCoroutine;
 
     // Lightsaber
     private Vector3 lightsaberOriginalEndPos;
@@ -119,6 +136,11 @@ public class GlowPartManager : MonoBehaviour
         transferAudioSource = gameObject.AddComponent<AudioSource>();
         transferAudioSource.loop = true;
         transferAudioSource.playOnAwake = false;
+
+        // NEW: Create separate AudioSource for filling sound
+        fillingAudioSource = gameObject.AddComponent<AudioSource>();
+        fillingAudioSource.loop = true;
+        fillingAudioSource.playOnAwake = false;
     }
 
     private void Start()
@@ -146,6 +168,7 @@ public class GlowPartManager : MonoBehaviour
         InitializeLightsaber();
         InitializeObjectStates();
         InitializeTracker();
+        InitializeEnergySliderIndicator();
         DisableGlowPart();
         UpdateTrackerText();
 
@@ -159,15 +182,196 @@ public class GlowPartManager : MonoBehaviour
 
         CheckPlayerEnergy();
 
-        // NEW: Handle rotation and check if looking at tower
         if (isRotatingToTower && currentActiveTower != null && playerTransform != null)
         {
             RotatePlayerToTower();
             CheckIfLookingAtTower();
         }
+
+        if (isTransferring && currentActiveTower != null)
+        {
+            UpdateEnergySliderIndicator();
+        }
     }
 
-    // NEW: Check if player is looking at the tower
+    // NEW: Start loop audio
+    private void StartLoopAudio()
+    {
+        // Start transfer loop sound
+        if (transferLoopSound != null && transferAudioSource != null)
+        {
+            transferAudioSource.clip = transferLoopSound;
+            transferAudioSource.loop = true;
+            transferAudioSource.Play();
+        }
+
+        // Start filling up sound alongside
+        if (fillingUpSound != null && fillingAudioSource != null)
+        {
+            fillingAudioSource.clip = fillingUpSound;
+            fillingAudioSource.loop = true;
+            fillingAudioSource.Play();
+        }
+    }
+
+    // NEW: Stop loop audio and play stop sound
+    private void StopLoopAudio()
+    {
+        // Stop transfer loop sound
+        if (transferAudioSource != null && transferAudioSource.isPlaying)
+        {
+            transferAudioSource.Stop();
+        }
+
+        // Stop filling up sound
+        if (fillingAudioSource != null && fillingAudioSource.isPlaying)
+        {
+            fillingAudioSource.Stop();
+        }
+
+        // Play transfer stop sound
+        if (transferStopSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(transferStopSound);
+        }
+    }
+
+    private void InitializeEnergySliderIndicator()
+    {
+        if (energySliderIndicator != null)
+        {
+            if (energySliderCanvasGroup == null)
+            {
+                energySliderCanvasGroup = energySliderIndicator.GetComponent<CanvasGroup>();
+                if (energySliderCanvasGroup == null)
+                {
+                    energySliderCanvasGroup = energySliderIndicator.AddComponent<CanvasGroup>();
+                }
+            }
+
+            RectTransform rectTransform = energySliderIndicator.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                energyPanelVisiblePosition = rectTransform.anchoredPosition;
+                energyPanelHiddenPosition = energyPanelVisiblePosition - new Vector3(energyPanelSlideDistance, 0, 0);
+
+                rectTransform.anchoredPosition = energyPanelHiddenPosition;
+                energySliderCanvasGroup.alpha = 0f;
+                energySliderCanvasGroup.interactable = false;
+                energySliderCanvasGroup.blocksRaycasts = false;
+                energySliderIndicator.SetActive(false);
+            }
+
+            if (energySlider != null)
+            {
+                energySlider.minValue = 0f;
+                energySlider.maxValue = 1f;
+                energySlider.value = 0f;
+            }
+
+            if (energySliderText != null)
+            {
+                energySliderText.text = "0%";
+            }
+        }
+    }
+
+    private void UpdateEnergySliderIndicator()
+    {
+        if (energySlider == null || energySliderText == null || currentActiveTower == null) return;
+
+        float towerEnergy = currentActiveTower.GetCurrentEnergy();
+        float maxEnergy = currentActiveTower.GetMaxEnergy();
+        float energyPercentage = (towerEnergy / maxEnergy) * 100f;
+
+        energySlider.value = towerEnergy / maxEnergy;
+        energySliderText.text = $"{energyPercentage:F0}%";
+
+        if (energyPercentage <= 33f)
+            energySliderText.color = Color.red;
+        else if (energyPercentage <= 66f)
+            energySliderText.color = Color.yellow;
+        else
+            energySliderText.color = Color.green;
+    }
+
+    private void ShowEnergySliderIndicator()
+    {
+        if (energySliderIndicator == null || energySliderCanvasGroup == null || currentActiveTower == null) return;
+
+        energySliderIndicator.SetActive(true);
+
+        if (energyPanelAnimationCoroutine != null)
+            StopCoroutine(energyPanelAnimationCoroutine);
+
+        energyPanelAnimationCoroutine = StartCoroutine(AnimateEnergyPanel(true));
+    }
+
+    private void HideEnergySliderIndicator()
+    {
+        if (energySliderIndicator == null || energySliderCanvasGroup == null) return;
+
+        if (energyPanelAnimationCoroutine != null)
+            StopCoroutine(energyPanelAnimationCoroutine);
+
+        energyPanelAnimationCoroutine = StartCoroutine(AnimateEnergyPanel(false));
+        StartCoroutine(DisableEnergyPanelAfterAnimation());
+    }
+
+    private IEnumerator AnimateEnergyPanel(bool showIn)
+    {
+        if (energySliderIndicator == null || energySliderCanvasGroup == null) yield break;
+
+        RectTransform rectTransform = energySliderIndicator.GetComponent<RectTransform>();
+        if (rectTransform == null) yield break;
+
+        Vector3 startPos = rectTransform.anchoredPosition;
+        Vector3 targetPos = showIn ? energyPanelVisiblePosition : energyPanelHiddenPosition;
+        float startAlpha = energySliderCanvasGroup.alpha;
+        float targetAlpha = showIn ? 1f : 0f;
+        float elapsedTime = 0f;
+
+        if (showIn)
+        {
+            energySliderCanvasGroup.interactable = true;
+            energySliderCanvasGroup.blocksRaycasts = true;
+        }
+        else
+        {
+            energySliderCanvasGroup.interactable = false;
+            energySliderCanvasGroup.blocksRaycasts = false;
+        }
+
+        if (showIn && panelSlideInSound != null)
+            PlaySound(panelSlideInSound);
+        else if (!showIn && panelSlideOutSound != null)
+            PlaySound(panelSlideOutSound);
+
+        while (elapsedTime < energyPanelSlideDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / energyPanelSlideDuration);
+
+            float easedT = Mathf.SmoothStep(0f, 1f, t);
+
+            rectTransform.anchoredPosition = Vector3.Lerp(startPos, targetPos, easedT);
+            energySliderCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, easedT);
+
+            yield return null;
+        }
+
+        rectTransform.anchoredPosition = targetPos;
+        energySliderCanvasGroup.alpha = targetAlpha;
+        energyPanelAnimationCoroutine = null;
+    }
+
+    private IEnumerator DisableEnergyPanelAfterAnimation()
+    {
+        yield return new WaitForSeconds(energyPanelSlideDuration + 0.1f);
+        if (energySliderIndicator != null)
+            energySliderIndicator.SetActive(false);
+    }
+
     private void CheckIfLookingAtTower()
     {
         if (currentActiveTower == null || playerTransform == null) return;
@@ -179,7 +383,6 @@ public class GlowPartManager : MonoBehaviour
         Vector3 playerForward = playerTransform.forward;
         playerForward.y = 0;
 
-        // Calculate angle between player forward and direction to tower
         float angle = Vector3.Angle(playerForward, directionToTower.normalized);
 
         if (angle <= lookAtAngleThreshold && !isLookingAtTower)
@@ -189,12 +392,9 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // NEW: Called when player is looking at the tower
     private void OnPlayerLookingAtTower()
     {
         Debug.Log("Player is now looking at the tower!");
-
-        // Start lightsaber and other effects
         StartLightsaberAndEffects();
     }
 
@@ -327,7 +527,7 @@ public class GlowPartManager : MonoBehaviour
         {
             Debug.Log($"Player exited range of current tower: {tower.gameObject.name}");
 
-            if (isTransferring)
+            if (isTransferring || isRotatingToTower)
                 StopTransfer();
 
             if (transferButton != null)
@@ -427,6 +627,7 @@ public class GlowPartManager : MonoBehaviour
         if (warningPanel != null) warningPanel.SetActive(false);
         if (transferButton != null) transferButton.gameObject.SetActive(false);
         if (transferProgressSlider != null) transferProgressSlider.gameObject.SetActive(false);
+        if (energySliderIndicator != null) energySliderIndicator.SetActive(false);
 
         isGlowPartActive = false;
     }
@@ -449,7 +650,6 @@ public class GlowPartManager : MonoBehaviour
         // Continuously called while button is held
     }
 
-    // NEW: Start rotation phase
     private void StartRotationToTower()
     {
         if (!isGlowPartActive || currentActiveTower == null || currentActiveTower.IsFullyLit())
@@ -460,27 +660,28 @@ public class GlowPartManager : MonoBehaviour
 
         Debug.Log($"Starting rotation to tower: {currentActiveTower.gameObject.name}");
 
-        // Reset states
         isRotatingToTower = true;
         isLookingAtTower = false;
 
-        // 1. Character animation
         SetCharacterTransferAnimation(true);
-
-        // 2. Manage objects (enable when holding / disable when holding)
         EnableObjectsWhenHolding();
         DisableObjectsWhenHolding();
-
-        // 3. Set tower focus camera priority
         SetTowerFocusCameraPriority(50);
-
-        // 4. Tower animation (start lighting animation)
         currentActiveTower.SetLightingAnimation(true);
+
+        ShowEnergySliderIndicator();
+
+        if (energySlider != null && energySliderText != null && currentActiveTower != null)
+        {
+            float towerEnergy = currentActiveTower.GetCurrentEnergy();
+            float maxEnergy = currentActiveTower.GetMaxEnergy();
+            energySlider.value = towerEnergy / maxEnergy;
+            energySliderText.text = $"{(towerEnergy / maxEnergy * 100f):F0}%";
+        }
 
         Debug.Log("Waiting for player to look at tower before starting lightsaber...");
     }
 
-    // NEW: Start lightsaber and effects after rotation
     private void StartLightsaberAndEffects()
     {
         if (!isRotatingToTower || isTransferring) return;
@@ -489,24 +690,19 @@ public class GlowPartManager : MonoBehaviour
 
         isTransferring = true;
 
-        // Start lightsaber
+        // Start loop audio (transfer loop + filling up sound)
+        StartLoopAudio();
+
         if (lightsaber != null && currentActiveTower != null)
         {
             StartLightsaberExtension();
         }
 
-        // Start energy transfer routine
         if (transferCoroutine != null)
             StopCoroutine(transferCoroutine);
         transferCoroutine = StartCoroutine(TransferEnergyRoutine());
 
         PlaySound(transferStartSound);
-
-        if (transferLoopSound != null && transferAudioSource != null)
-        {
-            transferAudioSource.clip = transferLoopSound;
-            transferAudioSource.Play();
-        }
     }
 
     private void StopTransfer()
@@ -515,43 +711,35 @@ public class GlowPartManager : MonoBehaviour
 
         Debug.Log("Stopping energy transfer and rotation");
 
-        // Reset all states
+        // Stop loop audio and play stop sound
+        StopLoopAudio();
+
         isRotatingToTower = false;
         isLookingAtTower = false;
         isTransferring = false;
 
-        // 1. Character animation
         SetCharacterTransferAnimation(false);
-
-        // 2. Restore object states
         DisableObjectsWhenNotHolding();
         EnableObjectsWhenNotHolding();
 
-        // 3. Stop lightsaber
         if (lightsaber != null)
         {
             StartLightsaberRetraction();
         }
 
-        // 4. Tower animation
         if (currentActiveTower != null && !currentActiveTower.IsFullyLit())
         {
             currentActiveTower.SetLightingAnimation(false);
         }
 
-        // 5. Reset tower focus camera priority
         SetTowerFocusCameraPriority(10);
+        HideEnergySliderIndicator();
 
         if (transferCoroutine != null)
         {
             StopCoroutine(transferCoroutine);
             transferCoroutine = null;
         }
-
-        if (transferAudioSource != null && transferAudioSource.isPlaying)
-            transferAudioSource.Stop();
-
-        PlaySound(transferStopSound);
     }
 
     private void SetTowerFocusCameraPriority(int priority)
@@ -727,10 +915,10 @@ public class GlowPartManager : MonoBehaviour
 
             UpdateTransferProgressUI();
 
+            // Check if tower reached maximum energy
             if (currentActiveTower.IsFullyLit())
             {
                 OnTowerFullyLit(currentActiveTower);
-                StopTransfer();
                 yield break;
             }
 
@@ -760,8 +948,11 @@ public class GlowPartManager : MonoBehaviour
         EnableObjectsWhenNotHolding();
         StartLightsaberRetraction();
         SetTowerFocusCameraPriority(10);
+        HideEnergySliderIndicator();
 
-        // Reset rotation state
+        // Stop loop audio when tower is fully lit and play stop sound
+        StopLoopAudio();
+
         isRotatingToTower = false;
         isLookingAtTower = false;
         isTransferring = false;
@@ -874,27 +1065,38 @@ public class GlowPartManager : MonoBehaviour
             warningPanel.SetActive(false);
 
         StopWarningBlink();
+        isWarningActive = false;
     }
 
     private IEnumerator WarningCheckRoutine()
     {
-        while (isGlowPartActive)
+        while (isGlowPartActive && isWarningActive)
         {
             yield return new WaitForSeconds(0.2f);
 
             if (GoGrowGlowGameManager.Instance != null)
             {
                 float playerEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
+
+                // Update warning state
                 UpdateWarningPanelState(playerEnergy);
+
+                // If energy is above threshold, stop checking
+                if (playerEnergy > warningThreshold)
+                {
+                    isWarningActive = false;
+                    break;
+                }
             }
         }
+
+        warningCheckCoroutine = null;
     }
 
-    private void UpdateWarningPanelState(float playerEnergy)
+
+    private void UpdateWarningPanelState(bool shouldShowWarning)
     {
         if (warningPanel == null) return;
-
-        bool shouldShowWarning = playerEnergy <= warningThreshold && playerEnergy > 0f;
 
         if (warningPanel.activeSelf != shouldShowWarning)
         {
@@ -911,6 +1113,55 @@ public class GlowPartManager : MonoBehaviour
             }
         }
     }
+
+    public void OnPlayerEnergyIncreased(float newEnergyAmount)
+    {
+        if (!isGlowPartActive) return;
+
+        // Check if energy is now above threshold and warning is showing
+        if (newEnergyAmount > warningThreshold && warningPanel != null && warningPanel.activeSelf)
+        {
+            UpdateWarningPanelState(false);
+        }
+    }
+
+    private void UpdateWarningPanelState(float playerEnergy)
+    {
+        if (warningPanel == null) return;
+
+        bool shouldShowWarning = playerEnergy <= warningThreshold && playerEnergy > 0f;
+
+        if (warningPanel.activeSelf != shouldShowWarning)
+        {
+            warningPanel.SetActive(shouldShowWarning);
+
+            if (shouldShowWarning)
+            {
+                isWarningActive = true;
+                StartWarningBlink();
+                PlaySound(warningSound);
+
+                // Start continuous check only when warning becomes active
+                if (warningCheckCoroutine == null)
+                {
+                    warningCheckCoroutine = StartCoroutine(WarningCheckRoutine());
+                }
+            }
+            else
+            {
+                isWarningActive = false;
+                StopWarningBlink();
+            }
+        }
+        // If warning is active and player energy is above threshold, hide it
+        else if (isWarningActive && playerEnergy > warningThreshold)
+        {
+            warningPanel.SetActive(false);
+            isWarningActive = false;
+            StopWarningBlink();
+        }
+    }
+
 
     private void StartWarningBlink()
     {
