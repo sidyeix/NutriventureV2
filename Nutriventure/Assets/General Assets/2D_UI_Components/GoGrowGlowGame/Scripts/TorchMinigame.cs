@@ -17,8 +17,6 @@ public class FoodOption
 public class TorchMinigame : MonoBehaviour
 {
     [Header("Torch Components")]
-    [SerializeField] private GameObject torchCanvas;
-    [SerializeField] private Button litButton;
     [SerializeField] private CinemachineVirtualCamera torchVirtualCamera;
     [SerializeField] private int activeCameraPriority = 30;
     [SerializeField] private int inactiveCameraPriority = 10;
@@ -26,10 +24,19 @@ public class TorchMinigame : MonoBehaviour
     [SerializeField] private GameObject wrongFlameObject;
     [SerializeField] private Transform flameFoodSpawn;
 
+    [Header("UI References - Direct Inspector References")]
+    [SerializeField] private GameObject torchCanvas;  // Drag your canvas here for each torch
+    [SerializeField] private Transform buttonPanel;   // Drag your ButtonPanel here
+    [SerializeField] private Button litButton;        // Drag your LitButton here
+    [SerializeField] private GameObject damagePanel;  // Drag your DamagePanel here
+
     [Header("Button System")]
     [SerializeField] private GameObject buttonPrefab;
-    [SerializeField] private Transform buttonPanel;
     [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>();
+
+    // Button panel positions (for animation)
+    private Vector3 buttonPanelHiddenPosition;
+    private Vector3 buttonPanelVisiblePosition;
 
     [Header("Game Settings")]
     [SerializeField] private int numberOfChoices = 3;
@@ -41,7 +48,6 @@ public class TorchMinigame : MonoBehaviour
     [SerializeField] private float energyLossOnWrongAnswer = 30f;
     [SerializeField] private float energyGainOnCorrectAnswer = 10f;
     [SerializeField] private float energyBonusOnComplete = 100f;
-    private float startingEnergy; // Store energy at start of minigame
 
     [Header("Point Settings")]
     [SerializeField] private int pointsGainOnCorrectAnswer = 10;
@@ -49,14 +55,14 @@ public class TorchMinigame : MonoBehaviour
 
     [Header("Torch Status")]
     [SerializeField] private bool isLit = false;
-    [SerializeField] private string torchID = "torch_1"; // Unique ID for each torch
+    [SerializeField] private string torchID = "torch_1";
 
     [Header("Coin Explosion")]
     [SerializeField] private GameObject coinPrefab;
     [SerializeField] private int numberOfCoins = 10;
     [SerializeField] private float coinExplosionForce = 5f;
     [SerializeField] private float coinUpwardForce = 8f;
-    [SerializeField] private float coinExplosionRadius = 2f;
+
     [Header("Coin Setup Override")]
     [SerializeField] private bool setupCoinComponents = true;
     [SerializeField] private bool coinIsTrigger = true;
@@ -97,20 +103,13 @@ public class TorchMinigame : MonoBehaviour
     [SerializeField] private AudioClip startButtonSound;
     [SerializeField] private AudioClip coinExplosionSound;
 
-    [Header("Damage Panel")]
-    [SerializeField] private GameObject damagePanel;
-    [SerializeField] private float damagePanelDuration = 1f;
-
     private List<GameObject> currentButtons = new List<GameObject>();
     private List<FoodOption> currentRoundFoods = new List<FoodOption>();
     private int goFoodIndex;
     private float currentFlameScale = 0f;
     private float scaleStep;
-    private Vector3 buttonPanelHiddenPosition;
-    private Vector3 buttonPanelVisiblePosition;
     private Coroutine scaleCoroutine;
     private Coroutine wrongFlameCoroutine;
-    private Coroutine damagePanelCoroutine;
     private Coroutine buttonFeedbackCoroutine;
     private Coroutine cameraShakeCoroutine;
 
@@ -123,34 +122,20 @@ public class TorchMinigame : MonoBehaviour
     {
         Debug.Log($"=== TORCH MINIGAME AWAKE [{torchID}] ===");
 
-        // Get audio source
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
 
-        // Get box collider
         triggerCollider = GetComponent<BoxCollider>();
         Debug.Log("BoxCollider found: " + (triggerCollider != null));
-
-        if (triggerCollider == null)
-        {
-            Debug.LogError("NO BOXCOLLIDER FOUND ON TORCH MINIGAME!");
-        }
-        else
-        {
-            Debug.Log("BoxCollider isTrigger: " + triggerCollider.isTrigger);
-            Debug.Log("BoxCollider enabled: " + triggerCollider.enabled);
-            Debug.Log("BoxCollider size: " + triggerCollider.size);
-        }
     }
 
     private void Start()
     {
         Debug.Log($"=== TORCH MINIGAME START [{torchID}] ===");
 
-        // FORCE reset state
         isInTorchMode = false;
-        isLit = false; // Reset lit status
+        isLit = false;
         Debug.Log($"isInTorchMode initialized to: {isInTorchMode}");
         Debug.Log($"isLit initialized to: {isLit}");
 
@@ -159,22 +144,8 @@ public class TorchMinigame : MonoBehaviour
         Debug.Log("GameManager found: " + (gameManager != null));
         Debug.Log("TorchManager found: " + (torchManager != null));
 
-        // Check if canvas and button are assigned
-        Debug.Log("Torch Canvas assigned: " + (torchCanvas != null));
-        Debug.Log("Lit Button assigned: " + (litButton != null));
-
-        if (torchCanvas == null)
-            Debug.LogError("TORCH CANVAS IS NULL - CHECK INSPECTOR!");
-        if (litButton == null)
-            Debug.LogError("LIT BUTTON IS NULL - CHECK INSPECTOR!");
-
-        // Initialize button panel positions
-        if (buttonPanel != null)
-        {
-            buttonPanelHiddenPosition = buttonPanel.localPosition - new Vector3(0, 300, 0);
-            buttonPanelVisiblePosition = buttonPanel.localPosition;
-            buttonPanel.localPosition = buttonPanelHiddenPosition;
-        }
+        // Initialize UI
+        InitializeUI();
 
         // Initialize flame
         if (fireObject != null)
@@ -182,25 +153,6 @@ public class TorchMinigame : MonoBehaviour
 
         if (wrongFlameObject != null)
             wrongFlameObject.SetActive(false);
-
-        if (damagePanel != null)
-            damagePanel.SetActive(false);
-
-        // Hide UI initially
-        if (torchCanvas != null)
-        {
-            torchCanvas.SetActive(false);
-            Debug.Log("Canvas hidden at start");
-        }
-
-        if (flameFoodSpawn != null)
-            flameFoodSpawn.gameObject.SetActive(false);
-
-        if (litButton != null)
-        {
-            litButton.gameObject.SetActive(false);
-            Debug.Log("Button hidden at start");
-        }
 
         // Calculate scale step
         scaleStep = 1f / requiredCorrectAnswers;
@@ -215,6 +167,64 @@ public class TorchMinigame : MonoBehaviour
         }
 
         Debug.Log($"=== TORCH MINIGAME READY [{torchID}] ===");
+    }
+
+    private void InitializeUI()
+    {
+        // Check if all UI elements are assigned
+        if (torchCanvas == null)
+            Debug.LogError($"TORCH CANVAS IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
+
+        if (buttonPanel == null)
+            Debug.LogError($"BUTTON PANEL IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
+
+        if (litButton == null)
+            Debug.LogError($"LIT BUTTON IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
+
+        if (damagePanel == null)
+            Debug.LogError($"DAMAGE PANEL IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
+
+        // Setup button panel positions
+        if (buttonPanel != null)
+        {
+            buttonPanelHiddenPosition = buttonPanel.localPosition - new Vector3(0, 300, 0);
+            buttonPanelVisiblePosition = buttonPanel.localPosition;
+            buttonPanel.localPosition = buttonPanelHiddenPosition;
+        }
+
+        // Setup lit button listener
+        if (litButton != null)
+        {
+            litButton.onClick.RemoveAllListeners();
+            litButton.onClick.AddListener(StartTorchMinigame);
+        }
+
+        // Hide all UI initially
+        HideAllUI();
+    }
+
+    private void HideAllUI()
+    {
+        if (torchCanvas != null)
+        {
+            torchCanvas.SetActive(false);
+            Debug.Log($"Canvas hidden at start for {torchID}");
+        }
+
+        if (flameFoodSpawn != null)
+            flameFoodSpawn.gameObject.SetActive(false);
+
+        if (litButton != null)
+        {
+            litButton.gameObject.SetActive(false);
+            Debug.Log($"Button hidden at start for {torchID}");
+        }
+
+        if (damagePanel != null)
+            damagePanel.SetActive(false);
+
+        if (buttonPanel != null)
+            buttonPanel.gameObject.SetActive(false);
     }
 
     private void ValidateFoodOptions()
@@ -237,12 +247,10 @@ public class TorchMinigame : MonoBehaviour
         Debug.Log("Current isInTorchMode: " + isInTorchMode);
         Debug.Log("Is torch already lit? " + isLit);
 
-        // Check if this is the player
         if (other.CompareTag("Player"))
         {
             Debug.Log("Player entered trigger!");
 
-            // Only show UI if torch is NOT lit and not in minigame mode
             if (!isLit && !isInTorchMode)
             {
                 ShowTorchUI();
@@ -264,12 +272,10 @@ public class TorchMinigame : MonoBehaviour
         Debug.Log("Collider tag: " + other.tag);
         Debug.Log("Is Player? " + other.CompareTag("Player"));
 
-        // Check if this is the player
         if (other.CompareTag("Player"))
         {
             Debug.Log("Player exited trigger!");
 
-            // Only hide UI if not in torch mode
             if (!isInTorchMode)
             {
                 HideTorchUI();
@@ -277,57 +283,46 @@ public class TorchMinigame : MonoBehaviour
         }
     }
 
-    // IMPROVED ShowTorchUI with better debugging
     public void ShowTorchUI()
     {
         Debug.Log($"=== SHOW TORCH UI [{torchID}] ===");
         Debug.Log("isInTorchMode: " + isInTorchMode);
         Debug.Log("isLit: " + isLit);
-        Debug.Log("Torch Canvas: " + (torchCanvas != null ? torchCanvas.name : "NULL"));
-        Debug.Log("Lit Button: " + (litButton != null ? litButton.name : "NULL"));
 
         if (torchCanvas == null)
         {
-            Debug.LogError("CANNOT SHOW UI - TORCH CANVAS IS NULL!");
-
-            // Try to find it
-            torchCanvas = GameObject.Find("TorchCanvas");
-            if (torchCanvas == null)
-            {
-                Debug.LogError("STILL CAN'T FIND TORCH CANVAS!");
-                return;
-            }
+            Debug.LogError($"CANNOT SHOW UI - TORCH CANVAS IS NULL FOR {torchID}!");
+            return;
         }
 
         if (litButton == null)
         {
-            Debug.LogError("CANNOT SHOW UI - LIT BUTTON IS NULL!");
+            Debug.LogError($"CANNOT SHOW UI - LIT BUTTON IS NULL FOR {torchID}!");
+            return;
+        }
 
-            // Try to find it
-            GameObject buttonObj = GameObject.Find("LitButton");
-            if (buttonObj != null)
-            {
-                litButton = buttonObj.GetComponent<Button>();
-            }
-
-            if (litButton == null)
-            {
-                Debug.LogError("STILL CAN'T FIND LIT BUTTON!");
-                return;
-            }
+        if (buttonPanel == null)
+        {
+            Debug.LogError($"CANNOT SHOW UI - BUTTON PANEL IS NULL FOR {torchID}!");
+            return;
         }
 
         // Show canvas
         torchCanvas.SetActive(true);
-        Debug.Log("Canvas set to active: " + torchCanvas.activeSelf);
-        Debug.Log("Canvas activeInHierarchy: " + torchCanvas.activeInHierarchy);
+        Debug.Log($"Canvas set to active for {torchID}: " + torchCanvas.activeSelf);
 
-        // Show button
+        // Show lit button
         litButton.gameObject.SetActive(true);
-        Debug.Log("Button set to active: " + litButton.gameObject.activeSelf);
-        Debug.Log("Button activeInHierarchy: " + litButton.gameObject.activeInHierarchy);
+        Debug.Log($"Button set to active for {torchID}: " + litButton.gameObject.activeSelf);
 
-        Debug.Log("=== UI SHOULD NOW BE VISIBLE ===");
+        // Update button text
+        TextMeshProUGUI buttonText = litButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (buttonText != null)
+        {
+            buttonText.text = $"Light Torch ({torchID})";
+        }
+
+        Debug.Log($"=== UI SHOULD NOW BE VISIBLE FOR {torchID} ===");
     }
 
     public void HideTorchUI()
@@ -337,13 +332,13 @@ public class TorchMinigame : MonoBehaviour
         if (torchCanvas != null)
         {
             torchCanvas.SetActive(false);
-            Debug.Log("Canvas hidden");
+            Debug.Log($"Canvas hidden for {torchID}");
         }
 
         if (litButton != null)
         {
             litButton.gameObject.SetActive(false);
-            Debug.Log("Button hidden");
+            Debug.Log($"Button hidden for {torchID}");
         }
     }
 
@@ -351,12 +346,8 @@ public class TorchMinigame : MonoBehaviour
     {
         Debug.Log($"StartTorchMinigame called [{torchID}]. isInTorchMode: " + isInTorchMode);
 
-        if (isInTorchMode || isLit) return; // Don't start if already lit
+        if (isInTorchMode || isLit) return;
 
-        // NO LONGER storing starting energy - we won't reset it
-        // NO LONGER pausing energy decrease
-
-        // Play sound
         if (startButtonSound != null && audioSource != null)
             audioSource.PlayOneShot(startButtonSound);
 
@@ -376,6 +367,10 @@ public class TorchMinigame : MonoBehaviour
         if (litButton != null)
             litButton.gameObject.SetActive(false);
 
+        // Ensure canvas is active
+        if (torchCanvas != null)
+            torchCanvas.SetActive(true);
+
         // Start minigame
         InitializeButtons();
         StartCoroutine(SlideButtonPanel(true));
@@ -388,6 +383,10 @@ public class TorchMinigame : MonoBehaviour
             Destroy(button);
         currentButtons.Clear();
         currentRoundFoods.Clear();
+
+        // Ensure button panel is active
+        if (buttonPanel != null)
+            buttonPanel.gameObject.SetActive(true);
 
         // Randomly choose which button is correct
         goFoodIndex = Random.Range(0, numberOfChoices);
@@ -477,37 +476,23 @@ public class TorchMinigame : MonoBehaviour
 
     private IEnumerator HandleCorrectAnswerSequence(int foodIndex)
     {
-        // Play food animation
         yield return StartCoroutine(PlayFoodAnimation(foodIndex, false));
-
-        // Wait then scale flame
         yield return new WaitForSeconds(delayBeforeFlameScale);
         HandleCorrectAnswerResult();
-
-        // Re-enable buttons
         ReEnableButtons();
     }
 
     private IEnumerator HandleWrongAnswerSequence(int foodIndex)
     {
-        // Button feedback
         GameObject selectedButton = currentButtons[foodIndex];
         yield return StartCoroutine(ButtonFeedbackSequence(selectedButton));
-
-        // Camera shake
         yield return StartCoroutine(ShakeCamera());
 
-        // Play sound
         if (shrivelingSound != null && audioSource != null)
             audioSource.PlayOneShot(shrivelingSound);
 
-        // Show wrong flame and food animation together
         yield return StartCoroutine(PlayFoodAnimationAndWrongFlame(foodIndex));
-
-        // Handle result - THIS IS NOW A COROUTINE TOO
         yield return StartCoroutine(HandleWrongAnswerResult());
-
-        // Re-enable buttons
         ReEnableButtons();
     }
 
@@ -516,11 +501,9 @@ public class TorchMinigame : MonoBehaviour
         if (flameFoodSpawn == null || currentRoundFoods.Count <= foodIndex)
             yield break;
 
-        // Show wrong flame
         if (wrongFlameObject != null)
             wrongFlameObject.SetActive(true);
 
-        // Spawn food
         FoodOption selectedFood = currentRoundFoods[foodIndex];
         if (selectedFood.foodPrefab != null)
         {
@@ -528,15 +511,12 @@ public class TorchMinigame : MonoBehaviour
             spawnedFood.transform.localPosition = Vector3.zero;
             flameFoodSpawn.gameObject.SetActive(true);
 
-            // Play animation
             Animator foodAnimator = spawnedFood.GetComponent<Animator>();
             if (foodAnimator != null)
                 foodAnimator.SetTrigger("Play");
 
-            // Wait
             yield return new WaitForSeconds(wrongFlameDuration);
 
-            // Clean up
             flameFoodSpawn.gameObject.SetActive(false);
             Destroy(spawnedFood);
         }
@@ -545,7 +525,6 @@ public class TorchMinigame : MonoBehaviour
             yield return new WaitForSeconds(wrongFlameDuration);
         }
 
-        // Hide wrong flame
         if (wrongFlameObject != null)
             wrongFlameObject.SetActive(false);
     }
@@ -586,7 +565,6 @@ public class TorchMinigame : MonoBehaviour
 
     private IEnumerator ShakeCamera()
     {
-        // Find main camera
         CinemachineVirtualCamera mainCamera = FindObjectOfType<CinemachineVirtualCamera>();
         if (mainCamera == null) yield break;
 
@@ -607,7 +585,6 @@ public class TorchMinigame : MonoBehaviour
             yield return null;
         }
 
-        // Reset
         noise.m_AmplitudeGain = originalAmplitude;
         noise.m_FrequencyGain = originalFrequency;
     }
@@ -642,21 +619,17 @@ public class TorchMinigame : MonoBehaviour
 
     private void HandleCorrectAnswerResult()
     {
-        // Play sound
         if (correctSound != null && audioSource != null)
             audioSource.PlayOneShot(correctSound);
 
-        // Scale flame up
         float targetScale = currentFlameScale + scaleStep;
         StartCoroutine(ScaleFlame(targetScale, true));
 
-        // Add energy
         if (gameManager != null)
         {
             gameManager.AddEnergy(energyGainOnCorrectAnswer);
         }
 
-        // Add points
         if (gameManager != null && pointsGainOnCorrectAnswer > 0)
         {
             gameManager.AddPoints(pointsGainOnCorrectAnswer);
@@ -677,44 +650,34 @@ public class TorchMinigame : MonoBehaviour
 
     private IEnumerator HandleWrongAnswerResult()
     {
-        // Play sound
         if (wrongSound != null && audioSource != null)
             audioSource.PlayOneShot(wrongSound);
 
-        // Scale flame down
         float targetScale = Mathf.Max(0f, currentFlameScale - scaleStep);
         yield return StartCoroutine(ScaleFlame(targetScale, false));
 
-        // Deduct energy and points
         if (gameManager != null)
         {
-            // Deduct points immediately
             if (pointsLossOnWrongAnswer > 0)
             {
                 gameManager.AddPoints(-pointsLossOnWrongAnswer);
                 Debug.Log($"Deducted {pointsLossOnWrongAnswer} points for wrong answer");
             }
 
-            // Deduct energy
             gameManager.RemoveEnergy(energyLossOnWrongAnswer);
 
-            // Check if energy reached 0
             float currentEnergy = gameManager.GetCurrentEnergy();
             if (currentEnergy <= 0)
             {
                 Debug.Log("Energy depleted to 0! Ending minigame with life loss");
 
-                // Show damage panel immediately
                 if (damagePanel != null)
                 {
                     damagePanel.SetActive(true);
                     Debug.Log("Damage panel activated");
                 }
 
-                // Wait so player sees the damage panel
                 yield return new WaitForSeconds(0.5f);
-
-                // End minigame
                 EndTorchMinigame(false);
                 yield break;
             }
@@ -722,29 +685,11 @@ public class TorchMinigame : MonoBehaviour
 
         if (targetScale <= 0f && currentFlameScale <= 0f)
         {
-            // If flame goes out completely, end the minigame
             EndTorchMinigame(false);
         }
         else
         {
             yield return StartCoroutine(ResetButtonsForNextRound());
-        }
-    }
-
-    private IEnumerator HideDamagePanelAfterSeconds(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-        if (damagePanel != null)
-            damagePanel.SetActive(false);
-    }
-
-    private IEnumerator ShowDamagePanel()
-    {
-        if (damagePanel != null)
-        {
-            damagePanel.SetActive(true);
-            yield return new WaitForSeconds(damagePanelDuration);
-            damagePanel.SetActive(false);
         }
     }
 
@@ -761,7 +706,6 @@ public class TorchMinigame : MonoBehaviour
     {
         if (fireObject == null) yield break;
 
-        // Play sound
         if (isScalingUp && flameScaleUpSound != null && audioSource != null)
             audioSource.PlayOneShot(flameScaleUpSound);
         else if (!isScalingUp && flameScaleDownSound != null && audioSource != null)
@@ -807,23 +751,15 @@ public class TorchMinigame : MonoBehaviour
         yield return StartCoroutine(SlideButtonPanel(false));
         yield return new WaitForSeconds(0.5f);
 
-        // Give energy bonus on completion
         if (gameManager != null)
         {
             gameManager.AddEnergy(energyBonusOnComplete);
-            // NO LONGER resuming energy decrease (it was never paused)
-
-            // Trigger boost on completion
-            gameManager.TriggerSpeedBoost(10f); // 10 second speed boost
-
-            // Spawn coin explosion
+            gameManager.TriggerSpeedBoost(10f);
             SpawnCoinExplosion();
         }
 
-        // Mark torch as lit
         isLit = true;
 
-        // Notify torch manager
         if (torchManager != null)
         {
             torchManager.TorchLit(this);
@@ -844,38 +780,50 @@ public class TorchMinigame : MonoBehaviour
         }
 
         rb.mass = coinMass;
-        rb.linearDamping = coinDrag;
+        rb.linearDamping = coinDrag; // Use drag instead of linearDamping for older Unity
         rb.angularDamping = coinAngularDrag;
         rb.useGravity = true;
         rb.isKinematic = false;
+
+        // CRITICAL: Enable continuous collision detection
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         // Setup BoxCollider
         BoxCollider collider = coin.GetComponent<BoxCollider>();
         if (collider != null)
         {
-            collider.isTrigger = coinIsTrigger;
-            // Don't change size since it's already set in your prefab
+            // MUST be false to collide with terrain
+            collider.isTrigger = false;
+
+            // Add physics material for bounce
+            PhysicsMaterial physicMaterial = new PhysicsMaterial("CoinPhysMat");
+            physicMaterial.bounciness = 0.5f;
+            physicMaterial.dynamicFriction = 0.1f;
+            physicMaterial.staticFriction = 0.1f;
+            collider.material = physicMaterial;
         }
         else
         {
-            // Add if missing
             collider = coin.AddComponent<BoxCollider>();
-            collider.isTrigger = coinIsTrigger;
-            collider.size = Vector3.one * 0.5f; // Default coin size
+            collider.isTrigger = false; // MUST be false
+            collider.size = Vector3.one * 0.5f;
+
+            // Add physics material for bounce
+            PhysicsMaterial physicMaterial = new PhysicsMaterial("CoinPhysMat");
+            physicMaterial.bounciness = 0.5f;
+            physicMaterial.dynamicFriction = 0.1f;
+            physicMaterial.staticFriction = 0.1f;
+            collider.material = physicMaterial;
         }
 
-        // Set layer
-        if (!string.IsNullOrEmpty(coinLayer))
-        {
-            int layer = LayerMask.NameToLayer(coinLayer);
-            if (layer != -1)
-                coin.layer = layer;
-        }
+        // Set layer to Default (layer 0) for proper collisions
+        coin.layer = 0; // Default layer
 
-        // Add tag
-        coin.tag = "Coin";
+        // Optional: Add a tag
+        if (!coin.CompareTag("Coin"))
+            coin.tag = "Coin";
 
-        Debug.Log("Coin components setup complete: " + coin.name);
+        Debug.Log($"Coin setup: isTrigger={collider.isTrigger}, layer={LayerMask.LayerToName(coin.layer)}");
     }
 
     private void SpawnCoinExplosion()
@@ -886,7 +834,6 @@ public class TorchMinigame : MonoBehaviour
             return;
         }
 
-        // Play coin explosion sound
         if (coinExplosionSound != null && audioSource != null)
             audioSource.PlayOneShot(coinExplosionSound);
 
@@ -895,11 +842,8 @@ public class TorchMinigame : MonoBehaviour
         for (int i = 0; i < numberOfCoins; i++)
         {
             GameObject coin = Instantiate(coinPrefab, spawnPosition, Quaternion.identity);
-
-            // Setup coin components (override)
             SetupCoinComponents(coin);
 
-            // Add Rigidbody if missing (should be added by SetupCoinComponents, but just in case)
             Rigidbody rb = coin.GetComponent<Rigidbody>();
             if (rb == null)
             {
@@ -907,21 +851,16 @@ public class TorchMinigame : MonoBehaviour
                 rb.useGravity = true;
             }
 
-            // Random direction for explosion
             Vector3 randomDirection = new Vector3(
                 Random.Range(-1f, 1f),
-                Random.Range(0.5f, 1f), // More upward
+                Random.Range(0.5f, 1f),
                 Random.Range(-1f, 1f)
             ).normalized;
 
-            // Apply explosion force
             float force = Random.Range(coinExplosionForce * 0.7f, coinExplosionForce * 1.3f);
             rb.AddForce(randomDirection * force, ForceMode.Impulse);
-
-            // Add some upward force
             rb.AddForce(Vector3.up * coinUpwardForce, ForceMode.Impulse);
 
-            // Add random rotation
             Vector3 randomTorque = new Vector3(
                 Random.Range(-100f, 100f),
                 Random.Range(-100f, 100f),
@@ -929,7 +868,6 @@ public class TorchMinigame : MonoBehaviour
             );
             rb.AddTorque(randomTorque);
 
-            // Auto-destroy after some time (optional)
             Destroy(coin, 10f);
         }
 
@@ -961,47 +899,41 @@ public class TorchMinigame : MonoBehaviour
         }
 
         buttonPanel.localPosition = targetPos;
+
+        if (!slideIn)
+        {
+            buttonPanel.gameObject.SetActive(false);
+        }
     }
 
     private void EndTorchMinigame(bool success)
     {
         isInTorchMode = false;
 
-        // Stop coroutines
         if (wrongFlameCoroutine != null) StopCoroutine(wrongFlameCoroutine);
-        if (damagePanelCoroutine != null) StopCoroutine(damagePanelCoroutine);
         if (buttonFeedbackCoroutine != null) StopCoroutine(buttonFeedbackCoroutine);
         if (cameraShakeCoroutine != null) StopCoroutine(cameraShakeCoroutine);
 
-        // Reset objects
         if (wrongFlameObject != null) wrongFlameObject.SetActive(false);
         if (damagePanel != null) damagePanel.SetActive(false);
 
-        // Show UI elements
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
-        // Reset camera
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = inactiveCameraPriority;
 
-        // Hide canvas
-        if (torchCanvas != null)
-            torchCanvas.SetActive(false);
-
-        if (flameFoodSpawn != null)
-            flameFoodSpawn.gameObject.SetActive(false);
-
-        // Clear buttons
         foreach (GameObject button in currentButtons)
             Destroy(button);
         currentButtons.Clear();
         currentRoundFoods.Clear();
 
         if (buttonPanel != null)
+        {
             buttonPanel.localPosition = buttonPanelHiddenPosition;
+            buttonPanel.gameObject.SetActive(false);
+        }
 
-        // Check if player is still in trigger
         if (triggerCollider != null)
         {
             Collider[] colliders = Physics.OverlapBox(transform.position, triggerCollider.size / 2, transform.rotation);
@@ -1010,11 +942,16 @@ public class TorchMinigame : MonoBehaviour
             foreach (Collider col in colliders)
                 if (col.CompareTag("Player")) playerInTrigger = true;
 
-            // Only show UI if torch is NOT lit and player is still there
-            if (playerInTrigger && !isLit && litButton != null)
+            if (playerInTrigger && !isLit)
             {
-                litButton.gameObject.SetActive(true);
-                torchCanvas.SetActive(true);
+                ShowTorchUI();
+            }
+            else
+            {
+                if (torchCanvas != null)
+                {
+                    torchCanvas.SetActive(false);
+                }
             }
         }
 
@@ -1029,13 +966,20 @@ public class TorchMinigame : MonoBehaviour
     public bool IsLit() => isLit;
     public string GetTorchID() => torchID;
 
-    // For saving/loading
     public void SetLit(bool lit)
     {
         isLit = lit;
         if (fireObject != null && isLit)
         {
-            fireObject.transform.localScale = Vector3.one; // Show flame if lit
+            fireObject.transform.localScale = Vector3.one;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (isInTorchMode)
+        {
+            EndTorchMinigame(false);
         }
     }
 }

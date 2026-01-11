@@ -98,6 +98,16 @@ namespace StarterAssets
         [Tooltip("Delay before auto-stand after crawl jump (seconds)")]
         public float AutoStandDelay = 0.5f;
 
+        [Header("Pushing")]
+        [Tooltip("Push speed of the character in m/s")]
+        public float PushSpeed = 1.5f;
+        [Tooltip("How close the player needs to be to push an object")]
+        public float PushRange = 1.5f;
+        [Tooltip("How much force is applied to pushable objects")]
+        public float PushForce = 5f;
+        [Tooltip("Angle threshold for pushing (degrees)")]
+        public float PushAngleThreshold = 45f;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -124,6 +134,7 @@ namespace StarterAssets
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
         private int _animIDCrawl;
+        private int _animIDIsPushing;
 
         // crawling variables
         [SerializeField] private bool _isCrawling = false;
@@ -132,6 +143,12 @@ namespace StarterAssets
         private Vector3 _originalCenter;
         private float _targetHeight;
         private float _currentCameraYOffset = 0f;
+
+        // pushing variables
+        [SerializeField] private bool _isPushing = false;
+        private GameObject _currentPushableObject;
+        private Vector3 _pushDirection;
+        private bool _wasPushingLastFrame = false;
 
         // Simple toggle tracking
         private bool _previousCrawlInput = false;
@@ -209,6 +226,7 @@ namespace StarterAssets
 
             HandleAutoStandTimer();
             HandleCrawlingInput();
+            HandlePushing();
             JumpAndGravity();
             GroundedCheck();
             Move();
@@ -228,6 +246,7 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDCrawl = Animator.StringToHash("Crawl");
+            _animIDIsPushing = Animator.StringToHash("isPushing");
         }
 
         private void HandleAutoStandTimer()
@@ -261,6 +280,153 @@ namespace StarterAssets
 
             // Always update the crawling state
             UpdateCrawlingState();
+        }
+
+        private void HandlePushing()
+        {
+            // If push button is pressed
+            if (_input.push)
+            {
+                if (!_isPushing)
+                {
+                    // Try to find a pushable object in front
+                    CheckForPushableObject();
+                }
+
+                if (_isPushing && _currentPushableObject != null)
+                {
+                    // Check if player is still facing the object
+                    Vector3 toObject = _currentPushableObject.transform.position - transform.position;
+                    toObject.y = 0;
+                    float angle = Vector3.Angle(transform.forward, toObject.normalized);
+
+                    if (angle > PushAngleThreshold || Vector3.Distance(transform.position, _currentPushableObject.transform.position) > PushRange + 1f)
+                    {
+                        // Player is no longer facing the object or too far away
+                        StopPushing();
+                        return;
+                    }
+
+                    // Update push direction based on player's forward direction
+                    _pushDirection = transform.forward;
+
+                    // Apply force to the pushable object if player is moving forward
+                    if (_input.move.y > 0.1f)
+                    {
+                        Rigidbody rb = _currentPushableObject.GetComponent<Rigidbody>();
+                        if (rb != null && rb.isKinematic)
+                        {
+                            // Force disable kinematic if we're supposed to be pushing
+                            rb.isKinematic = false;
+                            Debug.Log("Disabled kinematic on pushable object: " + _currentPushableObject.name);
+                        }
+
+                        if (rb != null && !rb.isKinematic)
+                        {
+                            Vector3 force = _pushDirection * PushForce * Time.deltaTime * 60f * Mathf.Clamp01(_input.move.y);
+                            rb.AddForce(force, ForceMode.Force);
+                        }
+                    }
+                    else
+                    {
+                        // Player is not moving forward - stop the object's movement
+                        Rigidbody rb = _currentPushableObject.GetComponent<Rigidbody>();
+                        if (rb != null)
+                        {
+                            rb.linearVelocity = Vector3.zero;
+                            rb.angularVelocity = Vector3.zero;
+                        }
+                    }
+                }
+            }
+            else if (_isPushing)
+            {
+                // Stop pushing when button is released
+                StopPushing();
+            }
+        }
+
+        private void CheckForPushableObject()
+        {
+            if (_isCrawling) return; // Can't push while crawling
+
+            RaycastHit hit;
+            Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+
+            // Use a spherecast for better detection
+            if (Physics.SphereCast(rayStart, 0.3f, transform.forward, out hit, PushRange))
+            {
+                // Check if the object has the "Pushable" tag AND has a Rigidbody
+                if (hit.collider.CompareTag("Pushable"))
+                {
+                    Rigidbody rb = hit.collider.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        _currentPushableObject = hit.collider.gameObject;
+                        StartPushing();
+                        return;
+                    }
+                }
+            }
+
+            // Also check for objects in front using OverlapSphere
+            Collider[] colliders = Physics.OverlapSphere(rayStart + transform.forward * (PushRange * 0.5f), 0.5f);
+            foreach (Collider col in colliders)
+            {
+                if (col.CompareTag("Pushable"))
+                {
+                    Rigidbody rb = col.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        _currentPushableObject = col.gameObject;
+                        StartPushing();
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void StartPushing()
+        {
+            _isPushing = true;
+
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDIsPushing, true);
+            }
+
+            // Disable other movement states
+            _input.sprint = false;
+            SetCrawling(false);
+
+            Debug.Log("Started pushing: " + (_currentPushableObject != null ? _currentPushableObject.name : "null"));
+        }
+
+        public void StopPushing()
+        {
+            _isPushing = false;
+
+            if (_hasAnimator)
+            {
+                _animator.SetBool(_animIDIsPushing, false);
+            }
+
+            // Re-enable kinematic on the pushable object
+            if (_currentPushableObject != null)
+            {
+                Rigidbody rb = _currentPushableObject.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = true; // Stop physics interactions
+                    rb.linearVelocity = Vector3.zero; // Stop any remaining movement
+                    rb.angularVelocity = Vector3.zero;
+                    Debug.Log("Re-enabled kinematic on pushable object: " + _currentPushableObject.name);
+                }
+            }
+
+            _currentPushableObject = null;
+
+            Debug.Log("Stopped pushing");
         }
 
         private void UpdateCrawlingState()
@@ -350,10 +516,30 @@ namespace StarterAssets
 
         private void Move()
         {
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = 0f;
+            // If pushing, limit movement speed and direction
+            float targetSpeed;
 
-            if (_isCrawling)
+            if (_isPushing)
+            {
+                // When pushing, use push speed
+                targetSpeed = PushSpeed;
+
+                // Check conditions for pushing movement:
+                bool canMoveWhilePushing = _input.push &&
+                                           _currentPushableObject != null &&
+                                           _input.move.y > 0.1f;
+
+                if (!canMoveWhilePushing)
+                {
+                    targetSpeed = 0f;
+                }
+                else
+                {
+                    // Scale speed based on forward input
+                    targetSpeed *= Mathf.Clamp01(_input.move.y);
+                }
+            }
+            else if (_isCrawling)
             {
                 targetSpeed = CrawlSpeed;
             }
@@ -445,8 +631,10 @@ namespace StarterAssets
                     _verticalVelocity = -2f;
                 }
 
-                // Jump - check if allowed while crawling
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f && (!_isCrawling || AllowJumpWhileCrawling))
+                // Jump - check if allowed while crawling or pushing
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f &&
+                    (!_isCrawling || AllowJumpWhileCrawling) &&
+                    !_isPushing) // Can't jump while pushing
                 {
                     // Calculate jump height based on crawl state
                     float currentJumpHeight = _isCrawling ? CrawlJumpHeight : JumpHeight;
@@ -458,6 +646,12 @@ namespace StarterAssets
                     if (_isCrawling && AutoStandAfterCrawlJump)
                     {
                         _autoStandTimer = AutoStandDelay;
+                    }
+
+                    // Stop pushing if jumping
+                    if (_isPushing)
+                    {
+                        StopPushing();
                     }
 
                     // update animator if using character
@@ -522,6 +716,13 @@ namespace StarterAssets
             Gizmos.DrawSphere(
                 new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
                 GroundedRadius);
+
+            // Draw push range gizmo
+            Gizmos.color = Color.blue;
+            Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+            Gizmos.DrawLine(rayStart, rayStart + transform.forward * PushRange);
+            Gizmos.DrawWireSphere(rayStart, 0.3f);
+            Gizmos.DrawWireSphere(rayStart + transform.forward * (PushRange * 0.5f), 0.5f);
         }
 
         private void OnFootstep(AnimationEvent animationEvent)
@@ -586,6 +787,40 @@ namespace StarterAssets
                     _input.sprint = false;
                 }
             }
+        }
+
+        // Public method to check if player can push
+        public bool CanPush()
+        {
+            if (_isCrawling) return false;
+
+            // Check if there's a pushable object in front using tag
+            RaycastHit hit;
+            Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+
+            if (Physics.SphereCast(rayStart, 0.3f, transform.forward, out hit, PushRange))
+            {
+                return hit.collider.CompareTag("Pushable");
+            }
+
+            return false;
+        }
+
+        // Public method to get push state
+        public bool IsPushing()
+        {
+            return _isPushing;
+        }
+
+        // Public method to get current pushable object
+        public GameObject GetCurrentPushableObject()
+        {
+            return _currentPushableObject;
+        }
+
+        public bool GetPushInput()
+        {
+            return _input.push;
         }
     }
 }
