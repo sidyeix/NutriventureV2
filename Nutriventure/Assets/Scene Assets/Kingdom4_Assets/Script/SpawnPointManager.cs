@@ -216,25 +216,22 @@ public class SpawnPointManager : MonoBehaviour
     }
     
     void SpawnRowItems(RowDefinition row)
+{
+    for (int col = 0; col < 3; col++)
     {
-        // Spawn for each column
-        for (int col = 0; col < 3; col++)
-        {
-            Transform point = row.GetPoint(col);
-            if (point == null) continue;
-            
-            if (row.IsColumnSafe(col))
-            {
-                SpawnSafeItem(point);
-            }
-            else
-            {
-                SpawnHarmfulItem(point);
-            }
-        }
+        Transform point = row.GetPoint(col);
+        if (point == null) continue;
+
+        if (row.IsColumnSafe(col))
+            SpawnSafeItem(point, row, col);
+        else
+            SpawnHarmfulItem(point, row, col);
     }
+}
+
     
-    void SpawnSafeItem(Transform point)
+    void SpawnSafeItem(Transform point, RowDefinition row, int columnIndex)
+
     {
         // Decide whether to spawn coins OR powerup at this point
         float randomValue = Random.value;
@@ -246,7 +243,7 @@ public class SpawnPointManager : MonoBehaviour
             if (powerupData != null && powerupData.prefab != null)
             {
                 Vector3 powerupPos = point.position + Vector3.up * 0.5f;
-                SpawnItemAtPosition(powerupPos, powerupData, point);
+                SpawnItemAtPosition(powerupPos, powerupData, point, row, columnIndex);
                 
                 if (showDebugInfo)
                 {
@@ -268,18 +265,18 @@ public class SpawnPointManager : MonoBehaviour
                         offset = new Vector3(Mathf.Cos(angle) * 0.3f, 0, Mathf.Sin(angle) * 0.3f);
                     }
                     
-                    SpawnItemAtPosition(point.position + offset, coinData, point);
+                    SpawnItemAtPosition(point.position + offset, coinData, point, row, columnIndex);
                 }
             }
         }
     }
     
-    void SpawnHarmfulItem(Transform point)
+    void SpawnHarmfulItem(Transform point, RowDefinition row, int columnIndex)
     {
         SpawnableItemData allergenData = GetRandomAllergen();
         if (allergenData != null && allergenData.prefab != null)
         {
-            SpawnItemAtPosition(point.position, allergenData, point);
+            SpawnItemAtPosition(point.position, allergenData, point, row, columnIndex);
         }
     }
     
@@ -308,7 +305,13 @@ public class SpawnPointManager : MonoBehaviour
         return allergens[Random.Range(0, allergens.Count)];
     }
     
-    void SpawnItemAtPosition(Vector3 position, SpawnableItemData itemData, Transform parent)
+    void SpawnItemAtPosition(
+    Vector3 position,
+    SpawnableItemData itemData,
+    Transform parent,
+    RowDefinition row,
+    int columnIndex
+)
     {
         if (itemData == null || itemData.prefab == null) return;
         
@@ -316,9 +319,41 @@ public class SpawnPointManager : MonoBehaviour
         spawnedItem.transform.SetParent(parent);
         spawnedItem.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
         
-        ItemCollectible collectible = spawnedItem.GetComponent<ItemCollectible>();
-        if (collectible == null) collectible = spawnedItem.AddComponent<ItemCollectible>();
-        collectible.Initialize(itemData);
+FloatingAnimation floatAnim = spawnedItem.GetComponent<FloatingAnimation>();
+if (floatAnim == null)
+    floatAnim = spawnedItem.AddComponent<FloatingAnimation>();
+
+// FORCE animation values (overwrite prefab data)
+floatAnim.speed = 2f;
+floatAnim.amplitude = 0.25f;
+
+// ROW PATTERN
+bool isOddRow = row.rowNumber % 2 == 1;
+
+// STRICT COLUMN PATTERN
+if (isOddRow)
+{
+    floatAnim.phaseOffset = columnIndex switch
+    {
+        0 => Mathf.PI / 2f,    // L ↑↓
+        1 => -Mathf.PI / 2f,   // M ↓↑
+        2 => Mathf.PI / 2f,    // R ↑↓
+        _ => 0f
+    };
+}
+else
+{
+    floatAnim.phaseOffset = columnIndex switch
+    {
+        0 => -Mathf.PI / 2f,   // L ↓↑
+        1 => Mathf.PI / 2f,    // M ↑↓
+        2 => -Mathf.PI / 2f,   // R ↓↑
+        _ => 0f
+    };
+}
+
+
+
         
         // Store reference
         if (!spawnedItems.ContainsKey(parent))

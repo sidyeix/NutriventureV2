@@ -7,6 +7,9 @@ using Cinemachine;
 
 public class NPCGuardController : MonoBehaviour
 {
+    [Header("Quest Mark")]
+[SerializeField] private GameObject questMark;
+
     [Header("Interaction Delay")]
 [SerializeField] private float interactionDelay = 5f;
 
@@ -256,30 +259,40 @@ void RestorePlayer()
     void AcceptQuest()
 {
     questAccepted = true;
+
     acceptButton.gameObject.SetActive(false);
     declineButton.gameObject.SetActive(false);
 
+    // Hide gate
     kingdomGate.SetActive(false);
 
+    // Hide quest mark
+    questMark.SetActive(false);
 
     EndCutscene();
-    dollyCamera.Priority = 0;    // releases control
-playerCamera.Priority = 10;  // gameplay camera
-dollyCamera.gameObject.SetActive(false);
+
+    dollyCamera.Priority = 0;
+    playerCamera.Priority = 10;
+    dollyCamera.gameObject.SetActive(false);
 }
+
 
 
     void DeclineQuest()
 {
+    // Quest mark stays visible
+    questMark.SetActive(true);
+
     acceptButton.gameObject.SetActive(false);
     declineButton.gameObject.SetActive(false);
 
     EndCutscene();
-    dollyCamera.Priority = 0;    // releases control
-playerCamera.Priority = 10;  // gameplay camera
-dollyCamera.gameObject.SetActive(false);
 
+    dollyCamera.Priority = 0;
+    playerCamera.Priority = 10;
+    dollyCamera.gameObject.SetActive(false);
 }
+
 
 
 

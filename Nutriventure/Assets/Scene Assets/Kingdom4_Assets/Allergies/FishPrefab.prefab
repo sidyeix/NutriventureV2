@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2382909777218233913}
   - component: {fileID: 66571319360685531}
-  - component: {fileID: 997843215209002674}
   - component: {fileID: 8397683238498718974}
+  - component: {fileID: 3113406420147152761}
   m_Layer: 0
   m_Name: FishPrefab
   m_TagString: Untagged
@@ -56,28 +56,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.011332359, y: 0.007749228, z: 0.0035520904}
   m_Center: {x: -0.000047096062, y: 0.0003094338, z: -0.00052206794}
---- !u!95 &997843215209002674
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3976856039960369269}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9f654710982e215458b1d3ef4892c927, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &8397683238498718974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -101,6 +79,26 @@ MonoBehaviour:
   damageAmount: 1
   damageParticles: {fileID: 0}
   damageSound: {fileID: 0}
+  floatHeight: 0.5
+  floatSpeed: 2
+  shieldPowerupParticles: {fileID: 0}
+  heartPowerupParticles: {fileID: 0}
+  particleOffset: {x: 0, y: 1, z: 0}
+--- !u!114 &3113406420147152761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3976856039960369269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d3f7ecb967089489a4121ef4bdfcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FloatingAnimation
+  amplitude: 0.25
+  speed: 2
+  phaseOffset: 0
 --- !u!1001 &781041913214728849
 PrefabInstance:
   m_ObjectHideFlags: 0
