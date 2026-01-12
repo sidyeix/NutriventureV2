@@ -426,7 +426,9 @@
           },
           {
             "name": "RenderTexture",
-            "scenes": [],
+            "scenes": [
+              "Assets/Scenes/5_Kingdom3.unity"
+            ],
             "dependencyType": 0,
             "icon": null
           },
@@ -834,7 +836,9 @@
         "dependencies": [
           {
             "name": "PlayableDirector",
-            "scenes": [],
+            "scenes": [
+              "Assets/Scenes/5_Kingdom3.unity"
+            ],
             "dependencyType": 0,
             "icon": null
           }
