@@ -16,14 +16,8 @@ TagManager:
   - QA2SpawnedProduct
   - Allergen
   - NutriKey
-  - SpawnPoint
-  - Fence
-  - Destination
-  - Inverted
-  - Interactable
-  - NPC
-  - K3_OxidantScroll
-  - K3_MicrobeScroll
+  - Button
+  - Pushable
   layers:
   - Default
   - TransparentFX
@@ -32,7 +26,7 @@ TagManager:
   - Water
   - UI
   - Interactable
-  - IngreLayer
+  - Pushable
   - 
   - 
   - 

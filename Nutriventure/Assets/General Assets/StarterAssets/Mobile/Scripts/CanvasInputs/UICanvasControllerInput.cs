@@ -31,5 +31,11 @@ namespace StarterAssets
         {
             starterAssetsInputs.CrawlInput(virtualCrawlState);
         }
+
+        // ADD THIS METHOD
+        public void VirtualPushInput(bool virtualPushState)
+        {
+            starterAssetsInputs.PushInput(virtualPushState);
+        }
     }
 }
