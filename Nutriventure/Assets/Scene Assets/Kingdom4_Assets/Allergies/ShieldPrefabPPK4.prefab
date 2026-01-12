@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6092630190529037024}
   - component: {fileID: 7941958144511989872}
-  - component: {fileID: 1615782758701265716}
   - component: {fileID: -909280819971800203}
+  - component: {fileID: -68630023028892611}
   m_Layer: 0
   m_Name: ShieldPrefabPPK4
   m_TagString: Untagged
@@ -63,28 +63,6 @@ MonoBehaviour:
   shieldPowerupParticles: {fileID: 6424583148328831481, guid: d2ffbc8b168cdf74a9dbb7c6c1cfdf2f, type: 3}
   heartPowerupParticles: {fileID: 0}
   particleOffset: {x: 0, y: -1, z: 0}
---- !u!95 &1615782758701265716
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2905122416797584608}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9f654710982e215458b1d3ef4892c927, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!65 &-909280819971800203
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -106,6 +84,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-68630023028892611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2905122416797584608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d3f7ecb967089489a4121ef4bdfcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FloatingAnimation
+  amplitude: 0.25
+  speed: 2
+  phaseOffset: 0
 --- !u!1001 &8176444001341494955
 PrefabInstance:
   m_ObjectHideFlags: 0
