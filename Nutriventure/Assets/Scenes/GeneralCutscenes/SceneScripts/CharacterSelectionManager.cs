@@ -21,15 +21,40 @@ public class CharacterSelectionManager : MonoBehaviour
     [Header("Timeline References")]
     public PlayableDirector playableDirector; // Your Playable Director component
 
+    [Header("Audio References")]
+    public AudioSource audioSource; // Reference to an AudioSource component
+    public AudioSource backgroundMusicSource; // Reference to background music AudioSource
+    public AudioClip buttonClickSound; // Sound for character button clicks
+    public AudioClip confirmClickSound; // Sound for confirm/select hero button
+    public AudioClip errorSound; // Sound when trying to proceed without nickname
+
     [Header("Validation Colors")]
     public Color normalBorderColor = Color.white;
     public Color errorBorderColor = Color.red;
+
+    [Header("Blink Settings")]
+    public float blinkDuration = 1f; // Duration of the blink effect
+    public float blinkSpeed = 0.2f; // Speed of each blink
+    private bool isBlinking = false;
+    private Coroutine blinkCoroutine;
 
     private Dictionary<GameObject, int> buttonToCharacterID = new Dictionary<GameObject, int>();
     private int selectedCharacterID = -1;
 
     void Start()
     {
+        // Initialize audio source if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                audioSource.loop = false;
+            }
+        }
+
         CreateCharacterButtons();
         LoadSelectedCharacter();
 
@@ -43,6 +68,12 @@ public class CharacterSelectionManager : MonoBehaviour
         if (nicknameInputField != null)
         {
             nicknameInputField.onValueChanged.AddListener(OnNicknameChanged);
+
+            // Set initial border color to normal (not error)
+            if (nicknameInputBorder != null)
+            {
+                nicknameInputBorder.color = normalBorderColor;
+            }
         }
 
         // Disable Playable Director at start
@@ -58,6 +89,9 @@ public class CharacterSelectionManager : MonoBehaviour
         {
             characterSelectionPanel.SetActive(true);
         }
+
+        // Update button visual state initially
+        UpdateButtonVisualState();
     }
 
     private void CreateCharacterButtons()
@@ -113,7 +147,34 @@ public class CharacterSelectionManager : MonoBehaviour
         if (buttonToCharacterID.TryGetValue(buttonObj, out int characterID))
         {
             SelectCharacter(characterID);
+            PlayButtonClickSound(); // Play sound when character button is clicked
         }
+    }
+
+    private void SelectCharacter(int characterID)
+    {
+        selectedCharacterID = characterID;
+
+        // Update all button highlights
+        foreach (var kvp in buttonToCharacterID)
+        {
+            GameObject highlight = kvp.Key.transform.Find("SelectedHighlight")?.gameObject;
+            if (highlight != null)
+            {
+                highlight.SetActive(kvp.Value == characterID);
+            }
+        }
+
+        // Apply visual change
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.ApplyCharacterVisuals(characterID);
+        }
+
+        Debug.Log("Selected Character ID: " + characterID);
+
+        // Update button visual state
+        UpdateButtonVisualState();
     }
 
     private void LoadSelectedCharacter()
@@ -140,50 +201,15 @@ public class CharacterSelectionManager : MonoBehaviour
         }
     }
 
-    private void SelectCharacter(int characterID)
-    {
-        selectedCharacterID = characterID;
-
-        // Update all button highlights
-        foreach (var kvp in buttonToCharacterID)
-        {
-            GameObject highlight = kvp.Key.transform.Find("SelectedHighlight")?.gameObject;
-            if (highlight != null)
-            {
-                highlight.SetActive(kvp.Value == characterID);
-            }
-        }
-
-        // Apply visual change
-        if (characterVisualSwapper != null)
-        {
-            characterVisualSwapper.ApplyCharacterVisuals(characterID);
-        }
-
-        Debug.Log("Selected Character ID: " + characterID);
-    }
-
     // Called when nickname input changes
     private void OnNicknameChanged(string newText)
     {
-        ValidateNickname();
-    }
+        UpdateButtonVisualState();
 
-    // Validates the nickname and updates UI
-    private void ValidateNickname()
-    {
-        bool isValid = IsNicknameValid();
-
-        // Update border color
-        if (nicknameInputBorder != null)
+        // Only validate and update border color if not currently blinking
+        if (!isBlinking && nicknameInputBorder != null)
         {
-            nicknameInputBorder.color = isValid ? normalBorderColor : errorBorderColor;
-        }
-
-        // Update button interactability
-        if (selectHeroButton != null)
-        {
-            selectHeroButton.interactable = isValid && selectedCharacterID != -1;
+            nicknameInputBorder.color = normalBorderColor;
         }
     }
 
@@ -196,14 +222,49 @@ public class CharacterSelectionManager : MonoBehaviour
         return !string.IsNullOrEmpty(nickname) && nickname.Length > 0;
     }
 
+    // Updates the button's visual state without affecting clickability
+    private void UpdateButtonVisualState()
+    {
+        if (selectHeroButton == null) return;
+
+        // Check if conditions are met
+        bool isReady = IsNicknameValid() && selectedCharacterID != -1;
+
+        // Get the Image component for color changes
+        Image buttonImage = selectHeroButton.GetComponent<Image>();
+        TMP_Text buttonText = selectHeroButton.GetComponentInChildren<TMP_Text>();
+
+        if (buttonImage != null)
+        {
+            // Change alpha to indicate state while keeping button clickable
+            Color currentColor = buttonImage.color;
+            currentColor.a = isReady ? 1f : 0.5f; // Dim when not ready
+            buttonImage.color = currentColor;
+        }
+
+        if (buttonText != null)
+        {
+            // Also adjust text alpha
+            Color textColor = buttonText.color;
+            textColor.a = isReady ? 1f : 0.5f;
+            buttonText.color = textColor;
+        }
+    }
+
     // Called when "Select Hero" button is clicked
     private void OnSelectHeroClicked()
     {
-        // Validate nickname one more time
+        // Play button click sound regardless
+        PlayButtonClickSound();
+
+        // Validate nickname
         if (!IsNicknameValid())
         {
-            // Show error effect
-            StartCoroutine(ShakeInputField());
+            // Play error sound
+            PlayErrorSound();
+
+            // Start blinking effect
+            StartBlinkEffect();
             return;
         }
 
@@ -211,7 +272,19 @@ public class CharacterSelectionManager : MonoBehaviour
         if (selectedCharacterID == -1)
         {
             Debug.LogWarning("Please select a character first!");
+            // Play error sound for missing character selection too
+            PlayErrorSound();
             return;
+        }
+
+        // Play confirm sound
+        PlayConfirmSound();
+
+        // Disable background music if assigned
+        if (backgroundMusicSource != null && backgroundMusicSource.isPlaying)
+        {
+            backgroundMusicSource.Stop();
+            Debug.Log("Background music stopped");
         }
 
         // Save everything to GameData
@@ -219,6 +292,49 @@ public class CharacterSelectionManager : MonoBehaviour
 
         // Start the timeline
         StartTimeline();
+    }
+
+    // Starts the blinking effect on the input border
+    private void StartBlinkEffect()
+    {
+        if (isBlinking) return;
+
+        if (blinkCoroutine != null)
+        {
+            StopCoroutine(blinkCoroutine);
+        }
+
+        blinkCoroutine = StartCoroutine(BlinkBorder());
+    }
+
+    private System.Collections.IEnumerator BlinkBorder()
+    {
+        isBlinking = true;
+        float elapsedTime = 0f;
+        Image border = nicknameInputBorder;
+
+        if (border == null)
+        {
+            isBlinking = false;
+            yield break;
+        }
+
+        // Start with normal color
+        border.color = normalBorderColor;
+
+        while (elapsedTime < blinkDuration)
+        {
+            // Blink between normal color and error color
+            float t = Mathf.PingPong(elapsedTime * (1f / blinkSpeed), 1f);
+            border.color = Color.Lerp(normalBorderColor, errorBorderColor, t);
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Always return to normal color after blinking
+        border.color = normalBorderColor;
+        isBlinking = false;
     }
 
     // Saves character selection and nickname to GameData
@@ -285,39 +401,33 @@ public class CharacterSelectionManager : MonoBehaviour
         }
     }
 
-    // Simple shake animation for error feedback
-    private System.Collections.IEnumerator ShakeInputField()
+    // Audio Methods
+    private void PlayButtonClickSound()
     {
-        if (nicknameInputField == null) yield break;
-
-        Transform inputTransform = nicknameInputField.transform;
-        Vector3 originalPosition = inputTransform.localPosition;
-        float shakeDuration = 0.5f;
-        float shakeMagnitude = 5f;
-
-        float elapsed = 0f;
-
-        while (elapsed < shakeDuration)
+        if (audioSource != null && buttonClickSound != null)
         {
-            float x = Random.Range(-1f, 1f) * shakeMagnitude;
-            float y = Random.Range(-1f, 1f) * shakeMagnitude;
-
-            inputTransform.localPosition = originalPosition + new Vector3(x, y, 0);
-
-            elapsed += Time.deltaTime;
-            yield return null;
+            audioSource.PlayOneShot(buttonClickSound);
         }
-
-        inputTransform.localPosition = originalPosition;
     }
 
-    // Update validation when character is selected
-    private void Update()
+    private void PlayConfirmSound()
     {
-        // Update validation in real-time
-        if (selectedCharacterID != -1)
+        if (audioSource != null && confirmClickSound != null)
         {
-            ValidateNickname();
+            audioSource.PlayOneShot(confirmClickSound);
+        }
+    }
+
+    private void PlayErrorSound()
+    {
+        if (audioSource != null && errorSound != null)
+        {
+            audioSource.PlayOneShot(errorSound);
+        }
+        else
+        {
+            // Fallback: play button click sound if no error sound is assigned
+            PlayButtonClickSound();
         }
     }
 
@@ -327,6 +437,12 @@ public class CharacterSelectionManager : MonoBehaviour
         if (playableDirector != null)
         {
             playableDirector.stopped -= OnTimelineFinished;
+        }
+
+        // Stop any running coroutines
+        if (blinkCoroutine != null)
+        {
+            StopCoroutine(blinkCoroutine);
         }
     }
 }

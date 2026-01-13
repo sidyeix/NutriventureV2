@@ -30,6 +30,7 @@ public class HealingZone : MonoBehaviour
     private GoGrowGlowGameManager gameManager;
     private Coroutine healingCoroutine;
     private float animationNormalizedTime = 0f;
+    private bool gameWasActive = false;
 
     private void Start()
     {
@@ -72,6 +73,23 @@ public class HealingZone : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // Check if game state changed
+        if (gameManager != null)
+        {
+            bool gameIsActive = gameManager.IsGameActive();
+
+            // If game was active but now isn't, stop healing
+            if (gameWasActive && !gameIsActive && playerInZone)
+            {
+                StopAllHealingActivities();
+            }
+
+            gameWasActive = gameIsActive;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && gameManager != null)
@@ -93,32 +111,11 @@ public class HealingZone : MonoBehaviour
             // Only start healing if game is active
             if (gameManager.IsGameActive())
             {
-                // Calculate animation start time based on current energy
-                float currentEnergy = GetCurrentEnergyFromSlider();
-
-                // Convert energy (0-100) to normalized time (0-1)
-                animationNormalizedTime = currentEnergy / 100f;
-
-                // Start healing
-                StartHealing();
-
-                // Start audio
-                if (healingAudioSource != null && !healingAudioSource.isPlaying)
-                {
-                    healingAudioSource.Play();
-                }
-
-                // Enable healing effect
-                if (enableEffectOnHealing && healingEffect != null)
-                {
-                    healingEffect.SetActive(true);
-                }
-
-                Debug.Log($"Player entered Healing Zone. Energy: {currentEnergy}, Animation start time: {animationNormalizedTime:F2}");
+                StartHealingActivities();
             }
             else
             {
-                Debug.Log($"Player entered Healing Zone (game not active).");
+                Debug.Log($"Player entered Healing Zone (game not active). Healing disabled.");
             }
         }
     }
@@ -129,32 +126,21 @@ public class HealingZone : MonoBehaviour
         {
             playerInZone = false;
 
-            // Only stop healing if game is active
-            if (gameManager != null && gameManager.IsGameActive())
-            {
-                // Stop healing
-                StopHealing();
-
-                // Stop audio
-                if (healingAudioSource != null && healingAudioSource.isPlaying)
-                {
-                    healingAudioSource.Stop();
-                }
-
-                // Disable healing effect
-                if (healingEffect != null)
-                {
-                    healingEffect.SetActive(false);
-                }
-
-                Debug.Log("Player exited Healing Zone");
-            }
+            // Stop healing activities regardless of game state
+            StopAllHealingActivities();
         }
     }
 
-    private void StartHealing()
+    // Start all healing activities (audio, effects, coroutine)
+    private void StartHealingActivities()
     {
-        if (!gameManager.IsGameActive()) return;
+        if (gameManager == null || !gameManager.IsGameActive()) return;
+
+        // Calculate animation start time based on current energy
+        float currentEnergy = GetCurrentEnergyFromSlider();
+
+        // Convert energy (0-100) to normalized time (0-1)
+        animationNormalizedTime = currentEnergy / 100f;
 
         // Notify GameManager
         gameManager.EnterHealingZone();
@@ -178,19 +164,35 @@ public class HealingZone : MonoBehaviour
             Debug.Log($"Started healing animation at normalized time: {animationNormalizedTime:F2}");
         }
 
+        // Start audio
+        if (healingAudioSource != null && !healingAudioSource.isPlaying)
+        {
+            healingAudioSource.Play();
+        }
+
+        // Enable healing effect
+        if (enableEffectOnHealing && healingEffect != null)
+        {
+            healingEffect.SetActive(true);
+        }
+
         // Start healing coroutine if not already running
         if (healingCoroutine == null)
         {
             healingCoroutine = StartCoroutine(HealingProcess());
         }
+
+        Debug.Log($"Player entered Healing Zone. Energy: {currentEnergy}, Animation start time: {animationNormalizedTime:F2}");
     }
 
-    private void StopHealing()
+    // Stop all healing activities
+    private void StopAllHealingActivities()
     {
-        if (!gameManager.IsGameActive()) return;
-
         // Notify GameManager
-        gameManager.ExitHealingZone();
+        if (gameManager != null && gameManager.IsGameActive())
+        {
+            gameManager.ExitHealingZone();
+        }
 
         // Stop animation
         if (healingAnimator != null)
@@ -204,6 +206,20 @@ public class HealingZone : MonoBehaviour
             StopCoroutine(healingCoroutine);
             healingCoroutine = null;
         }
+
+        // Stop audio
+        if (healingAudioSource != null && healingAudioSource.isPlaying)
+        {
+            healingAudioSource.Stop();
+        }
+
+        // Disable healing effect
+        if (healingEffect != null)
+        {
+            healingEffect.SetActive(false);
+        }
+
+        Debug.Log("Healing activities stopped");
     }
 
     private System.Collections.IEnumerator HealingProcess()
@@ -225,7 +241,7 @@ public class HealingZone : MonoBehaviour
 
     private void UpdateAnimationTime()
     {
-        if (healingAnimator == null) return;
+        if (healingAnimator == null || !gameManager.IsGameActive()) return;
 
         // Get current energy from slider or GameManager
         float currentEnergy = GetCurrentEnergyFromSlider();
@@ -271,17 +287,12 @@ public class HealingZone : MonoBehaviour
 
     private void OnDisable()
     {
-        StopHealing();
-
-        if (healingEffect != null)
-        {
-            healingEffect.SetActive(false);
-        }
+        StopAllHealingActivities();
     }
 
     private void OnDestroy()
     {
-        StopHealing();
+        StopAllHealingActivities();
     }
 
     // ====== Public Methods ======
@@ -317,6 +328,21 @@ public class HealingZone : MonoBehaviour
         if (checkpointComponent != null)
         {
             checkpointComponent.ResetCheckpoint();
+        }
+    }
+
+    // New method to check if healing zone should be active
+    public bool ShouldHealingBeActive()
+    {
+        return playerInZone && gameManager != null && gameManager.IsGameActive();
+    }
+
+    // New method to restart healing if game becomes active while player is in zone
+    public void RestartHealingIfNeeded()
+    {
+        if (playerInZone && gameManager != null && gameManager.IsGameActive() && healingCoroutine == null)
+        {
+            StartHealingActivities();
         }
     }
 }

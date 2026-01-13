@@ -81,7 +81,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoFood
   points: 100
-  foodSprite: {fileID: 21300000, guid: 00bf19df57fe85f4e840a357d1c9811c, type: 3}
+  foodSprite: {fileID: 21300000, guid: 5977f228cea91e7499b986eab7307afc, type: 3}
   collectionEffect: {fileID: 0}
 --- !u!135 &4281531132902258869
 SphereCollider:
