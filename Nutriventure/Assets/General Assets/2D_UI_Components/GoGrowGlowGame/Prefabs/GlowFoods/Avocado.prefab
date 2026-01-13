@@ -82,7 +82,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoFood
   points: 100
-  foodSprite: {fileID: 21300000, guid: 00bf19df57fe85f4e840a357d1c9811c, type: 3}
+  foodSprite: {fileID: 21300000, guid: 646cc1c9dbad8744ba5516fcaba8cadd, type: 3}
   collectionEffect: {fileID: 0}
 --- !u!135 &4281531132902258869
 SphereCollider:
@@ -154,7 +154,7 @@ Transform:
   m_GameObject: {fileID: 6931622412031941110}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.387, z: 0}
+  m_LocalPosition: {x: 0, y: 1.92, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
