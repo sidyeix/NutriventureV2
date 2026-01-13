@@ -33,6 +33,9 @@ public class K2_QueenACS2 : MonoBehaviour
     [Header("Trigger Settings")]
     [SerializeField] private K2_QA2system qa2System; // Reference to QA2 system to check completion
     [SerializeField] private int requiredCorrectAnswers = 5; // Number of products that must be answered correctly
+
+    [Header("Game Summary Reference")]
+    public K2_GameSummary gameSummary; // Reference to GameSummary script
     
     [Header("Events")]
     public UnityEvent onCutsceneStart;
@@ -77,7 +80,15 @@ public class K2_QueenACS2 : MonoBehaviour
     void Start()
     {
         InitializeComponents();
-        StartCompletionCheck();
+        
+        // NEW: Check if should be disabled based on key status
+        CheckKeyStatusAndDisable();
+        
+        // Only start completion check if we're enabled
+        if (this.enabled)
+        {
+            StartCompletionCheck();
+        }
     }
     
     void InitializeComponents()
@@ -216,6 +227,11 @@ public class K2_QueenACS2 : MonoBehaviour
                 ShowSkipButton();
                 Debug.Log("Skip button ready");
             }
+        }
+            // NEW: Check for QA2 completion even if disabled
+        if (!isCutscenePlaying && !hasTriggered && qa2System != null)
+        {
+            CheckQA2CompletionIfDisabled();
         }
     }
     
@@ -1210,5 +1226,57 @@ public class K2_QueenACS2 : MonoBehaviour
         {
             Debug.LogWarning("QA2 System not assigned!");
         }
+    }
+
+        public void CheckKeyStatusAndDisable()
+    {
+        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        
+        if (keyAlreadyCollected)
+        {
+            Debug.Log("Key already collected. Disabling Queen cutscene system.");
+            
+            // Disable this component
+            this.enabled = false;
+            
+            // Disable cutscene parent object if it exists
+            if (cutsceneParentObject != null && cutsceneParentObject.activeSelf)
+            {
+                cutsceneParentObject.SetActive(false);
+            }
+            
+            // Stop checking for completion
+            StopCompletionCheck();
+        }
+    }
+    
+    public void CheckQA2CompletionIfDisabled()
+    {
+        if (!this.enabled && qa2System != null)
+        {
+            bool keyAlreadyCollected = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            
+            if (keyAlreadyCollected && qa2System.GetCorrectlyAnsweredCount() >= requiredCorrectAnswers)
+            {
+                Debug.Log("Timeline disabled but QA2 completed with key. Triggering summary via GameSummary.");
+                
+                // Find GameSummary and trigger it directly
+                K2_GameSummary gameSummary = FindObjectOfType<K2_GameSummary>();
+                if (gameSummary != null && !gameSummary.IsSummaryActive())
+                {
+                    // Trigger the summary
+                    gameSummary.TriggerSummaryFromQA2();
+                }
+            }
+        }
+    }
+        public void OnCutsceneFinished()
+    {
+        // This method can be called when cutscene finishes to check if QA2 is completed
+        Debug.Log("Cutscene finished, checking QA2 completion...");
+        
+        // You could trigger QA2 completion check here if needed
     }
 }

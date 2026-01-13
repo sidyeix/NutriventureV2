@@ -2,6 +2,8 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.Playables;
+using System.Collections;
 
 public class BookUIManager : MonoBehaviour
 {
@@ -10,9 +12,7 @@ public class BookUIManager : MonoBehaviour
     public GameObject bookEntryPrefab;
     public GameObject bookPanel;
     public GameObject ingredientPanel;
-    
-    [Header("UI Elements to Hide When Book Opens")]
-    public GameObject[] uiElementsToHide; // Assign other UI panels here
+    public GameObject gateObject; // Drag your gate cube here
     
     [Header("Current Book UI")]
     public Transform ingredientsGrid;
@@ -28,19 +28,22 @@ public class BookUIManager : MonoBehaviour
     [Header("All Possible Ingredients")]
     public List<IngredientDefinition> allPossibleIngredients = new List<IngredientDefinition>();
     
+    [Header("Timeline")]
+    public PlayableDirector timelineDirector; // Drag your timeline here
+    
     private BookInteractable mainBook;
     private GameObject currentBookUIEntry;
-    private List<GameObject> hiddenUIElements = new List<GameObject>();
-    private Dictionary<string, Sprite> ingredientSilhouetteMap = new Dictionary<string, Sprite>();
+    private bool timelinePlayed = false;
     
     [System.Serializable]
     public class IngredientDefinition
     {
         public string ingredientId;
         public string ingredientName;
+        [TextArea(3, 5)]
         public string ingredientDescription;
         public Sprite ingredientIcon;
-        public int silhouetteIndex = -1; // Optional: assign specific silhouette index
+        public Sprite silhouetteSprite;
     }
     
     void Start()
@@ -57,40 +60,21 @@ public class BookUIManager : MonoBehaviour
         {
             closeBookButton.onClick.AddListener(CloseBook);
         }
-        
-
-    }
-    
-
-    
- 
-    
-    public Sprite GetSilhouetteForIngredientId(string ingredientId)
-    {
-        if (ingredientSilhouetteMap.TryGetValue(ingredientId, out Sprite silhouette))
-        {
-            return silhouette;
-        }
-        
-        return null;
     }
     
     public void SetMainBook(BookInteractable book)
     {
         mainBook = book;
-        Debug.Log($"Main book set: {book.bookName}");
-    }
-    
-    public BookInteractable GetMainBook()
-    {
-        return BookInteractable.Instance;
+        Debug.Log($"BookUIManager: Book set: {book.bookName}");
+        
+        // Check immediately if we already have 9 ingredients
+        CheckForTimeline();
     }
     
     public void AddBookToUI(string bookId, string bookName, Sprite bookIcon)
     {
         if (bookEntryPrefab != null && bookUIContainer != null)
         {
-            // Only create one book entry
             if (currentBookUIEntry == null)
             {
                 currentBookUIEntry = Instantiate(bookEntryPrefab, bookUIContainer);
@@ -100,13 +84,7 @@ public class BookUIManager : MonoBehaviour
                 {
                     entry.Initialize(bookId, bookName, bookIcon, this);
                 }
-                
-                Debug.Log($"Book {bookId} added to UI");
             }
-        }
-        else
-        {
-            Debug.LogError("Book entry prefab or container not assigned!");
         }
     }
     
@@ -114,74 +92,30 @@ public class BookUIManager : MonoBehaviour
     {
         if (bookPanel != null)
         {
-            // Hide other UI elements
-            HideOtherUI();
-            
-            // Show book panel
             bookPanel.SetActive(true);
-                
             UpdateBookUI();
         }
     }
     
     public void CloseBook()
     {
-        if (bookPanel != null) 
+        if (bookPanel != null)
         {
             bookPanel.SetActive(false);
-            
-            // Restore hidden UI elements
-            RestoreHiddenUI();
         }
-    }
-    
-    private void HideOtherUI()
-    {
-        hiddenUIElements.Clear();
-        
-        if (uiElementsToHide != null)
-        {
-            foreach (GameObject uiElement in uiElementsToHide)
-            {
-                if (uiElement != null && uiElement.activeInHierarchy)
-                {
-                    hiddenUIElements.Add(uiElement);
-                    uiElement.SetActive(false);
-                }
-            }
-        }
-        
-        // Also hide the book collection panel itself
-        if (bookUIContainer != null && bookUIContainer.gameObject.activeInHierarchy)
-        {
-            hiddenUIElements.Add(bookUIContainer.gameObject);
-            bookUIContainer.gameObject.SetActive(false);
-        }
-    }
-    
-    private void RestoreHiddenUI()
-    {
-        foreach (GameObject uiElement in hiddenUIElements)
-        {
-            if (uiElement != null)
-            {
-                uiElement.SetActive(true);
-            }
-        }
-        hiddenUIElements.Clear();
     }
     
     public void UpdateBookUI()
     {
-        if (ingredientsGrid == null) return;
+        if (ingredientsGrid == null || mainBook == null) return;
         
-        // Clear current ingredients grid
+        // Clear grid
         foreach (Transform child in ingredientsGrid)
         {
             Destroy(child.gameObject);
         }
         
-        // Show ALL possible ingredients (both collected and uncollected)
+        // Add all ingredients
         foreach (var ingredientDef in allPossibleIngredients)
         {
             if (ingredientSlotPrefab != null)
@@ -191,11 +125,9 @@ public class BookUIManager : MonoBehaviour
                 
                 if (slot != null)
                 {
-                    // Check if this ingredient has been collected
-                    bool isCollected = mainBook != null && mainBook.IsIngredientCollected(ingredientDef.ingredientId);
+                    bool isCollected = mainBook.IsIngredientCollected(ingredientDef.ingredientId);
                     
-                    // Create display data
-                    BookInteractable.IngredientData displayData = new BookInteractable.IngredientData
+                    BookInteractable.IngredientData data = new BookInteractable.IngredientData
                     {
                         ingredientId = ingredientDef.ingredientId,
                         ingredientName = ingredientDef.ingredientName,
@@ -203,17 +135,85 @@ public class BookUIManager : MonoBehaviour
                         ingredientIcon = ingredientDef.ingredientIcon
                     };
                     
-                    // Get the specific silhouette for this ingredient
-                    Sprite silhouette = GetSilhouetteForIngredientId(ingredientDef.ingredientId);
-                    slot.silhouetteSprite = silhouette;
+                    slot.Initialize(data, this, isCollected);
                     
-                    slot.Initialize(displayData, this, isCollected);
+                    // Set silhouette if available
+                    if (ingredientDef.silhouetteSprite != null)
+                    {
+                        slot.SetSilhouetteSprite(ingredientDef.silhouetteSprite);
+                    }
                 }
             }
         }
         
-        int collectedCount = mainBook != null ? mainBook.GetCollectedIngredients().Count : 0;
-        Debug.Log($"Updated book UI: {collectedCount}/{allPossibleIngredients.Count} ingredients collected");
+        // Check for timeline
+        CheckForTimeline();
+    }
+    
+    public void OnIngredientCollected(string ingredientId)
+    {
+        Debug.Log($"BookUIManager: Ingredient collected: {ingredientId}");
+        UpdateBookUI();
+    }
+    
+    private void CheckForTimeline()
+    {
+        if (mainBook == null || timelinePlayed) return;
+        
+        int collectedCount = mainBook.GetCollectedCount();
+        
+        if (collectedCount >= 9)
+        {
+            timelinePlayed = true;
+            
+            // Play timeline
+            PlayTimeline();
+            
+            // Disable the gate cube
+            if (gateObject != null)
+            {
+                gateObject.SetActive(false);
+                Debug.Log("✅ BookUIManager: Gate cube disabled!");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ BookUIManager: Gate object not assigned in inspector!");
+            }
+        }
+    }
+    
+    private void PlayTimeline()
+    {
+        if (timelineDirector != null)
+        {
+            Debug.Log("🎬 BookUIManager: Playing timeline!");
+            timelineDirector.Play();
+            
+            // Listen for timeline completion
+            StartCoroutine(WaitForTimelineCompletion());
+        }
+        else
+        {
+            Debug.LogError("❌ BookUIManager: No Timeline Director assigned!");
+        }
+    }
+    
+    private IEnumerator WaitForTimelineCompletion()
+    {
+        if (timelineDirector == null) yield break;
+        
+        // Wait for timeline to start
+        yield return null;
+        
+        // Wait while timeline is playing
+        while (timelineDirector.state == PlayState.Playing)
+        {
+            yield return null;
+        }
+        
+        Debug.Log("✅ BookUIManager: Timeline completed!");
+        
+        // You can add additional logic here after timeline finishes
     }
     
     public void ShowIngredientInfo(BookInteractable.IngredientData ingredient)
@@ -228,34 +228,62 @@ public class BookUIManager : MonoBehaviour
             if (ingredientDescriptionText != null)
                 ingredientDescriptionText.text = ingredient.ingredientDescription;
                 
-            if (ingredientIconImage != null && ingredient.ingredientIcon != null)
+            if (ingredientIconImage != null)
                 ingredientIconImage.sprite = ingredient.ingredientIcon;
         }
     }
     
     public void CloseIngredientPanel()
     {
-        if (ingredientPanel != null) ingredientPanel.SetActive(false);
-    }
-    
-    // Method to add ingredients dynamically with silhouette support
-    public void AddPossibleIngredient(string id, string name, string description, Sprite icon, int silhouetteIndex = -1)
-    {
-        IngredientDefinition newIngredient = new IngredientDefinition
+        if (ingredientPanel != null)
         {
-            ingredientId = id,
-            ingredientName = name,
-            ingredientDescription = description,
-            ingredientIcon = icon,
-            silhouetteIndex = silhouetteIndex
-        };
-        
-        allPossibleIngredients.Add(newIngredient);
+            ingredientPanel.SetActive(false);
+        }
     }
     
-    // Method to refresh the UI
-    public void RefreshUI()
+    // Test function - Shows narration and disables gate
+    [ContextMenu("Test Gate Opening")]
+    public void TestGateOpening()
     {
-        UpdateBookUI();
+        if (mainBook != null)
+        {
+            // Clear and add 9 ingredients
+            mainBook.ClearAllIngredients();
+            
+            for (int i = 0; i < 9; i++)
+            {
+                mainBook.AddTestIngredient();
+            }
+            
+            UpdateBookUI();
+            Debug.Log("Test: 9 ingredients added - timeline should trigger!");
+        }
+    }
+    
+    [ContextMenu("Test Timeline Only")]
+    public void TestTimelineOnly()
+    {
+        PlayTimeline();
+    }
+    
+    [ContextMenu("Reset Timeline Trigger")]
+    public void ResetTimelineTrigger()
+    {
+        timelinePlayed = false;
+        
+        // Re-enable the gate when resetting
+        if (gateObject != null)
+        {
+            gateObject.SetActive(true);
+            Debug.Log("BookUIManager: Timeline trigger reset and gate re-enabled");
+        }
+        
+        // Stop timeline if it's playing
+        if (timelineDirector != null && timelineDirector.state == PlayState.Playing)
+        {
+            timelineDirector.Stop();
+        }
+        
+        Debug.Log("BookUIManager: Timeline trigger reset - will trigger again at 9 ingredients");
     }
 }

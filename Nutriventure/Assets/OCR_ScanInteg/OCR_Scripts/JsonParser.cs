@@ -15,15 +15,25 @@ public static class JsonParser
         
         try
         {
-            // Try to parse the JSON string into IngredientData object
-            IngredientData data = JsonUtility.FromJson<IngredientData>(jsonResponse);
+            // Parse the JSON using JsonUtility
+            SimpleJsonData jsonData = JsonUtility.FromJson<SimpleJsonData>(jsonResponse);
+            
+            // Create IngredientData from parsed JSON
+            IngredientData data = new IngredientData
+            {
+                ingredient = jsonData.ingredient,
+                status = jsonData.status,
+                fingerprint = jsonData.fingerprint,
+                total_detected = jsonData.total_detected,
+                mode = jsonData.mode
+            };
             
             // Validate the parsed data
             if (data != null && data.IsValid())
             {
                 Debug.Log($"Successfully parsed ingredient: {data.ingredient} " +
                          $"(Total detected: {data.total_detected}, Fingerprint: {data.fingerprint}, " +
-                         $"Rarity breakdown: {data.rarity_breakdown})");
+                         $"Mode: {data.mode})");
                 return data;
             }
             else
@@ -45,11 +55,22 @@ public static class JsonParser
         return new IngredientData
         {
             ingredient = "Error",
-            rarity = -1,
             status = errorMessage,
             fingerprint = "",
             total_detected = 0,
-            rarity_breakdown = ""
+            mode = "error"
         };
+    }
+    
+    // Simple class for JSON parsing
+    [System.Serializable]
+    private class SimpleJsonData
+    {
+        public string ingredient;
+        public string status;
+        public string fingerprint;
+        public int total_detected;
+        public string mode;
+        public string all_ingredients; // This might be an array string, we'll handle separately if needed
     }
 }

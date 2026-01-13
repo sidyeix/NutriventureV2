@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5109446068576425698}
-  - component: {fileID: 4425268928049348491}
   - component: {fileID: 6784914400997044754}
   - component: {fileID: 7993955290330433929}
+  - component: {fileID: -9154304757286923913}
   m_Layer: 0
   m_Name: MilkPrefab
   m_TagString: Untagged
@@ -35,28 +35,6 @@ Transform:
   - {fileID: 9164412746832728931}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &4425268928049348491
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2704552755402775975}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 9f654710982e215458b1d3ef4892c927, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!65 &6784914400997044754
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -101,6 +79,26 @@ MonoBehaviour:
   damageAmount: 1
   damageParticles: {fileID: 0}
   damageSound: {fileID: 0}
+  floatHeight: 0.5
+  floatSpeed: 2
+  shieldPowerupParticles: {fileID: 0}
+  heartPowerupParticles: {fileID: 0}
+  particleOffset: {x: 0, y: 1, z: 0}
+--- !u!114 &-9154304757286923913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2704552755402775975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d3f7ecb967089489a4121ef4bdfcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FloatingAnimation
+  amplitude: 0.25
+  speed: 2
+  phaseOffset: 0
 --- !u!1001 &8693127795279901832
 PrefabInstance:
   m_ObjectHideFlags: 0

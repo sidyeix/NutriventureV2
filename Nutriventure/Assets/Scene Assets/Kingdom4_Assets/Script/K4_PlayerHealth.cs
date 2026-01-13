@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 public class PlayerHealth : MonoBehaviour
 {
+    private SugariaPlayerStat sugariaUI;
+
     [Header("Health Settings")]
     public int maxHearts = 6;
     public int currentHearts;
@@ -33,83 +35,111 @@ public class PlayerHealth : MonoBehaviour
     private Coroutine overlayCoroutine;
     
     void Start()
+{
+    sugariaUI = GetComponent<SugariaPlayerStat>();
+
+    if (sugariaUI == null)
     {
-        InitializeHearts();
-        InitializeDamageOverlay();
+        Debug.LogError("SugariaPlayerStat not found! UI references will be missing.");
+        return;
     }
+
+    // Use Sugaria's container and prefab
+    heartsContainer = sugariaUI.heartsContainer;
+    heartPrefab = sugariaUI.heartIconPrefab.gameObject;
+
+    InitializeHearts();
+    InitializeDamageOverlay();
+}
+
     
-    private void InitializeHearts()
+   private void InitializeHearts()
+{
+    if (heartsContainer == null)
     {
-        // Clear existing hearts
-        foreach (Transform child in heartsContainer)
-        {
-            Destroy(child.gameObject);
-        }
-        heartImages.Clear();
-        
-        // Create hearts
-        for (int i = 0; i < maxHearts; i++)
-        {
-            GameObject heart = Instantiate(heartPrefab, heartsContainer);
-            Image heartImage = heart.GetComponent<Image>();
-            if (heartImage != null)
-            {
-                heartImages.Add(heartImage);
-                heartImage.color = activeHeartColor; // All hearts start red
-            }
-        }
-        
-        currentHearts = maxHearts;
+        Debug.LogError("Hearts container is null!");
+        return;
     }
+
+    heartImages.Clear();
+
+    foreach (Transform child in heartsContainer)
+    {
+        Image img = child.GetComponent<Image>();
+        if (img != null)
+        {
+            heartImages.Add(img);
+        }
+    }
+
+    // 🔥 THIS IS THE KEY FIX
+    maxHearts = heartImages.Count;
+    currentHearts = maxHearts;
+
+    Debug.Log($"PlayerHealth synced to UI hearts: {maxHearts}");
+}
+
+
     
     private void InitializeDamageOverlay()
+{
+    if (damageOverlay != null)
     {
-        if (damageOverlay != null)
-        {
-            // Start with overlay hidden
-            damageOverlay.color = new Color(damageOverlayColor.r, damageOverlayColor.g, damageOverlayColor.b, 0f);
-            damageOverlay.gameObject.SetActive(true);
-        }
+        damageOverlay.gameObject.SetActive(true);
+        damageOverlay.color = new Color(
+            damageOverlayColor.r,
+            damageOverlayColor.g,
+            damageOverlayColor.b,
+            0f
+        );
     }
+}
+
     
     public void TakeDamage(int damage)
+{
+    if (isInvulnerable) return;
+
+    // 🔥 LET SUGARIA UPDATE THE UI
+    sugariaUI.TakeDamage(damage);
+
+    StartCoroutine(DamageSequence(damage));
+}
+
+
+
+    private void ValidateHeartImages()
+{
+    for (int i = heartImages.Count - 1; i >= 0; i--)
     {
-        if (isInvulnerable || currentHearts <= 0) return;
-        
-        StartCoroutine(DamageSequence(damage));
-    }
-    
-    private IEnumerator DamageSequence(int damage)
-    {
-        // Set invulnerable
-        isInvulnerable = true;
-        
-        // Deduct hearts
-        currentHearts = Mathf.Max(0, currentHearts - damage);
-        
-        // Update UI
-        UpdateHeartsUI();
-        
-        // Play effects
-        PlayDamageEffects();
-        
-        // Show damage overlay
-        ShowDamageOverlay();
-        
-        // Flash player (optional)
-        StartCoroutine(FlashPlayer());
-        
-        yield return new WaitForSeconds(invulnerabilityTime);
-        
-        // Remove invulnerability
-        isInvulnerable = false;
-        
-        // Check for game over
-        if (currentHearts <= 0)
+        // Unity-destroyed object check
+        if (heartImages[i] == null || heartImages[i].gameObject == null)
         {
-            GameOver();
+            heartImages.RemoveAt(i);
         }
     }
+}
+
+    
+    private IEnumerator DamageSequence(int damage)
+{
+    isInvulnerable = true;
+
+    // Effects ONLY
+    PlayDamageEffects();
+    ShowDamageOverlay();
+    StartCoroutine(FlashPlayer());
+
+    yield return new WaitForSeconds(invulnerabilityTime);
+
+    isInvulnerable = false;
+
+    if (sugariaUI.currentHealth <= 0)
+    {
+        GameOver();
+    }
+}
+
     
     private void ShowDamageOverlay()
     {
@@ -159,21 +189,23 @@ public class PlayerHealth : MonoBehaviour
     }
     
     private void UpdateHeartsUI()
+{
+    if (heartImages.Count == 0) return;
+
+    currentHearts = Mathf.Clamp(currentHearts, 0, heartImages.Count);
+
+    for (int i = 0; i < heartImages.Count; i++)
     {
-        for (int i = 0; i < heartImages.Count; i++)
-        {
-            if (i < currentHearts)
-            {
-                // Active heart (red)
-                heartImages[i].color = activeHeartColor;
-            }
-            else
-            {
-                // Lost heart (black)
-                heartImages[i].color = lostHeartColor;
-            }
-        }
+        if (heartImages[i] == null) continue;
+
+        heartImages[i].color = i < currentHearts
+            ? activeHeartColor
+            : lostHeartColor;
     }
+}
+
+
+
     
     private void PlayDamageEffects()
     {
@@ -217,10 +249,10 @@ public class PlayerHealth : MonoBehaviour
     }
     
     public void Heal(int healAmount)
-    {
-        currentHearts = Mathf.Min(maxHearts, currentHearts + healAmount);
-        UpdateHeartsUI();
-    }
+{
+    sugariaUI.Heal(healAmount);
+}
+
     
     public void ResetHealth()
     {
