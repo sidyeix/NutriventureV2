@@ -17,14 +17,25 @@ public class PreserviaPlayerStat : MonoBehaviour
     [Header("Damage Settings")]
     public float damageCooldown = 1f; // Prevent rapid damage spam
     
+    [Header("Damage Panel")]
+    [Tooltip("The red overlay image that appears when taking damage")]
+    public Image damagePanel;
+    [Tooltip("How long the damage panel stays visible")]
+    public float damagePanelDuration = 0.3f;
+    [Tooltip("Color of the damage panel")]
+    public Color damageColor = new Color(1f, 0f, 0f, 0.3f); // Semi-transparent red
+    
     private Image[] heartIcons;
     private float lastDamageTime;
+    private Color originalPanelColor;
+    private Coroutine damagePanelCoroutine;
     
     void Start()
     {
         InitializeHearts();
         currentHealth = maxHealth;
         UpdateHealthUI();
+        InitializeDamagePanel();
         
         Debug.Log($"Player health system initialized with {maxHealth} hearts");
     }
@@ -76,6 +87,24 @@ public class PreserviaPlayerStat : MonoBehaviour
         }
     }
     
+    private void InitializeDamagePanel()
+    {
+        if (damagePanel != null)
+        {
+            // Store original color (should be transparent or white with 0 alpha)
+            originalPanelColor = damagePanel.color;
+            
+            // Make sure damage panel is initially disabled
+            damagePanel.gameObject.SetActive(false);
+            
+            Debug.Log("Damage panel initialized and disabled");
+        }
+        else
+        {
+            Debug.LogWarning("Damage Panel not assigned! No visual feedback will appear when taking damage.");
+        }
+    }
+    
     public void TakeDamage(int damage)
     {
         // Check cooldown to prevent rapid damage
@@ -93,10 +122,49 @@ public class PreserviaPlayerStat : MonoBehaviour
         
         UpdateHealthUI();
         
+        // Show damage panel effect
+        ShowDamagePanel();
+        
         if (currentHealth <= 0)
         {
             Die();
         }
+    }
+    
+    private void ShowDamagePanel()
+    {
+        if (damagePanel == null) return;
+        
+        // Stop any existing damage panel coroutine
+        if (damagePanelCoroutine != null)
+        {
+            StopCoroutine(damagePanelCoroutine);
+        }
+        
+        // Start new damage panel effect
+        damagePanelCoroutine = StartCoroutine(DamagePanelEffect());
+    }
+    
+    private IEnumerator DamagePanelEffect()
+    {
+        // Activate the damage panel
+        damagePanel.gameObject.SetActive(true);
+        
+        // Set to damage color
+        damagePanel.color = damageColor;
+        
+        Debug.Log("Damage panel activated");
+        
+        // Wait for the duration
+        yield return new WaitForSeconds(damagePanelDuration);
+        
+        // Deactivate the damage panel
+        damagePanel.gameObject.SetActive(false);
+        
+        // Reset to original color (optional)
+        damagePanel.color = originalPanelColor;
+        
+        Debug.Log("Damage panel deactivated");
     }
     
     public void Heal(int amount)
@@ -206,6 +274,20 @@ public class PreserviaPlayerStat : MonoBehaviour
         UpdateHealthUI();
     }
     
+    // Test damage panel effect without taking damage
+    [ContextMenu("Test Damage Panel")]
+    public void TestDamagePanel()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Test only works in Play Mode!");
+            return;
+        }
+        
+        Debug.Log("=== TESTING DAMAGE PANEL ===");
+        ShowDamagePanel();
+    }
+    
     // Context menu for testing in editor
     [ContextMenu("Test Take Damage")]
     private void TestTakeDamage()
@@ -233,6 +315,8 @@ public class PreserviaPlayerStat : MonoBehaviour
         Debug.Log($"Hearts Container: {heartsContainer}");
         Debug.Log($"Heart Prefab: {heartIconPrefab}");
         Debug.Log($"Heart Icons Array: {(heartIcons != null ? heartIcons.Length : 0)} elements");
+        Debug.Log($"Damage Panel: {(damagePanel != null ? damagePanel.name : "Not assigned")}");
+        Debug.Log($"Damage Panel Active: {(damagePanel != null ? damagePanel.gameObject.activeInHierarchy : false)}");
         
         if (heartsContainer != null)
         {

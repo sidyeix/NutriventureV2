@@ -38,13 +38,13 @@ public class K3_DeathplaneFall : MonoBehaviour
     public AudioClip drownedSFX;
     [Tooltip("Volume for drowned SFX")]
     [Range(0f, 2f)]
-    public float drownedVolume = 1.5f;
+    public float drownedVolume = 2f;
     [Tooltip("Sound when player respawns")]
     public AudioClip respawnSFX;
     [Tooltip("Volume for respawn SFX")]
     [Range(0f, 2f)]
-    public float respawnVolume = 1.5f;
-    public float soundVolume = 0.7f;
+    public float respawnVolume = 2;
+    public float soundVolume = 1f;
     
     [Header("PLAYER REFERENCES")]
     [Tooltip("Drag your Player GameObject here")]

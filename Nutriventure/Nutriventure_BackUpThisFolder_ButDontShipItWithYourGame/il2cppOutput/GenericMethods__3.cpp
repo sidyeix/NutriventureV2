@@ -31270,7 +31270,7 @@ inline void UnsafeUtility_InternalCopyStructureToPtr_TisTwoBoneIKConstraintJob_t
 {
 	((  void (*) (TwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D*, void*, const RuntimeMethod*))UnsafeUtility_InternalCopyStructureToPtr_TisTwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D_mE9C4C4C27EF0AD7413E9CBEB3B01872758B9A384_gshared)(___0_input, ___1_ptr, method);
 }
-// Method Definition Index: 91984
+// Method Definition Index: 92110
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AnimationScriptPlayable_SetJobData_TisTwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D_m20908550F527313764BB13919D4604A416F8CC98_gshared (AnimationScriptPlayable_t1326433F6848D93D7D90BC54B4AB6649A5D59127* __this, TwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D ___0_jobData, const RuntimeMethod* method) 
 {
 	if (!il2cpp_rgctx_is_initialized(method))
@@ -31303,7 +31303,7 @@ IL2CPP_EXTERN_C  void AnimationScriptPlayable_SetJobData_TisTwoBoneIKConstraintJ
 	_thisAdjusted = reinterpret_cast<AnimationScriptPlayable_t1326433F6848D93D7D90BC54B4AB6649A5D59127*>(__this + _offset);
 	AnimationScriptPlayable_SetJobData_TisTwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D_m20908550F527313764BB13919D4604A416F8CC98(_thisAdjusted, ___0_jobData, method);
 }
-// Method Definition Index: 91984
+// Method Definition Index: 92110
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AnimationScriptPlayable_SetJobData_TisIl2CppFullySharedGenericStruct_m0875800AE8D572C36F6FD69BD08657826F883C75_gshared (AnimationScriptPlayable_t1326433F6848D93D7D90BC54B4AB6649A5D59127* __this, Il2CppFullySharedGenericStruct ___0_jobData, const RuntimeMethod* method) 
 {
 	if (!il2cpp_rgctx_is_initialized(method))
@@ -56036,7 +56036,7 @@ IL_0031:
 		return;
 	}
 }
-// Method Definition Index: 45856
+// Method Definition Index: 45979
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void UnsafeUtility_CopyStructureToPtr_TisTwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D_mC944AA0B43CC2F29498B26CD2A8690C1040848C7_gshared_inline (TwoBoneIKConstraintJob_t50F4FC30C2A29EAA17F885CAE0A8EA21F76D6C0D* ___0_input, void* ___1_ptr, const RuntimeMethod* method) 
 {
 	il2cpp_rgctx_method_init(method);

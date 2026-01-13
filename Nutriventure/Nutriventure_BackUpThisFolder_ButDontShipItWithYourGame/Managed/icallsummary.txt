@@ -2317,6 +2317,7 @@ UnityEngine.Transform::get_childCount_Injected
 UnityEngine.Transform::FindRelativeTransformWithPath_Injected
 UnityEngine.Transform::GetChild_Injected
 UnityEngine.Transform::GetParent_Injected
+UnityEngine.Transform::GetRoot_Injected
 UnityEngine.Transform::GetPositionAndRotation_Injected
 UnityEngine.Transform::Internal_LookAt_Injected
 UnityEngine.Transform::InverseTransformPoint_Injected
