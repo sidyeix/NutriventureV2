@@ -1071,6 +1071,7 @@ UnityEngine.Jobs.TransformAccessArray::SetTransform_Injected
 UnityEngine.JsonUtility::FromJsonInternal_Injected
 UnityEngine.JsonUtility::ToJsonInternal_Injected
 UnityEngine.LayerMask::NameToLayer_Injected
+UnityEngine.LayerMask::LayerToName_Injected
 UnityEngine.Light::get_enableSpotReflector_Injected
 UnityEngine.Light::get_useColorTemperature_Injected
 UnityEngine.Light::get_renderingLayerMask_Injected
@@ -1372,6 +1373,7 @@ UnityEngine.Physics::get_reuseCollisionCallbacks
 UnityEngine.Physics::GetBodyByInstanceID_Injected
 UnityEngine.Physics::GetColliderByInstanceID_Injected
 UnityEngine.Physics::Internal_RaycastAll_Injected
+UnityEngine.Physics::Query_SphereCastAll_Injected
 UnityEngine.Physics::SendOnCollisionEnter_Injected
 UnityEngine.Physics::SendOnCollisionExit_Injected
 UnityEngine.Physics::SendOnCollisionStay_Injected
@@ -1388,6 +1390,7 @@ UnityEngine.PhysicsMaterial::set_frictionCombine_Injected
 UnityEngine.PhysicsMaterial::set_staticFriction_Injected
 UnityEngine.PhysicsScene::Internal_RaycastTest_Injected
 UnityEngine.PhysicsScene::Internal_Raycast_Injected
+UnityEngine.PhysicsScene::Query_SphereCast_Injected
 UnityEngine.PhysicsScene::Internal_RaycastNonAlloc_Injected
 UnityEngine.PhysicsScene::Internal_SphereCastNonAlloc_Injected
 UnityEngine.PhysicsScene::OverlapSphereNonAlloc_Internal_Injected
@@ -1963,13 +1966,16 @@ UnityEngine.Rigidbody::AddForce_Injected
 UnityEngine.Rigidbody::AddTorque_Injected
 UnityEngine.Rigidbody::MovePosition_Injected
 UnityEngine.Rigidbody::MoveRotation_Injected
+UnityEngine.Rigidbody::get_angularVelocity_Injected
 UnityEngine.Rigidbody::get_linearVelocity_Injected
 UnityEngine.Rigidbody::get_position_Injected
 UnityEngine.Rigidbody::get_rotation_Injected
 UnityEngine.Rigidbody::set_angularDamping_Injected
 UnityEngine.Rigidbody::set_angularVelocity_Injected
 UnityEngine.Rigidbody::set_centerOfMass_Injected
+UnityEngine.Rigidbody::set_collisionDetectionMode_Injected
 UnityEngine.Rigidbody::set_detectCollisions_Injected
+UnityEngine.Rigidbody::set_interpolation_Injected
 UnityEngine.Rigidbody::set_isKinematic_Injected
 UnityEngine.Rigidbody::set_linearDamping_Injected
 UnityEngine.Rigidbody::set_linearVelocity_Injected
