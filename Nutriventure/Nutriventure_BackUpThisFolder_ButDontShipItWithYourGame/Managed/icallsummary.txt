@@ -2000,8 +2000,10 @@ UnityEngine.SceneManagement.SceneManager::get_sceneCount
 UnityEngine.SceneManagement.SceneManager::UnloadSceneAsyncInternal_Injected
 UnityEngine.SceneManagement.SceneManager::GetActiveScene_Injected
 UnityEngine.SceneManagement.SceneManager::GetSceneAt_Injected
+UnityEngine.SceneManagement.SceneManager::GetSceneByName_Injected
 UnityEngine.SceneManagement.SceneManager::MoveGameObjectToScene_Injected
 UnityEngine.SceneManagement.SceneManagerAPIInternal::LoadSceneAsyncNameIndexInternal_Injected
+UnityEngine.SceneManagement.SceneManagerAPIInternal::UnloadSceneNameIndexInternal_Injected
 UnityEngine.Screen::get_fullScreen
 UnityEngine.Screen::GetMSAASamples
 UnityEngine.Screen::get_height
@@ -2498,7 +2500,6 @@ UnityEngine.WebCamTexture::Play_Injected
 UnityEngine.WebCamTexture::Stop_Injected
 UnityEngine.WebCamTexture::GetPixels_Injected
 UnityEngine.WebCamTexture::get_devices
-UnityEngine.XR.XRDevice::DisableAutoXRCameraTracking_Injected
 UnityEngine.XR.XRDisplaySubsystem::AddGraphicsThreadMirrorViewBlit_Injected
 UnityEngine.XR.XRDisplaySubsystem::GetMirrorViewBlitDesc_Injected
 UnityEngine.XR.XRDisplaySubsystem::Internal_TryBeginRecordingIfLateLatched_Injected
