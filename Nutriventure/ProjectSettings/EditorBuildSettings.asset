@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/4_Kingdom 2.unity
     guid: edeb95cd8763d9d449c4f26820989060
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/6_Kingdom4.unity
     guid: 2f572999887977549abe98b88002efd8
   - enabled: 0
