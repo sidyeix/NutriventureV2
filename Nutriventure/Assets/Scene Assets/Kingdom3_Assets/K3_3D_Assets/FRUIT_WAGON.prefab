@@ -5180,7 +5180,7 @@ GameObject:
   - component: {fileID: 1554293323455871805}
   m_Layer: 0
   m_Name: FRUIT_WAGON
-  m_TagString: Untagged
+  m_TagString: K3_FruitWagon
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
