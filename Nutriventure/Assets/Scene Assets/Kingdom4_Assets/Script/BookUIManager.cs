@@ -46,6 +46,15 @@ public class BookUIManager : MonoBehaviour
         public Sprite silhouetteSprite;
     }
     
+    public void ShowBookIcon()
+{
+    if (currentBookUIEntry != null)
+    {
+        currentBookUIEntry.SetActive(true);
+    }
+}
+
+
     void Start()
     {
         if (bookPanel != null) bookPanel.SetActive(false);
