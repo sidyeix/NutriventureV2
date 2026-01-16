@@ -25,9 +25,9 @@ TagManager:
   - FxTemporaire
   - K3_MicrobeGEM
   - K3_OxidantGEM
-  - K3_BreadWagon
-  - K3_MeatWagon
-  - K3_FruitWagon
+  - K3_AbsorbicP
+  - K3_PotassiumP
+  - K3_SodiumP
   layers:
   - Default
   - TransparentFX
