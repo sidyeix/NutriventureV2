@@ -21,6 +21,11 @@ public class K3_NPCinstructions1 : MonoBehaviour
     [SerializeField] private bool showDialogueDuringCutscene = true; // Toggle for dialogue visibility
     [SerializeField] private TMP_Text npcNameText; // TextMeshPro for NPC name
     
+    [Header("Subtitle System - CRITICAL: Assign These")]
+    [SerializeField] private GameObject subtitleCanvas; // Separate canvas for subtitles (optional)
+    [SerializeField] private TextMeshProUGUI subtitleTextUI; // MUST be TextMeshProUGUI for K2_SubtitleController
+    [SerializeField] private K2_SubtitleController subtitleController; // Subtitle controller component
+    
     [Header("Skip Button")]
     [SerializeField] private Button skipButton; // Button to skip the cutscene
     [SerializeField] private bool enableSkipButton = true; // Whether skip button is enabled
@@ -71,6 +76,10 @@ public class K3_NPCinstructions1 : MonoBehaviour
     
     // NPC name text state
     private bool npcNameTextWasActive = false;
+    
+    // Subtitle tracking
+    private bool subtitleCanvasWasActive = false;
+    private bool subtitleTextWasActive = false;
     
     void Start()
     {
@@ -123,6 +132,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log("No NPC name text assigned - skipping NPC name display");
         }
         
+        // Initialize subtitle system
+        InitializeSubtitleSystem();
+        
         // Initialize skip button
         if (skipButton != null)
         {
@@ -154,6 +166,108 @@ public class K3_NPCinstructions1 : MonoBehaviour
             if (playerController == null)
             {
                 Debug.LogWarning("ThirdPersonController not found on player object!");
+            }
+        }
+    }
+    
+    void InitializeSubtitleSystem()
+    {
+        // Initialize subtitle canvas
+        if (subtitleCanvas != null)
+        {
+            // Store initial state
+            subtitleCanvasWasActive = subtitleCanvas.activeSelf;
+            // Ensure subtitle canvas is disabled initially
+            subtitleCanvas.SetActive(false);
+            Debug.Log($"Subtitle canvas initialized: {subtitleCanvas.name}, was active: {subtitleCanvasWasActive}");
+        }
+        else
+        {
+            // If no separate subtitle canvas, use dialogue canvas
+            if (dialogueCanvas != null)
+            {
+                subtitleCanvas = dialogueCanvas;
+                subtitleCanvasWasActive = dialogueCanvas.activeSelf;
+                Debug.Log($"Using dialogue canvas as subtitle canvas: {subtitleCanvas.name}");
+            }
+        }
+        
+        // Initialize subtitle text - CRITICAL: Must be TextMeshProUGUI
+        if (subtitleTextUI != null)
+        {
+            // Store initial state
+            subtitleTextWasActive = subtitleTextUI.gameObject.activeSelf;
+            // Ensure subtitle text is disabled initially
+            subtitleTextUI.gameObject.SetActive(false);
+            // Clear any existing text
+            subtitleTextUI.text = "";
+            Debug.Log($"Subtitle text initialized: {subtitleTextUI.name}, was active: {subtitleTextWasActive}");
+        }
+        else
+        {
+            Debug.LogWarning("No subtitle text assigned! Subtitles won't display.");
+            
+            // Try to find a TextMeshProUGUI component automatically
+            if (subtitleCanvas != null)
+            {
+                subtitleTextUI = subtitleCanvas.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (subtitleTextUI != null)
+                {
+                    subtitleTextUI.gameObject.SetActive(false);
+                    subtitleTextUI.text = "";
+                    Debug.Log($"Found subtitle text automatically: {subtitleTextUI.name}");
+                }
+            }
+        }
+        
+        // Initialize subtitle controller
+        if (subtitleController == null)
+        {
+            // Try to find it automatically
+            subtitleController = FindObjectOfType<K2_SubtitleController>();
+            
+            if (subtitleController == null)
+            {
+                // If not found, try to find it on the subtitle canvas
+                if (subtitleCanvas != null)
+                {
+                    subtitleController = subtitleCanvas.GetComponentInChildren<K2_SubtitleController>(true);
+                }
+                
+                if (subtitleController == null && subtitleTextUI != null)
+                {
+                    // Create a subtitle controller on this GameObject
+                    subtitleController = gameObject.AddComponent<K2_SubtitleController>();
+                    subtitleController.subtitleTextUI = subtitleTextUI;
+                    Debug.Log($"Created subtitle controller for text: {subtitleTextUI.name}");
+                }
+            }
+            
+            if (subtitleController != null)
+            {
+                Debug.Log($"Subtitle controller found/created: {subtitleController.name}");
+                
+                // Ensure subtitle controller has the text reference
+                if (subtitleController.subtitleTextUI == null && subtitleTextUI != null)
+                {
+                    subtitleController.subtitleTextUI = subtitleTextUI;
+                    Debug.Log($"Assigned subtitle text to controller: {subtitleTextUI.name}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Subtitle controller not found or created. Timeline subtitles may not work.");
+            }
+        }
+        else
+        {
+            Debug.Log($"Subtitle controller assigned: {subtitleController.name}");
+            
+            // Ensure subtitle controller has the text reference
+            if (subtitleController.subtitleTextUI == null && subtitleTextUI != null)
+            {
+                subtitleController.subtitleTextUI = subtitleTextUI;
+                Debug.Log($"Assigned subtitle text to controller: {subtitleTextUI.name}");
             }
         }
     }
@@ -329,6 +443,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
         
+        // Clear any existing subtitles before starting
+        ClearSubtitles();
+        
         // Play the cutscene
         if (npcCutsceneDirector != null)
         {
@@ -338,8 +455,8 @@ public class K3_NPCinstructions1 : MonoBehaviour
         // Invoke start event
         onCutsceneStart?.Invoke();
         
-        Debug.Log("NPC Cutscene triggered - Player completely frozen, NPC name: " + 
-                 (npcNameText != null && npcNameText.gameObject.activeSelf ? "SHOWN" : "HIDDEN"));
+        Debug.Log($"NPC Cutscene triggered - Player completely frozen, NPC name: {(npcNameText != null && npcNameText.gameObject.activeSelf ? "SHOWN" : "HIDDEN")}");
+        Debug.Log($"Subtitle system: {(subtitleTextUI != null ? "ASSIGNED" : "NOT ASSIGNED")}");
     }
     
     private void StoreOriginalPlayerStates()
@@ -452,7 +569,10 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 }
                 
                 // Disable anything that might affect movement
-                script.enabled = false;
+                if (script is Behaviour behaviour)
+                {
+                    behaviour.enabled = false;
+                }
             }
         }
         
@@ -469,6 +589,38 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             dialogueCanvas.SetActive(true);
             Debug.Log("Dialogue canvas activated");
+        }
+        
+        // CRITICAL: Enable subtitle canvas and text
+        EnableSubtitleDisplay();
+    }
+    
+    // Enable subtitle display
+    private void EnableSubtitleDisplay()
+    {
+        // Enable subtitle canvas
+        if (subtitleCanvas != null)
+        {
+            subtitleCanvas.SetActive(true);
+            Debug.Log($"Subtitle canvas enabled: {subtitleCanvas.name}");
+        }
+        
+        // Enable subtitle text
+        if (subtitleTextUI != null)
+        {
+            subtitleTextUI.gameObject.SetActive(true);
+            Debug.Log($"Subtitle text enabled: {subtitleTextUI.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Subtitle text UI is null! Subtitles won't display.");
+        }
+        
+        // Ensure subtitle controller has the text reference
+        if (subtitleController != null && subtitleController.subtitleTextUI == null && subtitleTextUI != null)
+        {
+            subtitleController.subtitleTextUI = subtitleTextUI;
+            Debug.Log($"Assigned subtitle text to controller: {subtitleTextUI.name}");
         }
     }
     
@@ -488,6 +640,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             npcNameText.gameObject.SetActive(false);
         }
+        
+        // Clear subtitles when paused
+        ClearSubtitles();
     }
     
     private void OnCutsceneFinished(PlayableDirector director)
@@ -502,7 +657,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
     // Skip button click handler
     private void OnSkipButtonClicked()
     {
-        if (isCutscenePlaying)
+        if (isCutscenePlaying && skipButtonReady)
         {
             SkipCutscene();
         }
@@ -532,7 +687,27 @@ public class K3_NPCinstructions1 : MonoBehaviour
     {
         if (isCutscenePlaying && npcCutsceneDirector != null)
         {
-            // Stop the timeline
+            Debug.Log("NPC cutscene skipped by player");
+            
+            // FAST FORWARD TO END: Set timeline to the end before stopping
+            double currentTime = npcCutsceneDirector.time;
+            double duration = npcCutsceneDirector.duration;
+            
+            if (duration > 0)
+            {
+                Debug.Log($"Fast-forwarding from {currentTime} to {duration}");
+                
+                // Fast forward to the end
+                npcCutsceneDirector.time = duration;
+                
+                // Evaluate the timeline at the end time
+                npcCutsceneDirector.Evaluate();
+                
+                // Trigger all bindings that should happen at the end
+                TriggerAllBindings(npcCutsceneDirector);
+            }
+            
+            // Stop the director
             npcCutsceneDirector.Stop();
             
             // Finish the cutscene with skipped flag
@@ -540,9 +715,47 @@ public class K3_NPCinstructions1 : MonoBehaviour
             
             // Invoke skipped event
             onCutsceneSkipped?.Invoke();
-            
-            Debug.Log("Cutscene skipped by player");
         }
+    }
+
+    private void TriggerAllBindings(PlayableDirector director)
+    {
+        if (director == null) return;
+        
+        // Get all PlayableBindings
+        var bindings = director.playableAsset.outputs;
+        
+        foreach (var binding in bindings)
+        {
+            try
+            {
+                // Get the bound object
+                var boundObject = director.GetGenericBinding(binding.sourceObject);
+                
+                if (boundObject != null)
+                {
+                    // If it's an animation track, force it to evaluate at the end
+                    if (binding.outputTargetType == typeof(Animator))
+                    {
+                        Animator animator = boundObject as Animator;
+                        if (animator != null)
+                        {
+                            // Ensure the animator is updated
+                            animator.Update(0f);
+                        }
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Error evaluating binding: {e.Message}");
+            }
+        }
+        
+        // Force evaluation of all playables
+        director.Evaluate();
+        
+        Debug.Log("Timeline bindings triggered for skip");
     }
     
     private void FinishCutscene(bool wasSkipped = false)
@@ -558,6 +771,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
             dialogueCanvas.SetActive(false);
             Debug.Log("Dialogue canvas deactivated");
         }
+        
+        // Clear subtitles when cutscene ends
+        ClearSubtitles();
+        
+        // Disable subtitle display
+        DisableSubtitleDisplay();
         
         // Disable NPC name text after cutscene
         if (npcNameText != null)
@@ -600,11 +819,29 @@ public class K3_NPCinstructions1 : MonoBehaviour
         
         if (wasSkipped)
         {
-            Debug.Log("NPC Cutscene skipped - Player unfrozen, NPC name text disabled");
+            Debug.Log("NPC Cutscene skipped - Player unfrozen, NPC name text disabled, subtitles cleared");
         }
         else
         {
-            Debug.Log("NPC Cutscene finished - Player unfrozen, NPC name text disabled");
+            Debug.Log("NPC Cutscene finished - Player unfrozen, NPC name text disabled, subtitles cleared");
+        }
+    }
+    
+    // Disable subtitle display
+    private void DisableSubtitleDisplay()
+    {
+        // Disable subtitle text (but keep canvas active if it's shared with dialogue)
+        if (subtitleTextUI != null)
+        {
+            subtitleTextUI.gameObject.SetActive(false);
+            Debug.Log($"Subtitle text disabled: {subtitleTextUI.name}");
+        }
+        
+        // Only disable subtitle canvas if it's separate from dialogue canvas
+        if (subtitleCanvas != null && subtitleCanvas != dialogueCanvas)
+        {
+            subtitleCanvas.SetActive(false);
+            Debug.Log($"Subtitle canvas disabled: {subtitleCanvas.name}");
         }
     }
     
@@ -699,6 +936,21 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log("Player unfrozen - All components restored");
     }
     
+    // Clear subtitles
+    private void ClearSubtitles()
+    {
+        if (subtitleController != null)
+        {
+            subtitleController.ClearSubtitle();
+            Debug.Log("Subtitles cleared via controller");
+        }
+        else if (subtitleTextUI != null)
+        {
+            subtitleTextUI.text = "";
+            Debug.Log("Subtitle text cleared directly");
+        }
+    }
+    
     // Method to update NPC name text during cutscene
     public void UpdateNPCName(string newName)
     {
@@ -783,6 +1035,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
             npcNameText.gameObject.SetActive(false);
         }
         
+        // Clear subtitles on reset
+        ClearSubtitles();
+        
+        // Disable subtitle display on reset
+        DisableSubtitleDisplay();
+        
         // Ensure player is unfrozen on reset
         UnfreezePlayer();
         
@@ -852,6 +1110,18 @@ public class K3_NPCinstructions1 : MonoBehaviour
         return skipButtonReady;
     }
     
+    // Check if subtitle text is assigned
+    public bool IsSubtitleTextAssigned()
+    {
+        return subtitleTextUI != null;
+    }
+    
+    // Check if subtitle controller is assigned
+    public bool IsSubtitleControllerAssigned()
+    {
+        return subtitleController != null;
+    }
+    
     // Get remaining time until skip button appears
     public float GetSkipButtonTimeRemaining()
     {
@@ -873,6 +1143,38 @@ public class K3_NPCinstructions1 : MonoBehaviour
             {
                 TriggerCutscene();
             }
+        }
+    }
+    
+    // Test method to show subtitle manually
+    [ContextMenu("Test Show Subtitle")]
+    public void TestShowSubtitle()
+    {
+        if (subtitleController != null)
+        {
+            // Ensure subtitle text is enabled
+            if (subtitleTextUI != null && !subtitleTextUI.gameObject.activeSelf)
+            {
+                subtitleTextUI.gameObject.SetActive(true);
+            }
+            
+            subtitleController.ShowSubtitle("This is a test subtitle! The text should appear.", 0.03f);
+            Debug.Log("Test subtitle shown via controller");
+        }
+        else if (subtitleTextUI != null)
+        {
+            // Enable text if not already enabled
+            if (!subtitleTextUI.gameObject.activeSelf)
+            {
+                subtitleTextUI.gameObject.SetActive(true);
+            }
+            
+            subtitleTextUI.text = "Test subtitle - Direct text assignment";
+            Debug.Log("Test subtitle shown (direct text assignment)");
+        }
+        else
+        {
+            Debug.LogWarning("Cannot show test subtitle - no subtitle text or controller assigned!");
         }
     }
     
@@ -917,9 +1219,13 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log($"NPC Name Text Assigned: {npcNameText != null}");
         Debug.Log($"NPC Name Text Active: {IsNPCNameActive()}");
         Debug.Log($"Current NPC Name: {(npcNameText != null ? $"'{npcNameText.text}'" : "N/A")}");
+        Debug.Log($"Subtitle Canvas: {(subtitleCanvas != null ? subtitleCanvas.name : "NOT ASSIGNED")}");
+        Debug.Log($"Subtitle Text UI: {(subtitleTextUI != null ? $"{subtitleTextUI.name} (Active: {subtitleTextUI.gameObject.activeSelf})" : "NOT ASSIGNED")}");
+        Debug.Log($"Subtitle Controller: {(subtitleController != null ? $"{subtitleController.name} (Has Text: {subtitleController.subtitleTextUI != null})" : "NOT ASSIGNED")}");
         Debug.Log($"Skip Button Ready: {skipButtonReady}");
         Debug.Log($"Time Until Skip: {GetSkipButtonTimeRemaining():F1}s");
         Debug.Log($"Timeline Director State: {(npcCutsceneDirector != null ? npcCutsceneDirector.state.ToString() : "NULL")}");
+        Debug.Log($"Timeline Time: {(npcCutsceneDirector != null ? $"{npcCutsceneDirector.time:F2}s/{npcCutsceneDirector.duration:F2}s" : "NULL")}");
         Debug.Log($"Cutscene Parent Active: {(cutsceneParentObject != null ? cutsceneParentObject.activeSelf : "NULL")}");
         Debug.Log($"=== END DEBUG ===");
     }

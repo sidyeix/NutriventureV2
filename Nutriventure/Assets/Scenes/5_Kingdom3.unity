@@ -3771,6 +3771,10 @@ PlayableDirector:
     value: {fileID: 1691801606}
   - key: {fileID: -7919140893885407170, guid: 7eada2a257bcb9346881ce7d0bc1ee19, type: 2}
     value: {fileID: 1205278606}
+  - key: {fileID: 4248879697364849048, guid: 7eada2a257bcb9346881ce7d0bc1ee19, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 2802595316936090607, guid: 7eada2a257bcb9346881ce7d0bc1ee19, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 320888b007737f14cb0e62dd54014e4c: {fileID: 1755890872}
@@ -45187,6 +45191,10 @@ PlayableDirector:
     value: {fileID: 114998889}
   - key: {fileID: 1485836115687930735, guid: e3e5f294fcb6c55459cf4282b7ea6f50, type: 2}
     value: {fileID: 1213763897}
+  - key: {fileID: -4715007242255434650, guid: e3e5f294fcb6c55459cf4282b7ea6f50, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 7144508160914948904, guid: e3e5f294fcb6c55459cf4282b7ea6f50, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 9d773a5094071b349ad2f56fc86b3ac7: {fileID: 1942007672}
@@ -72109,7 +72117,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1617288256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -126611,6 +126619,9 @@ MonoBehaviour:
   dialogueCanvas: {fileID: 1269067734}
   showDialogueDuringCutscene: 1
   npcNameText: {fileID: 1355695259}
+  subtitleCanvas: {fileID: 1617288255}
+  subtitleTextUI: {fileID: 1617288256}
+  subtitleController: {fileID: 117629750}
   skipButton: {fileID: 185100896}
   enableSkipButton: 1
   skipButtonDelay: 2
