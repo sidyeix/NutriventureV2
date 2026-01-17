@@ -24,6 +24,7 @@ public class StartingSequenceManager : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera normalFollowCamera;
     [SerializeField] private CinemachineVirtualCamera sequenceFollowCamera;
     [SerializeField] private int sequenceCameraPriority = 30;
+    [SerializeField] private int normalCameraPriority = 20; // CHANGED: Set this to 20 instead of 10
 
     [Header("UI Management")]
     [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>();
@@ -53,6 +54,8 @@ public class StartingSequenceManager : MonoBehaviour
         if (normalFollowCamera != null)
         {
             originalNormalCameraPriority = normalFollowCamera.Priority;
+            // Set the desired normal camera priority to 20
+            normalCameraPriority = 20; // CHANGED: Set this to 20 instead of 10
         }
     }
 
@@ -119,7 +122,6 @@ public class StartingSequenceManager : MonoBehaviour
         yield return StartCoroutine(RotateToStartingOrientation());
 
         // Animation automatically goes to idle when speed = 0 (handled by blend tree)
-        // We don't touch the animator at all after setting speed to 0
 
         // Step 7: Enable UI elements for object interaction (but NOT movement UI)
         EnableUIElements();
@@ -137,9 +139,33 @@ public class StartingSequenceManager : MonoBehaviour
     // Method to enable all controls when game ends (called by end trigger)
     public void EnableAllControlsAndUI()
     {
+        if (!hasReachedStartPoint) return; // Only enable if we actually started the sequence
+
         Debug.Log("Enabling all controls and UI (game end)");
 
-        // Switch back to normal camera
+        // Step 1: Switch back to normal camera with priority 20
+        SwitchToNormalCamera();
+
+        // Step 2: Re-enable player input
+        EnablePlayerInput();
+
+        // Step 3: Re-enable all UI elements that were disabled
+        ReEnableAllUI();
+
+        // Step 4: Reset sequence state
+        hasReachedStartPoint = false;
+
+        Debug.Log("Game ended - All controls and UI restored, camera priority set to 20"); // CHANGED: Updated log message
+    }
+
+    // NEW: Separate method for ending just the assessment (without resetting everything)
+    public void EndAssessmentOnly()
+    {
+        if (!hasReachedStartPoint) return;
+
+        Debug.Log("Ending assessment only");
+
+        // Switch back to normal camera with priority 20
         SwitchToNormalCamera();
 
         // Re-enable player input
@@ -148,146 +174,8 @@ public class StartingSequenceManager : MonoBehaviour
         // Re-enable all UI elements that were disabled
         ReEnableAllUI();
 
-        // Reset sequence state if needed
-        hasReachedStartPoint = false;
-    }
-
-    // Reset player to original position (for wrong object choice later)
-    public void ResetToOriginalPosition()
-    {
-        if (playerController != null)
-        {
-            playerController.transform.position = originalPlayerPosition;
-
-            // Make sure animator knows we're at zero speed
-            if (playerAnimator != null)
-            {
-                playerAnimator.SetFloat(animIDSpeed, 0f);
-                playerAnimator.SetFloat(animIDMotionSpeed, 0f);
-            }
-
-            Debug.Log("Player reset to original position (idle)");
-        }
-    }
-
-    private IEnumerator MoveToStartingPointSmooth()
-    {
-        Debug.Log("Moving to starting point with smooth stop...");
-
-        while (Vector3.Distance(playerController.transform.position, startingPoint.position) > arrivalDistance)
-        {
-            // Calculate distance remaining
-            float distanceRemaining = Vector3.Distance(playerController.transform.position, startingPoint.position);
-
-            // Calculate direction to starting point
-            Vector3 direction = (startingPoint.position - playerController.transform.position).normalized;
-
-            // Calculate speed based on distance (slower as we get closer)
-            float currentSpeed = CalculateSpeedBasedOnDistance(distanceRemaining);
-
-            // Calculate movement
-            Vector3 moveVector = direction * currentSpeed * Time.deltaTime;
-
-            // Move the character using CharacterController
-            if (characterController != null && characterController.enabled)
-            {
-                characterController.Move(moveVector);
-            }
-            else
-            {
-                // Fallback to transform movement
-                playerController.transform.position += moveVector;
-            }
-
-            // Smoothly rotate towards movement direction
-            if (direction != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                playerController.transform.rotation = Quaternion.Slerp(
-                    playerController.transform.rotation,
-                    targetRotation,
-                    rotationSpeed * Time.deltaTime
-                );
-            }
-
-            // Update animator speed (this triggers running animation)
-            // The animator will automatically transition to idle when speed = 0
-            UpdateAnimatorSpeed(currentSpeed);
-
-            yield return null;
-        }
-
-        Debug.Log("Reached starting point proximity");
-    }
-
-    private float CalculateSpeedBasedOnDistance(float distance)
-    {
-        if (distance <= arrivalDistance)
-        {
-            return 0f; // Stop completely
-        }
-        else if (distance <= slowDownDistance)
-        {
-            // Gradually slow down when close
-            float t = (distance - arrivalDistance) / (slowDownDistance - arrivalDistance);
-            return Mathf.Lerp(0.5f, autoMoveSpeed, t);
-        }
-        else
-        {
-            return autoMoveSpeed; // Full speed
-        }
-    }
-
-    private IEnumerator RotateToStartingOrientation()
-    {
-        Debug.Log("Rotating to starting orientation...");
-
-        Quaternion targetRotation = startingPoint.rotation;
-        float angleDifference;
-
-        do
-        {
-            playerController.transform.rotation = Quaternion.Slerp(
-                playerController.transform.rotation,
-                targetRotation,
-                rotationSpeed * Time.deltaTime
-            );
-
-            angleDifference = Quaternion.Angle(playerController.transform.rotation, targetRotation);
-            yield return null;
-
-        } while (angleDifference > arrivalAngleThreshold);
-
-        playerController.transform.rotation = targetRotation;
-        Debug.Log("Rotation completed");
-    }
-
-    private void SnapToStartingPoint()
-    {
-        // Snap to exact position
-        playerController.transform.position = startingPoint.position;
-
-        // Set animation speed to zero - animator will automatically go to idle
-        if (playerAnimator != null)
-        {
-            playerAnimator.SetFloat(animIDSpeed, 0f);
-            playerAnimator.SetFloat(animIDMotionSpeed, 0f);
-        }
-
-        Debug.Log("Snapped to starting point - animator will handle idle transition");
-    }
-
-    private void UpdateAnimatorSpeed(float currentSpeed)
-    {
-        if (playerAnimator != null)
-        {
-            // Convert movement speed to animation speed parameter
-            // Your controller uses Speed parameter where 0=idle, 2=walk, 5.33=run
-            float animSpeed = Mathf.Clamp(currentSpeed / 5.33f * 5f, 0f, 5f);
-
-            playerAnimator.SetFloat(animIDSpeed, animSpeed);
-            playerAnimator.SetFloat(animIDMotionSpeed, 1f);
-        }
+        // Don't reset hasReachedStartPoint if you want to keep the sequence state
+        // hasReachedStartPoint = false;
     }
 
     private void SwitchToSequenceCamera()
@@ -306,11 +194,11 @@ public class StartingSequenceManager : MonoBehaviour
     {
         if (sequenceFollowCamera != null && normalFollowCamera != null)
         {
-            // Switch back to normal camera
+            // Switch back to normal camera with priority 20
             sequenceFollowCamera.Priority = 0;
-            normalFollowCamera.Priority = originalNormalCameraPriority;
+            normalFollowCamera.Priority = normalCameraPriority;
 
-            Debug.Log($"Switched back to normal camera (Priority: {originalNormalCameraPriority})");
+            Debug.Log($"Switched back to normal camera (Priority: {normalCameraPriority})");
         }
     }
 
@@ -325,10 +213,6 @@ public class StartingSequenceManager : MonoBehaviour
             playerInput.crawl = false;
             playerInput.push = false;
         }
-
-        // IMPORTANT: Do NOT disable the playerController component
-        // We want the animator to keep working normally
-        // Just prevent new input
 
         // Lock cursor (for PC)
         Cursor.lockState = CursorLockMode.Locked;
@@ -402,11 +286,111 @@ public class StartingSequenceManager : MonoBehaviour
         }
     }
 
+    // The rest of your methods remain the same...
+    private IEnumerator MoveToStartingPointSmooth()
+    {
+        Debug.Log("Moving to starting point with smooth stop...");
+
+        while (Vector3.Distance(playerController.transform.position, startingPoint.position) > arrivalDistance)
+        {
+            float distanceRemaining = Vector3.Distance(playerController.transform.position, startingPoint.position);
+            Vector3 direction = (startingPoint.position - playerController.transform.position).normalized;
+            float currentSpeed = CalculateSpeedBasedOnDistance(distanceRemaining);
+            Vector3 moveVector = direction * currentSpeed * Time.deltaTime;
+
+            if (characterController != null && characterController.enabled)
+            {
+                characterController.Move(moveVector);
+            }
+            else
+            {
+                playerController.transform.position += moveVector;
+            }
+
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                playerController.transform.rotation = Quaternion.Slerp(
+                    playerController.transform.rotation,
+                    targetRotation,
+                    rotationSpeed * Time.deltaTime
+                );
+            }
+
+            UpdateAnimatorSpeed(currentSpeed);
+            yield return null;
+        }
+
+        Debug.Log("Reached starting point proximity");
+    }
+
+    private float CalculateSpeedBasedOnDistance(float distance)
+    {
+        if (distance <= arrivalDistance)
+        {
+            return 0f;
+        }
+        else if (distance <= slowDownDistance)
+        {
+            float t = (distance - arrivalDistance) / (slowDownDistance - arrivalDistance);
+            return Mathf.Lerp(0.5f, autoMoveSpeed, t);
+        }
+        else
+        {
+            return autoMoveSpeed;
+        }
+    }
+
+    private IEnumerator RotateToStartingOrientation()
+    {
+        Debug.Log("Rotating to starting orientation...");
+
+        Quaternion targetRotation = startingPoint.rotation;
+        float angleDifference;
+
+        do
+        {
+            playerController.transform.rotation = Quaternion.Slerp(
+                playerController.transform.rotation,
+                targetRotation,
+                rotationSpeed * Time.deltaTime
+            );
+
+            angleDifference = Quaternion.Angle(playerController.transform.rotation, targetRotation);
+            yield return null;
+
+        } while (angleDifference > arrivalAngleThreshold);
+
+        playerController.transform.rotation = targetRotation;
+        Debug.Log("Rotation completed");
+    }
+
+    private void SnapToStartingPoint()
+    {
+        playerController.transform.position = startingPoint.position;
+
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetFloat(animIDSpeed, 0f);
+            playerAnimator.SetFloat(animIDMotionSpeed, 0f);
+        }
+
+        Debug.Log("Snapped to starting point - animator will handle idle transition");
+    }
+
+    private void UpdateAnimatorSpeed(float currentSpeed)
+    {
+        if (playerAnimator != null)
+        {
+            float animSpeed = Mathf.Clamp(currentSpeed / 5.33f * 5f, 0f, 5f);
+            playerAnimator.SetFloat(animIDSpeed, animSpeed);
+            playerAnimator.SetFloat(animIDMotionSpeed, 1f);
+        }
+    }
+
     private void EnableObjectInteraction()
     {
         Debug.Log("Object interaction enabled - ready for tapping");
-
-        // Unlock cursor for mobile tapping
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -414,11 +398,7 @@ public class StartingSequenceManager : MonoBehaviour
     // Public methods for external access
     public bool IsSequenceComplete() => hasReachedStartPoint;
     public bool IsInSequence() => isInStartingSequence;
-    public bool CanInteractWithObjects()
-    {
-        return hasReachedStartPoint && !isInStartingSequence &&
-               (playerAnimator == null || !playerAnimator.GetBool("isWalkingBackward"));
-    }
+    public bool CanInteractWithObjects() => hasReachedStartPoint && !isInStartingSequence;
 
     public string GetCurrentState()
     {
@@ -432,32 +412,28 @@ public class StartingSequenceManager : MonoBehaviour
     {
         if (startingPoint != null)
         {
-            // Draw starting point
             Gizmos.color = Color.green;
             Gizmos.DrawSphere(startingPoint.position, 0.3f);
             Gizmos.DrawLine(startingPoint.position, startingPoint.position + startingPoint.forward * 2f);
 
-            // Draw slow down radius
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(startingPoint.position, slowDownDistance);
 
-            // Draw arrival radius
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(startingPoint.position, arrivalDistance);
         }
     }
 
-    // Editor validation
     void OnValidate()
     {
-        // Ensure values are sensible
         autoMoveSpeed = Mathf.Max(0.1f, autoMoveSpeed);
         rotationSpeed = Mathf.Max(0.1f, rotationSpeed);
         arrivalDistance = Mathf.Max(0.1f, arrivalDistance);
         slowDownDistance = Mathf.Max(arrivalDistance + 0.1f, slowDownDistance);
-
-        // Ensure camera priority is reasonable
         sequenceCameraPriority = Mathf.Max(1, sequenceCameraPriority);
+
+        // Ensure normal camera priority is 20
+        normalCameraPriority = 20; // CHANGED: Set to 20 instead of 10
     }
 
     public Vector3 GetPlayerPosition()
@@ -489,5 +465,12 @@ public class StartingSequenceManager : MonoBehaviour
         );
 
         return distance < 0.5f;
+    }
+
+    // NEW: Force camera reset (call this if needed)
+    public void ForceCameraReset()
+    {
+        SwitchToNormalCamera();
+        Debug.Log("Forced camera reset to normal priority");
     }
 }

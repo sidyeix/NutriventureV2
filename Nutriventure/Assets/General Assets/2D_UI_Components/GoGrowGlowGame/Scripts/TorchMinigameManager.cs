@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Playables; // Add this namespace
 
 public class TorchMinigameManager : MonoBehaviour
 {
@@ -38,6 +39,12 @@ public class TorchMinigameManager : MonoBehaviour
     [SerializeField] private bool showTrackerOnStart = false;
     [SerializeField] private bool hideOnExit = false;
 
+    [Header("Timeline Settings")]
+    [SerializeField] private PlayableDirector playableDirector; // Reference to Playable Director
+    [SerializeField] private PlayableAsset timelineToPlay; // The Timeline asset you assign in Inspector
+    [SerializeField] private bool playTimelineOnCompletion = true;
+    [SerializeField] private float timelineDelay = 2f; // Delay before playing timeline
+
     private List<TorchMinigame> allTorches = new List<TorchMinigame>();
     private int litTorchesCount = 0;
     private bool isTrackerVisible = false;
@@ -46,6 +53,7 @@ public class TorchMinigameManager : MonoBehaviour
     private Vector3 trackerPanelVisiblePosition;
     private Coroutine panelSlideCoroutine;
     private AudioSource audioSource;
+    private bool hasCompleted = false; // Track if minigame is already complete
 
     private void Awake()
     {
@@ -77,6 +85,16 @@ public class TorchMinigameManager : MonoBehaviour
         }
 
         Debug.Log($"Total torches to track: {totalTorches}");
+
+        // Validate Timeline Settings
+        if (playableDirector == null)
+        {
+            Debug.LogWarning("Playable Director not assigned. Timeline won't play on completion.");
+        }
+        if (timelineToPlay == null && playTimelineOnCompletion)
+        {
+            Debug.LogWarning("Timeline asset not assigned. Please assign a timeline in the Inspector if you want it to play on completion.");
+        }
     }
 
     private void InitializeTracker()
@@ -130,7 +148,7 @@ public class TorchMinigameManager : MonoBehaviour
     // Called when a torch is successfully lit
     public void TorchLit(TorchMinigame torch)
     {
-        if (!torch.IsLit()) return;
+        if (!torch.IsLit() || hasCompleted) return;
 
         litTorchesCount++;
         Debug.Log($"Torch lit! Total: {litTorchesCount}/{totalTorches}");
@@ -331,12 +349,16 @@ public class TorchMinigameManager : MonoBehaviour
 
     private void AllTorchesLit()
     {
+        if (hasCompleted) return; // Prevent multiple triggers
+
         Debug.Log("=== ALL TORCHES ARE LIT! ===");
+
+        hasCompleted = true;
 
         // Play complete sound
         PlaySound(completeSound);
 
-        // You can add special effects, rewards, or events here
+        // Update UI
         if (trackerText != null)
         {
             trackerText.text = "COMPLETE!";
@@ -347,6 +369,79 @@ public class TorchMinigameManager : MonoBehaviour
         if (GoGrowGlowGameManager.Instance != null)
         {
             GoGrowGlowGameManager.Instance.AddPoints(500); // Bonus points
+        }
+
+        // Play timeline if enabled
+        if (playTimelineOnCompletion)
+        {
+            StartCoroutine(PlayTimelineAfterDelay());
+        }
+    }
+
+    // Coroutine to play timeline after delay
+    private IEnumerator PlayTimelineAfterDelay()
+    {
+        Debug.Log($"Waiting {timelineDelay} seconds before playing timeline...");
+        yield return new WaitForSeconds(timelineDelay);
+
+        Debug.Log("Playing timeline...");
+
+        if (playableDirector != null && timelineToPlay != null)
+        {
+            // Assign the timeline to the Playable Director and play it
+            playableDirector.playableAsset = timelineToPlay;
+            playableDirector.Play();
+
+            Debug.Log($"Playing timeline: {timelineToPlay.name}");
+        }
+        else if (playableDirector == null)
+        {
+            Debug.LogWarning("Playable Director not assigned. Cannot play timeline.");
+        }
+        else if (timelineToPlay == null)
+        {
+            Debug.LogWarning("Timeline asset not assigned. Please assign a timeline in the Inspector.");
+        }
+
+        // Optional: Hide tracker panel when timeline starts
+        HideTrackerPanel();
+    }
+
+    // Manual method to play timeline
+    public void PlayTimeline()
+    {
+        if (playableDirector != null && timelineToPlay != null)
+        {
+            Debug.Log($"Manually playing timeline: {timelineToPlay.name}");
+            playableDirector.playableAsset = timelineToPlay;
+            playableDirector.Play();
+        }
+        else
+        {
+            Debug.LogWarning("Cannot play timeline: Playable Director or Timeline asset not assigned.");
+        }
+    }
+
+    // Method to stop timeline
+    public void StopTimeline()
+    {
+        if (playableDirector != null && playableDirector.state == PlayState.Playing)
+        {
+            Debug.Log("Stopping timeline");
+            playableDirector.Stop();
+        }
+    }
+
+    // Method to restart timeline
+    public void RestartTimeline()
+    {
+        if (playableDirector != null && timelineToPlay != null)
+        {
+            Debug.Log("Restarting timeline");
+            playableDirector.playableAsset = timelineToPlay;
+            playableDirector.Stop();
+            playableDirector.time = 0;
+            playableDirector.Play();
         }
     }
 
@@ -390,7 +485,7 @@ public class TorchMinigameManager : MonoBehaviour
         PlaySound(clip);
     }
 
-    // NEW: Manual toggle method
+    // Manual toggle method
     public void ToggleTrackerPanel()
     {
         if (isTrackerVisible)
@@ -403,18 +498,55 @@ public class TorchMinigameManager : MonoBehaviour
         }
     }
 
-    // NEW: Reset trigger (if you want to allow re-triggering)
+    // Reset trigger (if you want to allow re-triggering)
     public void ResetTrigger()
     {
         hasBeenTriggered = false;
         Debug.Log("Tracker trigger reset");
     }
 
-    // NEW: Force update tracker (useful for debugging)
+    // Reset minigame completion state
+    public void ResetMinigame()
+    {
+        hasCompleted = false;
+        litTorchesCount = 0;
+        UpdateTrackerText();
+        Debug.Log("Minigame reset");
+    }
+
+    // Force update tracker (useful for debugging)
     public void ForceUpdateTracker()
     {
         UpdateTrackerText();
         Debug.Log($"Force updated tracker: {litTorchesCount}/{totalTorches}");
+    }
+
+    // Set Playable Director at runtime
+    public void SetPlayableDirector(PlayableDirector director)
+    {
+        playableDirector = director;
+        Debug.Log($"Playable Director set to: {(director != null ? director.name : "null")}");
+    }
+
+    // Set Timeline asset at runtime
+    public void SetTimelineToPlay(PlayableAsset timelineAsset)
+    {
+        timelineToPlay = timelineAsset;
+        Debug.Log($"Timeline asset set to: {(timelineAsset != null ? timelineAsset.name : "null")}");
+    }
+
+    // Set timeline delay at runtime
+    public void SetTimelineDelay(float delay)
+    {
+        timelineDelay = Mathf.Max(0f, delay);
+        Debug.Log($"Timeline delay set to: {timelineDelay} seconds");
+    }
+
+    // Enable/disable timeline playback
+    public void SetPlayTimelineOnCompletion(bool enabled)
+    {
+        playTimelineOnCompletion = enabled;
+        Debug.Log($"Timeline playback on completion: {enabled}");
     }
 
     // Public getters
@@ -422,6 +554,10 @@ public class TorchMinigameManager : MonoBehaviour
     public int GetTotalTorches() => totalTorches;
     public bool AreAllTorchesLit() => litTorchesCount >= totalTorches;
     public bool IsTrackerVisible() => isTrackerVisible;
+    public bool HasCompleted() => hasCompleted;
+    public PlayableDirector GetPlayableDirector() => playableDirector;
+    public PlayableAsset GetTimelineToPlay() => timelineToPlay;
+    public bool IsTimelinePlaying() => playableDirector != null && playableDirector.state == PlayState.Playing;
 
     // For saving/loading game state
     public void SetLitTorchesCount(int count)
@@ -459,5 +595,11 @@ public class TorchMinigameManager : MonoBehaviour
 
         UpdateTrackerText();
         Debug.Log($"Restored torch states: {litTorchesCount}/{totalTorches} lit");
+
+        // Check if already completed
+        if (litTorchesCount >= totalTorches)
+        {
+            hasCompleted = true;
+        }
     }
 }

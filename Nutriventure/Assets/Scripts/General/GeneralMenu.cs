@@ -20,6 +20,9 @@ public class MainMenuController : MonoBehaviour
     {
         Debug.Log("=== MAIN MENU STARTING ===");
 
+        // Add a small delay to ensure GameDataManager is ready
+        yield return new WaitForSeconds(0.1f);
+
         // 1. Load the saved character appearance WITHOUT animation
         LoadSavedCharacterNoAnimation();
 
@@ -60,10 +63,24 @@ public class MainMenuController : MonoBehaviour
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             savedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
-            Debug.Log($"Loading saved character ID: {savedCharacterID} (no animation - main menu)");
+
+            // ADD EXTENSIVE DEBUGGING
+            Debug.Log($"=== LOADING CHARACTER DEBUG ===");
+            Debug.Log($"GameDataManager exists: {GameDataManager.Instance != null}");
+            Debug.Log($"CurrentGameData exists: {GameDataManager.Instance.CurrentGameData != null}");
+            Debug.Log($"Saved Character ID from GameData: {savedCharacterID}");
+            Debug.Log($"=== END DEBUG ===");
         }
         else
         {
+            if (GameDataManager.Instance == null)
+            {
+                Debug.LogError("GameDataManager.Instance is NULL!");
+            }
+            else if (GameDataManager.Instance.CurrentGameData == null)
+            {
+                Debug.LogError("GameDataManager.Instance.CurrentGameData is NULL!");
+            }
             Debug.LogWarning("No save data found, using default character (ID: 0)");
         }
 
@@ -75,16 +92,19 @@ public class MainMenuController : MonoBehaviour
             if (methodInfo != null)
             {
                 methodInfo.Invoke(characterVisualSwapper, new object[] { savedCharacterID });
+                Debug.Log($"Character loaded with LoadCharacterWithSavedSkinNoAnimation: ID {savedCharacterID}");
             }
             else
             {
                 // Fallback to regular method and then stop animation
                 characterVisualSwapper.LoadCharacterWithSavedSkin(savedCharacterID);
                 characterVisualSwapper.StopLookAroundAnimation();
+                Debug.Log($"Character loaded with fallback method: ID {savedCharacterID}");
             }
         }
     }
 
+    // KEEP ALL OTHER METHODS EXACTLY THE SAME
     void EnableStarterAssetsControl()
     {
         GameObject player = FindPlayer();

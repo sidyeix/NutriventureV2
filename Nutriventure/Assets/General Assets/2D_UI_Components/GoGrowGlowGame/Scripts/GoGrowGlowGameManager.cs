@@ -167,6 +167,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public AudioClip damageSound;
     public AudioClip deathSound;
 
+    [Header("Background Music Settings")]
+    public AudioSource backgroundMusicSource;
+    public AudioClip gameStartBGM;    // GameProperBGM
+    public AudioClip gameEndBGM;      // NutriKingdomBG
+
     [Header("Boost Effects")]
     public GameObject speedBoostEffect;
     public GameObject sizeBoostEffect;
@@ -174,6 +179,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("Food Feedback UI")]
     public FoodFeedbackUI foodFeedbackUI;
+
+    [Header("Start Game Settings")]
+    public float startDelay = 2f; // Delay before game actually starts after clicking button
+    public float startEnergy = 100f; // Starting energy value
+    private bool isStartingGame = false; // Flag to track if game is in starting process
 
     private bool inHealingZone = false;
     private Coroutine resetExciteCoroutine;
@@ -186,6 +196,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private bool playerSettingsInitialized = false;
     private CharacterController characterController;
     private float originalSpeed;
+    private bool isGameTimerPaused = false;
+    private float pausedTimerValue = 0f;
 
     private void Awake()
     {
@@ -206,7 +218,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         {
             energySlider.maxValue = 100f;
             energySlider.minValue = 0f;
-            energySlider.value = currentEnergy;
+            energySlider.value = 0f; // Start with 0 energy in menu
         }
 
         if (playerController != null)
@@ -221,7 +233,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
         HideAllBoostUI();
         if (oneLifePanel != null) oneLifePanel.SetActive(false);
 
-        targetEnergy = currentEnergy;
+        targetEnergy = 0f; // Start with 0 energy in menu
+        currentEnergy = 0f;
         targetSpeed = initialPlayerSpeed;
         targetSize = initialPlayerSize;
 
@@ -233,14 +246,25 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         UpdateUI();
         SetGameActive(false);
+
+        // Set initial BGM to gameEndBGM (NutriKingdomBG)
+        if (backgroundMusicSource != null && gameEndBGM != null)
+        {
+            backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.Play();
+        }
     }
 
     private void Update()
     {
         if (!gameIsActive) return;
 
-        gameTimer += Time.deltaTime;
-        UpdateTimerDisplay();
+        // Only update timer if not paused
+        if (!isGameTimerPaused)
+        {
+            gameTimer += Time.deltaTime;
+            UpdateTimerDisplay();
+        }
 
         // Only decrease energy if not paused and not in healing zone/boosted states
         if (!isEnergyDecreasePaused && !inHealingZone && !isSpeedBoosted && !isSizeBoosted)
@@ -492,13 +516,41 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== GAME FLOW ======
     public void StartGame()
     {
+        if (isStartingGame) return; // Prevent multiple clicks
+
+        isStartingGame = true;
+        if (startButton != null) startButton.interactable = false;
+
+        // Start the delayed game start process
+        StartCoroutine(DelayedGameStart());
+    }
+
+    private IEnumerator DelayedGameStart()
+    {
+        // Show a countdown or some indication the game is about to start
+        Debug.Log($"Game starting in {startDelay} seconds...");
+
+        // Wait for the start delay
+        yield return new WaitForSeconds(startDelay);
+
+        // Now actually start the game
+        ActualGameStart();
+    }
+
+    private void ActualGameStart()
+    {
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
         gameIsActive = true;
+        isStartingGame = false;
         isEnergyDecreasePaused = false; // Reset pause state
+
+        // Set starting energy to 100 to prevent instant death
+        currentEnergy = startEnergy;
+        targetEnergy = startEnergy;
+        if (energySlider != null) energySlider.value = currentEnergy;
+
         currentLives = maxLives;
         currentLifeAmount = maxLives;
-        currentEnergy = 0f;
-        targetEnergy = 0f;
         score = 0;
         gameTimer = 0f;
         currentFoodZone = FoodType.Go;
@@ -548,9 +600,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (foodSpawner != null) foodSpawner.StartSpawning();
         else Debug.LogError("FoodSpawner not assigned to GameManager!");
 
+        // Change background music to GameProperBGM when game starts
+        if (backgroundMusicSource != null && gameStartBGM != null)
+        {
+            backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.Play();
+        }
+
         UpdateUI();
         RespawnPlayer();
-        Debug.Log("Game Started!");
+        Debug.Log("Game Started! Starting energy: " + currentEnergy);
     }
 
     public void EndGame()
@@ -600,10 +659,21 @@ public class GoGrowGlowGameManager : MonoBehaviour
         HideAllVisualEffects();
         HideAllBoostUI();
 
+        // Change background music back to NutriKingdomBG when game ends
+        if (backgroundMusicSource != null && gameEndBGM != null)
+        {
+            backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.Play();
+        }
+
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
-        if (startButton != null) startButton.gameObject.SetActive(true);
+        if (startButton != null)
+        {
+            startButton.gameObject.SetActive(true);
+            startButton.interactable = true; // Re-enable the button
+        }
         Debug.Log("Game Ended!");
     }
 
@@ -1093,7 +1163,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== UI ======
     private void UpdateUI()
     {
-        if (scoreText != null) scoreText.text = $"Score: {score}";
+        if (scoreText != null) scoreText.text = $"{score}";
         if (livesText != null) livesText.text = $"Lives: {Mathf.CeilToInt(currentLifeAmount)}";
     }
 
@@ -1179,20 +1249,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     public void AddEnergy(float amount)
     {
-        if (!gameIsActive) return;
+        if (!gameIsActive)
+        {
+            Debug.LogWarning($"AddEnergy called but game is not active! Amount: {amount}");
+            return;
+        }
 
         targetEnergy += amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-        Debug.Log($"Energy added: {amount}. New target: {targetEnergy}");
+        Debug.Log($"Energy added: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
     }
 
     public void RemoveEnergy(float amount)
     {
-        if (!gameIsActive) return;
+        if (!gameIsActive)
+        {
+            Debug.LogWarning($"RemoveEnergy called but game is not active! Amount: {amount}");
+            return;
+        }
 
         targetEnergy -= amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-        Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}");
+        Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
     }
 
     public void SetEnergy(float amount)
@@ -1254,6 +1332,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
         Debug.Log($"Glow boost activated for {duration} seconds");
     }
 
+    public void PauseGameTimer()
+    {
+        if (!gameIsActive) return;
+
+        isGameTimerPaused = true;
+        pausedTimerValue = gameTimer;
+        Debug.Log("Game timer paused");
+    }
+
+    public void ResumeGameTimer()
+    {
+        if (!gameIsActive) return;
+
+        isGameTimerPaused = false;
+        Debug.Log("Game timer resumed");
+    }
+
+    public bool IsGameTimerPaused()
+    {
+        return isGameTimerPaused;
+    }
+
     // ====== PUBLIC GETTERS ======
     public float GetCurrentLifeAmount() => currentLifeAmount;
     public int GetCurrentLives() => currentLives;
@@ -1268,4 +1368,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public bool IsRespawning() => isRespawning;
     public bool IsKnockbackActive() => isKnockbackActive;
     public bool IsDamageOnCooldown() => isDamageOnCooldown;
+    public float GetStartDelay() => startDelay;
+    public bool IsStartingGame() => isStartingGame;
 }

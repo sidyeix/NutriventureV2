@@ -78,7 +78,24 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         sequenceManager = FindObjectOfType<StartingSequenceManager>();
 
         // Find assessment manager for point system integration
-        assessmentManager = FindObjectOfType<GrowAssessmentManager>();
+        // FIRST try the singleton
+        assessmentManager = GrowAssessmentManager.Instance;
+
+        // If still null, try to find it in the scene
+        if (assessmentManager == null)
+        {
+            assessmentManager = FindObjectOfType<GrowAssessmentManager>();
+        }
+
+        // DEBUG: Check if assessment manager was found
+        if (assessmentManager == null)
+        {
+            Debug.LogWarning($"No Assessment Manager found for {objectName}! Energy updates may not work.");
+        }
+        else
+        {
+            Debug.Log($"Found Assessment Manager for {objectName}");
+        }
 
         // Find group manager in parent hierarchy
         Transform parent = transform.parent;
@@ -291,22 +308,33 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     {
         Debug.Log($"Correct answer! Awarding {correctAnswerPoints} points and {correctEnergyGain} energy");
 
-        // Notify assessment manager for points and energy
+        // TRY ASSESSMENT MANAGER FIRST
         if (assessmentManager != null)
         {
             assessmentManager.OnCorrectAnswerSelected();
         }
         else
         {
-            Debug.LogWarning("No Assessment Manager found for point tracking");
+            Debug.LogWarning($"Assessment Manager is NULL for {objectName}! Trying direct energy update.");
+        }
 
-            // Fallback: Use game manager directly
-            if (GoGrowGlowGameManager.Instance != null)
-            {
-                GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
-                GoGrowGlowGameManager.Instance.AddEnergy(correctEnergyGain);
-                Debug.Log($"Added {correctAnswerPoints} points and {correctEnergyGain} energy via Game Manager");
-            }
+        // ALWAYS update energy through Game Manager (fallback)
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            // Update points
+            GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
+
+            // Update energy - THIS IS THE KEY PART!
+            GoGrowGlowGameManager.Instance.AddEnergy(correctEnergyGain);
+            Debug.Log($"DIRECT ENERGY UPDATE: Added {correctEnergyGain} energy via Game Manager");
+
+            // DEBUG: Check if energy actually updated
+            float currentEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
+            Debug.Log($"Current energy after update: {currentEnergy}");
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is also NULL!");
         }
     }
 
@@ -314,22 +342,33 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     {
         Debug.Log($"Wrong answer! Deducting {wrongAnswerPoints} points and {wrongEnergyDeduction} energy");
 
-        // Notify assessment manager for point and energy deduction
+        // TRY ASSESSMENT MANAGER FIRST
         if (assessmentManager != null)
         {
             assessmentManager.OnWrongAnswerSelected();
         }
         else
         {
-            Debug.LogWarning("No Assessment Manager found for point tracking");
+            Debug.LogWarning($"Assessment Manager is NULL for {objectName}! Trying direct energy update.");
+        }
 
-            // Fallback: Use game manager directly
-            if (GoGrowGlowGameManager.Instance != null)
-            {
-                GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
-                GoGrowGlowGameManager.Instance.RemoveEnergy(wrongEnergyDeduction);
-                Debug.Log($"Deducted {wrongAnswerPoints} points and {wrongEnergyDeduction} energy via Game Manager");
-            }
+        // ALWAYS update energy through Game Manager (fallback)
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            // Update points
+            GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
+
+            // Update energy - THIS IS THE KEY PART!
+            GoGrowGlowGameManager.Instance.RemoveEnergy(wrongEnergyDeduction);
+            Debug.Log($"DIRECT ENERGY UPDATE: Removed {wrongEnergyDeduction} energy via Game Manager");
+
+            // DEBUG: Check if energy actually updated
+            float currentEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
+            Debug.Log($"Current energy after deduction: {currentEnergy}");
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is also NULL!");
         }
     }
 

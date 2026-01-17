@@ -200,7 +200,6 @@ public class GrowAssessmentManager : MonoBehaviour
         shouldRespawnAtLatestPoint = false;
     }
 
-    // Called when player selects correct answer
     public void OnCorrectAnswerSelected()
     {
         if (!isAssessmentActive) return;
@@ -211,11 +210,21 @@ public class GrowAssessmentManager : MonoBehaviour
         // Add points
         if (GoGrowGlowGameManager.Instance != null)
         {
+            // DEBUG: Check if game is active
+            Debug.Log($"Game is active: {GoGrowGlowGameManager.Instance.IsGameActive()}");
+
             GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
 
             // Add energy (+20/100)
             GoGrowGlowGameManager.Instance.AddEnergy(correctAnswerEnergyGain);
-            Debug.Log($"Added {correctAnswerEnergyGain} energy for correct answer");
+            Debug.Log($"Called AddEnergy({correctAnswerEnergyGain}) for correct answer");
+
+            // DEBUG: Check current energy after adding
+            Debug.Log($"Current energy after adding: {GoGrowGlowGameManager.Instance.GetCurrentEnergy()}");
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is NULL!");
         }
 
         // Update UI
@@ -234,7 +243,6 @@ public class GrowAssessmentManager : MonoBehaviour
         }
     }
 
-    // Called when player selects wrong answer
     public void OnWrongAnswerSelected()
     {
         if (!isAssessmentActive) return;
@@ -244,17 +252,27 @@ public class GrowAssessmentManager : MonoBehaviour
         // Deduct points
         if (GoGrowGlowGameManager.Instance != null)
         {
+            // DEBUG: Check if game is active
+            Debug.Log($"Game is active: {GoGrowGlowGameManager.Instance.IsGameActive()}");
+
             GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
 
             // Deduct energy (-25/100)
             GoGrowGlowGameManager.Instance.RemoveEnergy(wrongAnswerEnergyDeduction);
-            Debug.Log($"Deducted {wrongAnswerEnergyDeduction} energy for wrong answer");
+            Debug.Log($"Called RemoveEnergy({wrongAnswerEnergyDeduction}) for wrong answer");
+
+            // DEBUG: Check current energy after removing
+            Debug.Log($"Current energy after removing: {GoGrowGlowGameManager.Instance.GetCurrentEnergy()}");
 
             // Check if energy reached zero
             if (GoGrowGlowGameManager.Instance.GetCurrentEnergy() <= 0f)
             {
                 HandleEnergyZero();
             }
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is NULL!");
         }
 
         // Optional: Show negative feedback
