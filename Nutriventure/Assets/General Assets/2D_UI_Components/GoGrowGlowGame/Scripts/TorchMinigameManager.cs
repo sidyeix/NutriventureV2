@@ -55,6 +55,11 @@ public class TorchMinigameManager : MonoBehaviour
     private AudioSource audioSource;
     private bool hasCompleted = false; // Track if minigame is already complete
 
+    // Game state tracking for pausing
+    private bool wasEnergyPaused = false;
+    private bool wasTimerPaused = false;
+    private bool isGameStatePaused = false;
+
     private void Awake()
     {
         if (Instance == null)
@@ -386,8 +391,29 @@ public class TorchMinigameManager : MonoBehaviour
 
         Debug.Log("Playing timeline...");
 
+        // Check if game is active
+        bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
+
+        if (isGameActive)
+        {
+            // Save current state before pausing
+            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+            wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
+
+            // Pause both energy decrease and game timer
+            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+            GoGrowGlowGameManager.Instance.PauseGameTimer();
+
+            isGameStatePaused = true;
+
+            Debug.Log($"Torch Minigame: Game state paused. Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+        }
+
         if (playableDirector != null && timelineToPlay != null)
         {
+            // Subscribe to timeline stopped event to resume game state
+            playableDirector.stopped += OnTimelineStopped;
+
             // Assign the timeline to the Playable Director and play it
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Play();
@@ -407,11 +433,74 @@ public class TorchMinigameManager : MonoBehaviour
         HideTrackerPanel();
     }
 
+    private void OnTimelineStopped(PlayableDirector director)
+    {
+        // Only handle our own director
+        if (director != playableDirector) return;
+
+        Debug.Log($"Torch Minigame: Timeline stopped. Director: {director.name}");
+
+        // Unsubscribe from the event
+        if (playableDirector != null)
+        {
+            playableDirector.stopped -= OnTimelineStopped;
+        }
+
+        // Resume game state if we paused it
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
+        }
+    }
+
+    private void ResumeGameState()
+    {
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            // Resume timer if it wasn't paused before
+            if (!wasTimerPaused)
+            {
+                GoGrowGlowGameManager.Instance.ResumeGameTimer();
+            }
+
+            // Resume energy if it wasn't paused before
+            if (!wasEnergyPaused)
+            {
+                GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
+            }
+
+            Debug.Log($"Torch Minigame: Game state resumed. Timer resumed: {!wasTimerPaused}, Energy resumed: {!wasEnergyPaused}");
+        }
+
+        isGameStatePaused = false;
+    }
+
     // Manual method to play timeline
     public void PlayTimeline()
     {
+        // Check if game is active
+        bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
+
+        if (isGameActive)
+        {
+            // Save current state before pausing
+            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+            wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
+
+            // Pause both energy decrease and game timer
+            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+            GoGrowGlowGameManager.Instance.PauseGameTimer();
+
+            isGameStatePaused = true;
+
+            Debug.Log($"Torch Minigame: Game state paused (manual). Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+        }
+
         if (playableDirector != null && timelineToPlay != null)
         {
+            // Subscribe to timeline stopped event to resume game state
+            playableDirector.stopped += OnTimelineStopped;
+
             Debug.Log($"Manually playing timeline: {timelineToPlay.name}");
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Play();
@@ -429,6 +518,12 @@ public class TorchMinigameManager : MonoBehaviour
         {
             Debug.Log("Stopping timeline");
             playableDirector.Stop();
+
+            // Resume game state if it was paused
+            if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+            {
+                ResumeGameState();
+            }
         }
     }
 
@@ -441,6 +536,28 @@ public class TorchMinigameManager : MonoBehaviour
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Stop();
             playableDirector.time = 0;
+
+            // Check if game is active
+            bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
+
+            if (isGameActive)
+            {
+                // Save current state before pausing
+                wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+                wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
+
+                // Pause both energy decrease and game timer
+                GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+                GoGrowGlowGameManager.Instance.PauseGameTimer();
+
+                isGameStatePaused = true;
+
+                Debug.Log($"Torch Minigame: Game state paused (restart). Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+            }
+
+            // Subscribe to timeline stopped event
+            playableDirector.stopped += OnTimelineStopped;
+
             playableDirector.Play();
         }
     }
@@ -600,6 +717,21 @@ public class TorchMinigameManager : MonoBehaviour
         if (litTorchesCount >= totalTorches)
         {
             hasCompleted = true;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from timeline events
+        if (playableDirector != null)
+        {
+            playableDirector.stopped -= OnTimelineStopped;
+        }
+
+        // Make sure we resume if we're destroyed while timeline is playing
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
         }
     }
 }
