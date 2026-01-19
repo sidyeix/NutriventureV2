@@ -6,17 +6,20 @@ public class MilkDeathZone : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            // 🔥 Force detach from moving platform
+            other.transform.SetParent(null);
+
             if (CheckpointManager.Instance != null)
             {
                 CheckpointManager.Instance.RespawnPlayer();
             }
         }
     }
-    
+
     void OnDrawGizmos()
     {
         Gizmos.color = new Color(1, 1, 0, 0.3f);
-        
+
         if (GetComponent<BoxCollider>() != null)
         {
             BoxCollider col = GetComponent<BoxCollider>();
