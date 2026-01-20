@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c332a43968bae924bb6ca752a4b91329, type: 3}
+  m_Name: K3_FoodDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::K3_FoodDatabase
+  foodProfiles:
+  - foodName: Bread
+    foodType: Baked Goods
+    shelfLife: Spoils within days if unpreserved
+    preservativeType: 2
+    minSliderValue: 40
+    maxSliderValue: 60
+    threats: "\U0001F9A0 Mold (Moderate)"
+    contents: Moist, sugar present
+    hint: "Bread molds easily \u2014 apply a moderate anti-microbial potion to prevent
+      spoilage!"
+    foodIcon: {fileID: 21300000, guid: 7540357d0843918409645710b77cc444, type: 3}
+  - foodName: Cake
+    foodType: Baked Goods
+    shelfLife: Very short if unpreserved
+    preservativeType: 2
+    minSliderValue: 50
+    maxSliderValue: 70
+    threats: "\U0001F9A0 Mold (High)"
+    contents: Moist, sugar-rich
+    hint: "This moist cake is at high risk of mold \u2014 use a high anti-microbial
+      potion!"
+    foodIcon: {fileID: 0}
+  - foodName: Canned Fruits
+    foodType: Preserved Snack
+    shelfLife: Several months if unpreserved
+    preservativeType: 1
+    minSliderValue: 40
+    maxSliderValue: 60
+    threats: "\U0001F7E0 Oxidation (Moderate)"
+    contents: Sealed, but still at risk of color loss
+    hint: "Keep the canned fruits bright \u2014 use a moderate anti-oxidant potion
+      to prevent browning!"
+    foodIcon: {fileID: 0}
+  - foodName: Fresh-Cut Fruits
+    foodType: Snack
+    shelfLife: Very short if unpreserved
+    preservativeType: 1
+    minSliderValue: 50
+    maxSliderValue: 70
+    threats: "\U0001F7E0 Oxidation / Browning (High)"
+    contents: Moist, exposed to air
+    hint: "These fruits oxidize quickly \u2014 apply a high anti-oxidant potion to
+      keep them fresh!"
+    foodIcon: {fileID: 0}
+  - foodName: Cheese
+    foodType: Dairy
+    shelfLife: Spoils in a few days if unpreserved
+    preservativeType: 2
+    minSliderValue: 40
+    maxSliderValue: 60
+    threats: "\U0001F9A0 Mold (Moderate)"
+    contents: Moist, high fat
+    hint: "Cheese can grow mold fast \u2014 apply a moderate anti-microbial potion!"
+    foodIcon: {fileID: 0}
+  - foodName: Sausages / Hotdogs
+    foodType: Processed Meat
+    shelfLife: Spoils within days if unpreserved
+    preservativeType: 1
+    minSliderValue: 30
+    maxSliderValue: 50
+    threats: "\U0001F7E0 Oxidation / Rancidity (Moderate)"
+    contents: High fat and protein
+    hint: "Prevent the meat from turning rancid \u2014 use a moderate anti-oxidant
+      potion!"
+    foodIcon: {fileID: 0}
+  - foodName: Soft Drink
+    foodType: Beverage
+    shelfLife: Spoils fast if unpreserved
+    preservativeType: 0
+    minSliderValue: 70
+    maxSliderValue: 85
+    threats: "\U0001F9A0 Microbial Growth (High)"
+    contents: High sugar content, liquid
+    hint: "This sugary drink is very vulnerable to microbes \u2014 use a very high
+      anti-microbial potion to keep it safe!"
+    foodIcon: {fileID: 0}
+  - foodName: Fruit Juice
+    foodType: Beverage
+    shelfLife: 5 days if unpreserved
+    preservativeType: 0
+    minSliderValue: 50
+    maxSliderValue: 70
+    threats: "\U0001F9A0 Microbial Growth (Moderate) & \U0001F7E0 Oxidation"
+    contents: Acidic with sugar, natural vitamins
+    hint: Fruit juice needs protection from both microbes AND oxidation. Use appropriate
+      preservative based on the threat!
+    foodIcon: {fileID: 0}
+  autoInitialize: 1
+  showDebugInfo: 1

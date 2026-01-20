@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::K3_ProductData
   allPreservatives:
   - preservativeID: 0
-    displayName: Absorbic Acid
+    displayName: Ascorbic Acid
     preservativePrefab: {fileID: 677522904236240901, guid: 327d4e79dff92c44f8a23f00709d4eb9, type: 3}
     preservativeIcon: {fileID: 0}
     preservDesc: A natural antioxidant that protects food from damage caused by air.
