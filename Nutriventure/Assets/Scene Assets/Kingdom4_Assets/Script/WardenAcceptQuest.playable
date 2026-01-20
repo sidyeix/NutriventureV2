@@ -35,9 +35,9 @@ MonoBehaviour:
   m_Clips:
   - m_Version: 1
     m_Start: 0
-    m_ClipIn: 1.0333333333333334
-    m_Asset: {fileID: 2617347120372169375}
-    m_Duration: 11.182666666666666
+    m_ClipIn: 0
+    m_Asset: {fileID: -5943706812430519924}
+    m_Duration: 10.266666666666667
     m_TimeScale: 1
     m_ParentTrack: {fileID: -8996940327294645123}
     m_EaseInDuration: 0
@@ -101,7 +101,7 @@ MonoBehaviour:
     m_PreExtrapolationMode: 0
     m_PostExtrapolationTime: 0
     m_PreExtrapolationTime: 0
-    m_DisplayName: k4acceptance
+    m_DisplayName: wardenaccept
   m_Markers:
     m_Objects: []
   m_TrackProperties:
@@ -158,7 +158,7 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 10.852
+    m_Start: 10.016666666666667
     m_ClipIn: 0
     m_Asset: {fileID: 1993065745487413561}
     m_Duration: 2.7333333333333325
@@ -244,6 +244,23 @@ MonoBehaviour:
   subtitleText: Then may knowledge guide your path.  The gate is now open.  Good
     luck, Traveler. Allerthria depends on you.
   typingSpeed: 0.03
+--- !u!114 &-5943706812430519924
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f10dd60657c6004587f237a7e90f8e4, type: 3}
+  m_Name: AudioPlayableAsset(Clone)
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.AudioPlayableAsset
+  m_Clip: {fileID: 8300000, guid: e0383740fa29a7e4a893ca6f40561ffc, type: 3}
+  m_Loop: 0
+  m_bufferingTime: 0.1
+  m_ClipProperties:
+    volume: 1
 --- !u!114 &-4627994859320938627
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -567,13 +584,13 @@ MonoBehaviour:
     m_Start: 7.449999999999999
     m_ClipIn: 0
     m_Asset: {fileID: 7082918048580741725}
-    m_Duration: 4.461341990344227
+    m_Duration: 4.046000000000001
     m_TimeScale: 1
     m_ParentTrack: {fileID: -3547733079050656264}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
     m_BlendInDuration: 1.7333333333333343
-    m_BlendOutDuration: 0.7286753236775603
+    m_BlendOutDuration: 0.8353333333333328
     m_MixInCurve:
       serializedVersion: 2
       m_Curve:
@@ -633,15 +650,15 @@ MonoBehaviour:
     m_PreExtrapolationTime: 0
     m_DisplayName: CityCamera
   - m_Version: 1
-    m_Start: 11.182666666666666
+    m_Start: 10.660666666666668
     m_ClipIn: 0
     m_Asset: {fileID: 2357546297459777861}
-    m_Duration: 2.4026666666666667
+    m_Duration: 2.0893333333333324
     m_TimeScale: 1
     m_ParentTrack: {fileID: -3547733079050656264}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
-    m_BlendInDuration: 0.7286753236775603
+    m_BlendInDuration: 0.8353333333333328
     m_BlendOutDuration: -1
     m_MixInCurve:
       serializedVersion: 2
@@ -722,7 +739,7 @@ MonoBehaviour:
     m_Start: 4.466666666666669
     m_ClipIn: 0
     m_Asset: {fileID: 7570542489779881458}
-    m_Duration: 9.118666666666664
+    m_Duration: 8.283333333333331
     m_TimeScale: 1
     m_ParentTrack: {fileID: -2390980807857252500}
     m_EaseInDuration: 0
@@ -954,23 +971,6 @@ MonoBehaviour:
   VirtualCamera:
     exposedName: 065bf866e0513de44bad8f7303ece840
     defaultValue: {fileID: 0}
---- !u!114 &2617347120372169375
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f10dd60657c6004587f237a7e90f8e4, type: 3}
-  m_Name: AudioPlayableAsset
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.AudioPlayableAsset
-  m_Clip: {fileID: 8300000, guid: 212ca731f480daf47ae5b32584524f99, type: 3}
-  m_Loop: 0
-  m_bufferingTime: 0.1
-  m_ClipProperties:
-    volume: 1
 --- !u!114 &3551938931732388294
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1113,7 +1113,7 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 10.852
+    m_Start: 10.016666666666667
     m_ClipIn: 0
     m_Asset: {fileID: -25563182705753240}
     m_Duration: 2.7333333333333325
@@ -1222,10 +1222,10 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 0
+    m_Start: 0.7166666666666667
     m_ClipIn: 0
     m_Asset: {fileID: -6387767352715230642}
-    m_Duration: 7.45
+    m_Duration: 6.7333333333333325
     m_TimeScale: 1
     m_ParentTrack: {fileID: 6928368868867621072}
     m_EaseInDuration: 0
@@ -1291,10 +1291,10 @@ MonoBehaviour:
     m_PreExtrapolationTime: 0
     m_DisplayName: K2_SubtitlePlayableAsset
   - m_Version: 1
-    m_Start: 7.45
+    m_Start: 7.783333333333333
     m_ClipIn: 0
     m_Asset: {fileID: 9063148709022816365}
-    m_Duration: 3.652
+    m_Duration: 2.2333333333333343
     m_TimeScale: 1
     m_ParentTrack: {fileID: 6928368868867621072}
     m_EaseInDuration: 0
@@ -1303,25 +1303,7 @@ MonoBehaviour:
     m_BlendOutDuration: -1
     m_MixInCurve:
       serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
+      m_Curve: []
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -1576,7 +1558,7 @@ MonoBehaviour:
     m_Start: 7.449999999999999
     m_ClipIn: 0
     m_Asset: {fileID: -9063432397525825829}
-    m_Duration: 3.652
+    m_Duration: 2.566666666666668
     m_TimeScale: 1
     m_ParentTrack: {fileID: 8121262150039171129}
     m_EaseInDuration: 0

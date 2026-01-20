@@ -1,77 +1,58 @@
 using UnityEngine;
+using System.Collections;
 
 public class CheckpointManager : MonoBehaviour
 {
     public static CheckpointManager Instance;
-    
+
     private Vector3 checkpointPosition;
     private Quaternion checkpointRotation;
-    private GameObject player;
-    private bool hasCheckpoint = false;
-    
-    void Awake()
+    private Transform checkpointPlatform;
+
+    private void Awake()
     {
         if (Instance == null)
-        {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
         else
-        {
             Destroy(gameObject);
-        }
     }
-    
-    void Start()
-    {
-        FindPlayer();
-        // Set initial checkpoint at player start position
-        if (player != null)
-        {
-            checkpointPosition = player.transform.position;
-            checkpointRotation = player.transform.rotation;
-            hasCheckpoint = true;
-        }
-    }
-    
-    void FindPlayer()
-    {
-        player = GameObject.FindGameObjectWithTag("Player");
-    }
-    
-    public void SetCheckpoint(Vector3 position, Quaternion rotation)
+
+    public void SetCheckpoint(
+        Vector3 position,
+        Quaternion rotation,
+        Transform platform)
     {
         checkpointPosition = position;
         checkpointRotation = rotation;
-        hasCheckpoint = true;
-        Debug.Log("Checkpoint saved at: " + position);
+        checkpointPlatform = platform;
     }
-    
-    public void RespawnPlayer()
+
+    public void RespawnPlayer(GameObject player)
     {
-        if (player == null) FindPlayer();
-        if (player == null) return;
-        
-        if (hasCheckpoint)
-        {
-            // Teleport player
-            player.transform.position = checkpointPosition;
-            player.transform.rotation = checkpointRotation;
-            
-            // Reset physics
-            Rigidbody rb = player.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-            
-            Debug.Log("Player respawned at checkpoint");
-        }
-        else
-        {
-            // Fallback to start
-            player.transform.position = Vector3.zero;
-        }
+        StartCoroutine(RespawnRoutine(player));
+    }
+
+    private IEnumerator RespawnRoutine(GameObject player)
+    {
+        CharacterController controller = player.GetComponent<CharacterController>();
+
+        // Disable controller BEFORE moving
+        if (controller != null)
+            controller.enabled = false;
+
+        player.transform.SetParent(null);
+        player.transform.position = checkpointPosition;
+        player.transform.rotation = checkpointRotation;
+
+        // Wait one physics frame
+        yield return new WaitForFixedUpdate();
+
+        // Re-attach to platform
+        if (checkpointPlatform != null)
+            player.transform.SetParent(checkpointPlatform);
+
+        // Re-enable controller AFTER parenting
+        if (controller != null)
+            controller.enabled = true;
     }
 }

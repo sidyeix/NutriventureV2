@@ -189,6 +189,23 @@ MonoBehaviour:
   subtitleText: This is only the beginning. There are eight more allergens waiting
     to be discovered. Explore carefully and gather them all.
   typingSpeed: 0.03
+--- !u!114 &-6367686039148234522
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f10dd60657c6004587f237a7e90f8e4, type: 3}
+  m_Name: AudioPlayableAsset
+  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.AudioPlayableAsset
+  m_Clip: {fileID: 8300000, guid: 5dac00f9124a54a4aa0bbe0c8a4009a2, type: 3}
+  m_Loop: 0
+  m_bufferingTime: 0.1
+  m_ClipProperties:
+    volume: 1
 --- !u!114 &-5820685429747254536
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -398,23 +415,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde0d25a170598d46a0b9dc16b4527a5, type: 3}
   m_Name: ActivationPlayableAsset(Clone)(Clone)
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.ActivationPlayableAsset
---- !u!114 &-309784852609070866
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f10dd60657c6004587f237a7e90f8e4, type: 3}
-  m_Name: AudioPlayableAsset
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.AudioPlayableAsset
-  m_Clip: {fileID: 8300000, guid: 8c527d6ee446a4f42ab58f2cde37e5e1, type: 3}
-  m_Loop: 0
-  m_bufferingTime: 0.1
-  m_ClipProperties:
-    volume: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -462,10 +462,10 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 3.6333333333333333
-    m_ClipIn: 3.6333333333333333
-    m_Asset: {fileID: -309784852609070866}
-    m_Duration: 7.934666666666667
+    m_Start: 3.8833333333333333
+    m_ClipIn: 2.8499999999999996
+    m_Asset: {fileID: -6367686039148234522}
+    m_Duration: 6.918000000000001
     m_TimeScale: 1
     m_ParentTrack: {fileID: 112542601884147750}
     m_EaseInDuration: 0
@@ -531,10 +531,10 @@ MonoBehaviour:
     m_PreExtrapolationTime: 0
     m_DisplayName: k4firstingredient
   - m_Version: 1
-    m_Start: 0
+    m_Start: 0.5666666666666667
     m_ClipIn: 0
-    m_Asset: {fileID: 6839102543250649853}
-    m_Duration: 3.6333333333333333
+    m_Asset: {fileID: 5007615067217341593}
+    m_Duration: 2.8499999999999996
     m_TimeScale: 1
     m_ParentTrack: {fileID: 112542601884147750}
     m_EaseInDuration: 0
@@ -631,7 +631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde0d25a170598d46a0b9dc16b4527a5, type: 3}
   m_Name: ActivationPlayableAsset
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.ActivationPlayableAsset
---- !u!114 &6839102543250649853
+--- !u!114 &5007615067217341593
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -643,7 +643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f10dd60657c6004587f237a7e90f8e4, type: 3}
   m_Name: AudioPlayableAsset(Clone)
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.AudioPlayableAsset
-  m_Clip: {fileID: 8300000, guid: 8c527d6ee446a4f42ab58f2cde37e5e1, type: 3}
+  m_Clip: {fileID: 8300000, guid: 5dac00f9124a54a4aa0bbe0c8a4009a2, type: 3}
   m_Loop: 0
   m_bufferingTime: 0.1
   m_ClipProperties:
