@@ -8510,8 +8510,8 @@ MonoBehaviour:
     currentValueText: {fileID: 0}
     preservationStatusText: {fileID: 0}
     ascorbicAcidFillImage: {fileID: 498500832}
-    potassiumSorbateFillImage: {fileID: 1287778838}
-    sodiumBenzoateFillImage: {fileID: 1834146677}
+    potassiumSorbateFillImage: {fileID: 1834146677}
+    sodiumBenzoateFillImage: {fileID: 1287778838}
   objectsToDisable:
   - {fileID: 78402326}
   - {fileID: 1430772280}
@@ -8555,7 +8555,6 @@ MonoBehaviour:
   - {fileID: 215193979}
   playerFollowCamera: {fileID: 1862087425}
   sliderIncreaseSpeed: 30
-  sliderDecreaseSpeed: 10
   minRequiredAccuracy: 10
 --- !u!1001 &294529118
 PrefabInstance:
@@ -14197,7 +14196,7 @@ GameObject:
   - component: {fileID: 498500833}
   - component: {fileID: 498500832}
   m_Layer: 5
-  m_Name: Fill
+  m_Name: AscFill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58791,7 +58790,7 @@ GameObject:
   - component: {fileID: 1287778839}
   - component: {fileID: 1287778838}
   m_Layer: 5
-  m_Name: Fill
+  m_Name: SodFill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -90310,7 +90309,7 @@ GameObject:
   - component: {fileID: 1834146678}
   - component: {fileID: 1834146677}
   m_Layer: 5
-  m_Name: Fill
+  m_Name: PotFill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

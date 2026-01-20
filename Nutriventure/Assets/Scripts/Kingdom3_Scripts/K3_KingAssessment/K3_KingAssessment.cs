@@ -55,9 +55,18 @@ public class K3_KingAssessment : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera playerFollowCamera;
     
     [Header("Preservation Settings")]
-    [SerializeField] private float sliderIncreaseSpeed = 30f;
-    [SerializeField] private float sliderDecreaseSpeed = 10f;
+    [SerializeField] private float baseSliderSpeed = 30f;
+    [SerializeField] private float maxSliderSpeed = 120f;
+    [SerializeField] private float speedIncreaseRate = 0.5f;
     [SerializeField] private float minRequiredAccuracy = 10f;
+    
+    [Header("Sound Effects (Optional)")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip sliderFillSound;
+    [SerializeField] private AudioClip bounceSound;
+    [SerializeField] private AudioClip successSound;
+    [SerializeField] private AudioClip failureSound;
+    [SerializeField] private AudioClip buttonClickSound;
     
     private bool isPlayerNear = false;
     private int currentFoodIndex = -1;
@@ -69,6 +78,9 @@ public class K3_KingAssessment : MonoBehaviour
     private float currentSliderValue = 0f;
     private bool isButtonHeld = false;
     private bool preservationComplete = false;
+    private bool isIncreasing = true; // Direction: true = increasing, false = decreasing
+    private float currentSpeed;
+    private float holdDuration = 0f;
     
     // Food completion tracking
     private Dictionary<int, bool> foodCompleted = new Dictionary<int, bool>();
@@ -161,15 +173,22 @@ public class K3_KingAssessment : MonoBehaviour
         }
         
         // Try to get collection system if not assigned
-        if (collectionSystem == null)
+        if (collectionSystem != null)
         {
             collectionSystem = FindObjectOfType<K3_CollectPreservatives>();
         }
         
         // Try to get info manager if not assigned
-        if (infoManager == null)
+        if (infoManager != null)
         {
             infoManager = FindObjectOfType<PreservativesInformationManager>();
+        }
+        
+        // Setup audio source if not assigned
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
         }
         
         // Disable all food cameras initially
@@ -180,6 +199,9 @@ public class K3_KingAssessment : MonoBehaviour
         {
             foodCompleted[i] = false;
         }
+        
+        // Initialize all sliders
+        InitializeAllSliders();
     }
     
     private void InitializeUIReferences()
@@ -208,33 +230,47 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
     
+    private void InitializeAllSliders()
+    {
+        // Set up all sliders with proper configuration
+        ConfigureSlider(ascorbicAcidSlider, 0f, 100f, false);
+        ConfigureSlider(potassiumSorbateSlider, 0f, 100f, false);
+        ConfigureSlider(sodiumBenzoateSlider, 0f, 100f, false);
+        
+        // Lock all sliders initially
+        SetAllSlidersInteractable(false);
+    }
+    
+    private void ConfigureSlider(Slider slider, float minValue, float maxValue, bool interactable)
+    {
+        if (slider != null)
+        {
+            slider.minValue = minValue;
+            slider.maxValue = maxValue;
+            slider.value = 0f;
+            slider.interactable = interactable;
+            
+            // Ensure handle is always visible but non-interactable
+            var handle = slider.handleRect;
+            if (handle != null)
+            {
+                handle.gameObject.SetActive(true);
+            }
+        }
+    }
+    
     private void SetupPreservativeButtons()
     {
-        // Clear existing listeners first
-        if (ascorbicAcidButton != null)
-        {
-            ascorbicAcidButton.onClick.RemoveAllListeners();
-            ascorbicAcidButton.onClick.AddListener(() => StartPreserving(PreservativeType.AscorbicAcid, ascorbicAcidSlider));
-            SetupButtonHoldEvents(ascorbicAcidButton, PreservativeType.AscorbicAcid, ascorbicAcidSlider);
-        }
-        
-        if (potassiumSorbateButton != null)
-        {
-            potassiumSorbateButton.onClick.RemoveAllListeners();
-            potassiumSorbateButton.onClick.AddListener(() => StartPreserving(PreservativeType.PotassiumSorbate, potassiumSorbateSlider));
-            SetupButtonHoldEvents(potassiumSorbateButton, PreservativeType.PotassiumSorbate, potassiumSorbateSlider);
-        }
-        
-        if (sodiumBenzoateButton != null)
-        {
-            sodiumBenzoateButton.onClick.RemoveAllListeners();
-            sodiumBenzoateButton.onClick.AddListener(() => StartPreserving(PreservativeType.SodiumBenzoate, sodiumBenzoateSlider));
-            SetupButtonHoldEvents(sodiumBenzoateButton, PreservativeType.SodiumBenzoate, sodiumBenzoateSlider);
-        }
+        // Setup EventTriggers ONLY - NO onClick listeners
+        SetupButtonHoldEvents(ascorbicAcidButton, PreservativeType.AscorbicAcid, ascorbicAcidSlider);
+        SetupButtonHoldEvents(potassiumSorbateButton, PreservativeType.PotassiumSorbate, potassiumSorbateSlider);
+        SetupButtonHoldEvents(sodiumBenzoateButton, PreservativeType.SodiumBenzoate, sodiumBenzoateSlider);
     }
     
     private void SetupButtonHoldEvents(Button button, PreservativeType type, Slider slider)
     {
+        if (button == null) return;
+        
         // Remove existing EventTrigger if any
         var existingTrigger = button.gameObject.GetComponent<EventTrigger>();
         if (existingTrigger != null)
@@ -256,70 +292,64 @@ public class K3_KingAssessment : MonoBehaviour
         pointerUp.eventID = EventTriggerType.PointerUp;
         pointerUp.callback.AddListener((data) => { OnButtonReleased(); });
         eventTrigger.triggers.Add(pointerUp);
-    }
-    
-    private void StartPreserving(PreservativeType type, Slider slider)
-    {
-        if (isPreserving || currentFoodIndex == -1 || foodCompleted[currentFoodIndex]) return;
         
-        // Convert type to ID based on your system (0, 1, 2)
-        string preservativeID = GetPreservativeID(type);
-        
-        // Check if this preservative is collected
-        if (!HasCollectedPreservative(preservativeID))
-        {
-            preservationStatusText.text = $"<color=red>{type} not collected yet! Find the potion first.</color>";
-            preservationStatusText.color = Color.red;
-            return;
-        }
-        
-        // Start preserving with selected type
-        isPreserving = true;
-        currentPreservativeType = type;
-        currentActiveSlider = slider;
-        currentSliderValue = 0f;
-        
-        // Highlight the selected button
-        HighlightSelectedButton(type);
-        
-        // Update instruction text
-        preservationStatusText.text = $"Hold {type} button to increase level. Release at target range!";
-        preservationStatusText.color = Color.yellow;
-        
-        // Update slider color to initial value
-        UpdateSliderColor(currentSliderValue, type);
-        
-        Debug.Log($"Started preserving with {type}. Hold button to increase slider.");
+        // Add PointerExit to handle finger/mouse leaving button
+        var pointerExit = new EventTrigger.Entry();
+        pointerExit.eventID = EventTriggerType.PointerExit;
+        pointerExit.callback.AddListener((data) => { OnButtonReleased(); });
+        eventTrigger.triggers.Add(pointerExit);
     }
     
     private void OnButtonPressed(PreservativeType type, Slider slider)
     {
-        // Only respond if this is the currently selected preservative
-        if (isPreserving && currentPreservativeType == type && currentActiveSlider == slider)
+        if (isPreserving) return;
+        if (currentFoodIndex == -1) return;
+        if (foodCompleted[currentFoodIndex]) return;
+        if (!HasCollectedPreservative(GetPreservativeID(type))) return;
+
+        // Play button click sound
+        PlaySound(buttonClickSound);
+
+        isPreserving = true;
+        isButtonHeld = true;
+        isIncreasing = true;
+        holdDuration = 0f;
+        currentSpeed = baseSliderSpeed;
+
+        currentPreservativeType = type;
+        currentActiveSlider = slider;
+        currentSliderValue = 0f;
+
+        // Disable all sliders except the active one
+        SetAllSlidersInteractable(false);
+        if (currentActiveSlider != null)
         {
-            isButtonHeld = true;
-            Debug.Log($"Button pressed for {type}. Slider increasing...");
+            currentActiveSlider.interactable = true;
         }
+
+        HighlightSelectedButton(type);
+
+        preservationStatusText.text = $"Holding {type}… release when in target range!";
+        preservationStatusText.color = Color.yellow;
+        
+        UpdateSliderUI(); // Initialize UI with 0 value
     }
     
     private void OnButtonReleased()
     {
-        if (isPreserving && isButtonHeld)
-        {
-            isButtonHeld = false;
-            Debug.Log($"Button released for {currentPreservativeType}. Checking result...");
-            CheckPreservationResult();
-        }
+        if (!isPreserving || !isButtonHeld) return;
+
+        isButtonHeld = false;
+        CheckPreservationResult();
     }
     
     private string GetPreservativeID(PreservativeType type)
     {
-        // Convert PreservativeType to the ID format used in your K3_PreservativeData
         switch (type)
         {
-            case PreservativeType.AscorbicAcid: return "0";     // Ascorbic Acid
-            case PreservativeType.PotassiumSorbate: return "1"; // Potassium Sorbate
-            case PreservativeType.SodiumBenzoate: return "2";   // Sodium Benzoate
+            case PreservativeType.AscorbicAcid: return "0";
+            case PreservativeType.PotassiumSorbate: return "1";
+            case PreservativeType.SodiumBenzoate: return "2";
             default: return type.ToString();
         }
     }
@@ -330,30 +360,30 @@ public class K3_KingAssessment : MonoBehaviour
         
         if (fillImage != null)
         {
-            // Calculate color based on value ranges (1-20, 21-50, 51-80, 81-100)
             Color color = Color.white;
             
+            // BRIGHTER COLORS as requested
             switch (type)
             {
-                case PreservativeType.AscorbicAcid: // Red gradient
-                    if (value <= 20) color = new Color(1f, 0.8f, 0.8f);     // Light Red
-                    else if (value <= 50) color = new Color(1f, 0.5f, 0.3f); // Orange-Red
-                    else if (value <= 80) color = new Color(0.8f, 0.2f, 0.1f); // Dark Red
-                    else color = new Color(0.6f, 0.1f, 0.05f); // Very Dark Red
+                case PreservativeType.AscorbicAcid: // Brighter Red gradient
+                    if (value <= 20) color = new Color(1f, 0.9f, 0.9f);     // Very Light Pink
+                    else if (value <= 50) color = new Color(1f, 0.7f, 0.6f); // Light Coral
+                    else if (value <= 80) color = new Color(1f, 0.4f, 0.3f); // Salmon
+                    else color = new Color(1f, 0.3f, 0.2f); // Bright Red
                     break;
                     
-                case PreservativeType.PotassiumSorbate: // Green gradient
-                    if (value <= 20) color = new Color(0.8f, 1f, 0.8f);     // Light Green
-                    else if (value <= 50) color = new Color(0.5f, 1f, 0.3f); // Lime Green
-                    else if (value <= 80) color = new Color(0.2f, 0.7f, 0.1f); // Green
-                    else color = new Color(0.1f, 0.4f, 0.05f); // Dark Green
+                case PreservativeType.PotassiumSorbate: // Brighter Green gradient
+                    if (value <= 20) color = new Color(0.9f, 1f, 0.9f);     // Very Light Green
+                    else if (value <= 50) color = new Color(0.7f, 1f, 0.6f); // Light Lime
+                    else if (value <= 80) color = new Color(0.4f, 0.9f, 0.3f); // Bright Green
+                    else color = new Color(0.3f, 0.8f, 0.2f); // Vivid Green
                     break;
                     
-                case PreservativeType.SodiumBenzoate: // Blue gradient
-                    if (value <= 20) color = new Color(0.8f, 0.8f, 1f);     // Light Blue
-                    else if (value <= 50) color = new Color(0.4f, 0.8f, 1f); // Cyan-Blue
-                    else if (value <= 80) color = new Color(0.1f, 0.4f, 0.8f); // Blue
-                    else color = new Color(0.05f, 0.2f, 0.6f); // Dark Blue
+                case PreservativeType.SodiumBenzoate: // Brighter Blue gradient
+                    if (value <= 20) color = new Color(0.9f, 0.9f, 1f);     // Very Light Blue
+                    else if (value <= 50) color = new Color(0.7f, 0.8f, 1f); // Light Sky Blue
+                    else if (value <= 80) color = new Color(0.4f, 0.6f, 1f); // Bright Blue
+                    else color = new Color(0.3f, 0.5f, 1f); // Vivid Blue
                     break;
             }
             
@@ -376,29 +406,36 @@ public class K3_KingAssessment : MonoBehaviour
     {
         CheckPlayerProximity();
         
-        if (isPlayerNear && currentFoodIndex != -1)
-        {
-            if (inspectButton != null)
-            {
-                inspectButton.gameObject.SetActive(true);
-            }
-        }
-        else
-        {
-            if (inspectButton != null)
-            {
-                inspectButton.gameObject.SetActive(false);
-            }
-        }
-        
-        // Handle button hold for sliders
+        // Handle button hold for sliders - BOUNCING MECHANIC
         if (isPreserving && isButtonHeld)
         {
-            UpdateSliderValue();
-        }
-        else if (isPreserving && !isButtonHeld && currentSliderValue > 0)
-        {
-            currentSliderValue = Mathf.Max(0, currentSliderValue - sliderDecreaseSpeed * Time.deltaTime);
+            holdDuration += Time.deltaTime;
+            
+            // Increase speed over time
+            currentSpeed = Mathf.Lerp(baseSliderSpeed, maxSliderSpeed, holdDuration * speedIncreaseRate);
+            
+            // Move slider based on direction
+            if (isIncreasing)
+            {
+                currentSliderValue += currentSpeed * Time.deltaTime;
+                if (currentSliderValue >= 100f)
+                {
+                    currentSliderValue = 100f;
+                    isIncreasing = false;
+                    PlaySound(bounceSound);
+                }
+            }
+            else
+            {
+                currentSliderValue -= currentSpeed * Time.deltaTime;
+                if (currentSliderValue <= 0f)
+                {
+                    currentSliderValue = 0f;
+                    isIncreasing = true;
+                    PlaySound(bounceSound);
+                }
+            }
+            
             UpdateSliderUI();
         }
     }
@@ -424,11 +461,23 @@ public class K3_KingAssessment : MonoBehaviour
                 break;
             }
         }
+        
+        // Update inspect button visibility based on proximity and panel state
+        if (KAPanel != null && !KAPanel.activeSelf)
+        {
+            if (inspectButton != null)
+            {
+                inspectButton.gameObject.SetActive(isPlayerNear);
+            }
+        }
     }
     
     private void OnInspectButtonClicked()
     {
         if (currentFoodIndex == -1) return;
+        
+        // Play button click sound
+        PlaySound(buttonClickSound);
         
         if (KAPanel != null)
         {
@@ -445,6 +494,7 @@ public class K3_KingAssessment : MonoBehaviour
                 }
             }
             
+            // Hide inspect button when panel opens
             if (inspectButton != null)
             {
                 inspectButton.gameObject.SetActive(false);
@@ -456,12 +506,18 @@ public class K3_KingAssessment : MonoBehaviour
     
     private void OnExitButtonClicked()
     {
+        // Play button click sound
+        PlaySound(buttonClickSound);
+        
         ClosePreservationPanel();
     }
     
     private void OnConfirmButtonClicked()
     {
         if (currentFoodIndex == -1 || !preservationComplete) return;
+        
+        // Play button click sound
+        PlaySound(buttonClickSound);
         
         foodCompleted[currentFoodIndex] = true;
         foodPreservativeUsed[currentFoodIndex] = currentPreservativeType;
@@ -473,9 +529,10 @@ public class K3_KingAssessment : MonoBehaviour
         SetAllPreservativeButtonsInteractable(false);
         confirmButton.interactable = false;
         
-        CheckAllFoodsCompleted();
+        // Disable all sliders after completion
+        SetAllSlidersInteractable(false);
         
-        Debug.Log($"Food {currentFoodIndex} preserved with {currentPreservativeType} at value {currentSliderValue:F0}");
+        CheckAllFoodsCompleted();
     }
     
     private void ClosePreservationPanel()
@@ -495,6 +552,12 @@ public class K3_KingAssessment : MonoBehaviour
             }
             
             ResetPreservationState();
+            
+            // Restore inspect button if player is still near
+            if (inspectButton != null)
+            {
+                inspectButton.gameObject.SetActive(isPlayerNear);
+            }
         }
     }
     
@@ -535,34 +598,36 @@ public class K3_KingAssessment : MonoBehaviour
         // Reset sliders
         ResetAllSliders();
         
-        // Check which preservatives have been collected using CORRECT IDs (0, 1, 2)
+        // Check which preservatives have been collected
         bool hasAscorbicAcid = HasCollectedPreservative("0");
         bool hasPotassiumSorbate = HasCollectedPreservative("1");
         bool hasSodiumBenzoate = HasCollectedPreservative("2");
         
-        Debug.Log($"Preservative Collection Status - Ascorbic Acid (0): {hasAscorbicAcid}, Potassium Sorbate (1): {hasPotassiumSorbate}, Sodium Benzoate (2): {hasSodiumBenzoate}");
+        // Update preservative text
+        UpdatePreservativeText(hasAscorbicAcid, hasPotassiumSorbate, hasSodiumBenzoate);
         
-        // Enable/disable buttons based on collection
+        // Disable all sliders by default
+        SetAllSlidersInteractable(false);
+        
+        // Setup buttons based on collection status - BUTTONS LOCKED WHEN NOT COLLECTED
         if (ascorbicAcidButton != null)
         {
             ascorbicAcidButton.interactable = hasAscorbicAcid;
-            ascorbicAcidButton.GetComponent<Image>().color = hasAscorbicAcid ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            // Use brighter colors for disabled state
+            ascorbicAcidButton.GetComponent<Image>().color = hasAscorbicAcid ? Color.white : new Color(0.7f, 0.7f, 0.7f, 0.5f);
         }
         
         if (potassiumSorbateButton != null)
         {
             potassiumSorbateButton.interactable = hasPotassiumSorbate;
-            potassiumSorbateButton.GetComponent<Image>().color = hasPotassiumSorbate ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            potassiumSorbateButton.GetComponent<Image>().color = hasPotassiumSorbate ? Color.white : new Color(0.7f, 0.7f, 0.7f, 0.5f);
         }
         
         if (sodiumBenzoateButton != null)
         {
             sodiumBenzoateButton.interactable = hasSodiumBenzoate;
-            sodiumBenzoateButton.GetComponent<Image>().color = hasSodiumBenzoate ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            sodiumBenzoateButton.GetComponent<Image>().color = hasSodiumBenzoate ? Color.white : new Color(0.7f, 0.7f, 0.7f, 0.5f);
         }
-        
-        // Update preservative text
-        UpdatePreservativeText(hasAscorbicAcid, hasPotassiumSorbate, hasSodiumBenzoate);
         
         // If food is already completed, show completion status
         if (foodCompleted[foodIndex])
@@ -573,7 +638,7 @@ public class K3_KingAssessment : MonoBehaviour
         }
         else
         {
-            preservationStatusText.text = "Select a collected preservative and hold its button";
+            preservationStatusText.text = "Hold a collected preservative button to start preservation";
             preservationStatusText.color = Color.white;
         }
         
@@ -618,46 +683,27 @@ public class K3_KingAssessment : MonoBehaviour
         // First check info manager
         if (infoManager != null)
         {
-            bool collected = infoManager.IsPreservativeCollected(preservativeID);
-            Debug.Log($"InfoManager check for ID '{preservativeID}': {collected}");
-            return collected;
+            return infoManager.IsPreservativeCollected(preservativeID);
         }
         
         // Then check collection system
         if (collectionSystem != null)
         {
-            bool collected = collectionSystem.HasCollectedPreservative(preservativeID);
-            Debug.Log($"CollectionSystem check for ID '{preservativeID}': {collected}");
-            return collected;
+            return collectionSystem.HasCollectedPreservative(preservativeID);
         }
         
         // Fallback to PlayerPrefs
-        bool fallbackCheck = PlayerPrefs.GetInt($"Preservative_{preservativeID}_Collected", 0) == 1;
-        Debug.Log($"PlayerPrefs check for ID '{preservativeID}': {fallbackCheck}");
-        return fallbackCheck;
-    }
-    
-    private void UpdateSliderValue()
-    {
-        if (!isPreserving || currentActiveSlider == null) return;
-        
-        currentSliderValue = Mathf.Min(100, currentSliderValue + sliderIncreaseSpeed * Time.deltaTime);
-        UpdateSliderUI();
-        
-        if (currentSliderValue >= 100)
-        {
-            isButtonHeld = false;
-            CheckPreservationResult();
-        }
+        return PlayerPrefs.GetInt($"Preservative_{preservativeID}_Collected", 0) == 1;
     }
     
     private void UpdateSliderUI()
     {
         if (currentActiveSlider != null)
         {
+            // Update the slider value smoothly
             currentActiveSlider.value = currentSliderValue;
             
-            // Update slider color
+            // Update slider color based on value
             UpdateSliderColor(currentSliderValue, currentPreservativeType);
             
             // Update value text
@@ -696,6 +742,7 @@ public class K3_KingAssessment : MonoBehaviour
             preservationComplete = true;
             confirmButton.interactable = true;
             
+            PlaySound(successSound);
             StartCoroutine(SuccessFeedback());
         }
         else
@@ -706,10 +753,12 @@ public class K3_KingAssessment : MonoBehaviour
             preservationComplete = false;
             confirmButton.interactable = false;
             
+            PlaySound(failureSound);
             StartCoroutine(FailureFeedback());
         }
         
         isPreserving = false;
+        SetAllSlidersInteractable(false);
     }
     
     private string GetPreservationLevelDescription(float value)
@@ -821,9 +870,13 @@ public class K3_KingAssessment : MonoBehaviour
         isButtonHeld = false;
         preservationComplete = false;
         currentSliderValue = 0f;
+        isIncreasing = true;
+        holdDuration = 0f;
+        currentSpeed = baseSliderSpeed;
         
         ResetButtonColors();
         ResetAllSliders();
+        SetAllSlidersInteractable(false);
     }
     
     private void SetAllPreservativeButtonsInteractable(bool interactable)
@@ -831,6 +884,13 @@ public class K3_KingAssessment : MonoBehaviour
         if (ascorbicAcidButton != null) ascorbicAcidButton.interactable = interactable;
         if (potassiumSorbateButton != null) potassiumSorbateButton.interactable = interactable;
         if (sodiumBenzoateButton != null) sodiumBenzoateButton.interactable = interactable;
+    }
+    
+    private void SetAllSlidersInteractable(bool interactable)
+    {
+        if (ascorbicAcidSlider != null) ascorbicAcidSlider.interactable = interactable;
+        if (potassiumSorbateSlider != null) potassiumSorbateSlider.interactable = interactable;
+        if (sodiumBenzoateSlider != null) sodiumBenzoateSlider.interactable = interactable;
     }
     
     private void CheckAllFoodsCompleted()
@@ -848,7 +908,6 @@ public class K3_KingAssessment : MonoBehaviour
         if (allCompleted)
         {
             Debug.Log("=== ALL FOODS PRESERVED! ===");
-            // Trigger completion event
         }
     }
     
@@ -871,6 +930,15 @@ public class K3_KingAssessment : MonoBehaviour
             case PreservativeType.PotassiumSorbate: return potassiumSorbateValueText;
             case PreservativeType.SodiumBenzoate: return sodiumBenzoateValueText;
             default: return null;
+        }
+    }
+    
+    // SOUND METHODS
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
     
@@ -907,7 +975,6 @@ public class K3_KingAssessment : MonoBehaviour
             foodParticles[foodIndex].SetActive(true);
     }
     
-    // Debug method
     [ContextMenu("Debug Collection Status")]
     public void DebugCollectionStatus()
     {
@@ -915,16 +982,6 @@ public class K3_KingAssessment : MonoBehaviour
         Debug.Log($"Ascorbic Acid (ID 0) Collected: {HasCollectedPreservative("0")}");
         Debug.Log($"Potassium Sorbate (ID 1) Collected: {HasCollectedPreservative("1")}");
         Debug.Log($"Sodium Benzoate (ID 2) Collected: {HasCollectedPreservative("2")}");
-        
-        if (infoManager != null)
-        {
-            Debug.Log($"Info Manager Found: Yes");
-            Debug.Log($"Collected IDs: {string.Join(", ", infoManager.GetCollectedPreservativeIDs())}");
-        }
-        else
-        {
-            Debug.Log($"Info Manager Found: No");
-        }
     }
     
     private void OnDrawGizmosSelected()
