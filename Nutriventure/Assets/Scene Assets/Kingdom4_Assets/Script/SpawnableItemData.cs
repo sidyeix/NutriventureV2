@@ -6,6 +6,7 @@ public class SpawnableItemData : ScriptableObject
     public enum ItemType
     {
         Coin,
+        // Allergens
         Peanut,
         Milk,
         Egg,
@@ -15,13 +16,19 @@ public class SpawnableItemData : ScriptableObject
         Wheat,
         Soybean,
         Sesame,
+        // Healthy Foods (SAFE)
+        Banana,
+        Apple,
+        Avocado,
+        Kiwi,
+        // Powerups
         Shield,
         Heart
     }
     
     public enum ItemCategory
     {
-        SafePassable,    // Coins
+        SafePassable,    // Coins, Healthy Foods
         NotSafe,         // Allergens
         SafePowerup      // Shield, Heart
     }
@@ -47,6 +54,10 @@ public class SpawnableItemData : ScriptableObject
     [Header("Effects")]
     public ParticleSystem collectParticles;
     
+    [Header("Game Effects")]
+    public int healthChange = 0;       // +1 for heart/healthy food, -1 for allergens
+    public float shieldDuration = 0f;  // For shield powerup
+    
     public bool IsAllergen()
     {
         return category == ItemCategory.NotSafe;
@@ -60,5 +71,13 @@ public class SpawnableItemData : ScriptableObject
     public bool IsPowerup()
     {
         return category == ItemCategory.SafePowerup;
+    }
+    
+    public bool IsHealthyFood()
+    {
+        return itemType == ItemType.Banana || 
+               itemType == ItemType.Apple || 
+               itemType == ItemType.Avocado || 
+               itemType == ItemType.Kiwi;
     }
 }
