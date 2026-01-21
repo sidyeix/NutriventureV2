@@ -25,9 +25,8 @@ TagManager:
   - FxTemporaire
   - K3_MicrobeGEM
   - K3_OxidantGEM
-  - K3_AbsorbicP
-  - K3_PotassiumP
-  - K3_SodiumP
+  - K3_PreservativePotion
+  - K3_KAFoods
   layers:
   - Default
   - TransparentFX
@@ -37,7 +36,7 @@ TagManager:
   - UI
   - Interactable
   - IngreLayer
-  - 
+  - Food
   - 
   - 
   - 
