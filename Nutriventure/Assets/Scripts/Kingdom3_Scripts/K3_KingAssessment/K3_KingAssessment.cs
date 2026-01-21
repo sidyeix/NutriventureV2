@@ -23,11 +23,15 @@ public class K3_KingAssessment : MonoBehaviour
     [SerializeField] private TMP_Text foodNameText;
     [SerializeField] private TMP_Text foodTypeText;
     [SerializeField] private TMP_Text shelfLifeText;
-    [SerializeField] private TMP_Text preservativeText;
     [SerializeField] private TMP_Text threatsText;
     [SerializeField] private TMP_Text contentsText;
     [SerializeField] private TMP_Text hintText;
     [SerializeField] private Image foodIconImage;
+    
+    [Header("Preservative Display Elements")]
+    [SerializeField] private TMP_Text requiredPreservativeText;  // Separated: Required preservative
+    [SerializeField] private TMP_Text targetRangesText;          // Separated: Target ranges
+    [SerializeField] private TMP_Text collectedPreservativeText; // Separated: Collected preservative
     
     [Header("Database")]
     [SerializeField] private K3_FoodDatabase foodDatabase;
@@ -119,9 +123,7 @@ public class K3_KingAssessment : MonoBehaviour
     private TMP_Text ascorbicAcidValueText;
     private TMP_Text potassiumSorbateValueText;
     private TMP_Text sodiumBenzoateValueText;
-    private TMP_Text targetRangeText;
-    private TMP_Text currentValueText;
-    private TMP_Text preservationStatusText;
+    private TMP_Text preservationStatusText; // Only keep preservation status text
     private Image ascorbicAcidFillImage;
     private Image potassiumSorbateFillImage;
     private Image sodiumBenzoateFillImage;
@@ -145,9 +147,7 @@ public class K3_KingAssessment : MonoBehaviour
         public TMP_Text sodiumBenzoateValueText;
         
         [Header("Status Display")]
-        public TMP_Text targetRangeText;
-        public TMP_Text currentValueText;
-        public TMP_Text preservationStatusText;
+        public TMP_Text preservationStatusText; // Only need preservation status text
         
         [Header("Slider Fill Images")]
         public Image ascorbicAcidFillImage;
@@ -286,9 +286,7 @@ public class K3_KingAssessment : MonoBehaviour
             potassiumSorbateValueText = preservationUISettings.potassiumSorbateValueText;
             sodiumBenzoateValueText = preservationUISettings.sodiumBenzoateValueText;
             
-            targetRangeText = preservationUISettings.targetRangeText;
-            currentValueText = preservationUISettings.currentValueText;
-            preservationStatusText = preservationUISettings.preservationStatusText;
+            preservationStatusText = preservationUISettings.preservationStatusText; // Only need preservation status
             
             ascorbicAcidFillImage = preservationUISettings.ascorbicAcidFillImage;
             potassiumSorbateFillImage = preservationUISettings.potassiumSorbateFillImage;
@@ -503,7 +501,7 @@ public class K3_KingAssessment : MonoBehaviour
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(currentFoodIndex);
         if (profile != null)
         {
-            preservationStatusText.text = $"Holding {type}… Release when in {profile.minSliderValue}-{profile.maxSliderValue} range!";
+            preservationStatusText.text = $"Holding {type}… Release when in target range!";
         }
         else
         {
@@ -724,7 +722,7 @@ public class K3_KingAssessment : MonoBehaviour
             
             if (!isInRange && !isCloseEnough)
             {
-                preservationStatusText.text = $"✗ No successful preservation to confirm. Try again!";
+                preservationStatusText.text = $"No successful preservation to confirm. Try again!";
                 preservationStatusText.color = Color.red;
                 return;
             }
@@ -763,7 +761,7 @@ public class K3_KingAssessment : MonoBehaviour
         if (isFullyPreserved)
         {
             foodCompleted[currentFoodIndex] = true;
-            preservationStatusText.text = $"✓ Successfully preserved with {GetPreservativeList(currentFoodIndex)}!";
+            preservationStatusText.text = $"Successfully preserved with {GetPreservativeList(currentFoodIndex)}!";
             preservationStatusText.color = Color.green;
             
             // Disable all preservative buttons
@@ -948,38 +946,85 @@ public class K3_KingAssessment : MonoBehaviour
         if (foodTypeText != null) foodTypeText.text = $"Type: {profile.foodType}";
         if (shelfLifeText != null) shelfLifeText.text = $"Shelf Life: {profile.shelfLife}";
         
-        // Show preservative requirements
-        if (preservativeText != null) 
-        {
-            string preservativeInfo = $"Required: {profile.PreservativeDisplayName}\nTarget Range: {profile.minSliderValue}-{profile.maxSliderValue}";
-            
-            // Special case for Fruit Juice
-            if (foodIndex == 7)
-            {
-                preservativeInfo = "Required: Sodium Benzoate AND Ascorbic Acid\n" +
-                                 $"Sodium Benzoate Range: 50-60\n" +
-                                 $"Ascorbic Acid Range: 40-50";
-            }
-            
-            preservativeText.text = preservativeInfo;
-        }
+        // Update separated preservative display elements
+        UpdateSeparatedPreservativeDisplay(foodIndex, profile);
         
         if (threatsText != null) threatsText.text = $"Threats: {profile.threats}";
         if (contentsText != null) contentsText.text = $"Contents: {profile.contents}";
         if (hintText != null) hintText.text = profile.hint;
         if (foodIconImage != null && profile.foodIcon != null) foodIconImage.sprite = profile.foodIcon;
-        
-        // Update target range text
-        if (targetRangeText != null)
+    }
+    
+    private void UpdateSeparatedPreservativeDisplay(int foodIndex, K3_FoodDatabase.FoodProfile profile)
+    {
+        // Update Required Preservative Text
+        if (requiredPreservativeText != null)
         {
             if (foodIndex == 7) // Fruit Juice
             {
-                targetRangeText.text = $"Target: Varies by preservative";
+                requiredPreservativeText.text = "Required: Sodium Benzoate AND Ascorbic Acid";
             }
             else
             {
-                targetRangeText.text = $"Target: {profile.minSliderValue}-{profile.maxSliderValue}";
+                requiredPreservativeText.text = $"Required: {profile.PreservativeDisplayName}";
             }
+        }
+        
+        // Update Target Ranges Text
+        if (targetRangesText != null)
+        {
+            if (foodIndex == 7) // Fruit Juice
+            {
+                targetRangesText.text = $"Sodium Benzoate Range: 50-60\n" +
+                                       $"Ascorbic Acid Range: 40-50";
+            }
+            else
+            {
+                targetRangesText.text = $"Target Range: {profile.minSliderValue}-{profile.maxSliderValue}";
+            }
+        }
+        
+        // Update Collected Preservative Text
+        if (collectedPreservativeText != null)
+        {
+            UpdateCollectedPreservativeText();
+        }
+    }
+    
+    private void UpdateCollectedPreservativeText()
+    {
+        // Check which preservatives have been collected
+        bool hasAscorbicAcid = HasCollectedPreservative("0");
+        bool hasPotassiumSorbate = HasCollectedPreservative("1");
+        bool hasSodiumBenzoate = HasCollectedPreservative("2");
+        
+        string collectedText = "<color=#000000>Collected Preservatives:</color>\n";
+        bool anyAvailable = false;
+        
+        if (hasAscorbicAcid) 
+        {
+            collectedText += "• <color=#FF6B6B>Ascorbic Acid (Anti-Oxidant)</color>\n";
+            anyAvailable = true;
+        }
+        if (hasPotassiumSorbate) 
+        {
+            collectedText += "• <color=#4CAF50>Potassium Sorbate (Anti-Microbial)</color>\n";
+            anyAvailable = true;
+        }
+        if (hasSodiumBenzoate) 
+        {
+            collectedText += "• <color=#2196F3>Sodium Benzoate (Anti-Microbial)</color>\n";
+            anyAvailable = true;
+        }
+        
+        if (!anyAvailable)
+        {
+            collectedText = "<color=red>No preservatives collected yet! Find potions in the castle.</color>";
+        }
+        
+        if (collectedPreservativeText != null)
+        {
+            collectedPreservativeText.text = collectedText;
         }
     }
     
@@ -998,8 +1043,8 @@ public class K3_KingAssessment : MonoBehaviour
         bool hasPotassiumSorbate = HasCollectedPreservative("1");
         bool hasSodiumBenzoate = HasCollectedPreservative("2");
         
-        // Update preservative text with collection status
-        UpdatePreservativeText(hasAscorbicAcid, hasPotassiumSorbate, hasSodiumBenzoate);
+        // Update collected preservative text
+        UpdateCollectedPreservativeText();
         
         // Disable all sliders by default
         SetAllSlidersInteractable(false);
@@ -1106,47 +1151,6 @@ public class K3_KingAssessment : MonoBehaviour
                     break;
             }
         }
-        
-        // Update current value text if we have a value
-        if (currentValueText != null && foodPreservativesUsed[foodIndex].Count > 0)
-        {
-            // For display purposes, show the last applied preservative value
-            var lastPreservative = foodPreservativesUsed[foodIndex][foodPreservativesUsed[foodIndex].Count - 1];
-            float lastValue = foodPreservationValues[foodIndex][lastPreservative];
-            currentValueText.text = $"Current: {lastValue:F0} ✓";
-            currentValueText.color = Color.green;
-        }
-    }
-    
-    private void UpdatePreservativeText(bool hasAscorbic, bool hasPotassium, bool hasSodium)
-    {
-        string availableText = "\n<color=#FFD700>Collected Preservatives:</color>\n";
-        bool anyAvailable = false;
-        
-        if (hasAscorbic) 
-        {
-            availableText += "• <color=#FF6B6B>Ascorbic Acid (Anti-Oxidant)</color>\n";
-            anyAvailable = true;
-        }
-        if (hasPotassium) 
-        {
-            availableText += "• <color=#4CAF50>Potassium Sorbate (Anti-Microbial)</color>\n";
-            anyAvailable = true;
-        }
-        if (hasSodium) 
-        {
-            availableText += "• <color=#2196F3>Sodium Benzoate (Anti-Microbial)</color>\n";
-            anyAvailable = true;
-        }
-        
-        if (!anyAvailable)
-        {
-            preservativeText.text += "\n<color=red>No preservatives collected yet! Find potions in the castle.</color>";
-        }
-        else
-        {
-            preservativeText.text += availableText;
-        }
     }
     
     private bool HasCollectedPreservative(string preservativeID)
@@ -1180,39 +1184,6 @@ public class K3_KingAssessment : MonoBehaviour
             // Update value text
             TMP_Text valueText = GetValueTextForPreservative(currentPreservativeType);
             if (valueText != null) valueText.text = $"{currentSliderValue:F0}";
-            
-            // Update current value text
-            if (currentValueText != null) currentValueText.text = $"Current: {currentSliderValue:F0}";
-            
-            // Check if value is in range
-            K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(currentFoodIndex);
-            if (profile != null)
-            {
-                // For Fruit Juice, check appropriate range based on preservative
-                bool inRange = false;
-                if (currentFoodIndex == 7) // Fruit Juice
-                {
-                    if (currentPreservativeType == PreservativeType.SodiumBenzoate)
-                        inRange = currentSliderValue >= 50 && currentSliderValue <= 60;
-                    else if (currentPreservativeType == PreservativeType.AscorbicAcid)
-                        inRange = currentSliderValue >= 40 && currentSliderValue <= 50;
-                }
-                else
-                {
-                    inRange = profile.IsValueInRange(currentSliderValue);
-                }
-                
-                currentValueText.color = inRange ? Color.green : Color.red;
-                
-                if (inRange)
-                {
-                    currentValueText.text = $"Current: {currentSliderValue:F0} ✓";
-                }
-                else
-                {
-                    currentValueText.text = $"Current: {currentSliderValue:F0} ✗";
-                }
-            }
         }
     }
     
@@ -1256,7 +1227,7 @@ public class K3_KingAssessment : MonoBehaviour
             {
                 // Success with correct preservative
                 string level = GetPreservationLevelDescription(currentSliderValue);
-                preservationStatusText.text = $"✓ Perfect! {currentPreservativeType} at {currentSliderValue:F0} is within target range!\n<color=#4CAF50>{level} preservation applied. Click CONFIRM to apply.</color>";
+                preservationStatusText.text = $"Perfect! {currentPreservativeType} at {currentSliderValue:F0} is within target range!\n<color=#4CAF50>{level} preservation applied. Click CONFIRM to apply.</color>";
                 preservationStatusText.color = Color.green;
                 preservationComplete = true;
                 confirmButton.interactable = true;
@@ -1396,9 +1367,6 @@ public class K3_KingAssessment : MonoBehaviour
         if (ascorbicAcidValueText != null) ascorbicAcidValueText.text = "0";
         if (potassiumSorbateValueText != null) potassiumSorbateValueText.text = "0";
         if (sodiumBenzoateValueText != null) sodiumBenzoateValueText.text = "0";
-        
-        if (currentValueText != null) currentValueText.text = "Current: 0";
-        currentValueText.color = Color.white;
     }
     
     private void ResetPreservationState()
@@ -1451,12 +1419,6 @@ public class K3_KingAssessment : MonoBehaviour
                 if (sodiumBenzoateValueText != null) sodiumBenzoateValueText.text = "0";
                 UpdateSliderColor(0, PreservativeType.SodiumBenzoate);
                 break;
-        }
-        
-        if (currentValueText != null) 
-        {
-            currentValueText.text = "Current: 0";
-            currentValueText.color = Color.white;
         }
         
         SetAllSlidersInteractable(false);

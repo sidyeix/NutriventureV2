@@ -18,87 +18,84 @@ MonoBehaviour:
     shelfLife: Spoils within days if unpreserved
     preservativeType: 2
     minSliderValue: 40
-    maxSliderValue: 60
+    maxSliderValue: 50
     threats: "\U0001F9A0 Mold (Moderate)"
     contents: Moist, sugar present
-    hint: "Bread molds easily \u2014 apply a moderate anti-microbial potion to prevent
-      spoilage!"
+    hint: "Bread molds easily \u2014 apply anti-microbial potion to prevent spoilage!"
     foodIcon: {fileID: 21300000, guid: 7540357d0843918409645710b77cc444, type: 3}
   - foodName: Cake
     foodType: Baked Goods
     shelfLife: Very short if unpreserved
     preservativeType: 2
     minSliderValue: 50
-    maxSliderValue: 70
+    maxSliderValue: 60
     threats: "\U0001F9A0 Mold (High)"
     contents: Moist, sugar-rich
-    hint: "This moist cake is at high risk of mold \u2014 use a high anti-microbial
-      potion!"
+    hint: "This moist cake is at high risk of mold \u2014 use anti-microbial potion!"
     foodIcon: {fileID: 0}
   - foodName: Canned Fruits
     foodType: Preserved Snack
     shelfLife: Several months if unpreserved
     preservativeType: 1
     minSliderValue: 40
-    maxSliderValue: 60
+    maxSliderValue: 50
     threats: "\U0001F7E0 Oxidation (Moderate)"
     contents: Sealed, but still at risk of color loss
-    hint: "Keep the canned fruits bright \u2014 use a moderate anti-oxidant potion
-      to prevent browning!"
+    hint: "Keep the canned fruits bright \u2014 use anti-oxidant potion to prevent
+      browning!"
     foodIcon: {fileID: 0}
   - foodName: Fresh-Cut Fruits
     foodType: Snack
     shelfLife: Very short if unpreserved
     preservativeType: 1
     minSliderValue: 50
-    maxSliderValue: 70
+    maxSliderValue: 60
     threats: "\U0001F7E0 Oxidation / Browning (High)"
     contents: Moist, exposed to air
-    hint: "These fruits oxidize quickly \u2014 apply a high anti-oxidant potion to
-      keep them fresh!"
+    hint: "These fruits oxidize quickly \u2014 apply anti-oxidant potion to keep
+      them fresh!"
     foodIcon: {fileID: 0}
   - foodName: Cheese
     foodType: Dairy
     shelfLife: Spoils in a few days if unpreserved
     preservativeType: 2
     minSliderValue: 40
-    maxSliderValue: 60
+    maxSliderValue: 50
     threats: "\U0001F9A0 Mold (Moderate)"
     contents: Moist, high fat
-    hint: "Cheese can grow mold fast \u2014 apply a moderate anti-microbial potion!"
+    hint: "Cheese can grow mold fast \u2014 apply anti-microbial potion!"
     foodIcon: {fileID: 0}
-  - foodName: Sausages / Hotdogs
+  - foodName: Sausages
     foodType: Processed Meat
     shelfLife: Spoils within days if unpreserved
     preservativeType: 1
     minSliderValue: 30
-    maxSliderValue: 50
+    maxSliderValue: 40
     threats: "\U0001F7E0 Oxidation / Rancidity (Moderate)"
     contents: High fat and protein
-    hint: "Prevent the meat from turning rancid \u2014 use a moderate anti-oxidant
-      potion!"
+    hint: "Prevent the meat from turning rancid \u2014 use anti-oxidant potion!"
     foodIcon: {fileID: 0}
   - foodName: Soft Drink
     foodType: Beverage
     shelfLife: Spoils fast if unpreserved
     preservativeType: 0
     minSliderValue: 70
-    maxSliderValue: 85
+    maxSliderValue: 80
     threats: "\U0001F9A0 Microbial Growth (High)"
     contents: High sugar content, liquid
-    hint: "This sugary drink is very vulnerable to microbes \u2014 use a very high
-      anti-microbial potion to keep it safe!"
+    hint: "This sugary drink is very vulnerable to microbes \u2014 use anti-microbial
+      potion!"
     foodIcon: {fileID: 0}
   - foodName: Fruit Juice
     foodType: Beverage
     shelfLife: 5 days if unpreserved
     preservativeType: 0
     minSliderValue: 50
-    maxSliderValue: 70
+    maxSliderValue: 60
     threats: "\U0001F9A0 Microbial Growth (Moderate) & \U0001F7E0 Oxidation"
     contents: Acidic with sugar, natural vitamins
-    hint: Fruit juice needs protection from both microbes AND oxidation. Use appropriate
-      preservative based on the threat!
+    hint: Fruit juice needs protection from both microbes AND oxidation. You may
+      need multiple preservatives!
     foodIcon: {fileID: 0}
   autoInitialize: 1
   showDebugInfo: 1
