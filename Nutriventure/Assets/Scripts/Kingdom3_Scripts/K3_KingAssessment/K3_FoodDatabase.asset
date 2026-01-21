@@ -19,83 +19,83 @@ MonoBehaviour:
     preservativeType: 2
     minSliderValue: 40
     maxSliderValue: 50
-    threats: "\U0001F9A0 Mold (Moderate)"
+    threats: Mold (Moderate)
     contents: Moist, sugar present
     hint: "Bread molds easily \u2014 apply anti-microbial potion to prevent spoilage!"
-    foodIcon: {fileID: 21300000, guid: 7540357d0843918409645710b77cc444, type: 3}
+    foodIcon: {fileID: 21300000, guid: 1e1c263185546f846abcc38b1e622df6, type: 3}
   - foodName: Cake
     foodType: Baked Goods
     shelfLife: Very short if unpreserved
     preservativeType: 2
     minSliderValue: 50
     maxSliderValue: 60
-    threats: "\U0001F9A0 Mold (High)"
+    threats: Mold (High)
     contents: Moist, sugar-rich
     hint: "This moist cake is at high risk of mold \u2014 use anti-microbial potion!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: 8f916848054bb104d825232292bdd3be, type: 3}
   - foodName: Canned Fruits
     foodType: Preserved Snack
     shelfLife: Several months if unpreserved
     preservativeType: 1
     minSliderValue: 40
     maxSliderValue: 50
-    threats: "\U0001F7E0 Oxidation (Moderate)"
+    threats: Oxidation (Moderate)
     contents: Sealed, but still at risk of color loss
     hint: "Keep the canned fruits bright \u2014 use anti-oxidant potion to prevent
       browning!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: ee85cd448f7c4cf4ead26bc2be7dc496, type: 3}
   - foodName: Fresh-Cut Fruits
     foodType: Snack
     shelfLife: Very short if unpreserved
     preservativeType: 1
     minSliderValue: 50
     maxSliderValue: 60
-    threats: "\U0001F7E0 Oxidation / Browning (High)"
+    threats: Oxidation / Browning (High)
     contents: Moist, exposed to air
     hint: "These fruits oxidize quickly \u2014 apply anti-oxidant potion to keep
       them fresh!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: 12a33f08dc7a2304d83be0fd714195b3, type: 3}
   - foodName: Cheese
     foodType: Dairy
     shelfLife: Spoils in a few days if unpreserved
     preservativeType: 2
     minSliderValue: 40
     maxSliderValue: 50
-    threats: "\U0001F9A0 Mold (Moderate)"
+    threats: Mold (Moderate)
     contents: Moist, high fat
     hint: "Cheese can grow mold fast \u2014 apply anti-microbial potion!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: 4a3759b82dcd5b44bba73a3259372620, type: 3}
   - foodName: Sausages
     foodType: Processed Meat
     shelfLife: Spoils within days if unpreserved
     preservativeType: 1
     minSliderValue: 30
     maxSliderValue: 40
-    threats: "\U0001F7E0 Oxidation / Rancidity (Moderate)"
+    threats: Oxidation / Rancidity (Moderate)
     contents: High fat and protein
     hint: "Prevent the meat from turning rancid \u2014 use anti-oxidant potion!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: 08064246f158b1d4b86a44220bc554cb, type: 3}
   - foodName: Soft Drink
     foodType: Beverage
     shelfLife: Spoils fast if unpreserved
     preservativeType: 0
     minSliderValue: 70
     maxSliderValue: 80
-    threats: "\U0001F9A0 Microbial Growth (High)"
+    threats: Microbial Growth (High)
     contents: High sugar content, liquid
     hint: "This sugary drink is very vulnerable to microbes \u2014 use anti-microbial
       potion!"
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: 54fa09c5f55a72b4e9c395470021071f, type: 3}
   - foodName: Fruit Juice
     foodType: Beverage
     shelfLife: 5 days if unpreserved
     preservativeType: 0
     minSliderValue: 50
     maxSliderValue: 60
-    threats: "\U0001F9A0 Microbial Growth (Moderate) & \U0001F7E0 Oxidation"
+    threats: Microbial Growth (Moderate) & Oxidation
     contents: Acidic with sugar, natural vitamins
     hint: Fruit juice needs protection from both microbes AND oxidation. You may
       need multiple preservatives!
-    foodIcon: {fileID: 0}
+    foodIcon: {fileID: 21300000, guid: f1964b05637edb346a730f9b37f3225b, type: 3}
   autoInitialize: 1
   showDebugInfo: 1

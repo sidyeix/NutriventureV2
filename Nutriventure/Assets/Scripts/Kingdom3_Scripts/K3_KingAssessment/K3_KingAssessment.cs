@@ -468,7 +468,7 @@ public class K3_KingAssessment : MonoBehaviour
             ResetPreservationStateForType(type);
             
             preservationStatusText.text = "Ready to try again. Hold the button to start.";
-            preservationStatusText.color = Color.white;
+            preservationStatusText.color = Color.black;
             
             // Scale button back down after a moment
             StartCoroutine(DelayedButtonScaleDown(type, 0.5f));
@@ -732,7 +732,7 @@ public class K3_KingAssessment : MonoBehaviour
             
             if (!isCorrectPreservative)
             {
-                preservationStatusText.text = $"✗ {currentPreservativeType} is not the correct preservative for {profile.foodName}";
+                preservationStatusText.text = $"{currentPreservativeType} is not the correct preservative for {profile.foodName}";
                 preservationStatusText.color = Color.red;
                 
                 // Switch button to retry mode for THIS food
@@ -926,7 +926,7 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
     
-    private void UpdateFoodPanelContent(int foodIndex)
+        private void UpdateFoodPanelContent(int foodIndex)
     {
         if (foodDatabase == null)
         {
@@ -943,30 +943,30 @@ public class K3_KingAssessment : MonoBehaviour
         }
         
         if (foodNameText != null) foodNameText.text = profile.foodName;
-        if (foodTypeText != null) foodTypeText.text = $"Type: {profile.foodType}";
-        if (shelfLifeText != null) shelfLifeText.text = $"Shelf Life: {profile.shelfLife}";
-        
+        if (foodTypeText != null) foodTypeText.text = $"<b>Type:</b> {profile.foodType}"; // Added <b> tags
+        if (shelfLifeText != null) shelfLifeText.text = $"<b>Shelf Life:</b> {profile.shelfLife}"; // Added <b> tags
+            
         // Update separated preservative display elements
         UpdateSeparatedPreservativeDisplay(foodIndex, profile);
         
-        if (threatsText != null) threatsText.text = $"Threats: {profile.threats}";
-        if (contentsText != null) contentsText.text = $"Contents: {profile.contents}";
-        if (hintText != null) hintText.text = profile.hint;
+        if (threatsText != null) threatsText.text = $"<b>Threats:</b> {profile.threats}"; // Added <b> tags
+        if (contentsText != null) contentsText.text = $"<b>Contents:</b> {profile.contents}"; // Added <b> tags
+        if (hintText != null) hintText.text = profile.hint; // Hint doesn't need bold label
         if (foodIconImage != null && profile.foodIcon != null) foodIconImage.sprite = profile.foodIcon;
     }
     
-    private void UpdateSeparatedPreservativeDisplay(int foodIndex, K3_FoodDatabase.FoodProfile profile)
+        private void UpdateSeparatedPreservativeDisplay(int foodIndex, K3_FoodDatabase.FoodProfile profile)
     {
         // Update Required Preservative Text
         if (requiredPreservativeText != null)
         {
             if (foodIndex == 7) // Fruit Juice
             {
-                requiredPreservativeText.text = "Required: Sodium Benzoate AND Ascorbic Acid";
+                requiredPreservativeText.text = "<b>Required:</b> Sodium Benzoate AND Ascorbic Acid"; // Added <b> tags
             }
             else
             {
-                requiredPreservativeText.text = $"Required: {profile.PreservativeDisplayName}";
+                requiredPreservativeText.text = $"<b>Required:</b> {profile.PreservativeDisplayName}"; // Added <b> tags
             }
         }
         
@@ -975,12 +975,12 @@ public class K3_KingAssessment : MonoBehaviour
         {
             if (foodIndex == 7) // Fruit Juice
             {
-                targetRangesText.text = $"Sodium Benzoate Range: 50-60\n" +
-                                       $"Ascorbic Acid Range: 40-50";
+                targetRangesText.text = $"<b>Sodium Benzoate Range:</b> 50-60\n" +
+                                    $"<b>Ascorbic Acid Range:</b> 40-50"; // Added <b> tags
             }
             else
             {
-                targetRangesText.text = $"Target Range: {profile.minSliderValue}-{profile.maxSliderValue}";
+                targetRangesText.text = $"<b>Target Range:</b> {profile.minSliderValue}-{profile.maxSliderValue}"; // Added <b> tags
             }
         }
         
@@ -990,15 +990,15 @@ public class K3_KingAssessment : MonoBehaviour
             UpdateCollectedPreservativeText();
         }
     }
-    
-    private void UpdateCollectedPreservativeText()
+        
+        private void UpdateCollectedPreservativeText()
     {
         // Check which preservatives have been collected
         bool hasAscorbicAcid = HasCollectedPreservative("0");
         bool hasPotassiumSorbate = HasCollectedPreservative("1");
         bool hasSodiumBenzoate = HasCollectedPreservative("2");
         
-        string collectedText = "<color=#000000>Collected Preservatives:</color>\n";
+        string collectedText = "<b>Collected Preservatives:</b>\n"; // Added <b> tags
         bool anyAvailable = false;
         
         if (hasAscorbicAcid) 
@@ -1100,7 +1100,7 @@ public class K3_KingAssessment : MonoBehaviour
         // If food is already completed, show completion status
         if (isCompleted)
         {
-            preservationStatusText.text = $"✓ Already preserved with {GetPreservativeList(foodIndex)}";
+            preservationStatusText.text = $"Already preserved with {GetPreservativeList(foodIndex)}";
             preservationStatusText.color = Color.green;
             SetAllPreservativeButtonsInteractable(false);
             confirmButton.interactable = false;
@@ -1115,7 +1115,7 @@ public class K3_KingAssessment : MonoBehaviour
         else
         {
             preservationStatusText.text = $"Select and hold preservative button to preserve";
-            preservationStatusText.color = Color.white;
+            preservationStatusText.color = Color.black;
         }
         
         // Reset confirmation button state
@@ -1241,7 +1241,7 @@ public class K3_KingAssessment : MonoBehaviour
             else if (alreadyApplied)
             {
                 // This preservative already applied
-                preservationStatusText.text = $"✗ {currentPreservativeType} already applied to this food!";
+                preservationStatusText.text = $"{currentPreservativeType} already applied to this food!";
                 preservationStatusText.color = Color.yellow;
                 preservationComplete = false;
                 confirmButton.interactable = false;
@@ -1255,7 +1255,7 @@ public class K3_KingAssessment : MonoBehaviour
             else
             {
                 // Wrong preservative
-                preservationStatusText.text = $"✗ Wrong preservative! {currentPreservativeType} is not needed for {profile.foodName}.";
+                preservationStatusText.text = $"Wrong preservative! {currentPreservativeType} is not needed for {profile.foodName}.";
                 preservationStatusText.color = Color.red;
                 preservationComplete = false;
                 confirmButton.interactable = false;
@@ -1271,7 +1271,7 @@ public class K3_KingAssessment : MonoBehaviour
         else
         {
             // Failed to hit target range
-            preservationStatusText.text = $"✗ {currentSliderValue:F0} is not in target range. Try again!";
+            preservationStatusText.text = $"{currentSliderValue:F0} is not in target range. Try again!";
             preservationStatusText.color = Color.red;
             preservationComplete = false;
             confirmButton.interactable = false;
