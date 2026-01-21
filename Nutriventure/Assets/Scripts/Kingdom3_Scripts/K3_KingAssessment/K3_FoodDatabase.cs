@@ -141,101 +141,105 @@ public class K3_FoodDatabase : ScriptableObject
     
     private void InitializeDefaultData()
     {
-        // 1. Bread
+        // 1. Bread - 10 GAP RANGE: 40-50
         if (foodProfiles[0] == null) foodProfiles[0] = new FoodProfile();
         foodProfiles[0].foodName = "Bread";
         foodProfiles[0].foodType = "Baked Goods";
         foodProfiles[0].shelfLife = "Spoils within days if unpreserved";
         foodProfiles[0].preservativeType = PreservativeType.PotassiumSorbate;
         foodProfiles[0].minSliderValue = 40;
-        foodProfiles[0].maxSliderValue = 60;
+        foodProfiles[0].maxSliderValue = 50; // 10 gap
         foodProfiles[0].threats = "🦠 Mold (Moderate)";
         foodProfiles[0].contents = "Moist, sugar present";
-        foodProfiles[0].hint = "Bread molds easily — apply a moderate anti-microbial potion to prevent spoilage!";
+        foodProfiles[0].hint = "Bread molds easily — apply anti-microbial potion to prevent spoilage!";
         
-        // 2. Cake
+        // 2. Cake - 10 GAP RANGE: 50-60
         if (foodProfiles[1] == null) foodProfiles[1] = new FoodProfile();
         foodProfiles[1].foodName = "Cake";
         foodProfiles[1].foodType = "Baked Goods";
         foodProfiles[1].shelfLife = "Very short if unpreserved";
         foodProfiles[1].preservativeType = PreservativeType.PotassiumSorbate;
         foodProfiles[1].minSliderValue = 50;
-        foodProfiles[1].maxSliderValue = 70;
+        foodProfiles[1].maxSliderValue = 60; // 10 gap
         foodProfiles[1].threats = "🦠 Mold (High)";
         foodProfiles[1].contents = "Moist, sugar-rich";
-        foodProfiles[1].hint = "This moist cake is at high risk of mold — use a high anti-microbial potion!";
+        foodProfiles[1].hint = "This moist cake is at high risk of mold — use anti-microbial potion!";
         
-        // 3. Canned Fruits
+        // 3. Canned Fruits - 10 GAP RANGE: 40-50
         if (foodProfiles[2] == null) foodProfiles[2] = new FoodProfile();
         foodProfiles[2].foodName = "Canned Fruits";
         foodProfiles[2].foodType = "Preserved Snack";
         foodProfiles[2].shelfLife = "Several months if unpreserved";
         foodProfiles[2].preservativeType = PreservativeType.AscorbicAcid;
         foodProfiles[2].minSliderValue = 40;
-        foodProfiles[2].maxSliderValue = 60;
+        foodProfiles[2].maxSliderValue = 50; // 10 gap
         foodProfiles[2].threats = "🟠 Oxidation (Moderate)";
         foodProfiles[2].contents = "Sealed, but still at risk of color loss";
-        foodProfiles[2].hint = "Keep the canned fruits bright — use a moderate anti-oxidant potion to prevent browning!";
+        foodProfiles[2].hint = "Keep the canned fruits bright — use anti-oxidant potion to prevent browning!";
         
-        // 4. Fresh-Cut Fruits
+        // 4. Fresh-Cut Fruits - 10 GAP RANGE: 50-60
         if (foodProfiles[3] == null) foodProfiles[3] = new FoodProfile();
         foodProfiles[3].foodName = "Fresh-Cut Fruits";
         foodProfiles[3].foodType = "Snack";
         foodProfiles[3].shelfLife = "Very short if unpreserved";
         foodProfiles[3].preservativeType = PreservativeType.AscorbicAcid;
         foodProfiles[3].minSliderValue = 50;
-        foodProfiles[3].maxSliderValue = 70;
+        foodProfiles[3].maxSliderValue = 60; // 10 gap
         foodProfiles[3].threats = "🟠 Oxidation / Browning (High)";
         foodProfiles[3].contents = "Moist, exposed to air";
-        foodProfiles[3].hint = "These fruits oxidize quickly — apply a high anti-oxidant potion to keep them fresh!";
+        foodProfiles[3].hint = "These fruits oxidize quickly — apply anti-oxidant potion to keep them fresh!";
         
-        // 5. Cheese
+        // 5. Cheese - 10 GAP RANGE: 40-50
         if (foodProfiles[4] == null) foodProfiles[4] = new FoodProfile();
         foodProfiles[4].foodName = "Cheese";
         foodProfiles[4].foodType = "Dairy";
         foodProfiles[4].shelfLife = "Spoils in a few days if unpreserved";
         foodProfiles[4].preservativeType = PreservativeType.PotassiumSorbate;
         foodProfiles[4].minSliderValue = 40;
-        foodProfiles[4].maxSliderValue = 60;
+        foodProfiles[4].maxSliderValue = 50; // 10 gap
         foodProfiles[4].threats = "🦠 Mold (Moderate)";
         foodProfiles[4].contents = "Moist, high fat";
-        foodProfiles[4].hint = "Cheese can grow mold fast — apply a moderate anti-microbial potion!";
+        foodProfiles[4].hint = "Cheese can grow mold fast — apply anti-microbial potion!";
         
-        // 6. Sausages
+        // 6. Sausages - 10 GAP RANGE: 30-40
         if (foodProfiles[5] == null) foodProfiles[5] = new FoodProfile();
         foodProfiles[5].foodName = "Sausages / Hotdogs";
         foodProfiles[5].foodType = "Processed Meat";
         foodProfiles[5].shelfLife = "Spoils within days if unpreserved";
         foodProfiles[5].preservativeType = PreservativeType.AscorbicAcid;
         foodProfiles[5].minSliderValue = 30;
-        foodProfiles[5].maxSliderValue = 50;
+        foodProfiles[5].maxSliderValue = 40; // 10 gap
         foodProfiles[5].threats = "🟠 Oxidation / Rancidity (Moderate)";
         foodProfiles[5].contents = "High fat and protein";
-        foodProfiles[5].hint = "Prevent the meat from turning rancid — use a moderate anti-oxidant potion!";
+        foodProfiles[5].hint = "Prevent the meat from turning rancid — use anti-oxidant potion!";
         
-        // 7. Soft Drink
+        // 7. Soft Drink - 10 GAP RANGE: 70-80
         if (foodProfiles[6] == null) foodProfiles[6] = new FoodProfile();
         foodProfiles[6].foodName = "Soft Drink";
         foodProfiles[6].foodType = "Beverage";
         foodProfiles[6].shelfLife = "Spoils fast if unpreserved";
         foodProfiles[6].preservativeType = PreservativeType.SodiumBenzoate;
         foodProfiles[6].minSliderValue = 70;
-        foodProfiles[6].maxSliderValue = 85;
+        foodProfiles[6].maxSliderValue = 80; // 10 gap (from your table: 70-85, adjusted to 70-80)
         foodProfiles[6].threats = "🦠 Microbial Growth (High)";
         foodProfiles[6].contents = "High sugar content, liquid";
-        foodProfiles[6].hint = "This sugary drink is very vulnerable to microbes — use a very high anti-microbial potion to keep it safe!";
+        foodProfiles[6].hint = "This sugary drink is very vulnerable to microbes — use anti-microbial potion!";
         
-        // 8. Fruit Juice
+        // 8. Fruit Juice - MULTIPLE PRESERVATIVES
+        // For Sodium Benzoate: 50-60 (from your table: 50-70, adjusted to 50-60)
+        // For Ascorbic Acid: 40-50 (from your table: 40-60, adjusted to 40-50)
         if (foodProfiles[7] == null) foodProfiles[7] = new FoodProfile();
         foodProfiles[7].foodName = "Fruit Juice";
         foodProfiles[7].foodType = "Beverage";
         foodProfiles[7].shelfLife = "5 days if unpreserved";
+        // Fruit Juice can use EITHER Sodium Benzoate OR Ascorbic Acid
+        // Defaulting to Sodium Benzoate for the database, but code handles both
         foodProfiles[7].preservativeType = PreservativeType.SodiumBenzoate;
         foodProfiles[7].minSliderValue = 50;
-        foodProfiles[7].maxSliderValue = 70;
+        foodProfiles[7].maxSliderValue = 60; // 10 gap
         foodProfiles[7].threats = "🦠 Microbial Growth (Moderate) & 🟠 Oxidation";
         foodProfiles[7].contents = "Acidic with sugar, natural vitamins";
-        foodProfiles[7].hint = "Fruit juice needs protection from both microbes AND oxidation. Use appropriate preservative based on the threat!";
+        foodProfiles[7].hint = "Fruit juice needs protection from both microbes AND oxidation. You may need multiple preservatives!";
     }
     
     private void UpdateDebugInfo()
@@ -245,7 +249,7 @@ public class K3_FoodDatabase : ScriptableObject
         {
             if (foodProfiles[i] != null)
             {
-                Debug.Log($"Index {i}: {foodProfiles[i].foodName} - {foodProfiles[i].PreservativeDisplayName}");
+                Debug.Log($"Index {i}: {foodProfiles[i].foodName} - {foodProfiles[i].PreservativeDisplayName} - Range: {foodProfiles[i].minSliderValue}-{foodProfiles[i].maxSliderValue}");
             }
             else
             {
@@ -321,7 +325,7 @@ public class K3_FoodDatabase : ScriptableObject
     public string GetFruitJuicePreservativeInfo()
     {
         return "Fruit Juice can use either:\n" +
-               "• Sodium Benzoate (50-70) for microbial protection\n" +
-               "• Ascorbic Acid (40-60) for oxidation protection";
+               "• Sodium Benzoate (50-60) for microbial protection\n" +
+               "• Ascorbic Acid (40-50) for oxidation protection";
     }
 }

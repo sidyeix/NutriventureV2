@@ -16,7 +16,7 @@ MonoBehaviour:
   - preservativeID: 0
     displayName: Ascorbic Acid
     preservativePrefab: {fileID: 677522904236240901, guid: 327d4e79dff92c44f8a23f00709d4eb9, type: 3}
-    preservativeIcon: {fileID: 0}
+    preservativeIcon: {fileID: 21300000, guid: 5e7c6a8a460af6a4ba0f8153611c93ba, type: 3}
     preservDesc: A natural antioxidant that protects food from damage caused by air.
     strengthsLimits: Strong against browning and oxidation, but less effective when
       exposed to high heat for long periods.
@@ -25,7 +25,7 @@ MonoBehaviour:
   - preservativeID: 1
     displayName: Potassium Sorbate
     preservativePrefab: {fileID: 5578406433059149183, guid: 0896ca5e31b6190469a9686b564f12a3, type: 3}
-    preservativeIcon: {fileID: 0}
+    preservativeIcon: {fileID: 21300000, guid: 2a84911a343fac64aaa3b12c12ff3215, type: 3}
     preservDesc: An antimicrobial preservative that stops mold and yeast from growing.
     strengthsLimits: Very effective in moist foods, but it does not work well against
       bacteria.
@@ -34,7 +34,7 @@ MonoBehaviour:
   - preservativeID: 2
     displayName: Sodium Benzoate
     preservativePrefab: {fileID: 4624078548867219990, guid: 0fbd59c2198c51641a6555b7d2d8e3c3, type: 3}
-    preservativeIcon: {fileID: 0}
+    preservativeIcon: {fileID: 21300000, guid: f5cdb582a9eed4843a3d783671e6b56b, type: 3}
     preservDesc: An antimicrobial preservative that works best in acidic foods.
     strengthsLimits: Strong against bacteria and yeast in liquids, but less effective
       in non-acidic foods.
