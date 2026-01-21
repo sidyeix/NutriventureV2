@@ -388,10 +388,6 @@ public class MonsterAI : MonoBehaviour
         if (sleepingEffect.activeSelf != shouldEnableSleeping)
         {
             sleepingEffect.SetActive(shouldEnableSleeping);
-            if (shouldEnableSleeping)
-                Debug.Log("Sleeping effect enabled: Monster is at center and idle");
-            else
-                Debug.Log("Sleeping effect disabled");
         }
     }
 

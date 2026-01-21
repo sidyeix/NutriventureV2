@@ -720,6 +720,54 @@ public class TorchMinigameManager : MonoBehaviour
         }
     }
 
+    public void ResetAllTorches()
+    {
+        Debug.Log("=== RESETTING ALL TORCHES ===");
+
+        // Reset manager state
+        hasCompleted = false;
+        litTorchesCount = 0;
+        UpdateTrackerText();
+
+        // Reset individual torches
+        foreach (TorchMinigame torch in allTorches)
+        {
+            if (torch != null)
+            {
+                torch.ResetTorch();
+            }
+        }
+
+        // Reset trigger
+        ResetTrigger();
+
+        // Hide tracker panel
+        HideTrackerPanel();
+
+        Debug.Log($"All torches reset. Total torches: {allTorches.Count}");
+    }
+
+    public void CompleteMinigameReset()
+    {
+        ResetAllTorches();
+
+        // Also reset any timeline state
+        if (playableDirector != null && playableDirector.state == PlayState.Playing)
+        {
+            playableDirector.Stop();
+            Debug.Log("Stopped playing timeline");
+        }
+
+        // Make sure game state is resumed
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
+        }
+
+        Debug.Log("Minigame completely reset to initial state");
+    }
+
+
     private void OnDestroy()
     {
         // Unsubscribe from timeline events

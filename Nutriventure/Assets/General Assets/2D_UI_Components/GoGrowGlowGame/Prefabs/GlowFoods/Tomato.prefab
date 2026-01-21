@@ -81,7 +81,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b633e235145707d40972ccb7c42310f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoFood
-  points: 100
+  points: 30
   foodSprite: {fileID: 21300000, guid: aa11df9db68beff45895c1ac1953558e, type: 3}
   collectionEffect: {fileID: 0}
 --- !u!135 &4281531132902258869

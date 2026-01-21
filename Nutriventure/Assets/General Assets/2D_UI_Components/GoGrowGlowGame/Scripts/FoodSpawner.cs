@@ -26,6 +26,9 @@ public class FoodSpawner : MonoBehaviour
     private bool isSpawningEnabled = false;
     private List<Transform> allSpawnPoints = new List<Transform>();
 
+    // Store original active state of food objects
+    private Dictionary<GameObject, bool> originalFoodStates = new Dictionary<GameObject, bool>();
+
     private void Start()
     {
         InitializeSpawnSystem();
@@ -125,6 +128,9 @@ public class FoodSpawner : MonoBehaviour
             GameObject food = Instantiate(foodPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
             activeFood.Add(food);
 
+            // Store original active state
+            originalFoodStates[food] = true;
+
             // Mark spawn point as occupied
             spawnPointOccupied[spawnPoint] = true;
 
@@ -199,6 +205,9 @@ public class FoodSpawner : MonoBehaviour
 
     public void ClearAllFood()
     {
+        // Clear original states dictionary
+        originalFoodStates.Clear();
+
         // Destroy all active food
         for (int i = activeFood.Count - 1; i >= 0; i--)
         {
@@ -225,6 +234,102 @@ public class FoodSpawner : MonoBehaviour
         Debug.Log("All food cleared!");
     }
 
+    // NEW METHOD: Hide all spawned food without destroying them
+    public void HideAllFood()
+    {
+        foreach (GameObject food in activeFood)
+        {
+            if (food != null)
+            {
+                // Store current active state before hiding
+                if (!originalFoodStates.ContainsKey(food))
+                {
+                    originalFoodStates[food] = food.activeSelf;
+                }
+
+                food.SetActive(false);
+            }
+        }
+
+        // Also pause respawn timers
+        PauseAllRespawnTimers();
+
+        Debug.Log($"Hid {activeFood.Count} food objects");
+    }
+
+    // NEW METHOD: Show all previously hidden food
+    public void ShowAllFood()
+    {
+        foreach (GameObject food in activeFood)
+        {
+            if (food != null)
+            {
+                // Restore to original state or default to active
+                if (originalFoodStates.ContainsKey(food))
+                {
+                    food.SetActive(originalFoodStates[food]);
+                }
+                else
+                {
+                    food.SetActive(true);
+                }
+            }
+        }
+
+        // Resume respawn timers
+        ResumeAllRespawnTimers();
+
+        Debug.Log($"Showed {activeFood.Count} food objects");
+    }
+
+    // NEW METHOD: Pause all respawn timers
+    private void PauseAllRespawnTimers()
+    {
+        foreach (Transform spawnPoint in allSpawnPoints)
+        {
+            if (respawnTimers.ContainsKey(spawnPoint))
+            {
+                // Set timers to a negative value to pause them
+                if (respawnTimers[spawnPoint] > 0f)
+                {
+                    respawnTimers[spawnPoint] = -respawnTimers[spawnPoint];
+                }
+            }
+        }
+    }
+
+    // NEW METHOD: Resume all paused respawn timers
+    private void ResumeAllRespawnTimers()
+    {
+        foreach (Transform spawnPoint in allSpawnPoints)
+        {
+            if (respawnTimers.ContainsKey(spawnPoint))
+            {
+                // If timer is negative (paused), convert back to positive
+                if (respawnTimers[spawnPoint] < 0f)
+                {
+                    respawnTimers[spawnPoint] = -respawnTimers[spawnPoint];
+                }
+            }
+        }
+    }
+
+    // NEW METHOD: Temporarily disable food spawning without clearing food
+    public void PauseSpawning()
+    {
+        isSpawningEnabled = false;
+        PauseAllRespawnTimers();
+        Debug.Log("Food spawning paused");
+    }
+
+    // NEW METHOD: Resume food spawning
+    public void ResumeSpawning()
+    {
+        isSpawningEnabled = true;
+        ResumeAllRespawnTimers();
+        Debug.Log("Food spawning resumed");
+    }
+
     public void RespawnAllFood()
     {
         if (!isSpawningEnabled) return;
@@ -237,6 +342,18 @@ public class FoodSpawner : MonoBehaviour
     public bool IsSpawningEnabled()
     {
         return isSpawningEnabled;
+    }
+
+    // NEW: Getter for active food count
+    public int GetActiveFoodCount()
+    {
+        return activeFood.Count;
+    }
+
+    // NEW: Check if any food is currently active
+    public bool HasActiveFood()
+    {
+        return activeFood.Count > 0;
     }
 }
 

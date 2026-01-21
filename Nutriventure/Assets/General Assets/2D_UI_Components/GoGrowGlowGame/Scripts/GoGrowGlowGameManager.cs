@@ -185,6 +185,12 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float startEnergy = 100f; // Starting energy value
     private bool isStartingGame = false; // Flag to track if game is in starting process
 
+    [Header("Low Energy Warning")]
+    public GameObject lowEnergyCanvas;
+    public float lowEnergyThreshold = 20f;
+    public AudioSource lowEnergyAudioSource;
+    public AudioClip lowEnergySound;
+
     private bool inHealingZone = false;
     private Coroutine resetExciteCoroutine;
     private Coroutine resetStomachAcheCoroutine;
@@ -198,6 +204,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private float originalSpeed;
     private bool isGameTimerPaused = false;
     private float pausedTimerValue = 0f;
+    private bool wasLowEnergyLastFrame = false;
+
 
     private void Awake()
     {
@@ -253,11 +261,32 @@ public class GoGrowGlowGameManager : MonoBehaviour
             backgroundMusicSource.clip = gameEndBGM;
             backgroundMusicSource.Play();
         }
+
+        // Initialize low energy canvas
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+        }
+
+        // ADDED: Initialize low energy audio source
+        if (lowEnergyAudioSource == null)
+        {
+            lowEnergyAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (lowEnergyAudioSource != null)
+        {
+            lowEnergyAudioSource.loop = true;
+            lowEnergyAudioSource.playOnAwake = false;
+        }
     }
 
     private void Update()
     {
         if (!gameIsActive) return;
+
+        // Check energy for low energy warning
+        CheckLowEnergyWarning();
 
         // Only update timer if not paused
         if (!isGameTimerPaused)
@@ -539,6 +568,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private void ActualGameStart()
     {
+
+        // Ensure low energy canvas is hidden at game start
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+            wasLowEnergyLastFrame = false;
+        }
+
+        // ADDED: Ensure low energy sound is stopped at game start
+        StopLowEnergySound();
+
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
         gameIsActive = true;
         isStartingGame = false;
@@ -618,6 +658,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isEnergyDecreasePaused = false; // Reset pause state
         StopOneLifeCheck();
         StopKnockback();
+
+        // Hide low energy canvas when game ends
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+            wasLowEnergyLastFrame = false;
+        }
+
+        // Stop low energy sound when game ends
+        StopLowEnergySound();
 
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(false);
         if (foodSpawner != null) foodSpawner.StopSpawning();
@@ -902,8 +952,12 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         StartDamageCooldown();
 
+
+
         if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
         respawnCoroutine = StartCoroutine(RespawnProcess());
+
+
     }
 
     private IEnumerator RespawnProcess()
@@ -934,6 +988,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (currentLifeAmount <= 0f)
         {
             EndGame();
+
+            // ADD THIS: Trigger Game Over screen
+            GameEndManager gameEndManager = FindObjectOfType<GameEndManager>();
+            if (gameEndManager != null)
+            {
+                gameEndManager.TriggerGameOver();
+            }
+
             yield break;
         }
 
@@ -1354,6 +1416,66 @@ public class GoGrowGlowGameManager : MonoBehaviour
         return isGameTimerPaused;
     }
 
+    // Method to check and update low energy warning
+    private void CheckLowEnergyWarning()
+    {
+        if (lowEnergyCanvas == null) return;
+
+        bool isLowEnergyNow = currentEnergy <= lowEnergyThreshold && currentEnergy > 0f;
+
+        if (isLowEnergyNow != wasLowEnergyLastFrame)
+        {
+            lowEnergyCanvas.SetActive(isLowEnergyNow);
+
+            // Handle low energy audio
+            if (isLowEnergyNow)
+            {
+                Debug.Log($"Low energy warning shown! Energy: {currentEnergy}");
+                PlayLowEnergySound();
+            }
+            else
+            {
+                Debug.Log($"Low energy warning hidden. Energy: {currentEnergy}");
+                StopLowEnergySound();
+            }
+        }
+
+        wasLowEnergyLastFrame = isLowEnergyNow;
+    }
+
+    // Method to play low energy sound
+    private void PlayLowEnergySound()
+    {
+        if (lowEnergyAudioSource != null && lowEnergySound != null)
+        {
+            lowEnergyAudioSource.clip = lowEnergySound;
+            lowEnergyAudioSource.loop = true;
+            if (!lowEnergyAudioSource.isPlaying)
+            {
+                lowEnergyAudioSource.Play();
+                Debug.Log("Started low energy warning sound");
+            }
+        }
+        else if (lowEnergyAudioSource == null)
+        {
+            Debug.LogWarning("Low energy audio source not assigned!");
+        }
+        else if (lowEnergySound == null)
+        {
+            Debug.LogWarning("Low energy sound clip not assigned!");
+        }
+    }
+
+    // Method to stop low energy sound
+    private void StopLowEnergySound()
+    {
+        if (lowEnergyAudioSource != null && lowEnergyAudioSource.isPlaying)
+        {
+            lowEnergyAudioSource.Stop();
+            Debug.Log("Stopped low energy warning sound");
+        }
+    }
+
     // ====== PUBLIC GETTERS ======
     public float GetCurrentLifeAmount() => currentLifeAmount;
     public int GetCurrentLives() => currentLives;
@@ -1370,4 +1492,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public bool IsDamageOnCooldown() => isDamageOnCooldown;
     public float GetStartDelay() => startDelay;
     public bool IsStartingGame() => isStartingGame;
+    public float GetLowEnergyThreshold() => lowEnergyThreshold;
+    public float GetGameTimer() => gameTimer;
+    public float GetRemainingHearts() => currentLifeAmount;
 }
