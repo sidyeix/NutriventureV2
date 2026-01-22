@@ -86,7 +86,7 @@ public class K3_GameSummary : MonoBehaviour
     // K3 SPECIFIC REFERENCES - CHANGED FROM SugariaPlayerStat TO PreserviaPlayerStat
     private PreserviaPlayerStat playerHealth;
     private K3_GameplayProgression gameplayProgression;
-    private SugariaScoringSystem scoringSystem;
+    private PreserviaScoringSystem scoringSystem;
     private MainMenu_Manager mainMenuManager;
     private GameObject playerObject;
     private Animator playerAnimator;
@@ -130,7 +130,7 @@ public class K3_GameSummary : MonoBehaviour
         // K3 SPECIFIC: Changed to PreserviaPlayerStat
         playerHealth = FindObjectOfType<PreserviaPlayerStat>();
         gameplayProgression = FindObjectOfType<K3_GameplayProgression>();
-        scoringSystem = FindObjectOfType<SugariaScoringSystem>();
+        scoringSystem = FindObjectOfType<PreserviaScoringSystem>();
         mainMenuManager = FindObjectOfType<MainMenu_Manager>();
         playerObject = GameObject.FindGameObjectWithTag("Player");
         collectKeyScript = FindObjectOfType<K3_CollectKey>(); // K3 specific

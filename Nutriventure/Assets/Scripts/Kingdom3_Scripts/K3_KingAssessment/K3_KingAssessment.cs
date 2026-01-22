@@ -35,6 +35,11 @@ public class K3_KingAssessment : MonoBehaviour
     
     [Header("Database")]
     [SerializeField] private K3_FoodDatabase foodDatabase;
+
+    [Header("Vibration Settings")]
+    [SerializeField] private bool enableHapticFeedback = true;
+    [SerializeField] private bool enableShakeAnimations = true;
+    [SerializeField] private float panelCloseDelay = 2f; // Delay before auto-closing panel
     
     [Header("Collection System")]
     [SerializeField] private K3_CollectPreservatives collectionSystem;
@@ -724,6 +729,11 @@ public class K3_KingAssessment : MonoBehaviour
             {
                 preservationStatusText.text = $"No successful preservation to confirm. Try again!";
                 preservationStatusText.color = Color.red;
+                
+                // NEW: Add vibration feedback for incorrect attempt
+                StartCoroutine(ShakePanel());
+                TriggerHapticFeedback(); // Mobile vibration
+                
                 return;
             }
             
@@ -740,6 +750,11 @@ public class K3_KingAssessment : MonoBehaviour
                 SetButtonIcon(currentPreservativeType, false);
                 
                 PlaySound(failureSound);
+                
+                // NEW: Add vibration feedback for wrong preservative
+                StartCoroutine(ShakePanel());
+                TriggerHapticFeedback(); // Mobile vibration
+                
                 return;
             }
         }
@@ -774,12 +789,18 @@ public class K3_KingAssessment : MonoBehaviour
             // Switch particle systems
             SwitchToPreservedParticles(currentFoodIndex);
             
+            // NEW: Auto-close panel after successful preservation
+            StartCoroutine(AutoClosePanelAfterSuccess());
+            
+            // NEW: Success vibration (light)
+            TriggerSuccessHapticFeedback();
+            
             CheckAllFoodsCompleted();
         }
         else
         {
             // Food needs more preservatives
-            preservationStatusText.text = $"✓ {currentPreservativeType} applied! {GetRemainingPreservativesText(currentFoodIndex)}";
+            preservationStatusText.text = $"{currentPreservativeType} applied! {GetRemainingPreservativesText(currentFoodIndex)}";
             preservationStatusText.color = Color.green;
             
             // Keep confirm button enabled for next preservative
@@ -791,7 +812,142 @@ public class K3_KingAssessment : MonoBehaviour
             
             // Update button icons for current food
             UpdateAllButtonIcons();
+            
+            // NEW: Success vibration (light) for partial preservation
+            TriggerSuccessHapticFeedback();
         }
+    }
+    
+    // NEW: Shake animation for incorrect attempts
+    private IEnumerator ShakePanel()
+    {
+        if (KAPanel == null) yield break;
+        
+        RectTransform panelRect = KAPanel.GetComponent<RectTransform>();
+        if (panelRect == null) yield break;
+        
+        Vector3 originalPosition = panelRect.anchoredPosition;
+        float shakeDuration = 0.5f;
+        float shakeIntensity = 10f;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < shakeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            
+            // Calculate shake offset
+            float x = Random.Range(-1f, 1f) * shakeIntensity;
+            float y = Random.Range(-1f, 1f) * shakeIntensity;
+            
+            // Apply shake
+            panelRect.anchoredPosition = originalPosition + new Vector3(x, y, 0);
+            
+            yield return null;
+        }
+        
+        // Return to original position
+        panelRect.anchoredPosition = originalPosition;
+    }
+    
+    // NEW: Shake button animation for incorrect attempts
+    private IEnumerator ShakeButton(Button button)
+    {
+        if (button == null) yield break;
+        
+        RectTransform buttonRect = button.GetComponent<RectTransform>();
+        if (buttonRect == null) yield break;
+        
+        Vector3 originalScale = buttonRect.localScale;
+        float shakeDuration = 0.3f;
+        float shakeIntensity = 0.1f;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < shakeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            
+            // Calculate shake offset
+            float xShake = Random.Range(-shakeIntensity, shakeIntensity);
+            float yShake = Random.Range(-shakeIntensity, shakeIntensity);
+            
+            // Apply shake to scale
+            buttonRect.localScale = originalScale + new Vector3(xShake, yShake, 0);
+            
+            yield return null;
+        }
+        
+        // Return to original scale
+        buttonRect.localScale = originalScale;
+    }
+    
+    // NEW: Haptic feedback for mobile devices
+    private void TriggerHapticFeedback()
+    {
+        #if UNITY_IOS || UNITY_ANDROID
+        // For iOS
+        #if UNITY_IOS
+        if (SystemInfo.supportsVibration)
+        {
+            // iOS haptic feedback - using different patterns based on iOS version
+            if (UnityEngine.iOS.Device.generation >= UnityEngine.iOS.DeviceGeneration.iPhone6S)
+            {
+                // Use iOS haptic feedback API
+                UnityEngine.iOS.NotificationServices.Init();
+            }
+        }
+        #endif
+        
+        // For Android and fallback for iOS
+        #if UNITY_ANDROID
+        // Use Android's Vibrator
+        Handheld.Vibrate();
+        #else
+        // Fallback for other platforms or if specific API not available
+        if (SystemInfo.supportsVibration)
+        {
+            // Short vibration (100ms)
+            StartCoroutine(VibrateForSeconds(0.1f));
+        }
+        #endif
+        #else
+        // PC/Editor fallback - just log
+        Debug.Log("Haptic feedback triggered (PC/Editor)");
+        #endif
+    }
+    
+    // NEW: Success haptic feedback (lighter vibration)
+    private void TriggerSuccessHapticFeedback()
+    {
+        #if UNITY_IOS || UNITY_ANDROID
+        if (SystemInfo.supportsVibration)
+        {
+            // Very short vibration for success (50ms)
+            StartCoroutine(VibrateForSeconds(0.05f));
+        }
+        #endif
+    }
+    
+    // NEW: Coroutine for timed vibration
+    private IEnumerator VibrateForSeconds(float seconds)
+    {
+        #if UNITY_ANDROID && !UNITY_EDITOR
+        // Android specific
+        Handheld.Vibrate();
+        yield return new WaitForSeconds(seconds);
+        // Note: Android's Handheld.Vibrate() doesn't have duration parameter
+        // For precise timing, you'd need Android native plugin
+        #else
+        // Editor or iOS - simulate with coroutine
+        Debug.Log($"Vibration simulated for {seconds} seconds");
+        yield return null;
+        #endif
+    }
+    
+    // NEW: Auto-close panel after success
+    private IEnumerator AutoClosePanelAfterSuccess()
+    {
+        yield return new WaitForSeconds(panelCloseDelay);
+        ClosePreservationPanel();
     }
     
     private bool IsCorrectPreservativeForFood(int foodIndex, PreservativeType type)
@@ -918,15 +1074,22 @@ public class K3_KingAssessment : MonoBehaviour
                 ResetPreservationState();
             }
             
+            // Reset confirm button state
+            preservationComplete = false;
+            confirmButton.interactable = false;
+            
             // Restore inspect button if player is still near
             if (inspectButton != null)
             {
                 inspectButton.gameObject.SetActive(isPlayerNear);
             }
+            
+            // NEW: Notify scoring system about panel closure (optional)
+            Debug.Log("Preservation panel closed");
         }
     }
     
-        private void UpdateFoodPanelContent(int foodIndex)
+    private void UpdateFoodPanelContent(int foodIndex)
     {
         if (foodDatabase == null)
         {
@@ -955,7 +1118,7 @@ public class K3_KingAssessment : MonoBehaviour
         if (foodIconImage != null && profile.foodIcon != null) foodIconImage.sprite = profile.foodIcon;
     }
     
-        private void UpdateSeparatedPreservativeDisplay(int foodIndex, K3_FoodDatabase.FoodProfile profile)
+    private void UpdateSeparatedPreservativeDisplay(int foodIndex, K3_FoodDatabase.FoodProfile profile)
     {
         // Update Required Preservative Text
         if (requiredPreservativeText != null)
@@ -991,7 +1154,7 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
         
-        private void UpdateCollectedPreservativeText()
+    private void UpdateCollectedPreservativeText()
     {
         // Check which preservatives have been collected
         bool hasAscorbicAcid = HasCollectedPreservative("0");
@@ -1251,6 +1414,10 @@ public class K3_KingAssessment : MonoBehaviour
                 SetButtonIcon(currentPreservativeType, false);
                 
                 PlaySound(failureSound);
+                
+                // NEW: Shake feedback for duplicate attempt
+                StartCoroutine(ShakeButton(GetButtonForPreservative(currentPreservativeType)));
+                TriggerHapticFeedback();
             }
             else
             {
@@ -1266,6 +1433,10 @@ public class K3_KingAssessment : MonoBehaviour
                 
                 PlaySound(failureSound);
                 StartCoroutine(FailureFeedback());
+                
+                // NEW: Shake feedback for wrong preservative
+                StartCoroutine(ShakeButton(GetButtonForPreservative(currentPreservativeType)));
+                TriggerHapticFeedback();
             }
         }
         else
@@ -1282,6 +1453,10 @@ public class K3_KingAssessment : MonoBehaviour
             
             PlaySound(failureSound);
             StartCoroutine(FailureFeedback());
+            
+            // NEW: Shake feedback for missed target
+            StartCoroutine(ShakePanel());
+            TriggerHapticFeedback();
         }
         
         isPreserving = false;
