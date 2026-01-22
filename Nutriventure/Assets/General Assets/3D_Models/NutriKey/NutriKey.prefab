@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1368009280038121718}
   m_Layer: 0
   m_Name: NutriKey
-  m_TagString: Untagged
+  m_TagString: NutriKey
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

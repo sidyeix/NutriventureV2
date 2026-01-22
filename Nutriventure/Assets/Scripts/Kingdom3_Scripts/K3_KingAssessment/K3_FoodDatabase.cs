@@ -226,20 +226,18 @@ public class K3_FoodDatabase : ScriptableObject
         foodProfiles[6].hint = "This sugary drink is very vulnerable to microbes — use anti-microbial potion!";
         
         // 8. Fruit Juice - MULTIPLE PRESERVATIVES
-        // For Sodium Benzoate: 50-60 (from your table: 50-70, adjusted to 50-60)
-        // For Ascorbic Acid: 40-50 (from your table: 40-60, adjusted to 40-50)
+        // In the K3_FoodDatabase class, update the Fruit Juice section (index 7):
         if (foodProfiles[7] == null) foodProfiles[7] = new FoodProfile();
         foodProfiles[7].foodName = "Fruit Juice";
         foodProfiles[7].foodType = "Beverage";
         foodProfiles[7].shelfLife = "5 days if unpreserved";
-        // Fruit Juice can use EITHER Sodium Benzoate OR Ascorbic Acid
-        // Defaulting to Sodium Benzoate for the database, but code handles both
+        // CHANGE: Fruit Juice only requires Sodium Benzoate (not both)
         foodProfiles[7].preservativeType = PreservativeType.SodiumBenzoate;
         foodProfiles[7].minSliderValue = 50;
         foodProfiles[7].maxSliderValue = 60; // 10 gap
-        foodProfiles[7].threats = "Microbial Growth (Moderate) & Oxidation";
+        foodProfiles[7].threats = "Microbial Growth (Moderate)";
         foodProfiles[7].contents = "Acidic with sugar, natural vitamins";
-        foodProfiles[7].hint = "Fruit juice needs protection from both microbes AND oxidation. You may need multiple preservatives!";
+        foodProfiles[7].hint = "Fruit juice needs protection from microbes. Apply Sodium Benzoate!";
     }
     
     private void UpdateDebugInfo()
