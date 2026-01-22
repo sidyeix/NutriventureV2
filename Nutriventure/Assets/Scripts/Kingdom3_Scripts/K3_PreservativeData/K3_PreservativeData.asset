@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30f7154b921c8b48ac44288d888be90, type: 3}
+  m_Name: K3_PreservativeData
+  m_EditorClassIdentifier: Assembly-CSharp::K3_ProductData
+  allPreservatives:
+  - preservativeID: 0
+    displayName: Ascorbic Acid
+    preservativePrefab: {fileID: 677522904236240901, guid: 327d4e79dff92c44f8a23f00709d4eb9, type: 3}
+    preservativeIcon: {fileID: 21300000, guid: 5e7c6a8a460af6a4ba0f8153611c93ba, type: 3}
+    preservDesc: A natural antioxidant that protects food from damage caused by air.
+    strengthsLimits: Strong against browning and oxidation, but less effective when
+      exposed to high heat for long periods.
+    foundIn: Fruit juices, Canned Fruits, Snacks, and Processed Meats.
+    funFact: "It\u2019s the same Vitamin C found in oranges and lemons."
+  - preservativeID: 1
+    displayName: Potassium Sorbate
+    preservativePrefab: {fileID: 5578406433059149183, guid: 0896ca5e31b6190469a9686b564f12a3, type: 3}
+    preservativeIcon: {fileID: 21300000, guid: 2a84911a343fac64aaa3b12c12ff3215, type: 3}
+    preservDesc: An antimicrobial preservative that stops mold and yeast from growing.
+    strengthsLimits: Very effective in moist foods, but it does not work well against
+      bacteria.
+    foundIn: Bread, Cheese, Yogurt, Baked goods, and Dried fruits.
+    funFact: It is one of the most common preservatives used in bread.
+  - preservativeID: 2
+    displayName: Sodium Benzoate
+    preservativePrefab: {fileID: 4624078548867219990, guid: 0fbd59c2198c51641a6555b7d2d8e3c3, type: 3}
+    preservativeIcon: {fileID: 21300000, guid: f5cdb582a9eed4843a3d783671e6b56b, type: 3}
+    preservDesc: An antimicrobial preservative that works best in acidic foods.
+    strengthsLimits: Strong against bacteria and yeast in liquids, but less effective
+      in non-acidic foods.
+    foundIn: Soft Drinks, Fruit Juices, Sauces, Dressings, and Pickles.
+    funFact: It is commonly used in soft drinks to keep them shelf-stable.

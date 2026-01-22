@@ -8,28 +8,46 @@ public class IngredientInteractable : Interactable
     [TextArea(3, 5)]
     public string ingredientDescription;
     public Sprite ingredientIcon;
-    
+
+    [Header("Sound FX")]
+    public AudioClip pickupSFX;
+    [Range(0f, 1f)] public float pickupVolume = 1f;
+
     public override void Pickup()
     {
-        // Use the singleton instance instead of finding through BookUIManager
+        // 🔊 Play pickup sound
+        if (pickupSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(
+                pickupSFX,
+                transform.position,
+                pickupVolume
+            );
+        }
+
+        // Add ingredient to book
         if (BookInteractable.Instance != null)
         {
-            // Add ingredient directly to the book
-            BookInteractable.Instance.AddIngredient(ingredientId, ingredientName, ingredientDescription, ingredientIcon);
+            BookInteractable.Instance.AddIngredient(
+                ingredientId,
+                ingredientName,
+                ingredientDescription,
+                ingredientIcon
+            );
             Debug.Log($"Added {ingredientName} to book");
         }
         else
         {
             Debug.LogWarning("No book collected yet! Collect the book first.");
         }
-        
-        // Notify spawn manager that this allergen was collected
+
+        // Notify spawn manager
         AllergenSpawnManager spawnManager = FindAnyObjectByType<AllergenSpawnManager>();
         if (spawnManager != null)
         {
             spawnManager.OnAllergenCollected(gameObject);
         }
-        
+
         base.Pickup();
     }
 }

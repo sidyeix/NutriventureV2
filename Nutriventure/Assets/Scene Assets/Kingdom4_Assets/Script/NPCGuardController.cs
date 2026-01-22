@@ -42,8 +42,8 @@ private MonoBehaviour playerMovementScript;
     [TextArea(2, 4)]
     [SerializeField] private string[] narrationLines =
     {
-        "Traveler... our kingdom is in danger, not from blades or beasts—",
-        "but from what our people eat without knowing.",
+        "Traveler... our kingdom is in danger,",
+        "from what our people eat without knowing.",
         "",
         "This scroll you see is the Scroll of Allergenia.",
         "It holds knowledge of the Big Nine Allergens—",

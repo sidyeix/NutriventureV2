@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.Playables;
 using System.Collections;
 
 public class BookUIManager : MonoBehaviour
@@ -27,24 +28,12 @@ public class BookUIManager : MonoBehaviour
     [Header("All Possible Ingredients")]
     public List<IngredientDefinition> allPossibleIngredients = new List<IngredientDefinition>();
     
-    [Header("Narration Settings")]
-    public AudioClip gateOpenSound; // Audio for when gate opens
-    
-    // ASSIGN THESE MANUALLY IN INSPECTOR
-    public AudioSource audioSource; 
-    public K2_SubtitleController subtitleController; // Reference to your subtitle controller
-    
-    [Header("Dialogue Canvas (for subtitle display)")]
-    public GameObject dialogueCanvas; // The canvas that contains subtitle UI - like NPCGuardController
-    
-    [Header("Subtitle Timing")]
-    public float narrationDisplayTime = 6f; 
-    public float typingSpeed = 0.05f; // Speed for subtitle typing
+    [Header("Timeline")]
+    public PlayableDirector timelineDirector; // Drag your timeline here
     
     private BookInteractable mainBook;
     private GameObject currentBookUIEntry;
-    private bool gateNarrationPlayed = false;
-    private Coroutine currentNarration;
+    private bool timelinePlayed = false;
     
     [System.Serializable]
     public class IngredientDefinition
@@ -57,6 +46,15 @@ public class BookUIManager : MonoBehaviour
         public Sprite silhouetteSprite;
     }
     
+    public void ShowBookIcon()
+{
+    if (currentBookUIEntry != null)
+    {
+        currentBookUIEntry.SetActive(true);
+    }
+}
+
+
     void Start()
     {
         if (bookPanel != null) bookPanel.SetActive(false);
@@ -71,41 +69,6 @@ public class BookUIManager : MonoBehaviour
         {
             closeBookButton.onClick.AddListener(CloseBook);
         }
-        
-        // Set up audio source
-        if (audioSource == null)
-        {
-            audioSource = GetComponent<AudioSource>();
-            if (audioSource == null)
-            {
-                audioSource = gameObject.AddComponent<AudioSource>();
-            }
-        }
-        
-        // Initialize dialogue canvas
-        if (dialogueCanvas != null)
-        {
-            dialogueCanvas.SetActive(false);
-            Debug.Log("BookUIManager: Dialogue canvas initialized (set inactive)");
-        }
-        else
-        {
-            Debug.LogWarning("BookUIManager: No dialogue canvas assigned! Subtitle display will fail.");
-        }
-        
-        // Check for subtitle controller
-        if (subtitleController == null)
-        {
-            Debug.LogWarning("BookUIManager: No subtitle controller assigned! Assign K2_SubtitleController in Inspector.");
-        }
-        else
-        {
-            // Make sure subtitle controller is initially disabled if it's on the dialogue canvas
-            if (subtitleController.gameObject == dialogueCanvas)
-            {
-                subtitleController.enabled = false;
-            }
-        }
     }
     
     public void SetMainBook(BookInteractable book)
@@ -114,7 +77,7 @@ public class BookUIManager : MonoBehaviour
         Debug.Log($"BookUIManager: Book set: {book.bookName}");
         
         // Check immediately if we already have 9 ingredients
-        CheckForGateNarration();
+        CheckForTimeline();
     }
     
     public void AddBookToUI(string bookId, string bookName, Sprite bookIcon)
@@ -192,8 +155,8 @@ public class BookUIManager : MonoBehaviour
             }
         }
         
-        // Check for gate narration
-        CheckForGateNarration();
+        // Check for timeline
+        CheckForTimeline();
     }
     
     public void OnIngredientCollected(string ingredientId)
@@ -202,18 +165,18 @@ public class BookUIManager : MonoBehaviour
         UpdateBookUI();
     }
     
-    private void CheckForGateNarration()
+    private void CheckForTimeline()
     {
-        if (mainBook == null || gateNarrationPlayed) return;
+        if (mainBook == null || timelinePlayed) return;
         
         int collectedCount = mainBook.GetCollectedCount();
         
         if (collectedCount >= 9)
         {
-            gateNarrationPlayed = true;
+            timelinePlayed = true;
             
-            // Show narration message
-            ShowNarrationMessage();
+            // Play timeline
+            PlayTimeline();
             
             // Disable the gate cube
             if (gateObject != null)
@@ -228,103 +191,38 @@ public class BookUIManager : MonoBehaviour
         }
     }
     
-    private void ShowNarrationMessage()
+    private void PlayTimeline()
     {
-        string message = "Congratulations on finding all 9 allergies! The gate to the wagon is now open. Proceed with it to heal the kingdom of Allerthria.";
-        
-        if (currentNarration != null)
+        if (timelineDirector != null)
         {
-            StopCoroutine(currentNarration);
-        }
-        
-        // Start new narration using subtitle controller
-        currentNarration = StartCoroutine(ShowSubtitleNarration(message, gateOpenSound));
-        
-        Debug.Log("🎉 BookUIManager: NARRATION TRIGGERED!");
-    }
-    
-    private IEnumerator ShowSubtitleNarration(string message, AudioClip soundClip = null)
-    {
-        // Check if we have required components
-        if (subtitleController == null)
-        {
-            Debug.LogError("BookUIManager: Subtitle controller is null! Cannot show narration.");
-            currentNarration = null;
-            yield break;
-        }
-        
-        if (dialogueCanvas == null)
-        {
-            Debug.LogError("BookUIManager: Dialogue canvas is null! Cannot show subtitle UI.");
-            currentNarration = null;
-            yield break;
-        }
-        
-        // ACTIVATE THE DIALOGUE CANVAS FIRST
-        if (!dialogueCanvas.activeInHierarchy)
-        {
-            dialogueCanvas.SetActive(true);
-            Debug.Log("BookUIManager: Activated dialogue canvas for narration");
+            Debug.Log("🎬 BookUIManager: Playing timeline!");
+            timelineDirector.Play();
             
-            // Wait for the canvas to be fully activated
-            yield return null;
-        }
-        
-        // Ensure the subtitle controller script is enabled
-        if (!subtitleController.enabled)
-        {
-            subtitleController.enabled = true;
-            Debug.Log("BookUIManager: Enabled subtitle controller script");
-        }
-        
-        // Check if subtitleTextUI is properly set up
-        if (subtitleController.subtitleTextUI == null)
-        {
-            Debug.LogError("BookUIManager: Subtitle Text UI is null! Check K2_SubtitleController setup.");
-            currentNarration = null;
-            yield break;
-        }
-        
-        // Ensure the Text UI is active
-        if (!subtitleController.subtitleTextUI.gameObject.activeInHierarchy)
-        {
-            subtitleController.subtitleTextUI.gameObject.SetActive(true);
-            Debug.Log("BookUIManager: Activated subtitle text UI");
-        }
-        
-        // Now show the subtitle
-        Debug.Log($"BookUIManager: Showing subtitle: {message}");
-        subtitleController.ShowSubtitle(message, typingSpeed);
-        
-        // Play audio if provided
-        if (soundClip != null && audioSource != null)
-        {
-            Debug.Log($"BookUIManager: Playing audio clip: {soundClip.name}");
-            audioSource.PlayOneShot(soundClip);
-            float clipDuration = soundClip.length;
-            float waitTime = Mathf.Max(clipDuration, narrationDisplayTime);
-            Debug.Log($"BookUIManager: Waiting for {waitTime} seconds");
-            yield return new WaitForSeconds(waitTime);
+            // Listen for timeline completion
+            StartCoroutine(WaitForTimelineCompletion());
         }
         else
         {
-            Debug.Log($"BookUIManager: No audio, waiting {narrationDisplayTime} seconds");
-            yield return new WaitForSeconds(narrationDisplayTime);
+            Debug.LogError("❌ BookUIManager: No Timeline Director assigned!");
         }
+    }
+    
+    private IEnumerator WaitForTimelineCompletion()
+    {
+        if (timelineDirector == null) yield break;
         
-        // Clear subtitle
-        subtitleController.ClearSubtitle();
-        Debug.Log("BookUIManager: Cleared subtitle");
+        // Wait for timeline to start
+        yield return null;
         
-        // Deactivate the dialogue canvas after narration is complete
-        // (This matches what NPCGuardController does)
-        if (dialogueCanvas.activeInHierarchy)
+        // Wait while timeline is playing
+        while (timelineDirector.state == PlayState.Playing)
         {
-            dialogueCanvas.SetActive(false);
-            Debug.Log("BookUIManager: Deactivated dialogue canvas after narration");
+            yield return null;
         }
         
-        currentNarration = null;
+        Debug.Log("✅ BookUIManager: Timeline completed!");
+        
+        // You can add additional logic here after timeline finishes
     }
     
     public void ShowIngredientInfo(BookInteractable.IngredientData ingredient)
@@ -367,60 +265,34 @@ public class BookUIManager : MonoBehaviour
             }
             
             UpdateBookUI();
-            Debug.Log("Test: 9 ingredients added - gate narration should trigger!");
+            Debug.Log("Test: 9 ingredients added - timeline should trigger!");
         }
     }
     
-    [ContextMenu("Test Narration Only")]
-    public void TestNarrationOnly()
+    [ContextMenu("Test Timeline Only")]
+    public void TestTimelineOnly()
     {
-        ShowNarrationMessage();
+        PlayTimeline();
     }
     
-    [ContextMenu("Reset Gate Narration")]
-    public void ResetGateNarration()
+    [ContextMenu("Reset Timeline Trigger")]
+    public void ResetTimelineTrigger()
     {
-        gateNarrationPlayed = false;
+        timelinePlayed = false;
         
         // Re-enable the gate when resetting
         if (gateObject != null)
         {
             gateObject.SetActive(true);
-            Debug.Log("BookUIManager: Gate narration reset and gate re-enabled");
+            Debug.Log("BookUIManager: Timeline trigger reset and gate re-enabled");
         }
         
-        // Clear any current narration
-        if (currentNarration != null)
+        // Stop timeline if it's playing
+        if (timelineDirector != null && timelineDirector.state == PlayState.Playing)
         {
-            StopCoroutine(currentNarration);
+            timelineDirector.Stop();
         }
         
-        // Clear subtitle and deactivate canvas if needed
-        if (subtitleController != null)
-        {
-            subtitleController.ClearSubtitle();
-        }
-        
-        if (dialogueCanvas != null && dialogueCanvas.activeInHierarchy)
-        {
-            dialogueCanvas.SetActive(false);
-        }
-        
-        Debug.Log("BookUIManager: Gate narration reset - will trigger again at 9 ingredients");
-    }
-    
-    // Clean up when this object is destroyed
-    void OnDestroy()
-    {
-        if (currentNarration != null)
-        {
-            StopCoroutine(currentNarration);
-        }
-        
-        // Ensure dialogue canvas is deactivated
-        if (dialogueCanvas != null && dialogueCanvas.activeInHierarchy)
-        {
-            dialogueCanvas.SetActive(false);
-        }
+        Debug.Log("BookUIManager: Timeline trigger reset - will trigger again at 9 ingredients");
     }
 }
