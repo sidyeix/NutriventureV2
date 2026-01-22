@@ -40,11 +40,9 @@ public class GlowPartManager : MonoBehaviour
     [Header("Objects to DISABLE When Holding Button")]
     [SerializeField] private List<GameObject> objectsToDisableWhenHolding = new List<GameObject>();
 
-    // NEW: Objects to enable when glow part starts
     [Header("Objects to ENABLE When Glow Part Starts")]
     [SerializeField] private List<GameObject> objectsToEnableOnStart = new List<GameObject>();
 
-    // NEW: Objects to DISABLE when glow part ends
     [Header("Objects to DISABLE When Glow Part Ends")]
     [SerializeField] private List<GameObject> objectsToDisableOnEnd = new List<GameObject>();
 
@@ -123,6 +121,10 @@ public class GlowPartManager : MonoBehaviour
     private Coroutine lightsaberCoroutine;
     private bool hasCompleted = false;
 
+    // NEW: Store initial tower states
+    private Dictionary<GlowTower, float> initialTowerEnergies = new Dictionary<GlowTower, float>();
+    private Dictionary<GlowTower, bool> initialTowerStates = new Dictionary<GlowTower, bool>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -179,18 +181,155 @@ public class GlowPartManager : MonoBehaviour
         SetupTransferButton();
         SetupProximityDetectors();
 
-        // NEW: Initialize objects that should be disabled at start
+        // NEW: Store initial tower states
+        StoreInitialTowerStates();
+
         DisableObjectsOnStart();
     }
 
-    // NEW: Method to disable objects that should be inactive when glow part starts
-    private void DisableObjectsOnStart()
+    // NEW: Method to store initial tower states
+    private void StoreInitialTowerStates()
     {
-        foreach (GameObject obj in objectsToEnableOnStart)
+        initialTowerEnergies.Clear();
+        initialTowerStates.Clear();
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                initialTowerEnergies[tower] = 0f; // Towers start with 0 energy
+                initialTowerStates[tower] = false; // Towers start as not active
+
+                // Ensure tower is at initial state
+                tower.SetEnergy(0f);
+                tower.ResetTower();
+            }
+        }
+    }
+
+    private void InitializeLightsaber()
+    {
+        if (lightsaber != null)
+        {
+            lightsaberOriginalEndPos = lightsaber.EndPos;
+            lightsaber.LineWidth = 0f;
+        }
+    }
+
+    private void InitializeObjectStates()
+    {
+        foreach (GameObject obj in objectsToEnableWhenHolding)
         {
             if (obj != null)
-            {
                 obj.SetActive(false);
+        }
+
+        foreach (GameObject obj in objectsToDisableWhenHolding)
+        {
+            if (obj != null)
+                obj.SetActive(true);
+        }
+    }
+
+    private void InitializeTracker()
+    {
+        if (trackerPanel != null)
+        {
+            trackerPanelHiddenPosition = trackerPanel.transform.localPosition - new Vector3(panelSlideDistance, 0, 0);
+            trackerPanelVisiblePosition = trackerPanel.transform.localPosition;
+
+            trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
+            trackerPanel.SetActive(false);
+        }
+
+        if (warningPanel != null)
+            warningPanel.SetActive(false);
+
+        if (transferProgressSlider != null)
+        {
+            transferProgressSlider.gameObject.SetActive(false);
+            transferProgressSlider.minValue = 0f;
+            transferProgressSlider.maxValue = 1f;
+            transferProgressSlider.value = 0f;
+        }
+    }
+
+    private void InitializeEnergySliderIndicator()
+    {
+        if (energySliderIndicator != null)
+        {
+            if (energySliderCanvasGroup == null)
+            {
+                energySliderCanvasGroup = energySliderIndicator.GetComponent<CanvasGroup>();
+                if (energySliderCanvasGroup == null)
+                {
+                    energySliderCanvasGroup = energySliderIndicator.AddComponent<CanvasGroup>();
+                }
+            }
+
+            RectTransform rectTransform = energySliderIndicator.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                energyPanelVisiblePosition = rectTransform.anchoredPosition;
+                energyPanelHiddenPosition = energyPanelVisiblePosition - new Vector3(energyPanelSlideDistance, 0, 0);
+
+                rectTransform.anchoredPosition = energyPanelHiddenPosition;
+                energySliderCanvasGroup.alpha = 0f;
+                energySliderCanvasGroup.interactable = false;
+                energySliderCanvasGroup.blocksRaycasts = false;
+                energySliderIndicator.SetActive(false);
+            }
+
+            if (energySlider != null)
+            {
+                energySlider.minValue = 0f;
+                energySlider.maxValue = 1f;
+                energySlider.value = 0f;
+            }
+
+            if (energySliderText != null)
+            {
+                energySliderText.text = "0%";
+            }
+        }
+    }
+
+    private void SetupTransferButton()
+    {
+        buttonPressHandler = transferButton.gameObject.GetComponent<ButtonPressHandler>();
+        if (buttonPressHandler == null)
+            buttonPressHandler = transferButton.gameObject.AddComponent<ButtonPressHandler>();
+
+        buttonPressHandler.onButtonPressed.RemoveAllListeners();
+        buttonPressHandler.onButtonReleased.RemoveAllListeners();
+        buttonPressHandler.onButtonHeld.RemoveAllListeners();
+
+        buttonPressHandler.onButtonPressed.AddListener(HandleButtonPressed);
+        buttonPressHandler.onButtonReleased.AddListener(HandleButtonReleased);
+        buttonPressHandler.onButtonHeld.AddListener(HandleButtonHeld);
+
+        if (transferButtonText != null)
+            transferButtonText.text = "HOLD TO TRANSFER";
+
+        transferButton.gameObject.SetActive(false);
+    }
+
+    private void SetupProximityDetectors()
+    {
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                tower.SetEnergy(0f);
+
+                TowerProximityDetector detector = tower.gameObject.GetComponent<TowerProximityDetector>();
+                if (detector == null)
+                    detector = tower.gameObject.AddComponent<TowerProximityDetector>();
+
+                detector.OnPlayerEnterRange += OnPlayerEnterTowerRange;
+                detector.OnPlayerExitRange += OnPlayerExitTowerRange;
+
+                proximityDetectors.Add(detector);
             }
         }
     }
@@ -245,46 +384,6 @@ public class GlowPartManager : MonoBehaviour
         if (transferStopSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(transferStopSound);
-        }
-    }
-
-    private void InitializeEnergySliderIndicator()
-    {
-        if (energySliderIndicator != null)
-        {
-            if (energySliderCanvasGroup == null)
-            {
-                energySliderCanvasGroup = energySliderIndicator.GetComponent<CanvasGroup>();
-                if (energySliderCanvasGroup == null)
-                {
-                    energySliderCanvasGroup = energySliderIndicator.AddComponent<CanvasGroup>();
-                }
-            }
-
-            RectTransform rectTransform = energySliderIndicator.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                energyPanelVisiblePosition = rectTransform.anchoredPosition;
-                energyPanelHiddenPosition = energyPanelVisiblePosition - new Vector3(energyPanelSlideDistance, 0, 0);
-
-                rectTransform.anchoredPosition = energyPanelHiddenPosition;
-                energySliderCanvasGroup.alpha = 0f;
-                energySliderCanvasGroup.interactable = false;
-                energySliderCanvasGroup.blocksRaycasts = false;
-                energySliderIndicator.SetActive(false);
-            }
-
-            if (energySlider != null)
-            {
-                energySlider.minValue = 0f;
-                energySlider.maxValue = 1f;
-                energySlider.value = 0f;
-            }
-
-            if (energySliderText != null)
-            {
-                energySliderText.text = "0%";
-            }
         }
     }
 
@@ -427,89 +526,14 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    private void InitializeLightsaber()
+    // NEW: Method to disable objects that should be inactive when glow part starts
+    private void DisableObjectsOnStart()
     {
-        if (lightsaber != null)
-        {
-            lightsaberOriginalEndPos = lightsaber.EndPos;
-            lightsaber.LineWidth = 0f;
-        }
-    }
-
-    private void InitializeObjectStates()
-    {
-        foreach (GameObject obj in objectsToEnableWhenHolding)
+        foreach (GameObject obj in objectsToEnableOnStart)
         {
             if (obj != null)
-                obj.SetActive(false);
-        }
-
-        foreach (GameObject obj in objectsToDisableWhenHolding)
-        {
-            if (obj != null)
-                obj.SetActive(true);
-        }
-    }
-
-    private void InitializeTracker()
-    {
-        if (trackerPanel != null)
-        {
-            trackerPanelHiddenPosition = trackerPanel.transform.localPosition - new Vector3(panelSlideDistance, 0, 0);
-            trackerPanelVisiblePosition = trackerPanel.transform.localPosition;
-
-            trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
-            trackerPanel.SetActive(false);
-        }
-
-        if (warningPanel != null)
-            warningPanel.SetActive(false);
-
-        if (transferProgressSlider != null)
-        {
-            transferProgressSlider.gameObject.SetActive(false);
-            transferProgressSlider.minValue = 0f;
-            transferProgressSlider.maxValue = 1f;
-            transferProgressSlider.value = 0f;
-        }
-    }
-
-    private void SetupTransferButton()
-    {
-        buttonPressHandler = transferButton.gameObject.GetComponent<ButtonPressHandler>();
-        if (buttonPressHandler == null)
-            buttonPressHandler = transferButton.gameObject.AddComponent<ButtonPressHandler>();
-
-        buttonPressHandler.onButtonPressed.RemoveAllListeners();
-        buttonPressHandler.onButtonReleased.RemoveAllListeners();
-        buttonPressHandler.onButtonHeld.RemoveAllListeners();
-
-        buttonPressHandler.onButtonPressed.AddListener(HandleButtonPressed);
-        buttonPressHandler.onButtonReleased.AddListener(HandleButtonReleased);
-        buttonPressHandler.onButtonHeld.AddListener(HandleButtonHeld);
-
-        if (transferButtonText != null)
-            transferButtonText.text = "HOLD TO TRANSFER";
-
-        transferButton.gameObject.SetActive(false);
-    }
-
-    private void SetupProximityDetectors()
-    {
-        foreach (GlowTower tower in glowTowers)
-        {
-            if (tower != null)
             {
-                tower.SetEnergy(0f);
-
-                TowerProximityDetector detector = tower.gameObject.GetComponent<TowerProximityDetector>();
-                if (detector == null)
-                    detector = tower.gameObject.AddComponent<TowerProximityDetector>();
-
-                detector.OnPlayerEnterRange += OnPlayerEnterTowerRange;
-                detector.OnPlayerExitRange += OnPlayerExitTowerRange;
-
-                proximityDetectors.Add(detector);
+                obj.SetActive(false);
             }
         }
     }
@@ -1308,31 +1332,33 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
+    // NEW: COMPLETE RESET METHOD
     public void CompleteReset()
     {
         Debug.Log("=== COMPLETE RESET OF GLOW PART MANAGER ===");
 
-        // Reset all towers
-        foreach (GlowTower tower in glowTowers)
+        // Stop all ongoing processes
+        StopAllCoroutines();
+
+        // Reset lightsaber
+        if (lightsaber != null)
         {
-            if (tower != null)
-            {
-                tower.ResetTower();
-            }
+            lightsaber.EndPos = Vector3.zero;
+            lightsaber.LineWidth = 0f;
         }
+
+        // Reset all towers to initial state
+        ResetAllTowers();
 
         // Reset manager state
         hasCompleted = false;
         litTowersCount = 0;
         isGlowPartActive = false;
         isTransferring = false;
+        isRotatingToTower = false;
+        isLookingAtTower = false;
+        isLightsaberActive = false;
         currentActiveTower = null;
-
-        // Stop any coroutines
-        if (transferCoroutine != null)
-            StopCoroutine(transferCoroutine);
-        if (lightsaberCoroutine != null)
-            StopCoroutine(lightsaberCoroutine);
 
         // Stop audio
         StopLoopAudio();
@@ -1343,13 +1369,85 @@ public class GlowPartManager : MonoBehaviour
         // Reset tracker text
         UpdateTrackerText();
 
+        // Reset button states
+        if (transferButton != null)
+            transferButton.gameObject.SetActive(false);
+
+        if (transferProgressSlider != null)
+            transferProgressSlider.gameObject.SetActive(false);
+
+        if (energySliderIndicator != null)
+            energySliderIndicator.SetActive(false);
+
+        // Reset character animation
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(transferEnergyParam, false);
+        }
+
         // Resume game state if paused
         if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
         {
             ResumeGameState();
         }
 
-        Debug.Log("Glow Part Manager completely reset");
+        Debug.Log("Glow Part Manager completely reset - All towers back to default state");
+    }
+
+    // NEW: Method to reset all towers
+    public void ResetAllTowers()
+    {
+        Debug.Log($"Resetting {glowTowers.Count} glow towers...");
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                // Reset tower to initial state
+                tower.SetEnergy(0f);
+                tower.ResetTower();
+
+                // Deactivate the tower
+                tower.DeactivateTower();
+
+                Debug.Log($"Reset tower: {tower.gameObject.name} - Energy: {tower.GetCurrentEnergy()}");
+            }
+        }
+
+        // Update lit towers count
+        UpdateLitTowersCount();
+    }
+
+    // NEW: Method to reset a specific tower
+    public void ResetTower(GlowTower tower)
+    {
+        if (tower != null)
+        {
+            tower.SetEnergy(0f);
+            tower.ResetTower();
+            tower.DeactivateTower();
+
+            Debug.Log($"Individual tower reset: {tower.gameObject.name}");
+        }
+    }
+
+    // NEW: Method to check if all towers are at initial state
+    public bool AreAllTowersReset()
+    {
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                if (tower.GetCurrentEnergy() > 0.01f ||
+                    tower.IsFullyLit() ||
+                    tower.IsLighting() ||
+                    tower.IsActive())
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public bool IsGlowPartActive() => isGlowPartActive;

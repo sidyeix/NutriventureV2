@@ -31,14 +31,17 @@ public class EndGameTrigger : MonoBehaviour
         {
             Debug.Log("Player reached end game trigger - Completing assessment");
 
-            // 1. End the grow assessment
+            // 1. RESET PLAYER SCALE TO (1,1,1)
+            ResetPlayerScale();
+
+            // 2. End the grow assessment
             if (assessmentManager != null)
             {
                 assessmentManager.EndGrowAssessment();
                 Debug.Log("Grow Assessment ended");
             }
 
-            // 2. Deactivate all group managers
+            // 3. Deactivate all group managers
             if (groupManagers != null)
             {
                 foreach (ObjectGroupManager group in groupManagers)
@@ -51,21 +54,51 @@ public class EndGameTrigger : MonoBehaviour
                 }
             }
 
-            // 3. Re-enable all controls, UI, and reset camera priority to 10
+            // 4. Re-enable all controls, UI, and reset camera priority to 10
             if (sequenceManager != null)
             {
                 sequenceManager.EnableAllControlsAndUI();
                 Debug.Log("All controls and UI restored, camera priority set to 10");
             }
 
-            // 4. Optional: Add some victory/complete effects here
+            // 5. Optional: Add some victory/complete effects here
             PlayCompletionEffects();
 
-            // 5. Disable trigger after use
+            // 6. Disable trigger after use
             if (disableAfterTrigger)
             {
                 GetComponent<Collider>().enabled = false;
                 Debug.Log("End game trigger disabled");
+            }
+        }
+    }
+
+    private void ResetPlayerScale()
+    {
+        // Get the GameManager instance
+        if (GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.playerArmature != null)
+        {
+            // Reset scale to (1,1,1)
+            GoGrowGlowGameManager.Instance.playerArmature.localScale = Vector3.one;
+
+            // Also reset the targetSize to 1 so it doesn't try to scale back
+            // You might need to add a public method in GameManager for this
+            // For now, we'll just set it directly if we can access it
+            Debug.Log("Player scale reset to (1,1,1)");
+        }
+        else
+        {
+            // Alternative: Try to find the player armature directly
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                // Try common armature names
+                Transform armature = player.transform.Find("Armature");
+                if (armature == null) armature = player.transform.Find("Character");
+                if (armature == null) armature = player.transform; // Use player transform as fallback
+
+                armature.localScale = Vector3.one;
+                Debug.Log("Player scale reset to (1,1,1) via direct search");
             }
         }
     }
@@ -78,7 +111,7 @@ public class EndGameTrigger : MonoBehaviour
         // - Trigger fireworks/particles
         // - Update score/achievements
 
-        Debug.Log("Assessment completed successfully!");
+        Debug.Log("Assessment completed successfully! Player scale reset to (1,1,1).");
 
         // Example: Play sound if available
         // AudioSource.PlayClipAtPoint(completionSound, transform.position);

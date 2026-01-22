@@ -30,7 +30,8 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private GameObject gameSummaryParent;
     [SerializeField] private List<GameObject> objectsToEnableOnLose = new List<GameObject>();
     [SerializeField] private List<GameObject> objectsToEnableOnWin = new List<GameObject>();
-    [SerializeField] private List<GameObject> objectsToDisableOnGameEnd = new List<GameObject>();
+    [SerializeField] private List<GameObject> objectsToDisableOnGameEnd = new List<GameObject>(); // These remain disabled
+    [SerializeField] private List<GameObject> objectsToEnableOnHomeButton = new List<GameObject>(); // Objects to enable when Home is clicked
     [SerializeField] private GameObject keyUnlockedObject;
 
     [Header("Camera Settings")]
@@ -42,6 +43,7 @@ public class GameEndManager : MonoBehaviour
     [Header("Spawn Points")]
     [SerializeField] private Transform resultCharacterSpawnPoint;
     [SerializeField] private Transform lobbyPoint;
+    [SerializeField] private Transform startingPoint; // NEW: Starting point for restart
 
     [Header("Quest System")]
     [SerializeField] private string kingdomID = "general_quests";
@@ -66,6 +68,15 @@ public class GameEndManager : MonoBehaviour
     [Header("Animator Reset System")]
     [SerializeField] private List<Animator> animatorsToReset = new List<Animator>();
     [SerializeField] private string defaultStateName = "Default";
+
+    [Header("Character Animation")]
+    [SerializeField] private Animator characterAnimator; // Reference to player's animator
+    [SerializeField] private string danceParameter = "isDancing"; // Parameter for dancing animation
+    [SerializeField] private string thinkParameter = "isThinking"; // Parameter for thinking animation
+
+    [Header("UI Controls")]
+    [SerializeField] private GameObject uiControlsCanvas; // Reference to UI Controls Canvas
+    [SerializeField] private MechanicsBoardManager mechanicsBoardManager; // Reference to Game Mechanics Board Manager
 
     [Header("References")]
     [SerializeField] private GoGrowGlowGameManager gameManager;
@@ -118,6 +129,15 @@ public class GameEndManager : MonoBehaviour
         if (startingSequenceManager == null)
             startingSequenceManager = FindObjectOfType<StartingSequenceManager>();
 
+        if (mechanicsBoardManager == null)
+            mechanicsBoardManager = FindObjectOfType<MechanicsBoardManager>();
+
+        // Find character animator if not assigned
+        if (characterAnimator == null && playerController != null)
+        {
+            characterAnimator = playerController.GetComponentInChildren<Animator>();
+        }
+
         // Find cameras if not assigned
         if (gameEndVirtualCamera == null)
         {
@@ -136,6 +156,21 @@ public class GameEndManager : MonoBehaviour
         {
             playerFollowCamera = FindObjectOfType<CinemachineVirtualCamera>();
         }
+
+        // Try to find starting point if not assigned
+        if (startingPoint == null)
+        {
+            GameObject startPointObj = GameObject.Find("StartingPoint");
+            if (startPointObj != null)
+            {
+                startingPoint = startPointObj.transform;
+                Debug.Log("Found StartingPoint: " + startingPoint.name);
+            }
+            else
+            {
+                Debug.LogWarning("StartingPoint not found and not assigned! Player will not respawn at correct position on restart.");
+            }
+        }
     }
 
     private void Start()
@@ -145,6 +180,10 @@ public class GameEndManager : MonoBehaviour
 
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
+
+        // Disable next button as requested
+        if (nextButton != null)
+            nextButton.gameObject.SetActive(false);
 
         if (homeButton != null)
             homeButton.onClick.AddListener(OnHomeClicked);
@@ -164,6 +203,16 @@ public class GameEndManager : MonoBehaviour
         {
             gameEndVirtualCamera.Priority = 0;
             gameEndVirtualCamera.gameObject.SetActive(false);
+        }
+
+        // Make sure UI controls are enabled initially (if assigned)
+        if (uiControlsCanvas != null)
+            uiControlsCanvas.SetActive(true);
+
+        // Make sure mechanics board is hidden initially (controlled by MechanicsBoardManager)
+        if (mechanicsBoardManager != null && mechanicsBoardManager.mechanicsBoard != null)
+        {
+            mechanicsBoardManager.mechanicsBoard.SetActive(false);
         }
 
         if (storeInitialPositionsOnStart)
@@ -246,9 +295,15 @@ public class GameEndManager : MonoBehaviour
         // Calculate rewards
         CalculateRewards();
 
-        // Set up UI
+        // Set up UI - Set correct background based on win/lose
         if (resultBackground != null)
+        {
             resultBackground.sprite = playerWon ? winBackground : loseBackground;
+            Debug.Log($"Set result background to {(playerWon ? "Win" : "Lose")} background");
+        }
+
+        // Handle character animation based on stars
+        HandleCharacterAnimation(playerWon, starsEarned);
 
         // Handle background music
         HandleBackgroundMusic(playerWon && starsEarned > 0); // Only play win music if at least 1 star
@@ -263,12 +318,102 @@ public class GameEndManager : MonoBehaviour
             HandleWin();
         }
 
+        // Handle key unlocked object based on quest status AND stars
+        HandleKeyUnlockedObject(playerWon);
+
         // Show the game summary
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(true);
 
         // Start animations
         StartCoroutine(GameEndSequence());
+    }
+
+    private void HandleKeyUnlockedObject(bool playerWon)
+    {
+        if (keyUnlockedObject == null) return;
+
+        // Reset key unlocked object first
+        keyUnlockedObject.SetActive(false);
+
+        // Check if we should show the key unlocked object
+        bool shouldShowKey = false;
+
+        if (questManager != null)
+        {
+            Quest quest = questManager.GetQuest(questID);
+            if (quest != null)
+            {
+                Debug.Log($"Quest found: {quest.questID}, Status: {quest.status}, Stars: {starsEarned}");
+
+                // Only show key if:
+                // 1. Quest is NotStarted or InProgress
+                // 2. Player got 2-3 stars
+                // 3. Player won the game
+                if ((quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress) &&
+                    starsEarned >= 2 &&
+                    playerWon)
+                {
+                    shouldShowKey = true;
+                    isFirstTimeCompletion = true;
+                    Debug.Log("Key unlocked: Quest is NotStarted/InProgress AND player got 2-3 stars AND won the game");
+                }
+                else
+                {
+                    Debug.Log($"Key not unlocked - Conditions not met: Status={quest.status}, Stars={starsEarned}, Won={playerWon}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Quest not found: {questID}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("QuestManager not found");
+        }
+
+        // Activate or deactivate the key object
+        keyUnlockedObject.SetActive(shouldShowKey);
+        Debug.Log($"Key Unlocked Object {(shouldShowKey ? "activated" : "deactivated")}");
+    }
+
+    private void HandleCharacterAnimation(bool playerWon, int stars)
+    {
+        if (characterAnimator == null)
+        {
+            Debug.LogWarning("Character animator not assigned!");
+            return;
+        }
+
+        // Reset all animation parameters first
+        characterAnimator.SetBool(danceParameter, false);
+        characterAnimator.SetBool(thinkParameter, false);
+
+        // Set animation based on stars
+        if (stars == 0)
+        {
+            // 0 stars - thinking animation
+            characterAnimator.SetBool(thinkParameter, true);
+            Debug.Log("Set character to thinking animation (0 stars)");
+        }
+        else if (playerWon)
+        {
+            // Win with stars - dancing animation
+            characterAnimator.SetBool(danceParameter, true);
+            Debug.Log("Set character to dancing animation (win with stars)");
+        }
+        // If lose with stars (unlikely), no special animation
+    }
+
+    private void ResetCharacterAnimation()
+    {
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(danceParameter, false);
+            characterAnimator.SetBool(thinkParameter, false);
+            Debug.Log("Reset character animation parameters");
+        }
     }
 
     private void DisableObjectsOnGameEnd()
@@ -282,6 +427,21 @@ public class GameEndManager : MonoBehaviour
                 obj.SetActive(false);
                 Debug.Log($"Disabled object: {obj.name}");
             }
+        }
+
+        // Also disable UI controls canvas if assigned
+        if (uiControlsCanvas != null && uiControlsCanvas.activeSelf)
+        {
+            uiControlsCanvas.SetActive(false);
+            Debug.Log("Disabled UI Controls Canvas");
+        }
+
+        // Also disable mechanics board if it's open
+        if (mechanicsBoardManager != null && mechanicsBoardManager.mechanicsBoard != null &&
+            mechanicsBoardManager.mechanicsBoard.activeSelf)
+        {
+            mechanicsBoardManager.CloseMechanicsBoard();
+            Debug.Log("Closed Mechanics Board");
         }
     }
 
@@ -308,7 +468,7 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    private void SwitchToPlayerCamera()
+    private void SwitchToPlayerCameraInstantly()
     {
         if (playerFollowCamera != null)
         {
@@ -319,11 +479,18 @@ public class GameEndManager : MonoBehaviour
                 gameEndVirtualCamera.gameObject.SetActive(false);
             }
 
-            // Enable player camera
+            // Enable player camera instantly
             playerFollowCamera.gameObject.SetActive(true);
             playerFollowCamera.Priority = playerCameraPriority;
 
-            Debug.Log("Switched back to player camera");
+            // Force camera to update immediately
+            CinemachineBrain brain = FindObjectOfType<CinemachineBrain>();
+            if (brain != null)
+            {
+                brain.ManualUpdate();
+            }
+
+            Debug.Log("Switched back to player camera INSTANTLY");
         }
     }
 
@@ -334,6 +501,20 @@ public class GameEndManager : MonoBehaviour
             playerController.transform.position = resultCharacterSpawnPoint.position;
             playerController.transform.rotation = resultCharacterSpawnPoint.rotation;
             Debug.Log($"Player teleported to result spawn point");
+        }
+    }
+
+    private void TeleportPlayerToStartingPoint()
+    {
+        if (playerController != null && startingPoint != null)
+        {
+            playerController.transform.position = startingPoint.position;
+            playerController.transform.rotation = startingPoint.rotation;
+            Debug.Log($"Player teleported to starting point: {startingPoint.position}");
+        }
+        else if (playerController != null)
+        {
+            Debug.LogWarning("StartingPoint not assigned! Player will remain at current position.");
         }
     }
 
@@ -356,9 +537,6 @@ public class GameEndManager : MonoBehaviour
     {
         Debug.Log("Handling win state...");
 
-        // Check if it's first time completion
-        CheckFirstTimeCompletion();
-
         // Enable objects for winning state
         foreach (GameObject obj in objectsToEnableOnWin)
         {
@@ -370,16 +548,19 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    private void EnableObjectsDisabledOnGameEnd()
-    {
-        Debug.Log($"Re-enabling {objectsToDisableOnGameEnd.Count} objects");
+    // NOTE: We DON'T re-enable objects that were disabled on game end
+    // These remain disabled permanently after game ends
 
-        foreach (GameObject obj in objectsToDisableOnGameEnd)
+    private void EnableObjectsOnHomeButton()
+    {
+        Debug.Log($"Enabling {objectsToEnableOnHomeButton.Count} objects on Home button click");
+
+        foreach (GameObject obj in objectsToEnableOnHomeButton)
         {
             if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
-                Debug.Log($"Re-enabled object: {obj.name}");
+                Debug.Log($"Enabled object on Home button: {obj.name}");
             }
         }
     }
@@ -395,7 +576,7 @@ public class GameEndManager : MonoBehaviour
         // Animate counting numbers
         yield return StartCoroutine(AnimateCountingNumbers());
 
-        // Show buttons
+        // Show buttons (except next button which is disabled)
         if (buttonContainer != null)
             buttonContainer.SetActive(true);
     }
@@ -578,52 +759,30 @@ public class GameEndManager : MonoBehaviour
         Debug.Log($"Total: {totalCoins} coins, {totalExp} EXP");
     }
 
-    private void CheckFirstTimeCompletion()
+    // NEW: Common button click handler to disable win/lose objects and enable player control
+    private void OnButtonClicked()
     {
-        if (questManager == null)
-        {
-            Debug.LogWarning("QuestManager not found");
-            return;
-        }
+        Debug.Log("Button clicked - disabling win/lose objects and enabling player control");
 
-        Quest quest = questManager.GetQuest(questID);
-        if (quest != null)
-        {
-            Debug.Log($"Quest found: {quest.questID}, Status: {quest.status}");
+        // Disable win/lose objects
+        DisableWinLoseObjects();
 
-            // Check if quest is NotStarted or InProgress
-            if (quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress)
-            {
-                isFirstTimeCompletion = true;
-                Debug.Log("First time completion detected!");
-
-                // Activate key unlocked object
-                if (keyUnlockedObject != null)
-                {
-                    keyUnlockedObject.SetActive(true);
-                    Debug.Log("KeyUnlocked object activated");
-                }
-            }
-            else
-            {
-                Debug.Log($"Quest already completed/claimed: {quest.status}");
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"Quest not found: {questID}");
-        }
+        // Enable ThirdPersonController for player movement
+        EnablePlayerControl();
     }
 
     private void ResetGameEndState()
     {
         Debug.Log("Resetting game end state...");
 
-        // Switch back to player camera
-        SwitchToPlayerCamera();
+        // Reset character animation first
+        ResetCharacterAnimation();
 
-        // Re-enable objects that were disabled on game end
-        EnableObjectsDisabledOnGameEnd();
+        // Switch back to player camera INSTANTLY (no transition)
+        SwitchToPlayerCameraInstantly();
+
+        // NOTE: We DON'T re-enable objects that were disabled on game end
+        // objectsToDisableOnGameEnd remain disabled permanently
 
         // Disable win/lose specific objects
         DisableWinLoseObjects();
@@ -683,6 +842,20 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
+    // NEW: Method to enable player control
+    private void EnablePlayerControl()
+    {
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+            Debug.Log("ThirdPersonController enabled - Player can now move");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerController not found!");
+        }
+    }
+
     private void ResetMinigames()
     {
         Debug.Log("=== RESETTING ALL MINIGAMES ===");
@@ -716,47 +889,85 @@ public class GameEndManager : MonoBehaviour
         Debug.Log("=== ALL MINIGAMES RESET ===");
     }
 
-    // NEW: Method to reset Glow Towers individually
+    // NEW: Method to reset Glow Towers with proper reset logic
     private void ResetGlowTowers()
     {
-        // First try to reset through the GlowPartManager
+        Debug.Log("=== RESETTING GLOW TOWERS ===");
+
+        // First, try to reset through the GlowPartManager
         if (glowPartManager != null)
         {
-            // Check if GlowPartManager has a CompleteReset method
-            System.Type glowManagerType = typeof(GlowPartManager);
-            var resetMethod = glowManagerType.GetMethod("CompleteReset");
-
-            if (resetMethod != null)
+            try
             {
-                resetMethod.Invoke(glowPartManager, null);
+                // Method 1: Try CompleteReset first
+                glowPartManager.CompleteReset();
                 Debug.Log("Glow Part Manager reset using CompleteReset method");
             }
-            else
+            catch (System.Exception e1)
             {
-                // Fallback: call EndGlowPart
-                glowPartManager.EndGlowPart();
-                Debug.Log("Glow Part Manager reset using EndGlowPart");
+                Debug.LogWarning($"CompleteReset failed: {e1.Message}. Trying ResetAllTowers...");
+
+                try
+                {
+                    // Method 2: Try ResetAllTowers
+                    glowPartManager.ResetAllTowers();
+                    Debug.Log("Glow Part Manager reset using ResetAllTowers method");
+                }
+                catch (System.Exception e2)
+                {
+                    Debug.LogWarning($"ResetAllTowers failed: {e2.Message}. Trying EndGlowPart...");
+
+                    try
+                    {
+                        // Method 3: Fallback to EndGlowPart
+                        glowPartManager.EndGlowPart();
+                        Debug.Log("Glow Part Manager reset using EndGlowPart");
+                    }
+                    catch (System.Exception e3)
+                    {
+                        Debug.LogError($"All reset methods failed: {e3.Message}");
+                    }
+                }
             }
         }
+        else
+        {
+            Debug.LogWarning("GlowPartManager not found in scene! Will reset towers individually.");
+        }
 
-        // Also reset individual towers as backup
+        // Reset individual towers as backup
         GlowTower[] allTowers = FindObjectsOfType<GlowTower>();
+        Debug.Log($"Found {allTowers.Length} glow towers to reset");
+
         foreach (GlowTower tower in allTowers)
         {
             if (tower != null)
             {
-                // Check if GlowTower has ResetTower method
-                System.Type towerType = typeof(GlowTower);
-                var towerResetMethod = towerType.GetMethod("ResetTower");
-
-                if (towerResetMethod != null)
+                try
                 {
-                    towerResetMethod.Invoke(tower, null);
+                    // Try ForceReset first
+                    tower.ForceReset();
+                    Debug.Log($"Tower {tower.gameObject.name} reset using ForceReset");
                 }
-                else
+                catch (System.Exception e1)
                 {
-                    // Fallback: Set energy to 0
-                    tower.SetEnergy(0f);
+                    Debug.LogWarning($"ForceReset failed for {tower.gameObject.name}: {e1.Message}. Trying ResetTower...");
+
+                    try
+                    {
+                        // Fallback to ResetTower
+                        tower.ResetTower();
+                        Debug.Log($"Tower {tower.gameObject.name} reset using ResetTower");
+                    }
+                    catch (System.Exception e2)
+                    {
+                        Debug.LogWarning($"ResetTower failed for {tower.gameObject.name}: {e2.Message}. Basic reset...");
+
+                        // Ultimate fallback: basic reset
+                        tower.SetEnergy(0f);
+                        tower.DeactivateTower();
+                        Debug.Log($"Tower {tower.gameObject.name} basic reset complete");
+                    }
                 }
             }
         }
@@ -838,12 +1049,15 @@ public class GameEndManager : MonoBehaviour
 
     private void OnHomeClicked()
     {
-        Debug.Log("Home button clicked");
+        Debug.Log("=== HOME BUTTON CLICKED ===");
+
+        // Call common button handler first to disable win/lose objects and enable player control
+        OnButtonClicked();
 
         // Play lobby music
         PlayLobbyMusic();
 
-        // Reset game end state
+        // Reset game end state (this includes switching camera instantly)
         ResetGameEndState();
 
         // Reset minigames
@@ -857,6 +1071,16 @@ public class GameEndManager : MonoBehaviour
             Debug.Log("Player teleported to lobby");
         }
 
+        // Enable UI Controls Canvas
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+        {
+            uiControlsCanvas.SetActive(true);
+            Debug.Log("Enabled UI Controls Canvas");
+        }
+
+        // Enable specific objects on Home button click
+        EnableObjectsOnHomeButton();
+
         // Update quest status if first time completion
         if (isFirstTimeCompletion && questManager != null)
         {
@@ -869,33 +1093,56 @@ public class GameEndManager : MonoBehaviour
                 questManager.ClaimQuest(questID); // Also claim the quest rewards
             }
         }
+
+        Debug.Log("=== HOME BUTTON PROCESS COMPLETE ===");
     }
 
     private void OnRestartClicked()
     {
-        Debug.Log("Restart button clicked");
+        Debug.Log("=== RESTART BUTTON CLICKED ===");
+
+        // Call common button handler first to disable win/lose objects and enable player control
+        OnButtonClicked();
 
         // Play restart music
         PlayRestartMusic();
 
-        // Reset game end state
+        // Reset game end state (this includes switching camera instantly)
         ResetGameEndState();
 
         // Reset minigames
         ResetMinigames();
 
-        // Reset game manager
+        // TELEPORT PLAYER TO STARTING POINT
+        TeleportPlayerToStartingPoint();
+
+        // Show Game Mechanics Board using the MechanicsBoardManager
+        if (mechanicsBoardManager != null)
+        {
+            mechanicsBoardManager.OpenMechanicsBoard();
+            Debug.Log("Opened Game Mechanics Board via MechanicsBoardManager");
+        }
+        else
+        {
+            Debug.LogWarning("MechanicsBoardManager not found!");
+        }
+
+        // Reset game manager (but don't start game yet - wait for Start button)
         if (gameManager != null)
         {
             gameManager.EndGame(); // Clean up current game
-            gameManager.StartGame(); // Start new game
-            Debug.Log("Game restarted");
+            Debug.Log("Game cleaned up, ready for restart via Start button");
         }
+
+        Debug.Log("=== RESTART BUTTON PROCESS COMPLETE ===");
     }
 
     private void OnNextClicked()
     {
-        Debug.Log("Next button clicked");
+        Debug.Log("=== NEXT BUTTON CLICKED ===");
+
+        // Call common button handler first to disable win/lose objects and enable player control
+        OnButtonClicked();
 
         // Play lobby music
         PlayLobbyMusic();
@@ -926,6 +1173,8 @@ public class GameEndManager : MonoBehaviour
             playerController.transform.rotation = lobbyPoint.rotation;
             Debug.Log("Player teleported to lobby");
         }
+
+        Debug.Log("=== NEXT BUTTON PROCESS COMPLETE ===");
     }
 
     // Call this when player loses all hearts during gameplay
