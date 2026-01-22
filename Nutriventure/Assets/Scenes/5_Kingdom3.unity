@@ -9181,6 +9181,7 @@ GameObject:
   m_Component:
   - component: {fileID: 291881783}
   - component: {fileID: 291881784}
+  - component: {fileID: 291881785}
   m_Layer: 0
   m_Name: KingAssessment
   m_TagString: Untagged
@@ -9232,25 +9233,12 @@ MonoBehaviour:
   targetRangesText: {fileID: 532117753}
   collectedPreservativeText: {fileID: 1528513309}
   foodDatabase: {fileID: 11400000, guid: c67813b7df64a4e4a84b409e8fcc9d6c, type: 2}
+  enableHapticFeedback: 1
+  enableShakeAnimations: 1
+  panelCloseDelay: 2
   collectionSystem: {fileID: 1938089368}
   infoManager: {fileID: 45400963}
-  preservationUISettings:
-    ascorbicAcidSlider: {fileID: 859931150}
-    potassiumSorbateSlider: {fileID: 746772671}
-    sodiumBenzoateSlider: {fileID: 97289620}
-    ascorbicAcidButton: {fileID: 2092396241}
-    potassiumSorbateButton: {fileID: 1582219189}
-    sodiumBenzoateButton: {fileID: 1992072016}
-    ascorbicAcidValueText: {fileID: 1795452914}
-    potassiumSorbateValueText: {fileID: 1669303257}
-    sodiumBenzoateValueText: {fileID: 528466574}
-    preservationStatusText: {fileID: 1743358500}
-    ascorbicAcidFillImage: {fileID: 498500832}
-    potassiumSorbateFillImage: {fileID: 1834146677}
-    sodiumBenzoateFillImage: {fileID: 1287778838}
-    ascorbicBTNimg: {fileID: 1328835669}
-    potassiumBTNimg: {fileID: 1392778202}
-    sodiumBTNimg: {fileID: 1403449785}
+  preservationSystem: {fileID: 291881785}
   objectsToDisable:
   - {fileID: 78402326}
   - {fileID: 1430772280}
@@ -9265,7 +9253,6 @@ MonoBehaviour:
   - {fileID: 54599009}
   - {fileID: 1459852686}
   - {fileID: 769868741}
-  - {fileID: 704645885}
   KAFoods:
   - {fileID: 1901878551}
   - {fileID: 832831537}
@@ -9303,10 +9290,40 @@ MonoBehaviour:
   - {fileID: 672920487}
   - {fileID: 1257271061}
   playerFollowCamera: {fileID: 1862087425}
+  scoringSystem: {fileID: 1475141004}
+--- !u!114 &291881785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291881782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b26944ce893bcab46bf5a2c5e0c992d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::K3_KingAS2
+  preservationUISettings:
+    ascorbicAcidSlider: {fileID: 859931150}
+    potassiumSorbateSlider: {fileID: 746772671}
+    sodiumBenzoateSlider: {fileID: 97289620}
+    ascorbicAcidButton: {fileID: 2092396241}
+    potassiumSorbateButton: {fileID: 1582219189}
+    sodiumBenzoateButton: {fileID: 1992072016}
+    ascorbicAcidValueText: {fileID: 1795452914}
+    potassiumSorbateValueText: {fileID: 1669303257}
+    sodiumBenzoateValueText: {fileID: 528466574}
+    preservationStatusText: {fileID: 1743358500}
+    ascorbicAcidFillImage: {fileID: 498500832}
+    potassiumSorbateFillImage: {fileID: 1834146677}
+    sodiumBenzoateFillImage: {fileID: 1287778838}
+    ascorbicBTNimg: {fileID: 1328835669}
+    potassiumBTNimg: {fileID: 1392778202}
+    sodiumBTNimg: {fileID: 1403449785}
   baseSliderSpeed: 30
   maxSliderSpeed: 150
   speedIncreaseRate: 0.5
-  minRequiredAccuracy: 3
+  minRequiredAccuracy: 5
   ascorbicIcon: {fileID: 21300000, guid: 5e7c6a8a460af6a4ba0f8153611c93ba, type: 3}
   potassiumIcon: {fileID: 21300000, guid: 2a84911a343fac64aaa3b12c12ff3215, type: 3}
   sodiumIcon: {fileID: 21300000, guid: f5cdb582a9eed4843a3d783671e6b56b, type: 3}
@@ -9314,11 +9331,15 @@ MonoBehaviour:
   buttonScaleDuration: 0.2
   buttonScaleFactor: 1.2
   audioSource: {fileID: 0}
-  sliderFillSound: {fileID: 8300000, guid: 8d8ee18379ee29145b7ae4295465f611, type: 3}
+  sliderFillSound: {fileID: 0}
   bounceSound: {fileID: 8300000, guid: 13c242d1c3bf4db4fbfc19aae7fe7da1, type: 3}
   successSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
   failureSound: {fileID: 8300000, guid: c2eaae29c09b4e241974e0e123e5047f, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
+  scoringSystem: {fileID: 1475141004}
+  foodDatabase: {fileID: 11400000, guid: c67813b7df64a4e4a84b409e8fcc9d6c, type: 2}
+  enableHapticFeedback: 1
+  enableShakeAnimations: 1
 --- !u!1001 &294529118
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -80607,9 +80628,10 @@ MonoBehaviour:
   multiplierText: {fileID: 1163451732}
   preservativesText: {fileID: 0}
   foodsPreservedText: {fileID: 0}
+  gemsCompletedText: {fileID: 0}
   scorePopupPrefab: {fileID: 417578766}
   scorePopupParent: {fileID: 704645886}
-  popupSpawnOffset: {x: 50, y: 50}
+  popupSpawnOffset: {x: 250, y: 0}
   popupLifetime: 1.5
   popupFadeDuration: 0.3
   popupFloatSpeed: 50

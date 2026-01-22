@@ -11,6 +11,9 @@ public class PreserviaScoringSystem : MonoBehaviour
     // Singleton pattern
     public static PreserviaScoringSystem Instance { get; private set; }
 
+    private int _totalNegativeScore = 0;
+    private Dictionary<int, bool> _foodMistakeMade = new Dictionary<int, bool>();
+
     [Header("Scoring Configuration")]
     [Tooltip("Base points for collecting a preservative potion")]
     public int basePreservativePoints = 100;
@@ -121,11 +124,11 @@ public class PreserviaScoringSystem : MonoBehaviour
     // State tracking
     private bool _isMonitoring = false;
     
-    // GEM tracking - FIXED: Track which GEMs have been scored
+    // GEM tracking
     private bool _oxidantGEMScored = false;
     private bool _microbeGEMScored = false;
     
-    // Food tracking - FIXED: Track which foods have been preserved
+    // Food tracking
     private Dictionary<int, bool> _foodPreservedThisSession = new Dictionary<int, bool>();
     
     // Queue for score popups
@@ -166,6 +169,12 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         _sessionStartTime = Time.time;
         _progressiveMultiplier = startingMultiplier;
+
+            // Initialize mistake tracking for 8 foods
+        for (int i = 0; i < 8; i++)
+        {
+            _foodMistakeMade[i] = false;
+        }
         
         // Find all necessary components dynamically
         FindAllReferences();
@@ -230,7 +239,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     }
     #endregion
 
-    #region Monitoring System - FIXED VERSION
+    #region Monitoring System
     void StartMonitoring()
     {
         _isMonitoring = true;
@@ -251,10 +260,10 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         if (!_isMonitoring) return;
         
-        // Monitor GEM completion - FIXED: Check panel activation
+        // Monitor GEM completion
         MonitorGEMCompletion();
         
-        // Monitor food preservation - FIXED: Check for completion
+        // Monitor food preservation
         MonitorFoodPreservation();
         
         // Update display
@@ -264,7 +273,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         ProcessPopupQueue();
     }
 
-    // FIXED: Monitor GEM completion by checking when panels open for the first time
     void MonitorGEMCompletion()
     {
         if (_gemSystem == null) return;
@@ -310,7 +318,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         }
     }
 
-    // FIXED: Monitor food preservation by checking when foods are completed
     void MonitorFoodPreservation()
     {
         if (_assessmentSystem == null) return;
@@ -421,6 +428,8 @@ public class PreserviaScoringSystem : MonoBehaviour
         OnMultiplierIncreased?.Invoke();
         
         Debug.Log($"Multiplier increased to {_progressiveMultiplier:F1}x (Streak: {_multiplierStreak})");
+        
+        UpdateMultiplierDisplay();
     }
 
     void ResetMultiplier()
@@ -439,6 +448,8 @@ public class PreserviaScoringSystem : MonoBehaviour
         OnMultiplierReset?.Invoke();
         
         Debug.Log($"Multiplier reset from {oldMultiplier:F1}x to {_progressiveMultiplier:F1}x");
+        
+        UpdateMultiplierDisplay();
     }
 
     public void LockMultiplier(bool locked)
@@ -457,7 +468,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     }
     #endregion
 
-    #region Scoring Methods - FIXED VERSION
+    #region Scoring Methods
     public void AwardPreservativePoints(string preservativeID)
     {
         // CHECK FOR COMBO
@@ -607,7 +618,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         UpdateScoreDisplay();
     }
 
-    // FIXED: This method now works even if text is disabled
     public void AwardFoodPreservationPoints(string foodName, bool isPerfect = false, bool correctType = true)
     {
         // Base points
@@ -663,7 +673,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         UpdateScoreDisplay();
     }
 
-    void AwardFullCompletionBonus()
+    public void AwardFullCompletionBonus()
     {
         int bonus = fullCompletionBonus;
         float multiplier = GetCurrentMultiplier();
@@ -686,6 +696,71 @@ public class PreserviaScoringSystem : MonoBehaviour
         // Update UI
         UpdateScoreDisplay();
     }
+
+        public void DeductPointsForMistake(int foodIndex, int points = 300)
+    {
+        if (_foodMistakeMade.ContainsKey(foodIndex) && _foodMistakeMade[foodIndex])
+        {
+            Debug.Log($"Mistake already recorded for food {foodIndex}");
+            return;
+        }
+        
+        // Deduct the points
+        _currentScore -= points;
+        _totalNegativeScore += points;
+        
+        // Mark this food as having a mistake
+        _foodMistakeMade[foodIndex] = true;
+        
+        // Trigger events
+        OnScoreChanged?.Invoke(_currentScore);
+        
+        // Show negative score popup
+        if (enableScorePopups && scorePopupPrefab != null)
+        {
+            ShowScorePopup(-points, Color.red, "Mistake");
+        }
+        
+        Debug.Log($"Deducted {points} points for mistake on food {foodIndex}. Total negative: {_totalNegativeScore}");
+        
+        // Check if we need to deduct a heart (every 500 negative points)
+        CheckForHeartDeduction();
+        
+        // Update UI
+        UpdateScoreDisplay();
+    }
+
+    // Add this method in PreserviaScoringSystem.cs
+    private void CheckForHeartDeduction()
+    {
+        if (_totalNegativeScore >= 500)
+        {
+            // Calculate how many hearts to deduct
+            int heartsToDeduct = Mathf.FloorToInt(_totalNegativeScore / 500f);
+            
+            // Find the health system
+            PreserviaPlayerStat healthSystem = FindObjectOfType<PreserviaPlayerStat>();
+            if (healthSystem != null)
+            {
+                // Deduct hearts
+                for (int i = 0; i < heartsToDeduct; i++)
+                {
+                    healthSystem.TakeDamage(1);
+                    Debug.Log($"Deducted 1 heart! Health: {healthSystem.currentHealth}/{healthSystem.maxHealth}");
+                }
+                
+                // Reduce negative score by the amount used
+                _totalNegativeScore -= heartsToDeduct * 500;
+                
+                // Show warning message
+                OnBonusEarned?.Invoke($"Lost {heartsToDeduct} heart(s)!");
+            }
+            else
+            {
+                Debug.LogWarning("PreserviaPlayerStat not found! Cannot deduct hearts.");
+            }
+        }
+    }
     
     string GetPreservativeTypeFromID(string preservativeID)
     {
@@ -697,6 +772,62 @@ public class PreserviaScoringSystem : MonoBehaviour
             case "2": return "SodiumBenzoate";
             default: return "Unknown";
         }
+    }
+    
+    // FIXED: Updated method signature to match what's called in K3_KingAssessment
+    public void ManualFoodPreserved(string foodName, float sliderValue, float targetMin, float targetMax, bool correctType, bool isPerfect = false)
+    {
+        // Base points
+        int basePoints = foodPreservationPoints;
+        
+        // Accuracy bonus (perfect placement)
+        int accuracyBonus = isPerfect ? perfectPlacementBonus : 50;
+        
+        // Correct type bonus
+        int typeBonus = correctType ? correctTypeBonus : 0;
+        
+        // Time bonus (if we tracked completion time)
+        int timeBonus = 0;
+        
+        // Calculate total
+        int rawScore = basePoints + accuracyBonus + typeBonus + timeBonus;
+        
+        // Apply progressive multiplier
+        float multiplier = GetCurrentMultiplier();
+        int finalScore = Mathf.RoundToInt(rawScore * multiplier);
+        
+        // Track perfect preservations
+        if (isPerfect)
+        {
+            _perfectPreservations++;
+        }
+        
+        // Update scores
+        _foodScore += finalScore;
+        _currentScore += finalScore;
+        _foodsPreserved++;
+        
+        // Trigger events
+        OnFoodPreserved?.Invoke(finalScore);
+        OnScoreChanged?.Invoke(_currentScore);
+        
+        // Show score popup
+        if (enableScorePopups && finalScore > 0)
+        {
+            Color popupColor = isPerfect ? perfectScoreColor : foodScoreColor;
+            string label = isPerfect ? "Perfect!" : "Food";
+            ShowScorePopup(finalScore, popupColor, label);
+        }
+        
+        // INCREASE MULTIPLIER for successful preservation
+        IncreaseMultiplier();
+        
+        Debug.Log($"Food preserved: {foodName} | " +
+                 $"Raw: {rawScore} (Base:{basePoints}, Acc:{accuracyBonus}, Type:{typeBonus}, Time:{timeBonus}) " +
+                 $"× {multiplier:F2} = {finalScore} points | " +
+                 $"Perfect: {isPerfect}, Correct Type: {correctType}");
+        
+        UpdateScoreDisplay();
     }
     
     // FIXED: Direct scoring method that works even when text is disabled
@@ -711,8 +842,8 @@ public class PreserviaScoringSystem : MonoBehaviour
         
         bool isPerfect = accuracyPercent >= 90f || isInRange;
         
-        // Award points
-        AwardFoodPreservationPoints(foodName, isPerfect, correctType);
+        // Award points using the updated method
+        ManualFoodPreserved(foodName, sliderValue, targetMin, targetMax, correctType, isPerfect);
     }
     #endregion
 
@@ -1030,7 +1161,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         AwardPreservativePoints(preservativeID);
     }
     
-    // FIXED: Manually trigger GEM scoring
     public void ManualGEMCompleted(string gemType)
     {
         if (gemType.Contains("Oxidant") && !_oxidantGEMScored)
@@ -1047,10 +1177,10 @@ public class PreserviaScoringSystem : MonoBehaviour
         }
     }
     
-    // FIXED: Manual food preservation with direct scoring
+    // Backward compatibility method (6 parameters)
     public void ManualFoodPreserved(string foodName, float sliderValue, float targetMin, float targetMax, bool correctType)
     {
-        ScoreFoodPreservationDirectly(foodName, sliderValue, targetMin, targetMax, correctType);
+        ManualFoodPreserved(foodName, sliderValue, targetMin, targetMax, correctType, false);
     }
     
     public void ManualResetMultiplier()
@@ -1105,6 +1235,9 @@ public class PreserviaScoringSystem : MonoBehaviour
         _multiplierStreak = 0;
         _lastCollectionTime = 0f;
         _sessionStartTime = Time.time;
+
+        _totalNegativeScore = 0;
+        ResetMistakes();
         
         // Reset GEM tracking
         _oxidantGEMScored = false;
@@ -1226,5 +1359,25 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             _collectionSystem.OnPotionCollected -= HandlePreservativeCollected;
         }
+    }
+
+    // In PreserviaScoringSystem.cs, add to Public API region:
+    public void DeductHealthForNegativeScore()
+    {
+        CheckForHeartDeduction();
+    }
+
+    public int GetNegativeScore()
+    {
+        return _totalNegativeScore;
+    }
+
+    public void ResetMistakes()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            _foodMistakeMade[i] = false;
+        }
+        _totalNegativeScore = 0;
     }
 }
