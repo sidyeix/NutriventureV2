@@ -400,10 +400,10 @@ public class K3_KingAssessment : MonoBehaviour
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(foodIndex);
         if (profile == null) return false;
         
-        // For Fruit Juice (index 7), both Sodium Benzoate AND Ascorbic Acid are required
+        // For Fruit Juice (index 7), only Sodium Benzoate is required
         if (foodIndex == 7)
         {
-            return type == PreservativeType.SodiumBenzoate || type == PreservativeType.AscorbicAcid;
+            return type == PreservativeType.SodiumBenzoate;
         }
         
         // For other foods, check the single required preservative
@@ -415,13 +415,10 @@ public class K3_KingAssessment : MonoBehaviour
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(foodIndex);
         if (profile == null) return false;
         
-        // For Fruit Juice (index 7), need BOTH Sodium Benzoate AND Ascorbic Acid
+        // For Fruit Juice (index 7), only need Sodium Benzoate
         if (foodIndex == 7)
         {
-            bool hasSodiumBenzoate = foodPreservativesUsed[foodIndex].Contains(PreservativeType.SodiumBenzoate);
-            bool hasAscorbicAcid = foodPreservativesUsed[foodIndex].Contains(PreservativeType.AscorbicAcid);
-            
-            return hasSodiumBenzoate && hasAscorbicAcid;
+            return foodPreservativesUsed[foodIndex].Contains(PreservativeType.SodiumBenzoate);
         }
         
         // For other foods, just need the single required preservative
@@ -448,17 +445,11 @@ public class K3_KingAssessment : MonoBehaviour
         
         if (foodIndex == 7)
         {
-            List<string> needed = new List<string>();
-            
             if (!foodPreservativesUsed[foodIndex].Contains(PreservativeType.SodiumBenzoate))
-                needed.Add("Sodium Benzoate");
-                
-            if (!foodPreservativesUsed[foodIndex].Contains(PreservativeType.AscorbicAcid))
-                needed.Add("Ascorbic Acid");
-                
-            if (needed.Count == 0) return "Fully preserved!";
-            
-            return $"Still need: {string.Join(" and ", needed)}";
+            {
+                return $"Still need: Sodium Benzoate";
+            }
+            return "Fully preserved!";
         }
         
         if (!foodPreservativesUsed[foodIndex].Contains(profile.preservativeType))
@@ -468,7 +459,7 @@ public class K3_KingAssessment : MonoBehaviour
         
         return "Fully preserved!";
     }
-    
+
     private void SwitchToPreservedParticles(int foodIndex)
     {
         if (foodIndex >= 0 && foodIndex < foodParticles.Length && foodParticles[foodIndex] != null)
@@ -543,7 +534,8 @@ public class K3_KingAssessment : MonoBehaviour
         {
             if (foodIndex == 7)
             {
-                requiredPreservativeText.text = "<b>Required:</b> Sodium Benzoate AND Ascorbic Acid";
+                // UPDATE: Fruit juice only requires Sodium Benzoate
+                requiredPreservativeText.text = "<b>Required:</b> Sodium Benzoate";
             }
             else
             {
@@ -555,8 +547,8 @@ public class K3_KingAssessment : MonoBehaviour
         {
             if (foodIndex == 7)
             {
-                targetRangesText.text = $"<b>Sodium Benzoate Range:</b> 50-60\n" +
-                                    $"<b>Ascorbic Acid Range:</b> 40-50";
+                // UPDATE: Only show Sodium Benzoate range
+                targetRangesText.text = $"<b>Sodium Benzoate Range:</b> 50-60";
             }
             else
             {
@@ -606,7 +598,7 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
     
-    private void SetupPreservationSystem(int foodIndex)
+        private void SetupPreservationSystem(int foodIndex)
     {
         if (foodDatabase == null || preservationSystem == null) return;
         
@@ -630,22 +622,19 @@ public class K3_KingAssessment : MonoBehaviour
         
         bool isCompleted = foodCompleted[foodIndex];
         
-        // Setup button interactability
+        // Setup button interactability - UPDATED FOR SINGLE PRESERVATIVE
         if (foodIndex == 7)
         {
-            if (hasAscorbicAcid)
-            {
-                bool alreadyUsed = foodPreservativesUsed[foodIndex].Contains(PreservativeType.AscorbicAcid);
-                preservationSystem.SetButtonInteractable(PreservativeType.AscorbicAcid, !isCompleted && !alreadyUsed);
-            }
-            
-            preservationSystem.SetButtonInteractable(PreservativeType.PotassiumSorbate, false);
-            
+            // Fruit Juice only needs Sodium Benzoate
             if (hasSodiumBenzoate)
             {
                 bool alreadyUsed = foodPreservativesUsed[foodIndex].Contains(PreservativeType.SodiumBenzoate);
                 preservationSystem.SetButtonInteractable(PreservativeType.SodiumBenzoate, !isCompleted && !alreadyUsed);
             }
+            
+            // Disable the other buttons for Fruit Juice
+            preservationSystem.SetButtonInteractable(PreservativeType.AscorbicAcid, false);
+            preservationSystem.SetButtonInteractable(PreservativeType.PotassiumSorbate, false);
         }
         else
         {
@@ -792,5 +781,15 @@ public class K3_KingAssessment : MonoBehaviour
         Gizmos.color = Color.yellow;
         foreach (GameObject food in KAFoods)
             if (food != null) Gizmos.DrawWireSphere(food.transform.position, interactionRange);
+    }
+
+    public int GetPreservedFoodCount()
+    {
+        int count = 0;
+        foreach (var kvp in foodCompleted)
+        {
+            if (kvp.Value) count++;
+        }
+        return count;
     }
 }

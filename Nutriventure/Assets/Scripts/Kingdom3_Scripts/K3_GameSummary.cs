@@ -1127,4 +1127,26 @@ public class K3_GameSummary : MonoBehaviour
             KeyImageunlocking.SetActive(false);
         }
     }
+        // Add this method to K3_GameSummary class:
+    public void TriggerQA2CompletionSummary()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            Debug.Log("K3: Triggering summary from QA/Assessment completion");
+            isVictory = true;
+            summaryTriggeredByKeyCollection = false; // Not triggered by key
+            StartCoroutine(ShowSummaryPanel());
+        }
+    }
+        // Add this method to K3_GameSummary class:
+    public void TriggerAssessmentCompletionSummary()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            Debug.Log("K3: Triggering summary from assessment completion (no key)");
+            isVictory = true;
+            summaryTriggeredByKeyCollection = false; // Not triggered by key
+            StartCoroutine(ShowSummaryPanel());
+        }
+    }
 }
