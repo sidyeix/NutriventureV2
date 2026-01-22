@@ -73,7 +73,7 @@ public class K3_CompletionHandler : MonoBehaviour
         
         // Check if key is already collected
         bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                  GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+                                  GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
         
         // Also check if key was collected in this session
         K3_CollectKey collectKeyScript = FindObjectOfType<K3_CollectKey>();
@@ -176,7 +176,7 @@ public class K3_CompletionHandler : MonoBehaviour
     {
         if (GameDataManager.Instance != null)
         {
-            bool keyAlreadyCollected = GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            bool keyAlreadyCollected = GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             if (keyAlreadyCollected)
             {
                 Debug.Log("K3: Key already collected from previous session.");
@@ -211,7 +211,7 @@ public class K3_CompletionHandler : MonoBehaviour
         // Re-enable cutscene for new game if key is not collected
         if (kingCutscene != null && GameDataManager.Instance != null)
         {
-            bool keyAlreadyCollected = GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            bool keyAlreadyCollected = GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             if (!keyAlreadyCollected)
             {
                 kingCutscene.gameObject.SetActive(true);

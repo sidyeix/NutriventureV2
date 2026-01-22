@@ -960,18 +960,18 @@ public class K3_GameSummary : MonoBehaviour
         return isSummaryActive;
     }
 
-    public bool HasSugariaKey()
+    public bool HasPreserviaKey()
     {
-        return GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        return GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
     }
 
-    public void ResetSugariaKey()
+    public void ResetPreserviaKey()
     {
         if (GameDataManager.Instance != null)
         {
-            GameDataManager.Instance.CurrentGameData.ResetSugariaKey();
+            GameDataManager.Instance.CurrentGameData.ResetPreserviaKey();
             GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey reset in GameData");
+            Debug.Log("PreserviaKey reset in GameData");
         }
     }
 

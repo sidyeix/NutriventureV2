@@ -19,6 +19,7 @@ public class GameData
     
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
+    public bool preserviaKeyCollected = false; // NEW: Added PreserviaKey
 
     // Character System
     public int selectedCharacterID = 0;
@@ -76,6 +77,7 @@ public class GameData
 
         // Kingdom Keys
         sugariaKeyCollected = false;
+        preserviaKeyCollected = false; // NEW: Initialize PreserviaKey
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -113,6 +115,7 @@ public class GameData
             scannedIngredients = new StringBoolDictionary2();
     }
 
+    // Sugaria Key Methods
     public bool HasSugariaKey()
     {
         return sugariaKeyCollected;
@@ -126,6 +129,54 @@ public class GameData
     public void ResetSugariaKey()
     {
         sugariaKeyCollected = false;
+    }
+
+    // NEW: Preservia Key Methods (same pattern as SugariaKey)
+    public bool HasPreserviaKey()
+    {
+        return preserviaKeyCollected;
+    }
+    
+    public void CollectPreserviaKey()
+    {
+        preserviaKeyCollected = true;
+    }
+    
+    public void ResetPreserviaKey()
+    {
+        preserviaKeyCollected = false;
+    }
+
+    // NEW: Combined method to check if player has a specific kingdom key
+    public bool HasKingdomKey(string kingdomName)
+    {
+        switch (kingdomName.ToLower())
+        {
+            case "sugaria":
+                return HasSugariaKey();
+            case "preservia":
+                return HasPreserviaKey();
+            default:
+                Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
+                return false;
+        }
+    }
+
+    // NEW: Combined method to collect a specific kingdom key
+    public void CollectKingdomKey(string kingdomName)
+    {
+        switch (kingdomName.ToLower())
+        {
+            case "sugaria":
+                CollectSugariaKey();
+                break;
+            case "preservia":
+                CollectPreserviaKey();
+                break;
+            default:
+                Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
+                break;
+        }
     }
 
     // NEW: Add NutriGems methods
