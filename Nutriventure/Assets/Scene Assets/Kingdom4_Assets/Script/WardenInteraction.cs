@@ -17,7 +17,8 @@ public class NPCInteraction : MonoBehaviour
     [Header("Animation Settings")]
     [SerializeField] private float animationDuration = 0.3f;
     [SerializeField] private float slideDistance = 50f;
-    
+    private bool isTimelinePlaying = false;
+
     private bool isPlayerInRange = false;
     private bool isUIVisible = false;
     private Vector2 originalPosition;
@@ -48,22 +49,24 @@ public class NPCInteraction : MonoBehaviour
     }
     
     private void OnTriggerEnter(Collider other)
+{
+    if (other.CompareTag("Player") && !isTimelinePlaying)
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = true;
-            ShowTalkButton();
-        }
+        isPlayerInRange = true;
+        ShowTalkButton();
     }
+}
+
     
     private void OnTriggerExit(Collider other)
+{
+    if (other.CompareTag("Player"))
     {
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = false;
-            HideTalkButton();
-        }
+        isPlayerInRange = false;
+        HideTalkButton();
     }
+}
+
     
     private void ShowTalkButton()
     {
@@ -157,39 +160,40 @@ public class NPCInteraction : MonoBehaviour
     }
     
     private void StartTimeline()
+{
+    if (timelineDirector != null)
     {
-        if (timelineDirector != null)
-        {
-            // Hide button immediately
-            HideTalkButton();
-            
-            // Play timeline
-            timelineDirector.Play();
-            
-            // Listen for when timeline ends
-            StartCoroutine(WaitForTimelineEnd());
-        }
-        else
-        {
-            Debug.LogError("No Timeline Director assigned!");
-        }
+        isTimelinePlaying = true;
+
+        // Force-hide UI immediately
+        HideTalkButton();
+
+        timelineDirector.Play();
+        StartCoroutine(WaitForTimelineEnd());
     }
+    else
+    {
+        Debug.LogError("No Timeline Director assigned!");
+    }
+}
+
     
     private IEnumerator WaitForTimelineEnd()
+{
+    yield return null;
+
+    while (timelineDirector.state == PlayState.Playing)
     {
-        // Wait for timeline to start playing
         yield return null;
-        
-        // Wait while timeline is playing
-        while (timelineDirector.state == PlayState.Playing)
-        {
-            yield return null;
-        }
-        
-        // Timeline ended - show button again if player is still in range
-        if (isPlayerInRange)
-        {
-            ShowTalkButton();
-        }
     }
+
+    isTimelinePlaying = false;
+
+    // Only show again if player is still nearby
+    if (isPlayerInRange)
+    {
+        ShowTalkButton();
+    }
+}
+
 }

@@ -202,7 +202,7 @@ struct U3CDisablePanelAfterSlideU3Ed__61_tBAB07A29B81089C0A853BB48816746AA6F6930
 struct U3CFlashCompleteTextU3Ed__57_t31336DB01773BD88AE56E7A88153FFA49061AF0B;
 struct U3CPlaySoundDelayedU3Ed__63_t3922CA5EE188432FE787CE5AEF1BCFA9F4A92CCE;
 struct U3CSlidePanelU3Ed__60_t0229F20D3680EE2ADDC99D9F0ABF79CE51B519B3;
-struct U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69;
+struct U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60;
 struct U3CFaceTargetBeforeMoveU3Ed__81_t6ED53D9876076EA6524F31F6BB47CC30E5B5A334;
 struct U3CHandleCorrectChoiceU3Ed__57_t79D57501352D9D5DB2F33B6C220A3AEB726A15E4;
 struct U3CHandleWrongChoiceU3Ed__58_t330DD909ED00CE06B4EFFD1182A9EB83CB13F2FE;
@@ -242,7 +242,7 @@ IL2CPP_EXTERN_C RuntimeClass* U3CFaceTargetBeforeMoveU3Ed__81_t6ED53D9876076EA65
 IL2CPP_EXTERN_C RuntimeClass* U3CFlashCompleteTextU3Ed__57_t31336DB01773BD88AE56E7A88153FFA49061AF0B_il2cpp_TypeInfo_var;
 IL2CPP_EXTERN_C RuntimeClass* U3CHandleCorrectChoiceU3Ed__57_t79D57501352D9D5DB2F33B6C220A3AEB726A15E4_il2cpp_TypeInfo_var;
 IL2CPP_EXTERN_C RuntimeClass* U3CHandleWrongChoiceU3Ed__58_t330DD909ED00CE06B4EFFD1182A9EB83CB13F2FE_il2cpp_TypeInfo_var;
-IL2CPP_EXTERN_C RuntimeClass* U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69_il2cpp_TypeInfo_var;
+IL2CPP_EXTERN_C RuntimeClass* U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60_il2cpp_TypeInfo_var;
 IL2CPP_EXTERN_C RuntimeClass* U3CMoveCharacterBackwardToGroupStartU3Ed__59_tB8756FF6F164EC7672226D6E6A5787A4546DD621_il2cpp_TypeInfo_var;
 IL2CPP_EXTERN_C RuntimeClass* U3CMoveCharacterToAnimationPointU3Ed__50_t4D180B4B8E583922D4C19F559C4AC1835FE4DC3E_il2cpp_TypeInfo_var;
 IL2CPP_EXTERN_C RuntimeClass* U3CMoveCharacterToMovePointU3Ed__52_t3751DF17C091514ED6C8A2DEECA206436EBC9351_il2cpp_TypeInfo_var;
@@ -277,6 +277,7 @@ IL2CPP_EXTERN_C String_t* _stringLiteral14009D9C267B4114DFF34216CB7658D45CBCF373
 IL2CPP_EXTERN_C String_t* _stringLiteral148DA4B48D077DE94FC43FD759981E65A335226D;
 IL2CPP_EXTERN_C String_t* _stringLiteral14C1B088A0C33E693B7FD475A1E4DE07C52BD185;
 IL2CPP_EXTERN_C String_t* _stringLiteral19F3A031E7DFDA5D477EEFBD7F7F3A206856F446;
+IL2CPP_EXTERN_C String_t* _stringLiteral1A24D6E60E59DF4A7B24A160E48FE16797BC8F03;
 IL2CPP_EXTERN_C String_t* _stringLiteral1BA3D11A846AC9E09AD2AE0B8A51E9288EABE699;
 IL2CPP_EXTERN_C String_t* _stringLiteral1DA11FBF79942E1390B385AC5BFB453F8DCF1AB7;
 IL2CPP_EXTERN_C String_t* _stringLiteral1E0453F6AB2F78817651C6396F0D51E4772563D0;
@@ -299,6 +300,7 @@ IL2CPP_EXTERN_C String_t* _stringLiteral3AA4CA04D61B0D69DC293D580065CB2AA272A752
 IL2CPP_EXTERN_C String_t* _stringLiteral3AF2FDC180C25161F9B5EF02DC0B62D5A419403D;
 IL2CPP_EXTERN_C String_t* _stringLiteral3BCBFCDAAD1FA516BB74BC6D578138928526DF54;
 IL2CPP_EXTERN_C String_t* _stringLiteral3E96B888E10D04024756FA0FE3B37753A3CCE1AA;
+IL2CPP_EXTERN_C String_t* _stringLiteral40EE76BBAD3223618397FEEB5BFFAEFAB877B2DB;
 IL2CPP_EXTERN_C String_t* _stringLiteral4348643AA96D82CF5EC1AF42AA1FC8C1584377B9;
 IL2CPP_EXTERN_C String_t* _stringLiteral456404F51863DAAE5E1C3510009CDC3397201443;
 IL2CPP_EXTERN_C String_t* _stringLiteral463723EB29C32453EEBCD9441963773ADC0F2BDF;
@@ -348,7 +350,6 @@ IL2CPP_EXTERN_C String_t* _stringLiteral8DB60B912E89CD5AA7CD39622D50028EA51AA08A
 IL2CPP_EXTERN_C String_t* _stringLiteral8F4B51929CC16045378C92937B014285B3D334E8;
 IL2CPP_EXTERN_C String_t* _stringLiteral91F9636D3D1091767ACD7B56314A55C7531E8CD5;
 IL2CPP_EXTERN_C String_t* _stringLiteral95A07962B0D054B0EC93E476FBB3D75BAA59068E;
-IL2CPP_EXTERN_C String_t* _stringLiteral9D2F9DC4D498A6B8E209AC8A94794C9AB2DC5D3B;
 IL2CPP_EXTERN_C String_t* _stringLiteral9D73B1ACE842E54672DCABC1323BECF09218F9AB;
 IL2CPP_EXTERN_C String_t* _stringLiteralA0A7537764979E47C1D4EF68773E3DF9F18473F9;
 IL2CPP_EXTERN_C String_t* _stringLiteralA157ED25B9B605F2DC03AEF3E9A2FEB9ECB73249;
@@ -386,7 +387,6 @@ IL2CPP_EXTERN_C String_t* _stringLiteralD40A418E7A8D3B1C9103F5B309CDF665579BFC02
 IL2CPP_EXTERN_C String_t* _stringLiteralD5008D4B2FD2E78CFC26385AD656F649275F2759;
 IL2CPP_EXTERN_C String_t* _stringLiteralD5405A330AC4ECE29CDFA257DDEACCEA7458644C;
 IL2CPP_EXTERN_C String_t* _stringLiteralDA65FB8709E510F7F43120A95D066234C55AAB5C;
-IL2CPP_EXTERN_C String_t* _stringLiteralDB8DF39A72D7FEB6DB1331339E0A263873CD2B97;
 IL2CPP_EXTERN_C String_t* _stringLiteralDEC55950E7C94001F6409D7A1BD582E5E923012A;
 IL2CPP_EXTERN_C String_t* _stringLiteralDFB29C2F433751FF5F22146A893276E077828CC8;
 IL2CPP_EXTERN_C String_t* _stringLiteralE162FFB18960E80AA5E9F2A50F9A712F89E5942A;
@@ -462,7 +462,7 @@ IL2CPP_EXTERN_C const RuntimeMethod* U3CFaceTargetBeforeMoveU3Ed__81_System_Coll
 IL2CPP_EXTERN_C const RuntimeMethod* U3CFlashCompleteTextU3Ed__57_System_Collections_IEnumerator_Reset_mCFE47EEE7EE0210B99D2E2A85DF957269E6B9FDC_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* U3CHandleCorrectChoiceU3Ed__57_System_Collections_IEnumerator_Reset_m375CECFD0BE236F70C85B6BFC73CFA728984A7E1_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* U3CHandleWrongChoiceU3Ed__58_System_Collections_IEnumerator_Reset_m1C0B89C8BDAA4F883797EAFDC7C786B83822D2EA_RuntimeMethod_var;
-IL2CPP_EXTERN_C const RuntimeMethod* U3CHealingProcessU3Ed__22_System_Collections_IEnumerator_Reset_m76725AEBB7B3FA1D4F29A7D0C0A735AF56546BE4_RuntimeMethod_var;
+IL2CPP_EXTERN_C const RuntimeMethod* U3CHealingProcessU3Ed__24_System_Collections_IEnumerator_Reset_m2A817329C60FCF502D3E87A5B2D0021E11225F70_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* U3CHideEffectAfterTimeU3Ed__184_System_Collections_IEnumerator_Reset_m6E2BCF8831FC088D7CDE2B3E28D10889169056E2_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* U3CHideFeedbackSpriteU3Ed__186_System_Collections_IEnumerator_Reset_mFCECF096EF44DB09B237B65FF0083CD0C1E54BD5_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* U3CHideRespawnEffectAfterDelayU3Ed__176_System_Collections_IEnumerator_Reset_mA4EFF1E79E94511A623280535B27485EC9DF71F5_RuntimeMethod_var;
@@ -634,7 +634,7 @@ struct U3CPlaySoundDelayedU3Ed__63_t3922CA5EE188432FE787CE5AEF1BCFA9F4A92CCE  : 
 	GrowAssessmentManager_t9863D84E1E55D351CA60A7F40BDC4E8AFABF7494* ___U3CU3E4__this;
 	AudioClip_t5D272C4EB4F2D3ED49F1C346DEA373CF6D585F20* ___clip;
 };
-struct U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69  : public RuntimeObject
+struct U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60  : public RuntimeObject
 {
 	int32_t ___U3CU3E1__state;
 	RuntimeObject* ___U3CU3E2__current;
@@ -2479,6 +2479,7 @@ struct HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408  : public MonoBehav
 	GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* ___gameManager;
 	Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* ___healingCoroutine;
 	float ___animationNormalizedTime;
+	bool ___gameWasActive;
 };
 struct InteractiveObject_tBEBC6E9870C45DC3D45445C5005882880C93956B  : public MonoBehaviour_t532A11E69716D348D8AA7F854AFCBFCB8AD17F71
 {
@@ -3884,19 +3885,19 @@ inline Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* GameObject_AddCompo
 	return ((  Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* (*) (GameObject_t76FEDD663AB33C991A9C9A23129337651094216F*, const RuntimeMethod*))GameObject_AddComponent_TisRuntimeObject_m69B93700FACCF372F5753371C6E8FB780800B824_gshared)(__this, method);
 }
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* Transform_Find_m3087032B0E1C5B96A2D2C27020BAEAE2DA08F932 (Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* __this, String_t* ___0_n, const RuntimeMethod* method) ;
+IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Checkpoint_IsActivated_mB25FF0E7C69C8AA5D3660C577D2A50C10C4BACE0_inline (Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Checkpoint_Activate_m6E7510B9A54AC4668BA48E3D9EFB849B968ED40F (Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* __this, const RuntimeMethod* method) ;
-IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StartHealingActivities_m3ED43C8893B90F941DFEAF104989D256535332BB (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StartHealing_mE688AD6DFB062673B664F625CD6F9F4054CA4333 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StopHealing_mBB6BB04B7069948C4E24352F06BBA7C4E4120082 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GoGrowGlowGameManager_EnterHealingZone_mC56917657F348778A265105D5D63B3BE19D1216F (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool String_IsNullOrEmpty_mEA9E3FB005AC28FE02E69FCF95A7B8456192B478 (String_t* ___0_value, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Animator_Play_m5565F093F0752D4DD9B451686F71C7A8F23F6744 (Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* __this, String_t* ___0_stateName, int32_t ___1_layer, float ___2_normalizedTime, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Animator_Play_m3011727F1A3F331EE7F5D7CF9B98EFEADE547BBD (Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* __this, int32_t ___0_stateNameHash, int32_t ___1_layer, float ___2_normalizedTime, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* HealingZone_HealingProcess_m72EE7A1077445484F7AA4276F40F81E522910A1B (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GoGrowGlowGameManager_ExitHealingZone_m3AFF9350519863B96801C2050F55536C6B20C838 (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__22__ctor_mB5A2422902F3C613995308CDA071E151EFEFF099 (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, int32_t ___0_U3CU3E1__state, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__24__ctor_m1002FAC70A1E4FF5548142D61106BD26F86BC361 (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, int32_t ___0_U3CU3E1__state, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Animator_set_speed_m933F4D6770122BC9D8A7FF82DE1CD33D514379FC (Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* __this, float ___0_value, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Checkpoint_ResetCheckpoint_m7E45138483A716ABF7F2093ACE19D940D8C33D42 (Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void GoGrowGlowGameManager_CollectHealing_m22B1E467187DD6AAF6264AFA943E850381890FB4 (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, float ___0_amount, const RuntimeMethod* method) ;
@@ -18636,12 +18637,12 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_Start_m7B196DA81DB718B2CC7B6
 	Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* V_0 = NULL;
 	Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* V_1 = NULL;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:37>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:38>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_0;
 		L_0 = GoGrowGlowGameManager_get_Instance_mD858D411306CE77AFD768FFB1DEC2524166AE0A8_inline(NULL);
 		__this->___gameManager = L_0;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___gameManager), (void*)L_0);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:40>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:41>
 		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_1 = __this->___healingAudioSource;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_2;
@@ -18652,7 +18653,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_Start_m7B196DA81DB718B2CC7B6
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:42>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:43>
 		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_3 = __this->___healingAudioSource;
 		NullCheck(L_3);
 		AudioSource_Stop_m318F17F17A147C77FF6E0A5A7A6BE057DB90F537(L_3, NULL);
@@ -18660,7 +18661,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_Start_m7B196DA81DB718B2CC7B6
 
 IL_0024:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:46>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:47>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_4 = __this->___healingAnimator;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_5;
@@ -18671,7 +18672,7 @@ IL_0024:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:48>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:49>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_6 = __this->___healingAnimator;
 		String_t* L_7 = __this->___healingBoolParameter;
 		NullCheck(L_6);
@@ -18680,7 +18681,7 @@ IL_0024:
 
 IL_0044:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:52>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:53>
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_8 = __this->___healingEffect;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_9;
@@ -18691,7 +18692,7 @@ IL_0044:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:54>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:55>
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_10 = __this->___healingEffect;
 		NullCheck(L_10);
 		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_10, (bool)0, NULL);
@@ -18699,7 +18700,7 @@ IL_0044:
 
 IL_005e:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:59>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:60>
 		bool L_11 = __this->___isCheckpoint;
 		if (!L_11)
 		{
@@ -18717,7 +18718,7 @@ IL_005e:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:61>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:62>
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_14;
 		L_14 = Component_get_gameObject_m57AEFBB14DB39EC476F740BA000E170355DE691B(__this, NULL);
 		NullCheck(L_14);
@@ -18725,36 +18726,36 @@ IL_005e:
 		L_15 = GameObject_AddComponent_TisCheckpoint_t73DBB588194FE620149319CC45C4187E6A9EB068_m6CCD7627DA7841C3DABF34BC34F0EAB497DDE515(L_14, GameObject_AddComponent_TisCheckpoint_t73DBB588194FE620149319CC45C4187E6A9EB068_m6CCD7627DA7841C3DABF34BC34F0EAB497DDE515_RuntimeMethod_var);
 		__this->___checkpointComponent = L_15;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___checkpointComponent), (void*)L_15);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:62>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:63>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_16 = __this->___checkpointComponent;
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_17;
 		L_17 = Component_get_transform_m2919A1D81931E6932C7F06D4C2F0AB8DDA9A5371(__this, NULL);
 		NullCheck(L_16);
 		L_16->___spawnPoint = L_17;
 		Il2CppCodeGenWriteBarrier((void**)(&L_16->___spawnPoint), (void*)L_17);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:63>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:64>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_18 = __this->___checkpointComponent;
 		NullCheck(L_18);
 		L_18->___activateOnTouch = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:64>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:65>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_19 = __this->___checkpointComponent;
 		NullCheck(L_19);
 		L_19->___isStartCheckpoint = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:67>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:68>
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_20;
 		L_20 = Component_get_transform_m2919A1D81931E6932C7F06D4C2F0AB8DDA9A5371(__this, NULL);
 		NullCheck(L_20);
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_21;
 		L_21 = Transform_Find_m3087032B0E1C5B96A2D2C27020BAEAE2DA08F932(L_20, _stringLiteralD2F02CA11AEC3996934F70D5A578E76FB2938699, NULL);
 		V_0 = L_21;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:68>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:69>
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_22;
 		L_22 = Component_get_transform_m2919A1D81931E6932C7F06D4C2F0AB8DDA9A5371(__this, NULL);
 		NullCheck(L_22);
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_23;
 		L_23 = Transform_Find_m3087032B0E1C5B96A2D2C27020BAEAE2DA08F932(L_22, _stringLiteralD2EB7425BC3B101B44DD2D66045EC5C1645DE596, NULL);
 		V_1 = L_23;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:70>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:71>
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_24 = V_0;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_25;
@@ -18765,7 +18766,7 @@ IL_005e:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:70>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:71>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_26 = __this->___checkpointComponent;
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_27 = V_0;
 		NullCheck(L_27);
@@ -18778,7 +18779,7 @@ IL_005e:
 
 IL_00f0:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:71>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:72>
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_29 = V_1;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_30;
@@ -18789,7 +18790,7 @@ IL_00f0:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:71>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:72>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_31 = __this->___checkpointComponent;
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_32 = V_1;
 		NullCheck(L_32);
@@ -18802,11 +18803,78 @@ IL_00f0:
 
 IL_010a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:73>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:74>
 		return;
 	}
 }
 // Method Definition Index: 30637
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_Update_m40121DAD67A2CACC12A4E8CCD6EB7CAE74EBB3FE (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+{
+	static bool s_Il2CppMethodInitialized;
+	if (!s_Il2CppMethodInitialized)
+	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		s_Il2CppMethodInitialized = true;
+	}
+	bool V_0 = false;
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:79>
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_0 = __this->___gameManager;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_1;
+		L_1 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_0, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_1)
+		{
+			goto IL_003a;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:81>
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
+		NullCheck(L_2);
+		bool L_3;
+		L_3 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_2, NULL);
+		V_0 = L_3;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:84>
+		bool L_4 = __this->___gameWasActive;
+		if (!L_4)
+		{
+			goto IL_0033;
+		}
+	}
+	{
+		bool L_5 = V_0;
+		if (L_5)
+		{
+			goto IL_0033;
+		}
+	}
+	{
+		bool L_6 = __this->___playerInZone;
+		if (!L_6)
+		{
+			goto IL_0033;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:86>
+		HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3(__this, NULL);
+	}
+
+IL_0033:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:89>
+		bool L_7 = V_0;
+		__this->___gameWasActive = L_7;
+	}
+
+IL_003a:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:91>
+		return;
+	}
+}
+// Method Definition Index: 30638
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0EB4AFA18EB15A2055D9DB56B510F8 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -18815,21 +18883,19 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0E
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&AudioHandler_t6C556472BD320200A188714DC7A31EDD94DBB1E7_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteral9D2F9DC4D498A6B8E209AC8A94794C9AB2DC5D3B);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteral40EE76BBAD3223618397FEEB5BFFAEFAB877B2DB);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteralCAF8804297181FF007CA835529DD4477CFD94A70);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteralF72275B7284032D2F4F821EA9AC70C05705FD124);
 		s_Il2CppMethodInitialized = true;
 	}
-	float V_0 = 0.0f;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:77>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:95>
 		Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* L_0 = ___0_other;
 		NullCheck(L_0);
 		bool L_1;
 		L_1 = Component_CompareTag_mE6F8897E84F12DF12D302FFC4D58204D51096FC5(L_0, _stringLiteralCAF8804297181FF007CA835529DD4477CFD94A70, NULL);
 		if (!L_1)
 		{
-			goto IL_0123;
+			goto IL_00a4;
 		}
 	}
 	{
@@ -18839,13 +18905,13 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0E
 		L_3 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_2, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
 		if (!L_3)
 		{
-			goto IL_0123;
+			goto IL_00a4;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:79>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:97>
 		__this->___playerInZone = (bool)1;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:82>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:100>
 		bool L_4 = __this->___isCheckpoint;
 		if (!L_4)
 		{
@@ -18873,11 +18939,11 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0E
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:84>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:102>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_9 = __this->___checkpointComponent;
 		NullCheck(L_9);
 		Checkpoint_Activate_m6E7510B9A54AC4668BA48E3D9EFB849B968ED40F(L_9, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:87>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:105>
 		AudioClip_t5D272C4EB4F2D3ED49F1C346DEA373CF6D585F20* L_10 = __this->___checkpointActivatedSound;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_11;
@@ -18898,7 +18964,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0E
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:89>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:107>
 		AudioHandler_t6C556472BD320200A188714DC7A31EDD94DBB1E7* L_14 = ((AudioHandler_t6C556472BD320200A188714DC7A31EDD94DBB1E7_StaticFields*)il2cpp_codegen_static_fields_for(AudioHandler_t6C556472BD320200A188714DC7A31EDD94DBB1E7_il2cpp_TypeInfo_var))->___Instance;
 		NullCheck(L_14);
 		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_15 = L_14->___soundEffectsSource;
@@ -18909,218 +18975,70 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerEnter_mFDCEFD275F0E
 
 IL_0086:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:94>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:112>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_17 = __this->___gameManager;
 		NullCheck(L_17);
 		bool L_18;
 		L_18 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_17, NULL);
 		if (!L_18)
 		{
-			goto IL_0119;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:97>
-		float L_19;
-		L_19 = HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29(__this, NULL);
-		V_0 = L_19;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:100>
-		float L_20 = V_0;
-		__this->___animationNormalizedTime = ((float)(L_20/(100.0f)));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:103>
-		HealingZone_StartHealing_mE688AD6DFB062673B664F625CD6F9F4054CA4333(__this, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:106>
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_21 = __this->___healingAudioSource;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_22;
-		L_22 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_21, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_22)
-		{
-			goto IL_00d6;
-		}
-	}
-	{
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_23 = __this->___healingAudioSource;
-		NullCheck(L_23);
-		bool L_24;
-		L_24 = AudioSource_get_isPlaying_mC203303F2F7146B2C056CB47B9391463FDF408FC(L_23, NULL);
-		if (L_24)
-		{
-			goto IL_00d6;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:108>
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_25 = __this->___healingAudioSource;
-		NullCheck(L_25);
-		AudioSource_Play_m95DF07111C61D0E0F00257A00384D31531D590C3(L_25, NULL);
-	}
-
-IL_00d6:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:112>
-		bool L_26 = __this->___enableEffectOnHealing;
-		if (!L_26)
-		{
-			goto IL_00f8;
-		}
-	}
-	{
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_27 = __this->___healingEffect;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_28;
-		L_28 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_27, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_28)
-		{
-			goto IL_00f8;
+			goto IL_009a;
 		}
 	}
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:114>
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_29 = __this->___healingEffect;
-		NullCheck(L_29);
-		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_29, (bool)1, NULL);
-	}
-
-IL_00f8:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:117>
-		float L_30 = V_0;
-		float L_31 = L_30;
-		RuntimeObject* L_32 = Box(il2cpp_defaults.single_class, &L_31);
-		float L_33 = __this->___animationNormalizedTime;
-		float L_34 = L_33;
-		RuntimeObject* L_35 = Box(il2cpp_defaults.single_class, &L_34);
-		String_t* L_36;
-		L_36 = String_Format_mFB7DA489BD99F4670881FF50EC017BFB0A5C0987(_stringLiteralF72275B7284032D2F4F821EA9AC70C05705FD124, L_32, L_35, NULL);
-		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
-		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_36, NULL);
+		HealingZone_StartHealingActivities_m3ED43C8893B90F941DFEAF104989D256535332BB(__this, NULL);
 		return;
 	}
 
-IL_0119:
+IL_009a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:121>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:118>
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
-		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral9D2F9DC4D498A6B8E209AC8A94794C9AB2DC5D3B, NULL);
+		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral40EE76BBAD3223618397FEEB5BFFAEFAB877B2DB, NULL);
 	}
 
-IL_0123:
+IL_00a4:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:124>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:121>
 		return;
 	}
 }
-// Method Definition Index: 30638
+// Method Definition Index: 30639
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnTriggerExit_mA6295BB844F0B4E3B85094FFB594347EDF951768 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
 	if (!s_Il2CppMethodInitialized)
 	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteralCAF8804297181FF007CA835529DD4477CFD94A70);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteralDB8DF39A72D7FEB6DB1331339E0A263873CD2B97);
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:128>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:125>
 		Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* L_0 = ___0_other;
 		NullCheck(L_0);
 		bool L_1;
 		L_1 = Component_CompareTag_mE6F8897E84F12DF12D302FFC4D58204D51096FC5(L_0, _stringLiteralCAF8804297181FF007CA835529DD4477CFD94A70, NULL);
 		if (!L_1)
 		{
-			goto IL_007f;
+			goto IL_001a;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:130>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:127>
 		__this->___playerInZone = (bool)0;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:133>
-		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_3;
-		L_3 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_2, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_3)
-		{
-			goto IL_007f;
-		}
-	}
-	{
-		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_4 = __this->___gameManager;
-		NullCheck(L_4);
-		bool L_5;
-		L_5 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_4, NULL);
-		if (!L_5)
-		{
-			goto IL_007f;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:136>
-		HealingZone_StopHealing_mBB6BB04B7069948C4E24352F06BBA7C4E4120082(__this, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:139>
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_6 = __this->___healingAudioSource;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_7;
-		L_7 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_6, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_7)
-		{
-			goto IL_005b;
-		}
-	}
-	{
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_8 = __this->___healingAudioSource;
-		NullCheck(L_8);
-		bool L_9;
-		L_9 = AudioSource_get_isPlaying_mC203303F2F7146B2C056CB47B9391463FDF408FC(L_8, NULL);
-		if (!L_9)
-		{
-			goto IL_005b;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:141>
-		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_10 = __this->___healingAudioSource;
-		NullCheck(L_10);
-		AudioSource_Stop_m318F17F17A147C77FF6E0A5A7A6BE057DB90F537(L_10, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:130>
+		HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3(__this, NULL);
 	}
 
-IL_005b:
+IL_001a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:145>
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_11 = __this->___healingEffect;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_12;
-		L_12 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_11, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_12)
-		{
-			goto IL_0075;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:147>
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_13 = __this->___healingEffect;
-		NullCheck(L_13);
-		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_13, (bool)0, NULL);
-	}
-
-IL_0075:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:150>
-		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
-		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteralDB8DF39A72D7FEB6DB1331339E0A263873CD2B97, NULL);
-	}
-
-IL_007f:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:153>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:132>
 		return;
 	}
 }
-// Method Definition Index: 30639
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StartHealing_mE688AD6DFB062673B664F625CD6F9F4054CA4333 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30640
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StartHealingActivities_m3ED43C8893B90F941DFEAF104989D256535332BB (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
 	if (!s_Il2CppMethodInitialized)
@@ -19128,204 +19046,352 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StartHealing_mE688AD6DFB0626
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteral53E5188FE76EE49FB7B1B451F25EFEC18C9EC172);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteralF72275B7284032D2F4F821EA9AC70C05705FD124);
 		s_Il2CppMethodInitialized = true;
 	}
+	float V_0 = 0.0f;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:157>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:137>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_0 = __this->___gameManager;
-		NullCheck(L_0);
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
-		L_1 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_0, NULL);
+		L_1 = Object_op_Equality_mB6120F782D83091EF56A198FCEBCF066DB4A9605(L_0, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
 		if (L_1)
 		{
-			goto IL_000e;
+			goto IL_001b;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:157>
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
+		NullCheck(L_2);
+		bool L_3;
+		L_3 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_2, NULL);
+		if (L_3)
+		{
+			goto IL_001c;
+		}
+	}
+
+IL_001b:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:137>
 		return;
 	}
 
-IL_000e:
+IL_001c:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:160>
-		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
-		NullCheck(L_2);
-		GoGrowGlowGameManager_EnterHealingZone_mC56917657F348778A265105D5D63B3BE19D1216F(L_2, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:163>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_3 = __this->___healingAnimator;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:140>
+		float L_4;
+		L_4 = HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29(__this, NULL);
+		V_0 = L_4;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:143>
+		float L_5 = V_0;
+		__this->___animationNormalizedTime = ((float)(L_5/(100.0f)));
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:146>
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_6 = __this->___gameManager;
+		NullCheck(L_6);
+		GoGrowGlowGameManager_EnterHealingZone_mC56917657F348778A265105D5D63B3BE19D1216F(L_6, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:149>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_7 = __this->___healingAnimator;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_4;
-		L_4 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_3, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_4)
-		{
-			goto IL_008d;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:166>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_5 = __this->___healingAnimator;
-		String_t* L_6 = __this->___healingBoolParameter;
-		NullCheck(L_5);
-		Animator_SetBool_m6F8D4FAF0770CD4EC1F54406249785DE7391E42B(L_5, L_6, (bool)1, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:169>
-		String_t* L_7 = __this->___animationStateName;
 		bool L_8;
-		L_8 = String_IsNullOrEmpty_mEA9E3FB005AC28FE02E69FCF95A7B8456192B478(L_7, NULL);
-		if (L_8)
+		L_8 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_7, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_8)
 		{
-			goto IL_0060;
+			goto IL_00af;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:171>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:152>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_9 = __this->___healingAnimator;
-		String_t* L_10 = __this->___animationStateName;
-		float L_11 = __this->___animationNormalizedTime;
+		String_t* L_10 = __this->___healingBoolParameter;
 		NullCheck(L_9);
-		Animator_Play_m5565F093F0752D4DD9B451686F71C7A8F23F6744(L_9, L_10, 0, L_11, NULL);
-		goto IL_0073;
+		Animator_SetBool_m6F8D4FAF0770CD4EC1F54406249785DE7391E42B(L_9, L_10, (bool)1, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:155>
+		String_t* L_11 = __this->___animationStateName;
+		bool L_12;
+		L_12 = String_IsNullOrEmpty_mEA9E3FB005AC28FE02E69FCF95A7B8456192B478(L_11, NULL);
+		if (L_12)
+		{
+			goto IL_0082;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:157>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_13 = __this->___healingAnimator;
+		String_t* L_14 = __this->___animationStateName;
+		float L_15 = __this->___animationNormalizedTime;
+		NullCheck(L_13);
+		Animator_Play_m5565F093F0752D4DD9B451686F71C7A8F23F6744(L_13, L_14, 0, L_15, NULL);
+		goto IL_0095;
 	}
 
-IL_0060:
+IL_0082:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:175>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_12 = __this->___healingAnimator;
-		float L_13 = __this->___animationNormalizedTime;
-		NullCheck(L_12);
-		Animator_Play_m3011727F1A3F331EE7F5D7CF9B98EFEADE547BBD(L_12, 0, 0, L_13, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:161>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_16 = __this->___healingAnimator;
+		float L_17 = __this->___animationNormalizedTime;
+		NullCheck(L_16);
+		Animator_Play_m3011727F1A3F331EE7F5D7CF9B98EFEADE547BBD(L_16, 0, 0, L_17, NULL);
 	}
 
-IL_0073:
+IL_0095:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:178>
-		float L_14 = __this->___animationNormalizedTime;
-		float L_15 = L_14;
-		RuntimeObject* L_16 = Box(il2cpp_defaults.single_class, &L_15);
-		String_t* L_17;
-		L_17 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteral53E5188FE76EE49FB7B1B451F25EFEC18C9EC172, L_16, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:164>
+		float L_18 = __this->___animationNormalizedTime;
+		float L_19 = L_18;
+		RuntimeObject* L_20 = Box(il2cpp_defaults.single_class, &L_19);
+		String_t* L_21;
+		L_21 = String_Format_mA8DBB4C2516B9723C5A41E6CB1E2FAF4BBE96DD8(_stringLiteral53E5188FE76EE49FB7B1B451F25EFEC18C9EC172, L_20, NULL);
 		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
-		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_17, NULL);
+		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_21, NULL);
 	}
 
-IL_008d:
+IL_00af:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:168>
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_22 = __this->___healingAudioSource;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_23;
+		L_23 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_22, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_23)
+		{
+			goto IL_00d5;
+		}
+	}
+	{
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_24 = __this->___healingAudioSource;
+		NullCheck(L_24);
+		bool L_25;
+		L_25 = AudioSource_get_isPlaying_mC203303F2F7146B2C056CB47B9391463FDF408FC(L_24, NULL);
+		if (L_25)
+		{
+			goto IL_00d5;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:170>
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_26 = __this->___healingAudioSource;
+		NullCheck(L_26);
+		AudioSource_Play_m95DF07111C61D0E0F00257A00384D31531D590C3(L_26, NULL);
+	}
+
+IL_00d5:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:174>
+		bool L_27 = __this->___enableEffectOnHealing;
+		if (!L_27)
+		{
+			goto IL_00f7;
+		}
+	}
+	{
+		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_28 = __this->___healingEffect;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_29;
+		L_29 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_28, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_29)
+		{
+			goto IL_00f7;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:176>
+		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_30 = __this->___healingEffect;
+		NullCheck(L_30);
+		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_30, (bool)1, NULL);
+	}
+
+IL_00f7:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:180>
+		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_31 = __this->___healingCoroutine;
+		if (L_31)
+		{
+			goto IL_0111;
+		}
+	}
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:182>
-		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_18 = __this->___healingCoroutine;
-		if (L_18)
-		{
-			goto IL_00a7;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:184>
-		RuntimeObject* L_19;
-		L_19 = HealingZone_HealingProcess_m72EE7A1077445484F7AA4276F40F81E522910A1B(__this, NULL);
-		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_20;
-		L_20 = MonoBehaviour_StartCoroutine_m4CAFF732AA28CD3BDC5363B44A863575530EC812(__this, L_19, NULL);
-		__this->___healingCoroutine = L_20;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___healingCoroutine), (void*)L_20);
+		RuntimeObject* L_32;
+		L_32 = HealingZone_HealingProcess_m72EE7A1077445484F7AA4276F40F81E522910A1B(__this, NULL);
+		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_33;
+		L_33 = MonoBehaviour_StartCoroutine_m4CAFF732AA28CD3BDC5363B44A863575530EC812(__this, L_32, NULL);
+		__this->___healingCoroutine = L_33;
+		Il2CppCodeGenWriteBarrier((void**)(&__this->___healingCoroutine), (void*)L_33);
 	}
 
-IL_00a7:
+IL_0111:
 	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:185>
+		float L_34 = V_0;
+		float L_35 = L_34;
+		RuntimeObject* L_36 = Box(il2cpp_defaults.single_class, &L_35);
+		float L_37 = __this->___animationNormalizedTime;
+		float L_38 = L_37;
+		RuntimeObject* L_39 = Box(il2cpp_defaults.single_class, &L_38);
+		String_t* L_40;
+		L_40 = String_Format_mFB7DA489BD99F4670881FF50EC017BFB0A5C0987(_stringLiteralF72275B7284032D2F4F821EA9AC70C05705FD124, L_36, L_39, NULL);
+		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
+		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(L_40, NULL);
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:186>
 		return;
 	}
 }
-// Method Definition Index: 30640
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StopHealing_mBB6BB04B7069948C4E24352F06BBA7C4E4120082 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30641
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
 	if (!s_Il2CppMethodInitialized)
 	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
 		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&_stringLiteral1A24D6E60E59DF4A7B24A160E48FE16797BC8F03);
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:190>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:192>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_0 = __this->___gameManager;
-		NullCheck(L_0);
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
-		L_1 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_0, NULL);
-		if (L_1)
+		L_1 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_0, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_1)
 		{
-			goto IL_000e;
+			goto IL_0026;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:190>
-		return;
-	}
-
-IL_000e:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:193>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
 		NullCheck(L_2);
-		GoGrowGlowGameManager_ExitHealingZone_m3AFF9350519863B96801C2050F55536C6B20C838(L_2, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:196>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_3 = __this->___healingAnimator;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_4;
-		L_4 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_3, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_4)
+		bool L_3;
+		L_3 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_2, NULL);
+		if (!L_3)
 		{
-			goto IL_0039;
+			goto IL_0026;
 		}
 	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:194>
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_4 = __this->___gameManager;
+		NullCheck(L_4);
+		GoGrowGlowGameManager_ExitHealingZone_m3AFF9350519863B96801C2050F55536C6B20C838(L_4, NULL);
+	}
+
+IL_0026:
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:198>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_5 = __this->___healingAnimator;
-		String_t* L_6 = __this->___healingBoolParameter;
-		NullCheck(L_5);
-		Animator_SetBool_m6F8D4FAF0770CD4EC1F54406249785DE7391E42B(L_5, L_6, (bool)0, NULL);
-	}
-
-IL_0039:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:202>
-		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_7 = __this->___healingCoroutine;
-		if (!L_7)
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_6;
+		L_6 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_5, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_6)
 		{
-			goto IL_0054;
+			goto IL_0046;
 		}
 	}
 	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:200>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_7 = __this->___healingAnimator;
+		String_t* L_8 = __this->___healingBoolParameter;
+		NullCheck(L_7);
+		Animator_SetBool_m6F8D4FAF0770CD4EC1F54406249785DE7391E42B(L_7, L_8, (bool)0, NULL);
+	}
+
+IL_0046:
+	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:204>
-		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_8 = __this->___healingCoroutine;
-		MonoBehaviour_StopCoroutine_mB0FC91BE84203BD8E360B3FBAE5B958B4C5ED22A(__this, L_8, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:205>
+		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_9 = __this->___healingCoroutine;
+		if (!L_9)
+		{
+			goto IL_0061;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:206>
+		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_10 = __this->___healingCoroutine;
+		MonoBehaviour_StopCoroutine_mB0FC91BE84203BD8E360B3FBAE5B958B4C5ED22A(__this, L_10, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:207>
 		__this->___healingCoroutine = (Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B*)NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___healingCoroutine), (void*)(Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B*)NULL);
 	}
 
-IL_0054:
+IL_0061:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:207>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:211>
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_11 = __this->___healingAudioSource;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_12;
+		L_12 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_11, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_12)
+		{
+			goto IL_0087;
+		}
+	}
+	{
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_13 = __this->___healingAudioSource;
+		NullCheck(L_13);
+		bool L_14;
+		L_14 = AudioSource_get_isPlaying_mC203303F2F7146B2C056CB47B9391463FDF408FC(L_13, NULL);
+		if (!L_14)
+		{
+			goto IL_0087;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:213>
+		AudioSource_t871AC2272F896738252F04EE949AEF5B241D3299* L_15 = __this->___healingAudioSource;
+		NullCheck(L_15);
+		AudioSource_Stop_m318F17F17A147C77FF6E0A5A7A6BE057DB90F537(L_15, NULL);
+	}
+
+IL_0087:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:217>
+		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_16 = __this->___healingEffect;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_17;
+		L_17 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_16, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_17)
+		{
+			goto IL_00a1;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:219>
+		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_18 = __this->___healingEffect;
+		NullCheck(L_18);
+		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_18, (bool)0, NULL);
+	}
+
+IL_00a1:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:222>
+		il2cpp_codegen_runtime_class_init_inline(Debug_t8394C7EEAECA3689C2C9B9DE9C7166D73596276F_il2cpp_TypeInfo_var);
+		Debug_Log_m87A9A3C761FF5C43ED8A53B16190A53D08F818BB(_stringLiteral1A24D6E60E59DF4A7B24A160E48FE16797BC8F03, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:223>
 		return;
 	}
 }
-// Method Definition Index: 30641
+// Method Definition Index: 30642
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* HealingZone_HealingProcess_m72EE7A1077445484F7AA4276F40F81E522910A1B (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
 	if (!s_Il2CppMethodInitialized)
 	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69_il2cpp_TypeInfo_var);
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60_il2cpp_TypeInfo_var);
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* L_0 = (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69*)il2cpp_codegen_object_new(U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69_il2cpp_TypeInfo_var);
-		U3CHealingProcessU3Ed__22__ctor_mB5A2422902F3C613995308CDA071E151EFEFF099(L_0, 0, NULL);
-		U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* L_1 = L_0;
+		U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* L_0 = (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60*)il2cpp_codegen_object_new(U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60_il2cpp_TypeInfo_var);
+		U3CHealingProcessU3Ed__24__ctor_m1002FAC70A1E4FF5548142D61106BD26F86BC361(L_0, 0, NULL);
+		U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* L_1 = L_0;
 		NullCheck(L_1);
 		L_1->___U3CU3E4__this = __this;
 		Il2CppCodeGenWriteBarrier((void**)(&L_1->___U3CU3E4__this), (void*)__this);
 		return L_1;
 	}
 }
-// Method Definition Index: 30642
+// Method Definition Index: 30643
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_UpdateAnimationTime_m102513FF8A4BD42C9E75B3D475784144CE371F8E (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19337,90 +19403,102 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_UpdateAnimationTime_m102513F
 	float V_0 = 0.0f;
 	float V_1 = 0.0f;
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:228>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:244>
 		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_0 = __this->___healingAnimator;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
 		L_1 = Object_op_Equality_mB6120F782D83091EF56A198FCEBCF066DB4A9605(L_0, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_1)
+		if (L_1)
 		{
-			goto IL_000f;
+			goto IL_001b;
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:228>
-		return;
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_2 = __this->___gameManager;
+		NullCheck(L_2);
+		bool L_3;
+		L_3 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_2, NULL);
+		if (L_3)
+		{
+			goto IL_001c;
+		}
 	}
 
-IL_000f:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:231>
-		float L_2;
-		L_2 = HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29(__this, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:234>
-		V_0 = ((float)(L_2/(100.0f)));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:235>
-		float L_3 = V_0;
-		float L_4;
-		L_4 = Mathf_Clamp01_mA7E048DBDA832D399A581BE4D6DED9FA44CE0F14_inline(L_3, NULL);
-		V_0 = L_4;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:238>
-		float L_5 = __this->___healingRate;
-		V_1 = ((float)(L_5/(10.0f)));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:239>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_6 = __this->___healingAnimator;
-		float L_7 = V_1;
-		NullCheck(L_6);
-		Animator_set_speed_m933F4D6770122BC9D8A7FF82DE1CD33D514379FC(L_6, L_7, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:242>
-		float L_8 = V_0;
-		float L_9 = __this->___animationNormalizedTime;
-		float L_10;
-		L_10 = fabsf(((float)il2cpp_codegen_subtract(L_8, L_9)));
-		if ((!(((float)L_10) > ((float)(0.00999999978f)))))
-		{
-			goto IL_0090;
-		}
-	}
+IL_001b:
 	{
 		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:244>
-		float L_11 = V_0;
-		__this->___animationNormalizedTime = L_11;
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:246>
-		String_t* L_12 = __this->___animationStateName;
-		bool L_13;
-		L_13 = String_IsNullOrEmpty_mEA9E3FB005AC28FE02E69FCF95A7B8456192B478(L_12, NULL);
-		if (L_13)
-		{
-			goto IL_007d;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:248>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_14 = __this->___healingAnimator;
-		String_t* L_15 = __this->___animationStateName;
-		float L_16 = __this->___animationNormalizedTime;
-		NullCheck(L_14);
-		Animator_Play_m5565F093F0752D4DD9B451686F71C7A8F23F6744(L_14, L_15, 0, L_16, NULL);
 		return;
 	}
 
-IL_007d:
+IL_001c:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:252>
-		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_17 = __this->___healingAnimator;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:247>
+		float L_4;
+		L_4 = HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29(__this, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:250>
+		V_0 = ((float)(L_4/(100.0f)));
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:251>
+		float L_5 = V_0;
+		float L_6;
+		L_6 = Mathf_Clamp01_mA7E048DBDA832D399A581BE4D6DED9FA44CE0F14_inline(L_5, NULL);
+		V_0 = L_6;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:254>
+		float L_7 = __this->___healingRate;
+		V_1 = ((float)(L_7/(10.0f)));
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:255>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_8 = __this->___healingAnimator;
+		float L_9 = V_1;
+		NullCheck(L_8);
+		Animator_set_speed_m933F4D6770122BC9D8A7FF82DE1CD33D514379FC(L_8, L_9, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:258>
+		float L_10 = V_0;
+		float L_11 = __this->___animationNormalizedTime;
+		float L_12;
+		L_12 = fabsf(((float)il2cpp_codegen_subtract(L_10, L_11)));
+		if ((!(((float)L_12) > ((float)(0.00999999978f)))))
+		{
+			goto IL_009d;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:260>
+		float L_13 = V_0;
+		__this->___animationNormalizedTime = L_13;
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:262>
+		String_t* L_14 = __this->___animationStateName;
+		bool L_15;
+		L_15 = String_IsNullOrEmpty_mEA9E3FB005AC28FE02E69FCF95A7B8456192B478(L_14, NULL);
+		if (L_15)
+		{
+			goto IL_008a;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:264>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_16 = __this->___healingAnimator;
+		String_t* L_17 = __this->___animationStateName;
 		float L_18 = __this->___animationNormalizedTime;
-		NullCheck(L_17);
-		Animator_Play_m3011727F1A3F331EE7F5D7CF9B98EFEADE547BBD(L_17, 0, 0, L_18, NULL);
+		NullCheck(L_16);
+		Animator_Play_m5565F093F0752D4DD9B451686F71C7A8F23F6744(L_16, L_17, 0, L_18, NULL);
+		return;
 	}
 
-IL_0090:
+IL_008a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:255>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:268>
+		Animator_t8A52E42AE54F76681838FE9E632683EF3952E883* L_19 = __this->___healingAnimator;
+		float L_20 = __this->___animationNormalizedTime;
+		NullCheck(L_19);
+		Animator_Play_m3011727F1A3F331EE7F5D7CF9B98EFEADE547BBD(L_19, 0, 0, L_20, NULL);
+	}
+
+IL_009d:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:271>
 		return;
 	}
 }
-// Method Definition Index: 30643
+// Method Definition Index: 30644
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentEnergyFromSlider_m1CCCC7445820FAF2CC8DE8ABDFF7CB275B05AF29 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19430,7 +19508,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentEnergyFromSlider_
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:259>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:275>
 		Slider_t87EA570E3D6556CABF57456C2F3873FFD86E652F* L_0 = __this->___energySlider;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -19441,7 +19519,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentEnergyFromSlider_
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:261>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:277>
 		Slider_t87EA570E3D6556CABF57456C2F3873FFD86E652F* L_2 = __this->___energySlider;
 		NullCheck(L_2);
 		float L_3;
@@ -19451,7 +19529,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentEnergyFromSlider_
 
 IL_001a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:264>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:280>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_4 = __this->___gameManager;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_5;
@@ -19462,7 +19540,7 @@ IL_001a:
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:266>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:282>
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_6 = __this->___gameManager;
 		NullCheck(L_6);
 		float L_7;
@@ -19472,56 +19550,31 @@ IL_001a:
 
 IL_0034:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:269>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:285>
 		return (0.0f);
 	}
 }
-// Method Definition Index: 30644
+// Method Definition Index: 30645
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnDisable_mDADA91F64A0D33286F7AB2720645EB9A541AB440 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
 	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:274>
-		HealingZone_StopHealing_mBB6BB04B7069948C4E24352F06BBA7C4E4120082(__this, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:276>
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_0 = __this->___healingEffect;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_1;
-		L_1 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_0, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_1)
-		{
-			goto IL_0020;
-		}
-	}
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:278>
-		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_2 = __this->___healingEffect;
-		NullCheck(L_2);
-		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_2, (bool)0, NULL);
-	}
-
-IL_0020:
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:280>
-		return;
-	}
-}
-// Method Definition Index: 30645
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnDestroy_m2C9C8B9773600FF0F5CF070EC99EAE5475B81AA5 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:284>
-		HealingZone_StopHealing_mBB6BB04B7069948C4E24352F06BBA7C4E4120082(__this, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:285>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:290>
+		HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3(__this, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:291>
 		return;
 	}
 }
 // Method Definition Index: 30646
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_OnDestroy_m2C9C8B9773600FF0F5CF070EC99EAE5475B81AA5 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:295>
+		HealingZone_StopAllHealingActivities_mCB0D101EECFE4C965B827E15D4E27CE5460481E3(__this, NULL);
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:296>
+		return;
+	}
+}
+// Method Definition Index: 30647
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_SetHealingEffectActive_mE55BB48F3F2DD2E097679E674945E183B5545F8F (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, bool ___0_active, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19531,7 +19584,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_SetHealingEffectActive_mE55B
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:291>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:302>
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_0 = __this->___healingEffect;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -19542,7 +19595,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_SetHealingEffectActive_mE55B
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:293>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:304>
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_2 = __this->___healingEffect;
 		bool L_3 = ___0_active;
 		NullCheck(L_2);
@@ -19551,20 +19604,20 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_SetHealingEffectActive_mE55B
 
 IL_001a:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:295>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:306>
 		return;
 	}
 }
-// Method Definition Index: 30647
+// Method Definition Index: 30648
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool HealingZone_IsPlayerInZone_mB9D54695867C9543686E3193BDE74BA1CD2B5673 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:297>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:308>
 		bool L_0 = __this->___playerInZone;
 		return L_0;
 	}
 }
-// Method Definition Index: 30648
+// Method Definition Index: 30649
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool HealingZone_IsCheckpointActivated_mC33C8126B4B41C32E61FFBB4CB45CCC8A38FE16D (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19574,7 +19627,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool HealingZone_IsCheckpointActivated_mC33C8
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:299>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:310>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_0 = __this->___checkpointComponent;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -19597,27 +19650,27 @@ IL_001a:
 		return (bool)0;
 	}
 }
-// Method Definition Index: 30649
+// Method Definition Index: 30650
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* HealingZone_GetCheckpointSpawnPoint_m46E9F0B9A8E5ADCD3F064C2E004383FFA36ABDF2 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:301>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:312>
 		Transform_tB27202C6F4E36D225EE28A13E4D662BF99785DB1* L_0;
 		L_0 = Component_get_transform_m2919A1D81931E6932C7F06D4C2F0AB8DDA9A5371(__this, NULL);
 		return L_0;
 	}
 }
-// Method Definition Index: 30650
+// Method Definition Index: 30651
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR float HealingZone_GetCurrentAnimationTime_m945127B5772DFC7EFBB0B529EBA86224E85DC4FC (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:303>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:314>
 		float L_0 = __this->___animationNormalizedTime;
 		float L_1 = __this->___animationDuration;
 		return ((float)il2cpp_codegen_multiply(L_0, L_1));
 	}
 }
-// Method Definition Index: 30651
+// Method Definition Index: 30652
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ActivateAsCheckpoint_mBEAA915E9839E9DD3A71EE01C72183F6C6E476B3 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19627,7 +19680,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ActivateAsCheckpoint_mBEAA91
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:308>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:319>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_0 = __this->___checkpointComponent;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -19638,7 +19691,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ActivateAsCheckpoint_mBEAA91
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:310>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:321>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_2 = __this->___checkpointComponent;
 		NullCheck(L_2);
 		Checkpoint_Activate_m6E7510B9A54AC4668BA48E3D9EFB849B968ED40F(L_2, NULL);
@@ -19646,11 +19699,11 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ActivateAsCheckpoint_mBEAA91
 
 IL_0019:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:312>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:323>
 		return;
 	}
 }
-// Method Definition Index: 30652
+// Method Definition Index: 30653
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ResetCheckpoint_mDD667AFEA7BB5A8AF08E69FFDBD8B6F3705851B9 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19660,7 +19713,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ResetCheckpoint_mDD667AFEA7B
 		s_Il2CppMethodInitialized = true;
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:317>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:328>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_0 = __this->___checkpointComponent;
 		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
 		bool L_1;
@@ -19671,7 +19724,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ResetCheckpoint_mDD667AFEA7B
 		}
 	}
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:319>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:330>
 		Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* L_2 = __this->___checkpointComponent;
 		NullCheck(L_2);
 		Checkpoint_ResetCheckpoint_m7E45138483A716ABF7F2093ACE19D940D8C33D42(L_2, NULL);
@@ -19679,11 +19732,106 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_ResetCheckpoint_mDD667AFEA7B
 
 IL_0019:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:321>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:332>
 		return;
 	}
 }
-// Method Definition Index: 30653
+// Method Definition Index: 30654
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool HealingZone_ShouldHealingBeActive_m57303C32DFCDF00C4D43AB98CA53521F0B3169DB (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+{
+	static bool s_Il2CppMethodInitialized;
+	if (!s_Il2CppMethodInitialized)
+	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		s_Il2CppMethodInitialized = true;
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:337>
+		bool L_0 = __this->___playerInZone;
+		if (!L_0)
+		{
+			goto IL_0022;
+		}
+	}
+	{
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_1 = __this->___gameManager;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_2;
+		L_2 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_1, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_2)
+		{
+			goto IL_0022;
+		}
+	}
+	{
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_3 = __this->___gameManager;
+		NullCheck(L_3);
+		bool L_4;
+		L_4 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_3, NULL);
+		return L_4;
+	}
+
+IL_0022:
+	{
+		return (bool)0;
+	}
+}
+// Method Definition Index: 30655
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone_RestartHealingIfNeeded_mE38A6A0954B1430D277D421FB42E18F04B2EE19A (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
+{
+	static bool s_Il2CppMethodInitialized;
+	if (!s_Il2CppMethodInitialized)
+	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		s_Il2CppMethodInitialized = true;
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:343>
+		bool L_0 = __this->___playerInZone;
+		if (!L_0)
+		{
+			goto IL_0031;
+		}
+	}
+	{
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_1 = __this->___gameManager;
+		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
+		bool L_2;
+		L_2 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602(L_1, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
+		if (!L_2)
+		{
+			goto IL_0031;
+		}
+	}
+	{
+		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_3 = __this->___gameManager;
+		NullCheck(L_3);
+		bool L_4;
+		L_4 = GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline(L_3, NULL);
+		if (!L_4)
+		{
+			goto IL_0031;
+		}
+	}
+	{
+		Coroutine_t85EA685566A254C23F3FD77AB5BDFFFF8799596B* L_5 = __this->___healingCoroutine;
+		if (L_5)
+		{
+			goto IL_0031;
+		}
+	}
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:345>
+		HealingZone_StartHealingActivities_m3ED43C8893B90F941DFEAF104989D256535332BB(__this, NULL);
+	}
+
+IL_0031:
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:347>
+		return;
+	}
+}
+// Method Definition Index: 30656
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone__ctor_mE96AAE91361C915FA726D22D87BAAEB7CC00C037 (HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19720,8 +19868,8 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void HealingZone__ctor_mE96AAE91361C915FA726D
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30654
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__22__ctor_mB5A2422902F3C613995308CDA071E151EFEFF099 (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, int32_t ___0_U3CU3E1__state, const RuntimeMethod* method) 
+// Method Definition Index: 30657
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__24__ctor_m1002FAC70A1E4FF5548142D61106BD26F86BC361 (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, int32_t ___0_U3CU3E1__state, const RuntimeMethod* method) 
 {
 	{
 		Object__ctor_mE837C6B9FA8C6D5D109F4B2EC885D79919AC0EA2(__this, NULL);
@@ -19730,15 +19878,15 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__22__ctor_mB5A2422
 		return;
 	}
 }
-// Method Definition Index: 30655
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__22_System_IDisposable_Dispose_m8C818D8FEDFCF47474F61F04A5DAE40C0A090B8B (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30658
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__24_System_IDisposable_Dispose_mF62DA8F336A600E6BBFFD1B17F5A915AA662558F (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, const RuntimeMethod* method) 
 {
 	{
 		return;
 	}
 }
-// Method Definition Index: 30656
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CHealingProcessU3Ed__22_MoveNext_m668B4CC55479DE04EE883EB10D799FAE749B488B (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30659
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool U3CHealingProcessU3Ed__24_MoveNext_m6EB4151914AD535665D9C7ABB1B359B1D2F4463B (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
 	if (!s_Il2CppMethodInitialized)
@@ -19779,25 +19927,25 @@ IL_0017:
 
 IL_0020:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:214>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:230>
 		HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* L_4 = V_1;
 		NullCheck(L_4);
 		float L_5 = L_4->___healingRate;
 		float L_6;
 		L_6 = Time_get_deltaTime_mC3195000401F0FD167DD2F948FD2BC58330D0865(NULL);
 		V_2 = ((float)il2cpp_codegen_multiply(L_5, L_6));
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:217>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:233>
 		HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* L_7 = V_1;
 		NullCheck(L_7);
 		GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* L_8 = L_7->___gameManager;
 		float L_9 = V_2;
 		NullCheck(L_8);
 		GoGrowGlowGameManager_CollectHealing_m22B1E467187DD6AAF6264AFA943E850381890FB4(L_8, L_9, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:220>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:236>
 		HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* L_10 = V_1;
 		NullCheck(L_10);
 		HealingZone_UpdateAnimationTime_m102513FF8A4BD42C9E75B3D475784144CE371F8E(L_10, NULL);
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:222>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:238>
 		__this->___U3CU3E2__current = NULL;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___U3CU3E2__current), (void*)NULL);
 		__this->___U3CU3E1__state = 1;
@@ -19811,7 +19959,7 @@ IL_004f:
 
 IL_0056:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:211>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:227>
 		HealingZone_t1815092854F9F01C5C61DBA066E15E0728836408* L_11 = V_1;
 		NullCheck(L_11);
 		bool L_12 = L_11->___playerInZone;
@@ -19847,29 +19995,29 @@ IL_0056:
 
 IL_0079:
 	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:224>
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/HealingZone.cs:240>
 		return (bool)0;
 	}
 }
-// Method Definition Index: 30657
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* U3CHealingProcessU3Ed__22_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_mDB90AC7EFCC4D161CF915141ABBB813313362F4E (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30660
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* U3CHealingProcessU3Ed__24_System_Collections_Generic_IEnumeratorU3CSystem_ObjectU3E_get_Current_mF6AF86BC7393879DCB4007913701F6CC85EBBC06 (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, const RuntimeMethod* method) 
 {
 	{
 		RuntimeObject* L_0 = __this->___U3CU3E2__current;
 		return L_0;
 	}
 }
-// Method Definition Index: 30658
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__22_System_Collections_IEnumerator_Reset_m76725AEBB7B3FA1D4F29A7D0C0A735AF56546BE4 (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30661
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void U3CHealingProcessU3Ed__24_System_Collections_IEnumerator_Reset_m2A817329C60FCF502D3E87A5B2D0021E11225F70 (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, const RuntimeMethod* method) 
 {
 	{
 		NotSupportedException_t1429765983D409BD2986508963C98D214E4EBF4A* L_0 = (NotSupportedException_t1429765983D409BD2986508963C98D214E4EBF4A*)il2cpp_codegen_object_new(((RuntimeClass*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&NotSupportedException_t1429765983D409BD2986508963C98D214E4EBF4A_il2cpp_TypeInfo_var)));
 		NotSupportedException__ctor_m1398D0CDE19B36AA3DE9392879738C1EA2439CDF(L_0, NULL);
-		IL2CPP_RAISE_MANAGED_EXCEPTION(L_0, ((RuntimeMethod*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&U3CHealingProcessU3Ed__22_System_Collections_IEnumerator_Reset_m76725AEBB7B3FA1D4F29A7D0C0A735AF56546BE4_RuntimeMethod_var)));
+		IL2CPP_RAISE_MANAGED_EXCEPTION(L_0, ((RuntimeMethod*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&U3CHealingProcessU3Ed__24_System_Collections_IEnumerator_Reset_m2A817329C60FCF502D3E87A5B2D0021E11225F70_RuntimeMethod_var)));
 	}
 }
-// Method Definition Index: 30659
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* U3CHealingProcessU3Ed__22_System_Collections_IEnumerator_get_Current_m7862729413DE71621D95FFC451F2B45DD9E8D56C (U3CHealingProcessU3Ed__22_tB00C83F1AAF61CC6DB9FAA41DD222F139F502F69* __this, const RuntimeMethod* method) 
+// Method Definition Index: 30662
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* U3CHealingProcessU3Ed__24_System_Collections_IEnumerator_get_Current_m46B2AD4A448711F5C2509595A76C5C475F4164D8 (U3CHealingProcessU3Ed__24_tA36E96306AAB44D4464B5BB41D144BE6FC494C60* __this, const RuntimeMethod* method) 
 {
 	{
 		RuntimeObject* L_0 = __this->___U3CU3E2__current;
@@ -19884,7 +20032,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RuntimeObject* U3CHealingProcessU3Ed__22_Syst
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30660
+// Method Definition Index: 30663
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void JunkFood_OnTriggerEnter_m54A2F646C80CCA6D61413E3ED724B3B7532E9E44 (JunkFood_tA6DC8658FBD73D50A82E7342C880F0AAB246DC18* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19915,7 +20063,7 @@ IL_0013:
 		return;
 	}
 }
-// Method Definition Index: 30661
+// Method Definition Index: 30664
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void JunkFood_CollectJunkFood_m8EAC91BBBE16EE306B1ED4990187E0F981A425CF (JunkFood_tA6DC8658FBD73D50A82E7342C880F0AAB246DC18* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20004,7 +20152,7 @@ IL_0076:
 		return;
 	}
 }
-// Method Definition Index: 30662
+// Method Definition Index: 30665
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void JunkFood__ctor_mF146CD3E003CFAADC3C97E136D6B14506B02C451 (JunkFood_tA6DC8658FBD73D50A82E7342C880F0AAB246DC18* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20022,7 +20170,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void JunkFood__ctor_mF146CD3E003CFAADC3C97E13
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30663
+// Method Definition Index: 30666
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera_Start_mDD1E2D1B09D04B2F086416570FA709B19F7E7B8B (LookAtCamera_t8FA21EC35AA0CE816D27C9A9DDCD5FE2AF118D69* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20038,7 +20186,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera_Start_mDD1E2D1B09D04B2F0864
 		return;
 	}
 }
-// Method Definition Index: 30664
+// Method Definition Index: 30667
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera_Update_m25EDB8C242C1EA0EFC6C513BAD52E48B33043780 (LookAtCamera_t8FA21EC35AA0CE816D27C9A9DDCD5FE2AF118D69* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20052,7 +20200,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera_Update_m25EDB8C242C1EA0EFC6
 		return;
 	}
 }
-// Method Definition Index: 30665
+// Method Definition Index: 30668
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera__ctor_mE529F66941C9FA8213A54D2201EA713F4B84534E (LookAtCamera_t8FA21EC35AA0CE816D27C9A9DDCD5FE2AF118D69* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20068,7 +20216,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void LookAtCamera__ctor_mE529F66941C9FA8213A5
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30666
+// Method Definition Index: 30669
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick_Awake_m6A8D09CA26E8F26B5F6061242253741071385FED (PlayerPlatformStick_tA35B9C84E4E36B1DD6AC08364D3765DD31F36DD7* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20103,7 +20251,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick_Awake_m6A8D09CA26E8F
 		return;
 	}
 }
-// Method Definition Index: 30667
+// Method Definition Index: 30670
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick_OnControllerColliderHit_m0B1C5704F8F68FAD1E960CCDE6D7DAF7D50751CB (PlayerPlatformStick_tA35B9C84E4E36B1DD6AC08364D3765DD31F36DD7* __this, ControllerColliderHit_tD0B734CBE0E2B089339B14600EB5A80295F6DE92* ___0_hit, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20197,7 +20345,7 @@ IL_008a:
 		return;
 	}
 }
-// Method Definition Index: 30668
+// Method Definition Index: 30671
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick_Update_m2E6D3F0D705A9F670381BA5892EF84290283F32E (PlayerPlatformStick_tA35B9C84E4E36B1DD6AC08364D3765DD31F36DD7* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20276,7 +20424,7 @@ IL_0072:
 		return;
 	}
 }
-// Method Definition Index: 30669
+// Method Definition Index: 30672
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick__ctor_m8214FE45701D8267BEEE5B6AB44CE71937FFEEA2 (PlayerPlatformStick_tA35B9C84E4E36B1DD6AC08364D3765DD31F36DD7* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20292,7 +20440,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlayerPlatformStick__ctor_m8214FE45701D8
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30670
+// Method Definition Index: 30673
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText_Awake_m7B1B7E4E60785933177C1022FA4628731B23B795 (PlusOneText_tEA0D4B32FB018E6780E94C8A6C1039E1C8470753* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20356,7 +20504,7 @@ IL_0058:
 		return;
 	}
 }
-// Method Definition Index: 30671
+// Method Definition Index: 30674
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText_Start_mC6CBC4DCCC957A727D9AD2B2C3DCCC27BD1E0BCE (PlusOneText_tEA0D4B32FB018E6780E94C8A6C1039E1C8470753* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20371,7 +20519,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText_Start_mC6CBC4DCCC957A727D9AD
 		return;
 	}
 }
-// Method Definition Index: 30672
+// Method Definition Index: 30675
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText_Update_mEF4276FF292CDA33063322C578A099A9B6BF82E0 (PlusOneText_tEA0D4B32FB018E6780E94C8A6C1039E1C8470753* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20501,7 +20649,7 @@ IL_011f:
 		return;
 	}
 }
-// Method Definition Index: 30673
+// Method Definition Index: 30676
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText_SetColor_m9F69D0CF8B28197059B85F41DDB02CE36BDF47EA (PlusOneText_tEA0D4B32FB018E6780E94C8A6C1039E1C8470753* __this, Color_tD001788D726C3A7F1379BEED0260B9591F440C1F ___0_color, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20538,7 +20686,7 @@ IL_0021:
 		return;
 	}
 }
-// Method Definition Index: 30674
+// Method Definition Index: 30677
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText__ctor_m47F88D13DA9F4014779C31633BEC9C34AC8427D9 (PlusOneText_tEA0D4B32FB018E6780E94C8A6C1039E1C8470753* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20564,7 +20712,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PlusOneText__ctor_m47F88D13DA9F4014779C3
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30675
+// Method Definition Index: 30678
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_Start_mB99564028262CD990009DBF6E45BA209D2203222 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20665,7 +20813,7 @@ IL_0080:
 		return;
 	}
 }
-// Method Definition Index: 30676
+// Method Definition Index: 30679
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_ConfigureRigidbody_m51BF02F429F5FB7FCBA94CB7A694ED4E6B47B51B (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -20701,7 +20849,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_ConfigureRigidbody_m51BF0
 		return;
 	}
 }
-// Method Definition Index: 30677
+// Method Definition Index: 30680
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_Update_mC67362BFCD62E45C51B3ED33D416EF9EF37D957B (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20732,7 +20880,7 @@ IL_0014:
 		return;
 	}
 }
-// Method Definition Index: 30678
+// Method Definition Index: 30681
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_UpdateUIState_mA3829AF7B4FB633BEC1321D922D9C70BC84DC587 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	bool V_0 = false;
@@ -20806,7 +20954,7 @@ IL_0064:
 		return;
 	}
 }
-// Method Definition Index: 30679
+// Method Definition Index: 30682
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushableObject_IsPlayerFacingObject_m9D0971067A909194EB4D8E007282B2F75E21556D (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20891,7 +21039,7 @@ IL_004d:
 		return (bool)((((int32_t)((!(((float)L_14) <= ((float)(60.0f))))? 1 : 0)) == ((int32_t)0))? 1 : 0);
 	}
 }
-// Method Definition Index: 30680
+// Method Definition Index: 30683
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_ShowPushButton_m6C3EE8A1629BB7835DBC50015D7DF7B17638FD90 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, bool ___0_show, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20925,7 +21073,7 @@ IL_001a:
 		return;
 	}
 }
-// Method Definition Index: 30681
+// Method Definition Index: 30684
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_OnStartPushing_mCD0F1D36765D3E136A06F93897319080AA256961 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -20972,7 +21120,7 @@ IL_0041:
 		return;
 	}
 }
-// Method Definition Index: 30682
+// Method Definition Index: 30685
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_OnStopPushing_mE9D89F696907A03B031BA0A9649CC2FFF26800E3 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21019,7 +21167,7 @@ IL_0041:
 		return;
 	}
 }
-// Method Definition Index: 30683
+// Method Definition Index: 30686
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_OnCollisionEnter_m88476458B8D2FB860F86B691B9F5DCE6ABBDED09 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, Collision_tBCC6AEBD9A63E6DA2E50660DAC03CDCB1FF7A9B0* ___0_collision, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21062,7 +21210,7 @@ IL_0026:
 		return;
 	}
 }
-// Method Definition Index: 30684
+// Method Definition Index: 30687
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushableObject_IsPlayerInRange_mDA3C8701BEF072128AE966762FF4E25E54664184 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21071,7 +21219,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushableObject_IsPlayerInRange_mDA3C8701
 		return L_0;
 	}
 }
-// Method Definition Index: 30685
+// Method Definition Index: 30688
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushableObject_IsBeingPushed_m923732F58B4CA31461F4A033A0F18CE79E7E99C1 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21080,7 +21228,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushableObject_IsBeingPushed_m923732F58B
 		return L_0;
 	}
 }
-// Method Definition Index: 30686
+// Method Definition Index: 30689
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_OnDrawGizmosSelected_m3DF86B5E8F2684A1E1594B915B5E95A84F499359 (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21100,7 +21248,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject_OnDrawGizmosSelected_m3DF
 		return;
 	}
 }
-// Method Definition Index: 30687
+// Method Definition Index: 30690
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject__ctor_m7288BC5D91DC181A034FD776695D8AD1F084EE3C (PushableObject_t60DC92A7CF4C13E3019B3E4380EB6B9D0DAA414F* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21126,7 +21274,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushableObject__ctor_m7288BC5D91DC181A03
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30688
+// Method Definition Index: 30691
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_Start_mAB681C6525E1CAF3C426C59C12D16A73ACDB3BB1 (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21220,7 +21368,7 @@ IL_0063:
 		return;
 	}
 }
-// Method Definition Index: 30689
+// Method Definition Index: 30692
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_Update_m2F9D8BC87D5504B10431057FC561557C0320F786 (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21379,7 +21527,7 @@ IL_00da:
 		return;
 	}
 }
-// Method Definition Index: 30690
+// Method Definition Index: 30693
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_OnPointerDown_m0AB8B7D19518E17F2FA90A439F0D1CACCEB856A0 (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, PointerEventData_t9670F3C7D823CCB738A1604C72A1EB90292396FB* ___0_eventData, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21416,7 +21564,7 @@ IL_0029:
 		return;
 	}
 }
-// Method Definition Index: 30691
+// Method Definition Index: 30694
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_OnPointerUp_m246C8348603A51C08FF1FD595F103AC4749DF4BB (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, PointerEventData_t9670F3C7D823CCB738A1604C72A1EB90292396FB* ___0_eventData, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21487,7 +21635,7 @@ IL_0058:
 		return;
 	}
 }
-// Method Definition Index: 30692
+// Method Definition Index: 30695
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_UpdateButtonAppearance_m53A20661358ED5203725A5051F8D5ECC85901F0A (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, bool ___0_isPushing, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21549,7 +21697,7 @@ IL_002a:
 		return;
 	}
 }
-// Method Definition Index: 30693
+// Method Definition Index: 30696
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_OnPushButtonClick_m2A06B0878B98AD54130DD9808FC4DD3A3B5607DD (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21557,7 +21705,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_OnPushButtonClick_m
 		return;
 	}
 }
-// Method Definition Index: 30694
+// Method Definition Index: 30697
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController_OnDestroy_m0FBBBC2148360FF9A96A9EDACF8DC88BEC9C9B6E (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21609,7 +21757,7 @@ IL_0033:
 		return;
 	}
 }
-// Method Definition Index: 30695
+// Method Definition Index: 30698
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController__ctor_m542DB8C17544AD565F307DF575F1CC74F4FDC768 (PushButtonController_t93704B177C2796C62097BE6DBEA3DC0754EF9EE8* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21639,7 +21787,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushButtonController__ctor_m542DB8C17544
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30696
+// Method Definition Index: 30699
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_Start_m11159851B7BD4958AF2E2C24390DD083EBDC98A7 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21709,7 +21857,7 @@ IL_0062:
 		return;
 	}
 }
-// Method Definition Index: 30697
+// Method Definition Index: 30700
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_Update_m7D1216247C5CCF916D7F016002D13108C27EE972 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	{
@@ -21725,7 +21873,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_Update_m7D1216247C5CCF916
 		return;
 	}
 }
-// Method Definition Index: 30698
+// Method Definition Index: 30701
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_CheckForPushableObjects_mB91A03E43E3ACCC5788733726593262951487C7B (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21822,7 +21970,7 @@ IL_0099:
 		return;
 	}
 }
-// Method Definition Index: 30699
+// Method Definition Index: 30702
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_HandlePushInput_mB9579B41F9C019CC3ED1B7F4B40966DFEDCD5412 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21905,7 +22053,7 @@ IL_004b:
 		return;
 	}
 }
-// Method Definition Index: 30700
+// Method Definition Index: 30703
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_StartPushing_mFE7006EA8BC5CC25883915DE5E1228ABDBFD7754 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21976,7 +22124,7 @@ IL_0052:
 		return;
 	}
 }
-// Method Definition Index: 30701
+// Method Definition Index: 30704
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_StopPushing_m7AEC87908C85CA9F8ADD0A952B384BCE4262BBCB (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -21996,7 +22144,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_StopPushing_m7AEC87908C85
 		return;
 	}
 }
-// Method Definition Index: 30702
+// Method Definition Index: 30705
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_UpdateAnimator_mEC59BCF2BE035635960C0B9011929A478315F20F (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22031,7 +22179,7 @@ IL_0025:
 		return;
 	}
 }
-// Method Definition Index: 30703
+// Method Definition Index: 30706
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_UpdateUI_mA6584D4351A654406FBB6C9F1A256FAC049CEFA2 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22113,7 +22261,7 @@ IL_004e:
 		return;
 	}
 }
-// Method Definition Index: 30704
+// Method Definition Index: 30707
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController_OnDrawGizmos_m43F14D10709A6259281FED0003F2A82BD94C35E9 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22226,7 +22374,7 @@ IL_00a2:
 		return;
 	}
 }
-// Method Definition Index: 30705
+// Method Definition Index: 30708
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushController_IsPushing_m1245D651EAECF14E836B0E43611C49CECAD766AB (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	{
@@ -22235,7 +22383,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushController_IsPushing_m1245D651EAECF1
 		return L_0;
 	}
 }
-// Method Definition Index: 30706
+// Method Definition Index: 30709
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushController_IsFacingPushable_m8BB3DCC33CEF69B035B50A08F2B4A153F1FEBDD5 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	{
@@ -22244,7 +22392,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool PushController_IsFacingPushable_m8BB3DCC
 		return L_0;
 	}
 }
-// Method Definition Index: 30707
+// Method Definition Index: 30710
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController__ctor_m4DD0003513D05C279125BD963306F2E7D907EFA0 (PushController_t6C4C2A0CA02CBE24D7D6BC5DAEEFEB3B53FE201E* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22281,7 +22429,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushController__ctor_m4DD0003513D05C2791
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30708
+// Method Definition Index: 30711
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager_Start_m37170DB6697492D22EBBFF8508F931D4E9DDEDDC (PushInteractionManager_tE3CD1901F19AB23A19312C9F4DA0C47F49C27869* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22317,7 +22465,7 @@ IL_0019:
 		return;
 	}
 }
-// Method Definition Index: 30709
+// Method Definition Index: 30712
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager_Update_m7994CE2697DD7FC02422C477B530DF8A76E84F05 (PushInteractionManager_tE3CD1901F19AB23A19312C9F4DA0C47F49C27869* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22680,7 +22828,7 @@ IL_0279:
 		return;
 	}
 }
-// Method Definition Index: 30710
+// Method Definition Index: 30713
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager_StopAllPushing_mC38458623C2FBDCA313B886CBC59D2FA37F05341 (PushInteractionManager_tE3CD1901F19AB23A19312C9F4DA0C47F49C27869* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22733,7 +22881,7 @@ IL_003a:
 		return;
 	}
 }
-// Method Definition Index: 30711
+// Method Definition Index: 30714
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager_OnDestroy_mADB6D5916B993EDE379003CE274E037A407D038B (PushInteractionManager_tE3CD1901F19AB23A19312C9F4DA0C47F49C27869* __this, const RuntimeMethod* method) 
 {
 	{
@@ -22743,7 +22891,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager_OnDestroy_mADB6D5
 		return;
 	}
 }
-// Method Definition Index: 30712
+// Method Definition Index: 30715
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager__ctor_mDE3F764A78709E42520A0F81AE31F190F67D8956 (PushInteractionManager_tE3CD1901F19AB23A19312C9F4DA0C47F49C27869* __this, const RuntimeMethod* method) 
 {
 	{
@@ -22765,7 +22913,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void PushInteractionManager__ctor_mDE3F764A78
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30713
+// Method Definition Index: 30716
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RestrictedArea_OnTriggerEnter_m17F599E3FBC76EFDD050E55E2E061E0BB2C466F0 (RestrictedArea_t79B4519CA3B6513C8CFE4A2BCDFE9D9A90BC0A13* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22897,7 +23045,7 @@ IL_00ab:
 		return;
 	}
 }
-// Method Definition Index: 30714
+// Method Definition Index: 30717
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RestrictedArea__ctor_m9246B47A88C5AF1C5B23754FB742D714B36145B8 (RestrictedArea_t79B4519CA3B6513C8CFE4A2BCDFE9D9A90BC0A13* __this, const RuntimeMethod* method) 
 {
 	{
@@ -22915,7 +23063,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RestrictedArea__ctor_m9246B47A88C5AF1C5B
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30715
+// Method Definition Index: 30718
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_Start_mB67AC39FC8E7A63D1099E24B8897FC79EF31BB41 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -22951,7 +23099,7 @@ IL_0020:
 		return;
 	}
 }
-// Method Definition Index: 30716
+// Method Definition Index: 30719
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_OnTriggerEnter_mD8892438763583BD8A5CE693473831E196D861D7 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	{
@@ -23001,7 +23149,7 @@ IL_0039:
 		return;
 	}
 }
-// Method Definition Index: 30717
+// Method Definition Index: 30720
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_OnTriggerExit_m42ED17E4E24ECA3D4E73B2BF5AF4E6AA2E8155C3 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, Collider_t1CC3163924FCD6C4CC2E816373A929C1E3D55E76* ___0_other, const RuntimeMethod* method) 
 {
 	{
@@ -23051,7 +23199,7 @@ IL_0038:
 		return;
 	}
 }
-// Method Definition Index: 30718
+// Method Definition Index: 30721
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_PressButton_m08AD5357A7ECCFB260C3287D8937007524B477E1 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23087,7 +23235,7 @@ IL_0020:
 		return;
 	}
 }
-// Method Definition Index: 30719
+// Method Definition Index: 30722
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_ReleaseButton_m2EDA5261D49C9FE12DA7B615159794B7A1D3ADD2 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23123,7 +23271,7 @@ IL_0020:
 		return;
 	}
 }
-// Method Definition Index: 30720
+// Method Definition Index: 30723
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_SetAllTargets_m9F6A83B6BEF5BED28AE1C00B32BA765458663073 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, bool ___0_activate, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23204,7 +23352,7 @@ IL_0039:
 		return;
 	}
 }
-// Method Definition Index: 30721
+// Method Definition Index: 30724
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController_OnDrawGizmos_mAFDA25331C2C073F58E1E9965CFBA6AFF425BA05 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, const RuntimeMethod* method) 
 {
 	{
@@ -23241,7 +23389,7 @@ IL_003c:
 		return;
 	}
 }
-// Method Definition Index: 30722
+// Method Definition Index: 30725
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController__ctor_m492B774E1C5A6556A41E958D7B435AA905635AD1 (ReusableButtonController_t3CACD58FFE5D1532CA4ACDF976B86EEABD02216C* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23274,7 +23422,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void ReusableButtonController__ctor_m492B774E
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 30723
+// Method Definition Index: 30726
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SpawnPointVisualizer_OnDrawGizmos_m6F80FE3937A717DBAEBA8666CE50190830D7A295 (SpawnPointVisualizer_t4F92ED15C2CD482418250049C9BF4D486EC8D76C* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23407,7 +23555,7 @@ IL_010b:
 		return;
 	}
 }
-// Method Definition Index: 30724
+// Method Definition Index: 30727
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SpawnPointVisualizer__ctor_m14899853DC89763492A3711A78FB56B79346E20B (SpawnPointVisualizer_t4F92ED15C2CD482418250049C9BF4D486EC8D76C* __this, const RuntimeMethod* method) 
 {
 	{
@@ -23426,7 +23574,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void SpawnPointVisualizer__ctor_m14899853DC89
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-// Method Definition Index: 48933
+// Method Definition Index: 49396
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_get_normalized_m736BBF65D5CDA7A18414370D15B4DFCC1E466F07_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2* __this, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -23445,7 +23593,7 @@ IL_000f:
 		return L_2;
 	}
 }
-// Method Definition Index: 48958
+// Method Definition Index: 49421
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_op_Multiply_m87BA7C578F96C8E49BB07088DAAC4649F83B0353_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, float ___1_d, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -23473,7 +23621,7 @@ IL_0021:
 		return L_10;
 	}
 }
-// Method Definition Index: 49048
+// Method Definition Index: 49511
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Lerp_m47EF2FFB7647BD0A1FDC26DC03E28B19812139B5_inline (float ___0_a, float ___1_b, float ___2_t, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -23494,7 +23642,7 @@ IL_0010:
 		return L_5;
 	}
 }
-// Method Definition Index: 48947
+// Method Definition Index: 49410
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_get_zero_m0C1249C3F25B1C70EAD3CC8B31259975A457AE39_inline (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23517,7 +23665,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 49030
+// Method Definition Index: 49493
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Max_mF5379E63D2BBAC76D090748695D833934F8AD051_inline (float ___0_a, float ___1_b, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -23554,7 +23702,7 @@ IL_000c:
 		return L_4;
 	}
 }
-// Method Definition Index: 49041
+// Method Definition Index: 49504
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t Mathf_CeilToInt_mF2BF9F4261B3431DC20E10A46CFEEED103C48963_inline (float ___0_f, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23594,7 +23742,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GoGrowGlowGameManager_t6511419863
 		return L_0;
 	}
 }
-// Method Definition Index: 48776
+// Method Definition Index: 49239
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Color__ctor_m3786F0D6E510D9CFA544523A955870BD2A514C8C_inline (Color_tD001788D726C3A7F1379BEED0260B9591F440C1F* __this, float ___0_r, float ___1_g, float ___2_b, float ___3_a, const RuntimeMethod* method) 
 {
 	{
@@ -23609,7 +23757,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Color__ctor_m3786F0D6E510D9C
 		return;
 	}
 }
-// Method Definition Index: 48955
+// Method Definition Index: 49418
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_op_Addition_m78C0EC70CB66E8DCAC225743D82B268DAEE92067_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_b, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -23649,7 +23797,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Transform_tB27202C6F4E36D225EE28A
 		return L_0;
 	}
 }
-// Method Definition Index: 48811
+// Method Definition Index: 49274
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_yellow_m66637FA14383E8D74F24AE256B577CE1D55D469F_inline (const RuntimeMethod* method) 
 {
 	{
@@ -23691,7 +23839,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void GrowAssessmentManager_set_In
 		return;
 	}
 }
-// Method Definition Index: 48922
+// Method Definition Index: 49385
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Vector3__ctor_m376936E6B999EF1ECBE57D990A386303E2283DE0_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2* __this, float ___0_x, float ___1_y, float ___2_z, const RuntimeMethod* method) 
 {
 	{
@@ -23704,7 +23852,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Vector3__ctor_m376936E6B999E
 		return;
 	}
 }
-// Method Definition Index: 48956
+// Method Definition Index: 49419
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_op_Subtraction_mE42023FF80067CB44A1D4A27EB7CF2B24CABB828_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_b, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -23744,7 +23892,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float GoGrowGlowGameManager_GetCu
 		return L_0;
 	}
 }
-// Method Definition Index: 48980
+// Method Definition Index: 49443
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Quaternion_tDA59F214EF07D7700B26E40E562F267AF7306974 Quaternion_get_identity_m7E701AE095ED10FD5EA0B50ABCFDE2EEFF2173A5_inline (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23767,7 +23915,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 48789
+// Method Definition Index: 49252
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_Lerp_mE79F87889843ECDC188E4CB5B5E1F1B2256E5EBE_inline (Color_tD001788D726C3A7F1379BEED0260B9591F440C1F ___0_a, Color_tD001788D726C3A7F1379BEED0260B9591F440C1F ___1_b, float ___2_t, const RuntimeMethod* method) 
 {
 	Color_tD001788D726C3A7F1379BEED0260B9591F440C1F V_0;
@@ -23818,7 +23966,7 @@ IL_0069:
 		return L_31;
 	}
 }
-// Method Definition Index: 48948
+// Method Definition Index: 49411
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_get_one_mC9B289F1E15C42C597180C9FE6FB492495B51D02_inline (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -23841,7 +23989,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 49057
+// Method Definition Index: 49520
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_PingPong_mB1D6A10F386CE1EEA99DB69486DDA6DA531D799D_inline (float ___0_t, float ___1_length, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -23866,7 +24014,7 @@ IL_001d:
 		return L_7;
 	}
 }
-// Method Definition Index: 48915
+// Method Definition Index: 49378
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_Lerp_m3A906D0530A94FAABB94F0F905E84D99BE85C3F8_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_b, float ___2_t, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -23910,7 +24058,7 @@ IL_0053:
 		return L_24;
 	}
 }
-// Method Definition Index: 48962
+// Method Definition Index: 49425
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Vector3_op_Inequality_m9F170CDFBF1E490E559DA5D06D6547501A402BBF_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_lhs, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_rhs, const RuntimeMethod* method) 
 {
 	bool V_0 = false;
@@ -23929,7 +24077,7 @@ IL_000e:
 		return L_3;
 	}
 }
-// Method Definition Index: 49045
+// Method Definition Index: 49508
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Clamp_mEB9AEA827D27D20FCC787F7375156AF46BB12BBF_inline (float ___0_value, float ___1_min, float ___2_max, const RuntimeMethod* method) 
 {
 	bool V_0 = false;
@@ -23989,7 +24137,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool GrowAssessmentManager_IsAsse
 		return L_0;
 	}
 }
-// Method Definition Index: 48801
+// Method Definition Index: 49264
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_blue_mF04A26CE61D6DA3C0D8B1C4720901B1028C7AB87_inline (const RuntimeMethod* method) 
 {
 	{
@@ -23999,7 +24147,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 48807
+// Method Definition Index: 49270
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_green_mEB001F2CD8C68C6BBAEF9101990B779D3AA2A6EF_inline (const RuntimeMethod* method) 
 {
 	{
@@ -24009,7 +24157,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 48809
+// Method Definition Index: 49272
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_red_mA2E53E7173FDC97E68E335049AB0FAAEE43A844D_inline (const RuntimeMethod* method) 
 {
 	{
@@ -24019,7 +24167,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 48944
+// Method Definition Index: 49407
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_get_sqrMagnitude_m43C27DEC47C4811FB30AB474FF2131A963B66FC8_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2* __this, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24040,7 +24188,7 @@ IL_002d:
 		return L_6;
 	}
 }
-// Method Definition Index: 48987
+// Method Definition Index: 49450
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Quaternion_Angle_mAADDBB3C30736B4C7B75CF3A241C1CF5E0386C26_inline (Quaternion_tDA59F214EF07D7700B26E40E562F267AF7306974 ___0_a, Quaternion_tDA59F214EF07D7700B26E40E562F267AF7306974 ___1_b, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24089,7 +24237,7 @@ IL_003c:
 		return L_9;
 	}
 }
-// Method Definition Index: 49051
+// Method Definition Index: 49514
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_SmoothStep_mEFDC738EB0AA162D71013BDBBDD157B080A8E524_inline (float ___0_from, float ___1_to, float ___2_t, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24118,7 +24266,7 @@ IL_0030:
 		return L_11;
 	}
 }
-// Method Definition Index: 48957
+// Method Definition Index: 49420
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_op_UnaryNegation_m5450829F333BD2A88AF9A592C4EE331661225915_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;
@@ -24143,7 +24291,7 @@ IL_001e:
 		return L_7;
 	}
 }
-// Method Definition Index: 48939
+// Method Definition Index: 49402
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_Distance_m2314DB9B8BD01157E013DF87BEA557375C7F9FF9_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_b, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24191,7 +24339,7 @@ IL_0040:
 		return L_19;
 	}
 }
-// Method Definition Index: 49047
+// Method Definition Index: 49510
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Clamp01_mA7E048DBDA832D399A581BE4D6DED9FA44CE0F14_inline (float ___0_value, const RuntimeMethod* method) 
 {
 	bool V_0 = false;
@@ -24283,7 +24431,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void InteractiveObject_SetSpawned
 		return;
 	}
 }
-// Method Definition Index: 78226
+// Method Definition Index: 78700
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t CinemachineVirtualCameraBase_get_Priority_m273769ED137982DE43BB658BBE704BCAA55E5246_inline (CinemachineVirtualCameraBase_tAD070AA799E9D3990F0B2DA9AC5889CF138261DE* __this, const RuntimeMethod* method) 
 {
 	{
@@ -24292,7 +24440,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t CinemachineVirtualCameraB
 		return L_0;
 	}
 }
-// Method Definition Index: 78227
+// Method Definition Index: 78701
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void CinemachineVirtualCameraBase_set_Priority_m233ED0376CE0BD1244CCA52DF4532C8988DC05AC_inline (CinemachineVirtualCameraBase_tAD070AA799E9D3990F0B2DA9AC5889CF138261DE* __this, int32_t ___0_value, const RuntimeMethod* method) 
 {
 	{
@@ -24302,7 +24450,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void CinemachineVirtualCameraBase
 		return;
 	}
 }
-// Method Definition Index: 49105
+// Method Definition Index: 49568
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector2_t1FD6F485C871E832B347AB2DC8CBA08B739D8DF7 Vector2_get_zero_m32506C40EC2EE7D5D4410BF40D3EE683A3D5F32C_inline (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24325,7 +24473,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 49032
+// Method Definition Index: 49495
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t Mathf_Max_m7FA442918DE37E3A00106D1F2E789D65829792B8_inline (int32_t ___0_a, int32_t ___1_b, const RuntimeMethod* method) 
 {
 	int32_t V_0 = 0;
@@ -24362,15 +24510,6 @@ IL_000c:
 		return L_4;
 	}
 }
-// Method Definition Index: 29850
-IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Checkpoint_IsActivated_mB25FF0E7C69C8AA5D3660C577D2A50C10C4BACE0_inline (Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/Checkpoint.cs:99>
-		bool L_0 = __this->___isActivated;
-		return L_0;
-	}
-}
 // Method Definition Index: 30303
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool GoGrowGlowGameManager_IsGameActive_mB211B3BD8C5C2AA32123AD074BBA3D8381D0BB0F_inline (GoGrowGlowGameManager_t6511419863579F364A2E4712451F1F942F70A725* __this, const RuntimeMethod* method) 
 {
@@ -24380,7 +24519,16 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool GoGrowGlowGameManager_IsGame
 		return L_0;
 	}
 }
-// Method Definition Index: 48951
+// Method Definition Index: 29850
+IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Checkpoint_IsActivated_mB25FF0E7C69C8AA5D3660C577D2A50C10C4BACE0_inline (Checkpoint_t73DBB588194FE620149319CC45C4187E6A9EB068* __this, const RuntimeMethod* method) 
+{
+	{
+		//<source_info:C:/Users/Sidyei/Unity Projects/NutriventureV2/Nutriventure/Assets/General Assets/2D_UI_Components/GoGrowGlowGame/Scripts/Checkpoint.cs:99>
+		bool L_0 = __this->___isActivated;
+		return L_0;
+	}
+}
+// Method Definition Index: 49414
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_get_up_m128AF3FDC820BF59D5DE86D973E7DE3F20C3AEBA_inline (const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24403,7 +24551,7 @@ IL_0009:
 		return L_1;
 	}
 }
-// Method Definition Index: 35234
+// Method Definition Index: 35687
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool ThirdPersonController_IsCrawling_m3EF11A7E6C82511053C8858EA92B61A803648C92_inline (ThirdPersonController_t893DAD6404051D289F667ABE7A3B1C17C031BBF3* __this, const RuntimeMethod* method) 
 {
 	{
@@ -24412,7 +24560,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool ThirdPersonController_IsCraw
 		return L_0;
 	}
 }
-// Method Definition Index: 48942
+// Method Definition Index: 49405
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_get_magnitude_mF0D6017E90B345F1F52D1CC564C640F1A847AF2D_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2* __this, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24442,7 +24590,7 @@ IL_0034:
 		return L_7;
 	}
 }
-// Method Definition Index: 48937
+// Method Definition Index: 49400
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_Angle_mB16906B482814C140FE5BA9D041D2DC11E42A68D_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_from, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_to, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24501,7 +24649,7 @@ IL_0056:
 		return L_12;
 	}
 }
-// Method Definition Index: 35238
+// Method Definition Index: 35691
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool ThirdPersonController_IsPushing_mFA9DD0DC860323C630A8AC9F00757BC128540FDD_inline (ThirdPersonController_t893DAD6404051D289F667ABE7A3B1C17C031BBF3* __this, const RuntimeMethod* method) 
 {
 	{
@@ -24510,7 +24658,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool ThirdPersonController_IsPush
 		return L_0;
 	}
 }
-// Method Definition Index: 83553
+// Method Definition Index: 84026
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Selectable_get_interactable_m17DD0484DC62DCB4467109488D7A599BC85EC112_inline (Selectable_t3251808068A17B8E92FB33590A4C2FA66D456712* __this, const RuntimeMethod* method) 
 {
 	{
@@ -24519,7 +24667,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Selectable_get_interactable_
 		return L_0;
 	}
 }
-// Method Definition Index: 48810
+// Method Definition Index: 49273
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_white_m068F5AF879B0FCA584E3693F762EA41BB65532C6_inline (const RuntimeMethod* method) 
 {
 	{
@@ -24529,7 +24677,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED02
 		return L_0;
 	}
 }
-// Method Definition Index: 35239
+// Method Definition Index: 35692
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* ThirdPersonController_GetCurrentPushableObject_m544B973AAF7100DCBB2FDE49000B76CC5047D06C_inline (ThirdPersonController_t893DAD6404051D289F667ABE7A3B1C17C031BBF3* __this, const RuntimeMethod* method) 
 {
 	{
@@ -24538,7 +24686,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR GameObject_t76FEDD663AB33C991A9C9
 		return L_0;
 	}
 }
-// Method Definition Index: 48803
+// Method Definition Index: 49266
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Color_tD001788D726C3A7F1379BEED0260B9591F440C1F Color_get_cyan_m182A29E7475C0A98ACC03E1CF5252BAB83F0BA31_inline (const RuntimeMethod* method) 
 {
 	{
@@ -24602,7 +24750,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t List_1_get_Count_m4407E4C
 		return L_0;
 	}
 }
-// Method Definition Index: 48931
+// Method Definition Index: 49394
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_Normalize_mEF8349CC39674236CFC694189AFD36E31F89AC8F_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_value, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24645,7 +24793,7 @@ IL_0026:
 		return L_8;
 	}
 }
-// Method Definition Index: 49056
+// Method Definition Index: 49519
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Repeat_m6F1560A163481BB311D685294E1B463C3E4EB3BA_inline (float ___0_t, float ___1_length, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24669,7 +24817,7 @@ IL_001b:
 		return L_7;
 	}
 }
-// Method Definition Index: 48961
+// Method Definition Index: 49424
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Vector3_op_Equality_mCDCBB8D2EDC3D3BF20F31A25ACB34705D352B479_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_lhs, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_rhs, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24711,7 +24859,7 @@ IL_0043:
 		return L_19;
 	}
 }
-// Method Definition Index: 48986
+// Method Definition Index: 49449
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Quaternion_Dot_mF9D3BE33940A47979DADA7E81650AEB356D5D12B_inline (Quaternion_tDA59F214EF07D7700B26E40E562F267AF7306974 ___0_a, Quaternion_tDA59F214EF07D7700B26E40E562F267AF7306974 ___1_b, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24742,7 +24890,7 @@ IL_003b:
 		return L_16;
 	}
 }
-// Method Definition Index: 49027
+// Method Definition Index: 49490
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Min_m747CA71A9483CDB394B13BD0AD048EE17E48FFE4_inline (float ___0_a, float ___1_b, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24779,7 +24927,7 @@ IL_000c:
 		return L_4;
 	}
 }
-// Method Definition Index: 48983
+// Method Definition Index: 49446
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool Quaternion_IsEqualUsingDot_m9C672201C918C2D1E739F559DBE4406F95997CBD_inline (float ___0_dot, const RuntimeMethod* method) 
 {
 	bool V_0 = false;
@@ -24795,7 +24943,7 @@ IL_000c:
 		return L_1;
 	}
 }
-// Method Definition Index: 48934
+// Method Definition Index: 49397
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_Dot_mBB86BB940AA0A32FA7D3C02AC42E5BC7095A5D52_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_lhs, Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___1_rhs, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -24822,7 +24970,7 @@ IL_002d:
 		return L_12;
 	}
 }
-// Method Definition Index: 48941
+// Method Definition Index: 49404
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Vector3_Magnitude_m21652D951393A3D7CE92CE40049A0E7F76544D1B_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_vector, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -24858,7 +25006,7 @@ IL_0034:
 		return L_13;
 	}
 }
-// Method Definition Index: 48960
+// Method Definition Index: 49423
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 Vector3_op_Division_mCC6BB24E372AB96B8380D1678446EF6A8BAE13BB_inline (Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 ___0_a, float ___1_d, const RuntimeMethod* method) 
 {
 	Vector3_t24C512C7B96BBABAD472002D0BA2BDA40A5A80B2 V_0;

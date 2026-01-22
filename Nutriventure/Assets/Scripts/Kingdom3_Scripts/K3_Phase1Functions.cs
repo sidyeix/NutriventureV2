@@ -13,11 +13,31 @@ public class K3_Phase1Functions : MonoBehaviour
     [Tooltip("The GEM object with 'K3_MicrobeGEM' tag")]
     public GameObject microbeGEM;
     
+    [Header("GEM Child Renderers - Assign in Inspector")]
+    [Tooltip("Renderer of GemPackOxidant child (for material switching)")]
+    public Renderer oxidantGemRenderer;
+    [Tooltip("Renderer of GemPackMicrobe child (for material switching)")]
+    public Renderer microbeGemRenderer;
+    
+    [Header("GEM Materials - Assign in Inspector")]
+    [Tooltip("Initial dormant material for both GEMs")]
+    public Material dormantMat;
+    [Tooltip("Active material for oxidant GEM")]
+    public Material antiOxidantMat;
+    [Tooltip("Active material for microbe GEM")]
+    public Material antiMicrobeMat;
+    
     [Header("Info Panels - Initially Disabled")]
     [Tooltip("The Antioxidant info panel GameObject")]
     public GameObject antioxidantInfo;
     [Tooltip("The Antimicrobes info panel GameObject")]
     public GameObject antimicrobeInfo;
+    
+    [Header("VFX Objects - Initially Disabled")]
+    [Tooltip("Oxidant GEM VFX GameObject (activate when panel closes)")]
+    public GameObject oxidantVFX;
+    [Tooltip("Microbe GEM VFX GameObject (activate when panel closes)")]
+    public GameObject microbeVFX;
     
     [Header("Particle Systems - Initially Disabled")]
     [Tooltip("Particle system for Oxidant GEM (assign from oxidantGEM child)")]
@@ -65,6 +85,9 @@ public class K3_Phase1Functions : MonoBehaviour
     [Tooltip("Sound when activating GEM particle system")]
     public AudioClip particleActivateSFX;
     
+    [Tooltip("Sound when switching GEM material")]
+    public AudioClip materialSwitchSFX;
+    
     [Tooltip("Volume for particle activation sound")]
     [Range(0f, 1f)]
     public float particleSoundVolume = 0.5f;
@@ -98,6 +121,10 @@ public class K3_Phase1Functions : MonoBehaviour
     private float oxidantPanelCloseTime = -10f;
     private float microbePanelCloseTime = -10f;
     
+    // Material state tracking
+    private bool oxidantMaterialSwitched = false;
+    private bool microbeMaterialSwitched = false;
+    
     // Particle system instances
     private ParticleSystem activeNewRespawnParticles;
     
@@ -106,6 +133,7 @@ public class K3_Phase1Functions : MonoBehaviour
         InitializeAudio();
         InitializeSystem();
         SetupButtonListeners();
+        InitializeMaterials();
         
         if (showDebugMessages)
         {
@@ -147,6 +175,22 @@ public class K3_Phase1Functions : MonoBehaviour
         }
     }
     
+    private void InitializeMaterials()
+    {
+        // Set initial dormant materials
+        if (oxidantGemRenderer != null && dormantMat != null)
+        {
+            oxidantGemRenderer.material = dormantMat;
+            if (showDebugMessages) Debug.Log("Set oxidant GEM to dormant material");
+        }
+        
+        if (microbeGemRenderer != null && dormantMat != null)
+        {
+            microbeGemRenderer.material = dormantMat;
+            if (showDebugMessages) Debug.Log("Set microbe GEM to dormant material");
+        }
+    }
+    
     private void InitializeSystem()
     {
         // Ensure info panels are disabled at start
@@ -155,6 +199,13 @@ public class K3_Phase1Functions : MonoBehaviour
             
         if (antimicrobeInfo != null && antimicrobeInfo.activeSelf)
             antimicrobeInfo.SetActive(false);
+        
+        // Ensure VFX are disabled at start
+        if (oxidantVFX != null && oxidantVFX.activeSelf)
+            oxidantVFX.SetActive(false);
+            
+        if (microbeVFX != null && microbeVFX.activeSelf)
+            microbeVFX.SetActive(false);
         
         // Ensure particle systems are disabled at start
         if (oxidantParticles != null && oxidantParticles.gameObject.activeSelf)
@@ -312,6 +363,20 @@ public class K3_Phase1Functions : MonoBehaviour
             
             if (showDebugMessages) Debug.Log("Antioxidant info panel closed");
             
+            // Switch material if not already switched
+            if (fromButton && !oxidantMaterialSwitched)
+            {
+                SwitchOxidantMaterial();
+            }
+            
+            // Enable VFX if not already active (only when closed by button)
+            if (fromButton && oxidantVFX != null && !oxidantVFX.activeSelf)
+            {
+                oxidantVFX.SetActive(true);
+                
+                if (showDebugMessages) Debug.Log("Oxidant VFX activated");
+            }
+            
             // Enable particle system if not already active (only when closed by button)
             if (fromButton && oxidantParticles != null && !oxidantParticles.gameObject.activeSelf)
             {
@@ -342,6 +407,20 @@ public class K3_Phase1Functions : MonoBehaviour
             
             if (showDebugMessages) Debug.Log("Antimicrobe info panel closed");
             
+            // Switch material if not already switched
+            if (fromButton && !microbeMaterialSwitched)
+            {
+                SwitchMicrobeMaterial();
+            }
+            
+            // Enable VFX if not already active (only when closed by button)
+            if (fromButton && microbeVFX != null && !microbeVFX.activeSelf)
+            {
+                microbeVFX.SetActive(true);
+                
+                if (showDebugMessages) Debug.Log("Microbe VFX activated");
+            }
+            
             // Enable particle system if not already active (only when closed by button)
             if (fromButton && microbeParticles != null && !microbeParticles.gameObject.activeSelf)
             {
@@ -353,6 +432,44 @@ public class K3_Phase1Functions : MonoBehaviour
                 
                 if (showDebugMessages) Debug.Log("Microbe particles activated");
             }
+        }
+    }
+    
+    private void SwitchOxidantMaterial()
+    {
+        if (oxidantGemRenderer != null && antiOxidantMat != null)
+        {
+            oxidantGemRenderer.material = antiOxidantMat;
+            oxidantMaterialSwitched = true;
+            
+            // Play material switch SFX
+            PlayMaterialSwitchSound();
+            
+            if (showDebugMessages) Debug.Log("Switched oxidant GEM to AntiOxidant material");
+        }
+        else if (showDebugMessages)
+        {
+            if (oxidantGemRenderer == null) Debug.LogWarning("Oxidant renderer not assigned!");
+            if (antiOxidantMat == null) Debug.LogWarning("AntiOxidant material not assigned!");
+        }
+    }
+    
+    private void SwitchMicrobeMaterial()
+    {
+        if (microbeGemRenderer != null && antiMicrobeMat != null)
+        {
+            microbeGemRenderer.material = antiMicrobeMat;
+            microbeMaterialSwitched = true;
+            
+            // Play material switch SFX
+            PlayMaterialSwitchSound();
+            
+            if (showDebugMessages) Debug.Log("Switched microbe GEM to AntiMicrobe material");
+        }
+        else if (showDebugMessages)
+        {
+            if (microbeGemRenderer == null) Debug.LogWarning("Microbe renderer not assigned!");
+            if (antiMicrobeMat == null) Debug.LogWarning("AntiMicrobe material not assigned!");
         }
     }
     
@@ -473,6 +590,21 @@ public class K3_Phase1Functions : MonoBehaviour
         }
     }
     
+    private void PlayMaterialSwitchSound()
+    {
+        if (materialSwitchSFX != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(materialSwitchSFX, particleSoundVolume);
+            
+            if (showDebugMessages) Debug.Log("Played material switch sound");
+        }
+        else if (showDebugMessages)
+        {
+            if (materialSwitchSFX == null) Debug.LogWarning("Material switch SFX not assigned!");
+            if (audioSource == null) Debug.LogWarning("Audio source not available!");
+        }
+    }
+    
     [ContextMenu("Test Oxidant Interaction")]
     public void TestOxidantInteraction()
     {
@@ -511,6 +643,32 @@ public class K3_Phase1Functions : MonoBehaviour
         {
             Debug.LogError("Cannot test: Microbe GEM not assigned!");
         }
+    }
+    
+    [ContextMenu("Test Switch Oxidant Material")]
+    public void TestSwitchOxidantMaterial()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Test only works in Play Mode!");
+            return;
+        }
+        
+        Debug.Log("=== TESTING SWITCH OXIDANT MATERIAL ===");
+        SwitchOxidantMaterial();
+    }
+    
+    [ContextMenu("Test Switch Microbe Material")]
+    public void TestSwitchMicrobeMaterial()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Test only works in Play Mode!");
+            return;
+        }
+        
+        Debug.Log("=== TESTING SWITCH MICROBE MATERIAL ===");
+        SwitchMicrobeMaterial();
     }
     
     [ContextMenu("Test Close Antioxidant Info")]
@@ -565,32 +723,6 @@ public class K3_Phase1Functions : MonoBehaviour
         PlayNewRespawnParticles();
     }
     
-    [ContextMenu("Test Panel Open Sound")]
-    public void TestPanelOpenSound()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("Test only works in Play Mode!");
-            return;
-        }
-        
-        Debug.Log("=== TESTING PANEL OPEN SOUND ===");
-        PlayPanelOpenSound();
-    }
-    
-    [ContextMenu("Test Panel Close Sound")]
-    public void TestPanelCloseSound()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("Test only works in Play Mode!");
-            return;
-        }
-        
-        Debug.Log("=== TESTING PANEL CLOSE SOUND ===");
-        PlayPanelCloseSound();
-    }
-    
     [ContextMenu("Reset All Systems")]
     public void ResetAllSystems()
     {
@@ -603,6 +735,9 @@ public class K3_Phase1Functions : MonoBehaviour
         oxidantPanelCloseTime = -10f;
         microbePanelCloseTime = -10f;
         
+        oxidantMaterialSwitched = false;
+        microbeMaterialSwitched = false;
+        
         // Ensure GEMs are active
         if (oxidantGEM != null)
         {
@@ -614,6 +749,17 @@ public class K3_Phase1Functions : MonoBehaviour
             microbeGEM.SetActive(true);
         }
         
+        // Reset materials to dormant
+        if (oxidantGemRenderer != null && dormantMat != null)
+        {
+            oxidantGemRenderer.material = dormantMat;
+        }
+        
+        if (microbeGemRenderer != null && dormantMat != null)
+        {
+            microbeGemRenderer.material = dormantMat;
+        }
+        
         // Close info panels
         if (antioxidantInfo != null)
         {
@@ -623,6 +769,17 @@ public class K3_Phase1Functions : MonoBehaviour
         if (antimicrobeInfo != null)
         {
             antimicrobeInfo.SetActive(false);
+        }
+        
+        // Disable VFX
+        if (oxidantVFX != null)
+        {
+            oxidantVFX.SetActive(false);
+        }
+        
+        if (microbeVFX != null)
+        {
+            microbeVFX.SetActive(false);
         }
         
         // Stop and disable particle systems
@@ -660,6 +817,10 @@ public class K3_Phase1Functions : MonoBehaviour
         Debug.Log($"- Activated (first time): {oxidantActivated}");
         Debug.Log($"- Panel Open: {oxidantPanelOpen}");
         Debug.Log($"- Panel Close Time: {(Time.time - oxidantPanelCloseTime):F1}s ago");
+        Debug.Log($"- Material Switched: {oxidantMaterialSwitched}");
+        Debug.Log($"- Current Material: {oxidantGemRenderer?.material?.name ?? "No renderer/material"}");
+        Debug.Log($"- VFX: {oxidantVFX?.name ?? "Not assigned"}");
+        Debug.Log($"- VFX Active: {oxidantVFX?.activeSelf ?? false}");
         Debug.Log($"- Particles: {oxidantParticles?.name ?? "Not assigned"}");
         Debug.Log($"- Particles Active: {oxidantParticles?.gameObject.activeInHierarchy ?? false}");
         Debug.Log($"");
@@ -669,8 +830,17 @@ public class K3_Phase1Functions : MonoBehaviour
         Debug.Log($"- Activated (first time): {microbeActivated}");
         Debug.Log($"- Panel Open: {microbePanelOpen}");
         Debug.Log($"- Panel Close Time: {(Time.time - microbePanelCloseTime):F1}s ago");
+        Debug.Log($"- Material Switched: {microbeMaterialSwitched}");
+        Debug.Log($"- Current Material: {microbeGemRenderer?.material?.name ?? "No renderer/material"}");
+        Debug.Log($"- VFX: {microbeVFX?.name ?? "Not assigned"}");
+        Debug.Log($"- VFX Active: {microbeVFX?.activeSelf ?? false}");
         Debug.Log($"- Particles: {microbeParticles?.name ?? "Not assigned"}");
         Debug.Log($"- Particles Active: {microbeParticles?.gameObject.activeInHierarchy ?? false}");
+        Debug.Log($"");
+        Debug.Log($"MATERIALS:");
+        Debug.Log($"- Dormant Material: {dormantMat?.name ?? "Not assigned"}");
+        Debug.Log($"- AntiOxidant Material: {antiOxidantMat?.name ?? "Not assigned"}");
+        Debug.Log($"- AntiMicrobe Material: {antiMicrobeMat?.name ?? "Not assigned"}");
         Debug.Log($"");
         Debug.Log($"INFO PANELS:");
         Debug.Log($"- Antioxidant Info: {antioxidantInfo?.name ?? "Not assigned"}");
@@ -696,6 +866,7 @@ public class K3_Phase1Functions : MonoBehaviour
         Debug.Log($"- Panel Open SFX: {panelOpenSFX?.name ?? "Not assigned"}");
         Debug.Log($"- Panel Close SFX: {panelCloseSFX?.name ?? "Not assigned"}");
         Debug.Log($"- Particle Activate SFX: {particleActivateSFX?.name ?? "Not assigned"}");
+        Debug.Log($"- Material Switch SFX: {materialSwitchSFX?.name ?? "Not assigned"}");
         Debug.Log($"");
         Debug.Log($"SETTINGS:");
         Debug.Log($"- Collection Range: {collectionRange}m");
