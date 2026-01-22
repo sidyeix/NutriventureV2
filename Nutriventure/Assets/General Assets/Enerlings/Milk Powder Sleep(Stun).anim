@@ -268,7 +268,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 1.0166667
+        time: 1
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -1129,7 +1129,7 @@ AnimationClip:
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 1.0166667
+        time: 1
         value: 1
         inSlope: Infinity
         outSlope: Infinity
@@ -1163,7 +1163,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
+    path: MILK (1)/Armature.028/Bone/Bone.003
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1175,7 +1175,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
+    path: MILK (1)/Armature.028/Bone/Bone.003
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1187,7 +1187,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
+    path: MILK (1)/Armature.028/Bone/Bone.003
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1199,7 +1199,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: MILK (1)/Armature.028/Bone/Bone.003
+    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1211,7 +1211,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: MILK (1)/Armature.028/Bone/Bone.003
+    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1223,7 +1223,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: MILK (1)/Armature.028/Bone/Bone.003
+    path: MILK (1)/Armature.028/Bone/Bone.001/Bone.002
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -1265,4 +1265,11 @@ AnimationClip:
     flags: 0
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
-  m_Events: []
+  m_Events:
+  - time: 1
+    functionName: PlaySkill1
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
