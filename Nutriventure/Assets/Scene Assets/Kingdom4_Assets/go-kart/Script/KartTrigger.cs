@@ -3,9 +3,14 @@ using StarterAssets;
 using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.Playables;
+
 
 public class KartTrigger : MonoBehaviour
 {
+    [Header("Timeline")]
+public PlayableDirector destinationDirector;
+
     public GameObject playerUI;
     public GameObject driveUI;
     public GameObject kartDrivingUI;
@@ -44,25 +49,66 @@ public class KartTrigger : MonoBehaviour
         kartDrivingUI?.SetActive(false);
     }
 
-    private void Update()
-    {
-        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-        {
-            if (playerInside && !isDriving)
-            {
-                DriveKart();
-            }
-            else if (isDriving && !kartController.HasArrived)
-            {
-                ExitKart();
-            }
-        }
+    private bool hasPlayedTimeline = false;
 
-        if (isDriving)
+private void Update()
+{
+    if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+    {
+        if (playerInside && !isDriving)
         {
-            UpdateDestinationUI();
+            DriveKart();
+        }
+        else if (isDriving && !kartController.HasArrived)
+        {
+            ExitKart();
         }
     }
+
+    if (isDriving)
+    {
+        UpdateDestinationUI();
+
+        if (kartController.HasArrived && !hasPlayedTimeline)
+        {
+            PlayDestinationTimeline();
+        }
+    }
+}
+
+void PlayDestinationTimeline()
+{
+    hasPlayedTimeline = true;
+
+    // Disable kart control
+    if (kartController != null)
+        kartController.SetControllable(false);
+
+    // Hide driving UI
+    kartDrivingUI?.SetActive(false);
+
+    // Play timeline
+    if (destinationDirector != null)
+    {
+        destinationDirector.stopped += OnTimelineFinished;
+        destinationDirector.Play();
+    }
+    else
+    {
+        // Fallback if no timeline assigned
+        AutoExitKart();
+    }
+}
+
+void OnTimelineFinished(PlayableDirector director)
+{
+    director.stopped -= OnTimelineFinished;
+
+    AutoExitKart();
+}
+
+
+
 
     private void OnTriggerEnter(Collider other)
     {

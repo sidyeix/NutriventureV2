@@ -8,7 +8,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/2_Lobby.unity
     guid: 746f0a973f52feb489d563780b4e81a1
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/4_Kingdom 2.unity
     guid: edeb95cd8763d9d449c4f26820989060
   - enabled: 1

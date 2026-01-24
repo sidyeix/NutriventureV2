@@ -72,6 +72,18 @@ public class AllergenProductData : ScriptableObject
         return null;
     }
 
+    public int GetAllergenCount()
+{
+    int count = 0;
+    foreach (var product in allProducts)
+    {
+        if (product.containsAllergen)
+            count++;
+    }
+    return count;
+}
+
+
     public ProductInfo[] GetProductsWithAllergens()
     {
         System.Collections.Generic.List<ProductInfo> result = new System.Collections.Generic.List<ProductInfo>();
