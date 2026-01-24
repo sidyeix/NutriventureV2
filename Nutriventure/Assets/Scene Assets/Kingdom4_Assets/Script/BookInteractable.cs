@@ -6,6 +6,10 @@ public class BookInteractable : Interactable
 {
     public static BookInteractable Instance { get; private set; }
 
+    public bool IsClaimed { get; private set; } = false;
+[Header("First Ingredient Unlock")]
+[SerializeField] private GameObject firstIngredient;
+
     [Header("Book Settings")]
     public string bookId = "BookOfAllergens";
     public string bookName = "Book of Allergens";
@@ -43,16 +47,32 @@ public class BookInteractable : Interactable
     }
 
     void Start()
+{
+    bookManager = FindAnyObjectByType<BookUIManager>();
+    if (bookManager == null)
     {
-        bookManager = FindAnyObjectByType<BookUIManager>();
-        if (bookManager == null)
-        {
-            Debug.LogError("BookUIManager not found!");
-        }
+        Debug.LogError("BookUIManager not found!");
     }
+
+    if (firstIngredient != null)
+    {
+        firstIngredient.SetActive(false); // 🔒 locked at start
+    }
+}
+
 
 public override void Pickup()
 {
+    if (firstIngredient != null)
+{
+    firstIngredient.SetActive(true); // 🔓 unlocked
+    Debug.Log("🥇 First ingredient activated!");
+}
+
+    if (IsClaimed) return; // prevent double pickup
+
+    IsClaimed = true;
+
     if (bookManager != null)
     {
         bookManager.SetMainBook(this);
@@ -61,14 +81,25 @@ public override void Pickup()
 
     Debug.Log($"📖 Book collected: {bookName}");
 
+    // ✅ Spawn allergens AFTER scroll is claimed
+    AllergenSpawnManager spawner = FindAnyObjectByType<AllergenSpawnManager>();
+    if (spawner != null)
+    {
+        spawner.SpawnNow(); // 🔥 THIS WAS MISSING
+        Debug.Log("🌱 Allergens spawned because scroll was claimed!");
+    }
+    else
+    {
+        Debug.LogWarning("⚠️ AllergenSpawnManager not found!");
+    }
+
+    // 🎬 Play timeline
     if (pickupTimeline != null)
     {
-        pickupTimeline.Play();   // 🎬 Focus camera on scroll
+        pickupTimeline.Play();
     }
 }
 
-
-    // ---- REST UNCHANGED ----
 
     public void AddIngredient(string ingredientId, string name, string description, Sprite icon)
     {
