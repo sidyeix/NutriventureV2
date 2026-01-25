@@ -326,6 +326,9 @@ public class K3_Phase1Functions : MonoBehaviour
             antioxidantInfo.SetActive(true);
             oxidantPanelOpen = true;
             
+            // Notify scoring system
+            NotifyAntioxidantPanelOpened();
+            
             // Play panel open SFX
             PlayPanelOpenSound();
             
@@ -340,13 +343,16 @@ public class K3_Phase1Functions : MonoBehaviour
             antimicrobeInfo.SetActive(true);
             microbePanelOpen = true;
             
+            // Notify scoring system
+            NotifyAntimicrobePanelOpened();
+            
             // Play panel open SFX
             PlayPanelOpenSound();
             
             if (showDebugMessages) Debug.Log("Antimicrobe info panel opened");
         }
     }
-    
+
     public void CloseAntioxidantInfo(bool fromButton = false)
     {
         if (antioxidantInfo != null && antioxidantInfo.activeSelf)
@@ -904,4 +910,25 @@ public class K3_Phase1Functions : MonoBehaviour
             Gizmos.DrawWireSphere(newRespawnPoint.transform.position, 1f);
         }
     }
+
+        // Call this when Antioxidant panel opens
+    public void NotifyAntioxidantPanelOpened()
+    {
+        if (PreserviaScoringSystem.Instance != null && !oxidantActivated)
+        {
+            PreserviaScoringSystem.Instance.ManualGEMCompleted("Anti-Oxidant GEM");
+            oxidantActivated = true;
+        }
+    }
+
+    // Call this when Antimicrobe panel opens  
+    public void NotifyAntimicrobePanelOpened()
+    {
+        if (PreserviaScoringSystem.Instance != null && !microbeActivated)
+        {
+            PreserviaScoringSystem.Instance.ManualGEMCompleted("Anti-Microbe GEM");
+            microbeActivated = true;
+        }
+    }
+    
 }

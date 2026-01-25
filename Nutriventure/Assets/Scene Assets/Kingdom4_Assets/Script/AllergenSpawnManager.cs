@@ -3,286 +3,244 @@ using System.Collections.Generic;
 
 public class AllergenSpawnManager : MonoBehaviour
 {
-    [Header("Allergen Prefabs")]
-    public List<GameObject> allergenPrefabs = new List<GameObject>(); // Drag your 9 allergen prefabs here
-    
+    [Header("Allergen Prefabs (Big Nine Only)")]
+    public List<GameObject> allergenPrefabs = new List<GameObject>();
+
     [Header("Spawn Points")]
-    public List<Transform> spawnPoints = new List<Transform>(); // Your 20 empty GameObjects
-    
+    public List<Transform> spawnPoints = new List<Transform>();
+
     [Header("Spawn Settings")]
-    public bool spawnAllAllergens = true; // Spawn one of each allergen type
-    public int maxAllergensToSpawn = 9; // Maximum allergens to spawn
-    public float minDistanceBetweenSpawns = 2f; // Minimum distance between allergens
-    
+    public bool spawnOneOfEachAllergen = true;
+    public int maxAllergensToSpawn = 9;
+    public float minDistanceBetweenSpawns = 2f;
+
     [Header("Debug")]
     public bool showDebugInfo = true;
     public bool showGizmos = true;
-    
-    private List<GameObject> spawnedAllergens = new List<GameObject>();
-    private Dictionary<string, GameObject> allergenPrefabMap = new Dictionary<string, GameObject>();
-    
+    private bool hasSpawned = false;
+
+
+    // ================= INTERNAL =================
+    private readonly List<GameObject> spawnedAllergens = new List<GameObject>();
+    private readonly Dictionary<string, GameObject> allergenPrefabMap =
+        new Dictionary<string, GameObject>();
+
+    // ================= UNITY =================
     void Start()
+{
+    InitializeAllergenMap(); // ✅ ALWAYS DO THIS
+
+    if (BookInteractable.Instance == null || !BookInteractable.Instance.IsClaimed)
     {
-        InitializeAllergenMap();
-        SpawnAllergens();
+        if (showDebugInfo)
+            Debug.Log("🚫 Allergens not spawned: Scroll not claimed yet.");
+        return;
     }
-    
-    void InitializeAllergenMap()
+
+    SpawnAllergens();
+}
+
+
+
+
+    // ================= INITIALIZATION =================
+    private void InitializeAllergenMap()
     {
         allergenPrefabMap.Clear();
-        
+
         foreach (GameObject prefab in allergenPrefabs)
         {
-            IngredientInteractable interactable = prefab.GetComponent<IngredientInteractable>();
-            if (interactable != null && !string.IsNullOrEmpty(interactable.ingredientId))
+            if (prefab == null) continue;
+
+            IngredientInteractable interactable =
+                prefab.GetComponent<IngredientInteractable>();
+
+            if (interactable == null || string.IsNullOrEmpty(interactable.ingredientId))
             {
-                string ingredientId = interactable.ingredientId.ToLower();
-                
-                if (!allergenPrefabMap.ContainsKey(ingredientId))
-                {
-                    allergenPrefabMap.Add(ingredientId, prefab);
-                    
-                    if (showDebugInfo)
-                        Debug.Log($"Mapped prefab: {ingredientId} -> {prefab.name}");
-                }
-                else
-                {
-                    Debug.LogWarning($"Duplicate ingredientId found: {ingredientId} in {prefab.name}");
-                }
+                Debug.LogWarning(
+                    $"Prefab '{prefab.name}' is missing IngredientInteractable or ingredientId");
+                continue;
+            }
+
+            string id = interactable.ingredientId.ToLowerInvariant();
+
+            if (!allergenPrefabMap.ContainsKey(id))
+            {
+                allergenPrefabMap.Add(id, prefab);
+
+                if (showDebugInfo)
+                    Debug.Log($"Mapped allergen prefab: {id} → {prefab.name}");
             }
             else
             {
-                Debug.LogWarning($"Prefab {prefab.name} doesn't have IngredientInteractable component or missing ingredientId");
+                Debug.LogWarning($"Duplicate allergen ID detected: {id}");
             }
         }
     }
-    
-    void SpawnAllergens()
+
+    // ================= SPAWNING =================
+    private void SpawnAllergens()
+{
+    if (hasSpawned) return;
+
+    if (spawnPoints.Count == 0 || allergenPrefabMap.Count == 0)
     {
-        if (allergenPrefabs.Count == 0)
-        {
-            Debug.LogError("No allergen prefabs assigned!");
-            return;
-        }
-        
-        if (spawnPoints.Count == 0)
-        {
-            Debug.LogError("No spawn points assigned!");
-            return;
-        }
-        
-        // Clear any existing allergens
+        Debug.LogError("Cannot spawn allergens: missing prefabs or spawn points.");
+        return;
+    }
+
+    if (spawnedAllergens.Count > 0)
         ClearAllAllergens();
-        
-        if (spawnAllAllergens)
-        {
-            SpawnOneOfEachAllergen();
-        }
-        else
-        {
-            SpawnRandomAllergens();
-        }
-        
-        if (showDebugInfo)
-        {
-            Debug.Log($"Spawned {spawnedAllergens.Count} allergens at random positions");
-            Debug.Log($"Available spawn points: {spawnPoints.Count}");
-        }
-    }
-    
-    void SpawnOneOfEachAllergen()
+
+    if (spawnOneOfEachAllergen)
+        SpawnOneOfEach();
+    else
+        SpawnRandom();
+
+    hasSpawned = true;
+
+    if (showDebugInfo)
+        Debug.Log($"Spawned {spawnedAllergens.Count} allergens.");
+}
+
+    private void SpawnOneOfEach()
     {
-        if (spawnPoints.Count < allergenPrefabs.Count)
-        {
-            Debug.LogWarning($"Not enough spawn points ({spawnPoints.Count}) for all allergens ({allergenPrefabs.Count})");
-        }
-        
-        // Create shuffled lists
         List<string> allergenIds = new List<string>(allergenPrefabMap.Keys);
-        List<Transform> availableSpawnPoints = new List<Transform>(spawnPoints);
-        
-        ShuffleList(allergenIds);
-        ShuffleList(availableSpawnPoints);
-        
-        int spawnedCount = 0;
-        
-        // Spawn one of each unique allergen
-        for (int i = 0; i < allergenIds.Count && i < availableSpawnPoints.Count && spawnedCount < maxAllergensToSpawn; i++)
+        List<Transform> points = new List<Transform>(spawnPoints);
+
+        Shuffle(allergenIds);
+        Shuffle(points);
+
+        int spawnLimit = Mathf.Min(maxAllergensToSpawn, points.Count, allergenIds.Count);
+
+        for (int i = 0; i < spawnLimit; i++)
         {
-            string allergenId = allergenIds[i];
-            Transform spawnPoint = availableSpawnPoints[i];
-            
-            if (SpawnAllergenAtPoint(allergenId, spawnPoint))
-            {
-                spawnedCount++;
-            }
+            TrySpawn(allergenIds[i], points[i]);
         }
     }
     
-    void SpawnRandomAllergens()
+
+    private void SpawnRandom()
     {
-        if (allergenPrefabs.Count == 0) return;
-        
-        List<Transform> availableSpawnPoints = new List<Transform>(spawnPoints);
-        ShuffleList(availableSpawnPoints);
-        
-        int allergensToSpawn = Mathf.Min(maxAllergensToSpawn, availableSpawnPoints.Count);
-        
-        for (int i = 0; i < allergensToSpawn; i++)
+        List<Transform> points = new List<Transform>(spawnPoints);
+        Shuffle(points);
+
+        int spawnLimit = Mathf.Min(maxAllergensToSpawn, points.Count);
+
+        for (int i = 0; i < spawnLimit; i++)
         {
-            // Pick random allergen
-            GameObject randomPrefab = allergenPrefabs[Random.Range(0, allergenPrefabs.Count)];
-            IngredientInteractable interactable = randomPrefab.GetComponent<IngredientInteractable>();
-            
-            if (interactable != null)
-            {
-                string allergenId = interactable.ingredientId.ToLower();
-                Transform spawnPoint = availableSpawnPoints[i];
-                
-                SpawnAllergenAtPoint(allergenId, spawnPoint);
-            }
+            string randomId = GetRandomAllergenId();
+            TrySpawn(randomId, points[i]);
         }
     }
-    
-    bool SpawnAllergenAtPoint(string allergenId, Transform spawnPoint)
+
+    private bool TrySpawn(string allergenId, Transform point)
     {
-        if (!allergenPrefabMap.ContainsKey(allergenId))
-        {
-            Debug.LogWarning($"No prefab found for allergen: {allergenId}");
-            return false;
-        }
-        
-        if (spawnPoint == null)
-        {
-            Debug.LogWarning("Spawn point is null!");
-            return false;
-        }
-        
-        // Check if spawn point is too close to other allergens
-        if (!IsValidSpawnPosition(spawnPoint.position))
-            return false;
-        
-        GameObject prefab = allergenPrefabMap[allergenId];
-        GameObject allergen = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
-        
-        // Set as child of spawn point for organization
-        allergen.transform.SetParent(spawnPoint);
-        
+        if (!allergenPrefabMap.ContainsKey(allergenId)) return false;
+        if (!IsValidSpawnPosition(point.position)) return false;
+
+        GameObject allergen =
+            Instantiate(allergenPrefabMap[allergenId], point.position, Quaternion.identity);
+
+        allergen.transform.SetParent(point);
         spawnedAllergens.Add(allergen);
-        
+
         if (showDebugInfo)
-        {
-            IngredientInteractable interactable = allergen.GetComponent<IngredientInteractable>();
-            if (interactable != null)
-            {
-                Debug.Log($"Spawned {interactable.ingredientName} at {spawnPoint.name}");
-            }
-        }
-        
+            Debug.Log($"Spawned allergen [{allergenId}] at {point.name}");
+
         return true;
     }
-    
-    bool IsValidSpawnPosition(Vector3 position)
+
+    // ================= VALIDATION =================
+    private bool IsValidSpawnPosition(Vector3 position)
     {
-        foreach (GameObject allergen in spawnedAllergens)
+        foreach (GameObject a in spawnedAllergens)
         {
-            if (allergen != null && Vector3.Distance(position, allergen.transform.position) < minDistanceBetweenSpawns)
-            {
+            if (a != null &&
+                Vector3.Distance(position, a.transform.position) < minDistanceBetweenSpawns)
                 return false;
-            }
         }
         return true;
     }
-    
-    void ShuffleList<T>(List<T> list)
+
+    private string GetRandomAllergenId()
+    {
+        List<string> keys = new List<string>(allergenPrefabMap.Keys);
+        return keys[Random.Range(0, keys.Count)];
+    }
+
+    // ================= COLLECTION =================
+    public void OnAllergenCollected(GameObject allergen)
+    {
+        if (spawnedAllergens.Remove(allergen) && showDebugInfo)
+        {
+            IngredientInteractable i = allergen.GetComponent<IngredientInteractable>();
+            Debug.Log($"Collected allergen: {i?.ingredientId}");
+        }
+    }
+
+    // ================= UTILITIES =================
+private void ClearAllAllergens()
+{
+    foreach (GameObject a in spawnedAllergens)
+        if (a != null)
+            Destroy(a);
+
+    spawnedAllergens.Clear();
+    hasSpawned = false;
+}
+
+
+    private void Shuffle<T>(List<T> list)
     {
         for (int i = 0; i < list.Count; i++)
         {
-            T temp = list[i];
-            int randomIndex = Random.Range(i, list.Count);
-            list[i] = list[randomIndex];
-            list[randomIndex] = temp;
+            int r = Random.Range(i, list.Count);
+            (list[i], list[r]) = (list[r], list[i]);
         }
     }
-    
-    void ClearAllAllergens()
-    {
-        foreach (GameObject allergen in spawnedAllergens)
-        {
-            if (allergen != null)
-                Destroy(allergen);
-        }
-        spawnedAllergens.Clear();
-    }
-    
-    // Call this when an allergen is collected
-    public void OnAllergenCollected(GameObject allergen)
-    {
-        if (spawnedAllergens.Contains(allergen))
-        {
-            spawnedAllergens.Remove(allergen);
-            
-            if (showDebugInfo)
-            {
-                IngredientInteractable interactable = allergen.GetComponent<IngredientInteractable>();
-                if (interactable != null)
-                {
-                    Debug.Log($"Allergen collected and removed: {interactable.ingredientName}");
-                }
-            }
-        }
-    }
-    
-    // Editor helper methods
-    [ContextMenu("Collect All Child Spawn Points")]
-    void CollectChildSpawnPoints()
+
+    // ================= EDITOR HELPERS =================
+    [ContextMenu("Collect Child Spawn Points")]
+    private void CollectChildSpawnPoints()
     {
         spawnPoints.Clear();
         foreach (Transform child in transform)
-        {
-            if (child != null)
-            {
-                spawnPoints.Add(child);
-            }
-        }
-        Debug.Log($"Collected {spawnPoints.Count} spawn points from children");
+            spawnPoints.Add(child);
+
+        Debug.Log($"Collected {spawnPoints.Count} spawn points.");
     }
-    
+
     [ContextMenu("Spawn Allergens Now")]
-    void SpawnNow()
+public void SpawnNow()
+{
+    if (BookInteractable.Instance == null || !BookInteractable.Instance.IsClaimed)
     {
-        SpawnAllergens();
+        if (showDebugInfo)
+            Debug.Log("🚫 SpawnNow blocked: Scroll not claimed.");
+        return;
     }
-    
-    [ContextMenu("Clear All Allergens")]
-    void ClearNow()
-    {
-        ClearAllAllergens();
-    }
-    
+
+    SpawnAllergens();
+}
+
+
+    [ContextMenu("Clear Allergens")]
+    private void ClearNow() => ClearAllAllergens();
+
+    // ================= GIZMOS =================
     void OnDrawGizmos()
     {
         if (!showGizmos) return;
-        
-        // Draw spawn points
+
         Gizmos.color = Color.green;
-        foreach (Transform point in spawnPoints)
-        {
-            if (point != null)
-            {
-                Gizmos.DrawWireSphere(point.position, 0.3f);
-                Gizmos.DrawIcon(point.position, "d_Transform Icon", true);
-            }
-        }
-        
-        // Draw spawned allergens
+        foreach (Transform t in spawnPoints)
+            if (t != null)
+                Gizmos.DrawWireSphere(t.position, 0.3f);
+
         Gizmos.color = Color.yellow;
-        foreach (GameObject allergen in spawnedAllergens)
-        {
-            if (allergen != null)
-            {
-                Gizmos.DrawWireSphere(allergen.transform.position, 0.4f);
-            }
-        }
+        foreach (GameObject a in spawnedAllergens)
+            if (a != null)
+                Gizmos.DrawWireSphere(a.transform.position, 0.4f);
     }
 }

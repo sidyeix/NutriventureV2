@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8d882058f89f0f4b9be2ad78b706484, type: 3}
   m_Name: K4_Heart
   m_EditorClassIdentifier: Assembly-CSharp::SpawnableItemData
-  itemType: 11
+  itemType: 15
   prefab: {fileID: 8125444678559989855, guid: 5a2735f95fb4e5b4c92d556ef5e8efac, type: 3}
   category: 2
   spawnChance: 0.5
@@ -23,3 +23,5 @@ MonoBehaviour:
   gizmoColor: {r: 1, g: 1, b: 1, a: 1}
   collectSound: {fileID: 0}
   collectParticles: {fileID: 0}
+  healthChange: 0
+  shieldDuration: 0
