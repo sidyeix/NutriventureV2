@@ -6,12 +6,12 @@ using UnityEngine.EventSystems;
 public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 {
     [Header("Object Points")]
-    [SerializeField] private Transform animationPoint;  // Where character stands to smash
-    [SerializeField] private Transform movePoint;       // Where character moves after correct smash
-    [SerializeField] private Collider animationPointCollider; // Optional collider at animation point
+    [SerializeField] private Transform animationPoint;
+    [SerializeField] private Transform movePoint;
+    [SerializeField] private Collider animationPointCollider;
 
     [Header("Object Settings")]
-    [SerializeField] private bool isGrowFood = false;   // Is this the correct object?
+    [SerializeField] private bool isGrowFood = false;
     [SerializeField] private string objectName = "Object";
 
     [Header("Animation Settings")]
@@ -20,7 +20,7 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     [SerializeField] private string playerWalkingBackBool = "isWalkingBackward";
     [SerializeField] private string objectCorrectBool = "isCorrect";
     [SerializeField] private string objectWrongBool = "isWrong";
-    [SerializeField] private float animationExitTime = 1.3f; // Time to wait before exiting animation
+    [SerializeField] private float animationExitTime = 1.3f;
 
     [Header("Food Settings")]
     [SerializeField] private GameObject foodPrefab;
@@ -28,29 +28,29 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float backwardMoveSpeed = 5f; // Changed to 5 for backward
+    [SerializeField] private float backwardMoveSpeed = 5f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float arrivalDistance = 0.3f;
-    [SerializeField] private float smashAnimationLength = 1.5f; // Player's smash animation length
-    [SerializeField] private float rotationStopDistance = 1f; // Stop rotating when this close
+    [SerializeField] private float smashAnimationLength = 1.5f;
+    [SerializeField] private float rotationStopDistance = 1f;
 
     [Header("Delay Settings")]
-    [SerializeField] private float beforeSmashDelay = 0f; // Delay before playing smash animation
+    [SerializeField] private float beforeSmashDelay = 0f;
     [SerializeField] private float beforeMoveDelay = 0.5f;
     [SerializeField] private float afterSmashDelay = 0.5f;
 
     [Header("Rotation Settings")]
     [SerializeField] private bool useAnimationPointForward = true;
     [SerializeField] private bool useMovePointForward = true;
-    [SerializeField] private bool useColliderForFinalRotation = true; // Use collider for perfect rotation
+    [SerializeField] private bool useColliderForFinalRotation = true;
 
     [Header("Point System")]
     [SerializeField] private int correctAnswerPoints = 1000;
     [SerializeField] private int wrongAnswerPoints = 500;
 
     [Header("Energy System")]
-    [SerializeField] private float correctEnergyGain = 20f; // +20/100 energy
-    [SerializeField] private float wrongEnergyDeduction = 25f; // -25/100 energy
+    [SerializeField] private float correctEnergyGain = 20f;
+    [SerializeField] private float wrongEnergyDeduction = 25f;
 
     // References
     private Animator objectAnimator;
@@ -58,9 +58,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     private ThirdPersonController playerController;
     private StartingSequenceManager sequenceManager;
     private CharacterController characterController;
-    private ObjectGroupManager currentGroupManager; // Added to find group manager
-    private GrowAssessmentManager assessmentManager; // Added for assessment integration
-    private GameObject spawnedFood; // Track spawned food
+    private ObjectGroupManager currentGroupManager;
+    private GrowAssessmentManager assessmentManager;
+    private GameObject spawnedFood;
 
     // State
     private bool isInteractable = true;
@@ -77,24 +77,11 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         playerController = FindObjectOfType<ThirdPersonController>();
         sequenceManager = FindObjectOfType<StartingSequenceManager>();
 
-        // Find assessment manager for point system integration
-        // FIRST try the singleton
+        // Find assessment manager
         assessmentManager = GrowAssessmentManager.Instance;
-
-        // If still null, try to find it in the scene
         if (assessmentManager == null)
         {
             assessmentManager = FindObjectOfType<GrowAssessmentManager>();
-        }
-
-        // DEBUG: Check if assessment manager was found
-        if (assessmentManager == null)
-        {
-            Debug.LogWarning($"No Assessment Manager found for {objectName}! Energy updates may not work.");
-        }
-        else
-        {
-            Debug.Log($"Found Assessment Manager for {objectName}");
         }
 
         // Find group manager in parent hierarchy
@@ -116,7 +103,7 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         AddPhysicsRaycasterToCamera();
 
         // Register with assessment manager if this is part of grow assessment
-        if (assessmentManager != null && isGrowFood) // Only register correct answers
+        if (assessmentManager != null && isGrowFood)
         {
             assessmentManager.RegisterAssessmentObject(this);
             Debug.Log($"Registered {objectName} with Assessment Manager (Correct Answer)");
@@ -127,6 +114,25 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             Debug.LogError($"Animation Point not set on {objectName}");
         if (movePoint == null && isGrowFood)
             Debug.LogWarning($"Move Point not set on {objectName} (needed for correct choices)");
+
+        // NEW: Spawn food immediately when the game starts
+        if (foodPrefab != null && foodSpawnPoint != null && !isGrowFood) // Spawn junk food immediately
+        {
+            SpawnFoodImmediately();
+        }
+    }
+
+    // NEW: Called by ObjectGroupManager when food prefab is assigned
+    public void SpawnAssignedFood(GameObject prefab)
+    {
+        if (prefab == null || foodSpawnPoint == null) return;
+
+        // Destroy existing food first
+        DestroySpawnedFood();
+
+        // Spawn new food
+        spawnedFood = Instantiate(prefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
+        Debug.Log($"Spawned assigned food for {objectName}: {prefab.name}");
     }
 
     private void AddPhysicsRaycasterToCamera()
@@ -215,8 +221,6 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             }
 
             // CORRECT OBJECT FLOW
-
-            // Handle point and energy system for correct answer
             HandleCorrectAnswer();
 
             // Wait after smash delay
@@ -225,14 +229,16 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             // Wait before move delay
             yield return new WaitForSeconds(beforeMoveDelay);
 
-            // NEW: Set isEntry to false for all objects before moving to move point
+            // NEW: Do NOT destroy food yet! Keep it visible while moving
+
+            // Set isEntry to false for all objects before moving to move point
             if (currentGroupManager != null)
             {
                 currentGroupManager.SetGroupEntryAnimation(false);
                 Debug.Log("Set isEntry to false for all objects in group");
             }
 
-            // Handle correct choice
+            // Handle correct choice - THIS is where food will be destroyed
             yield return HandleCorrectChoice();
         }
         else
@@ -244,8 +250,6 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             }
 
             // WRONG OBJECT FLOW
-
-            // Handle point and energy system for wrong answer
             HandleWrongAnswer();
 
             // Play dizzy animation during afterSmashDelay
@@ -294,6 +298,8 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             // Wait before move delay
             yield return new WaitForSeconds(beforeMoveDelay);
 
+            // NEW: Do NOT destroy food for wrong answer - keep it for retry
+
             // Handle wrong choice (with backward walking) - IMMEDIATELY AFTER DIZZY
             yield return HandleWrongChoice();
         }
@@ -303,77 +309,8 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         Debug.Log($"{objectName} interaction complete");
     }
 
-    // Point and Energy System Methods
-    private void HandleCorrectAnswer()
-    {
-        Debug.Log($"Correct answer! Awarding {correctAnswerPoints} points and {correctEnergyGain} energy");
+    // ====== MOVEMENT AND ANIMATION METHODS ======
 
-        // TRY ASSESSMENT MANAGER FIRST
-        if (assessmentManager != null)
-        {
-            assessmentManager.OnCorrectAnswerSelected();
-        }
-        else
-        {
-            Debug.LogWarning($"Assessment Manager is NULL for {objectName}! Trying direct energy update.");
-        }
-
-        // ALWAYS update energy through Game Manager (fallback)
-        if (GoGrowGlowGameManager.Instance != null)
-        {
-            // Update points
-            GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
-
-            // Update energy - THIS IS THE KEY PART!
-            GoGrowGlowGameManager.Instance.AddEnergy(correctEnergyGain);
-            Debug.Log($"DIRECT ENERGY UPDATE: Added {correctEnergyGain} energy via Game Manager");
-
-            // DEBUG: Check if energy actually updated
-            float currentEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
-            Debug.Log($"Current energy after update: {currentEnergy}");
-        }
-        else
-        {
-            Debug.LogError("Game Manager Instance is also NULL!");
-        }
-    }
-
-    private void HandleWrongAnswer()
-    {
-        Debug.Log($"Wrong answer! Deducting {wrongAnswerPoints} points and {wrongEnergyDeduction} energy");
-
-        // TRY ASSESSMENT MANAGER FIRST
-        if (assessmentManager != null)
-        {
-            assessmentManager.OnWrongAnswerSelected();
-        }
-        else
-        {
-            Debug.LogWarning($"Assessment Manager is NULL for {objectName}! Trying direct energy update.");
-        }
-
-        // ALWAYS update energy through Game Manager (fallback)
-        if (GoGrowGlowGameManager.Instance != null)
-        {
-            // Update points
-            GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
-
-            // Update energy - THIS IS THE KEY PART!
-            GoGrowGlowGameManager.Instance.RemoveEnergy(wrongEnergyDeduction);
-            Debug.Log($"DIRECT ENERGY UPDATE: Removed {wrongEnergyDeduction} energy via Game Manager");
-
-            // DEBUG: Check if energy actually updated
-            float currentEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
-            Debug.Log($"Current energy after deduction: {currentEnergy}");
-        }
-        else
-        {
-            Debug.LogError("Game Manager Instance is also NULL!");
-        }
-    }
-
-    // Fixed: Movement to animation point with NO overshooting
-    // Simple Version: Move directly without physics
     private IEnumerator MoveCharacterToAnimationPoint()
     {
         if (playerController == null || animationPoint == null) yield break;
@@ -476,34 +413,103 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         hasReachedAnimationPoint = true;
     }
 
-    // NEW: Smooth rotation without overshooting
-    private IEnumerator RotateCharacterToTargetSmooth(Quaternion targetRotation)
+    private void PlaySmashAnimations()
     {
-        if (playerController == null) yield break;
-
-        float angleThreshold = 0.1f; // Very small threshold
-        float maxRotationTime = 0.5f; // Reduced time
-        float elapsedTime = 0f;
-
-        Quaternion startRotation = playerController.transform.rotation;
-
-        while (Quaternion.Angle(playerController.transform.rotation, targetRotation) > angleThreshold &&
-               elapsedTime < maxRotationTime)
+        // Play player smash animation
+        if (playerAnimator != null)
         {
-            elapsedTime += Time.deltaTime;
-
-            // Use Lerp for more predictable rotation
-            float t = Mathf.Clamp01(elapsedTime / maxRotationTime);
-            playerController.transform.rotation = Quaternion.Lerp(
-                startRotation,
-                targetRotation,
-                t
-            );
-            yield return null;
+            playerAnimator.SetBool(playerSmashTrigger, true);
         }
 
-        // Final snap to exact rotation
-        playerController.transform.rotation = targetRotation;
+        // Play object animation
+        if (objectAnimator != null)
+        {
+            if (isGrowFood)
+            {
+                // Set isCorrect to true (stays true)
+                objectAnimator.SetBool(objectCorrectBool, true);
+                objectAnimator.SetBool(objectWrongBool, false);
+                Debug.Log($"Set {objectCorrectBool} = true (will stay true)");
+            }
+            else
+            {
+                // Set isWrong to true
+                objectAnimator.SetBool(objectWrongBool, true);
+                objectAnimator.SetBool(objectCorrectBool, false);
+                Debug.Log($"Set {objectWrongBool} = true");
+
+                // Start coroutine to reset isWrong after the animation's natural exit time
+                wrongAnimationResetCoroutine = StartCoroutine(ResetWrongAnimationWithExitTime());
+            }
+        }
+    }
+
+    private IEnumerator ResetWrongAnimationWithExitTime()
+    {
+        // Wait for the animation to play through its natural exit time
+        Debug.Log($"Waiting {animationExitTime}s for wrong animation to complete naturally");
+        yield return new WaitForSeconds(animationExitTime);
+
+        // Now reset the animation
+        if (objectAnimator != null)
+        {
+            objectAnimator.SetBool(objectWrongBool, false);
+            Debug.Log($"Reset {objectWrongBool} = false (after natural exit)");
+        }
+
+        wrongAnimationResetCoroutine = null;
+    }
+
+    private IEnumerator HandleCorrectChoice()
+    {
+        Debug.Log($"{objectName} was the CORRECT choice!");
+
+        // NEW: Food is already spawned, just keep it visible
+        Debug.Log($"Food already visible for {objectName}, keeping it for player to see");
+
+        // Move to move point
+        if (movePoint != null)
+        {
+            yield return StartCoroutine(MoveCharacterToMovePoint());
+            latestPosition = movePoint.position;
+
+            // Update respawn point
+            if (assessmentManager != null)
+            {
+                assessmentManager.UpdateRespawnPoint(latestPosition);
+            }
+
+            // NEW: NOW destroy the food when player reaches move point
+            DestroySpawnedFood();
+            Debug.Log($"Destroyed food for {objectName} after reaching move point");
+        }
+    }
+
+    private IEnumerator HandleWrongChoice()
+    {
+        Debug.Log($"{objectName} was the WRONG choice!");
+
+        // Safety check: Stop dizzy audio and disable dizzy effect through group manager
+        if (currentGroupManager != null)
+        {
+            currentGroupManager.StopDizzyAudio();
+            currentGroupManager.DisableDizzyEffect();
+            Debug.Log("Safety stop: Stopped dizzy audio and disabled effect in HandleWrongChoice");
+        }
+
+        // NEW: Food stays visible for retry
+        Debug.Log($"Food stays visible for {objectName} for retry");
+
+        // Return to group starting point instead of latest position
+        if (playerController != null)
+        {
+            yield return StartCoroutine(MoveCharacterBackwardToGroupStart());
+        }
+
+        // Re-enable this object for retry
+        isInteractable = true;
+        if (objectCollider != null)
+            objectCollider.enabled = true;
     }
 
     private IEnumerator MoveCharacterToMovePoint()
@@ -609,143 +615,6 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         Debug.Log($"Character reached and properly facing at {objectName}'s move point");
     }
 
-    private Quaternion GetTargetRotationAtAnimationPoint()
-    {
-        if (animationPoint == null) return Quaternion.identity;
-
-        if (useAnimationPointForward && animationPoint.forward != Vector3.zero)
-        {
-            return Quaternion.LookRotation(animationPoint.forward);
-        }
-        else
-        {
-            Vector3 directionToObject = transform.position - animationPoint.position;
-            directionToObject.y = 0;
-            if (directionToObject != Vector3.zero)
-                return Quaternion.LookRotation(directionToObject.normalized);
-        }
-
-        return playerController != null ? playerController.transform.rotation : Quaternion.identity;
-    }
-
-    private Quaternion GetTargetRotationAtMovePoint()
-    {
-        if (movePoint == null) return Quaternion.identity;
-
-        if (useMovePointForward && movePoint.forward != Vector3.zero)
-        {
-            return Quaternion.LookRotation(movePoint.forward);
-        }
-        else
-        {
-            if (animationPoint != null)
-            {
-                Vector3 directionToAnimationPoint = animationPoint.position - movePoint.position;
-                directionToAnimationPoint.y = 0;
-                if (directionToAnimationPoint != Vector3.zero)
-                    return Quaternion.LookRotation(directionToAnimationPoint.normalized);
-            }
-        }
-
-        return playerController != null ? playerController.transform.rotation : Quaternion.identity;
-    }
-
-    private void PlaySmashAnimations()
-    {
-        // Play player smash animation
-        if (playerAnimator != null)
-        {
-            playerAnimator.SetBool(playerSmashTrigger, true);
-        }
-
-        // Play object animation
-        if (objectAnimator != null)
-        {
-            if (isGrowFood)
-            {
-                // Set isCorrect to true (stays true)
-                objectAnimator.SetBool(objectCorrectBool, true);
-                objectAnimator.SetBool(objectWrongBool, false);
-                Debug.Log($"Set {objectCorrectBool} = true (will stay true)");
-            }
-            else
-            {
-                // Set isWrong to true
-                objectAnimator.SetBool(objectWrongBool, true);
-                objectAnimator.SetBool(objectCorrectBool, false);
-                Debug.Log($"Set {objectWrongBool} = true");
-
-                // Start coroutine to reset isWrong after the animation's natural exit time
-                wrongAnimationResetCoroutine = StartCoroutine(ResetWrongAnimationWithExitTime());
-            }
-        }
-    }
-
-    private IEnumerator ResetWrongAnimationWithExitTime()
-    {
-        // Wait for the animation to play through its natural exit time
-        Debug.Log($"Waiting {animationExitTime}s for wrong animation to complete naturally");
-        yield return new WaitForSeconds(animationExitTime);
-
-        // Now reset the animation
-        if (objectAnimator != null)
-        {
-            objectAnimator.SetBool(objectWrongBool, false);
-            Debug.Log($"Reset {objectWrongBool} = false (after natural exit)");
-        }
-
-        wrongAnimationResetCoroutine = null;
-    }
-
-    private IEnumerator HandleCorrectChoice()
-    {
-        Debug.Log($"{objectName} was the CORRECT choice!");
-
-        // Spawn food
-        if (foodPrefab != null && foodSpawnPoint != null)
-        {
-            Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity);
-        }
-
-        // Move to move point
-        if (movePoint != null)
-        {
-            yield return StartCoroutine(MoveCharacterToMovePoint());
-            latestPosition = movePoint.position;
-
-            // Update respawn point
-            if (assessmentManager != null)
-            {
-                assessmentManager.UpdateRespawnPoint(latestPosition);
-            }
-        }
-    }
-
-    private IEnumerator HandleWrongChoice()
-    {
-        Debug.Log($"{objectName} was the WRONG choice!");
-
-        // Safety check: Stop dizzy audio and disable dizzy effect through group manager
-        if (currentGroupManager != null)
-        {
-            currentGroupManager.StopDizzyAudio();
-            currentGroupManager.DisableDizzyEffect();
-            Debug.Log("Safety stop: Stopped dizzy audio and disabled effect in HandleWrongChoice");
-        }
-
-        // Return to group starting point instead of latest position
-        if (playerController != null)
-        {
-            yield return StartCoroutine(MoveCharacterBackwardToGroupStart());
-        }
-
-        // Re-enable this object
-        isInteractable = true;
-        if (objectCollider != null)
-            objectCollider.enabled = true;
-    }
-
-    // CHANGED: Modified to go to GROUP STARTING POINT with no overshoot
     private IEnumerator MoveCharacterBackwardToGroupStart()
     {
         if (playerController == null) yield break;
@@ -841,6 +710,119 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         UpdatePlayerAnimatorSpeed(0f);
     }
 
+    // ====== HELPER METHODS ======
+
+    private Quaternion GetTargetRotationAtAnimationPoint()
+    {
+        if (animationPoint == null) return Quaternion.identity;
+
+        if (useAnimationPointForward && animationPoint.forward != Vector3.zero)
+        {
+            return Quaternion.LookRotation(animationPoint.forward);
+        }
+        else
+        {
+            Vector3 directionToObject = transform.position - animationPoint.position;
+            directionToObject.y = 0;
+            if (directionToObject != Vector3.zero)
+                return Quaternion.LookRotation(directionToObject.normalized);
+        }
+
+        return playerController != null ? playerController.transform.rotation : Quaternion.identity;
+    }
+
+    private Quaternion GetTargetRotationAtMovePoint()
+    {
+        if (movePoint == null) return Quaternion.identity;
+
+        if (useMovePointForward && movePoint.forward != Vector3.zero)
+        {
+            return Quaternion.LookRotation(movePoint.forward);
+        }
+        else
+        {
+            if (animationPoint != null)
+            {
+                Vector3 directionToAnimationPoint = animationPoint.position - movePoint.position;
+                directionToAnimationPoint.y = 0;
+                if (directionToAnimationPoint != Vector3.zero)
+                    return Quaternion.LookRotation(directionToAnimationPoint.normalized);
+            }
+        }
+
+        return playerController != null ? playerController.transform.rotation : Quaternion.identity;
+    }
+
+    private IEnumerator RotateCharacterToTargetSmooth(Quaternion targetRotation)
+    {
+        if (playerController == null) yield break;
+
+        float angleThreshold = 0.1f;
+        float maxRotationTime = 0.5f;
+        float elapsedTime = 0f;
+
+        Quaternion startRotation = playerController.transform.rotation;
+
+        while (Quaternion.Angle(playerController.transform.rotation, targetRotation) > angleThreshold &&
+               elapsedTime < maxRotationTime)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsedTime / maxRotationTime);
+            playerController.transform.rotation = Quaternion.Lerp(
+                startRotation,
+                targetRotation,
+                t
+            );
+            yield return null;
+        }
+
+        playerController.transform.rotation = targetRotation;
+    }
+
+    private IEnumerator FaceTargetBeforeMove(Vector3 targetPos)
+    {
+        if (playerController == null) yield break;
+
+        Transform player = playerController.transform;
+
+        Vector3 dir = targetPos - player.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f)
+            yield break;
+
+        Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
+        float angle = Quaternion.Angle(player.rotation, targetRot);
+
+        if (angle < 5f)
+        {
+            player.rotation = targetRot;
+            yield break;
+        }
+
+        float rotationTime = 0f;
+        float maxRotationTime = Mathf.Clamp(angle / 90f, 0.5f, 1.5f);
+
+        while (rotationTime < maxRotationTime &&
+               Quaternion.Angle(player.rotation, targetRot) > 1f)
+        {
+            rotationTime += Time.deltaTime;
+            float t = rotationTime / maxRotationTime;
+
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            player.rotation = Quaternion.Lerp(
+                player.rotation,
+                targetRot,
+                t
+            );
+            yield return null;
+        }
+
+        player.rotation = targetRot;
+    }
+
     private void UpdatePlayerAnimatorSpeed(float speed)
     {
         if (playerAnimator != null)
@@ -851,7 +833,131 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // Public methods
+    // ====== FOOD MANAGEMENT METHODS ======
+
+    // Method to destroy spawned food (ONLY when player reaches move point or game resets)
+    public void DestroySpawnedFood()
+    {
+        if (spawnedFood != null)
+        {
+            Destroy(spawnedFood);
+            spawnedFood = null;
+            Debug.Log($"Destroyed spawned food for {objectName}");
+        }
+
+        // Also destroy any child food objects at the spawn point (safety cleanup)
+        if (foodSpawnPoint != null)
+        {
+            foreach (Transform child in foodSpawnPoint)
+            {
+                if (child != foodSpawnPoint &&
+                    (child.name.Contains("Food") || child.name.Contains("food") ||
+                     child.name.Contains("Prefab") || child.name.Contains("prefab")))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+    }
+
+    // Method to spawn food immediately (used at Start or when group activates)
+    public void SpawnFoodImmediately()
+    {
+        if (foodPrefab != null && foodSpawnPoint != null)
+        {
+            // Don't destroy existing food - just spawn new one
+            if (spawnedFood == null)
+            {
+                spawnedFood = Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
+                Debug.Log($"Spawned food immediately for {objectName}");
+            }
+        }
+    }
+
+    // Updated ResetObject method - destroys food ONLY when game resets
+    public void ResetObject()
+    {
+        Debug.Log($"Resetting object: {objectName}");
+
+        // Reset all state variables
+        isInteractable = true;
+        isProcessingInteraction = false;
+        hasReachedAnimationPoint = false;
+
+        // Reset collider
+        if (objectCollider != null)
+        {
+            objectCollider.enabled = true;
+        }
+
+        // Destroy spawned food ONLY when game resets completely
+        DestroySpawnedFood();
+
+        // Reset animator
+        if (objectAnimator != null)
+        {
+            objectAnimator.SetBool(objectCorrectBool, false);
+            objectAnimator.SetBool(objectWrongBool, false);
+            objectAnimator.Rebind();
+            objectAnimator.Update(0f);
+        }
+
+        // Stop any coroutines
+        if (wrongAnimationResetCoroutine != null)
+        {
+            StopCoroutine(wrongAnimationResetCoroutine);
+            wrongAnimationResetCoroutine = null;
+        }
+
+        Debug.Log($"Object reset complete: {objectName}");
+    }
+
+    // ====== ANSWER HANDLING METHODS ======
+
+    private void HandleCorrectAnswer()
+    {
+        Debug.Log($"Correct answer! Awarding {correctAnswerPoints} points and {correctEnergyGain} energy");
+
+        if (assessmentManager != null)
+        {
+            assessmentManager.OnCorrectAnswerSelected();
+        }
+
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
+            GoGrowGlowGameManager.Instance.AddEnergy(correctEnergyGain);
+            Debug.Log($"DIRECT ENERGY UPDATE: Added {correctEnergyGain} energy via Game Manager");
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is also NULL!");
+        }
+    }
+
+    private void HandleWrongAnswer()
+    {
+        Debug.Log($"Wrong answer! Deducting {wrongAnswerPoints} points and {wrongEnergyDeduction} energy");
+
+        if (assessmentManager != null)
+        {
+            assessmentManager.OnWrongAnswerSelected();
+        }
+
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
+            GoGrowGlowGameManager.Instance.RemoveEnergy(wrongEnergyDeduction);
+            Debug.Log($"DIRECT ENERGY UPDATE: Removed {wrongEnergyDeduction} energy via Game Manager");
+        }
+        else
+        {
+            Debug.LogError("Game Manager Instance is also NULL!");
+        }
+    }
+
+    // ====== PUBLIC METHODS ======
+
     public void SetInteractable(bool interactable)
     {
         isInteractable = interactable;
@@ -863,7 +969,6 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     {
         isGrowFood = isGrow;
 
-        // Update registration with assessment manager if needed
         if (assessmentManager != null && isGrowFood && !assessmentManager.IsAssessmentActive())
         {
             assessmentManager.RegisterAssessmentObject(this);
@@ -874,23 +979,8 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     public void SetFoodPrefab(GameObject prefab)
     {
         foodPrefab = prefab;
-
-        // Spawn food immediately when prefab is set
-        if (foodPrefab != null && foodSpawnPoint != null && spawnedFood == null)
-        {
-            spawnedFood = Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
-            Debug.Log($"Spawned food immediately for {objectName}");
-        }
-    }
-
-    // ADDED: SpawnFoodImmediately method
-    public void SpawnFoodImmediately()
-    {
-        if (foodPrefab != null && foodSpawnPoint != null && spawnedFood == null)
-        {
-            spawnedFood = Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
-            Debug.Log($"Spawned food immediately for {objectName}");
-        }
+        // Spawn food immediately when prefab is assigned
+        SpawnFoodImmediately();
     }
 
     public void SetDelaySettings(float beforeSmash, float beforeMove, float afterSmash)
@@ -905,25 +995,21 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         animationExitTime = exitTime;
     }
 
-    // ADDED: Set group manager reference
     public void SetGroupManager(ObjectGroupManager manager)
     {
         currentGroupManager = manager;
     }
 
-    // ADDED: Set assessment manager reference
     public void SetAssessmentManager(GrowAssessmentManager manager)
     {
         assessmentManager = manager;
 
-        // Register if this is a correct answer
         if (assessmentManager != null && isGrowFood)
         {
             assessmentManager.RegisterAssessmentObject(this);
         }
     }
 
-    // ADDED: Set point and energy values
     public void SetPointValues(int correctPoints, int wrongPoints)
     {
         correctAnswerPoints = correctPoints;
@@ -941,12 +1027,23 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     public bool IsGrowFood() => isGrowFood;
     public Transform GetAnimationPoint() => animationPoint;
     public Transform GetMovePoint() => movePoint;
+    public Transform GetFoodSpawnPoint() => foodSpawnPoint;
     public bool IsInteractable() => isInteractable;
     public bool IsProcessingInteraction() => isProcessingInteraction;
     public int GetCorrectAnswerPoints() => correctAnswerPoints;
     public int GetWrongAnswerPoints() => wrongAnswerPoints;
     public float GetCorrectEnergyGain() => correctEnergyGain;
     public float GetWrongEnergyDeduction() => wrongEnergyDeduction;
+
+    public void SetSpawnedFood(GameObject food)
+    {
+        spawnedFood = food;
+    }
+
+    public GameObject GetSpawnedFood()
+    {
+        return spawnedFood;
+    }
 
     void OnDrawGizmosSelected()
     {
@@ -969,62 +1066,5 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
         Gizmos.color = isGrowFood ? Color.green : Color.red;
         Gizmos.DrawWireCube(transform.position, Vector3.one * 1.2f);
-    }
-
-    private IEnumerator FaceTargetBeforeMove(Vector3 targetPos)
-    {
-        if (playerController == null) yield break;
-
-        Transform player = playerController.transform;
-
-        Vector3 dir = targetPos - player.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.001f)
-            yield break;
-
-        Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
-        float angle = Quaternion.Angle(player.rotation, targetRot);
-
-        // If already mostly facing the right direction, just snap
-        if (angle < 5f)
-        {
-            player.rotation = targetRot;
-            yield break;
-        }
-
-        // Smooth rotation to face target
-        float rotationTime = 0f;
-        float maxRotationTime = Mathf.Clamp(angle / 90f, 0.5f, 1.5f); // Scale based on angle
-
-        while (rotationTime < maxRotationTime &&
-               Quaternion.Angle(player.rotation, targetRot) > 1f)
-        {
-            rotationTime += Time.deltaTime;
-            float t = rotationTime / maxRotationTime;
-
-            // Use smooth step for more natural rotation
-            t = Mathf.SmoothStep(0f, 1f, t);
-
-            player.rotation = Quaternion.Lerp(
-                player.rotation,
-                targetRot,
-                t
-            );
-            yield return null;
-        }
-
-        // Final snap
-        player.rotation = targetRot;
-    }
-
-    public Transform GetFoodSpawnPoint()
-    {
-        return foodSpawnPoint;
-    }
-
-    public void SetSpawnedFood(GameObject food)
-    {
-        spawnedFood = food;
     }
 }

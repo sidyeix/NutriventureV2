@@ -79,4 +79,17 @@ public class GlowPartTrigger : MonoBehaviour
             Gizmos.DrawLine(top - Vector3.forward * col.radius, bottom - Vector3.forward * col.radius);
         }
     }
+
+    // NEW: Reset method for game restart
+    public void ResetTrigger()
+    {
+        hasBeenTriggered = false;
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = true;
+        }
+
+        Debug.Log($"GlowPartTrigger {gameObject.name} reset");
+    }
 }

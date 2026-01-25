@@ -81,6 +81,31 @@ public class TimelineSequenceManager : MonoBehaviour
         }
     }
 
+    // NEW: Reset timeline for next playthrough
+    public void ResetTimeline()
+    {
+        Debug.Log("Resetting timeline for new game...");
+
+        // Stop timeline if playing
+        if (isTimelinePlaying && timeline != null)
+        {
+            timeline.Stop();
+        }
+
+        // Reset timeline to start
+        if (timeline != null)
+        {
+            timeline.time = 0;
+            timeline.Evaluate();
+        }
+
+        // Reset flags
+        timelineCompleted = false;
+        isTimelinePlaying = false;
+
+        Debug.Log("Timeline reset complete");
+    }
+
     public bool IsTimelineComplete()
     {
         return timelineCompleted;

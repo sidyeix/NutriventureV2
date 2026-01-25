@@ -12,22 +12,27 @@ public class DayNightLightingTransition : MonoBehaviour
     [Header("Day Lights (initially active)")]
     [Tooltip("First directional light for daytime")]
     public Light dayLight1;
+    public float dayLight1Intensity = 1.0f; // Explicit intensity
 
     [Tooltip("Second directional light for daytime")]
     public Light dayLight2;
+    public float dayLight2Intensity = 1.0f; // Explicit intensity
 
-    [Header("Night Lights (initially INACTIVE GameObject)")]
+    [Header("Night Lights (initially INACTIVE GameObjects)")]
     [Tooltip("GameObject containing all night lights")]
     public GameObject nightLightsParent;
 
     [Tooltip("First directional light for nighttime")]
     public Light nightLight1;
+    public float nightLight1Intensity = 0.51f; // Explicit intensity
 
     [Tooltip("Second directional light for nighttime")]
     public Light nightLight2;
+    public float nightLight2Intensity = 0.51f; // Explicit intensity
 
     [Tooltip("Third directional light for nighttime")]
     public Light nightLight3;
+    public float nightLight3Intensity = 0.51f; // Explicit intensity
 
     [Header("Transition Settings")]
     [Tooltip("Time in seconds for the lighting transition")]
@@ -43,15 +48,9 @@ public class DayNightLightingTransition : MonoBehaviour
     [Tooltip("Player tag to check for")]
     public string playerTag = "Player";
 
-    // Stored light values
-    private float dayLight1Intensity;
-    private float dayLight2Intensity;
+    // Store colors (we'll keep these as-is)
     private Color dayLight1Color;
     private Color dayLight2Color;
-
-    private float nightLight1Intensity;
-    private float nightLight2Intensity;
-    private float nightLight3Intensity;
     private Color nightLight1Color;
     private Color nightLight2Color;
     private Color nightLight3Color;
@@ -66,8 +65,8 @@ public class DayNightLightingTransition : MonoBehaviour
 
     void Start()
     {
-        // Store day light values (active)
-        StoreDayLightValues();
+        // Store colors only (intensities are already set in Inspector)
+        StoreLightColors();
 
         // Initialize: Day lights active, night lights GameObject inactive
         InitializeDaytime();
@@ -83,48 +82,42 @@ public class DayNightLightingTransition : MonoBehaviour
         }
     }
 
-    private void StoreDayLightValues()
+    private void StoreLightColors()
     {
-        // Store day light values
+        // Store light colors only
         if (dayLight1 != null)
         {
-            dayLight1Intensity = dayLight1.intensity;
             dayLight1Color = dayLight1.color;
         }
 
         if (dayLight2 != null)
         {
-            dayLight2Intensity = dayLight2.intensity;
             dayLight2Color = dayLight2.color;
         }
-    }
 
-    private void ActivateAndStoreNightLights()
-    {
-        // Activate the night lights GameObject first
-        if (nightLightsParent != null && !nightLightsParent.activeSelf)
-        {
-            nightLightsParent.SetActive(true);
-            nightLightsActivated = true;
-        }
-
-        // Now store the night light values
         if (nightLight1 != null)
         {
-            nightLight1Intensity = nightLight1.intensity;
             nightLight1Color = nightLight1.color;
         }
 
         if (nightLight2 != null)
         {
-            nightLight2Intensity = nightLight2.intensity;
             nightLight2Color = nightLight2.color;
         }
 
         if (nightLight3 != null)
         {
-            nightLight3Intensity = nightLight3.intensity;
             nightLight3Color = nightLight3.color;
+        }
+    }
+
+    private void ActivateAndInitializeNightLights()
+    {
+        // Activate the night lights GameObject first (ENABLE GAMEOBJECT)
+        if (nightLightsParent != null && !nightLightsParent.activeSelf)
+        {
+            nightLightsParent.SetActive(true); // ENABLE GAMEOBJECT
+            nightLightsActivated = true;
         }
     }
 
@@ -137,29 +130,29 @@ public class DayNightLightingTransition : MonoBehaviour
             DynamicGI.UpdateEnvironment();
         }
 
-        // Ensure day lights are enabled at full intensity
+        // Ensure day lights are enabled at explicit intensity
         if (dayLight1 != null)
         {
             dayLight1.enabled = true;
-            dayLight1.intensity = dayLight1Intensity;
+            dayLight1.intensity = dayLight1Intensity; // Use explicit intensity
             dayLight1.color = dayLight1Color;
         }
         if (dayLight2 != null)
         {
             dayLight2.enabled = true;
-            dayLight2.intensity = dayLight2Intensity;
+            dayLight2.intensity = dayLight2Intensity; // Use explicit intensity
             dayLight2.color = dayLight2Color;
         }
 
-        // Ensure night lights GameObject is inactive
+        // Ensure night lights GameObject is inactive (DISABLE GAMEOBJECT)
         if (nightLightsParent != null)
         {
-            nightLightsParent.SetActive(false);
+            nightLightsParent.SetActive(false); // DISABLE GAMEOBJECT
             nightLightsActivated = false;
         }
 
         isDayTime = true;
-        Debug.Log("Initialized to Daytime");
+        Debug.Log("Initialized to Daytime - Day lights at explicit intensity");
     }
 
     private void ValidateSetup()
@@ -198,8 +191,8 @@ public class DayNightLightingTransition : MonoBehaviour
         {
             Debug.Log("Starting transition: Day ? Night");
 
-            // Activate night lights GameObject and store values
-            ActivateAndStoreNightLights();
+            // Activate night lights GameObject (ENABLE GAMEOBJECT)
+            ActivateAndInitializeNightLights();
 
             // Set night lights to 0 intensity for fade in
             if (nightLight1 != null)
@@ -297,10 +290,11 @@ public class DayNightLightingTransition : MonoBehaviour
     {
         // SIMULTANEOUS TRANSITION:
         // Day lights fade out AS night lights fade in at the same rate
+        // Using EXPLICIT intensities from Inspector
 
         if (dayLight1 != null)
         {
-            // Day light fades from full to 0
+            // Day light fades from explicit intensity to 0
             dayLight1.intensity = Mathf.Lerp(dayLight1Intensity, 0f, progress);
             dayLight1.color = Color.Lerp(dayLight1Color, Color.black, progress);
         }
@@ -313,7 +307,7 @@ public class DayNightLightingTransition : MonoBehaviour
 
         if (nightLight1 != null)
         {
-            // Night light fades from 0 to full AT THE SAME TIME
+            // Night light fades from 0 to explicit intensity
             nightLight1.intensity = Mathf.Lerp(0f, nightLight1Intensity, progress);
             nightLight1.color = Color.Lerp(Color.black, nightLight1Color, progress);
         }
@@ -329,19 +323,17 @@ public class DayNightLightingTransition : MonoBehaviour
             nightLight3.intensity = Mathf.Lerp(0f, nightLight3Intensity, progress);
             nightLight3.color = Color.Lerp(Color.black, nightLight3Color, progress);
         }
-
-        // At progress = 0.5, both sets of lights are at 50% intensity
-        // They "meet halfway" visually
     }
 
     private void UpdateNightToDayTransition(float progress)
     {
         // SIMULTANEOUS TRANSITION:
         // Night lights fade out AS day lights fade in at the same rate
+        // Using EXPLICIT intensities from Inspector
 
         if (nightLight1 != null)
         {
-            // Night light fades from full to 0
+            // Night light fades from explicit intensity to 0
             nightLight1.intensity = Mathf.Lerp(nightLight1Intensity, 0f, progress);
             nightLight1.color = Color.Lerp(nightLight1Color, Color.black, progress);
         }
@@ -360,7 +352,7 @@ public class DayNightLightingTransition : MonoBehaviour
 
         if (dayLight1 != null)
         {
-            // Day light fades from 0 to full AT THE SAME TIME
+            // Day light fades from 0 to explicit intensity
             dayLight1.intensity = Mathf.Lerp(0f, dayLight1Intensity, progress);
             dayLight1.color = Color.Lerp(Color.black, dayLight1Color, progress);
         }
@@ -370,9 +362,6 @@ public class DayNightLightingTransition : MonoBehaviour
             dayLight2.intensity = Mathf.Lerp(0f, dayLight2Intensity, progress);
             dayLight2.color = Color.Lerp(Color.black, dayLight2Color, progress);
         }
-
-        // At progress = 0.5, both sets of lights are at 50% intensity
-        // They "meet halfway" visually
     }
 
     private void SetToDayInstantly()
@@ -384,25 +373,25 @@ public class DayNightLightingTransition : MonoBehaviour
             DynamicGI.UpdateEnvironment();
         }
 
-        // Enable day lights at full intensity
+        // Enable day lights at explicit intensity
         if (dayLight1 != null)
         {
-            dayLight1.intensity = dayLight1Intensity;
+            dayLight1.intensity = dayLight1Intensity; // Use explicit intensity
             dayLight1.color = dayLight1Color;
             dayLight1.enabled = true;
         }
 
         if (dayLight2 != null)
         {
-            dayLight2.intensity = dayLight2Intensity;
+            dayLight2.intensity = dayLight2Intensity; // Use explicit intensity
             dayLight2.color = dayLight2Color;
             dayLight2.enabled = true;
         }
 
-        // Deactivate night lights GameObject
+        // Deactivate night lights GameObject (DISABLE GAMEOBJECT)
         if (nightLightsParent != null)
         {
-            nightLightsParent.SetActive(false);
+            nightLightsParent.SetActive(false); // DISABLE GAMEOBJECT
             nightLightsActivated = false;
         }
 
@@ -411,28 +400,11 @@ public class DayNightLightingTransition : MonoBehaviour
 
     private void SetToNightInstantly()
     {
-        // Activate night lights GameObject first
+        // Activate night lights GameObject first (ENABLE GAMEOBJECT)
         if (nightLightsParent != null && !nightLightsParent.activeSelf)
         {
-            nightLightsParent.SetActive(true);
+            nightLightsParent.SetActive(true); // ENABLE GAMEOBJECT
             nightLightsActivated = true;
-
-            // Store night light values (they should be at full intensity in the scene)
-            if (nightLight1 != null)
-            {
-                nightLight1Intensity = nightLight1.intensity;
-                nightLight1Color = nightLight1.color;
-            }
-            if (nightLight2 != null)
-            {
-                nightLight2Intensity = nightLight2.intensity;
-                nightLight2Color = nightLight2.color;
-            }
-            if (nightLight3 != null)
-            {
-                nightLight3Intensity = nightLight3.intensity;
-                nightLight3Color = nightLight3.color;
-            }
         }
 
         // Set skybox
@@ -442,24 +414,24 @@ public class DayNightLightingTransition : MonoBehaviour
             DynamicGI.UpdateEnvironment();
         }
 
-        // Set night lights to full intensity
+        // Set night lights to explicit intensity
         if (nightLight1 != null)
         {
-            nightLight1.intensity = nightLight1Intensity;
+            nightLight1.intensity = nightLight1Intensity; // Use explicit intensity
             nightLight1.color = nightLight1Color;
         }
         if (nightLight2 != null)
         {
-            nightLight2.intensity = nightLight2Intensity;
+            nightLight2.intensity = nightLight2Intensity; // Use explicit intensity
             nightLight2.color = nightLight2Color;
         }
         if (nightLight3 != null)
         {
-            nightLight3.intensity = nightLight3Intensity;
+            nightLight3.intensity = nightLight3Intensity; // Use explicit intensity
             nightLight3.color = nightLight3Color;
         }
 
-        // Disable day lights
+        // Disable day lights (light component only, GameObject stays active)
         if (dayLight1 != null) dayLight1.enabled = false;
         if (dayLight2 != null) dayLight2.enabled = false;
 
@@ -528,5 +500,29 @@ public class DayNightLightingTransition : MonoBehaviour
     void OnDestroy()
     {
         StopTransition();
+    }
+
+    public void ResetTransition()
+    {
+        Debug.Log($"Resetting DayNightLightingTransition on {gameObject.name}");
+
+        // Stop any active transition
+        isTransitioning = false;
+        transitionProgress = 0f;
+
+        // Reset to daytime
+        SetToDay();
+
+        // Reset trigger state
+        hasTriggered = false;
+
+        // Re-enable collider if it exists and triggerOnce is enabled
+        Collider collider = GetComponent<Collider>();
+        if (collider != null && triggerOnce)
+        {
+            collider.enabled = true;
+        }
+
+        Debug.Log($"DayNightLightingTransition reset to Daytime");
     }
 }

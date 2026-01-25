@@ -221,7 +221,7 @@ public class StartingSequenceManager : MonoBehaviour
         Debug.Log("Player input disabled (controller still active for animation)");
     }
 
-    private void EnablePlayerInput()
+    public void EnablePlayerInput()
     {
         // Just re-enable the input system
         // The controller was never disabled, so it's ready to go

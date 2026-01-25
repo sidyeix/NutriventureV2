@@ -10,8 +10,11 @@ public class GameEndManager : MonoBehaviour
 {
     [Header("Star Rating System")]
     [SerializeField] private GameObject starsContainer;
-    [SerializeField] private Animator starsAnimator; // Single animator for all stars
-    [SerializeField] private string starParameter = "Stars"; // Parameter name in animator
+    [SerializeField] private Animator starsAnimator;
+    [SerializeField] private string starParameter = "Stars";
+
+    [Header("Stars to Hide")]
+    [SerializeField] private List<GameObject> starsToHide = new List<GameObject>();
 
     [Header("Game Summary UI")]
     [SerializeField] private TMP_Text pointsText;
@@ -20,6 +23,11 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private TMP_Text expText;
     [SerializeField] private GameObject buttonContainer;
     [SerializeField] private float countAnimationDuration = 2f;
+
+    [Header("Count Animation Audio")]
+    [SerializeField] private AudioClip countTickSound;
+    [SerializeField] private AudioClip countCompleteSound;
+    [SerializeField] private AudioSource countAudioSource;
 
     [Header("Result Background")]
     [SerializeField] private Image resultBackground;
@@ -30,8 +38,8 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private GameObject gameSummaryParent;
     [SerializeField] private List<GameObject> objectsToEnableOnLose = new List<GameObject>();
     [SerializeField] private List<GameObject> objectsToEnableOnWin = new List<GameObject>();
-    [SerializeField] private List<GameObject> objectsToDisableOnGameEnd = new List<GameObject>(); // These remain disabled
-    [SerializeField] private List<GameObject> objectsToEnableOnHomeButton = new List<GameObject>(); // Objects to enable when Home is clicked
+    [SerializeField] private List<GameObject> objectsToDisableOnGameEnd = new List<GameObject>();
+    [SerializeField] private List<GameObject> objectsToEnableOnHomeButton = new List<GameObject>();
     [SerializeField] private GameObject keyUnlockedObject;
 
     [Header("Camera Settings")]
@@ -43,7 +51,7 @@ public class GameEndManager : MonoBehaviour
     [Header("Spawn Points")]
     [SerializeField] private Transform resultCharacterSpawnPoint;
     [SerializeField] private Transform lobbyPoint;
-    [SerializeField] private Transform startingPoint; // NEW: Starting point for restart
+    [SerializeField] private Transform startingPoint;
 
     [Header("Quest System")]
     [SerializeField] private string kingdomID = "general_quests";
@@ -56,10 +64,10 @@ public class GameEndManager : MonoBehaviour
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource backgroundMusicSource;
-    [SerializeField] private AudioClip winMusicClip;        // For 1-3 stars
-    [SerializeField] private AudioClip loseMusicClip;       // For 0 stars
-    [SerializeField] private AudioClip restartMusicClip;    // When restarting
-    [SerializeField] private AudioClip lobbyMusicClip;      // When going to lobby/home
+    [SerializeField] private AudioClip winMusicClip;
+    [SerializeField] private AudioClip loseMusicClip;
+    [SerializeField] private AudioClip restartMusicClip;
+    [SerializeField] private AudioClip lobbyMusicClip;
 
     [Header("Object Reset System")]
     [SerializeField] private List<GameObject> objectsToReset = new List<GameObject>();
@@ -70,13 +78,13 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private string defaultStateName = "Default";
 
     [Header("Character Animation")]
-    [SerializeField] private Animator characterAnimator; // Reference to player's animator
-    [SerializeField] private string danceParameter = "isDancing"; // Parameter for dancing animation
-    [SerializeField] private string thinkParameter = "isThinking"; // Parameter for thinking animation
+    [SerializeField] private Animator characterAnimator;
+    [SerializeField] private string danceParameter = "isDancing";
+    [SerializeField] private string thinkParameter = "isThinking";
 
     [Header("UI Controls")]
-    [SerializeField] private GameObject uiControlsCanvas; // Reference to UI Controls Canvas
-    [SerializeField] private MechanicsBoardManager mechanicsBoardManager; // Reference to Game Mechanics Board Manager
+    [SerializeField] private GameObject uiControlsCanvas;
+    [SerializeField] private MechanicsBoardManager mechanicsBoardManager;
 
     [Header("References")]
     [SerializeField] private GoGrowGlowGameManager gameManager;
@@ -98,8 +106,12 @@ public class GameEndManager : MonoBehaviour
 
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
+    private bool isCountingAnimationComplete = false;
 
     private Dictionary<GameObject, TransformData> initialTransformData = new Dictionary<GameObject, TransformData>();
+
+    private CinemachineBrain cinemachineBrain;
+    private CinemachineBlendDefinition originalBlendDefinition;
 
     [System.Serializable]
     public class TransformData
@@ -129,8 +141,15 @@ public class GameEndManager : MonoBehaviour
         if (startingSequenceManager == null)
             startingSequenceManager = FindObjectOfType<StartingSequenceManager>();
 
-        if (mechanicsBoardManager == null)
+        if (mechanicsBoardManager != null)
             mechanicsBoardManager = FindObjectOfType<MechanicsBoardManager>();
+
+        // Find Cinemachine Brain
+        cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+        if (cinemachineBrain != null)
+        {
+            originalBlendDefinition = cinemachineBrain.m_DefaultBlend;
+        }
 
         // Find character animator if not assigned
         if (characterAnimator == null && playerController != null)
@@ -164,11 +183,6 @@ public class GameEndManager : MonoBehaviour
             if (startPointObj != null)
             {
                 startingPoint = startPointObj.transform;
-                Debug.Log("Found StartingPoint: " + startingPoint.name);
-            }
-            else
-            {
-                Debug.LogWarning("StartingPoint not found and not assigned! Player will not respawn at correct position on restart.");
             }
         }
     }
@@ -205,11 +219,11 @@ public class GameEndManager : MonoBehaviour
             gameEndVirtualCamera.gameObject.SetActive(false);
         }
 
-        // Make sure UI controls are enabled initially (if assigned)
+        // Make sure UI controls are enabled initially
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
 
-        // Make sure mechanics board is hidden initially (controlled by MechanicsBoardManager)
+        // Make sure mechanics board is hidden initially
         if (mechanicsBoardManager != null && mechanicsBoardManager.mechanicsBoard != null)
         {
             mechanicsBoardManager.mechanicsBoard.SetActive(false);
@@ -218,6 +232,13 @@ public class GameEndManager : MonoBehaviour
         if (storeInitialPositionsOnStart)
         {
             StoreInitialTransforms();
+        }
+
+        // IMPORTANT: Don't auto-search for background music
+        // It should be assigned in the Inspector
+        if (backgroundMusicSource == null)
+        {
+            Debug.LogWarning("BackgroundMusicSource is not assigned in the Inspector!");
         }
     }
 
@@ -237,8 +258,6 @@ public class GameEndManager : MonoBehaviour
                 };
             }
         }
-
-        Debug.Log($"Stored initial transforms for {initialTransformData.Count} objects");
     }
 
     public void ResetObjectsToInitialState()
@@ -264,19 +283,20 @@ public class GameEndManager : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log($"Reset {initialTransformData.Count} objects to initial state");
     }
 
     public void ShowGameEndScreen(bool playerWon)
     {
         Debug.Log($"=== SHOWING GAME END SCREEN - {(playerWon ? "WIN" : "LOSE")} ===");
 
+        // Hide stars when showing summary
+        HideStarsWhenShowingSummary();
+
         // Disable objects that should be hidden when game ends
         DisableObjectsOnGameEnd();
 
-        // Switch to game end camera instantly
-        SwitchToGameEndCamera();
+        // Switch to game end camera with CUT blend
+        SwitchToGameEndCameraWithCut();
 
         // Teleport player to result spawn point
         TeleportPlayerToResultPoint();
@@ -286,11 +306,8 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
 
-        Debug.Log($"Game End Data - Time: {completionTime}, Points: {playerPoints}, Hearts: {remainingHearts}");
-
         // Calculate star rating
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        Debug.Log($"Stars Earned: {starsEarned}");
 
         // Calculate rewards
         CalculateRewards();
@@ -299,14 +316,13 @@ public class GameEndManager : MonoBehaviour
         if (resultBackground != null)
         {
             resultBackground.sprite = playerWon ? winBackground : loseBackground;
-            Debug.Log($"Set result background to {(playerWon ? "Win" : "Lose")} background");
         }
 
         // Handle character animation based on stars
         HandleCharacterAnimation(playerWon, starsEarned);
 
-        // Handle background music
-        HandleBackgroundMusic(playerWon && starsEarned > 0); // Only play win music if at least 1 star
+        // Handle background music - ONLY if we have a valid source
+        HandleBackgroundMusic(playerWon && starsEarned > 0);
 
         // Handle win/lose specific logic
         if (!playerWon)
@@ -325,18 +341,30 @@ public class GameEndManager : MonoBehaviour
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(true);
 
+        // Reset counting animation flag
+        isCountingAnimationComplete = false;
+
         // Start animations
         StartCoroutine(GameEndSequence());
+    }
+
+    private void HideStarsWhenShowingSummary()
+    {
+        foreach (GameObject star in starsToHide)
+        {
+            if (star != null && star.activeSelf)
+            {
+                star.SetActive(false);
+            }
+        }
     }
 
     private void HandleKeyUnlockedObject(bool playerWon)
     {
         if (keyUnlockedObject == null) return;
 
-        // Reset key unlocked object first
         keyUnlockedObject.SetActive(false);
 
-        // Check if we should show the key unlocked object
         bool shouldShowKey = false;
 
         if (questManager != null)
@@ -344,47 +372,22 @@ public class GameEndManager : MonoBehaviour
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
-                Debug.Log($"Quest found: {quest.questID}, Status: {quest.status}, Stars: {starsEarned}");
-
-                // Only show key if:
-                // 1. Quest is NotStarted or InProgress
-                // 2. Player got 2-3 stars
-                // 3. Player won the game
                 if ((quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress) &&
                     starsEarned >= 2 &&
                     playerWon)
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
-                    Debug.Log("Key unlocked: Quest is NotStarted/InProgress AND player got 2-3 stars AND won the game");
-                }
-                else
-                {
-                    Debug.Log($"Key not unlocked - Conditions not met: Status={quest.status}, Stars={starsEarned}, Won={playerWon}");
                 }
             }
-            else
-            {
-                Debug.LogWarning($"Quest not found: {questID}");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("QuestManager not found");
         }
 
-        // Activate or deactivate the key object
         keyUnlockedObject.SetActive(shouldShowKey);
-        Debug.Log($"Key Unlocked Object {(shouldShowKey ? "activated" : "deactivated")}");
     }
 
     private void HandleCharacterAnimation(bool playerWon, int stars)
     {
-        if (characterAnimator == null)
-        {
-            Debug.LogWarning("Character animator not assigned!");
-            return;
-        }
+        if (characterAnimator == null) return;
 
         // Reset all animation parameters first
         characterAnimator.SetBool(danceParameter, false);
@@ -393,17 +396,12 @@ public class GameEndManager : MonoBehaviour
         // Set animation based on stars
         if (stars == 0)
         {
-            // 0 stars - thinking animation
             characterAnimator.SetBool(thinkParameter, true);
-            Debug.Log("Set character to thinking animation (0 stars)");
         }
         else if (playerWon)
         {
-            // Win with stars - dancing animation
             characterAnimator.SetBool(danceParameter, true);
-            Debug.Log("Set character to dancing animation (win with stars)");
         }
-        // If lose with stars (unlikely), no special animation
     }
 
     private void ResetCharacterAnimation()
@@ -412,20 +410,24 @@ public class GameEndManager : MonoBehaviour
         {
             characterAnimator.SetBool(danceParameter, false);
             characterAnimator.SetBool(thinkParameter, false);
-            Debug.Log("Reset character animation parameters");
         }
     }
 
     private void DisableObjectsOnGameEnd()
     {
-        Debug.Log($"Disabling {objectsToDisableOnGameEnd.Count} objects on game end");
-
         foreach (GameObject obj in objectsToDisableOnGameEnd)
         {
+            // CRITICAL: Check if this is our background music source
             if (obj != null && obj.activeSelf)
             {
+                // Skip disabling if this is the background music source
+                if (backgroundMusicSource != null && obj == backgroundMusicSource.gameObject)
+                {
+                    Debug.Log($"Skipping disable of background music: {obj.name}");
+                    continue;
+                }
+
                 obj.SetActive(false);
-                Debug.Log($"Disabled object: {obj.name}");
             }
         }
 
@@ -433,7 +435,6 @@ public class GameEndManager : MonoBehaviour
         if (uiControlsCanvas != null && uiControlsCanvas.activeSelf)
         {
             uiControlsCanvas.SetActive(false);
-            Debug.Log("Disabled UI Controls Canvas");
         }
 
         // Also disable mechanics board if it's open
@@ -441,56 +442,61 @@ public class GameEndManager : MonoBehaviour
             mechanicsBoardManager.mechanicsBoard.activeSelf)
         {
             mechanicsBoardManager.CloseMechanicsBoard();
-            Debug.Log("Closed Mechanics Board");
         }
     }
 
-    private void SwitchToGameEndCamera()
+    private void SetCameraBlendToCut()
+    {
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+        }
+    }
+
+    private void RestoreOriginalCameraBlend()
+    {
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.m_DefaultBlend = originalBlendDefinition;
+        }
+    }
+
+    private void SwitchToGameEndCameraWithCut()
     {
         if (gameEndVirtualCamera != null)
         {
-            // Disable player camera
+            SetCameraBlendToCut();
+
             if (playerFollowCamera != null)
             {
                 playerFollowCamera.Priority = 0;
                 playerFollowCamera.gameObject.SetActive(false);
             }
 
-            // Enable game end camera with high priority
             gameEndVirtualCamera.gameObject.SetActive(true);
             gameEndVirtualCamera.Priority = gameEndCameraPriority;
-
-            Debug.Log("Switched to game end camera instantly");
-        }
-        else
-        {
-            Debug.LogWarning("Game end virtual camera not assigned!");
         }
     }
 
-    private void SwitchToPlayerCameraInstantly()
+    private void SwitchToPlayerCameraWithCut()
     {
         if (playerFollowCamera != null)
         {
-            // Disable game end camera
+            SetCameraBlendToCut();
+
             if (gameEndVirtualCamera != null)
             {
                 gameEndVirtualCamera.Priority = 0;
                 gameEndVirtualCamera.gameObject.SetActive(false);
             }
 
-            // Enable player camera instantly
             playerFollowCamera.gameObject.SetActive(true);
             playerFollowCamera.Priority = playerCameraPriority;
 
-            // Force camera to update immediately
-            CinemachineBrain brain = FindObjectOfType<CinemachineBrain>();
-            if (brain != null)
+            if (cinemachineBrain != null)
             {
-                brain.ManualUpdate();
+                cinemachineBrain.ManualUpdate();
             }
-
-            Debug.Log("Switched back to player camera INSTANTLY");
         }
     }
 
@@ -500,7 +506,6 @@ public class GameEndManager : MonoBehaviour
         {
             playerController.transform.position = resultCharacterSpawnPoint.position;
             playerController.transform.rotation = resultCharacterSpawnPoint.rotation;
-            Debug.Log($"Player teleported to result spawn point");
         }
     }
 
@@ -510,73 +515,52 @@ public class GameEndManager : MonoBehaviour
         {
             playerController.transform.position = startingPoint.position;
             playerController.transform.rotation = startingPoint.rotation;
-            Debug.Log($"Player teleported to starting point: {startingPoint.position}");
-        }
-        else if (playerController != null)
-        {
-            Debug.LogWarning("StartingPoint not assigned! Player will remain at current position.");
         }
     }
 
     private void HandleLose()
     {
-        Debug.Log("Handling lose state...");
-
-        // Enable objects for losing state
         foreach (GameObject obj in objectsToEnableOnLose)
         {
             if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
-                Debug.Log($"Enabled object on lose: {obj.name}");
             }
         }
     }
 
     private void HandleWin()
     {
-        Debug.Log("Handling win state...");
-
-        // Enable objects for winning state
         foreach (GameObject obj in objectsToEnableOnWin)
         {
             if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
-                Debug.Log($"Enabled object on win: {obj.name}");
             }
         }
     }
 
-    // NOTE: We DON'T re-enable objects that were disabled on game end
-    // These remain disabled permanently after game ends
-
     private void EnableObjectsOnHomeButton()
     {
-        Debug.Log($"Enabling {objectsToEnableOnHomeButton.Count} objects on Home button click");
-
         foreach (GameObject obj in objectsToEnableOnHomeButton)
         {
             if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
-                Debug.Log($"Enabled object on Home button: {obj.name}");
             }
         }
     }
 
     private IEnumerator GameEndSequence()
     {
-        // Wait a moment before starting
         yield return new WaitForSeconds(0.5f);
 
-        // Animate stars (single animator version)
         yield return StartCoroutine(AnimateStars());
 
-        // Animate counting numbers
         yield return StartCoroutine(AnimateCountingNumbers());
 
-        // Show buttons (except next button which is disabled)
+        isCountingAnimationComplete = true;
+
         if (buttonContainer != null)
             buttonContainer.SetActive(true);
     }
@@ -586,34 +570,24 @@ public class GameEndManager : MonoBehaviour
         if (starsContainer == null || starsAnimator == null)
             yield break;
 
-        // Activate stars container
         starsContainer.SetActive(true);
 
-        // Wait a moment
         yield return new WaitForSeconds(0.3f);
 
-        // Reset to default state first
         starsAnimator.SetInteger(starParameter, 0);
         starsAnimator.Play("Default", -1, 0f);
 
-        // Wait one frame
         yield return null;
 
-        // Set the star parameter (0-4 where 0=0 stars, 1=1 star, 2=2 stars, 3=3 stars)
         starsAnimator.SetInteger(starParameter, starsEarned);
-
-        // Force animation update
         starsAnimator.Update(0f);
 
-        // If you have specific animation clips for each star count, trigger them
-        // For example, if you have triggers named "Show1Star", "Show2Stars", etc.
         if (starsEarned > 0)
         {
             string triggerName = $"Show{starsEarned}Star" + (starsEarned > 1 ? "s" : "");
             starsAnimator.SetTrigger(triggerName);
         }
 
-        // Wait for animation to play
         yield return new WaitForSeconds(1f);
     }
 
@@ -622,32 +596,34 @@ public class GameEndManager : MonoBehaviour
         if (pointsText == null || timeText == null || coinsText == null || expText == null)
             yield break;
 
-        // Reset all values to 0
         pointsText.text = "0";
         timeText.text = "00:00";
         coinsText.text = "0";
         expText.text = "0";
 
-        // Wait a moment
         yield return new WaitForSeconds(0.3f);
 
         float elapsedTime = 0f;
+        int lastIntegerValue = 0;
 
         while (elapsedTime < countAnimationDuration)
         {
             elapsedTime += Time.deltaTime;
             float progress = elapsedTime / countAnimationDuration;
-
-            // Smooth progress curve
             float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
 
-            // Update values with easing
             float currentPoints = Mathf.Lerp(0, playerPoints, smoothProgress);
             float currentTime = Mathf.Lerp(0, completionTime, smoothProgress);
             float currentCoins = Mathf.Lerp(0, totalCoins, smoothProgress);
             float currentExp = Mathf.Lerp(0, totalExp, smoothProgress);
 
-            // Update UI
+            int currentInteger = Mathf.FloorToInt(currentPoints);
+            if (currentInteger > lastIntegerValue && countTickSound != null && countAudioSource != null)
+            {
+                countAudioSource.PlayOneShot(countTickSound);
+                lastIntegerValue = currentInteger;
+            }
+
             pointsText.text = Mathf.FloorToInt(currentPoints).ToString("N0");
             timeText.text = FormatTime(currentTime);
             coinsText.text = Mathf.FloorToInt(currentCoins).ToString("N0");
@@ -656,11 +632,15 @@ public class GameEndManager : MonoBehaviour
             yield return null;
         }
 
-        // Set final values
         pointsText.text = playerPoints.ToString("N0");
         timeText.text = FormatTime(completionTime);
         coinsText.text = totalCoins.ToString("N0");
         expText.text = totalExp.ToString("N0");
+
+        if (countCompleteSound != null && countAudioSource != null)
+        {
+            countAudioSource.PlayOneShot(countCompleteSound);
+        }
     }
 
     private string FormatTime(float timeInSeconds)
@@ -672,321 +652,147 @@ public class GameEndManager : MonoBehaviour
 
     private int CalculateStarRating(int hearts, float time)
     {
-        // Debug log for understanding calculations
-        Debug.Log($"Calculating stars: Hearts={hearts}, Time={time}s ({FormatTime(time)})");
-
-        // Apply priority order (time in seconds)
-        if (hearts == 0)
-        {
-            Debug.Log("0 stars: Hearts == 0");
-            return 0; // 0 stars for failure
-        }
-
-        if (hearts >= 3 && time <= 15 * 60) // 15 minutes in seconds = 900
-        {
-            Debug.Log("3 stars: Hearts >= 3 AND Time <= 15 min (900s)");
-            return 3;
-        }
-
-        if (hearts == 2 && time <= 17 * 60) // 17 minutes in seconds = 1020
-        {
-            Debug.Log("2 stars: Hearts == 2 AND Time <= 17 min (1020s)");
-            return 2;
-        }
-
-        if (hearts == 1 && time >= 20 * 60) // 20 minutes in seconds = 1200
-        {
-            Debug.Log("1 star: Hearts == 1 AND Time >= 20 min (1200s)");
-            return 1;
-        }
-
-        // Default: 1 star if conditions not met but player completed with at least 1 heart
-        Debug.Log("1 star: Default (hearts > 0 but other conditions not met)");
+        if (hearts == 0) return 0;
+        if (hearts >= 3 && time <= 15 * 60) return 3;
+        if (hearts == 2 && time <= 17 * 60) return 2;
+        if (hearts == 1 && time >= 20 * 60) return 1;
         return 1;
     }
 
     private void CalculateRewards()
     {
-        // Base rewards based on stars
         switch (starsEarned)
         {
             case 3:
-                baseCoins = 1000;
-                baseExp = 1000;
-                Debug.Log("Base: 1000 coins, 1000 EXP");
-                break;
+                baseCoins = 1000; baseExp = 1000; break;
             case 2:
-                baseCoins = 500;
-                baseExp = 500;
-                Debug.Log("Base: 500 coins, 500 EXP");
-                break;
+                baseCoins = 500; baseExp = 500; break;
             case 1:
-                baseCoins = 100;
-                baseExp = 100;
-                Debug.Log("Base: 100 coins, 100 EXP");
-                break;
+                baseCoins = 100; baseExp = 100; break;
             default:
-                baseCoins = 0;
-                baseExp = 0;
-                Debug.Log("Base: 0 coins, 0 EXP");
-                break;
+                baseCoins = 0; baseExp = 0; break;
         }
 
-        // Bonus from points
         int bonusExpFromPoints = Mathf.FloorToInt(playerPoints / 7f);
         int bonusCoinsFromPoints = Mathf.FloorToInt(playerPoints / 10f);
-        Debug.Log($"Points Bonus: {bonusCoinsFromPoints} coins, {bonusExpFromPoints} EXP (from {playerPoints} points)");
 
-        // Life bonus (coins only)
         int lifeBonusCoins = 0;
-        if (remainingHearts >= 5)
-            lifeBonusCoins = 300;
-        else if (remainingHearts == 4)
-            lifeBonusCoins = 200;
-        else if (remainingHearts == 3)
-            lifeBonusCoins = 100;
-        else if (remainingHearts == 2)
-            lifeBonusCoins = 50;
-        else if (remainingHearts == 1)
-            lifeBonusCoins = 0;
+        if (remainingHearts >= 5) lifeBonusCoins = 300;
+        else if (remainingHearts == 4) lifeBonusCoins = 200;
+        else if (remainingHearts == 3) lifeBonusCoins = 100;
+        else if (remainingHearts == 2) lifeBonusCoins = 50;
 
-        Debug.Log($"Life Bonus: {lifeBonusCoins} coins for {remainingHearts} hearts");
-
-        // Total rewards
         totalExp = baseExp + bonusExpFromPoints;
         totalCoins = baseCoins + bonusCoinsFromPoints + lifeBonusCoins;
-
-        Debug.Log($"Total: {totalCoins} coins, {totalExp} EXP");
     }
 
-    // NEW: Common button click handler to disable win/lose objects and enable player control
     private void OnButtonClicked()
     {
-        Debug.Log("Button clicked - disabling win/lose objects and enabling player control");
-
-        // Disable win/lose objects
         DisableWinLoseObjects();
-
-        // Enable ThirdPersonController for player movement
         EnablePlayerControl();
     }
 
-    private void ResetGameEndState()
+    public void ResetGameEndState()
     {
-        Debug.Log("Resetting game end state...");
-
-        // Reset character animation first
         ResetCharacterAnimation();
-
-        // Switch back to player camera INSTANTLY (no transition)
-        SwitchToPlayerCameraInstantly();
-
-        // NOTE: We DON'T re-enable objects that were disabled on game end
-        // objectsToDisableOnGameEnd remain disabled permanently
-
-        // Disable win/lose specific objects
+        SwitchToPlayerCameraWithCut();
         DisableWinLoseObjects();
 
-        // Reset star animation
-        if (starsAnimator != null)
-        {
-            starsAnimator.SetInteger(starParameter, 0);
-        }
+        if (starsAnimator != null) starsAnimator.SetInteger(starParameter, 0);
+        if (starsContainer != null) starsContainer.SetActive(false);
 
-        // Hide stars container
-        if (starsContainer != null)
-            starsContainer.SetActive(false);
-
-        // Reset key unlocked object
         if (keyUnlockedObject != null && keyUnlockedObject.activeSelf)
-        {
             keyUnlockedObject.SetActive(false);
-            Debug.Log("KeyUnlocked object deactivated");
-        }
 
-        // Reset text values
         if (pointsText != null) pointsText.text = "0";
         if (timeText != null) timeText.text = "00:00";
         if (coinsText != null) coinsText.text = "0";
         if (expText != null) expText.text = "0";
 
-        // Hide buttons
-        if (buttonContainer != null)
-            buttonContainer.SetActive(false);
-
-        // Hide game summary
-        if (gameSummaryParent != null)
-            gameSummaryParent.SetActive(false);
+        if (buttonContainer != null) buttonContainer.SetActive(false);
+        if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
     }
 
     private void DisableWinLoseObjects()
     {
-        // Disable win objects
         foreach (GameObject obj in objectsToEnableOnWin)
         {
-            if (obj != null && obj.activeSelf)
-            {
-                obj.SetActive(false);
-                Debug.Log($"Disabled win object: {obj.name}");
-            }
+            if (obj != null && obj.activeSelf) obj.SetActive(false);
         }
 
-        // Disable lose objects
         foreach (GameObject obj in objectsToEnableOnLose)
         {
-            if (obj != null && obj.activeSelf)
-            {
-                obj.SetActive(false);
-                Debug.Log($"Disabled lose object: {obj.name}");
-            }
+            if (obj != null && obj.activeSelf) obj.SetActive(false);
         }
     }
 
-    // NEW: Method to enable player control
     private void EnablePlayerControl()
     {
-        if (playerController != null)
-        {
-            playerController.enabled = true;
-            Debug.Log("ThirdPersonController enabled - Player can now move");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerController not found!");
-        }
+        if (playerController != null) playerController.enabled = true;
     }
 
-    private void ResetMinigames()
+    public void ResetMinigames()
     {
-        Debug.Log("=== RESETTING ALL MINIGAMES ===");
-
-        // Reset Grow Assessment
-        if (growAssessmentManager != null)
-        {
-            growAssessmentManager.EndGrowAssessment();
-            Debug.Log("Grow Assessment reset");
-        }
-
-        // Reset Glow Part and Towers
+        if (growAssessmentManager != null) growAssessmentManager.EndGrowAssessment();
         ResetGlowTowers();
+        ResetDayNightTransition();
 
-        // Reset Starting Sequence
-        if (startingSequenceManager != null)
-        {
-            startingSequenceManager.EnableAllControlsAndUI();
-            Debug.Log("Starting Sequence reset");
-        }
-
-        // Reset Torch Minigame
+        if (startingSequenceManager != null) startingSequenceManager.EnableAllControlsAndUI();
         ResetTorchMinigame();
 
-        // Reset objects to initial positions
+        AssessmentTrigger assessmentTrigger = FindObjectOfType<AssessmentTrigger>();
+        if (assessmentTrigger != null) assessmentTrigger.ForceResetForNewGame();
+
+        EndGameTrigger endGameTrigger = FindObjectOfType<EndGameTrigger>();
+        if (endGameTrigger != null) endGameTrigger.ResetEndTrigger();
+
         ResetObjectsToInitialState();
-
-        // Reset animators with one-time animations
         ResetOneTimeAnimations();
-
-        Debug.Log("=== ALL MINIGAMES RESET ===");
     }
 
-    // NEW: Method to reset Glow Towers with proper reset logic
     private void ResetGlowTowers()
     {
-        Debug.Log("=== RESETTING GLOW TOWERS ===");
-
-        // First, try to reset through the GlowPartManager
-        if (glowPartManager != null)
-        {
-            try
-            {
-                // Method 1: Try CompleteReset first
-                glowPartManager.CompleteReset();
-                Debug.Log("Glow Part Manager reset using CompleteReset method");
-            }
-            catch (System.Exception e1)
-            {
-                Debug.LogWarning($"CompleteReset failed: {e1.Message}. Trying ResetAllTowers...");
-
-                try
-                {
-                    // Method 2: Try ResetAllTowers
-                    glowPartManager.ResetAllTowers();
-                    Debug.Log("Glow Part Manager reset using ResetAllTowers method");
-                }
-                catch (System.Exception e2)
-                {
-                    Debug.LogWarning($"ResetAllTowers failed: {e2.Message}. Trying EndGlowPart...");
-
-                    try
-                    {
-                        // Method 3: Fallback to EndGlowPart
-                        glowPartManager.EndGlowPart();
-                        Debug.Log("Glow Part Manager reset using EndGlowPart");
-                    }
-                    catch (System.Exception e3)
-                    {
-                        Debug.LogError($"All reset methods failed: {e3.Message}");
-                    }
-                }
-            }
-        }
-        else
-        {
-            Debug.LogWarning("GlowPartManager not found in scene! Will reset towers individually.");
-        }
-
-        // Reset individual towers as backup
         GlowTower[] allTowers = FindObjectsOfType<GlowTower>();
-        Debug.Log($"Found {allTowers.Length} glow towers to reset");
-
         foreach (GlowTower tower in allTowers)
         {
-            if (tower != null)
-            {
-                try
-                {
-                    // Try ForceReset first
-                    tower.ForceReset();
-                    Debug.Log($"Tower {tower.gameObject.name} reset using ForceReset");
-                }
-                catch (System.Exception e1)
-                {
-                    Debug.LogWarning($"ForceReset failed for {tower.gameObject.name}: {e1.Message}. Trying ResetTower...");
-
-                    try
-                    {
-                        // Fallback to ResetTower
-                        tower.ResetTower();
-                        Debug.Log($"Tower {tower.gameObject.name} reset using ResetTower");
-                    }
-                    catch (System.Exception e2)
-                    {
-                        Debug.LogWarning($"ResetTower failed for {tower.gameObject.name}: {e2.Message}. Basic reset...");
-
-                        // Ultimate fallback: basic reset
-                        tower.SetEnergy(0f);
-                        tower.DeactivateTower();
-                        Debug.Log($"Tower {tower.gameObject.name} basic reset complete");
-                    }
-                }
-            }
+            if (tower != null) tower.ResetTower();
         }
 
-        Debug.Log($"Reset {allTowers.Length} glow towers");
+        if (glowPartManager != null)
+        {
+            System.Type type = glowPartManager.GetType();
+            var newGameReset = type.GetMethod("CompleteResetForNewGame");
+            if (newGameReset != null) newGameReset.Invoke(glowPartManager, null);
+        }
+
+        GlowPartTrigger[] glowTriggers = FindObjectsOfType<GlowPartTrigger>();
+        foreach (GlowPartTrigger trigger in glowTriggers)
+        {
+            if (trigger != null) trigger.ResetTrigger();
+        }
     }
 
-    // NEW: Method to reset animators with one-time animations
+    private void ResetDayNightTransition()
+    {
+        DayNightLightingTransition dayNight = FindObjectOfType<DayNightLightingTransition>();
+        if (dayNight != null)
+        {
+            System.Type type = dayNight.GetType();
+            var resetMethod = type.GetMethod("ResetTransition");
+            if (resetMethod != null) resetMethod.Invoke(dayNight, null);
+            else dayNight.SetToDay();
+        }
+    }
+
     private void ResetOneTimeAnimations()
     {
         foreach (Animator animator in animatorsToReset)
         {
             if (animator != null && animator.isActiveAndEnabled)
             {
-                // Reset to default state
                 animator.Play(defaultStateName, -1, 0f);
                 animator.Update(0f);
 
-                // Reset all parameters
                 foreach (AnimatorControllerParameter param in animator.parameters)
                 {
                     switch (param.type)
@@ -1005,247 +811,193 @@ public class GameEndManager : MonoBehaviour
                             break;
                     }
                 }
-
-                Debug.Log($"Reset animator: {animator.gameObject.name}");
             }
         }
     }
 
-    // NEW: Simplified method to reset Torch Minigame
     private void ResetTorchMinigame()
     {
         TorchMinigameManager torchManager = FindObjectOfType<TorchMinigameManager>();
         if (torchManager != null)
         {
-            // Check if TorchMinigameManager has CompleteMinigameReset method
             System.Type torchManagerType = typeof(TorchMinigameManager);
             var resetMethod = torchManagerType.GetMethod("CompleteMinigameReset");
-
-            if (resetMethod != null)
-            {
-                resetMethod.Invoke(torchManager, null);
-                Debug.Log("Torch Minigame reset using CompleteMinigameReset method");
-            }
-            else
-            {
-                // Fallback: use ResetMinigame method
-                var fallbackMethod = torchManagerType.GetMethod("ResetMinigame");
-                if (fallbackMethod != null)
-                {
-                    fallbackMethod.Invoke(torchManager, null);
-                    Debug.Log("Torch Minigame reset using ResetMinigame method");
-                }
-                else
-                {
-                    Debug.LogWarning("TorchMinigameManager doesn't have a reset method!");
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("No TorchMinigameManager found in scene.");
+            if (resetMethod != null) resetMethod.Invoke(torchManager, null);
         }
     }
 
     private void OnHomeClicked()
     {
-        Debug.Log("=== HOME BUTTON CLICKED ===");
+        if (!isCountingAnimationComplete) return;
 
-        // Call common button handler first to disable win/lose objects and enable player control
         OnButtonClicked();
-
-        // Play lobby music
         PlayLobbyMusic();
-
-        // Reset game end state (this includes switching camera instantly)
         ResetGameEndState();
-
-        // Reset minigames
         ResetMinigames();
 
-        // Teleport to lobby
         if (playerController != null && lobbyPoint != null)
         {
             playerController.transform.position = lobbyPoint.position;
             playerController.transform.rotation = lobbyPoint.rotation;
-            Debug.Log("Player teleported to lobby");
         }
 
-        // Enable UI Controls Canvas
+        if (playerController != null && !playerController.gameObject.activeSelf)
+            playerController.gameObject.SetActive(true);
+
         if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
-        {
             uiControlsCanvas.SetActive(true);
-            Debug.Log("Enabled UI Controls Canvas");
-        }
 
-        // Enable specific objects on Home button click
         EnableObjectsOnHomeButton();
 
-        // Update quest status if first time completion
         if (isFirstTimeCompletion && questManager != null)
         {
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
-                Debug.Log($"Completing quest: {questID}");
-                // Mark quest as completed
                 questManager.CompleteTask(questID, $"{questID}_task_1");
-                questManager.ClaimQuest(questID); // Also claim the quest rewards
+                questManager.ClaimQuest(questID);
             }
         }
 
-        Debug.Log("=== HOME BUTTON PROCESS COMPLETE ===");
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+    }
+
+    private IEnumerator RestoreCameraBlendAfterTeleport()
+    {
+        yield return null;
+        RestoreOriginalCameraBlend();
+    }
+
+    // FIXED: This method now ONLY changes the music clip, doesn't disable/create AudioSources
+    private void PlayLobbyMusic()
+    {
+        if (backgroundMusicSource == null)
+        {
+            Debug.LogWarning("BackgroundMusicSource is null. Cannot play lobby music.");
+            return;
+        }
+
+        if (lobbyMusicClip != null)
+        {
+            // Just change the clip, don't disable/enable the GameObject
+            backgroundMusicSource.Stop();
+            backgroundMusicSource.clip = lobbyMusicClip;
+            backgroundMusicSource.loop = true;
+            backgroundMusicSource.Play();
+
+            Debug.Log($"Changed to lobby music: {lobbyMusicClip.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Lobby music clip not assigned!");
+        }
     }
 
     private void OnRestartClicked()
     {
-        Debug.Log("=== RESTART BUTTON CLICKED ===");
+        if (!isCountingAnimationComplete) return;
 
-        // Call common button handler first to disable win/lose objects and enable player control
         OnButtonClicked();
-
-        // Play restart music
-        PlayRestartMusic();
-
-        // Reset game end state (this includes switching camera instantly)
         ResetGameEndState();
-
-        // Reset minigames
         ResetMinigames();
-
-        // TELEPORT PLAYER TO STARTING POINT
         TeleportPlayerToStartingPoint();
 
-        // Show Game Mechanics Board using the MechanicsBoardManager
-        if (mechanicsBoardManager != null)
-        {
-            mechanicsBoardManager.OpenMechanicsBoard();
-            Debug.Log("Opened Game Mechanics Board via MechanicsBoardManager");
-        }
-        else
-        {
-            Debug.LogWarning("MechanicsBoardManager not found!");
-        }
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = playerCameraPriority;
 
-        // Reset game manager (but don't start game yet - wait for Start button)
         if (gameManager != null)
+            gameManager.FullGameReset();
+
+        if (mechanicsBoardManager != null)
+            mechanicsBoardManager.OpenMechanicsBoard();
+
+        PlayRestartMusic();
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+    }
+
+    // FIXED: This method now ONLY changes the music clip
+    private void PlayRestartMusic()
+    {
+        if (backgroundMusicSource == null)
         {
-            gameManager.EndGame(); // Clean up current game
-            Debug.Log("Game cleaned up, ready for restart via Start button");
+            Debug.LogWarning("BackgroundMusicSource is null. Cannot play restart music.");
+            return;
         }
 
-        Debug.Log("=== RESTART BUTTON PROCESS COMPLETE ===");
+        if (restartMusicClip != null)
+        {
+            // Just change the clip, don't disable/enable the GameObject
+            backgroundMusicSource.Stop();
+            backgroundMusicSource.clip = restartMusicClip;
+            backgroundMusicSource.loop = false;
+            backgroundMusicSource.Play();
+
+            Debug.Log($"Changed to restart music: {restartMusicClip.name}");
+        }
     }
 
     private void OnNextClicked()
     {
-        Debug.Log("=== NEXT BUTTON CLICKED ===");
+        if (!isCountingAnimationComplete) return;
 
-        // Call common button handler first to disable win/lose objects and enable player control
         OnButtonClicked();
-
-        // Play lobby music
         PlayLobbyMusic();
-
-        // Reset game end state
         ResetGameEndState();
-
-        // Reset minigames
         ResetMinigames();
 
-        // Update quest status if first time completion
         if (isFirstTimeCompletion && questManager != null)
         {
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
-                Debug.Log($"Completing quest: {questID}");
-                // Mark quest as completed
                 questManager.CompleteTask(questID, $"{questID}_task_1");
-                questManager.ClaimQuest(questID); // Also claim the quest rewards
+                questManager.ClaimQuest(questID);
             }
         }
 
-        // For now, just go back to lobby (you can change this to load next level)
         if (playerController != null && lobbyPoint != null)
         {
             playerController.transform.position = lobbyPoint.position;
             playerController.transform.rotation = lobbyPoint.rotation;
-            Debug.Log("Player teleported to lobby");
         }
 
-        Debug.Log("=== NEXT BUTTON PROCESS COMPLETE ===");
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
     }
 
-    // Call this when player loses all hearts during gameplay
     public void HandleGameOver()
     {
-        Debug.Log("=== HANDLING GAME OVER ===");
-
-        // Stop the game first
         if (gameManager != null && gameManager.IsGameActive())
-        {
             gameManager.EndGame();
-        }
 
-        // Get current game state
         completionTime = gameManager.GetGameTimer();
         playerPoints = gameManager.GetCurrentScore();
-        remainingHearts = 0; // Player lost all hearts
-
-        Debug.Log($"Game Over - Time: {completionTime}, Points: {playerPoints}, Hearts: {remainingHearts}");
-
-        // Always 0 stars for game over
+        remainingHearts = 0;
         starsEarned = 0;
-
-        // Calculate rewards (0 stars = 0 rewards)
         CalculateRewards();
-
-        // Show game end screen with losing background
         ShowGameEndScreen(false);
     }
 
-    // Call this when player completes the level
     public void HandleLevelComplete()
     {
-        Debug.Log("=== HANDLING LEVEL COMPLETE ===");
-
-        // Stop the game first
         if (gameManager != null && gameManager.IsGameActive())
-        {
             gameManager.EndGame();
-        }
 
-        // Get current game state
         completionTime = gameManager.GetGameTimer();
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
-
-        Debug.Log($"Level Complete - Time: {completionTime}, Points: {playerPoints}, Hearts: {remainingHearts}");
-
-        // Calculate star rating
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-
-        // Show game end screen with winning background
         ShowGameEndScreen(true);
     }
 
-    // Helper methods to call from GoGrowGlowGameManager
-    public void TriggerLevelComplete()
-    {
-        HandleLevelComplete();
-    }
+    public void TriggerLevelComplete() => HandleLevelComplete();
+    public void TriggerGameOver() => HandleGameOver();
 
-    public void TriggerGameOver()
-    {
-        HandleGameOver();
-    }
-
+    // FIXED: This method now ONLY changes the music clip
     private void HandleBackgroundMusic(bool isWin)
     {
         if (backgroundMusicSource == null)
         {
-            Debug.LogWarning("Background Music Source not assigned!");
+            Debug.LogWarning("Background music source is null. Skipping music change.");
             return;
         }
 
@@ -1253,75 +1005,75 @@ public class GameEndManager : MonoBehaviour
 
         if (musicToPlay != null)
         {
+            // Just change the clip, don't disable/enable the GameObject
+            backgroundMusicSource.Stop();
             backgroundMusicSource.clip = musicToPlay;
             backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
-            Debug.Log($"Playing {(isWin ? "win" : "lose")} music: {musicToPlay.name}");
+
+            Debug.Log($"Changed background music to: {(isWin ? "WIN" : "LOSE")} music");
         }
         else
         {
-            Debug.LogWarning($"{(isWin ? "Win" : "Lose")} music clip not assigned!");
+            Debug.LogWarning($"No {(isWin ? "win" : "lose")} music clip assigned!");
         }
     }
 
-    private void PlayRestartMusic()
+    public void ShowGameEndAfterKingTimeline()
     {
-        if (backgroundMusicSource != null && restartMusicClip != null)
+        HideStarsWhenShowingSummary();
+        DisableObjectsOnGameEnd();
+        SwitchToGameEndCameraWithCut();
+        TeleportPlayerToResultPoint();
+
+        if (GoGrowGlowGameManager.Instance != null)
         {
-            backgroundMusicSource.clip = restartMusicClip;
-            backgroundMusicSource.loop = false; // Usually restart music doesn't loop
-            backgroundMusicSource.Play();
-            Debug.Log("Playing restart music");
+            completionTime = GoGrowGlowGameManager.Instance.GetGameTimer();
+            playerPoints = GoGrowGlowGameManager.Instance.GetCurrentScore();
+            remainingHearts = Mathf.CeilToInt(GoGrowGlowGameManager.Instance.GetCurrentLifeAmount());
         }
+
+        starsEarned = CalculateStarRating(remainingHearts, completionTime);
+        CalculateRewards();
+
+        if (resultBackground != null && winBackground != null)
+            resultBackground.sprite = winBackground;
+
+        HandleCharacterAnimation(true, starsEarned);
+        HandleBackgroundMusic(true);
+        HandleWin();
+
+        if (gameSummaryParent != null)
+            gameSummaryParent.SetActive(true);
+
+        isCountingAnimationComplete = false;
+        StartCoroutine(GameEndSequence());
     }
 
-    private void PlayLobbyMusic()
+    public Transform GetResultSpawnPoint() => resultCharacterSpawnPoint;
+
+    public void CompleteQuestAfterKingTimeline(string questID)
     {
-        if (backgroundMusicSource != null && lobbyMusicClip != null)
+        if (QuestManager.Instance != null)
         {
-            backgroundMusicSource.clip = lobbyMusicClip;
-            backgroundMusicSource.loop = true;
-            backgroundMusicSource.Play();
-            Debug.Log("Playing lobby music");
+            Quest quest = QuestManager.Instance.GetQuest(questID);
+            if (quest != null && (quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress))
+            {
+                foreach (var task in quest.tasks)
+                {
+                    if (!task.isCompleted)
+                        QuestManager.Instance.CompleteTask(questID, task.taskID);
+                }
+                QuestManager.Instance.ClaimQuest(questID);
+                HandleKeyUnlockedObject(true);
+            }
         }
     }
 
-    // Public getters for external access
     public int GetStarsEarned() => starsEarned;
     public int GetTotalCoins() => totalCoins;
     public int GetTotalExp() => totalExp;
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
-
-    // Helper method to test from inspector
-    [ContextMenu("Test Win")]
-    public void TestWin()
-    {
-        // Simulate win conditions
-        if (gameManager != null)
-        {
-            // Set test values
-            gameManager.AddPoints(1000);
-            gameManager.SetEnergy(100);
-
-            // Show win screen
-            HandleLevelComplete();
-        }
-    }
-
-    [ContextMenu("Test Lose")]
-    public void TestLose()
-    {
-        // Simulate lose conditions
-        if (gameManager != null)
-        {
-            // Set test values
-            gameManager.AddPoints(500);
-            gameManager.SetEnergy(0);
-
-            // Show lose screen
-            HandleGameOver();
-        }
-    }
 }

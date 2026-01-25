@@ -121,7 +121,6 @@ public class GlowPartManager : MonoBehaviour
     private Coroutine lightsaberCoroutine;
     private bool hasCompleted = false;
 
-    // NEW: Store initial tower states
     private Dictionary<GlowTower, float> initialTowerEnergies = new Dictionary<GlowTower, float>();
     private Dictionary<GlowTower, bool> initialTowerStates = new Dictionary<GlowTower, bool>();
 
@@ -175,19 +174,18 @@ public class GlowPartManager : MonoBehaviour
         InitializeObjectStates();
         InitializeTracker();
         InitializeEnergySliderIndicator();
+
         DisableGlowPart();
         UpdateTrackerText();
 
         SetupTransferButton();
         SetupProximityDetectors();
 
-        // NEW: Store initial tower states
         StoreInitialTowerStates();
 
         DisableObjectsOnStart();
     }
 
-    // NEW: Method to store initial tower states
     private void StoreInitialTowerStates()
     {
         initialTowerEnergies.Clear();
@@ -197,10 +195,9 @@ public class GlowPartManager : MonoBehaviour
         {
             if (tower != null)
             {
-                initialTowerEnergies[tower] = 0f; // Towers start with 0 energy
-                initialTowerStates[tower] = false; // Towers start as not active
+                initialTowerEnergies[tower] = 0f;
+                initialTowerStates[tower] = false;
 
-                // Ensure tower is at initial state
                 tower.SetEnergy(0f);
                 tower.ResetTower();
             }
@@ -316,6 +313,11 @@ public class GlowPartManager : MonoBehaviour
 
     private void SetupProximityDetectors()
     {
+        if (proximityDetectors == null)
+            proximityDetectors = new List<TowerProximityDetector>();
+        else
+            proximityDetectors.Clear();
+
         foreach (GlowTower tower in glowTowers)
         {
             if (tower != null)
@@ -326,12 +328,21 @@ public class GlowPartManager : MonoBehaviour
                 if (detector == null)
                     detector = tower.gameObject.AddComponent<TowerProximityDetector>();
 
+                if (detector.glowTower == null)
+                    detector.glowTower = tower;
+
+                detector.OnPlayerEnterRange -= OnPlayerEnterTowerRange;
+                detector.OnPlayerExitRange -= OnPlayerExitTowerRange;
+
                 detector.OnPlayerEnterRange += OnPlayerEnterTowerRange;
                 detector.OnPlayerExitRange += OnPlayerExitTowerRange;
 
-                proximityDetectors.Add(detector);
+                if (!proximityDetectors.Contains(detector))
+                    proximityDetectors.Add(detector);
             }
         }
+
+        Debug.Log($"GlowPartManager: Setup {proximityDetectors.Count} proximity detectors");
     }
 
     private void Update()
@@ -505,7 +516,7 @@ public class GlowPartManager : MonoBehaviour
 
     private void OnPlayerLookingAtTower()
     {
-        Debug.Log("Player is now looking at the tower!");
+        Debug.Log("GlowPartManager: Player is now looking at the tower!");
         StartLightsaberAndEffects();
     }
 
@@ -526,7 +537,6 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // NEW: Method to disable objects that should be inactive when glow part starts
     private void DisableObjectsOnStart()
     {
         foreach (GameObject obj in objectsToEnableOnStart)
@@ -542,7 +552,7 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isGlowPartActive || tower.IsFullyLit()) return;
 
-        Debug.Log($"Player entered range of tower: {tower.gameObject.name}");
+        Debug.Log($"GlowPartManager: Player entered range of tower: {tower.gameObject.name}");
         currentActiveTower = tower;
 
         if (transferButton != null)
@@ -561,7 +571,7 @@ public class GlowPartManager : MonoBehaviour
 
         if (currentActiveTower == tower)
         {
-            Debug.Log($"Player exited range of current tower: {tower.gameObject.name}");
+            Debug.Log($"GlowPartManager: Player exited range of current tower: {tower.gameObject.name}");
 
             if (isTransferring || isRotatingToTower)
                 StopTransfer();
@@ -586,7 +596,7 @@ public class GlowPartManager : MonoBehaviour
         {
             wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
             GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
-            Debug.Log("Energy decrease paused for glow part");
+            Debug.Log("GlowPartManager: Energy decrease paused for glow part");
         }
 
         if (glowCanvas != null)
@@ -606,23 +616,21 @@ public class GlowPartManager : MonoBehaviour
         UpdateLitTowersCount();
         isGlowPartActive = true;
 
-        // NEW: Enable objects when glow part starts
         EnableObjectsOnGlowPartStart();
 
         if (GoGrowGlowGameManager.Instance != null)
             GoGrowGlowGameManager.Instance.StartOneLifeCheck();
     }
 
-    // NEW: Method to enable objects when glow part starts
     private void EnableObjectsOnGlowPartStart()
     {
-        Debug.Log($"Enabling {objectsToEnableOnStart.Count} objects on glow part start");
+        Debug.Log($"GlowPartManager: Enabling {objectsToEnableOnStart.Count} objects on glow part start");
         foreach (GameObject obj in objectsToEnableOnStart)
         {
             if (obj != null)
             {
                 obj.SetActive(true);
-                Debug.Log($"Enabled object: {obj.name}");
+                Debug.Log($"GlowPartManager: Enabled object: {obj.name}");
             }
         }
     }
@@ -651,7 +659,6 @@ public class GlowPartManager : MonoBehaviour
         if (transferProgressSlider != null)
             transferProgressSlider.gameObject.SetActive(false);
 
-        // NEW: Disable objects when glow part ends
         DisableObjectsOnGlowPartEnd();
 
         if (GoGrowGlowGameManager.Instance != null &&
@@ -659,7 +666,7 @@ public class GlowPartManager : MonoBehaviour
             GoGrowGlowGameManager.Instance.foodSpawner != null)
         {
             GoGrowGlowGameManager.Instance.foodSpawner.HideAllFood();
-            Debug.Log("All food hidden after glow part completion");
+            Debug.Log("GlowPartManager: All food hidden after glow part completion");
         }
 
         isGlowPartActive = false;
@@ -669,11 +676,11 @@ public class GlowPartManager : MonoBehaviour
             if (!wasEnergyPaused && !hasCompleted)
             {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
-                Debug.Log("Energy decrease resumed (wasn't paused before)");
+                Debug.Log("GlowPartManager: Energy decrease resumed (wasn't paused before)");
             }
             else if (hasCompleted)
             {
-                Debug.Log("Glow part completed - energy decrease remains paused");
+                Debug.Log("GlowPartManager: Glow part completed - energy decrease remains paused");
             }
 
             GoGrowGlowGameManager.Instance.StopOneLifeCheck();
@@ -685,26 +692,25 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // NEW: Method to disable objects when glow part ends
     private void DisableObjectsOnGlowPartEnd()
     {
-        Debug.Log($"Disabling {objectsToDisableOnEnd.Count} objects on glow part end");
+        Debug.Log($"GlowPartManager: Disabling {objectsToDisableOnEnd.Count} objects on glow part end");
         foreach (GameObject obj in objectsToDisableOnEnd)
         {
             if (obj != null)
             {
                 obj.SetActive(false);
-                Debug.Log($"Disabled object: {obj.name}");
+                Debug.Log($"GlowPartManager: Disabled object: {obj.name}");
             }
         }
     }
 
     private IEnumerator PlayTimelineAfterDelay()
     {
-        Debug.Log($"Waiting {timelineDelay} seconds before playing timeline...");
+        Debug.Log($"GlowPartManager: Waiting {timelineDelay} seconds before playing timeline...");
         yield return new WaitForSeconds(timelineDelay);
 
-        Debug.Log("Playing timeline after glow part completion...");
+        Debug.Log("GlowPartManager: Playing timeline after glow part completion...");
 
         bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
 
@@ -727,11 +733,11 @@ public class GlowPartManager : MonoBehaviour
         }
         else if (playableDirector == null)
         {
-            Debug.LogWarning("Playable Director not assigned.");
+            Debug.LogWarning("GlowPartManager: Playable Director not assigned.");
         }
         else if (timelineToPlay == null)
         {
-            Debug.LogWarning("Timeline asset not assigned.");
+            Debug.LogWarning("GlowPartManager: Timeline asset not assigned.");
         }
     }
 
@@ -739,7 +745,7 @@ public class GlowPartManager : MonoBehaviour
     {
         if (director != playableDirector) return;
 
-        Debug.Log($"Glow Part: Timeline stopped.");
+        Debug.Log($"GlowPartManager: Timeline stopped.");
 
         if (playableDirector != null)
         {
@@ -764,11 +770,11 @@ public class GlowPartManager : MonoBehaviour
             if (!wasEnergyPaused && !hasCompleted)
             {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
-                Debug.Log("Resuming energy decrease after timeline");
+                Debug.Log("GlowPartManager: Resuming energy decrease after timeline");
             }
             else
             {
-                Debug.Log("Keeping energy decrease paused (glow part completed)");
+                Debug.Log("GlowPartManager: Keeping energy decrease paused (glow part completed)");
             }
         }
 
@@ -794,19 +800,18 @@ public class GlowPartManager : MonoBehaviour
 
         isGlowPartActive = false;
 
-        // NEW: Also disable end objects when glow part is disabled
         DisableObjectsOnGlowPartEnd();
     }
 
     private void HandleButtonPressed()
     {
-        Debug.Log("Transfer button PRESSED");
+        Debug.Log("GlowPartManager: Transfer button PRESSED");
         StartRotationToTower();
     }
 
     private void HandleButtonReleased()
     {
-        Debug.Log("Transfer button RELEASED");
+        Debug.Log("GlowPartManager: Transfer button RELEASED");
         StopTransfer();
     }
 
@@ -822,7 +827,7 @@ public class GlowPartManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Starting rotation to tower: {currentActiveTower.gameObject.name}");
+        Debug.Log($"GlowPartManager: Starting rotation to tower: {currentActiveTower.gameObject.name}");
 
         isRotatingToTower = true;
         isLookingAtTower = false;
@@ -848,7 +853,7 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isRotatingToTower || isTransferring) return;
 
-        Debug.Log("Starting lightsaber and energy transfer");
+        Debug.Log("GlowPartManager: Starting lightsaber and energy transfer");
 
         isTransferring = true;
 
@@ -870,7 +875,7 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isRotatingToTower && !isTransferring) return;
 
-        Debug.Log("Stopping energy transfer and rotation");
+        Debug.Log("GlowPartManager: Stopping energy transfer and rotation");
 
         StopLoopAudio();
 
@@ -894,12 +899,6 @@ public class GlowPartManager : MonoBehaviour
 
         SetTowerFocusCameraPriority(10);
         HideEnergySliderIndicator();
-
-        if (transferCoroutine != null)
-        {
-            StopCoroutine(transferCoroutine);
-            transferCoroutine = null;
-        }
     }
 
     private void SetTowerFocusCameraPriority(int priority)
@@ -1041,7 +1040,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator TransferEnergyRoutine()
     {
-        Debug.Log("Transfer Energy Routine Started");
+        Debug.Log("GlowPartManager: Transfer Energy Routine Started");
 
         while (isTransferring && currentActiveTower != null &&
                !currentActiveTower.IsFullyLit() &&
@@ -1051,7 +1050,7 @@ public class GlowPartManager : MonoBehaviour
 
             if (playerEnergy <= 0f)
             {
-                Debug.Log("Player has no energy to transfer");
+                Debug.Log("GlowPartManager: Player has no energy to transfer");
                 StopTransfer();
                 yield break;
             }
@@ -1081,12 +1080,12 @@ public class GlowPartManager : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log("Transfer Energy Routine Ended");
+        Debug.Log("GlowPartManager: Transfer Energy Routine Ended");
     }
 
     private void OnTowerFullyLit(GlowTower tower)
     {
-        Debug.Log($"Tower {tower.gameObject.name} is fully lit!");
+        Debug.Log($"GlowPartManager: Tower {tower.gameObject.name} is fully lit!");
 
         if (GoGrowGlowGameManager.Instance != null)
         {
@@ -1322,6 +1321,21 @@ public class GlowPartManager : MonoBehaviour
         {
             ResumeGameState();
         }
+
+        if (proximityDetectors != null)
+        {
+            foreach (TowerProximityDetector detector in proximityDetectors)
+            {
+                if (detector != null)
+                {
+                    detector.OnPlayerEnterRange -= OnPlayerEnterTowerRange;
+                    detector.OnPlayerExitRange -= OnPlayerExitTowerRange;
+                }
+            }
+            proximityDetectors.Clear();
+        }
+
+        StopAllCoroutines();
     }
 
     public void RegisterTower(GlowTower tower)
@@ -1332,25 +1346,20 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // NEW: COMPLETE RESET METHOD
     public void CompleteReset()
     {
         Debug.Log("=== COMPLETE RESET OF GLOW PART MANAGER ===");
 
-        // Stop all ongoing processes
         StopAllCoroutines();
 
-        // Reset lightsaber
         if (lightsaber != null)
         {
             lightsaber.EndPos = Vector3.zero;
             lightsaber.LineWidth = 0f;
         }
 
-        // Reset all towers to initial state
         ResetAllTowers();
 
-        // Reset manager state
         hasCompleted = false;
         litTowersCount = 0;
         isGlowPartActive = false;
@@ -1360,16 +1369,12 @@ public class GlowPartManager : MonoBehaviour
         isLightsaberActive = false;
         currentActiveTower = null;
 
-        // Stop audio
         StopLoopAudio();
 
-        // Hide all UI
         DisableGlowPart();
 
-        // Reset tracker text
         UpdateTrackerText();
 
-        // Reset button states
         if (transferButton != null)
             transferButton.gameObject.SetActive(false);
 
@@ -1379,13 +1384,11 @@ public class GlowPartManager : MonoBehaviour
         if (energySliderIndicator != null)
             energySliderIndicator.SetActive(false);
 
-        // Reset character animation
         if (characterAnimator != null)
         {
             characterAnimator.SetBool(transferEnergyParam, false);
         }
 
-        // Resume game state if paused
         if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
         {
             ResumeGameState();
@@ -1394,31 +1397,25 @@ public class GlowPartManager : MonoBehaviour
         Debug.Log("Glow Part Manager completely reset - All towers back to default state");
     }
 
-    // NEW: Method to reset all towers
     public void ResetAllTowers()
     {
-        Debug.Log($"Resetting {glowTowers.Count} glow towers...");
+        Debug.Log($"GlowPartManager: Resetting {glowTowers.Count} glow towers...");
 
         foreach (GlowTower tower in glowTowers)
         {
             if (tower != null)
             {
-                // Reset tower to initial state
                 tower.SetEnergy(0f);
                 tower.ResetTower();
-
-                // Deactivate the tower
                 tower.DeactivateTower();
 
-                Debug.Log($"Reset tower: {tower.gameObject.name} - Energy: {tower.GetCurrentEnergy()}");
+                Debug.Log($"GlowPartManager: Reset tower: {tower.gameObject.name} - Energy: {tower.GetCurrentEnergy()}");
             }
         }
 
-        // Update lit towers count
         UpdateLitTowersCount();
     }
 
-    // NEW: Method to reset a specific tower
     public void ResetTower(GlowTower tower)
     {
         if (tower != null)
@@ -1427,11 +1424,10 @@ public class GlowPartManager : MonoBehaviour
             tower.ResetTower();
             tower.DeactivateTower();
 
-            Debug.Log($"Individual tower reset: {tower.gameObject.name}");
+            Debug.Log($"GlowPartManager: Individual tower reset: {tower.gameObject.name}");
         }
     }
 
-    // NEW: Method to check if all towers are at initial state
     public bool AreAllTowersReset()
     {
         foreach (GlowTower tower in glowTowers)
@@ -1448,6 +1444,80 @@ public class GlowPartManager : MonoBehaviour
             }
         }
         return true;
+    }
+
+    public void ResetForNewGame()
+    {
+        Debug.Log("=== RESETTING GLOW PART FOR NEW GAME ===");
+
+        CompleteReset();
+
+        if (trackerText != null)
+            trackerText.text = string.Format(trackerFormat, 0, glowTowers.Count);
+
+        if (transferButton != null)
+            transferButton.gameObject.SetActive(false);
+
+        Debug.Log("Glow Part ready for new game");
+    }
+
+    public void CompleteResetForNewGame()
+    {
+        Debug.Log("=== COMPLETE RESET FOR NEW GAME ===");
+
+        CompleteReset();
+
+        if (playableDirector != null)
+        {
+            playableDirector.Stop();
+            playableDirector.time = 0;
+            playableDirector.Evaluate();
+        }
+
+        if (proximityDetectors != null)
+        {
+            foreach (TowerProximityDetector detector in proximityDetectors)
+            {
+                if (detector != null)
+                {
+                    detector.ResetDetector();
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("GlowPartManager: proximityDetectors list is null");
+        }
+
+        if (buttonPressHandler != null)
+        {
+            buttonPressHandler.enabled = true;
+            System.Type type = buttonPressHandler.GetType();
+            var resetMethod = type.GetMethod("OnDisable", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (resetMethod != null)
+            {
+                resetMethod.Invoke(buttonPressHandler, null);
+            }
+        }
+
+        StopAllCoroutines();
+
+        if (lightsaber != null)
+        {
+            lightsaber.EndPos = Vector3.zero;
+            lightsaber.LineWidth = 0f;
+        }
+
+        if (transferAudioSource != null && transferAudioSource.isPlaying)
+            transferAudioSource.Stop();
+
+        if (fillingAudioSource != null && fillingAudioSource.isPlaying)
+            fillingAudioSource.Stop();
+
+        if (audioSource != null && audioSource.isPlaying)
+            audioSource.Stop();
+
+        Debug.Log("Glow Part Manager completely reset for new game");
     }
 
     public bool IsGlowPartActive() => isGlowPartActive;
