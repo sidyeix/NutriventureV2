@@ -30,7 +30,7 @@ MonoBehaviour:
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
-    animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
+    animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
     currentLife: 120
     armorPercent: 25
@@ -282,7 +282,7 @@ MonoBehaviour:
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 1545884430150599015, guid: 4a61aa487d5cf1644a71cc35c23f0f22, type: 3}
-    animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
+    animatorController: {fileID: 9100000, guid: 407649418f9798f4bb04cb92e3d2eb86, type: 2}
     baseLife: 120
     currentLife: 120
     armorPercent: 20
@@ -343,7 +343,7 @@ MonoBehaviour:
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
-    animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
+    animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
     currentLife: 120
     armorPercent: 20
@@ -405,7 +405,7 @@ MonoBehaviour:
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 5545957314174723285, guid: cf46ddbcd33ac4544a75969cb9acee8e, type: 3}
-    animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
+    animatorController: {fileID: 9100000, guid: 2c4b5c08b462af14db3f0fd170d598bf, type: 2}
     baseLife: 120
     currentLife: 120
     armorPercent: 15
@@ -465,7 +465,7 @@ MonoBehaviour:
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 1440148696383731439, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
-    animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
+    animatorController: {fileID: 9100000, guid: ea9070045de99a4499761ccb9ab8419f, type: 2}
     baseLife: 120
     currentLife: 120
     armorPercent: 15
@@ -590,8 +590,8 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
-    modelPrefab: {fileID: 2931095760934502716, guid: f7f927a7861dde347b58ca1add59efd4, type: 3}
-    animatorController: {fileID: 9100000, guid: 462826e67baf7fe40b34fd0239a13fce, type: 2}
+    modelPrefab: {fileID: 5268653089127011796, guid: 5290cb8080660db409317e782cce03e8, type: 3}
+    animatorController: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
     baseLife: 160
     currentLife: 160
     armorPercent: 20
@@ -899,8 +899,8 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
-    modelPrefab: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
-    animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
+    modelPrefab: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
+    animatorController: {fileID: 9100000, guid: 1d621b960f8110d43b81403c8c87affc, type: 2}
     baseLife: 200
     currentLife: 200
     armorPercent: 25

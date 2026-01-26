@@ -44,7 +44,6 @@ GameObject:
   m_Component:
   - component: {fileID: 212858735570210138}
   - component: {fileID: 1397984337604658676}
-  - component: {fileID: -2785587790389555226}
   - component: {fileID: 9096977697161541728}
   m_Layer: 0
   m_Name: Calcium
@@ -92,22 +91,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &-2785587790389555226
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1790790307989994943}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb22f82390503fa4788ce87807bd194c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnerlingAnimationManager
-  ingredientDatabase: {fileID: 11400000, guid: d70f73ee91d427e47b1e44293813d4e4, type: 2}
-  animationConfig: {fileID: 11400000, guid: c84b783f20fd48b43a88d5f8846372ba, type: 2}
-  enerlingName: Calcium
-  animator: {fileID: 0}
 --- !u!114 &9096977697161541728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -468,7 +451,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 161766660727748596, guid: 05ce920d629922a4eb4795ef7494ce5c, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6928458153528979022, guid: 05ce920d629922a4eb4795ef7494ce5c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -571,7 +554,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3156866507962234106, guid: 645ebd7cef59b7b40b27c29bf3e99cf2, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5135655739932955482, guid: 645ebd7cef59b7b40b27c29bf3e99cf2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -653,7 +636,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2060900179291159282, guid: ca6705a3f9070d14d819d179493bcfa0, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2145314521902459719, guid: ca6705a3f9070d14d819d179493bcfa0, type: 3}
       propertyPath: m_LocalPosition.x
