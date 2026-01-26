@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class DamageObject : MonoBehaviour
 {
@@ -6,6 +7,15 @@ public class DamageObject : MonoBehaviour
     public float damageAmount = 1f;
     public bool respawnPlayer = true;
     public bool destroyOnContact = false;
+
+    [Header("Damage Type")]
+    public bool reduceEnergyInstead = false; // Check this to reduce energy instead of life
+    public float energyReductionAmount = 20f; // How much energy to reduce
+
+    [Header("Damage Panel Settings")]
+    [SerializeField] private float panelDisplayTime = 1f;
+    [SerializeField] private bool useCustomDisplayTime = false;
+    [SerializeField] private GameObject damagePanel; // Drag your UI damage panel here
 
     [Header("Knockback Settings")]
     public bool applyKnockback = true;
@@ -17,6 +27,15 @@ public class DamageObject : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip damageSound;
+
+    void Start()
+    {
+        // Hide panel at start if assigned
+        if (damagePanel != null)
+        {
+            damagePanel.SetActive(false);
+        }
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -38,8 +57,11 @@ public class DamageObject : MonoBehaviour
 
     private void ApplyDamage(Transform playerTransform = null)
     {
-        // 1. FIRST - SHOW THE DAMAGE PANEL
-        ShowDamagePanel();
+        // 1. Show damage panel if assigned
+        if (damagePanel != null)
+        {
+            StartCoroutine(ShowDamagePanel());
+        }
 
         // 2. Check if GameManager exists
         if (GoGrowGlowGameManager.Instance == null)
@@ -70,13 +92,24 @@ public class DamageObject : MonoBehaviour
         }
 
         // 5. Apply damage through GameManager
-        if (respawnPlayer && damageAmount >= 1f)
+        if (reduceEnergyInstead)
         {
-            GoGrowGlowGameManager.Instance.LoseLife();
+            // Reduce energy instead of life
+            GoGrowGlowGameManager.Instance.RemoveEnergy(energyReductionAmount);
+            Debug.Log($"Energy reduced by: {energyReductionAmount}");
         }
         else
         {
-            GoGrowGlowGameManager.Instance.LoseLifeAmount(damageAmount, false);
+            // Apply life damage
+            if (respawnPlayer && damageAmount >= 1f)
+            {
+                GoGrowGlowGameManager.Instance.LoseLife();
+            }
+            else
+            {
+                GoGrowGlowGameManager.Instance.LoseLifeAmount(damageAmount, false);
+            }
+            Debug.Log($"Life damage applied: {damageAmount}");
         }
 
         // 6. Visual effect
@@ -98,30 +131,28 @@ public class DamageObject : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
-        Debug.Log($"Damage applied: {damageAmount}");
     }
 
-    private void ShowDamagePanel()
+    private IEnumerator ShowDamagePanel()
     {
-        if (DamagePanelController.Instance != null)
-        {
-            DamagePanelController.Instance.ShowDamagePanel();
-        }
-        else
-        {
-            Debug.LogError("DamagePanelController not found! Make sure the script is attached to your damage panel UI.");
+        // Show the panel
+        damagePanel.SetActive(true);
 
-            // Try to find it anyway as a fallback
-            DamagePanelController panelController = FindObjectOfType<DamagePanelController>();
-            if (panelController != null)
-            {
-                panelController.ShowDamagePanel();
-            }
-            else
-            {
-                Debug.LogError("Could not find DamagePanelController in the scene!");
-            }
+        // Wait for display time
+        float displayTime = useCustomDisplayTime ? panelDisplayTime : 1f;
+        yield return new WaitForSeconds(displayTime);
+
+        // Hide the panel
+        damagePanel.SetActive(false);
+    }
+
+    // Public method to test the panel
+    public void TestPanel()
+    {
+        if (damagePanel != null)
+        {
+            StartCoroutine(ShowDamagePanel());
+            Debug.Log($"Testing damage panel for {panelDisplayTime} seconds");
         }
     }
 }

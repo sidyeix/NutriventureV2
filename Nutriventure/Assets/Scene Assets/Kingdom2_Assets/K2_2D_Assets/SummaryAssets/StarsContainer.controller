@@ -9,7 +9,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 6
-    m_ConditionEvent: star
+    m_ConditionEvent: Stars
     m_EventTreshold: 1
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 1842189435979340675}
@@ -117,7 +117,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 6
-    m_ConditionEvent: star
+    m_ConditionEvent: Stars
     m_EventTreshold: 2
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4146710172544039958}
@@ -171,7 +171,7 @@ AnimatorController:
   m_Name: StarsContainer
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: star
+  - m_Name: Stars
     m_Type: 3
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -225,7 +225,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 6
-    m_ConditionEvent: star
+    m_ConditionEvent: Stars
     m_EventTreshold: 3
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4507490634079747114}

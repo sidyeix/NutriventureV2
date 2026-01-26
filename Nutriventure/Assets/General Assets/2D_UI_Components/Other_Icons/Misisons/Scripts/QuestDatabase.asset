@@ -19,8 +19,8 @@ MonoBehaviour:
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
     - questID: 0001
-      questName: Sample 1
-      description: Buy one character and equip it using the "Curtains"
+      questName: Go to Nutri Kingdom
+      description: Since the energling began to
       longDescription: You need to follow the instruction to get the
       category: 1
       questIcon: {fileID: 0}
@@ -41,7 +41,7 @@ MonoBehaviour:
         amount: 203
         type: 1
       timelineAsset: {fileID: 0}
-      status: 2
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Nutri Kingdom
     kingdomName: Nutri Kingdom

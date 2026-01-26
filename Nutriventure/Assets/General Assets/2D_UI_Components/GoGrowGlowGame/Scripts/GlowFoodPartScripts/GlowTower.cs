@@ -47,14 +47,24 @@ public class GlowTower : MonoBehaviour
     // Store original scales for each text
     private Dictionary<TMP_Text, Vector3> originalTextScales = new Dictionary<TMP_Text, Vector3>();
 
+    // NEW: Store initial animation state
+    private AnimatorStateInfo initialAnimatorState;
+
     private void Start()
     {
         currentEnergy = Mathf.Clamp(initialEnergy, 0f, maxEnergy);
 
         if (towerAnimator != null)
         {
+            // Store initial animator state
+            initialAnimatorState = towerAnimator.GetCurrentAnimatorStateInfo(0);
+
+            // Reset animator parameters
             towerAnimator.SetBool(isLightingParam, false);
             towerAnimator.SetBool(isLightedParam, false);
+
+            // Play default state
+            towerAnimator.Play("Default", -1, 0f);
         }
 
         if (lightingEffect != null) lightingEffect.SetActive(false);
@@ -132,6 +142,8 @@ public class GlowTower : MonoBehaviour
             StopCoroutine(updateTextCoroutine);
             updateTextCoroutine = null;
         }
+
+        Debug.Log($"Tower {gameObject.name} deactivated");
     }
 
     public void AddEnergy(float amount)
@@ -352,29 +364,51 @@ public class GlowTower : MonoBehaviour
             UpdateEnergyTextIndicators();
     }
 
+    // NEW: COMPLETE RESET METHOD
     public void ResetTower()
     {
+        Debug.Log($"Resetting tower: {gameObject.name}");
+
+        // Reset energy
         currentEnergy = 0f;
         isFullyLit = false;
         isLighting = false;
+        isActive = false;
 
+        // Stop all coroutines
         if (animationSequenceCoroutine != null)
         {
             StopCoroutine(animationSequenceCoroutine);
             animationSequenceCoroutine = null;
         }
 
+        if (updateTextCoroutine != null)
+        {
+            StopCoroutine(updateTextCoroutine);
+            updateTextCoroutine = null;
+        }
+
+        // Reset animator to default state
         if (towerAnimator != null)
         {
             towerAnimator.SetBool(isLightingParam, false);
             towerAnimator.SetBool(isLightedParam, false);
+
+            // Play default state to reset animations
+            towerAnimator.Play("Default", -1, 0f);
+            towerAnimator.Update(0f);
         }
 
+        // Deactivate visual effects
         if (lightingEffect != null) lightingEffect.SetActive(false);
         if (fullyLitEffect != null) fullyLitEffect.SetActive(false);
-        if (rangeIndicator != null && isActive) rangeIndicator.SetActive(true);
+        if (rangeIndicator != null) rangeIndicator.SetActive(false);
 
+        // Reset text indicators
+        ResetTextScales();
         UpdateEnergyTextIndicators();
+
+        Debug.Log($"Tower {gameObject.name} reset complete - Energy: {currentEnergy}, FullyLit: {isFullyLit}, Lighting: {isLighting}");
     }
 
     private void ResetTextScales()
@@ -386,6 +420,13 @@ public class GlowTower : MonoBehaviour
                 kvp.Key.transform.localScale = kvp.Value;
             }
         }
+    }
+
+    // NEW: Force reset method for external calls
+    public void ForceReset()
+    {
+        ResetTower();
+        DeactivateTower();
     }
 
     public void AddTextIndicator(TMP_Text textIndicator)
