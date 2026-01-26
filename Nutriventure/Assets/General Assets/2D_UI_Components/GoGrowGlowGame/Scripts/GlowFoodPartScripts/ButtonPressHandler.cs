@@ -68,6 +68,19 @@ public class ButtonPressHandler : MonoBehaviour, IPointerDownHandler, IPointerUp
         }
     }
 
+    public void ResetHandler()
+    {
+        if (holdCoroutine != null)
+        {
+            StopCoroutine(holdCoroutine);
+            holdCoroutine = null;
+        }
+
+        isPressed = false;
+
+        Debug.Log("ButtonPressHandler reset");
+    }
+
     private void OnDisable()
     {
         if (isPressed)

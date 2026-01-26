@@ -5,19 +5,19 @@ using UnityEngine;
 public class ObjectGroupManager : MonoBehaviour
 {
     [Header("Group Settings")]
-    [SerializeField] private Transform[] optionObjects; // The 3 options in this group
-    [SerializeField] private Transform groupStartingPoint; // Where player enters this group
+    [SerializeField] private Transform[] optionObjects;
+    [SerializeField] private Transform groupStartingPoint;
 
     [Header("Food Assignment")]
     [SerializeField] private GameObject[] growFoodPrefabs;
     [SerializeField] private GameObject[] junkFoodPrefabs;
-    [SerializeField] private float foodScale = 1.0f; // NEW: Food scale multiplier
+    [SerializeField] private float foodScale = 1.0f;
 
     [Header("Audio Settings")]
-    [SerializeField] private AudioClip dizzyAudioClip; // Dizzy audio clip
-    [SerializeField] private AudioClip[] correctAudioClips; // Audio clips for correct answers
-    [SerializeField] private AudioClip[] incorrectAudioClips; // Audio clips for incorrect answers
-    [SerializeField] private GameObject dizzyEffect; // Dizzy effect GameObject (enable/disable)
+    [SerializeField] private AudioClip dizzyAudioClip;
+    [SerializeField] private AudioClip[] correctAudioClips;
+    [SerializeField] private AudioClip[] incorrectAudioClips;
+    [SerializeField] private GameObject dizzyEffect;
 
     [Header("Spawn Settings")]
     [SerializeField] private bool spawnOnGroupEntry = true;
@@ -31,16 +31,19 @@ public class ObjectGroupManager : MonoBehaviour
     // Audio components
     private AudioSource audioSource;
     private AudioSource dizzyAudioSource;
-    private Animator groupAnimator; // Animator on THIS GameObject
+    private Animator groupAnimator;
 
     // State
     private bool isActiveGroup = false;
     private int assignedGrowFoodIndex = -1;
     private ThirdPersonController playerController;
+    private List<GameObject> spawnedFoods = new List<GameObject>();
+
+    // Track food assignments
+    private Dictionary<Transform, GameObject> assignedFoodPrefabs = new Dictionary<Transform, GameObject>();
 
     private void Start()
     {
-        // Get the animator on THIS GameObject
         groupAnimator = GetComponent<Animator>();
         if (groupAnimator == null)
         {
@@ -56,26 +59,36 @@ public class ObjectGroupManager : MonoBehaviour
         // Find player controller
         playerController = FindObjectOfType<ThirdPersonController>();
 
-        // Initialize dizzy effect - disable it at start
+        // Initialize dizzy effect
         if (dizzyEffect != null)
         {
             dizzyEffect.SetActive(false);
+        }
+
+        // Auto-register with GrowAssessmentManager
+        RegisterWithAssessmentManager();
+    }
+
+    private void RegisterWithAssessmentManager()
+    {
+        if (GrowAssessmentManager.Instance != null)
+        {
+            GrowAssessmentManager.Instance.RegisterGroupManager(this);
+            Debug.Log($"Registered {gameObject.name} with GrowAssessmentManager");
         }
     }
 
     private void InitializeAudioSources()
     {
-        // Create main audio source for this manager
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
-        audioSource.spatialBlend = 0f; // 2D sound for feedback
+        audioSource.spatialBlend = 0f;
 
-        // Create dizzy audio source on the player if available
         if (playerController != null)
         {
             dizzyAudioSource = playerController.gameObject.AddComponent<AudioSource>();
             dizzyAudioSource.playOnAwake = false;
-            dizzyAudioSource.loop = true; // Loop while dizzy
+            dizzyAudioSource.loop = true;
 
             if (dizzyAudioClip != null)
             {
@@ -90,13 +103,46 @@ public class ObjectGroupManager : MonoBehaviour
 
         isActiveGroup = true;
 
+        // Clear any existing spawned food
+        DestroyAllSpawnedFood();
+
+        // Clear previous assignments
+        assignedFoodPrefabs.Clear();
+
         // Assign random grow food and junk foods
         AssignFoodTypes();
 
         // Show all objects
         SetGroupObjectsActive(true);
 
+        // Spawn food for all objects
+        SpawnFoodForAllObjects();
+
         Debug.Log($"Group {gameObject.name} activated. Grow food at index: {assignedGrowFoodIndex}");
+    }
+
+    private void SpawnFoodForAllObjects()
+    {
+        for (int i = 0; i < optionObjects.Length; i++)
+        {
+            Transform option = optionObjects[i];
+            if (option == null) continue;
+
+            InteractiveObject interactiveObj = option.GetComponent<InteractiveObject>();
+            if (interactiveObj != null && assignedFoodPrefabs.ContainsKey(option))
+            {
+                GameObject prefab = assignedFoodPrefabs[option];
+                interactiveObj.SpawnAssignedFood(prefab);
+
+                // Track the spawned food
+                if (interactiveObj.GetSpawnedFood() != null)
+                {
+                    spawnedFoods.Add(interactiveObj.GetSpawnedFood());
+                }
+            }
+        }
+
+        Debug.Log($"Spawned food for {optionObjects.Length} objects in group: {gameObject.name}");
     }
 
     public void DeactivateGroup()
@@ -110,7 +156,39 @@ public class ObjectGroupManager : MonoBehaviour
             SetGroupObjectsActive(false);
         }
 
+        // Destroy all spawned food when deactivating
+        DestroyAllSpawnedFood();
+
         Debug.Log($"Group {gameObject.name} deactivated");
+    }
+
+    // Properly destroy all spawned food
+    private void DestroyAllSpawnedFood()
+    {
+        // Destroy tracked spawned foods
+        foreach (GameObject food in spawnedFoods)
+        {
+            if (food != null)
+            {
+                Destroy(food);
+            }
+        }
+        spawnedFoods.Clear();
+
+        // Also destroy food from interactive objects
+        foreach (Transform option in optionObjects)
+        {
+            if (option != null)
+            {
+                InteractiveObject interactiveObj = option.GetComponent<InteractiveObject>();
+                if (interactiveObj != null)
+                {
+                    interactiveObj.DestroySpawnedFood();
+                }
+            }
+        }
+
+        Debug.Log($"Destroyed all spawned food for group: {gameObject.name}");
     }
 
     private void AssignFoodTypes()
@@ -121,70 +199,44 @@ public class ObjectGroupManager : MonoBehaviour
             return;
         }
 
-        // Randomly select which option gets the grow food (0, 1, or 2)
         assignedGrowFoodIndex = Random.Range(0, 3);
 
         for (int i = 0; i < optionObjects.Length; i++)
         {
-            InteractiveObject interactiveObj = optionObjects[i].GetComponent<InteractiveObject>();
+            Transform option = optionObjects[i];
+            if (option == null) continue;
+
+            InteractiveObject interactiveObj = option.GetComponent<InteractiveObject>();
             if (interactiveObj != null)
             {
                 if (i == assignedGrowFoodIndex)
                 {
-                    // Assign as grow food
+                    // This is the correct (grow) food
                     interactiveObj.SetIsGrowFood(true);
-
-                    // Randomly select a grow food prefab
                     if (growFoodPrefabs.Length > 0)
                     {
                         GameObject selectedPrefab = growFoodPrefabs[Random.Range(0, growFoodPrefabs.Length)];
-                        interactiveObj.SetFoodPrefab(selectedPrefab);
-                        // Spawn food immediately with scale
-                        SpawnFoodWithScale(interactiveObj, selectedPrefab);
+                        assignedFoodPrefabs[option] = selectedPrefab;
+                        Debug.Log($"Assigned grow food to option {i}: {selectedPrefab.name}");
                     }
                 }
                 else
                 {
-                    // Assign as junk food
+                    // These are wrong (junk) foods
                     interactiveObj.SetIsGrowFood(false);
-
-                    // Randomly select a junk food prefab
                     if (junkFoodPrefabs.Length > 0)
                     {
                         GameObject selectedPrefab = junkFoodPrefabs[Random.Range(0, junkFoodPrefabs.Length)];
-                        interactiveObj.SetFoodPrefab(selectedPrefab);
-                        // Spawn food immediately with scale
-                        SpawnFoodWithScale(interactiveObj, selectedPrefab);
+                        assignedFoodPrefabs[option] = selectedPrefab;
+                        Debug.Log($"Assigned junk food to option {i}: {selectedPrefab.name}");
                     }
                 }
 
-                // Pass delay settings
+                // Set delay settings and animation times
                 interactiveObj.SetDelaySettings(0f, beforeMoveDelay, afterSmashDelay);
                 interactiveObj.SetAnimationExitTime(objectAnimationResetDelay);
-
-                // Set reference to this manager
                 interactiveObj.SetGroupManager(this);
             }
-        }
-    }
-
-    // NEW: Method to spawn food with custom scale
-    private void SpawnFoodWithScale(InteractiveObject interactiveObj, GameObject foodPrefab)
-    {
-        Transform foodSpawnPoint = interactiveObj.GetFoodSpawnPoint();
-        if (foodPrefab != null && foodSpawnPoint != null)
-        {
-            GameObject spawnedFood = Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
-
-            // Apply custom scale
-            if (foodScale != 1.0f)
-            {
-                spawnedFood.transform.localScale *= foodScale;
-                Debug.Log($"Applied scale {foodScale} to {interactiveObj.gameObject.name}'s food");
-            }
-
-            // Store reference in interactive object if needed
-            interactiveObj.SetSpawnedFood(spawnedFood);
         }
     }
 
@@ -195,70 +247,86 @@ public class ObjectGroupManager : MonoBehaviour
             if (option != null)
             {
                 option.gameObject.SetActive(active);
+
+                // Make sure interactive objects are set to interactable when activated
+                if (active)
+                {
+                    InteractiveObject interactiveObj = option.GetComponent<InteractiveObject>();
+                    if (interactiveObj != null)
+                    {
+                        interactiveObj.ResetObject();
+                        interactiveObj.SetInteractable(true);
+                    }
+                }
             }
         }
     }
 
-    // PUBLIC METHOD: Set isEntry on THIS GameObject's animator
+    // Get all interactive objects in this group
+    public InteractiveObject[] GetAllInteractiveObjects()
+    {
+        List<InteractiveObject> objects = new List<InteractiveObject>();
+        foreach (Transform option in optionObjects)
+        {
+            InteractiveObject obj = option.GetComponent<InteractiveObject>();
+            if (obj != null)
+            {
+                objects.Add(obj);
+            }
+        }
+        return objects.ToArray();
+    }
+
+    // Reset this group for new game
+    public void ResetGroupForNewGame()
+    {
+        Debug.Log($"Resetting group: {gameObject.name}");
+
+        // Deactivate group
+        DeactivateGroup();
+
+        // Destroy all spawned food
+        DestroyAllSpawnedFood();
+
+        // Reset animator
+        SetGroupEntryAnimation(false);
+
+        // Reset assigned index
+        assignedGrowFoodIndex = -1;
+
+        // Clear food assignments
+        assignedFoodPrefabs.Clear();
+
+        Debug.Log($"Group {gameObject.name} reset for new game");
+    }
+
     public void SetGroupEntryAnimation(bool isEntry)
     {
         if (groupAnimator != null)
         {
             groupAnimator.SetBool("isEntry", isEntry);
-            Debug.Log($"Set isEntry = {isEntry} on ObjectGroupManager: {gameObject.name}");
-        }
-        else
-        {
-            Debug.LogError($"Cannot set isEntry: No Animator found on ObjectGroupManager: {gameObject.name}");
         }
     }
 
-    // AUDIO METHODS
     public void PlayCorrectAnswerAudio()
     {
-        if (audioSource == null) return;
-
-        if (correctAudioClips != null && correctAudioClips.Length > 0)
-        {
-            // Randomly select a correct audio clip
-            AudioClip selectedClip = correctAudioClips[Random.Range(0, correctAudioClips.Length)];
-            audioSource.PlayOneShot(selectedClip);
-            Debug.Log("Playing correct answer audio: " + selectedClip.name);
-        }
-        else
-        {
-            Debug.LogWarning("No correct audio clips assigned!");
-        }
+        if (audioSource == null || correctAudioClips == null || correctAudioClips.Length == 0) return;
+        AudioClip selectedClip = correctAudioClips[Random.Range(0, correctAudioClips.Length)];
+        audioSource.PlayOneShot(selectedClip);
     }
 
     public void PlayIncorrectAnswerAudio()
     {
-        if (audioSource == null) return;
-
-        if (incorrectAudioClips != null && incorrectAudioClips.Length > 0)
-        {
-            // Randomly select an incorrect audio clip
-            AudioClip selectedClip = incorrectAudioClips[Random.Range(0, incorrectAudioClips.Length)];
-            audioSource.PlayOneShot(selectedClip);
-            Debug.Log("Playing incorrect answer audio: " + selectedClip.name);
-        }
-        else
-        {
-            Debug.LogWarning("No incorrect audio clips assigned!");
-        }
+        if (audioSource == null || incorrectAudioClips == null || incorrectAudioClips.Length == 0) return;
+        AudioClip selectedClip = incorrectAudioClips[Random.Range(0, incorrectAudioClips.Length)];
+        audioSource.PlayOneShot(selectedClip);
     }
 
-    // DIZZY EFFECT METHODS - SIMPLE ENABLE/DISABLE
     public void PlayDizzyAudio()
     {
         if (dizzyAudioSource != null && dizzyAudioClip != null)
         {
             dizzyAudioSource.Play();
-            Debug.Log("Started dizzy audio");
-        }
-        else
-        {
-            Debug.LogWarning("Dizzy audio source or clip not available!");
         }
     }
 
@@ -267,7 +335,6 @@ public class ObjectGroupManager : MonoBehaviour
         if (dizzyAudioSource != null && dizzyAudioSource.isPlaying)
         {
             dizzyAudioSource.Stop();
-            Debug.Log("Stopped dizzy audio");
         }
     }
 
@@ -276,7 +343,6 @@ public class ObjectGroupManager : MonoBehaviour
         if (dizzyEffect != null && !dizzyEffect.activeSelf)
         {
             dizzyEffect.SetActive(true);
-            Debug.Log("Enabled dizzy effect");
         }
     }
 
@@ -285,11 +351,9 @@ public class ObjectGroupManager : MonoBehaviour
         if (dizzyEffect != null && dizzyEffect.activeSelf)
         {
             dizzyEffect.SetActive(false);
-            Debug.Log("Disabled dizzy effect");
         }
     }
 
-    // PUBLIC METHODS
     public Transform GetGroupStartingPoint()
     {
         return groupStartingPoint;
@@ -300,7 +364,6 @@ public class ObjectGroupManager : MonoBehaviour
         return isActiveGroup;
     }
 
-    // Call this when player reaches this group's starting point
     public void OnPlayerEnterGroup()
     {
         if (spawnOnGroupEntry)
@@ -309,22 +372,61 @@ public class ObjectGroupManager : MonoBehaviour
         }
     }
 
-    // NEW: Method to set food scale
     public void SetFoodScale(float scale)
     {
-        foodScale = Mathf.Max(0.1f, scale); // Ensure minimum scale
-        Debug.Log($"Set food scale to: {foodScale}");
+        foodScale = Mathf.Max(0.1f, scale);
     }
 
-    // NEW: Method to get food scale
     public float GetFoodScale()
     {
         return foodScale;
     }
 
-    // NEW: Helper method for InteractiveObject to get spawn point
     public Transform GetFoodSpawnPoint(InteractiveObject interactiveObj)
     {
         return interactiveObj.GetFoodSpawnPoint();
+    }
+
+    // Helper method to get spawned food reference
+    public GameObject GetSpawnedFoodForOption(int optionIndex)
+    {
+        if (optionIndex < 0 || optionIndex >= optionObjects.Length)
+            return null;
+
+        Transform option = optionObjects[optionIndex];
+        if (option == null)
+            return null;
+
+        InteractiveObject interactiveObj = option.GetComponent<InteractiveObject>();
+        if (interactiveObj != null)
+        {
+            return interactiveObj.GetSpawnedFood();
+        }
+
+        return null;
+    }
+
+    // Method to scale spawned food (if needed)
+    public void ScaleSpawnedFood(GameObject foodObject)
+    {
+        if (foodObject != null && foodScale != 1.0f)
+        {
+            foodObject.transform.localScale *= foodScale;
+        }
+    }
+
+    // Get the assigned food prefab for an option
+    public GameObject GetAssignedFoodPrefab(int optionIndex)
+    {
+        if (optionIndex < 0 || optionIndex >= optionObjects.Length)
+            return null;
+
+        Transform option = optionObjects[optionIndex];
+        if (option != null && assignedFoodPrefabs.ContainsKey(option))
+        {
+            return assignedFoodPrefabs[option];
+        }
+
+        return null;
     }
 }

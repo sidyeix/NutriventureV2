@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VolumetricLines;
 using Cinemachine;
+using UnityEngine.Playables;
 
 public class GlowPartManager : MonoBehaviour
 {
@@ -27,7 +28,7 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private TMP_Text energySliderText;
     [SerializeField] private float energyPanelSlideDuration = 0.5f;
     [SerializeField] private float energyPanelSlideDistance = 300f;
-    [SerializeField] private CanvasGroup energySliderCanvasGroup; // For fade effect
+    [SerializeField] private CanvasGroup energySliderCanvasGroup;
 
     [Header("Character Animation")]
     [SerializeField] private Animator characterAnimator;
@@ -38,6 +39,12 @@ public class GlowPartManager : MonoBehaviour
 
     [Header("Objects to DISABLE When Holding Button")]
     [SerializeField] private List<GameObject> objectsToDisableWhenHolding = new List<GameObject>();
+
+    [Header("Objects to ENABLE When Glow Part Starts")]
+    [SerializeField] private List<GameObject> objectsToEnableOnStart = new List<GameObject>();
+
+    [Header("Objects to DISABLE When Glow Part Ends")]
+    [SerializeField] private List<GameObject> objectsToDisableOnEnd = new List<GameObject>();
 
     [Header("Lightsaber Settings")]
     [SerializeField] private VolumetricLineBehavior lightsaber;
@@ -50,7 +57,6 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private float panelSlideDistance = 400f;
     [SerializeField] private float panelShowDelay = 0.2f;
     [SerializeField] private float panelSlideSoundDelay = 0.1f;
-    [SerializeField] private float warningBlinkSpeed = 2f;
 
     [Header("Audio Settings")]
     [SerializeField] private AudioClip panelSlideInSound;
@@ -59,13 +65,12 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private AudioClip transferLoopSound;
     [SerializeField] private AudioClip transferStopSound;
     [SerializeField] private AudioClip towerLitSound;
-    [SerializeField] private AudioClip warningSound;
-    [SerializeField] private AudioClip fillingUpSound; // NEW: Filling up sound
+    [SerializeField] private AudioClip fillingUpSound;
+    [SerializeField] private AudioClip completeSound;
 
     [Header("Energy Transfer Settings")]
     [SerializeField] private float transferRate = 5f;
     [SerializeField] private float maxTowerEnergy = 100f;
-    [SerializeField] private float warningThreshold = 10f;
     [SerializeField] private int pointReward = 250;
 
     [Header("Tracking Settings")]
@@ -80,8 +85,12 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private float playerRotationSpeed = 8f;
     [SerializeField] private float lookAtAngleThreshold = 10f;
 
+    [Header("Timeline Settings")]
+    [SerializeField] private PlayableDirector playableDirector;
+    [SerializeField] private PlayableAsset timelineToPlay;
+    [SerializeField] private bool playTimelineOnCompletion = true;
+    [SerializeField] private float timelineDelay = 2f;
 
-    // State
     private bool isGlowPartActive = false;
     private bool isTrackerVisible = false;
     private bool isTransferring = false;
@@ -90,33 +99,30 @@ public class GlowPartManager : MonoBehaviour
     private Vector3 trackerPanelHiddenPosition;
     private Vector3 trackerPanelVisiblePosition;
     private bool isWarningActive = false;
-
-    // Energy Slider Indicator positions
     private Vector3 energyPanelHiddenPosition;
     private Vector3 energyPanelVisiblePosition;
-
+    private bool wasEnergyPaused = false;
+    private bool wasTimerPaused = false;
+    private bool isGameStatePaused = false;
     private Coroutine panelSlideCoroutine;
-    private Coroutine energyPanelAnimationCoroutine; // For combined slide+fade
+    private Coroutine energyPanelAnimationCoroutine;
     private Coroutine transferCoroutine;
-    private Coroutine warningBlinkCoroutine;
     private AudioSource audioSource;
     private AudioSource transferAudioSource;
-    private AudioSource fillingAudioSource; // NEW: Separate AudioSource for filling sound
-    private Coroutine warningCheckCoroutine;
+    private AudioSource fillingAudioSource;
     private ButtonPressHandler buttonPressHandler;
     private List<TowerProximityDetector> proximityDetectors = new List<TowerProximityDetector>();
     private Transform playerTransform;
-    private bool wasEnergyPaused = false;
-
-    // Rotation state
     private bool isRotatingToTower = false;
     private bool isLookingAtTower = false;
-
-    // Lightsaber
     private Vector3 lightsaberOriginalEndPos;
     private bool isLightsaberActive = false;
     private Vector3 targetEndPos;
     private Coroutine lightsaberCoroutine;
+    private bool hasCompleted = false;
+
+    private Dictionary<GlowTower, float> initialTowerEnergies = new Dictionary<GlowTower, float>();
+    private Dictionary<GlowTower, bool> initialTowerStates = new Dictionary<GlowTower, bool>();
 
     private void Awake()
     {
@@ -137,7 +143,6 @@ public class GlowPartManager : MonoBehaviour
         transferAudioSource.loop = true;
         transferAudioSource.playOnAwake = false;
 
-        // NEW: Create separate AudioSource for filling sound
         fillingAudioSource = gameObject.AddComponent<AudioSource>();
         fillingAudioSource.loop = true;
         fillingAudioSource.playOnAwake = false;
@@ -169,70 +174,80 @@ public class GlowPartManager : MonoBehaviour
         InitializeObjectStates();
         InitializeTracker();
         InitializeEnergySliderIndicator();
+
         DisableGlowPart();
         UpdateTrackerText();
 
         SetupTransferButton();
         SetupProximityDetectors();
+
+        StoreInitialTowerStates();
+
+        DisableObjectsOnStart();
     }
 
-    private void Update()
+    private void StoreInitialTowerStates()
     {
-        if (!isGlowPartActive) return;
+        initialTowerEnergies.Clear();
+        initialTowerStates.Clear();
 
-        CheckPlayerEnergy();
-
-        if (isRotatingToTower && currentActiveTower != null && playerTransform != null)
+        foreach (GlowTower tower in glowTowers)
         {
-            RotatePlayerToTower();
-            CheckIfLookingAtTower();
-        }
+            if (tower != null)
+            {
+                initialTowerEnergies[tower] = 0f;
+                initialTowerStates[tower] = false;
 
-        if (isTransferring && currentActiveTower != null)
-        {
-            UpdateEnergySliderIndicator();
-        }
-    }
-
-    // NEW: Start loop audio
-    private void StartLoopAudio()
-    {
-        // Start transfer loop sound
-        if (transferLoopSound != null && transferAudioSource != null)
-        {
-            transferAudioSource.clip = transferLoopSound;
-            transferAudioSource.loop = true;
-            transferAudioSource.Play();
-        }
-
-        // Start filling up sound alongside
-        if (fillingUpSound != null && fillingAudioSource != null)
-        {
-            fillingAudioSource.clip = fillingUpSound;
-            fillingAudioSource.loop = true;
-            fillingAudioSource.Play();
+                tower.SetEnergy(0f);
+                tower.ResetTower();
+            }
         }
     }
 
-    // NEW: Stop loop audio and play stop sound
-    private void StopLoopAudio()
+    private void InitializeLightsaber()
     {
-        // Stop transfer loop sound
-        if (transferAudioSource != null && transferAudioSource.isPlaying)
+        if (lightsaber != null)
         {
-            transferAudioSource.Stop();
+            lightsaberOriginalEndPos = lightsaber.EndPos;
+            lightsaber.LineWidth = 0f;
+        }
+    }
+
+    private void InitializeObjectStates()
+    {
+        foreach (GameObject obj in objectsToEnableWhenHolding)
+        {
+            if (obj != null)
+                obj.SetActive(false);
         }
 
-        // Stop filling up sound
-        if (fillingAudioSource != null && fillingAudioSource.isPlaying)
+        foreach (GameObject obj in objectsToDisableWhenHolding)
         {
-            fillingAudioSource.Stop();
+            if (obj != null)
+                obj.SetActive(true);
+        }
+    }
+
+    private void InitializeTracker()
+    {
+        if (trackerPanel != null)
+        {
+            trackerPanelHiddenPosition = trackerPanel.transform.localPosition - new Vector3(panelSlideDistance, 0, 0);
+            trackerPanelVisiblePosition = trackerPanel.transform.localPosition;
+
+            trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
+            trackerPanel.SetActive(false);
         }
 
-        // Play transfer stop sound
-        if (transferStopSound != null && audioSource != null)
+        if (warningPanel != null)
+            warningPanel.SetActive(false);
+
+        if (transferProgressSlider != null)
         {
-            audioSource.PlayOneShot(transferStopSound);
+            transferProgressSlider.gameObject.SetActive(false);
+            transferProgressSlider.minValue = 0f;
+            transferProgressSlider.maxValue = 1f;
+            transferProgressSlider.value = 0f;
         }
     }
 
@@ -273,6 +288,113 @@ public class GlowPartManager : MonoBehaviour
             {
                 energySliderText.text = "0%";
             }
+        }
+    }
+
+    private void SetupTransferButton()
+    {
+        buttonPressHandler = transferButton.gameObject.GetComponent<ButtonPressHandler>();
+        if (buttonPressHandler == null)
+            buttonPressHandler = transferButton.gameObject.AddComponent<ButtonPressHandler>();
+
+        buttonPressHandler.onButtonPressed.RemoveAllListeners();
+        buttonPressHandler.onButtonReleased.RemoveAllListeners();
+        buttonPressHandler.onButtonHeld.RemoveAllListeners();
+
+        buttonPressHandler.onButtonPressed.AddListener(HandleButtonPressed);
+        buttonPressHandler.onButtonReleased.AddListener(HandleButtonReleased);
+        buttonPressHandler.onButtonHeld.AddListener(HandleButtonHeld);
+
+        if (transferButtonText != null)
+            transferButtonText.text = "HOLD TO TRANSFER";
+
+        transferButton.gameObject.SetActive(false);
+    }
+
+    private void SetupProximityDetectors()
+    {
+        if (proximityDetectors == null)
+            proximityDetectors = new List<TowerProximityDetector>();
+        else
+            proximityDetectors.Clear();
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                tower.SetEnergy(0f);
+
+                TowerProximityDetector detector = tower.gameObject.GetComponent<TowerProximityDetector>();
+                if (detector == null)
+                    detector = tower.gameObject.AddComponent<TowerProximityDetector>();
+
+                if (detector.glowTower == null)
+                    detector.glowTower = tower;
+
+                detector.OnPlayerEnterRange -= OnPlayerEnterTowerRange;
+                detector.OnPlayerExitRange -= OnPlayerExitTowerRange;
+
+                detector.OnPlayerEnterRange += OnPlayerEnterTowerRange;
+                detector.OnPlayerExitRange += OnPlayerExitTowerRange;
+
+                if (!proximityDetectors.Contains(detector))
+                    proximityDetectors.Add(detector);
+            }
+        }
+
+        Debug.Log($"GlowPartManager: Setup {proximityDetectors.Count} proximity detectors");
+    }
+
+    private void Update()
+    {
+        if (!isGlowPartActive) return;
+
+        CheckPlayerEnergy();
+
+        if (isRotatingToTower && currentActiveTower != null && playerTransform != null)
+        {
+            RotatePlayerToTower();
+            CheckIfLookingAtTower();
+        }
+
+        if (isTransferring && currentActiveTower != null)
+        {
+            UpdateEnergySliderIndicator();
+        }
+    }
+
+    private void StartLoopAudio()
+    {
+        if (transferLoopSound != null && transferAudioSource != null)
+        {
+            transferAudioSource.clip = transferLoopSound;
+            transferAudioSource.loop = true;
+            transferAudioSource.Play();
+        }
+
+        if (fillingUpSound != null && fillingAudioSource != null)
+        {
+            fillingAudioSource.clip = fillingUpSound;
+            fillingAudioSource.loop = true;
+            fillingAudioSource.Play();
+        }
+    }
+
+    private void StopLoopAudio()
+    {
+        if (transferAudioSource != null && transferAudioSource.isPlaying)
+        {
+            transferAudioSource.Stop();
+        }
+
+        if (fillingAudioSource != null && fillingAudioSource.isPlaying)
+        {
+            fillingAudioSource.Stop();
+        }
+
+        if (transferStopSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(transferStopSound);
         }
     }
 
@@ -394,7 +516,7 @@ public class GlowPartManager : MonoBehaviour
 
     private void OnPlayerLookingAtTower()
     {
-        Debug.Log("Player is now looking at the tower!");
+        Debug.Log("GlowPartManager: Player is now looking at the tower!");
         StartLightsaberAndEffects();
     }
 
@@ -415,89 +537,13 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    private void InitializeLightsaber()
+    private void DisableObjectsOnStart()
     {
-        if (lightsaber != null)
-        {
-            lightsaberOriginalEndPos = lightsaber.EndPos;
-            lightsaber.LineWidth = 0f;
-        }
-    }
-
-    private void InitializeObjectStates()
-    {
-        foreach (GameObject obj in objectsToEnableWhenHolding)
+        foreach (GameObject obj in objectsToEnableOnStart)
         {
             if (obj != null)
-                obj.SetActive(false);
-        }
-
-        foreach (GameObject obj in objectsToDisableWhenHolding)
-        {
-            if (obj != null)
-                obj.SetActive(true);
-        }
-    }
-
-    private void InitializeTracker()
-    {
-        if (trackerPanel != null)
-        {
-            trackerPanelHiddenPosition = trackerPanel.transform.localPosition - new Vector3(panelSlideDistance, 0, 0);
-            trackerPanelVisiblePosition = trackerPanel.transform.localPosition;
-
-            trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
-            trackerPanel.SetActive(false);
-        }
-
-        if (warningPanel != null)
-            warningPanel.SetActive(false);
-
-        if (transferProgressSlider != null)
-        {
-            transferProgressSlider.gameObject.SetActive(false);
-            transferProgressSlider.minValue = 0f;
-            transferProgressSlider.maxValue = 1f;
-            transferProgressSlider.value = 0f;
-        }
-    }
-
-    private void SetupTransferButton()
-    {
-        buttonPressHandler = transferButton.gameObject.GetComponent<ButtonPressHandler>();
-        if (buttonPressHandler == null)
-            buttonPressHandler = transferButton.gameObject.AddComponent<ButtonPressHandler>();
-
-        buttonPressHandler.onButtonPressed.RemoveAllListeners();
-        buttonPressHandler.onButtonReleased.RemoveAllListeners();
-        buttonPressHandler.onButtonHeld.RemoveAllListeners();
-
-        buttonPressHandler.onButtonPressed.AddListener(HandleButtonPressed);
-        buttonPressHandler.onButtonReleased.AddListener(HandleButtonReleased);
-        buttonPressHandler.onButtonHeld.AddListener(HandleButtonHeld);
-
-        if (transferButtonText != null)
-            transferButtonText.text = "HOLD TO TRANSFER";
-
-        transferButton.gameObject.SetActive(false);
-    }
-
-    private void SetupProximityDetectors()
-    {
-        foreach (GlowTower tower in glowTowers)
-        {
-            if (tower != null)
             {
-                tower.SetEnergy(0f);
-
-                TowerProximityDetector detector = tower.gameObject.GetComponent<TowerProximityDetector>();
-                if (detector == null)
-                    detector = tower.gameObject.AddComponent<TowerProximityDetector>();
-
-                detector.OnPlayerEnterRange += OnPlayerEnterTowerRange;
-                detector.OnPlayerExitRange += OnPlayerExitTowerRange;
-
-                proximityDetectors.Add(detector);
+                obj.SetActive(false);
             }
         }
     }
@@ -506,7 +552,7 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isGlowPartActive || tower.IsFullyLit()) return;
 
-        Debug.Log($"Player entered range of tower: {tower.gameObject.name}");
+        Debug.Log($"GlowPartManager: Player entered range of tower: {tower.gameObject.name}");
         currentActiveTower = tower;
 
         if (transferButton != null)
@@ -525,7 +571,7 @@ public class GlowPartManager : MonoBehaviour
 
         if (currentActiveTower == tower)
         {
-            Debug.Log($"Player exited range of current tower: {tower.gameObject.name}");
+            Debug.Log($"GlowPartManager: Player exited range of current tower: {tower.gameObject.name}");
 
             if (isTransferring || isRotatingToTower)
                 StopTransfer();
@@ -550,6 +596,7 @@ public class GlowPartManager : MonoBehaviour
         {
             wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
             GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+            Debug.Log("GlowPartManager: Energy decrease paused for glow part");
         }
 
         if (glowCanvas != null)
@@ -567,12 +614,25 @@ public class GlowPartManager : MonoBehaviour
         }
 
         UpdateLitTowersCount();
-        StartWarningCheck();
-
         isGlowPartActive = true;
+
+        EnableObjectsOnGlowPartStart();
 
         if (GoGrowGlowGameManager.Instance != null)
             GoGrowGlowGameManager.Instance.StartOneLifeCheck();
+    }
+
+    private void EnableObjectsOnGlowPartStart()
+    {
+        Debug.Log($"GlowPartManager: Enabling {objectsToEnableOnStart.Count} objects on glow part start");
+        foreach (GameObject obj in objectsToEnableOnStart)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(true);
+                Debug.Log($"GlowPartManager: Enabled object: {obj.name}");
+            }
+        }
     }
 
     public void EndGlowPart()
@@ -591,9 +651,6 @@ public class GlowPartManager : MonoBehaviour
                 tower.DeactivateTower();
         }
 
-        StopWarningCheck();
-        StopWarningBlink();
-
         currentActiveTower = null;
 
         if (transferButton != null)
@@ -602,14 +659,126 @@ public class GlowPartManager : MonoBehaviour
         if (transferProgressSlider != null)
             transferProgressSlider.gameObject.SetActive(false);
 
+        DisableObjectsOnGlowPartEnd();
+
+        if (GoGrowGlowGameManager.Instance != null &&
+            GoGrowGlowGameManager.Instance.IsGameActive() &&
+            GoGrowGlowGameManager.Instance.foodSpawner != null)
+        {
+            GoGrowGlowGameManager.Instance.foodSpawner.HideAllFood();
+            Debug.Log("GlowPartManager: All food hidden after glow part completion");
+        }
+
         isGlowPartActive = false;
 
         if (GoGrowGlowGameManager.Instance != null)
         {
-            if (!wasEnergyPaused)
+            if (!wasEnergyPaused && !hasCompleted)
+            {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
+                Debug.Log("GlowPartManager: Energy decrease resumed (wasn't paused before)");
+            }
+            else if (hasCompleted)
+            {
+                Debug.Log("GlowPartManager: Glow part completed - energy decrease remains paused");
+            }
+
             GoGrowGlowGameManager.Instance.StopOneLifeCheck();
+
+            if (hasCompleted && playTimelineOnCompletion)
+            {
+                StartCoroutine(PlayTimelineAfterDelay());
+            }
         }
+    }
+
+    private void DisableObjectsOnGlowPartEnd()
+    {
+        Debug.Log($"GlowPartManager: Disabling {objectsToDisableOnEnd.Count} objects on glow part end");
+        foreach (GameObject obj in objectsToDisableOnEnd)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(false);
+                Debug.Log($"GlowPartManager: Disabled object: {obj.name}");
+            }
+        }
+    }
+
+    private IEnumerator PlayTimelineAfterDelay()
+    {
+        Debug.Log($"GlowPartManager: Waiting {timelineDelay} seconds before playing timeline...");
+        yield return new WaitForSeconds(timelineDelay);
+
+        Debug.Log("GlowPartManager: Playing timeline after glow part completion...");
+
+        bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
+
+        if (isGameActive)
+        {
+            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+            wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
+
+            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+            GoGrowGlowGameManager.Instance.PauseGameTimer();
+
+            isGameStatePaused = true;
+        }
+
+        if (playableDirector != null && timelineToPlay != null)
+        {
+            playableDirector.stopped += OnTimelineStopped;
+            playableDirector.playableAsset = timelineToPlay;
+            playableDirector.Play();
+        }
+        else if (playableDirector == null)
+        {
+            Debug.LogWarning("GlowPartManager: Playable Director not assigned.");
+        }
+        else if (timelineToPlay == null)
+        {
+            Debug.LogWarning("GlowPartManager: Timeline asset not assigned.");
+        }
+    }
+
+    private void OnTimelineStopped(PlayableDirector director)
+    {
+        if (director != playableDirector) return;
+
+        Debug.Log($"GlowPartManager: Timeline stopped.");
+
+        if (playableDirector != null)
+        {
+            playableDirector.stopped -= OnTimelineStopped;
+        }
+
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
+        }
+    }
+
+    private void ResumeGameState()
+    {
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            if (!wasTimerPaused)
+            {
+                GoGrowGlowGameManager.Instance.ResumeGameTimer();
+            }
+
+            if (!wasEnergyPaused && !hasCompleted)
+            {
+                GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
+                Debug.Log("GlowPartManager: Resuming energy decrease after timeline");
+            }
+            else
+            {
+                Debug.Log("GlowPartManager: Keeping energy decrease paused (glow part completed)");
+            }
+        }
+
+        isGameStatePaused = false;
     }
 
     private IEnumerator DisableCanvasAfterDelay()
@@ -630,18 +799,19 @@ public class GlowPartManager : MonoBehaviour
         if (energySliderIndicator != null) energySliderIndicator.SetActive(false);
 
         isGlowPartActive = false;
+
+        DisableObjectsOnGlowPartEnd();
     }
 
-    // BUTTON EVENT HANDLERS
     private void HandleButtonPressed()
     {
-        Debug.Log("Transfer button PRESSED");
+        Debug.Log("GlowPartManager: Transfer button PRESSED");
         StartRotationToTower();
     }
 
     private void HandleButtonReleased()
     {
-        Debug.Log("Transfer button RELEASED");
+        Debug.Log("GlowPartManager: Transfer button RELEASED");
         StopTransfer();
     }
 
@@ -654,11 +824,10 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isGlowPartActive || currentActiveTower == null || currentActiveTower.IsFullyLit())
         {
-            Debug.Log($"Cannot start rotation: Active={isGlowPartActive}, Tower={currentActiveTower?.name}");
             return;
         }
 
-        Debug.Log($"Starting rotation to tower: {currentActiveTower.gameObject.name}");
+        Debug.Log($"GlowPartManager: Starting rotation to tower: {currentActiveTower.gameObject.name}");
 
         isRotatingToTower = true;
         isLookingAtTower = false;
@@ -678,19 +847,16 @@ public class GlowPartManager : MonoBehaviour
             energySlider.value = towerEnergy / maxEnergy;
             energySliderText.text = $"{(towerEnergy / maxEnergy * 100f):F0}%";
         }
-
-        Debug.Log("Waiting for player to look at tower before starting lightsaber...");
     }
 
     private void StartLightsaberAndEffects()
     {
         if (!isRotatingToTower || isTransferring) return;
 
-        Debug.Log("Starting lightsaber and energy transfer");
+        Debug.Log("GlowPartManager: Starting lightsaber and energy transfer");
 
         isTransferring = true;
 
-        // Start loop audio (transfer loop + filling up sound)
         StartLoopAudio();
 
         if (lightsaber != null && currentActiveTower != null)
@@ -709,9 +875,8 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isRotatingToTower && !isTransferring) return;
 
-        Debug.Log("Stopping energy transfer and rotation");
+        Debug.Log("GlowPartManager: Stopping energy transfer and rotation");
 
-        // Stop loop audio and play stop sound
         StopLoopAudio();
 
         isRotatingToTower = false;
@@ -734,12 +899,6 @@ public class GlowPartManager : MonoBehaviour
 
         SetTowerFocusCameraPriority(10);
         HideEnergySliderIndicator();
-
-        if (transferCoroutine != null)
-        {
-            StopCoroutine(transferCoroutine);
-            transferCoroutine = null;
-        }
     }
 
     private void SetTowerFocusCameraPriority(int priority)
@@ -750,7 +909,6 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // OBJECT MANAGEMENT METHODS
     private void EnableObjectsWhenHolding()
     {
         foreach (GameObject obj in objectsToEnableWhenHolding)
@@ -795,7 +953,6 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // LIGHTSABER METHODS
     private void StartLightsaberExtension()
     {
         if (lightsaber == null || currentActiveTower == null) return;
@@ -873,7 +1030,6 @@ public class GlowPartManager : MonoBehaviour
         lightsaber.LineWidth = 0f;
     }
 
-    // CHARACTER ANIMATION
     private void SetCharacterTransferAnimation(bool transferring)
     {
         if (characterAnimator != null)
@@ -884,7 +1040,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator TransferEnergyRoutine()
     {
-        Debug.Log("Transfer Energy Routine Started");
+        Debug.Log("GlowPartManager: Transfer Energy Routine Started");
 
         while (isTransferring && currentActiveTower != null &&
                !currentActiveTower.IsFullyLit() &&
@@ -894,7 +1050,7 @@ public class GlowPartManager : MonoBehaviour
 
             if (playerEnergy <= 0f)
             {
-                Debug.Log("Player has no energy to transfer");
+                Debug.Log("GlowPartManager: Player has no energy to transfer");
                 StopTransfer();
                 yield break;
             }
@@ -915,23 +1071,21 @@ public class GlowPartManager : MonoBehaviour
 
             UpdateTransferProgressUI();
 
-            // Check if tower reached maximum energy
             if (currentActiveTower.IsFullyLit())
             {
                 OnTowerFullyLit(currentActiveTower);
                 yield break;
             }
 
-            CheckPlayerEnergyForWarning();
             yield return null;
         }
 
-        Debug.Log("Transfer Energy Routine Ended");
+        Debug.Log("GlowPartManager: Transfer Energy Routine Ended");
     }
 
     private void OnTowerFullyLit(GlowTower tower)
     {
-        Debug.Log($"Tower {tower.gameObject.name} is fully lit!");
+        Debug.Log($"GlowPartManager: Tower {tower.gameObject.name} is fully lit!");
 
         if (GoGrowGlowGameManager.Instance != null)
         {
@@ -950,7 +1104,6 @@ public class GlowPartManager : MonoBehaviour
         SetTowerFocusCameraPriority(10);
         HideEnergySliderIndicator();
 
-        // Stop loop audio when tower is fully lit and play stop sound
         StopLoopAudio();
 
         isRotatingToTower = false;
@@ -966,7 +1119,57 @@ public class GlowPartManager : MonoBehaviour
         }
 
         if (AreAllTowersLit())
+        {
             AllTowersLit();
+        }
+    }
+
+    private void AllTowersLit()
+    {
+        if (hasCompleted) return;
+
+        Debug.Log("=== ALL TOWERS ARE LIT! ===");
+
+        hasCompleted = true;
+
+        PlaySound(completeSound);
+
+        if (trackerText != null)
+        {
+            trackerText.text = "COMPLETE!";
+            StartCoroutine(FlashCompleteText());
+        }
+
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            GoGrowGlowGameManager.Instance.AddPoints(500);
+        }
+
+        Invoke(nameof(EndGlowPart), 3f);
+    }
+
+    private IEnumerator FlashCompleteText()
+    {
+        if (trackerText == null) yield break;
+
+        Color originalColor = trackerText.color;
+        float flashDuration = 2f;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < flashDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.PingPong(elapsedTime * 3f, 1f);
+            trackerText.color = Color.Lerp(originalColor, Color.yellow, t);
+
+            float scale = 1 + Mathf.Sin(elapsedTime * 5f) * 0.05f;
+            trackerText.transform.localScale = Vector3.one * scale;
+
+            yield return null;
+        }
+
+        trackerText.color = originalColor;
+        trackerText.transform.localScale = Vector3.one;
     }
 
     private void UpdateTransferProgressUI()
@@ -1003,14 +1206,6 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    private void CheckPlayerEnergyForWarning()
-    {
-        if (GoGrowGlowGameManager.Instance == null) return;
-
-        float playerEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
-        UpdateWarningPanelState(playerEnergy);
-    }
-
     private void UpdateLitTowersCount()
     {
         litTowersCount = 0;
@@ -1032,204 +1227,10 @@ public class GlowPartManager : MonoBehaviour
         return true;
     }
 
-    private void AllTowersLit()
-    {
-        Debug.Log("=== ALL TOWERS ARE LIT! ===");
-
-        if (trackerText != null)
-        {
-            trackerText.text = "COMPLETE!";
-            StartCoroutine(FlashCompleteText());
-        }
-
-        Invoke(nameof(EndGlowPart), 3f);
-    }
-
-    private void StartWarningCheck()
-    {
-        if (warningCheckCoroutine != null)
-            StopCoroutine(warningCheckCoroutine);
-
-        warningCheckCoroutine = StartCoroutine(WarningCheckRoutine());
-    }
-
-    private void StopWarningCheck()
-    {
-        if (warningCheckCoroutine != null)
-        {
-            StopCoroutine(warningCheckCoroutine);
-            warningCheckCoroutine = null;
-        }
-
-        if (warningPanel != null)
-            warningPanel.SetActive(false);
-
-        StopWarningBlink();
-        isWarningActive = false;
-    }
-
-    private IEnumerator WarningCheckRoutine()
-    {
-        while (isGlowPartActive && isWarningActive)
-        {
-            yield return new WaitForSeconds(0.2f);
-
-            if (GoGrowGlowGameManager.Instance != null)
-            {
-                float playerEnergy = GoGrowGlowGameManager.Instance.GetCurrentEnergy();
-
-                // Update warning state
-                UpdateWarningPanelState(playerEnergy);
-
-                // If energy is above threshold, stop checking
-                if (playerEnergy > warningThreshold)
-                {
-                    isWarningActive = false;
-                    break;
-                }
-            }
-        }
-
-        warningCheckCoroutine = null;
-    }
-
-
-    private void UpdateWarningPanelState(bool shouldShowWarning)
-    {
-        if (warningPanel == null) return;
-
-        if (warningPanel.activeSelf != shouldShowWarning)
-        {
-            warningPanel.SetActive(shouldShowWarning);
-
-            if (shouldShowWarning)
-            {
-                StartWarningBlink();
-                PlaySound(warningSound);
-            }
-            else
-            {
-                StopWarningBlink();
-            }
-        }
-    }
-
-    public void OnPlayerEnergyIncreased(float newEnergyAmount)
-    {
-        if (!isGlowPartActive) return;
-
-        // Check if energy is now above threshold and warning is showing
-        if (newEnergyAmount > warningThreshold && warningPanel != null && warningPanel.activeSelf)
-        {
-            UpdateWarningPanelState(false);
-        }
-    }
-
-    private void UpdateWarningPanelState(float playerEnergy)
-    {
-        if (warningPanel == null) return;
-
-        bool shouldShowWarning = playerEnergy <= warningThreshold && playerEnergy > 0f;
-
-        if (warningPanel.activeSelf != shouldShowWarning)
-        {
-            warningPanel.SetActive(shouldShowWarning);
-
-            if (shouldShowWarning)
-            {
-                isWarningActive = true;
-                StartWarningBlink();
-                PlaySound(warningSound);
-
-                // Start continuous check only when warning becomes active
-                if (warningCheckCoroutine == null)
-                {
-                    warningCheckCoroutine = StartCoroutine(WarningCheckRoutine());
-                }
-            }
-            else
-            {
-                isWarningActive = false;
-                StopWarningBlink();
-            }
-        }
-        // If warning is active and player energy is above threshold, hide it
-        else if (isWarningActive && playerEnergy > warningThreshold)
-        {
-            warningPanel.SetActive(false);
-            isWarningActive = false;
-            StopWarningBlink();
-        }
-    }
-
-
-    private void StartWarningBlink()
-    {
-        if (warningBlinkCoroutine != null)
-            StopCoroutine(warningBlinkCoroutine);
-
-        warningBlinkCoroutine = StartCoroutine(WarningBlinkRoutine());
-    }
-
-    private void StopWarningBlink()
-    {
-        if (warningBlinkCoroutine != null)
-        {
-            StopCoroutine(warningBlinkCoroutine);
-            warningBlinkCoroutine = null;
-        }
-
-        if (warningPanelImage != null)
-        {
-            Color color = warningPanelImage.color;
-            color.a = 1f;
-            warningPanelImage.color = color;
-        }
-    }
-
-    private IEnumerator WarningBlinkRoutine()
-    {
-        if (warningPanelImage == null) yield break;
-
-        while (true)
-        {
-            float alpha = Mathf.PingPong(Time.time * warningBlinkSpeed, 1f);
-            Color color = warningPanelImage.color;
-            color.a = 0.3f + alpha * 0.7f;
-            warningPanelImage.color = color;
-
-            yield return null;
-        }
-    }
-
     private void UpdateTrackerText()
     {
         if (trackerText != null)
             trackerText.text = string.Format(trackerFormat, litTowersCount, glowTowers.Count);
-    }
-
-    private IEnumerator FlashCompleteText()
-    {
-        if (trackerText == null) yield break;
-
-        Color originalColor = trackerText.color;
-        float flashDuration = 2f;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < flashDuration)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.PingPong(elapsedTime * 3f, 1f);
-            trackerText.color = Color.Lerp(originalColor, Color.yellow, t);
-
-            float scale = 1 + Mathf.Sin(elapsedTime * 5f) * 0.05f;
-            trackerText.transform.localScale = Vector3.one * scale;
-
-            yield return null;
-        }
-
-        trackerText.color = originalColor;
-        trackerText.transform.localScale = Vector3.one;
     }
 
     public void ShowTrackerPanel()
@@ -1309,6 +1310,34 @@ public class GlowPartManager : MonoBehaviour
         PlaySound(clip);
     }
 
+    private void OnDestroy()
+    {
+        if (playableDirector != null)
+        {
+            playableDirector.stopped -= OnTimelineStopped;
+        }
+
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
+        }
+
+        if (proximityDetectors != null)
+        {
+            foreach (TowerProximityDetector detector in proximityDetectors)
+            {
+                if (detector != null)
+                {
+                    detector.OnPlayerEnterRange -= OnPlayerEnterTowerRange;
+                    detector.OnPlayerExitRange -= OnPlayerExitTowerRange;
+                }
+            }
+            proximityDetectors.Clear();
+        }
+
+        StopAllCoroutines();
+    }
+
     public void RegisterTower(GlowTower tower)
     {
         if (!glowTowers.Contains(tower))
@@ -1317,15 +1346,190 @@ public class GlowPartManager : MonoBehaviour
         }
     }
 
-    // Getters and setters
+    public void CompleteReset()
+    {
+        Debug.Log("=== COMPLETE RESET OF GLOW PART MANAGER ===");
+
+        StopAllCoroutines();
+
+        if (lightsaber != null)
+        {
+            lightsaber.EndPos = Vector3.zero;
+            lightsaber.LineWidth = 0f;
+        }
+
+        ResetAllTowers();
+
+        hasCompleted = false;
+        litTowersCount = 0;
+        isGlowPartActive = false;
+        isTransferring = false;
+        isRotatingToTower = false;
+        isLookingAtTower = false;
+        isLightsaberActive = false;
+        currentActiveTower = null;
+
+        StopLoopAudio();
+
+        DisableGlowPart();
+
+        UpdateTrackerText();
+
+        if (transferButton != null)
+            transferButton.gameObject.SetActive(false);
+
+        if (transferProgressSlider != null)
+            transferProgressSlider.gameObject.SetActive(false);
+
+        if (energySliderIndicator != null)
+            energySliderIndicator.SetActive(false);
+
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(transferEnergyParam, false);
+        }
+
+        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
+        {
+            ResumeGameState();
+        }
+
+        Debug.Log("Glow Part Manager completely reset - All towers back to default state");
+    }
+
+    public void ResetAllTowers()
+    {
+        Debug.Log($"GlowPartManager: Resetting {glowTowers.Count} glow towers...");
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                tower.SetEnergy(0f);
+                tower.ResetTower();
+                tower.DeactivateTower();
+
+                Debug.Log($"GlowPartManager: Reset tower: {tower.gameObject.name} - Energy: {tower.GetCurrentEnergy()}");
+            }
+        }
+
+        UpdateLitTowersCount();
+    }
+
+    public void ResetTower(GlowTower tower)
+    {
+        if (tower != null)
+        {
+            tower.SetEnergy(0f);
+            tower.ResetTower();
+            tower.DeactivateTower();
+
+            Debug.Log($"GlowPartManager: Individual tower reset: {tower.gameObject.name}");
+        }
+    }
+
+    public bool AreAllTowersReset()
+    {
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null)
+            {
+                if (tower.GetCurrentEnergy() > 0.01f ||
+                    tower.IsFullyLit() ||
+                    tower.IsLighting() ||
+                    tower.IsActive())
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void ResetForNewGame()
+    {
+        Debug.Log("=== RESETTING GLOW PART FOR NEW GAME ===");
+
+        CompleteReset();
+
+        if (trackerText != null)
+            trackerText.text = string.Format(trackerFormat, 0, glowTowers.Count);
+
+        if (transferButton != null)
+            transferButton.gameObject.SetActive(false);
+
+        Debug.Log("Glow Part ready for new game");
+    }
+
+    public void CompleteResetForNewGame()
+    {
+        Debug.Log("=== COMPLETE RESET FOR NEW GAME ===");
+
+        CompleteReset();
+
+        if (playableDirector != null)
+        {
+            playableDirector.Stop();
+            playableDirector.time = 0;
+            playableDirector.Evaluate();
+        }
+
+        if (proximityDetectors != null)
+        {
+            foreach (TowerProximityDetector detector in proximityDetectors)
+            {
+                if (detector != null)
+                {
+                    detector.ResetDetector();
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("GlowPartManager: proximityDetectors list is null");
+        }
+
+        if (buttonPressHandler != null)
+        {
+            buttonPressHandler.enabled = true;
+            System.Type type = buttonPressHandler.GetType();
+            var resetMethod = type.GetMethod("OnDisable", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (resetMethod != null)
+            {
+                resetMethod.Invoke(buttonPressHandler, null);
+            }
+        }
+
+        StopAllCoroutines();
+
+        if (lightsaber != null)
+        {
+            lightsaber.EndPos = Vector3.zero;
+            lightsaber.LineWidth = 0f;
+        }
+
+        if (transferAudioSource != null && transferAudioSource.isPlaying)
+            transferAudioSource.Stop();
+
+        if (fillingAudioSource != null && fillingAudioSource.isPlaying)
+            fillingAudioSource.Stop();
+
+        if (audioSource != null && audioSource.isPlaying)
+            audioSource.Stop();
+
+        Debug.Log("Glow Part Manager completely reset for new game");
+    }
+
     public bool IsGlowPartActive() => isGlowPartActive;
     public int GetLitTowersCount() => litTowersCount;
     public int GetTotalTowers() => glowTowers.Count;
     public float GetTransferRate() => transferRate;
-    public float GetWarningThreshold() => warningThreshold;
     public int GetPointReward() => pointReward;
 
     public void SetTransferRate(float rate) => transferRate = Mathf.Max(0.1f, rate);
-    public void SetWarningThreshold(float threshold) => warningThreshold = Mathf.Max(1f, threshold);
     public void SetPointReward(int points) => pointReward = Mathf.Max(0, points);
+    public void SetPlayTimelineOnCompletion(bool enabled) => playTimelineOnCompletion = enabled;
+    public void SetTimelineDelay(float delay) => timelineDelay = Mathf.Max(0f, delay);
+    public void SetTimelineToPlay(PlayableAsset timeline) => timelineToPlay = timeline;
+    public void SetPlayableDirector(PlayableDirector director) => playableDirector = director;
 }

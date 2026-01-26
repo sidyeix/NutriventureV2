@@ -93,6 +93,16 @@ public class CharacterSelectionController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
+        // Check if we're in the main menu - if yes, skip loading character
+        // because MainMenuController already loaded it
+        MainMenuController mainMenuController = FindObjectOfType<MainMenuController>();
+        if (mainMenuController != null)
+        {
+            Debug.Log("MainMenuController detected - skipping character load in CharacterSelectionController");
+            yield break;
+        }
+
+        // Only load character if MainMenuController is not present (e.g., in game scene)
         if (GameDataManager.Instance != null && characterVisualSwapper != null)
         {
             int equippedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;

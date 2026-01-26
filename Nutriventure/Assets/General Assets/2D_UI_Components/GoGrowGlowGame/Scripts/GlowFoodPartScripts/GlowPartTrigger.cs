@@ -30,7 +30,7 @@ public class GlowPartTrigger : MonoBehaviour
 
             hasBeenTriggered = true;
 
-            // Start the glow part
+            // Start the glow part ONLY - NO MONSTER ACTIVATION
             if (glowPartManager != null)
             {
                 glowPartManager.StartGlowPart();
@@ -52,7 +52,7 @@ public class GlowPartTrigger : MonoBehaviour
     {
         if (!showDebugGizmo) return;
 
-        Gizmos.color = new Color(1, 0.5f, 0, 0.3f); // Orange transparent
+        Gizmos.color = new Color(1, 0.5f, 0, 0.3f);
         if (GetComponent<BoxCollider>() != null)
         {
             BoxCollider col = GetComponent<BoxCollider>();
@@ -67,18 +67,29 @@ public class GlowPartTrigger : MonoBehaviour
         {
             CapsuleCollider col = GetComponent<CapsuleCollider>();
 
-            // Draw wire capsule (simplified)
             Vector3 top = transform.position + col.center + Vector3.up * (col.height * 0.5f - col.radius);
             Vector3 bottom = transform.position + col.center - Vector3.up * (col.height * 0.5f - col.radius);
 
             Gizmos.DrawWireSphere(top, col.radius);
             Gizmos.DrawWireSphere(bottom, col.radius);
 
-            // Draw connecting lines
             Gizmos.DrawLine(top + Vector3.right * col.radius, bottom + Vector3.right * col.radius);
             Gizmos.DrawLine(top - Vector3.right * col.radius, bottom - Vector3.right * col.radius);
             Gizmos.DrawLine(top + Vector3.forward * col.radius, bottom + Vector3.forward * col.radius);
             Gizmos.DrawLine(top - Vector3.forward * col.radius, bottom - Vector3.forward * col.radius);
         }
+    }
+
+    // NEW: Reset method for game restart
+    public void ResetTrigger()
+    {
+        hasBeenTriggered = false;
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = true;
+        }
+
+        Debug.Log($"GlowPartTrigger {gameObject.name} reset");
     }
 }

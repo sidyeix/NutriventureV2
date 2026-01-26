@@ -3,7 +3,7 @@ using UnityEngine;
 public class TowerProximityDetector : MonoBehaviour
 {
     [Header("Tower Reference")]
-    [SerializeField] private GlowTower glowTower;
+    [SerializeField] public GlowTower glowTower;
 
     [Header("Detection Settings")]
     [SerializeField] private float checkInterval = 0.1f;
@@ -64,6 +64,36 @@ public class TowerProximityDetector : MonoBehaviour
                 Debug.Log($"Player exited range of {glowTower.gameObject.name}");
             }
         }
+    }
+
+    public void ResetDetector()
+    {
+        Debug.Log($"Resetting TowerProximityDetector on {gameObject.name}");
+
+        // Stop the detection coroutine
+        if (detectionCoroutine != null)
+        {
+            StopCoroutine(detectionCoroutine);
+            detectionCoroutine = null;
+        }
+
+        // Reset state
+        wasPlayerInRange = false;
+
+        // Find player again (in case it changed)
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+        {
+            playerTransform = playerObject.transform;
+        }
+
+        // Restart detection if conditions are met
+        if (playerTransform != null && glowTower != null)
+        {
+            detectionCoroutine = StartCoroutine(DetectionRoutine());
+        }
+
+        Debug.Log($"TowerProximityDetector reset complete for {gameObject.name}");
     }
 
     private void OnDestroy()
