@@ -10,3 +10,10 @@ MonoImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 215755
+  packageName: Health System For Dummies
+  packageVersion: 
+  assetPath: Assets/TutorialInfo/Scripts/Editor/ReadmeEditor.cs
+  uploadId: 0
