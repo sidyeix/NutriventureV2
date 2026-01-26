@@ -1,4 +1,7 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class EnerlingsSFX : MonoBehaviour
 {
@@ -11,25 +14,25 @@ public class EnerlingsSFX : MonoBehaviour
     public AudioClip hitImpact;
     public AudioClip magicCast;
     public AudioClip dodge;
-
+    
     [Header("Skill Sounds")]
     [Space(10)]
     public AudioClip skill1;
     public AudioClip skill2;
     public AudioClip skill3;
-
+    
     [Header("Character Sounds")]
     [Space(10)]
     public AudioClip footstep;
     public AudioClip jump;
     public AudioClip land;
     public AudioClip voiceGrunt;
-
+    
     [Header("Result Sounds")]
     [Space(10)]
     public AudioClip winSound;
     public AudioClip deathSound;
-
+    
     [Header("Optional Sounds")]
     [Space(10)]
     public AudioClip special1;
@@ -153,6 +156,18 @@ public class EnerlingsSFX : MonoBehaviour
     // Helper method to play clips with error checking
     void PlayClip(AudioClip clip, string clipName)
     {
+        // Check if we're in Play Mode or Preview Mode in Animation Window
+        bool canPlayAudio = Application.isPlaying || IsInAnimationPreview();
+        
+        if (!canPlayAudio)
+        {
+            // In editor mode but not previewing, just log
+            #if UNITY_EDITOR
+            Debug.Log($"Editor: Would play {clipName}");
+            #endif
+            return;
+        }
+
         if (audioSource == null)
         {
             Debug.LogError("AudioSource is null! Cannot play " + clipName);
@@ -162,6 +177,13 @@ public class EnerlingsSFX : MonoBehaviour
         if (clip != null)
         {
             audioSource.PlayOneShot(clip);
+            
+            #if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                Debug.Log($"Animation Preview: Playing {clipName}");
+            }
+            #endif
         }
         else
         {
@@ -169,33 +191,14 @@ public class EnerlingsSFX : MonoBehaviour
         }
     }
 
-    // Optional: Volume control methods
-    public void PlayBasicAttackWithVolume(float volume = 1.0f)
+    // Check if we're in Animation Preview mode
+    bool IsInAnimationPreview()
     {
-        PlayClipWithVolume(basicAttack, "basicAttack", volume);
-    }
-
-    public void PlaySkill1WithVolume(float volume = 1.0f)
-    {
-        PlayClipWithVolume(skill1, "skill1", volume);
-    }
-
-    // Generic volume control helper
-    void PlayClipWithVolume(AudioClip clip, string clipName, float volume)
-    {
-        if (audioSource == null)
-        {
-            Debug.LogError("AudioSource is null! Cannot play " + clipName);
-            return;
-        }
-
-        if (clip != null)
-        {
-            audioSource.PlayOneShot(clip, volume);
-        }
-        else
-        {
-            Debug.LogWarning(clipName + " is not assigned in the inspector!");
-        }
+        #if UNITY_EDITOR
+        // Check if the Animation window is in preview mode
+        return UnityEditor.AnimationMode.InAnimationMode();
+        #else
+        return false;
+        #endif
     }
 }
