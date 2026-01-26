@@ -171,13 +171,22 @@ public class AllergenSpawnManager : MonoBehaviour
 
     // ================= COLLECTION =================
     public void OnAllergenCollected(GameObject allergen)
+{
+    if (spawnedAllergens.Remove(allergen))
     {
-        if (spawnedAllergens.Remove(allergen) && showDebugInfo)
-        {
-            IngredientInteractable i = allergen.GetComponent<IngredientInteractable>();
+        IngredientInteractable i = allergen.GetComponent<IngredientInteractable>();
+
+        if (showDebugInfo)
             Debug.Log($"Collected allergen: {i?.ingredientId}");
+
+        // ✅ SCORING HOOK (PHASE 1)
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.AddAllergenFound();
         }
     }
+}
+
 
     // ================= UTILITIES =================
 private void ClearAllAllergens()

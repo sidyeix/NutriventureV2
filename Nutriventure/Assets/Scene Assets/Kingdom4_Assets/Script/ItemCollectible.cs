@@ -3,6 +3,18 @@ using System.Collections;
 
 public class ItemCollectible : MonoBehaviour
 {
+    public enum Kingdom4Phase
+{
+    Phase1_FindAllergens,
+    Phase2_Wagon,
+    Phase3_MovingRocks
+}
+
+[Header("Kingdom 4 Phase")]
+public Kingdom4Phase currentPhase;
+
+
+
     [Header("Item Settings")]
     public SpawnableItemData itemData;
     
@@ -204,53 +216,58 @@ public class ItemCollectible : MonoBehaviour
     }
     
     void HandleCoinCollection()
+{
+    Debug.Log("🥗 Healthy food collected");
+
+    if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
     {
-        Debug.Log($"💰 Coin collected!");
-        // Add coin collection logic here
-        // Example: GameManager.Instance.AddCoins(1);
+        Kingdom4ScoreManager.Instance?.HitHealthyFood();
     }
+}
+
     
     void HandleAllergenCollection()
+{
+    // ===== BELOW IS PHASE 2 & 3 ONLY =====
+    if (isShieldActiveGlobal && Time.time < shieldEndTime)
     {
-        Debug.Log($"Checking shield status for allergen: {itemData.itemType}");
-        Debug.Log($"Shield active: {isShieldActiveGlobal}");
-        
-        // Check if shield is active
-        if (isShieldActiveGlobal && Time.time < shieldEndTime)
-        {
-            Debug.Log($"🛡️ Shield protected from: {itemData.itemType}");
-            PlayShieldBlockEffect();
-            return;
-        }
-        else if (isShieldActiveGlobal && Time.time >= shieldEndTime)
-        {
-            // Shield expired - clean it up
-            DeactivateShield();
-        }
-        
-        Debug.Log($"⚠️ Allergen collected (no shield): {itemData.itemType}");
-        
-        // Apply damage to player
-        ApplyAllergenDamage();
-        
-        // Play allergen-specific damage effects
-        PlayAllergenDamageEffects();
+        PlayShieldBlockEffect();
+        return;
     }
+    else if (isShieldActiveGlobal && Time.time >= shieldEndTime)
+    {
+        DeactivateShield();
+    }
+
+    // ❌ Player made a mistake
+    ApplyAllergenDamage();
+    PlayAllergenDamageEffects();
+
+    // ✅ PHASE 3: COMBO RESET
+    if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
+    {
+        Kingdom4ScoreManager.Instance?.HitAllergenInPhase3();
+    }
+}
+
     
     void ApplyAllergenDamage()
+{
+    PlayerHealth health = playerObject?.GetComponent<PlayerHealth>() 
+                          ?? FindAnyObjectByType<PlayerHealth>();
+
+    if (health == null) return;
+
+    int before = health.currentHearts;
+    health.TakeDamage(damageAmount);
+
+    if (health.currentHearts < before &&
+        currentPhase == Kingdom4Phase.Phase2_Wagon)
     {
-        PlayerHealth health = playerObject?.GetComponent<PlayerHealth>() ?? FindAnyObjectByType<PlayerHealth>();
-        if (health != null)
-        {
-            int heartsBefore = health.currentHearts;
-            health.TakeDamage(damageAmount);
-            Debug.Log($"❤️ Lost {damageAmount} heart from {itemData.itemType}. Hearts: {heartsBefore} → {health.currentHearts}");
-        }
-        else
-        {
-            Debug.LogError("PlayerHealth not found when taking damage!");
-        }
+        Kingdom4ScoreManager.Instance?.WagonHitAllergen();
     }
+}
+
     
     void PlayAllergenDamageEffects()
     {
@@ -291,6 +308,12 @@ public class ItemCollectible : MonoBehaviour
             Destroy(instance.gameObject, instance.main.duration);
         }
     }
+    void Awake()
+{
+    // Default safe phase (can be overridden by spawners)
+    currentPhase = Kingdom4Phase.Phase1_FindAllergens;
+}
+
     
     void HandlePowerupCollection()
     {
