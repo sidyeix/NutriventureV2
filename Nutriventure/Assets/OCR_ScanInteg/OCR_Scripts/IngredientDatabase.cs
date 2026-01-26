@@ -31,7 +31,8 @@ public class IngredientDatabase : ScriptableObject
             Defend
         }
 
-        [Header("Skill Type")]
+        [Header("Skill Info")]
+        public string skillName = "Skill Name";
         public SkillType type = SkillType.Damage;
 
         [Header("Base Values")]
@@ -47,6 +48,10 @@ public class IngredientDatabase : ScriptableObject
         [Tooltip("Use random range instead of base value")]
         public bool useRandomRange = false;
 
+        [Header("Organ Effects")]
+        [Tooltip("Additional damage/heal per beneficial/target organ")]
+        public int additionalEffectPerOrgan = 5;
+
         [Header("Cooldown")]
         public int cooldownTurns = 0;
 
@@ -54,6 +59,7 @@ public class IngredientDatabase : ScriptableObject
         public Sprite skillSprite;
 
         [Header("Description")]
+        [TextArea(2, 4)]
         public string skillDescription;
 
         // Get actual value (either base or random)
@@ -65,6 +71,17 @@ public class IngredientDatabase : ScriptableObject
             }
             return baseValue;
         }
+
+        // Calculate total effect with organ bonuses
+        public int CalculateTotalEffect(int organCount)
+        {
+            int baseEffect = GetValue();
+
+            // Apply organ bonus: 5% per organ
+            float organBonus = 1f + (organCount * 0.05f);
+
+            return Mathf.RoundToInt(baseEffect * organBonus);
+        }
     }
 
     [System.Serializable]
@@ -74,7 +91,7 @@ public class IngredientDatabase : ScriptableObject
         public string ingredientName;
         public Rarity rarity = Rarity.Common;
         public KingdomOrigin kingdom = KingdomOrigin.NutriKingdom;
-        public bool isUnlocked = false;
+        public bool isUnlocked = false; // This will be set by PersistentDataManager at runtime
 
         [Header("Visuals")]
         public Sprite enerlingSprite;
@@ -83,14 +100,19 @@ public class IngredientDatabase : ScriptableObject
         [Header("Animation")]
         public RuntimeAnimatorController animatorController;
 
-        [Header("Core Stats")]
+        [Header("Life Stats")]
         [Tooltip("Base life points")]
         public int baseLife = 100;
 
+        [Tooltip("Current life points")]
+        public int currentLife = 100;
+
+        [Header("Defense")]
         [Tooltip("Armor as percentage (0-100)")]
         [Range(0, 100)]
         public int armorPercent = 0;
 
+        [Header("Base Attack")]
         [Tooltip("Base damage for normal attacks")]
         public int baseDamage = 10;
 
@@ -98,35 +120,108 @@ public class IngredientDatabase : ScriptableObject
         [Tooltip("Immune to organ damage effects")]
         public bool immuneToOrganDamage = false;
 
-        [Header("Beneficial Organs")]
+        [Header("Organs")]
         [Tooltip("Organs that this ingredient benefits (for healing calculations)")]
         public List<string> beneficialOrgans = new List<string>();
 
-        [Header("Target Organs")]
         [Tooltip("Organs that this ingredient targets (for damage calculations)")]
         public List<string> targetOrgans = new List<string>();
 
-        [Header("Skills")]
+        [Header("Skills (4 Skills)")]
         public SkillInfo skill1;
         public SkillInfo skill2;
         public SkillInfo skill3;
+        public SkillInfo skill4;
 
         [Header("Description")]
         [TextArea(3, 5)]
-        public string ingredientDescription;
+        public string enerlingDescription;
 
         // Battle status (runtime only)
         [System.NonSerialized]
-        public int currentLife = 100;
-
-        [System.NonSerialized]
         public int skill1Cooldown = 0;
-
         [System.NonSerialized]
         public int skill2Cooldown = 0;
-
         [System.NonSerialized]
         public int skill3Cooldown = 0;
+        [System.NonSerialized]
+        public int skill4Cooldown = 0;
+
+        // Properties for UI
+        public string LifeText
+        {
+            get { return $"{currentLife}/{baseLife}"; }
+        }
+
+        public float LifePercentage
+        {
+            get { return (float)currentLife / baseLife; }
+        }
+
+        public Color LifeTextColor
+        {
+            get
+            {
+                float percentage = LifePercentage;
+                if (percentage <= 0.33f) return Color.red;
+                if (percentage <= 0.66f) return new Color(1f, 0.5f, 0f); // Orange
+                return Color.white;
+            }
+        }
+
+        public string OrgansLabel
+        {
+            get
+            {
+                if (beneficialOrgans.Count > 0) return "Beneficial Organs";
+                if (targetOrgans.Count > 0) return "Target Organs";
+                return "No Special Organs";
+            }
+        }
+
+        public int OrganCount
+        {
+            get { return Mathf.Max(beneficialOrgans.Count, targetOrgans.Count); }
+        }
+
+        public string AddedAbilityText
+        {
+            get
+            {
+                if (OrganCount == 0) return "No additional abilities";
+
+                string organType = beneficialOrgans.Count > 0 ? "beneficial" : "target";
+                int bonusPercent = CalculateOrganBonusPercent();
+
+                if (beneficialOrgans.Count > 0)
+                {
+                    return $"Since the Enerling has {OrganCount} {organType} organs, plus {bonusPercent}% healing every {skill2.cooldownTurns} turns";
+                }
+                else if (targetOrgans.Count > 0)
+                {
+                    return $"Since the Enerling has {OrganCount} {organType} organs, plus {bonusPercent}% damage every {skill1.cooldownTurns} turns";
+                }
+
+                return "No additional abilities";
+            }
+        }
+
+        // Calculate organ bonus percentage based on your distribution logic
+        private int CalculateOrganBonusPercent()
+        {
+            int organCount = OrganCount;
+
+            // Your logic: 2 organs = 5%, 3 organs = 10%, 4 organs = 15%
+            switch (organCount)
+            {
+                case 1: return 0;
+                case 2: return 5;
+                case 3: return 10;
+                case 4: return 15;
+                case 5: return 20;
+                default: return 0;
+            }
+        }
 
         // Get effective max life after armor
         public int GetEffectiveMaxLife()
@@ -142,6 +237,7 @@ public class IngredientDatabase : ScriptableObject
             skill1Cooldown = 0;
             skill2Cooldown = 0;
             skill3Cooldown = 0;
+            skill4Cooldown = 0;
         }
 
         // Reduce cooldowns
@@ -150,6 +246,7 @@ public class IngredientDatabase : ScriptableObject
             if (skill1Cooldown > 0) skill1Cooldown--;
             if (skill2Cooldown > 0) skill2Cooldown--;
             if (skill3Cooldown > 0) skill3Cooldown--;
+            if (skill4Cooldown > 0) skill4Cooldown--;
         }
 
         // Check if skill is ready
@@ -160,6 +257,7 @@ public class IngredientDatabase : ScriptableObject
                 case 1: return skill1Cooldown == 0;
                 case 2: return skill2Cooldown == 0;
                 case 3: return skill3Cooldown == 0;
+                case 4: return skill4Cooldown == 0;
                 default: return false;
             }
         }
@@ -178,9 +276,41 @@ public class IngredientDatabase : ScriptableObject
                 case 3:
                     skill3Cooldown = skill3.cooldownTurns;
                     break;
+                case 4:
+                    skill4Cooldown = skill4.cooldownTurns;
+                    break;
             }
         }
+
+        // Heal the enerling
+        public void Heal(int amount)
+        {
+            currentLife = Mathf.Min(baseLife, currentLife + amount);
+        }
+
+        // Take damage
+        public void TakeDamage(int amount)
+        {
+            currentLife = Mathf.Max(0, currentLife - amount);
+        }
     }
+
+    [Header("Organ Sprites (For UI)")]
+    public Sprite heartSprite;
+    public Sprite liverSprite;
+    public Sprite kidneySprite;
+    public Sprite pancreasSprite;
+    public Sprite brainSprite;
+
+    [Header("Frame Sprites (For UI)")]
+    public Sprite commonFrameSprite;
+    public Sprite rareFrameSprite;
+    public Sprite ultraRareFrameSprite;
+
+    [Header("Rarity Icons (For UI)")]
+    public Sprite commonRarityIcon;
+    public Sprite rareRarityIcon;
+    public Sprite ultraRareRarityIcon;
 
     [Header("Ingredients List")]
     [SerializeField]
@@ -189,6 +319,7 @@ public class IngredientDatabase : ScriptableObject
     // Get ingredient by name
     public IngredientInfo GetIngredientInfo(string name)
     {
+        if (string.IsNullOrEmpty(name)) return null;
         return ingredients.Find(i => i.ingredientName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
     }
 
@@ -215,22 +346,93 @@ public class IngredientDatabase : ScriptableObject
     // Get ingredients by rarity
     public List<IngredientInfo> GetIngredientsByRarity(Rarity rarity)
     {
-        return ingredients.FindAll(i => i.rarity == rarity);
+        return ingredients.FindAll(i => i.rarity == rarity && i.isUnlocked);
     }
 
     // Get ingredients by kingdom
     public List<IngredientInfo> GetIngredientsByKingdom(KingdomOrigin kingdom)
     {
-        return ingredients.FindAll(i => i.kingdom == kingdom);
+        return ingredients.FindAll(i => i.kingdom == kingdom && i.isUnlocked);
     }
 
-    // Unlock an ingredient
+    // Get ingredients by both rarity and kingdom
+    public List<IngredientInfo> GetIngredientsByFilter(Rarity rarityFilter, KingdomOrigin kingdomFilter, bool useRarityFilter, bool useKingdomFilter)
+    {
+        List<IngredientInfo> filtered = new List<IngredientInfo>();
+
+        foreach (var ingredient in ingredients)
+        {
+            if (!ingredient.isUnlocked) continue;
+
+            bool rarityMatch = !useRarityFilter || ingredient.rarity == rarityFilter;
+            bool kingdomMatch = !useKingdomFilter || ingredient.kingdom == kingdomFilter;
+
+            if (rarityMatch && kingdomMatch)
+            {
+                filtered.Add(ingredient);
+            }
+        }
+
+        return filtered;
+    }
+
+    // Get organ sprite by name
+    public Sprite GetOrganSprite(string organName)
+    {
+        switch (organName.ToLower())
+        {
+            case "heart": return heartSprite;
+            case "liver": return liverSprite;
+            case "kidney":
+            case "kidneys": return kidneySprite;
+            case "pancreas": return pancreasSprite;
+            case "brain": return brainSprite;
+            default: return null;
+        }
+    }
+
+    // Get frame sprite by rarity
+    public Sprite GetFrameSprite(Rarity rarity)
+    {
+        switch (rarity)
+        {
+            case Rarity.Common: return commonFrameSprite;
+            case Rarity.Rare: return rareFrameSprite;
+            case Rarity.UltraRare: return ultraRareFrameSprite;
+            default: return commonFrameSprite;
+        }
+    }
+
+    // Get rarity icon by rarity
+    public Sprite GetRarityIcon(Rarity rarity)
+    {
+        switch (rarity)
+        {
+            case Rarity.Common: return commonRarityIcon;
+            case Rarity.Rare: return rareRarityIcon;
+            case Rarity.UltraRare: return ultraRareRarityIcon;
+            default: return commonRarityIcon;
+        }
+    }
+
+    // Unlock an ingredient (runtime only)
     public void UnlockIngredient(string name)
+    {
+        var ingredient = GetIngredientInfo(name);
+        if (ingredient != null && !ingredient.isUnlocked)
+        {
+            ingredient.isUnlocked = true;
+            Debug.Log($"Database: Unlocked {name}");
+        }
+    }
+
+    // Lock an ingredient (runtime only)
+    public void LockIngredient(string name)
     {
         var ingredient = GetIngredientInfo(name);
         if (ingredient != null)
         {
-            ingredient.isUnlocked = true;
+            ingredient.isUnlocked = false;
         }
     }
 
@@ -296,7 +498,7 @@ public class IngredientDatabase : ScriptableObject
             modelPrefab = original.modelPrefab,
             animatorController = original.animatorController,
             baseLife = original.baseLife,
-            currentLife = original.baseLife,
+            currentLife = original.baseLife, // Start with full life
             armorPercent = original.armorPercent,
             baseDamage = original.baseDamage,
             immuneToOrganDamage = original.immuneToOrganDamage,
@@ -305,7 +507,8 @@ public class IngredientDatabase : ScriptableObject
             skill1 = original.skill1,
             skill2 = original.skill2,
             skill3 = original.skill3,
-            ingredientDescription = original.ingredientDescription
+            skill4 = original.skill4,
+            enerlingDescription = original.enerlingDescription
         };
 
         return copy;
