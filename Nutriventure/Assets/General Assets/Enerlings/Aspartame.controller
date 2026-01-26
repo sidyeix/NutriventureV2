@@ -94,7 +94,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: isHeal
+    m_ConditionEvent: isSkill2
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -6627798650613283597}
@@ -194,7 +194,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: isBlock
+    m_ConditionEvent: isSkill1
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -6627798650613283597}
@@ -217,7 +217,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Aspartame heal
+  m_Name: Aspartame skill 2
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -248,28 +248,28 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: 3639180624054264406}
-    m_Position: {x: -320, y: 180, z: 0}
+    m_Position: {x: 380, y: 300, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -6627798650613283597}
     m_Position: {x: 30, y: 190, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8381550561273446506}
-    m_Position: {x: -300, y: 270, z: 0}
+    m_Position: {x: 30, y: 370, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8062321098324080632}
-    m_Position: {x: 30, y: 350, z: 0}
+    m_Position: {x: 380, y: 200, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -762395946755953219}
-    m_Position: {x: -190, y: 350, z: 0}
+    m_Position: {x: 380, y: 250, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -9164909760625400111}
-    m_Position: {x: 350, y: 280, z: 0}
+    m_Position: {x: 380, y: 150, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 739200143767189490}
-    m_Position: {x: 440, y: 160, z: 0}
+    m_Position: {x: -290, y: 240, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 5575140658253560785}
-    m_Position: {x: 250, y: 340, z: 0}
+    m_Position: {x: -290, y: 190, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -295,13 +295,19 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: isHeal
+  - m_Name: isSkill1
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: isBlock
+  - m_Name: isSkill2
+    m_Type: 4
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
+  - m_Name: isSkill3
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -320,12 +326,6 @@ AnimatorController:
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
   - m_Name: isDie
-    m_Type: 4
-    m_DefaultFloat: 0
-    m_DefaultInt: 0
-    m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: isSuperSkill
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -353,7 +353,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isHeal
+    m_ConditionEvent: isSkill2
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -762395946755953219}
@@ -475,7 +475,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Aspartame charged atk
+  m_Name: Aspartame skill 3
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -601,7 +601,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Aspartame block
+  m_Name: Aspartame skill 1
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -657,7 +657,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isBlock
+    m_ConditionEvent: isSkill1
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 8062321098324080632}
