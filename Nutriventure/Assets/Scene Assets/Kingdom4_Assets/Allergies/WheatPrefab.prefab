@@ -68,6 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23625f14c2627dc45ba961506f740c21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemCollectible
+  currentPhase: 1
   itemData: {fileID: 11400000, guid: 0f04b65b2aa35e545a72b4043aecbb81, type: 2}
   collectionRadius: 1
   overrideCollectSound: {fileID: 0}
