@@ -7,7 +7,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Vitamin A block
+  m_Name: Vitamin A skill 1
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -148,7 +148,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isBlock
+    m_ConditionEvent: isSkill1
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -9015474189383919190}
@@ -171,7 +171,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Vitamin A Shield
+  m_Name: Vitamin A skill 3
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -225,7 +225,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isHeal
+    m_ConditionEvent: isSkill2
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: 3968476113244788972}
@@ -256,13 +256,19 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: isHeal
+  - m_Name: isSkill1
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: isBlock
+  - m_Name: isSkill2
+    m_Type: 4
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
+  - m_Name: isSkill3
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -281,12 +287,6 @@ AnimatorController:
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
   - m_Name: isDie
-    m_Type: 4
-    m_DefaultFloat: 0
-    m_DefaultInt: 0
-    m_DefaultBool: 0
-    m_Controller: {fileID: 9100000}
-  - m_Name: isSuperSkill
     m_Type: 4
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -443,7 +443,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isHeal
+    m_ConditionEvent: isSkill2
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -7403080219283243490}
@@ -491,7 +491,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Vitamin A Heal
+  m_Name: Vitamin A skill 2
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions:
@@ -545,7 +545,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: isSuperSkill
+    m_ConditionEvent: isSkill3
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -7403080219283243490}
@@ -575,25 +575,25 @@ AnimatorStateMachine:
     m_Position: {x: 30, y: 190, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -8461063576052403886}
-    m_Position: {x: -280, y: 290, z: 0}
-  - serializedVersion: 1
-    m_State: {fileID: 1962617172066601286}
-    m_Position: {x: 350, y: 260, z: 0}
-  - serializedVersion: 1
-    m_State: {fileID: -4182445308925044195}
-    m_Position: {x: -280, y: 180, z: 0}
-  - serializedVersion: 1
-    m_State: {fileID: 3968476113244788972}
-    m_Position: {x: -220, y: 380, z: 0}
-  - serializedVersion: 1
-    m_State: {fileID: -9015474189383919190}
     m_Position: {x: 30, y: 340, z: 0}
   - serializedVersion: 1
+    m_State: {fileID: 1962617172066601286}
+    m_Position: {x: 410, y: 200, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -4182445308925044195}
+    m_Position: {x: 410, y: 350, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: 3968476113244788972}
+    m_Position: {x: 410, y: 300, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -9015474189383919190}
+    m_Position: {x: 410, y: 250, z: 0}
+  - serializedVersion: 1
     m_State: {fileID: -6287209215611775376}
-    m_Position: {x: 250, y: 340, z: 0}
+    m_Position: {x: -260, y: 190, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 1993432555417922446}
-    m_Position: {x: 370, y: 160, z: 0}
+    m_Position: {x: -260, y: 250, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -613,7 +613,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 1
-    m_ConditionEvent: isSuperSkill
+    m_ConditionEvent: isSkill3
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4182445308925044195}
@@ -638,7 +638,7 @@ AnimatorStateTransition:
   m_Name: 
   m_Conditions:
   - m_ConditionMode: 2
-    m_ConditionEvent: isBlock
+    m_ConditionEvent: isSkill1
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -7403080219283243490}
@@ -674,7 +674,7 @@ AnimatorStateTransition:
   m_TransitionDuration: 0.25
   m_TransitionOffset: 0
   m_ExitTime: 0.95
-  m_HasExitTime: 1
+  m_HasExitTime: 0
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
