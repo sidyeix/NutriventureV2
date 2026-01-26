@@ -34,56 +34,18 @@ public class IngredientDatabase : ScriptableObject
         [Header("Skill Type")]
         public SkillType type = SkillType.Damage;
 
-        [Header("Damage Values")]
-        [Tooltip("Base damage/heal value")]
+        [Header("Base Values")]
+        [Tooltip("Base value for damage/heal")]
         public int baseValue;
 
-        [Tooltip("Minimum damage for random range")]
+        [Tooltip("Minimum value for random range")]
         public int minValue;
 
-        [Tooltip("Maximum damage for random range")]
+        [Tooltip("Maximum value for random range")]
         public int maxValue;
 
         [Tooltip("Use random range instead of base value")]
         public bool useRandomRange = false;
-
-        [Header("Organ Damage Multipliers")]
-        [Tooltip("Bonus damage multiplier against heart (percentage)")]
-        [Range(0, 200)]
-        public int heartDamageMultiplier = 100; // 100% = normal damage
-
-        [Tooltip("Bonus damage multiplier against liver (percentage)")]
-        [Range(0, 200)]
-        public int liverDamageMultiplier = 100;
-
-        [Tooltip("Bonus damage multiplier against kidneys (percentage)")]
-        [Range(0, 200)]
-        public int kidneyDamageMultiplier = 100;
-
-        [Tooltip("Bonus damage multiplier against pancreas (percentage)")]
-        [Range(0, 200)]
-        public int pancreasDamageMultiplier = 100;
-
-        [Tooltip("Bonus damage multiplier against stomach (percentage)")]
-        [Range(0, 200)]
-        public int stomachDamageMultiplier = 100;
-
-        [Tooltip("Bonus damage multiplier against brain (percentage)")]
-        [Range(0, 200)]
-        public int brainDamageMultiplier = 100;
-
-        [Header("Defense Properties")]
-        [Tooltip("Percentage of damage blocked (0-100)")]
-        [Range(0, 100)]
-        public int blockPercent = 0;
-
-        [Tooltip("Against which rarities does this block work?")]
-        public Rarity[] blockWorksAgainst = new Rarity[] { Rarity.Common };
-
-        [Header("Heal Properties")]
-        [Tooltip("Percentage of max life to heal (0-100)")]
-        [Range(0, 100)]
-        public int healPercent = 0;
 
         [Header("Cooldown")]
         public int cooldownTurns = 0;
@@ -94,8 +56,8 @@ public class IngredientDatabase : ScriptableObject
         [Header("Description")]
         public string skillDescription;
 
-        // Get actual damage value (either base or random)
-        public int GetDamageValue()
+        // Get actual value (either base or random)
+        public int GetValue()
         {
             if (useRandomRange)
             {
@@ -103,51 +65,13 @@ public class IngredientDatabase : ScriptableObject
             }
             return baseValue;
         }
-
-        // Calculate total damage with organ multiplier
-        public int CalculateTotalDamage(IngredientInfo attacker, IngredientInfo target, string organType)
-        {
-            int baseDamage = GetDamageValue();
-            float multiplier = 1f;
-
-            // Apply organ-specific multiplier
-            switch (organType.ToLower())
-            {
-                case "heart":
-                    multiplier = heartDamageMultiplier / 100f;
-                    break;
-                case "liver":
-                    multiplier = liverDamageMultiplier / 100f;
-                    break;
-                case "kidney":
-                    multiplier = kidneyDamageMultiplier / 100f;
-                    break;
-                case "pancreas":
-                    multiplier = pancreasDamageMultiplier / 100f;
-                    break;
-                case "stomach":
-                    multiplier = stomachDamageMultiplier / 100f;
-                    break;
-                case "brain":
-                    multiplier = brainDamageMultiplier / 100f;
-                    break;
-            }
-
-            // If target is immune to organ damage, don't apply multipliers
-            if (target.immuneToOrganDamage && multiplier > 1f)
-            {
-                multiplier = 1f; // Just use base damage
-            }
-
-            return Mathf.RoundToInt(baseDamage * multiplier);
-        }
     }
 
     [System.Serializable]
     public class IngredientInfo
     {
         [Header("Basic Info")]
-        public string ingredientName; // Keep this name for compatibility
+        public string ingredientName;
         public Rarity rarity = Rarity.Common;
         public KingdomOrigin kingdom = KingdomOrigin.NutriKingdom;
         public bool isUnlocked = false;
@@ -158,18 +82,10 @@ public class IngredientDatabase : ScriptableObject
 
         [Header("Animation")]
         public RuntimeAnimatorController animatorController;
-        public string idleTrigger = "Idle";
-        public string attackTrigger = "Attack";
-        public string hitTrigger = "Hit";
-        public string blockTrigger = "Block";
-        public string deathTrigger = "Death";
 
         [Header("Core Stats")]
         [Tooltip("Base life points")]
         public int baseLife = 100;
-
-        [Tooltip("Current life (for battle)")]
-        public int currentLife = 100;
 
         [Tooltip("Armor as percentage (0-100)")]
         [Range(0, 100)]
@@ -179,25 +95,16 @@ public class IngredientDatabase : ScriptableObject
         public int baseDamage = 10;
 
         [Header("Immunities")]
-        [Tooltip("Immune to all organ damage effects (extra damage from multipliers)")]
+        [Tooltip("Immune to organ damage effects")]
         public bool immuneToOrganDamage = false;
 
-        [Header("Organ Weaknesses")]
-        [Tooltip("Which organs are weak (for taking extra damage)")]
-        public List<string> weakOrgans = new List<string>();
+        [Header("Beneficial Organs")]
+        [Tooltip("Organs that this ingredient benefits (for healing calculations)")]
+        public List<string> beneficialOrgans = new List<string>();
 
-        [Header("Win Chance Modifiers")]
-        [Tooltip("Win chance against Common rarity (0-100)")]
-        [Range(0, 100)]
-        public int winChanceVsCommon = 50;
-
-        [Tooltip("Win chance against Rare rarity (0-100)")]
-        [Range(0, 100)]
-        public int winChanceVsRare = 50;
-
-        [Tooltip("Win chance against UltraRare rarity (0-100)")]
-        [Range(0, 100)]
-        public int winChanceVsUltraRare = 50;
+        [Header("Target Organs")]
+        [Tooltip("Organs that this ingredient targets (for damage calculations)")]
+        public List<string> targetOrgans = new List<string>();
 
         [Header("Skills")]
         public SkillInfo skill1;
@@ -208,7 +115,10 @@ public class IngredientDatabase : ScriptableObject
         [TextArea(3, 5)]
         public string ingredientDescription;
 
-        // Battle status
+        // Battle status (runtime only)
+        [System.NonSerialized]
+        public int currentLife = 100;
+
         [System.NonSerialized]
         public int skill1Cooldown = 0;
 
@@ -218,33 +128,11 @@ public class IngredientDatabase : ScriptableObject
         [System.NonSerialized]
         public int skill3Cooldown = 0;
 
-        // Helper method to calculate win chance based on opponent rarity
-        public int GetWinChanceAgainst(Rarity opponentRarity)
-        {
-            switch (opponentRarity)
-            {
-                case Rarity.Common:
-                    return winChanceVsCommon;
-                case Rarity.Rare:
-                    return winChanceVsRare;
-                case Rarity.UltraRare:
-                    return winChanceVsUltraRare;
-                default:
-                    return 50;
-            }
-        }
-
-        // Get effective life after armor
-        public int GetEffectiveLife()
+        // Get effective max life after armor
+        public int GetEffectiveMaxLife()
         {
             float armorMultiplier = (100f - armorPercent) / 100f;
             return Mathf.RoundToInt(baseLife * armorMultiplier);
-        }
-
-        // Check if an organ is weak
-        public bool IsOrganWeak(string organ)
-        {
-            return weakOrgans.Contains(organ.ToLower());
         }
 
         // Reset battle state
@@ -298,7 +186,7 @@ public class IngredientDatabase : ScriptableObject
     [SerializeField]
     public List<IngredientInfo> ingredients = new List<IngredientInfo>();
 
-    // Get ingredient by name - KEEP THIS METHOD FOR COMPATIBILITY
+    // Get ingredient by name
     public IngredientInfo GetIngredientInfo(string name)
     {
         return ingredients.Find(i => i.ingredientName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
@@ -312,13 +200,13 @@ public class IngredientDatabase : ScriptableObject
         return null;
     }
 
-    // Get all unlocked ingredients - KEEP FOR COMPATIBILITY
+    // Get all unlocked ingredients
     public List<IngredientInfo> GetUnlockedIngredients()
     {
         return ingredients.FindAll(i => i.isUnlocked);
     }
 
-    // Get all locked ingredients - KEEP FOR COMPATIBILITY
+    // Get all locked ingredients
     public List<IngredientInfo> GetLockedIngredients()
     {
         return ingredients.FindAll(i => !i.isUnlocked);
@@ -336,7 +224,7 @@ public class IngredientDatabase : ScriptableObject
         return ingredients.FindAll(i => i.kingdom == kingdom);
     }
 
-    // Unlock an ingredient - KEEP FOR COMPATIBILITY
+    // Unlock an ingredient
     public void UnlockIngredient(string name)
     {
         var ingredient = GetIngredientInfo(name);
@@ -355,7 +243,7 @@ public class IngredientDatabase : ScriptableObject
         }
     }
 
-    // Reset all unlocks - KEEP FOR COMPATIBILITY
+    // Reset all unlocks
     public void ResetAllUnlocks()
     {
         foreach (var ingredient in ingredients)
@@ -407,20 +295,13 @@ public class IngredientDatabase : ScriptableObject
             enerlingSprite = original.enerlingSprite,
             modelPrefab = original.modelPrefab,
             animatorController = original.animatorController,
-            idleTrigger = original.idleTrigger,
-            attackTrigger = original.attackTrigger,
-            hitTrigger = original.hitTrigger,
-            blockTrigger = original.blockTrigger,
-            deathTrigger = original.deathTrigger,
             baseLife = original.baseLife,
             currentLife = original.baseLife,
             armorPercent = original.armorPercent,
             baseDamage = original.baseDamage,
             immuneToOrganDamage = original.immuneToOrganDamage,
-            weakOrgans = new List<string>(original.weakOrgans),
-            winChanceVsCommon = original.winChanceVsCommon,
-            winChanceVsRare = original.winChanceVsRare,
-            winChanceVsUltraRare = original.winChanceVsUltraRare,
+            beneficialOrgans = new List<string>(original.beneficialOrgans),
+            targetOrgans = new List<string>(original.targetOrgans),
             skill1 = original.skill1,
             skill2 = original.skill2,
             skill3 = original.skill3,
