@@ -292,13 +292,6 @@ public class TurnSystem : MonoBehaviour
         // Process organ effects
         ProcessOrganEffects();
 
-        // NEW: Clear defense at the end of player's turn
-        if (battleManager != null)
-        {
-            // BattleEnerlingManager should have a ClearDefense() method
-            // battleManager.ClearDefense();
-        }
-
         // Switch to AI turn
         isPlayerTurn = false;
         StartAITurn();
@@ -327,12 +320,6 @@ public class TurnSystem : MonoBehaviour
         // Process organ effects for AI
         ProcessAIOrganEffects();
 
-        // NEW: Clear AI defense at the end of AI's turn
-        if (aiManager != null)
-        {
-            aiManager.ClearAIDefense();
-        }
-
         // Next round
         currentRound++;
         UpdateRoundUI();
@@ -355,23 +342,31 @@ public class TurnSystem : MonoBehaviour
         int bonusPercent = CalculateOrganBonus(playerEnerling.rarity, organCount);
 
         // Check cooldown for organ bonus (every few turns based on rarity)
-        if (currentRound % GetOrganCooldown(playerEnerling.rarity) == 0)
+        int organCooldown = GetOrganCooldown(playerEnerling.rarity);
+
+        if (currentRound % organCooldown == 0)
         {
             if (playerEnerling.beneficialOrgans.Count > 0)
             {
-                // Apply healing bonus
-                int healAmount = Mathf.RoundToInt(playerEnerling.baseLife * (bonusPercent / 100f));
+                // Apply healing bonus: 10 + (bonusPercent * baseLife / 100)
+                int healAmount = 10 + Mathf.RoundToInt(playerEnerling.baseLife * (bonusPercent / 100f));
                 if (battleManager != null)
                 {
-                    // You'll need to add a method to apply heal with feedback
-                    // battleManager.ApplyHealToPlayer(healAmount);
+                    // Set organ heal bonus for next heal skill
+                    battleManager.SetOrganHealBonus(healAmount, playerEnerling.beneficialOrgans);
                 }
-                Debug.Log($"Player Organ bonus: Healed {healAmount} HP");
+                Debug.Log($"Player Organ bonus: +{bonusPercent}% healing on next heal (amount: {healAmount})");
             }
             else if (playerEnerling.targetOrgans.Count > 0)
             {
-                // Store damage bonus for next attack
-                Debug.Log($"Player Organ bonus: +{bonusPercent}% damage on next attack");
+                // Calculate damage bonus: 10 + (bonusPercent * baseDamage / 100)
+                int damageBonus = 10 + Mathf.RoundToInt(playerEnerling.baseDamage * (bonusPercent / 100f));
+                if (battleManager != null)
+                {
+                    // Set organ damage bonus for next damage skill
+                    battleManager.SetOrganDamageBonus(damageBonus, playerEnerling.targetOrgans);
+                }
+                Debug.Log($"Player Organ bonus: +{bonusPercent}% damage on next attack (amount: {damageBonus})");
             }
         }
     }
@@ -391,7 +386,9 @@ public class TurnSystem : MonoBehaviour
         int bonusPercent = CalculateOrganBonus(aiEnerling.rarity, organCount);
 
         // Check cooldown for organ bonus (every few turns based on rarity)
-        if (currentRound % GetOrganCooldown(aiEnerling.rarity) == 0)
+        int organCooldown = GetOrganCooldown(aiEnerling.rarity);
+
+        if (currentRound % organCooldown == 0)
         {
             if (aiEnerling.beneficialOrgans.Count > 0)
             {
@@ -399,15 +396,19 @@ public class TurnSystem : MonoBehaviour
                 int healAmount = Mathf.RoundToInt(aiEnerling.baseLife * (bonusPercent / 100f));
                 if (aiManager != null)
                 {
-                    // You'll need to add a method to apply heal to AI
-                    // aiManager.ApplyHealToAI(healAmount);
+                    aiManager.SetOrganHealBonus(healAmount, aiEnerling.beneficialOrgans);
                 }
-                Debug.Log($"AI Organ bonus: Healed {healAmount} HP");
+                Debug.Log($"AI Organ bonus: +{bonusPercent}% healing on next heal (amount: {healAmount})");
             }
             else if (aiEnerling.targetOrgans.Count > 0)
             {
-                // Store damage bonus for AI's next attack
-                Debug.Log($"AI Organ bonus: +{bonusPercent}% damage on next attack");
+                // Calculate damage bonus based on base damage
+                int damageBonus = Mathf.RoundToInt(aiEnerling.baseDamage * (bonusPercent / 100f));
+                if (aiManager != null)
+                {
+                    aiManager.SetOrganDamageBonus(damageBonus, aiEnerling.targetOrgans);
+                }
+                Debug.Log($"AI Organ bonus: +{bonusPercent}% damage on next attack (amount: {damageBonus})");
             }
         }
     }
