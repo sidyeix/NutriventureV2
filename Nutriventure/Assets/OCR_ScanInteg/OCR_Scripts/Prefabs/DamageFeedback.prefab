@@ -216,7 +216,7 @@ GameObject:
   - component: {fileID: 8931660333763108443}
   - component: {fileID: 525993337902862132}
   m_Layer: 0
-  m_Name: Damage
+  m_Name: Damage/Heal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

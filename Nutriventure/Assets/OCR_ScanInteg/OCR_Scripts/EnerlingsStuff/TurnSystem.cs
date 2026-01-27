@@ -230,12 +230,6 @@ public class TurnSystem : MonoBehaviour
         // Time's up - end turn
         if (turnActive)
         {
-            // If AI hasn't chosen a skill yet, force it
-            if (aiManager != null)
-            {
-                // You might want to add a method to force AI decision
-            }
-
             EndAITurn();
         }
     }
@@ -298,6 +292,13 @@ public class TurnSystem : MonoBehaviour
         // Process organ effects
         ProcessOrganEffects();
 
+        // NEW: Clear defense at the end of player's turn
+        if (battleManager != null)
+        {
+            // BattleEnerlingManager should have a ClearDefense() method
+            // battleManager.ClearDefense();
+        }
+
         // Switch to AI turn
         isPlayerTurn = false;
         StartAITurn();
@@ -325,6 +326,12 @@ public class TurnSystem : MonoBehaviour
 
         // Process organ effects for AI
         ProcessAIOrganEffects();
+
+        // NEW: Clear AI defense at the end of AI's turn
+        if (aiManager != null)
+        {
+            aiManager.ClearAIDefense();
+        }
 
         // Next round
         currentRound++;
@@ -496,7 +503,6 @@ public class TurnSystem : MonoBehaviour
         }
     }
 
-    // ADD THIS METHOD to fix the error
     public int GetCurrentRound()
     {
         return currentRound;

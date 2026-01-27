@@ -158,12 +158,8 @@ public class PlayerEnerlingManager : MonoBehaviour
                         cooldownSlider.value = 0;
                         cooldownSlider.gameObject.SetActive(false); // Hidden initially
 
-                        // Also find and setup the fill image for color changes
-                        Image fillImage = cooldownSlider.fillRect?.GetComponent<Image>();
-                        if (fillImage != null)
-                        {
-                            fillImage.color = new Color(1f, 0f, 0f, 0.7f); // Red with transparency
-                        }
+                        // FIXED: Don't change the color of the cooldown slider fill
+                        // Keep it as is (the original color from the prefab)
                     }
                 }
 
@@ -278,7 +274,10 @@ public class PlayerEnerlingManager : MonoBehaviour
             {
                 cooldownSliders[skillNumber].gameObject.SetActive(true);
                 cooldownSliders[skillNumber].maxValue = skill.cooldownTurns;
-                cooldownSliders[skillNumber].value = 0;
+                cooldownSliders[skillNumber].value = skill.cooldownTurns; // Start full
+
+                // FIXED: Don't animate the slider value, keep it static
+                // The color changing should only happen to the button
             }
 
             // Disable button and change appearance
@@ -326,9 +325,9 @@ public class PlayerEnerlingManager : MonoBehaviour
                     var skill = GetSkillByNumber(skillNum);
                     if (skill != null && skill.cooldownTurns > 0)
                     {
-                        // Calculate current value (inverse since we want it to fill up)
-                        float currentValue = cooldownSliders[skillNum].maxValue - currentCooldowns[skillNum];
-                        StartCoroutine(SmoothSliderValue(cooldownSliders[skillNum], currentValue, 0.3f));
+                        // Set slider value based on remaining cooldown
+                        float remainingValue = currentCooldowns[skillNum];
+                        cooldownSliders[skillNum].value = remainingValue;
                     }
                 }
 
@@ -341,52 +340,11 @@ public class PlayerEnerlingManager : MonoBehaviour
 
                     if (cooldownSliders.ContainsKey(skillNum))
                     {
-                        // Hide the slider with fade
-                        StartCoroutine(HideCooldownSlider(skillNum));
+                        // Hide the slider immediately (no fade)
+                        cooldownSliders[skillNum].gameObject.SetActive(false);
                     }
                 }
             }
-        }
-    }
-
-    IEnumerator SmoothSliderValue(Slider slider, float targetValue, float duration)
-    {
-        float startValue = slider.value;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            slider.value = Mathf.Lerp(startValue, targetValue, t);
-            yield return null;
-        }
-
-        slider.value = targetValue;
-    }
-
-    IEnumerator HideCooldownSlider(int skillNumber)
-    {
-        if (cooldownSliders.ContainsKey(skillNumber))
-        {
-            Slider slider = cooldownSliders[skillNumber];
-            CanvasGroup canvasGroup = slider.GetComponent<CanvasGroup>();
-
-            if (canvasGroup != null)
-            {
-                // Fade out
-                float fadeTime = 0.5f;
-                float elapsed = 0f;
-
-                while (elapsed < fadeTime)
-                {
-                    elapsed += Time.deltaTime;
-                    canvasGroup.alpha = 1f - (elapsed / fadeTime);
-                    yield return null;
-                }
-            }
-
-            slider.gameObject.SetActive(false);
         }
     }
 
