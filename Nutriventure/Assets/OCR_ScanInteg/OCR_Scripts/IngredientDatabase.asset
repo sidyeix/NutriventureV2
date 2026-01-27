@@ -239,7 +239,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: c064aa097e38e0642a304aefd2eab04e, type: 3}
       skillDescription: A sharp citrus-based attack. Random damage between 8-16.
     skill2:
       skillName: Immune Block
@@ -250,7 +250,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: b758e0d0091332e4e8fe16698b579980, type: 3}
       skillDescription: Boosts immune system to block 50% of incoming damage.
     skill3:
       skillName: Cell Shield
@@ -261,7 +261,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 83fddf192ad02a740a69ea27a127256d, type: 3}
       skillDescription: Creates a cellular shield that blocks 45 damage for 1 turn.
     skill4:
       skillName: Antioxidant Wave
@@ -272,7 +272,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: fbe441824dcce5f478db381ca0bd51b0, type: 3}
       skillDescription: Releases antioxidants that deal 20 damage to all enemies.
     enerlingDescription: An antioxidant Enerling that boosts immunity and protects
       cells.
@@ -280,7 +280,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 414c4fc7e8324964cab3cfcfe069db2c, type: 3}
     modelPrefab: {fileID: 1545884430150599015, guid: 4a61aa487d5cf1644a71cc35c23f0f22, type: 3}
     animatorController: {fileID: 9100000, guid: 407649418f9798f4bb04cb92e3d2eb86, type: 2}
     baseLife: 120
@@ -300,7 +300,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 4b5a315f9556c1d44a52ad765366780e, type: 3}
       skillDescription: A precise vision-enhanced strike. Random damage between 11-13.
     skill2:
       skillName: Immune Block
@@ -311,7 +311,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 4c04437de6f7bd5488fa7ed3e32f41a3, type: 3}
       skillDescription: Visual distortion field that blocks 65% of damage.
     skill3:
       skillName: Cell Shield
@@ -322,7 +322,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: d69a07a0c973b7947ac565298b92565a, type: 3}
       skillDescription: Restores 30 health through cellular regeneration.
     skill4:
       skillName: Antioxidant Wave
@@ -333,7 +333,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 79254d204f439344fb74fb5e21970d11, type: 3}
       skillDescription: Creates a growth-enhanced shield that blocks 50 damage.
     enerlingDescription: Vision-enhancing Enerling that promotes eye health and cell
       growth.
@@ -341,7 +341,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e85be579bfd380147b5dba740d1f9307, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 0752cf7d150e0184c8ec9d724cbaf960, type: 3}
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
     animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
@@ -362,7 +362,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 766e1b0e04aab7749b35db932036ef59, type: 3}
       skillDescription: A protein-packed punch. Random damage between 8-16.
     skill2:
       skillName: Albumin Block
@@ -373,7 +373,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: d69611b10d1745c458f58238d79abfde, type: 3}
       skillDescription: Albumin-based shield blocks 55% of damage.
     skill3:
       skillName: Immune Heal
@@ -384,7 +384,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: c4883ea2dfac6c64eadfcf7cad47bdd8, type: 3}
       skillDescription: Restores 50 health and grants immunity to next attack.
     skill4:
       skillName: Egg Stun Strike
@@ -395,7 +395,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: c8cc0b6346536d94895d9e08e4762ff4, type: 3}
       skillDescription: Protein-rich strike with chance to stun. Deals 25 damage.
     enerlingDescription: Protein-packed Enerling with complete amino acids for muscle
       repair.
@@ -423,7 +423,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 31ea175e7b000d04497d78c142dd25d5, type: 3}
       skillDescription: A crunchy nut attack. Random damage between 7-17.
     skill2:
       skillName: Allergen Block
@@ -434,7 +434,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 93e0373c99aa2fd4db79e79573d832e7, type: 3}
       skillDescription: Allergen barrier blocks 45% of incoming damage.
     skill3:
       skillName: Single Crunch
@@ -445,7 +445,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 51ec990c7285ddf4e9078701c2c47e30, type: 3}
       skillDescription: Concentrated strike dealing 30 damage to single target.
     skill4:
       skillName: Nut Blast
@@ -456,7 +456,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: e65c8af32cbd84f4c9e77f1600465e85, type: 3}
       skillDescription: Explosive nut fragments deal 18 damage to all enemies.
     enerlingDescription: Energy-dense Enerling rich in healthy fats and protein.
   - ingredientName: Shrimp
@@ -484,7 +484,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 373eee9a517c1ee46b08bf69d88461bc, type: 3}
       skillDescription: A hard shell attack. Random damage between 9-15.
     skill2:
       skillName: Chitin Block
@@ -495,7 +495,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 0d61d3071139e5d419e527308c4b2e40, type: 3}
       skillDescription: Chitin shell blocks 50% of damage for one turn.
     skill3:
       skillName: Shell Wall
@@ -506,7 +506,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 5
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: e5533f44c42edd24bb13352cc1f38f3c, type: 3}
       skillDescription: Creates a defensive wall that blocks 60 damage.
     skill4:
       skillName: Crustacean Wave
@@ -517,7 +517,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: ce99f5f0abf957842a2223556c17490a, type: 3}
       skillDescription: Ocean wave attack dealing 22 damage to all enemies.
     enerlingDescription: Marine Enerling packed with omega-3s and minerals for heart
       health.
@@ -525,7 +525,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 2
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 5ede0c78e43ca574890e1fd95a9b0354, type: 3}
     modelPrefab: {fileID: 2931095760934502716, guid: f7f927a7861dde347b58ca1add59efd4, type: 3}
     animatorController: {fileID: 9100000, guid: 462826e67baf7fe40b34fd0239a13fce, type: 2}
     baseLife: 160
@@ -548,7 +548,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 4f1bb8b83ac174d4a8199a7e15f649c8, type: 3}
       skillDescription: A sugary sweet attack. Random damage between 11-17.
     skill2:
       skillName: Glucose Block
@@ -559,7 +559,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 6a913961623db9049a55430de87ea311, type: 3}
       skillDescription: Glucose barrier blocks 40% of incoming damage.
     skill3:
       skillName: Sugar Freeze Strike
@@ -570,7 +570,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 5
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 450f98d7900d6da4c9f9c61229a76a33, type: 3}
       skillDescription: Freezes opponent with crystallized sugar. Deals 35 damage.
     skill4:
       skillName: Diabetic Poison
@@ -581,7 +581,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 3
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 6b1fedbc319228941b41b921c8d10d97, type: 3}
       skillDescription: Toxic sugar buildup deals 15 damage over 3 turns.
     enerlingDescription: Sweet but harmful Enerling that damages multiple organs
       when consumed in excess.
@@ -589,7 +589,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 2
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: c4db3cdb92323484e991c3d164aa4764, type: 3}
     modelPrefab: {fileID: 5268653089127011796, guid: 5290cb8080660db409317e782cce03e8, type: 3}
     animatorController: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
     baseLife: 160
@@ -610,7 +610,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: c1ee46a2f1cfc384f80c6baadd67e93c, type: 3}
       skillDescription: Sticky syrup attack. Random damage between 12-16.
     skill2:
       skillName: Thin Block
@@ -621,7 +621,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 4ee83bdddac26aa4883951ca6178a319, type: 3}
       skillDescription: Thin syrup layer blocks 35% of damage.
     skill3:
       skillName: Corn Burst
@@ -632,7 +632,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 4
       cooldownTurns: 5
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 2e692fe42fd449e4e864105bd5aa4b57, type: 3}
       skillDescription: Explosive corn energy deals 32 damage to all enemies.
     skill4:
       skillName: Insulin Drain
@@ -643,7 +643,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 3
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 2d7dce8da640bc648ad887d3f8f7523f, type: 3}
       skillDescription: Drains opponent's energy, dealing 12 damage per turn for
         1 turns.
     enerlingDescription: Processed sweetener Enerling that stresses the liver and
@@ -714,7 +714,7 @@ MonoBehaviour:
     rarity: 1
     kingdom: 2
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 285dab36aa1d68d479d8be5d5c9a533c, type: 3}
     modelPrefab: {fileID: 8608059987361140176, guid: b47ee876fdee7f04aac83106c980b371, type: 3}
     animatorController: {fileID: 9100000, guid: 87145e9cf25700144b03f9702f78b2f7, type: 2}
     baseLife: 160
@@ -735,7 +735,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 21edb9ec26673cf44b1d875b47b3cf9e, type: 3}
       skillDescription: Phenylalanine energy blast. Random damage between 18-26.
     skill2:
       skillName: Asparta Block
@@ -746,7 +746,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: eb0ef32d6391a5f48973c97b9cff9e74, type: 3}
       skillDescription: Artificial sweetener barrier blocks 30% of damage.
     skill3:
       skillName: Sweet Charge
@@ -757,7 +757,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 6
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 021d6fe4a711c644f882f72105eae602, type: 3}
       skillDescription: Charged artificial sweet attack dealing 50 damage.
     skill4:
       skillName: Brain Fog
@@ -768,7 +768,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 6
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: b1932de1989250b41be3676c7a92b778, type: 3}
       skillDescription: Causes mental confusion dealing 20 damage over 1 turn.
     enerlingDescription: Controversial artificial sweetener that may affect brain
       function.
@@ -776,7 +776,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 3
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: d3bf2388c4b43254b9d4d9563cc043db, type: 3}
     modelPrefab: {fileID: 375772980708063953, guid: 979b2d05f62b5d44b92e49fc6be9b641, type: 3}
     animatorController: {fileID: 9100000, guid: aee6249c44d87704397621a3cff4012f, type: 2}
     baseLife: 200
@@ -797,7 +797,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: f2b0063fcd87b5f4fa67f11260937f8f, type: 3}
       skillDescription: Powerful preservative strike. Random damage between 22-30.
     skill2:
       skillName: Chemical Block
@@ -808,7 +808,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 78150a78834782147a9c19dfe38db8a2, type: 3}
       skillDescription: Chemical barrier blocks 40% of incoming damage.
     skill3:
       skillName: Benzene Wave
@@ -819,7 +819,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 4
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: f140273eb0b3f574790a9268d9698ed5, type: 3}
       skillDescription: Benzene energy wave deals 55 damage to all enemies.
     skill4:
       skillName: Toxin Overload
@@ -830,14 +830,14 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 6
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 2f599b803a303d44c9cbaafa0f2c2951, type: 3}
       skillDescription: Toxic overload dealing 25 damage.
     enerlingDescription: Potent preservative Enerling with known toxicity concerns.
   - ingredientName: Stevia Extract
     rarity: 2
     kingdom: 2
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 17227884efa25094383e47ccbac6cb34, type: 3}
     modelPrefab: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
     animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
     baseLife: 200
@@ -858,7 +858,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: c1699701b31f0244ca6f46ca961bab5c, type: 3}
       skillDescription: Natural sweetener attack. Random damage between 20-32.
     skill2:
       skillName: Plant Block
@@ -869,7 +869,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: ed8014b44fa6c194f92f4ccc70247edf, type: 3}
       skillDescription: Plant-based shield blocks 35% of damage.
     skill3:
       skillName: Herbal Drain
@@ -880,7 +880,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 5
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: bfb252b90265482499614902a6334f6c, type: 3}
       skillDescription: Drains 45 health from opponent and heals self.
     skill4:
       skillName: Leaf Heal
@@ -891,14 +891,14 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 6
       cooldownTurns: 3
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 8cef08b0ce8ce8c4a892952162e6b201, type: 3}
       skillDescription: Natural leaf extract heals 40 health.
     enerlingDescription: Natural sweetener Enerling derived from plant leaves.
   - ingredientName: Sorbitol
     rarity: 2
     kingdom: 2
     isUnlocked: 1
-    enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
+    enerlingSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
     modelPrefab: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
     animatorController: {fileID: 9100000, guid: 1d621b960f8110d43b81403c8c87affc, type: 2}
     baseLife: 200
@@ -919,7 +919,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 2ff6fa4e952e48f4e9febd2236635eb2, type: 3}
       skillDescription: Sugar alcohol strike. Random damage between 22-30.
     skill2:
       skillName: Osmotic Block
@@ -930,7 +930,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 8d576188dafc68044830cd0d39e64fd7, type: 3}
       skillDescription: Osmotic barrier blocks 30% of incoming damage.
     skill3:
       skillName: Laxative Freeze Strike
@@ -941,7 +941,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 7
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 89a3a30c60c944c4c9a33e01277e6712, type: 3}
       skillDescription: Freezes opponent dealing 60 damage.
     skill4:
       skillName: Digestive Drain
@@ -952,7 +952,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: d85721ae0c638084a8ef02391e32bcae, type: 3}
       skillDescription: Digestive disruption deals 18 damage over 3 turns.
     enerlingDescription: Sugar alcohol Enerling that can cause digestive issues.
   - ingredientName: Sucralose
@@ -980,7 +980,7 @@ MonoBehaviour:
       useRandomRange: 1
       additionalEffectPerOrgan: 5
       cooldownTurns: 0
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: 553e18fed47dc6445872c51770414094, type: 3}
       skillDescription: Artificial sweetener strike. Random damage between 17-23.
     skill2:
       skillName: Chlorine Block
@@ -991,7 +991,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 0
       cooldownTurns: 2
-      skillSprite: {fileID: 21300000, guid: 11fc390fbaa1fbd48b46cf39ebc32bdd, type: 3}
+      skillSprite: {fileID: 21300000, guid: 8d94444ffea7a4c4ab09d2c04f6fdcb2, type: 3}
       skillDescription: Chlorine-based barrier blocks 40% of damage.
     skill3:
       skillName: Sucra Stun Strike
@@ -1002,7 +1002,7 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 6
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: f8921df2ca40afe4898199f9298cde70, type: 3}
       skillDescription: Chlorinated attack may stun. Deals 45 damage.
     skill4:
       skillName: Synthetic Wave
@@ -1013,6 +1013,68 @@ MonoBehaviour:
       useRandomRange: 0
       additionalEffectPerOrgan: 5
       cooldownTurns: 5
-      skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
+      skillSprite: {fileID: 21300000, guid: b81a8b55e08f74a4782c3da010c0b6a9, type: 3}
       skillDescription: Synthetic energy wave deals 30 damage to enemy.
     enerlingDescription: Artificial sweetener Enerling with potential organ toxicity.
+  - ingredientName: Folic Acid
+    rarity: 0
+    kingdom: 0
+    isUnlocked: 1
+    enerlingSprite: {fileID: 21300000, guid: c39a57c2002861e458546203f742cee1, type: 3}
+    modelPrefab: {fileID: 6023607372359657904, guid: dcbcd625aa8be004f889c08f71bdf2a0, type: 3}
+    animatorController: {fileID: 9100000, guid: 130f5ae0b85b3a44c907d79199dfc3a8, type: 2}
+    baseLife: 120
+    currentLife: 120
+    armorPercent: 20
+    baseDamage: 12
+    immuneToOrganDamage: 1
+    beneficialOrgans:
+    - Heart
+    - Brain
+    targetOrgans: []
+    skill1:
+      skillName: Cellular Strike
+      type: 1
+      baseValue: 12
+      minValue: 9
+      maxValue: 15
+      useRandomRange: 1
+      additionalEffectPerOrgan: 5
+      cooldownTurns: 0
+      skillSprite: {fileID: 21300000, guid: 7957dee3c738db4428147bf7ad87d977, type: 3}
+      skillDescription: A cellular-level attack. Random damage between 9-15.
+    skill2:
+      skillName: DNA Block
+      type: 2
+      baseValue: 60
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 2
+      skillSprite: {fileID: 21300000, guid: 8ef11ceba1a199b4eb3933b5350ee066, type: 3}
+      skillDescription: DNA-based defense that blocks 60% of damage.
+    skill3:
+      skillName: Tissue Shield
+      type: 2
+      baseValue: 55
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 5
+      skillSprite: {fileID: 21300000, guid: 4804bc39fe273c4429cff66d234c4b80, type: 3}
+      skillDescription: Creates a tissue regeneration shield blocking 55 damage.
+    skill4:
+      skillName: Growth Spurt Charge
+      type: 1
+      baseValue: 22
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 5
+      cooldownTurns: 6
+      skillSprite: {fileID: 21300000, guid: c9d04b48b735fd8438a45c1b1869e7ab, type: 3}
+      skillDescription: Cellular growth burst dealing 22 damage to opponent.
+    enerlingDescription: Cellular growth Enerling essential for DNA synthesis and
+      repair.
