@@ -19483,7 +19483,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StaticGetter_1_Invoke_m6206102EF397AEFFA
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 43444
+// Method Definition Index: 43449
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t StatsPanel_get_Flags_m444CE50B3DD496FE7E1A11A26666EF1027726ADB_gshared (StatsPanel_t96059D3A84AC027B3909FC543259CF8F284D17AE* __this, const RuntimeMethod* method) 
 {
 	{
@@ -19491,7 +19491,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t StatsPanel_get_Flags_m444CE50B3DD496F
 		return (int32_t)(4);
 	}
 }
-// Method Definition Index: 43445
+// Method Definition Index: 43450
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StatsPanel__ctor_m32D43C761834BCEA295B306E1CA16427B9179655_gshared (StatsPanel_t96059D3A84AC027B3909FC543259CF8F284D17AE* __this, DebugDisplaySettingsStats_1_tE168FF31CF5A4F63CBD438C521C729BDD75E66E8* ___0_displaySettingsStats, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19596,7 +19596,7 @@ IL_0065:
 		return;
 	}
 }
-// Method Definition Index: 43446
+// Method Definition Index: 43451
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StatsPanel_Dispose_m88A8C80757AD3B3B56F0ADDDA2BE1456BD4CB53B_gshared (StatsPanel_t96059D3A84AC027B3909FC543259CF8F284D17AE* __this, const RuntimeMethod* method) 
 {
 	{
@@ -19622,7 +19622,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StatsPanel_Dispose_m88A8C80757AD3B3B56F0
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-// Method Definition Index: 43444
+// Method Definition Index: 43449
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t StatsPanel_get_Flags_m273567C9D1AA8A375EA67F8240CF67E76395C6B9_gshared (StatsPanel_tE854C1AF572C86BCCB7D1954558E55D4A5BEDC63* __this, const RuntimeMethod* method) 
 {
 	{
@@ -19630,7 +19630,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t StatsPanel_get_Flags_m273567C9D1AA8A3
 		return (int32_t)(4);
 	}
 }
-// Method Definition Index: 43445
+// Method Definition Index: 43450
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StatsPanel__ctor_m109E8B432C6EA0B6FE668E05A9412BC621D69691_gshared (StatsPanel_tE854C1AF572C86BCCB7D1954558E55D4A5BEDC63* __this, DebugDisplaySettingsStats_1_t0E02F5C4D4A2D7EF81526E92825541BEC4C02A3E* ___0_displaySettingsStats, const RuntimeMethod* method) 
 {
 	static bool s_Il2CppMethodInitialized;
@@ -19735,7 +19735,7 @@ IL_0065:
 		return;
 	}
 }
-// Method Definition Index: 43446
+// Method Definition Index: 43451
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void StatsPanel_Dispose_m63566038968823078D9900B7579C3DD61855A87D_gshared (StatsPanel_tE854C1AF572C86BCCB7D1954558E55D4A5BEDC63* __this, const RuntimeMethod* method) 
 {
 	{
@@ -25814,7 +25814,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR ResolveContextU5BU5D_tA44F71F5EFF
 		return L_0;
 	}
 }
-// Method Definition Index: 43440
+// Method Definition Index: 43445
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR DebugDisplayStats_1_t0D30D6935238AEC97DBDC2EA687D9560A9780DFF* DebugDisplaySettingsStats_1_get_debugDisplayStats_mD90CA17E3D6623A27F4F42CD6421A94AF9EAE124_gshared_inline (DebugDisplaySettingsStats_1_tE168FF31CF5A4F63CBD438C521C729BDD75E66E8* __this, const RuntimeMethod* method) 
 {
 	{
@@ -25879,7 +25879,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t RefCounted_get_refCount_m
 		return L_0;
 	}
 }
-// Method Definition Index: 47621
+// Method Definition Index: 47626
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool UnsafeUtility_EnumEquals_TisInt32Enum_tCBAC8BA2BFF3A845FA599F303093BBBA374B6F0C_m9668962BCDAE5E794B91763106C693FA5B11590A_gshared_inline (int32_t ___0_lhs, int32_t ___1_rhs, const RuntimeMethod* method) 
 {
 	{
@@ -25888,7 +25888,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool UnsafeUtility_EnumEquals_Tis
 		return (bool)((((int64_t)((int64_t)L_0)) == ((int64_t)((int64_t)L_1)))? 1 : 0);
 	}
 }
-// Method Definition Index: 47619
+// Method Definition Index: 47624
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t UnsafeUtility_EnumToInt_TisInt32Enum_tCBAC8BA2BFF3A845FA599F303093BBBA374B6F0C_mC90816E6D58853C585D61A83E0383B5FE2E98304_gshared_inline (int32_t ___0_enumValue, const RuntimeMethod* method) 
 {
 	il2cpp_rgctx_method_init(method);
@@ -26022,7 +26022,7 @@ IL_0019:
 		return L_4;
 	}
 }
-// Method Definition Index: 47620
+// Method Definition Index: 47625
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void UnsafeUtility_InternalEnumToInt_TisInt32Enum_tCBAC8BA2BFF3A845FA599F303093BBBA374B6F0C_m2DE327573510598889BAAF82C367CD246855CDA4_gshared_inline (int32_t* ___0_enumValue, int32_t* ___1_intValue, const RuntimeMethod* method) 
 {
 	{
