@@ -18223,7 +18223,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   musicSource: {fileID: 1729832189}
   soundEffectsSource: {fileID: 1250697502}
-  mainMenuMusic: {fileID: 0}
+  mainMenuMusic: {fileID: 8300000, guid: b38ae38a7498db449ac8237405d927af, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
   chestOpenSound: {fileID: 0}
   rewardPopSound: {fileID: 0}
