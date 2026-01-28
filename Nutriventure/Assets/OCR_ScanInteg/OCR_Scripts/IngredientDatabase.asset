@@ -32,7 +32,7 @@ MonoBehaviour:
     modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 0
     armorPercent: 25
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -271,7 +271,7 @@ MonoBehaviour:
       maxValue: 0
       useRandomRange: 0
       additionalEffectPerOrgan: 4
-      cooldownTurns: 3
+      cooldownTurns: 2
       skillSprite: {fileID: 21300000, guid: fbe441824dcce5f478db381ca0bd51b0, type: 3}
       skillDescription: Releases antioxidants that deal 20 damage to all enemies.
     enerlingDescription: An antioxidant Enerling that boosts immunity and protects
@@ -314,9 +314,9 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: 4c04437de6f7bd5488fa7ed3e32f41a3, type: 3}
       skillDescription: Visual distortion field that blocks 65% of damage.
     skill3:
-      skillName: Cell Shield
-      type: 2
-      baseValue: 45
+      skillName: Skin Heal
+      type: 0
+      baseValue: 30
       minValue: 0
       maxValue: 0
       useRandomRange: 0
@@ -325,9 +325,9 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: d69a07a0c973b7947ac565298b92565a, type: 3}
       skillDescription: Restores 30 health through cellular regeneration.
     skill4:
-      skillName: Antioxidant Wave
-      type: 1
-      baseValue: 20
+      skillName: Growth Shield
+      type: 2
+      baseValue: 50
       minValue: 0
       maxValue: 0
       useRandomRange: 0
@@ -345,7 +345,7 @@ MonoBehaviour:
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
     animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 15
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -377,7 +377,7 @@ MonoBehaviour:
       skillDescription: Albumin-based shield blocks 55% of damage.
     skill3:
       skillName: Immune Heal
-      type: 2
+      type: 0
       baseValue: 50
       minValue: 0
       maxValue: 0
@@ -499,7 +499,7 @@ MonoBehaviour:
       skillDescription: Chitin shell blocks 50% of damage for one turn.
     skill3:
       skillName: Shell Wall
-      type: 1
+      type: 2
       baseValue: 60
       minValue: 0
       maxValue: 0
@@ -593,7 +593,7 @@ MonoBehaviour:
     modelPrefab: {fileID: 5268653089127011796, guid: 5290cb8080660db409317e782cce03e8, type: 3}
     animatorController: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
     baseLife: 160
-    currentLife: 160
+    currentLife: 147
     armorPercent: 20
     baseDamage: 15
     immuneToOrganDamage: 0
@@ -873,7 +873,7 @@ MonoBehaviour:
       skillDescription: Plant-based shield blocks 35% of damage.
     skill3:
       skillName: Herbal Drain
-      type: 1
+      type: 0
       baseValue: 45
       minValue: 0
       maxValue: 0

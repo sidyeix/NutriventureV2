@@ -32,17 +32,6 @@ public class AIEnerlingManager : MonoBehaviour
     public Sprite aiRareNameStatsBG;
     public Sprite aiUltraRareNameStatsBG;
 
-    [Header("Damage Feedback")]
-    public GameObject damageFeedbackPrefab;
-    public Transform aiFeedbackSpawnPoint;
-
-    [Header("Organ Sprites")]
-    public Sprite heartSprite;
-    public Sprite liverSprite;
-    public Sprite kidneySprite;
-    public Sprite pancreasSprite;
-    public Sprite brainSprite;
-
     // AI state
     private IngredientDatabase.IngredientInfo aiEnerling;
     private GameObject spawnedAIEnerling;
@@ -67,12 +56,6 @@ public class AIEnerlingManager : MonoBehaviour
     private TurnSystem turnSystem;
     private IngredientDatabase ingredientDatabase;
 
-    // Feedback queue
-    private Queue<FeedbackInfo> aiFeedbackQueue = new Queue<FeedbackInfo>();
-
-    [Header("Shield Icon")]
-    public Sprite shieldSprite;
-
     // Organ bonus tracking
     private int aiOrganBonusDamage = 0;
     private int aiOrganBonusHeal = 0;
@@ -88,15 +71,6 @@ public class AIEnerlingManager : MonoBehaviour
         for (int i = 1; i <= 4; i++)
         {
             skillCooldowns[i] = 0;
-        }
-    }
-
-    void Update()
-    {
-        // Process feedback queue with 0.5 second interval
-        if (aiFeedbackQueue.Count > 0 && !IsInvoking("ProcessAIFeedback"))
-        {
-            Invoke("ProcessAIFeedback", 0.5f);
         }
     }
 
@@ -119,99 +93,59 @@ public class AIEnerlingManager : MonoBehaviour
     }
 
     // Apply organ bonus to damage
-    public int ApplyOrganDamageBonus(int baseDamage)
+    public BattleStructs.DamageBreakdown ApplyOrganDamageBonus(int baseDamage)
     {
+        List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
+
         if (aiHasOrganDamageBonus && aiOrganBonusNames.Count > 0)
         {
-            Debug.Log($"AI Applying organ damage bonus: {aiOrganBonusDamage} from {aiOrganBonusNames.Count} organs");
+            Debug.Log($"AI applying organ damage bonus: {aiOrganBonusDamage} from {aiOrganBonusNames.Count} organs");
 
-            // Calculate individual organ bonus: 5% of base damage per organ
-            int organBonusPerOrgan = Mathf.RoundToInt(baseDamage * 0.05f);
-            if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
-
-            // Apply and show feedback for each organ
+            // Calculate individual organ bonus: 5% of base damage per organ (minimum 1)
             foreach (string organ in aiOrganBonusNames)
             {
-                // Show organ feedback
-                ShowAIDamageFeedback(
-                    organBonusPerOrgan,
-                    false, // isHeal = false for damage
-                    aiFeedbackSpawnPoint,
-                    "Organ",
-                    true,  // isOrganBonus = true
-                    organ  // organName
-                );
+                int organBonus = Mathf.RoundToInt(baseDamage * 0.05f);
+                if (organBonus < 1) organBonus = 1;
 
-                // Apply damage for this organ (this will be handled in battle manager)
-                if (battleManager != null)
-                {
-                    battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
-                        organBonusPerOrgan,
-                        0,
-                        organ
-                    ));
-                }
+                organBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonus));
+                Debug.Log($"AI Organ {organ}: {organBonus} damage (5% of {baseDamage})");
             }
-
-            // Calculate total organ damage for return value
-            int totalOrganDamage = organBonusPerOrgan * aiOrganBonusNames.Count;
 
             // Reset bonus
             aiHasOrganDamageBonus = false;
             aiOrganBonusDamage = 0;
             aiOrganBonusNames.Clear();
-
-            return totalOrganDamage;
         }
-        return 0;
+
+        return new BattleStructs.DamageBreakdown(baseDamage, organBonuses);
     }
 
     // Apply organ bonus to heal
-    public int ApplyOrganHealBonus(int baseHeal)
+    public BattleStructs.HealBreakdown ApplyOrganHealBonus(int baseHeal)
     {
+        List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
+
         if (aiHasOrganHealBonus && aiOrganBonusNames.Count > 0)
         {
-            Debug.Log($"AI Applying organ heal bonus: {aiOrganBonusHeal} from {aiOrganBonusNames.Count} organs");
+            Debug.Log($"AI applying organ heal bonus: {aiOrganBonusHeal} from {aiOrganBonusNames.Count} organs");
 
-            // For EACH organ, show separate feedback
-            int organCount = aiOrganBonusNames.Count;
-            int bonusPerOrgan = Mathf.RoundToInt(aiOrganBonusHeal / (float)organCount);
-
+            // Calculate individual organ bonus: 5% of base heal per organ (minimum 1)
             foreach (string organ in aiOrganBonusNames)
             {
-                ShowAIDamageFeedback(
-                    bonusPerOrgan,
-                    true, // isHeal = true for healing
-                    aiFeedbackSpawnPoint, // Show at AI position
-                    "Organ",
-                    true,  // isOrganBonus = true
-                    organ  // organName
-                );
+                int organBonus = Mathf.RoundToInt(baseHeal * 0.05f);
+                if (organBonus < 1) organBonus = 1;
+
+                organBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonus));
+                Debug.Log($"AI Organ {organ}: {organBonus} heal (5% of {baseHeal})");
             }
 
             // Reset bonus
             aiHasOrganHealBonus = false;
             aiOrganBonusHeal = 0;
             aiOrganBonusNames.Clear();
-
-            return aiOrganBonusHeal;
         }
-        return 0;
-    }
 
-    void ProcessAIFeedback()
-    {
-        if (aiFeedbackQueue.Count > 0)
-        {
-            var feedback = aiFeedbackQueue.Dequeue();
-            ShowAIDamageFeedback(feedback.amount, feedback.isHeal, feedback.spawnPoint, feedback.type, feedback.isOrganBonus, feedback.organName);
-
-            // Schedule next feedback after 0.5 seconds
-            if (aiFeedbackQueue.Count > 0)
-            {
-                Invoke("ProcessAIFeedback", 0.5f);
-            }
-        }
+        return new BattleStructs.HealBreakdown(baseHeal, organBonuses);
     }
 
     public void InitializeAIEnerling(string enerlingName, IngredientDatabase database, Transform spawningPoint = null)
@@ -496,7 +430,7 @@ public class AIEnerlingManager : MonoBehaviour
     {
         if (turnSystem != null)
         {
-            turnSystem.OnSkillAnimationStart(1f);
+            turnSystem.OnSkillAnimationStart();
         }
 
         float decisionTime = Random.Range(minDecisionTime, maxDecisionTime);
@@ -512,19 +446,64 @@ public class AIEnerlingManager : MonoBehaviour
                 UpdateAvailableSkills();
             }
 
-            UseSkill(chosenSkill);
+            yield return StartCoroutine(PlayAISkillAnimation(chosenSkill));
+
+            if (turnSystem != null)
+            {
+                turnSystem.OnSkillAnimationEnd();
+            }
+
+            yield return new WaitForSeconds(1f);
+
+            if (turnSystem != null)
+            {
+                turnSystem.EndAITurn();
+            }
+        }
+        else
+        {
+            if (turnSystem != null)
+            {
+                turnSystem.OnSkillAnimationEnd();
+                turnSystem.EndAITurn();
+            }
+        }
+    }
+
+    IEnumerator PlayAISkillAnimation(int skillNumber)
+    {
+        string animationBool = GetAnimationBoolName(skillNumber);
+        if (aiAnimator != null && !string.IsNullOrEmpty(animationBool))
+        {
+            aiAnimator.SetBool(animationBool, true);
+            Debug.Log($"AI playing animation: {animationBool}");
+
+            // Wait for animation to complete using the generic wait coroutine
+            yield return StartCoroutine(WaitForCurrentStateToFinish(aiAnimator));
+
+            aiAnimator.SetBool(animationBool, false);
         }
 
-        if (turnSystem != null)
-        {
-            turnSystem.OnSkillAnimationEnd();
-        }
+        // Apply skill effect AFTER animation completes
+        UseSkill(skillNumber);
+    }
 
-        yield return new WaitForSeconds(1f);
+    // Generic animation waiting coroutine
+    IEnumerator WaitForCurrentStateToFinish(Animator animator, int layer = 0)
+    {
+        if (animator == null) yield break;
 
-        if (turnSystem != null)
+        // Wait until we are fully inside a state (not transitioning)
+        while (animator.IsInTransition(layer))
+            yield return null;
+
+        AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layer);
+
+        // Wait until this state finishes playing
+        while (state.normalizedTime < 1f || animator.IsInTransition(layer))
         {
-            turnSystem.EndAITurn();
+            yield return null;
+            state = animator.GetCurrentAnimatorStateInfo(layer);
         }
     }
 
@@ -580,12 +559,6 @@ public class AIEnerlingManager : MonoBehaviour
 
     void UseSkill(int skillNumber)
     {
-        string animationBool = GetAnimationBoolName(skillNumber);
-        if (aiAnimator != null && !string.IsNullOrEmpty(animationBool))
-        {
-            StartCoroutine(PlayAIAnimation(animationBool, skillNumber));
-        }
-
         int effect = CalculateAISkillEffect(skillNumber);
         var skill = GetSkillByNumber(skillNumber);
 
@@ -598,16 +571,24 @@ public class AIEnerlingManager : MonoBehaviour
             {
                 case IngredientDatabase.SkillInfo.SkillType.Heal:
                     // Apply organ heal bonus if available
-                    int organHealBonus = ApplyOrganHealBonus(effect);
+                    BattleStructs.HealBreakdown healBreakdown = ApplyOrganHealBonus(effect);
 
-                    // Get base effect WITHOUT organ bonus
-                    int baseHeal = skill.GetValue();
+                    Debug.Log($"AI healing: Base={healBreakdown.baseHeal}, Total={healBreakdown.totalHeal}, OrganBonuses={healBreakdown.organBonuses?.Count ?? 0}");
 
-                    // Show base heal feedback
-                    ShowAIDamageFeedback(baseHeal, true, aiFeedbackSpawnPoint, "Heal", false, "");
+                    // Show TOTAL heal with breakdown
+                    if (FeedbackManager.Instance != null)
+                    {
+                        FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
+                            FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                            healBreakdown.baseHeal,
+                            healBreakdown.organBonuses,
+                            false,
+                            "AI Heal"
+                        );
+                    }
 
                     // Apply total heal
-                    StartCoroutine(ApplyAIHeal(baseHeal + organHealBonus, 0));
+                    StartCoroutine(ApplyAIHeal(healBreakdown.totalHeal, 0));
 
                     // Beneficial organ healing (triggers when cooldown is ready)
                     if (hasBeneficialOrgans && aiOrganCooldownReady)
@@ -616,24 +597,30 @@ public class AIEnerlingManager : MonoBehaviour
 
                         // For EACH organ, calculate and show feedback
                         int organCount = aiEnerling.beneficialOrgans.Count;
-                        int organBonusPerOrgan = Mathf.RoundToInt(baseHeal * 0.05f);
+                        int organBonusPerOrgan = Mathf.RoundToInt(effect * 0.05f);
                         if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
 
+                        List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
                         foreach (string organ in aiEnerling.beneficialOrgans)
                         {
-                            // Show organ feedback
-                            ShowAIDamageFeedback(
-                                organBonusPerOrgan,
-                                true, // isHeal = true for healing
-                                aiFeedbackSpawnPoint,
-                                "Organ",
-                                true, // isOrganBonus = true
-                                organ // organName
-                            );
-
-                            // Apply heal for this organ
-                            StartCoroutine(ApplyAIHeal(organBonusPerOrgan, 0));
+                            cooldownBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonusPerOrgan));
                         }
+
+                        // Show organ cooldown bonuses
+                        if (FeedbackManager.Instance != null && cooldownBonuses.Count > 0)
+                        {
+                            FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
+                                FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                                0,
+                                cooldownBonuses,
+                                false,
+                                "AI Organ Cooldown"
+                            );
+                        }
+
+                        // Apply total organ heal
+                        int totalOrganHeal = organBonusPerOrgan * aiEnerling.beneficialOrgans.Count;
+                        StartCoroutine(ApplyAIHeal(totalOrganHeal, 0));
 
                         // Reset organ cooldown
                         aiOrganCooldownTimer = aiMaxOrganCooldown;
@@ -649,46 +636,40 @@ public class AIEnerlingManager : MonoBehaviour
                     if (battleManager != null)
                     {
                         // Apply organ damage bonus if available
-                        int organDamageBonus = ApplyOrganDamageBonus(effect);
+                        BattleStructs.DamageBreakdown damageBreakdown = ApplyOrganDamageBonus(effect);
 
-                        // Get base effect WITHOUT organ bonus
-                        int baseDamage = skill.GetValue();
-
-                        // Show base damage feedback
-                        ShowAIDamageFeedback(baseDamage, false, aiFeedbackSpawnPoint, "Damage", false, "");
+                        Debug.Log($"AI attacking: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
 
                         // Apply total damage
-                        battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(baseDamage + organDamageBonus, 0, ""));
+                        battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
+                            damageBreakdown,
+                            FeedbackManager.Instance != null ? FeedbackManager.Instance.playerFeedbackSpawnPoint : null
+                        ));
 
                         // Target organ damage (triggers when cooldown is ready)
                         if (hasTargetOrgans && aiOrganCooldownReady)
                         {
                             Debug.Log($"AI Organ Damage Triggered! {aiEnerling.targetOrgans.Count} target organs");
 
-                            // For EACH organ, calculate and show feedback
+                            // For EACH organ, calculate bonus
                             int organCount = aiEnerling.targetOrgans.Count;
-                            int organBonusPerOrgan = Mathf.RoundToInt(baseDamage * 0.05f);
+                            int organBonusPerOrgan = Mathf.RoundToInt(effect * 0.05f);
                             if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
 
+                            List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
                             foreach (string organ in aiEnerling.targetOrgans)
                             {
-                                // Show organ feedback
-                                ShowAIDamageFeedback(
-                                    organBonusPerOrgan,
-                                    false, // isHeal = false for damage
-                                    aiFeedbackSpawnPoint,
-                                    "Organ",
-                                    true, // isOrganBonus = true
-                                    organ // organName
-                                );
-
-                                // Apply organ damage
-                                battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
-                                    organBonusPerOrgan,
-                                    0,
-                                    organ
-                                ));
+                                cooldownBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonusPerOrgan));
                             }
+
+                            // Create damage breakdown for cooldown bonuses
+                            BattleStructs.DamageBreakdown cooldownDamage = new BattleStructs.DamageBreakdown(0, cooldownBonuses);
+
+                            // Apply organ cooldown damage
+                            battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
+                                cooldownDamage,
+                                FeedbackManager.Instance != null ? FeedbackManager.Instance.playerFeedbackSpawnPoint : null
+                            ));
 
                             // Reset organ cooldown
                             aiOrganCooldownTimer = aiMaxOrganCooldown;
@@ -712,16 +693,6 @@ public class AIEnerlingManager : MonoBehaviour
     {
         // 5% per organ
         return organCount * 5f;
-    }
-
-    IEnumerator PlayAIAnimation(string animationBool, int skillNumber)
-    {
-        if (aiAnimator == null) yield break;
-
-        aiAnimator.SetBool(animationBool, true);
-        yield return new WaitForSeconds(0.1f);
-        yield return new WaitForSeconds(0.5f);
-        aiAnimator.SetBool(animationBool, false);
     }
 
     string GetAnimationBoolName(int skillNumber)
@@ -767,10 +738,11 @@ public class AIEnerlingManager : MonoBehaviour
         }
     }
 
-    public IEnumerator TakeDamageWithFeedback(int totalDamage, int organBonusDamage, Transform feedbackSpawnPoint, string organName = "")
+    public IEnumerator TakeDamageWithFeedback(BattleStructs.DamageBreakdown damageBreakdown, Transform feedbackSpawnPoint)
     {
-        Debug.Log($"AI TakeDamageWithFeedback: Total={totalDamage}, OrganBonus={organBonusDamage}, OrganName={organName}");
+        Debug.Log($"AI receiving damage: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
 
+        int totalDamage = damageBreakdown.totalDamage;
         int remainingDamage = totalDamage;
 
         // Apply AI defense if active
@@ -781,7 +753,15 @@ public class AIEnerlingManager : MonoBehaviour
             activeAIDefense -= defendedDamage;
 
             // Show defense feedback
-            aiFeedbackQueue.Enqueue(new FeedbackInfo(defendedDamage, false, aiFeedbackSpawnPoint, "Defend", false, ""));
+            if (FeedbackManager.Instance != null)
+            {
+                FeedbackManager.Instance.ShowDefend(
+                    FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                    defendedDamage,
+                    false,
+                    "AI Defense"
+                );
+            }
 
             if (activeAIDefense <= 0)
             {
@@ -792,31 +772,32 @@ public class AIEnerlingManager : MonoBehaviour
             yield return new WaitForSeconds(0.3f);
         }
 
-        // Damage goes to armor first
+        // Calculate armor damage
+        int armorDamage = 0;
         if (currentAIArmor > 0 && remainingDamage > 0)
         {
-            int armorDamage = Mathf.Min(currentAIArmor, remainingDamage);
-            StartCoroutine(SmoothAIArmorChange(currentAIArmor, currentAIArmor - armorDamage, 0.3f));
+            armorDamage = Mathf.Min(currentAIArmor, remainingDamage);
             currentAIArmor -= armorDamage;
             remainingDamage -= armorDamage;
+        }
 
-            // Show armor damage feedback
-            aiFeedbackQueue.Enqueue(new FeedbackInfo(armorDamage, false, aiFeedbackSpawnPoint, "Armor", false, ""));
+        // Show ALL damage feedback with breakdown
+        if (FeedbackManager.Instance != null && totalDamage > 0)
+        {
+            FeedbackManager.Instance.ShowTotalDamageWithOrganBreakdown(
+                FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                damageBreakdown.baseDamage,
+                damageBreakdown.organBonuses,
+                false,
+                "Player Attack"
+            );
+        }
 
+        // Apply armor change
+        if (armorDamage > 0)
+        {
+            StartCoroutine(SmoothAIArmorChange(currentAIArmor + armorDamage, currentAIArmor, 0.3f));
             yield return new WaitForSeconds(0.3f);
-        }
-
-        // Show base damage feedback
-        int baseDamage = totalDamage - organBonusDamage;
-        if (baseDamage > 0 && remainingDamage > 0)
-        {
-            aiFeedbackQueue.Enqueue(new FeedbackInfo(baseDamage, false, aiFeedbackSpawnPoint, "Damage", false, ""));
-        }
-
-        // Show organ bonus damage feedback
-        if (organBonusDamage > 0 && remainingDamage > 0)
-        {
-            aiFeedbackQueue.Enqueue(new FeedbackInfo(organBonusDamage, false, aiFeedbackSpawnPoint, "Organ", true, organName));
         }
 
         // Remaining damage goes to health
@@ -838,40 +819,13 @@ public class AIEnerlingManager : MonoBehaviour
         yield return null;
     }
 
-    public IEnumerator ApplyAIHeal(int baseHeal, int organBonus)
+    public IEnumerator ApplyAIHeal(int totalHeal, int organBonus)
     {
-        int totalHeal = baseHeal + organBonus;
-
-        // Show heal feedback
-        aiFeedbackQueue.Enqueue(new FeedbackInfo(totalHeal, true, aiFeedbackSpawnPoint, "Heal", false, ""));
+        // Show heal feedback - handled in UseSkill method
 
         int targetHealth = Mathf.Min(aiEnerling.currentLife + totalHeal, aiEnerling.baseLife);
         yield return StartCoroutine(SmoothAIHealthChange(aiEnerling.currentLife, targetHealth, 0.5f));
         aiEnerling.currentLife = targetHealth;
-    }
-
-    IEnumerator SpawnAIOrganFeedbacks(List<string> organs, bool isHeal, int totalAmount)
-    {
-        if (organs == null || organs.Count == 0) yield break;
-
-        // Calculate individual amount per organ
-        int individualAmount = Mathf.RoundToInt(totalAmount / (float)organs.Count);
-        if (individualAmount < 1) individualAmount = 1;
-
-        foreach (string organ in organs)
-        {
-            // Queue organ feedback
-            aiFeedbackQueue.Enqueue(new FeedbackInfo(
-                individualAmount,
-                isHeal,
-                aiFeedbackSpawnPoint,
-                "Organ",
-                true,
-                organ
-            ));
-
-            yield return new WaitForSeconds(0.2f);
-        }
     }
 
     void SetAIDefense(int defenseAmount)
@@ -880,7 +834,15 @@ public class AIEnerlingManager : MonoBehaviour
         hasAIDefense = true;
 
         // Show defense activation feedback
-        aiFeedbackQueue.Enqueue(new FeedbackInfo(defenseAmount, false, aiFeedbackSpawnPoint, "Defend Active", false, ""));
+        if (FeedbackManager.Instance != null)
+        {
+            FeedbackManager.Instance.ShowDefend(
+                FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                defenseAmount,
+                true,
+                "AI Defense"
+            );
+        }
     }
 
     public void ClearAIDefense()
@@ -908,131 +870,6 @@ public class AIEnerlingManager : MonoBehaviour
     public void ProcessEndTurn()
     {
         UpdateAIOrganCooldown();
-    }
-
-    void ShowAIDamageFeedback(int amount, bool isHeal, Transform spawnPoint, string type, bool isOrganBonus, string organName = "")
-    {
-        if (damageFeedbackPrefab == null || spawnPoint == null) return;
-
-        // Create a random position within the specified bounds
-        // Y = -0.23 to 0.40, X = 0 to 1.21, Z = 0 to 0.78
-        float randomX = Random.Range(0f, 1.21f);
-        float randomY = Random.Range(-0.23f, 0.40f);
-        float randomZ = Random.Range(0f, 0.78f);
-
-        Vector3 randomPosition = new Vector3(randomX, randomY, randomZ);
-
-        GameObject feedback = Instantiate(damageFeedbackPrefab, spawnPoint);
-        feedback.transform.localPosition = randomPosition;
-
-        Debug.Log($"AI SHOWING FEEDBACK: Amount={amount}, IsHeal={isHeal}, Type={type}, IsOrganBonus={isOrganBonus}, OrganName={organName}");
-
-        // Set damage text
-        Transform damageTransform = feedback.transform.Find("Damage");
-        if (damageTransform != null)
-        {
-            TextMeshProUGUI damageText = damageTransform.GetComponent<TextMeshProUGUI>();
-            if (damageText != null)
-            {
-                // For Defend type, show only the number
-                if (type == "Defend" || type == "Defend Active")
-                {
-                    damageText.text = $"{amount}";
-                    damageText.color = Color.yellow;
-                }
-                else
-                {
-                    damageText.text = isHeal ? $"+{amount}" : $"-{amount}";
-
-                    if (isHeal)
-                        damageText.color = Color.green;
-                    else if (isOrganBonus)
-                        damageText.color = new Color(1f, 0.5f, 0f);
-                    else
-                        damageText.color = Color.red;
-                }
-            }
-        }
-
-        // Set organ sprite
-        Transform organTransform = feedback.transform.Find("Organ");
-        if (organTransform != null)
-        {
-            Image organImage = organTransform.GetComponent<Image>();
-            TextMeshProUGUI organText = organTransform.GetComponent<TextMeshProUGUI>();
-
-            // Hide text component
-            if (organText != null)
-                organText.gameObject.SetActive(false);
-
-            // Show organ sprite for organ bonuses
-            if (isOrganBonus && !string.IsNullOrEmpty(organName))
-            {
-                if (organImage != null)
-                {
-                    Sprite organSprite = GetOrganSpriteFromName(organName);
-                    if (organSprite != null)
-                    {
-                        organImage.sprite = organSprite;
-                        organImage.preserveAspect = true;
-                        organImage.gameObject.SetActive(true);
-                    }
-                }
-            }
-            // Show shield for defend skills
-            else if (type == "Defend" || type == "Defend Active")
-            {
-                if (organImage != null && shieldSprite != null)
-                {
-                    organImage.sprite = shieldSprite;
-                    organImage.preserveAspect = true;
-                    organImage.gameObject.SetActive(true);
-                }
-            }
-            // Hide for everything else
-            else
-            {
-                if (organImage != null)
-                    organImage.gameObject.SetActive(false);
-            }
-        }
-
-        // Animate
-        StartCoroutine(MoveAIFeedbackUpwards(feedback.transform));
-
-        CanvasGroup canvasGroup = feedback.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = feedback.AddComponent<CanvasGroup>();
-
-        StartCoroutine(FadeOutAIFeedback(canvasGroup, feedback));
-    }
-
-    Sprite GetOrganSpriteFromName(string organName)
-    {
-        if (string.IsNullOrEmpty(organName)) return null;
-
-        // Try to get from local sprites first
-        switch (organName.ToLower())
-        {
-            case "heart":
-                return heartSprite;
-            case "liver":
-                return liverSprite;
-            case "kidney":
-            case "kidneys":
-                return kidneySprite;
-            case "pancreas":
-                return pancreasSprite;
-            case "brain":
-                return brainSprite;
-            default:
-                // Try to get from database
-                if (ingredientDatabase != null)
-                    return ingredientDatabase.GetOrganSprite(organName);
-                else if (battleManager != null && battleManager.ingredientDatabase != null)
-                    return battleManager.ingredientDatabase.GetOrganSprite(organName);
-                return null;
-        }
     }
 
     IEnumerator SmoothAIHealthChange(float startValue, float endValue, float duration)
@@ -1124,44 +961,6 @@ public class AIEnerlingManager : MonoBehaviour
         }
 
         fillImage.color = originalColor;
-    }
-
-    IEnumerator MoveAIFeedbackUpwards(Transform feedbackTransform)
-    {
-        if (feedbackTransform == null) yield break;
-
-        float duration = 1.5f;
-        float elapsed = 0f;
-        Vector3 startPos = feedbackTransform.localPosition;
-        Vector3 endPos = startPos + new Vector3(0, 0.33f, 0);
-
-        while (elapsed < duration && feedbackTransform != null)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            feedbackTransform.localPosition = Vector3.Lerp(startPos, endPos, t);
-            yield return null;
-        }
-    }
-
-    IEnumerator FadeOutAIFeedback(CanvasGroup canvasGroup, GameObject feedback)
-    {
-        if (canvasGroup == null || feedback == null) yield break;
-
-        yield return new WaitForSeconds(1f);
-
-        float fadeDuration = 0.5f;
-        float elapsed = 0f;
-
-        while (elapsed < fadeDuration && canvasGroup != null && feedback != null)
-        {
-            elapsed += Time.deltaTime;
-            canvasGroup.alpha = 1f - (elapsed / fadeDuration);
-            yield return null;
-        }
-
-        if (feedback != null)
-            Destroy(feedback);
     }
 
     void UpdateAIHealthTextColor()
@@ -1275,36 +1074,21 @@ public class AIEnerlingManager : MonoBehaviour
         currentAIArmor = 0;
         activeAIDefense = 0;
         hasAIDefense = false;
-        aiFeedbackQueue.Clear();
 
         // Reset AI organ cooldown
         aiOrganCooldownTimer = 0;
         aiOrganCooldownReady = false;
+
+        // Reset organ bonuses
+        aiOrganBonusDamage = 0;
+        aiOrganBonusHeal = 0;
+        aiHasOrganDamageBonus = false;
+        aiHasOrganHealBonus = false;
+        aiOrganBonusNames.Clear();
     }
 
     public IngredientDatabase.IngredientInfo GetAIEnerling()
     {
         return aiEnerling;
-    }
-
-    // Helper struct for feedback queue
-    private struct FeedbackInfo
-    {
-        public int amount;
-        public bool isHeal;
-        public Transform spawnPoint;
-        public string type;
-        public bool isOrganBonus;
-        public string organName;
-
-        public FeedbackInfo(int amount, bool isHeal, Transform spawnPoint, string type, bool isOrganBonus, string organName)
-        {
-            this.amount = amount;
-            this.isHeal = isHeal;
-            this.spawnPoint = spawnPoint;
-            this.type = type;
-            this.isOrganBonus = isOrganBonus;
-            this.organName = organName;
-        }
     }
 }

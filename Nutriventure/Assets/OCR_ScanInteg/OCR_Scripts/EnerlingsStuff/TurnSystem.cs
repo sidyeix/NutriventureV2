@@ -87,6 +87,9 @@ public class TurnSystem : MonoBehaviour
     {
         Debug.Log($"Round {currentRound}: Player's Turn");
 
+        // Clear AI defense at the start of player turn
+        ClearDefenses();
+
         turnActive = true;
         skillChosenThisTurn = false;
         currentTurnTime = turnDuration;
@@ -128,6 +131,9 @@ public class TurnSystem : MonoBehaviour
     void StartAITurn()
     {
         Debug.Log($"Round {currentRound}: AI's Turn");
+
+        // Clear player defense at the start of AI turn
+        ClearDefenses();
 
         turnActive = true;
         currentTurnTime = turnDuration;
@@ -327,6 +333,22 @@ public class TurnSystem : MonoBehaviour
         // Switch to player turn
         isPlayerTurn = true;
         StartPlayerTurn();
+    }
+
+    // Clear defenses at turn start
+    void ClearDefenses()
+    {
+        // Clear player defense at the start of AI turn
+        if (!isPlayerTurn && battleManager != null)
+        {
+            battleManager.ClearDefense();
+        }
+
+        // Clear AI defense at the start of player turn
+        if (isPlayerTurn && aiManager != null)
+        {
+            aiManager.ClearAIDefense();
+        }
     }
 
     void ProcessOrganEffects()
