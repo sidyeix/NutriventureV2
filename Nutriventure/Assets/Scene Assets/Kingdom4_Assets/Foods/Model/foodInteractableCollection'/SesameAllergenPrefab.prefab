@@ -55,6 +55,7 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  productInfoManager: {fileID: 0}
   allergenDatabase: {fileID: 11400000, guid: 93d4396a1d8e9654c977e9e751eb0c63, type: 2}
   ingredientId: sesame
   pickupSFX: {fileID: 8300000, guid: d3969949d9ff1e646a385b63aa4619a8, type: 3}
@@ -196,7 +197,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8394bd499c2835e42a22d3bfa8931175, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.0033277273
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8394bd499c2835e42a22d3bfa8931175, type: 3}
       propertyPath: m_LocalPosition.z
