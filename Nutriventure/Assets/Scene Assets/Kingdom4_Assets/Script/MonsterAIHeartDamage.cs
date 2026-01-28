@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class MonsterAIHeartDamage : MonoBehaviour
 {
-    private PlayerHealth playerHealth;
+    private PlayerHealthManager playerHealth;
 
     [Header("Detection Settings")]
     [SerializeField] private float detectionRange = 10f;
@@ -71,8 +71,6 @@ public class MonsterAIHeartDamage : MonoBehaviour
 
     private void Start()
     {
-
-
         // Get the main animator from TurtleShell
         if (monsterBody != null)
         {
@@ -84,20 +82,27 @@ public class MonsterAIHeartDamage : MonoBehaviour
         }
 
         // Find player
-GameObject player = GameObject.FindGameObjectWithTag("Player");
-if (player != null)
-{
-    playerTransform = player.transform;
-    playerHealth = player.GetComponent<PlayerHealth>();
-
-    if (playerHealth == null)
-        Debug.LogError("PlayerHealth NOT found on Player!");
-}
-else
-{
-    Debug.LogError("Player GameObject with tag 'Player' not found!");
-}
-
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTransform = player.transform;
+            
+            // Try to get PlayerHealthManager from singleton first
+            playerHealth = PlayerHealthManager.Instance;
+            
+            // If singleton is null, try to get it from the player GameObject
+            if (playerHealth == null)
+            {
+                playerHealth = player.GetComponent<PlayerHealthManager>();
+            }
+            
+            if (playerHealth == null)
+                Debug.LogError("PlayerHealthManager NOT found on Player!");
+        }
+        else
+        {
+            Debug.LogError("Player GameObject with tag 'Player' not found!");
+        }
 
         // Store center position
         centerPosition = transform.position;
@@ -478,20 +483,28 @@ else
     }
 
     private void ApplyDamageToPlayer()
-{
-    if (playerHealth == null) return;
-
-    // Deal 1 heart damage (or change value)
-    playerHealth.TakeDamage(1);
-
-    Debug.Log("Monster damaged player's HEART!");
-
-    if (playerHurtSound != null && playerTransform != null)
     {
-        AudioSource.PlayClipAtPoint(playerHurtSound, playerTransform.position);
-    }
-}
+        if (playerHealth == null) 
+        {
+            // Try to get PlayerHealthManager from singleton
+            playerHealth = PlayerHealthManager.Instance;
+            if (playerHealth == null)
+            {
+                Debug.LogWarning("PlayerHealthManager is null!");
+                return;
+            }
+        }
 
+        // Deal 1 heart damage
+        playerHealth.TakeDamage(1f);
+
+        Debug.Log("Monster damaged player's HEART!");
+
+        if (playerHurtSound != null && playerTransform != null)
+        {
+            AudioSource.PlayClipAtPoint(playerHurtSound, playerTransform.position);
+        }
+    }
 
     private void ApplyKnockbackToPlayer()
     {

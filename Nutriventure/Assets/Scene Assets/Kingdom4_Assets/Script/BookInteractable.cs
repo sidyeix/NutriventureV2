@@ -69,6 +69,11 @@ public override void Pickup()
     Debug.Log("🥇 First ingredient activated!");
 }
 
+// Notify game manager
+        if (!AllerthriaGameManager.Instance.hasScroll)
+        {
+            AllerthriaGameManager.Instance.CollectScroll();
+        }
     if (IsClaimed) return; // prevent double pickup
 
     IsClaimed = true;

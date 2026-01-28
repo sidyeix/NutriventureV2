@@ -5,19 +5,19 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/GeneralCutscenes/LogoScreen.unity
     guid: 7037d90476ec74140ae21d31fca3e18f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/GeneralCutscenes/PlayerProfile.unity
     guid: 32bd45f41e08ba844857c5d2d8f10579
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/3_Kingdom1.unity
     guid: d16c5c7a09c34824b815adead5139428
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/4_Kingdom 2.unity
     guid: edeb95cd8763d9d449c4f26820989060
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/5_Kingdom3.unity
     guid: ce9ff593cd1714b4aa82da03770fd58b
   - enabled: 1

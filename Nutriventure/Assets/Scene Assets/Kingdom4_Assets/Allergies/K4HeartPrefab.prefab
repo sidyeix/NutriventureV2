@@ -52,7 +52,7 @@ MonoBehaviour:
   collectionRadius: 1
   overrideCollectSound: {fileID: 0}
   overrideCollectParticles: {fileID: 0}
-  shieldDuration: 5
+  shieldDuration: 3
   shieldMaterial: {fileID: 0}
   shieldActivationParticles: {fileID: 0}
   shieldActivationSound: {fileID: 0}
@@ -63,7 +63,7 @@ MonoBehaviour:
   floatSpeed: 2
   shieldPowerupParticles: {fileID: 0}
   heartPowerupParticles: {fileID: 7986504087968017091, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
-  particleOffset: {x: 0, y: 1, z: 0}
+  particleOffset: {x: 0, y: 0.5, z: 0}
 --- !u!65 &7886509770741773333
 BoxCollider:
   m_ObjectHideFlags: 0
