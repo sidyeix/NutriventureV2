@@ -4,16 +4,14 @@ using System.Collections;
 public class ItemCollectible : MonoBehaviour
 {
     public enum Kingdom4Phase
-{
-    Phase1_FindAllergens,
-    Phase2_Wagon,
-    Phase3_MovingRocks
-}
+    {
+        Phase1_FindAllergens,
+        Phase2_Wagon,
+        Phase3_MovingRocks
+    }
 
-[Header("Kingdom 4 Phase")]
-public Kingdom4Phase currentPhase;
-
-
+    [Header("Kingdom 4 Phase")]
+    public Kingdom4Phase currentPhase = Kingdom4Phase.Phase1_FindAllergens;
 
     [Header("Item Settings")]
     public SpawnableItemData itemData;
@@ -24,13 +22,13 @@ public Kingdom4Phase currentPhase;
     public ParticleSystem overrideCollectParticles;
     
     [Header("Shield Settings")]
-    public float shieldDuration = 5f; // Fixed: 5 seconds duration
+    public float shieldDuration = 5f;
     public Material shieldMaterial;
     public ParticleSystem shieldActivationParticles;
     public AudioClip shieldActivationSound;
     
     [Header("Allergen Damage Settings")]
-    public int damageAmount = 1; // Hearts to deduct for allergens
+    public int damageAmount = 1;
     public ParticleSystem damageParticles;
     public AudioClip damageSound;
     
@@ -39,9 +37,9 @@ public Kingdom4Phase currentPhase;
     public float floatSpeed = 2f;
     
     [Header("Particle Attachment Settings")]
-    public GameObject shieldPowerupParticles; // Assign your shield particle prefab
-    public GameObject heartPowerupParticles;  // Assign your heart particle prefab
-    public Vector3 particleOffset = new Vector3(0, 1f, 0); // Position above kart
+    public GameObject shieldPowerupParticles;
+    public GameObject heartPowerupParticles;
+    public Vector3 particleOffset = new Vector3(0, 1f, 0);
     
     private SphereCollider triggerCollider;
     private bool isCollected = false;
@@ -49,7 +47,7 @@ public Kingdom4Phase currentPhase;
     private Vector3 startPosition;
     private float floatOffset;
     
-    // FIXED: Proper static shield tracking
+    // Shield tracking
     private static bool isShieldActiveGlobal = false;
     private static float shieldEndTime = 0f;
     private static Material originalKartMaterial;
@@ -57,7 +55,7 @@ public Kingdom4Phase currentPhase;
     private static GameObject currentHeartParticles;
     private static Coroutine shieldCheckCoroutine;
     
-    // NEW: Heart particle duration
+    // Heart particle duration
     private static float heartParticlesEndTime = 0f;
     private static Coroutine heartParticleCheckCoroutine;
     
@@ -68,13 +66,11 @@ public Kingdom4Phase currentPhase;
         ApplyVisualMaterial();
         SetupFloating();
         
-        // Set damage amount based on item type
         if (itemData != null && itemData.category == SpawnableItemData.ItemCategory.NotSafe)
         {
-            damageAmount = 1; // All allergens deduct 1 heart
+            damageAmount = 1;
         }
         
-        // Find player once
         playerObject = GameObject.FindGameObjectWithTag("Player");
         
         Debug.Log($"Initialized {itemData.itemType} ({itemData.category}) at {transform.position}");
@@ -95,15 +91,13 @@ public Kingdom4Phase currentPhase;
     
     void SetupCollider()
     {
-        // Remove existing colliders if any
         Collider[] existingColliders = GetComponents<Collider>();
         foreach (Collider col in existingColliders)
         {
-            if (!(col is SphereCollider)) // Keep SphereCollider if it exists
+            if (!(col is SphereCollider))
                 Destroy(col);
         }
         
-        // Get or add SphereCollider
         triggerCollider = GetComponent<SphereCollider>();
         if (triggerCollider == null)
         {
@@ -113,12 +107,11 @@ public Kingdom4Phase currentPhase;
         triggerCollider.isTrigger = true;
         triggerCollider.radius = collectionRadius;
         
-        // Add a Rigidbody for better collision detection
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb == null)
         {
             rb = gameObject.AddComponent<Rigidbody>();
-            rb.isKinematic = true; // Don't let physics move it
+            rb.isKinematic = true;
             rb.useGravity = false;
         }
     }
@@ -126,7 +119,7 @@ public Kingdom4Phase currentPhase;
     void SetupFloating()
     {
         startPosition = transform.position;
-        floatOffset = Random.Range(0f, Mathf.PI * 2f); // Random offset for variety
+        floatOffset = Random.Range(0f, Mathf.PI * 2f);
         StartCoroutine(FloatAnimation());
     }
     
@@ -156,48 +149,32 @@ public Kingdom4Phase currentPhase;
     {
         if (isCollected) return;
         
-        Debug.Log($"🎯 ItemCollectible triggered by: {other.gameObject.name}");
-        
-        // Check if it's the player OR the kart
         bool isPlayer = other.CompareTag("Player");
         bool isKart = other.GetComponent<KartCollisionHandler>() != null || 
                       other.GetComponentInParent<KartCollisionHandler>() != null;
         
         if (isPlayer || isKart)
         {
-            Debug.Log($"🎉 Collected! (Player: {isPlayer}, Kart: {isKart})");
             CollectItem();
-        }
-        else
-        {
-            Debug.Log($"❓ Not collected - not player or kart");
         }
     }
     
     public void CollectItem()
     {
-        if (isCollected) 
-        {
-            Debug.LogWarning($"Already collected: {itemData.itemType}");
-            return;
-        }
+        if (isCollected) return;
         
         isCollected = true;
         
         StopAllCoroutines();
         
-        // IMMEDIATELY disable collider to prevent multiple triggers
         Collider collider = GetComponent<Collider>();
         if (collider != null) collider.enabled = false;
         
-        // IMMEDIATELY disable renderer so it disappears
         Renderer renderer = GetComponent<Renderer>();
         if (renderer != null) renderer.enabled = false;
         
-        // Play collection effects
         PlayCollectionEffects();
         
-        // Handle different item types
         switch (itemData.category)
         {
             case SpawnableItemData.ItemCategory.SafePassable:
@@ -211,67 +188,69 @@ public Kingdom4Phase currentPhase;
                 break;
         }
         
-        // Destroy IMMEDIATELY after effects start
-        Destroy(gameObject, 0.1f); // Very short delay for effects
+        Destroy(gameObject, 0.1f);
     }
     
     void HandleCoinCollection()
-{
-    Debug.Log("🥗 Healthy food collected");
-
-    if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
     {
-        Kingdom4ScoreManager.Instance?.HitHealthyFood();
-    }
-}
+        Debug.Log("🥗 Healthy food collected");
 
+        if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
+        {
+            Kingdom4ScoreManager.Instance?.HitHealthyFood();
+        }
+    }
     
     void HandleAllergenCollection()
-{
-    // ===== BELOW IS PHASE 2 & 3 ONLY =====
-    if (isShieldActiveGlobal && Time.time < shieldEndTime)
     {
-        PlayShieldBlockEffect();
-        return;
-    }
-    else if (isShieldActiveGlobal && Time.time >= shieldEndTime)
-    {
-        DeactivateShield();
-    }
+        if (isShieldActiveGlobal && Time.time < shieldEndTime)
+        {
+            PlayShieldBlockEffect();
+            return;
+        }
+        else if (isShieldActiveGlobal && Time.time >= shieldEndTime)
+        {
+            DeactivateShield();
+        }
 
-    // ❌ Player made a mistake
-    ApplyAllergenDamage();
-    PlayAllergenDamageEffects();
+        ApplyAllergenDamage();
+        PlayAllergenDamageEffects();
 
-    // ✅ PHASE 3: COMBO RESET
-    if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
-    {
-        Kingdom4ScoreManager.Instance?.HitAllergenInPhase3();
+        if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
+        {
+            Kingdom4ScoreManager.Instance?.HitAllergenInPhase3();
+        }
     }
-}
-
     
     void ApplyAllergenDamage()
-{
-    PlayerHealth health = playerObject?.GetComponent<PlayerHealth>() 
-                          ?? FindAnyObjectByType<PlayerHealth>();
-
-    if (health == null) return;
-
-    int before = health.currentHearts;
-    health.TakeDamage(damageAmount);
-
-    if (health.currentHearts < before &&
-        currentPhase == Kingdom4Phase.Phase2_Wagon)
     {
-        Kingdom4ScoreManager.Instance?.WagonHitAllergen();
-    }
-}
+        // FIXED: Use PlayerHealthManager instead of PlayerHealth
+        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
+        
+        if (healthManager == null)
+        {
+            // Fallback: try to find it on player
+            healthManager = playerObject?.GetComponent<PlayerHealthManager>();
+            if (healthManager == null)
+            {
+                Debug.LogWarning("PlayerHealthManager not found!");
+                return;
+            }
+        }
 
+        float healthBefore = healthManager.currentHealth;
+        healthManager.TakeDamage(damageAmount);
+        
+        Debug.Log($"Player took {damageAmount} damage! Health: {healthBefore} → {healthManager.currentHealth}");
+
+        if (currentPhase == Kingdom4Phase.Phase2_Wagon)
+        {
+            Kingdom4ScoreManager.Instance?.WagonHitAllergen();
+        }
+    }
     
     void PlayAllergenDamageEffects()
     {
-        // Play damage sound
         if (damageSound != null)
         {
             AudioSource.PlayClipAtPoint(damageSound, transform.position);
@@ -281,7 +260,6 @@ public Kingdom4Phase currentPhase;
             AudioSource.PlayClipAtPoint(itemData.collectSound, transform.position);
         }
         
-        // Play damage particles
         if (damageParticles != null)
         {
             ParticleSystem particles = Instantiate(damageParticles, transform.position, Quaternion.identity);
@@ -292,14 +270,12 @@ public Kingdom4Phase currentPhase;
     
     void PlayShieldBlockEffect()
     {
-        // Play shield block sound
         AudioClip sound = shieldActivationSound ?? itemData.collectSound;
         if (sound != null)
         {
             AudioSource.PlayClipAtPoint(sound, transform.position);
         }
         
-        // Play shield block particles
         ParticleSystem particles = shieldActivationParticles ?? itemData.collectParticles;
         if (particles != null)
         {
@@ -308,42 +284,36 @@ public Kingdom4Phase currentPhase;
             Destroy(instance.gameObject, instance.main.duration);
         }
     }
-    void Awake()
-{
-    // Default safe phase (can be overridden by spawners)
-    currentPhase = Kingdom4Phase.Phase1_FindAllergens;
-}
-
     
     void HandlePowerupCollection()
     {
         if (itemData.itemType == SpawnableItemData.ItemType.Shield)
         {
             Debug.Log("🛡️ Shield collected! Activating shield for 5 seconds...");
-            
-            // Attach shield particles to kart
             AttachShieldParticlesToKart();
-            
-            // Activate shield with 5-second duration
             ActivateShield();
         }
         else if (itemData.itemType == SpawnableItemData.ItemType.Heart)
         {
             Debug.Log("❤️ Heart collected! Healing player...");
-            
-            // Attach heart particles to kart
             AttachHeartParticlesToKart();
             
-            PlayerHealth health = playerObject?.GetComponent<PlayerHealth>() ?? FindAnyObjectByType<PlayerHealth>();
-            if (health != null)
+            // FIXED: Use PlayerHealthManager
+            PlayerHealthManager healthManager = PlayerHealthManager.Instance;
+            if (healthManager == null)
             {
-                int heartsBefore = health.currentHearts;
-                health.Heal(1);
-                Debug.Log($"Healed! Hearts: {heartsBefore} → {health.currentHearts}");
+                healthManager = playerObject?.GetComponent<PlayerHealthManager>();
+            }
+            
+            if (healthManager != null)
+            {
+                float healthBefore = healthManager.currentHealth;
+                healthManager.Heal(1);
+                Debug.Log($"Healed! Health: {healthBefore} → {healthManager.currentHealth}");
             }
             else
             {
-                Debug.LogError("PlayerHealth component not found!");
+                Debug.LogError("PlayerHealthManager component not found!");
             }
         }
         else
@@ -354,75 +324,40 @@ public Kingdom4Phase currentPhase;
     
     void AttachShieldParticlesToKart()
     {
-        if (shieldPowerupParticles == null)
-        {
-            Debug.LogWarning("No shield particle prefab assigned!");
-            return;
-        }
+        if (shieldPowerupParticles == null) return;
         
-        // Remove existing shield particles
         RemoveShieldParticles();
         
-        // Find the kart
         GameObject kart = FindKartObject();
-        if (kart == null)
-        {
-            Debug.LogError("No kart found to attach shield particles!");
-            return;
-        }
+        if (kart == null) return;
         
-        // Create and attach shield particles
         currentShieldParticles = Instantiate(shieldPowerupParticles);
-        
-        // Attach to kart with smooth following
         AttachParticlesToKart(currentShieldParticles, kart, particleOffset);
-        
-        Debug.Log($"🛡️ Shield particles attached to {kart.name} for {shieldDuration} seconds");
     }
     
     void AttachHeartParticlesToKart()
     {
-        if (heartPowerupParticles == null)
-        {
-            Debug.LogWarning("No heart particle prefab assigned!");
-            return;
-        }
+        if (heartPowerupParticles == null) return;
         
-        // Remove existing heart particles
         RemoveHeartParticles();
         
-        // Find the kart
         GameObject kart = FindKartObject();
-        if (kart == null)
-        {
-            Debug.LogError("No kart found to attach heart particles!");
-            return;
-        }
+        if (kart == null) return;
         
-        // Create and attach heart particles
         currentHeartParticles = Instantiate(heartPowerupParticles);
-        
-        // Attach to kart with smooth following
         AttachParticlesToKart(currentHeartParticles, kart, particleOffset);
         
-        Debug.Log($"❤️ Heart particles attached to {kart.name}");
-        
-        // Set heart particle duration to 5 seconds
         heartParticlesEndTime = Time.time + 5f;
-        
-        // Start heart particle expiration check
         StartHeartParticleExpirationCheck();
     }
     
     void StartHeartParticleExpirationCheck()
     {
-        // Stop any existing heart particle check
         if (heartParticleCheckCoroutine != null)
         {
             StopCoroutine(heartParticleCheckCoroutine);
         }
         
-        // Start new heart particle check on a MonoBehaviour that won't be destroyed
         GameObject heartParticleManager = new GameObject("HeartParticleTimerManager");
         DontDestroyOnLoad(heartParticleManager);
         HeartParticleTimerManager timerManager = heartParticleManager.AddComponent<HeartParticleTimerManager>();
@@ -431,27 +366,15 @@ public Kingdom4Phase currentPhase;
     
     IEnumerator CheckHeartParticleExpirationCoroutine()
     {
-        Debug.Log("⏱️ Heart particle timer started...");
-        
         while (Time.time < heartParticlesEndTime)
         {
-            float remainingTime = heartParticlesEndTime - Time.time;
-            int currentSecond = Mathf.FloorToInt(remainingTime);
-            int previousSecond = Mathf.FloorToInt(remainingTime + Time.deltaTime);
-            
-            if (currentSecond != previousSecond && currentSecond > 0)
-            {
-                Debug.Log($"❤️ Heart particles time remaining: {remainingTime:F1}s");
-            }
             yield return null;
         }
         
-        // Heart particles expired
         Debug.Log("❤️ Heart particles EXPIRED after 5 seconds!");
         RemoveHeartParticles();
         heartParticlesEndTime = 0f;
         
-        // Clean up the timer manager GameObject
         GameObject timerManager = GameObject.Find("HeartParticleTimerManager");
         if (timerManager != null)
         {
@@ -461,10 +384,8 @@ public Kingdom4Phase currentPhase;
     
     GameObject FindKartObject()
     {
-        // First try to find by tag
         GameObject kart = GameObject.FindGameObjectWithTag("Player");
         
-        // If not found, try to find by component
         if (kart == null)
         {
             KartCollisionHandler kartHandler = FindAnyObjectByType<KartCollisionHandler>();
@@ -474,7 +395,6 @@ public Kingdom4Phase currentPhase;
             }
         }
         
-        // If still not found, use cached player object
         if (kart == null && playerObject != null)
         {
             kart = playerObject;
@@ -485,14 +405,12 @@ public Kingdom4Phase currentPhase;
     
     void AttachParticlesToKart(GameObject particles, GameObject kart, Vector3 offset)
     {
-        // Add a follower script for smooth movement
         ParticleFollower follower = particles.AddComponent<ParticleFollower>();
         follower.target = kart.transform;
         follower.offset = offset;
         follower.followSpeed = 20f;
         follower.rotateWithTarget = false;
         
-        // Optionally set parent for hierarchy organization
         particles.transform.SetParent(kart.transform);
         particles.transform.localPosition = offset;
         particles.transform.localRotation = Quaternion.identity;
@@ -502,28 +420,19 @@ public Kingdom4Phase currentPhase;
     {
         if (currentShieldParticles != null)
         {
-            Debug.Log("🛡️ Removing shield particles...");
-            
-            // Stop particles gracefully
             ParticleSystem ps = currentShieldParticles.GetComponent<ParticleSystem>();
             if (ps != null)
             {
                 ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 float destroyDelay = ps.main.duration;
                 Destroy(currentShieldParticles, destroyDelay);
-                Debug.Log($"✅ Shield particles will be destroyed in {destroyDelay}s");
             }
             else
             {
                 Destroy(currentShieldParticles);
-                Debug.Log($"✅ Shield particles destroyed immediately");
             }
             
             currentShieldParticles = null;
-        }
-        else
-        {
-            Debug.Log("ℹ️ No shield particles to remove");
         }
     }
     
@@ -531,64 +440,45 @@ public Kingdom4Phase currentPhase;
     {
         if (currentHeartParticles != null)
         {
-            Debug.Log("❤️ Removing heart particles...");
-            
-            // Stop particles gracefully
             ParticleSystem ps = currentHeartParticles.GetComponent<ParticleSystem>();
             if (ps != null)
             {
                 ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 float destroyDelay = ps.main.duration;
                 Destroy(currentHeartParticles, destroyDelay);
-                Debug.Log($"✅ Heart particles will be destroyed in {destroyDelay}s");
             }
             else
             {
                 Destroy(currentHeartParticles);
-                Debug.Log($"✅ Heart particles destroyed immediately");
             }
             
             currentHeartParticles = null;
             
-            // Clean up the timer manager GameObject
             GameObject timerManager = GameObject.Find("HeartParticleTimerManager");
             if (timerManager != null)
             {
                 Destroy(timerManager);
             }
         }
-        else
-        {
-            Debug.Log("ℹ️ No heart particles to remove");
-        }
     }
     
     void ActivateShield()
     {
-        // Set shield end time
         shieldEndTime = Time.time + shieldDuration;
         isShieldActiveGlobal = true;
         
-        // Apply shield visual
         ApplyShieldVisual(true);
-        
-        // Start shield expiration check coroutine
         StartShieldExpirationCheck();
-        
         PlayShieldActivationEffects();
-        
-        Debug.Log($"🛡️ Shield activated until {shieldEndTime} (Current time: {Time.time})");
     }
     
     void StartShieldExpirationCheck()
     {
-        // Stop any existing shield check
         if (shieldCheckCoroutine != null)
         {
             StopCoroutine(shieldCheckCoroutine);
         }
         
-        // Start new shield check on a MonoBehaviour that won't be destroyed
         GameObject shieldManager = new GameObject("ShieldTimerManager");
         DontDestroyOnLoad(shieldManager);
         ShieldTimerManager timerManager = shieldManager.AddComponent<ShieldTimerManager>();
@@ -597,32 +487,17 @@ public Kingdom4Phase currentPhase;
     
     IEnumerator CheckShieldExpirationCoroutine()
     {
-        Debug.Log("⏱️ Shield timer started...");
-        
-        float startTime = Time.time;
-        
         while (Time.time < shieldEndTime && isShieldActiveGlobal)
         {
-            // Log remaining time every second
-            float remainingTime = shieldEndTime - Time.time;
-            int currentSecond = Mathf.FloorToInt(remainingTime);
-            int previousSecond = Mathf.FloorToInt(remainingTime + Time.deltaTime);
-            
-            if (currentSecond != previousSecond && currentSecond > 0)
-            {
-                Debug.Log($"🛡️ Shield time remaining: {remainingTime:F1}s");
-            }
             yield return null;
         }
         
-        // Shield expired
         if (isShieldActiveGlobal && Time.time >= shieldEndTime)
         {
             Debug.Log("🛡️ Shield EXPIRED after 5 seconds!");
             DeactivateShield();
         }
         
-        // Clean up the timer manager GameObject
         GameObject timerManager = GameObject.Find("ShieldTimerManager");
         if (timerManager != null)
         {
@@ -640,26 +515,22 @@ public Kingdom4Phase currentPhase;
         {
             if (enable)
             {
-                // Store original material
                 if (originalKartMaterial == null)
                 {
                     originalKartMaterial = kartRenderer.material;
                 }
                 
-                // Apply shield material
                 if (shieldMaterial != null)
                 {
                     kartRenderer.material = shieldMaterial;
                 }
                 else
                 {
-                    // Default shield effect - tint blue
                     kartRenderer.material.color = Color.cyan;
                 }
             }
             else
             {
-                // Restore original material
                 if (originalKartMaterial != null)
                 {
                     kartRenderer.material = originalKartMaterial;
@@ -690,14 +561,12 @@ public Kingdom4Phase currentPhase;
     
     void PlayCollectionEffects()
     {
-        // Play collection sound (for all items)
         AudioClip sound = overrideCollectSound ?? itemData.collectSound;
         if (sound != null)
         {
             AudioSource.PlayClipAtPoint(sound, transform.position);
         }
         
-        // Play collection particles (for all items)
         ParticleSystem particles = overrideCollectParticles ?? itemData.collectParticles;
         if (particles != null)
         {
@@ -707,7 +576,6 @@ public Kingdom4Phase currentPhase;
         }
     }
     
-    // Public static method to check shield status
     public static bool IsShieldActive()
     {
         return isShieldActiveGlobal && Time.time < shieldEndTime;
@@ -718,7 +586,6 @@ public Kingdom4Phase currentPhase;
         isShieldActiveGlobal = false;
         shieldEndTime = 0f;
         
-        // Restore visual
         GameObject kart = GameObject.FindGameObjectWithTag("Player") ?? 
                          FindAnyObjectByType<KartCollisionHandler>()?.gameObject;
         if (kart != null && originalKartMaterial != null)
@@ -727,72 +594,36 @@ public Kingdom4Phase currentPhase;
             if (kartRenderer != null)
             {
                 kartRenderer.material = originalKartMaterial;
-                Debug.Log("✅ Shield visual removed from kart");
             }
         }
         
-        // Remove shield particles
         RemoveShieldParticles();
+    }
+    
+    // Simple ParticleFollower class
+    public class ParticleFollower : MonoBehaviour
+    {
+        public Transform target;
+        public Vector3 offset;
+        public float followSpeed = 10f;
+        public bool rotateWithTarget = false;
         
-        Debug.Log("🛡️ Shield deactivated!");
-    }
-    
-    // Clean up on destroy
-    void OnDestroy()
-    {
-        // No coroutines to stop since we're using separate GameObject
-    }
-    
-    #if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        if (itemData != null)
+        void Update()
         {
-            // Color code based on category
-            Gizmos.color = itemData.category switch
+            if (target != null)
             {
-                SpawnableItemData.ItemCategory.SafePassable => Color.yellow,
-                SpawnableItemData.ItemCategory.NotSafe => Color.red,
-                SpawnableItemData.ItemCategory.SafePowerup => Color.blue,
-                _ => Color.white
-            };
-            
-            float radius = triggerCollider != null ? triggerCollider.radius : collectionRadius;
-            Gizmos.DrawWireSphere(transform.position, radius);
-            
-            // Draw icon based on type
-            string icon = itemData.itemType switch
-            {
-                SpawnableItemData.ItemType.Coin => "💰",
-                SpawnableItemData.ItemType.Shield => "🛡️",
-                SpawnableItemData.ItemType.Heart => "❤️",
-                _ => "●"
-            };
-            
-            UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f, 
-                $"{icon}\n{itemData.itemType}\n{itemData.category}");
+                Vector3 targetPosition = target.position + offset;
+                transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
+                
+                if (rotateWithTarget)
+                {
+                    transform.rotation = target.rotation;
+                }
+            }
         }
     }
-    
-    void OnDrawGizmos()
-    {
-        if (itemData != null && itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, 0.3f);
-        }
-    }
-    #endif
 }
 
-// Helper class to run the shield timer coroutine
-public class ShieldTimerManager : MonoBehaviour
-{
-    // Empty class just to have a MonoBehaviour to run coroutines
-}
-
-// NEW: Helper class to run the heart particle timer coroutine
-public class HeartParticleTimerManager : MonoBehaviour
-{
-    // Empty class just to have a MonoBehaviour to run coroutines
-}
+// Helper classes
+public class ShieldTimerManager : MonoBehaviour { }
+public class HeartParticleTimerManager : MonoBehaviour { }
