@@ -141,50 +141,59 @@ public class k4ProductInformationManager : MonoBehaviour
     }
     
     private void SpawnProductForDisplay(GameObject productPrefab)
+{
+    if (currentDisplayedProduct != null)
+        Destroy(currentDisplayedProduct);
+
+    if (productDisplaySpawnPoint == null || productPrefab == null)
     {
-        if (currentDisplayedProduct != null)
-            Destroy(currentDisplayedProduct);
-
-        if (productDisplaySpawnPoint == null || productPrefab == null)
-        {
-            Debug.LogError("ProductSpawnPoint NOT assigned!");
-            return;
-        }
-
-        currentDisplayedProduct = Instantiate(productPrefab);
-        currentDisplayedProduct.transform.SetParent(productDisplaySpawnPoint, false);
-
-        Vector3 rotation = new Vector3(0, 180, 0);
-        if (currentProductInfo != null && currentProductInfo.productID == "milk")
-        {
-            rotation = new Vector3(90, 0, 0);
-        }
-
-        currentDisplayedProduct.transform.localRotation = Quaternion.Euler(rotation);
-        currentDisplayedProduct.transform.localScale = Vector3.one * 0.6f;
-
-        // Disable physics
-        Rigidbody rb = currentDisplayedProduct.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
-
-        Collider col = currentDisplayedProduct.GetComponent<Collider>();
-        if (col != null) col.enabled = false;
-
-        // Add rotator
-        if (currentProductInfo != null && currentProductInfo.productID.Equals("MILK", StringComparison.OrdinalIgnoreCase))
-        {
-            Transform meshRoot = currentDisplayedProduct.transform.GetChild(0);
-            meshRoot.gameObject.AddComponent<ProductDisplayRotator>();
-        }
-        else
-        {
-            currentDisplayedProduct.AddComponent<ProductDisplayRotator>();
-        }
+        Debug.LogError("ProductSpawnPoint NOT assigned!");
+        return;
     }
+
+    currentDisplayedProduct = Instantiate(productPrefab);
+    currentDisplayedProduct.transform.SetParent(productDisplaySpawnPoint, false);
+
+    Vector3 rotation = new Vector3(0, 180, 0);
+    if (currentProductInfo != null && currentProductInfo.productID == "milk")
+    {
+        rotation = new Vector3(90, 0, 0);
+    }
+
+    currentDisplayedProduct.transform.localRotation = Quaternion.Euler(rotation);
+    
+    // Add this check for peanut scaling
+    if (currentProductInfo != null && currentProductInfo.productID.ToLower() == "peanut")
+    {
+        currentDisplayedProduct.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+    }
+    else
+    {
+        currentDisplayedProduct.transform.localScale = Vector3.one * 0.6f;
+    }
+
+    // Disable physics
+    Rigidbody rb = currentDisplayedProduct.GetComponent<Rigidbody>();
+    if (rb != null)
+    {
+        rb.isKinematic = true;
+        rb.useGravity = false;
+    }
+
+    Collider col = currentDisplayedProduct.GetComponent<Collider>();
+    if (col != null) col.enabled = false;
+
+    // Add rotator
+    if (currentProductInfo != null && currentProductInfo.productID.Equals("MILK", StringComparison.OrdinalIgnoreCase))
+    {
+        Transform meshRoot = currentDisplayedProduct.transform.GetChild(0);
+        meshRoot.gameObject.AddComponent<ProductDisplayRotator>();
+    }
+    else
+    {
+        currentDisplayedProduct.AddComponent<ProductDisplayRotator>();
+    }
+}
     
     public void HideProductInfo()
     {

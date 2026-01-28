@@ -8,6 +8,7 @@ using Cinemachine;
 
 public class Kingdom4GameEndManager : MonoBehaviour
 {
+     public static Kingdom4GameEndManager Instance { get; private set; }
     [Header("Star Rating System")]
     [SerializeField] private GameObject starsContainer;
     [SerializeField] private Animator starsAnimator;
@@ -115,7 +116,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
     }
 
     private void Awake()
-    {
+    {if (Instance == null)
+        {
+            Instance = this;
+            // Optional: DontDestroyOnLoad if you want it to persist
+            // DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         if (gameManager == null)
             gameManager = FindObjectOfType<AllerthriaGameManager>();
 

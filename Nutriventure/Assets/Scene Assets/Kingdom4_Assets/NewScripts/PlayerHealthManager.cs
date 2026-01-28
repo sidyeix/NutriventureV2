@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine.SceneManagement;
+using StarterAssets;
 
 public class PlayerHealthManager : MonoBehaviour
 {
@@ -46,20 +48,33 @@ public class PlayerHealthManager : MonoBehaviour
     {
         Debug.Log("Player Died!");
         
-        // Check current phase to handle death appropriately
-        if (AllerthriaGameManager.Instance != null)
+        // Play death sound
+        if (AudioHandler.Instance != null && deathSound != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(deathSound);
+        
+        // Disable player controls
+        ThirdPersonController playerController = GetComponent<ThirdPersonController>();
+        if (playerController != null)
         {
-            switch (AllerthriaGameManager.Instance.currentPhase)
+            playerController.enabled = false;
+        }
+        
+        // Trigger game over in Kingdom4GameEndManager
+        if (Kingdom4GameEndManager.Instance != null)
+        {
+            Kingdom4GameEndManager.Instance.HandleKingdom4GameOver();
+        }
+        else
+        {
+            // Fallback: Try to find it in the scene
+            Kingdom4GameEndManager gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
+            if (gameEndManager != null)
             {
-                case AllerthriaGameManager.GamePhase.AllergenHunt:
-                    // Respawn at checkpoint
-                    break;
-                case AllerthriaGameManager.GamePhase.WagonPhase:
-                    // Restart wagon phase
-                    break;
-                case AllerthriaGameManager.GamePhase.PlatformPhase:
-                    // Restart platform phase
-                    break;
+                gameEndManager.HandleKingdom4GameOver();
+            }
+            else
+            {
+                Debug.LogWarning("Kingdom4GameEndManager not found! Game over screen won't show.");
             }
         }
     }
@@ -172,37 +187,62 @@ public class PlayerHealthManager : MonoBehaviour
     }
     
     private IEnumerator DamageSequence()
+{
+    isInvulnerable = true;
+    
+    // Activate damage overlay if it exists
+    if (damageOverlay != null)
     {
-        isInvulnerable = true;
+        damageOverlay.gameObject.SetActive(true);
         
-        // Show damage overlay
-        if (damageOverlay != null)
+        float timer = 0f;
+        while (timer < overlayFadeTime)
         {
-            float timer = 0f;
-            while (timer < overlayFadeTime)
-            {
-                timer += Time.deltaTime;
-                float alpha = Mathf.Lerp(0f, 0.3f, timer / overlayFadeTime);
-                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-                yield return null;
-            }
-            
-            yield return new WaitForSeconds(0.1f);
-            
-            timer = 0f;
-            while (timer < overlayFadeTime)
-            {
-                timer += Time.deltaTime;
-                float alpha = Mathf.Lerp(0.3f, 0f, timer / overlayFadeTime);
-                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-                yield return null;
-            }
+            timer += Time.deltaTime;
+            float alpha = Mathf.Lerp(0f, 0.3f, timer / overlayFadeTime);
+            damageOverlay.color = new Color(1f, 0f, 0f, alpha);
+            yield return null;
         }
         
-        yield return new WaitForSeconds(invulnerabilityTime - overlayFadeTime * 2 - 0.1f);
+        yield return new WaitForSeconds(0.1f);
         
-        isInvulnerable = false;
+        timer = 0f;
+        while (timer < overlayFadeTime)
+        {
+            timer += Time.deltaTime;
+            float alpha = Mathf.Lerp(0.3f, 0f, timer / overlayFadeTime);
+            damageOverlay.color = new Color(1f, 0f, 0f, alpha);
+            yield return null;
+        }
+        
+        // Deactivate overlay after fade out
+        damageOverlay.gameObject.SetActive(false);
     }
+    
+    yield return new WaitForSeconds(invulnerabilityTime - overlayFadeTime * 2 - 0.1f);
+    
+    isInvulnerable = false;
+}
+
+public void ResetHealth()
+{
+    currentHealth = maxHearts;
+    UpdateHeartsUI();
+    isInvulnerable = false;
+    
+    // Ensure damage overlay is deactivated
+    if (damageOverlay != null)
+    {
+        damageOverlay.color = new Color(1f, 0f, 0f, 0f);
+        damageOverlay.gameObject.SetActive(false);
+    }
+    
+    if (damageCoroutine != null)
+    {
+        StopCoroutine(damageCoroutine);
+        damageCoroutine = null;
+    }
+}
     
     private void PlayDamageEffects()
     {
@@ -226,22 +266,6 @@ public class PlayerHealthManager : MonoBehaviour
         playerRenderer.material.color = Color.red;
         yield return new WaitForSeconds(damageFlashDuration);
         playerRenderer.material.color = originalPlayerColor;
-    }
-    
-    public void ResetHealth()
-    {
-        currentHealth = maxHearts;
-        UpdateHeartsUI();
-        isInvulnerable = false;
-        
-        if (damageCoroutine != null)
-        {
-            StopCoroutine(damageCoroutine);
-            damageCoroutine = null;
-        }
-        
-        if (damageOverlay != null)
-            damageOverlay.color = new Color(1f, 0f, 0f, 0f);
     }
     
     public void SetMaxHearts(int newMax)
