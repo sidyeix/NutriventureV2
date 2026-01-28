@@ -41,9 +41,6 @@ public class BattleEnerlingManager : MonoBehaviour
     public Transform enerlingSpawningPoint;
     public Transform aiSpawningPoint;
 
-    [Header("Animation Settings")]
-    public float animationBufferTime = 0.1f;
-
     // Current battle enerling
     private IngredientDatabase.IngredientInfo battleEnerling;
     private GameObject spawnedEnerling;
@@ -55,9 +52,7 @@ public class BattleEnerlingManager : MonoBehaviour
     private bool hasDefense = false;
 
     // Skill tracking
-    private List<GameObject> skillButtons = new List<GameObject>();
     private bool isAnimating = false;
-    private float animationEndTime = 0f;
 
     // Organ cooldown tracking
     private int organCooldownTimer = 0;
@@ -501,6 +496,20 @@ public class BattleEnerlingManager : MonoBehaviour
             return;
         }
 
+        // Check if it's player's turn
+        if (turnSystem != null && !turnSystem.IsPlayerTurn())
+        {
+            Debug.Log("Not player's turn!");
+            return;
+        }
+
+        // Check if turn system is animating
+        if (turnSystem != null && turnSystem.IsAnimating())
+        {
+            Debug.Log("System is busy, please wait...");
+            return;
+        }
+
         if (enerlingAnimator == null)
         {
             Debug.LogWarning("No animator found for skill animation");
@@ -511,6 +520,12 @@ public class BattleEnerlingManager : MonoBehaviour
         {
             Debug.Log($"Skill {skillNumber} is on cooldown!");
             return;
+        }
+
+        // Notify turn system
+        if (turnSystem != null)
+        {
+            turnSystem.PlayerSkillChosen();
         }
 
         StartCoroutine(PlaySkillAnimationAndEffect(skillNumber));
@@ -562,13 +577,10 @@ public class BattleEnerlingManager : MonoBehaviour
             battleEnerling.SetSkillCooldown(skillNumber);
         }
 
-        // Wait a moment for feedback to display
-        yield return new WaitForSeconds(0.5f);
-
-        // Notify turn system that skill is complete
+        // Notify turn system that animation is complete
         if (turnSystem != null)
         {
-            turnSystem.PlayerSkillChosen();
+            turnSystem.OnSkillAnimationEnd();
         }
 
         isAnimating = false;
@@ -580,7 +592,7 @@ public class BattleEnerlingManager : MonoBehaviour
         // Wait until animation starts
         yield return new WaitForSeconds(0.1f);
 
-        // Wait for current state to finish
+        // Wait for current state to finish using FeedbackManager's utility
         if (FeedbackManager.Instance != null && enerlingAnimator != null)
         {
             yield return StartCoroutine(FeedbackManager.Instance.WaitForCurrentStateToFinish(enerlingAnimator));
@@ -1042,12 +1054,6 @@ public class BattleEnerlingManager : MonoBehaviour
             StopCoroutine(armorAnimationCoroutine);
 
         CleanupSpawnedEnerling();
-
-        foreach (GameObject button in skillButtons)
-        {
-            Destroy(button);
-        }
-        skillButtons.Clear();
 
         if (organPanel != null)
         {

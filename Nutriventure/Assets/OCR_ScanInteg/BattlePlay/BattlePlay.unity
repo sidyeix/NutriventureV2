@@ -2424,7 +2424,6 @@ MonoBehaviour:
   ultraRareNameStatsBG: {fileID: 21300000, guid: 6543508529143594eb9816069cc36b22, type: 3}
   enerlingSpawningPoint: {fileID: 2040517775}
   aiSpawningPoint: {fileID: 2038211415}
-  animationBufferTime: 0.1
 --- !u!1 &159576762
 GameObject:
   m_ObjectHideFlags: 0
@@ -16038,16 +16037,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnSystem
   turnText: {fileID: 1529671708}
-  playerTimerText: {fileID: 1381890843}
-  aiTimerText: {fileID: 917536275}
-  roundText: {fileID: 1019170865}
-  yourTurnIndicator: {fileID: 0}
+  turnTimerSlider: {fileID: 0}
+  turnTimerText: {fileID: 0}
+  playerTurnIndicator: {fileID: 0}
   aiTurnIndicator: {fileID: 0}
-  gameTimerText: {fileID: 2143479529}
-  turnDuration: 10
-  playerStartsFirst: 1
-  aiTimerShowThreshold: 5
-  skillAnimationWaitTime: 1
+  playerTurnDuration: 30
+  aiTurnDuration: 30
+  animationBufferTime: 0.5
 --- !u!1 &706355146
 GameObject:
   m_ObjectHideFlags: 0
@@ -19330,7 +19326,8 @@ Transform:
   m_LocalPosition: {x: -2.741622, y: 0.92, z: 9.4045105}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1982090501}
   m_Father: {fileID: 1183149142}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &838580516
@@ -40090,6 +40087,72 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1981559759}
   m_Mesh: {fileID: 6609761975937461910, guid: 8b0ca80358bd53c489fa2808a1984a17, type: 3}
+--- !u!1001 &1982090500
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 838095212}
+    m_Modifications:
+    - target: {fileID: 3627856772980114984, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: d51bc8cfea327f744a8090ac1eb3df9b, type: 2}
+    - target: {fileID: 7053385775836331393, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_Name
+      value: Star aura
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 354b6251e950209409c75ab984acf000, type: 3}
+--- !u!4 &1982090501 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7909250533478703700, guid: 354b6251e950209409c75ab984acf000, type: 3}
+  m_PrefabInstance: {fileID: 1982090500}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1983991024
 PrefabInstance:
   m_ObjectHideFlags: 0

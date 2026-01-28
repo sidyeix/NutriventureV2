@@ -7,8 +7,8 @@ using System.Collections.Generic;
 public class AIEnerlingManager : MonoBehaviour
 {
     [Header("AI Settings")]
-    public float minDecisionTime = 0f;
-    public float maxDecisionTime = 5f;
+    public float minDecisionTime = 1f;
+    public float maxDecisionTime = 3f;
 
     [Header("Spawning")]
     public Transform aiSpawningPoint;
@@ -428,12 +428,19 @@ public class AIEnerlingManager : MonoBehaviour
 
     IEnumerator AIDecisionRoutine()
     {
+        Debug.Log("AI starting decision process...");
+
+        // Wait a moment before starting AI decision
+        yield return new WaitForSeconds(0.5f);
+
+        // Notify turn system that animation is starting
         if (turnSystem != null)
         {
             turnSystem.OnSkillAnimationStart();
         }
 
         float decisionTime = Random.Range(minDecisionTime, maxDecisionTime);
+        Debug.Log($"AI thinking for {decisionTime} seconds...");
         yield return new WaitForSeconds(decisionTime);
 
         int chosenSkill = ChooseSkill();
@@ -446,26 +453,28 @@ public class AIEnerlingManager : MonoBehaviour
                 UpdateAvailableSkills();
             }
 
+            Debug.Log($"AI chose skill {chosenSkill}");
+
+            // 1. Play animation FIRST and WAIT FOR IT TO COMPLETE
             yield return StartCoroutine(PlayAISkillAnimation(chosenSkill));
 
+            // 2. Apply skill effect AFTER animation completes
+            yield return StartCoroutine(UseSkill(chosenSkill));
+
+            // 3. Animation completed, notify turn system
             if (turnSystem != null)
             {
                 turnSystem.OnSkillAnimationEnd();
-            }
-
-            yield return new WaitForSeconds(1f);
-
-            if (turnSystem != null)
-            {
-                turnSystem.EndAITurn();
             }
         }
         else
         {
+            Debug.Log("AI has no available skills");
+
+            // Still notify turn system
             if (turnSystem != null)
             {
                 turnSystem.OnSkillAnimationEnd();
-                turnSystem.EndAITurn();
             }
         }
     }
@@ -482,10 +491,15 @@ public class AIEnerlingManager : MonoBehaviour
             yield return StartCoroutine(WaitForCurrentStateToFinish(aiAnimator));
 
             aiAnimator.SetBool(animationBool, false);
-        }
 
-        // Apply skill effect AFTER animation completes
-        UseSkill(skillNumber);
+            // Wait a bit more to ensure animation resets
+            yield return new WaitForSeconds(0.2f);
+        }
+        else
+        {
+            Debug.LogWarning($"No animator or animation bool found for AI skill {skillNumber}");
+            yield return new WaitForSeconds(1f); // Fallback wait time
+        }
     }
 
     // Generic animation waiting coroutine
@@ -557,7 +571,7 @@ public class AIEnerlingManager : MonoBehaviour
         return skill.GetValue();
     }
 
-    void UseSkill(int skillNumber)
+    IEnumerator UseSkill(int skillNumber)
     {
         int effect = CalculateAISkillEffect(skillNumber);
         var skill = GetSkillByNumber(skillNumber);
@@ -587,8 +601,8 @@ public class AIEnerlingManager : MonoBehaviour
                         );
                     }
 
-                    // Apply total heal
-                    StartCoroutine(ApplyAIHeal(healBreakdown.totalHeal, 0));
+                    // Apply total heal AND WAIT FOR IT
+                    yield return StartCoroutine(ApplyAIHeal(healBreakdown.totalHeal, 0));
 
                     // Beneficial organ healing (triggers when cooldown is ready)
                     if (hasBeneficialOrgans && aiOrganCooldownReady)
@@ -618,9 +632,9 @@ public class AIEnerlingManager : MonoBehaviour
                             );
                         }
 
-                        // Apply total organ heal
+                        // Apply total organ heal AND WAIT FOR IT
                         int totalOrganHeal = organBonusPerOrgan * aiEnerling.beneficialOrgans.Count;
-                        StartCoroutine(ApplyAIHeal(totalOrganHeal, 0));
+                        yield return StartCoroutine(ApplyAIHeal(totalOrganHeal, 0));
 
                         // Reset organ cooldown
                         aiOrganCooldownTimer = aiMaxOrganCooldown;
@@ -640,8 +654,8 @@ public class AIEnerlingManager : MonoBehaviour
 
                         Debug.Log($"AI attacking: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
 
-                        // Apply total damage
-                        battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
+                        // Apply total damage AND WAIT FOR IT
+                        yield return StartCoroutine(battleManager.ApplyDamageToPlayer(
                             damageBreakdown,
                             FeedbackManager.Instance != null ? FeedbackManager.Instance.playerFeedbackSpawnPoint : null
                         ));
@@ -665,8 +679,8 @@ public class AIEnerlingManager : MonoBehaviour
                             // Create damage breakdown for cooldown bonuses
                             BattleStructs.DamageBreakdown cooldownDamage = new BattleStructs.DamageBreakdown(0, cooldownBonuses);
 
-                            // Apply organ cooldown damage
-                            battleManager.StartCoroutine(battleManager.ApplyDamageToPlayer(
+                            // Apply organ cooldown damage AND WAIT FOR IT
+                            yield return StartCoroutine(battleManager.ApplyDamageToPlayer(
                                 cooldownDamage,
                                 FeedbackManager.Instance != null ? FeedbackManager.Instance.playerFeedbackSpawnPoint : null
                             ));
@@ -684,15 +698,11 @@ public class AIEnerlingManager : MonoBehaviour
 
                 case IngredientDatabase.SkillInfo.SkillType.Defend:
                     SetAIDefense(effect);
+                    // Wait a moment for defense feedback
+                    yield return new WaitForSeconds(0.5f);
                     break;
             }
         }
-    }
-
-    float CalculateOrganBonusPercentage(int organCount)
-    {
-        // 5% per organ
-        return organCount * 5f;
     }
 
     string GetAnimationBoolName(int skillNumber)
