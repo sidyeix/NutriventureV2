@@ -7,14 +7,16 @@ public class TurnSystem : MonoBehaviour
 {
     [Header("UI References")]
     public TextMeshProUGUI turnText;
-    public Slider turnTimerSlider;
-    public TextMeshProUGUI turnTimerText;
+    public TextMeshProUGUI playerTurnTimerText;
+    public TextMeshProUGUI aiTurnTimerText;
+    public TextMeshProUGUI roundText;
+    public TextMeshProUGUI gameTimerText;
     public GameObject playerTurnIndicator;
     public GameObject aiTurnIndicator;
 
     [Header("Turn Settings")]
-    public float playerTurnDuration = 30f;
-    public float aiTurnDuration = 30f;
+    public float playerTurnDuration = 10f;
+    public float aiTurnDuration = 10f;
     public float animationBufferTime = 0.5f;
 
     // State
@@ -23,6 +25,9 @@ public class TurnSystem : MonoBehaviour
     private bool isTurnActive = false;
     private bool isAnimating = false;
     private bool isWaitingForAnimation = false;
+    private int currentRound = 1;
+    private float gameTimer = 0f;
+    private bool isGameTimerRunning = false;
 
     // References
     private BattleEnerlingManager battleManager;
@@ -40,10 +45,39 @@ public class TurnSystem : MonoBehaviour
         battleManager = FindObjectOfType<BattleEnerlingManager>();
         aiManager = FindObjectOfType<AIEnerlingManager>();
         playerManager = FindObjectOfType<PlayerEnerlingManager>();
+        
+        InitializeUI();
+    }
+
+    void InitializeUI()
+    {
+        if (playerTurnTimerText != null)
+            playerTurnTimerText.text = playerTurnDuration.ToString("F0");
+        
+        if (aiTurnTimerText != null)
+            aiTurnTimerText.text = aiTurnDuration.ToString("F0");
+        
+        if (roundText != null)
+            roundText.text = $"Round {currentRound}";
+        
+        if (gameTimerText != null)
+            gameTimerText.text = "0:00";
+        
+        if (playerTurnIndicator != null)
+            playerTurnIndicator.SetActive(false);
+        
+        if (aiTurnIndicator != null)
+            aiTurnIndicator.SetActive(false);
     }
 
     void Update()
     {
+        if (isGameTimerRunning)
+        {
+            gameTimer += Time.deltaTime;
+            UpdateGameTimerUI();
+        }
+
         if (isTurnActive && !isAnimating && !isWaitingForAnimation)
         {
             currentTurnTime -= Time.deltaTime;
@@ -56,9 +90,36 @@ public class TurnSystem : MonoBehaviour
         }
     }
 
-    // Call this when battle starts
+    void UpdateGameTimerUI()
+    {
+        if (gameTimerText == null) return;
+        
+        int minutes = Mathf.FloorToInt(gameTimer / 60f);
+        int seconds = Mathf.FloorToInt(gameTimer % 60f);
+        gameTimerText.text = $"{minutes}:{seconds:00}";
+    }
+
+    void UpdateTurnTimerUI()
+    {
+        if (currentTurn == TurnState.Player && playerTurnTimerText != null)
+        {
+            playerTurnTimerText.text = Mathf.Max(0, Mathf.Ceil(currentTurnTime)).ToString();
+            playerTurnTimerText.color = currentTurnTime < 3f ? Color.red : Color.white;
+        }
+        else if (currentTurn == TurnState.AI && aiTurnTimerText != null)
+        {
+            aiTurnTimerText.text = Mathf.Max(0, Mathf.Ceil(currentTurnTime)).ToString();
+            aiTurnTimerText.color = currentTurnTime < 3f ? Color.red : Color.white;
+        }
+    }
+
     public void StartBattle()
     {
+        currentRound = 1;
+        gameTimer = 0f;
+        isGameTimerRunning = true;
+        
+        InitializeUI();
         StartPlayerTurn();
     }
 
@@ -70,6 +131,11 @@ public class TurnSystem : MonoBehaviour
         isAnimating = false;
         isWaitingForAnimation = false;
 
+        if (playerTurnTimerText != null)
+            playerTurnTimerText.gameObject.SetActive(true);
+        if (aiTurnTimerText != null)
+            aiTurnTimerText.gameObject.SetActive(false);
+
         UpdateTurnUI();
 
         // Enable player input
@@ -78,7 +144,10 @@ public class TurnSystem : MonoBehaviour
             playerManager.SetButtonsInteractable(true);
         }
 
-        Debug.Log("=== PLAYER TURN STARTED ===");
+        // Apply beneficial organ heal automatically at the start of player's turn
+        ApplyBeneficialOrganHeal(true);
+
+        Debug.Log($"=== PLAYER TURN STARTED - Round {currentRound} ===");
     }
 
     void StartAITurn()
@@ -89,6 +158,11 @@ public class TurnSystem : MonoBehaviour
         isAnimating = false;
         isWaitingForAnimation = false;
 
+        if (playerTurnTimerText != null)
+            playerTurnTimerText.gameObject.SetActive(false);
+        if (aiTurnTimerText != null)
+            aiTurnTimerText.gameObject.SetActive(true);
+
         UpdateTurnUI();
 
         // Disable player input during AI turn
@@ -97,13 +171,49 @@ public class TurnSystem : MonoBehaviour
             playerManager.SetButtonsInteractable(false);
         }
 
+        // Apply beneficial organ heal automatically at the start of AI's turn
+        ApplyBeneficialOrganHeal(false);
+
         // Start AI decision making
         if (aiManager != null)
         {
             aiManager.StartAITurn();
         }
 
-        Debug.Log("=== AI TURN STARTED ===");
+        Debug.Log($"=== AI TURN STARTED - Round {currentRound} ===");
+    }
+
+    void ApplyBeneficialOrganHeal(bool isPlayer)
+    {
+        Debug.Log($"ApplyBeneficialOrganHeal called for {(isPlayer ? "Player" : "AI")}");
+        
+        // This applies heal from beneficial organs automatically at the start of each turn
+        if (isPlayer)
+        {
+            // For player
+            if (battleManager != null)
+            {
+                Debug.Log("Calling battleManager.CheckAndApplyOrganHeal()");
+                battleManager.CheckAndApplyOrganHeal();
+            }
+            else
+            {
+                Debug.LogWarning("battleManager is null in ApplyBeneficialOrganHeal");
+            }
+        }
+        else
+        {
+            // For AI
+            if (aiManager != null)
+            {
+                Debug.Log("Calling aiManager.CheckAndApplyOrganHeal()");
+                aiManager.CheckAndApplyOrganHeal();
+            }
+            else
+            {
+                Debug.LogWarning("aiManager is null in ApplyBeneficialOrganHeal");
+            }
+        }
     }
 
     void UpdateTurnUI()
@@ -124,38 +234,26 @@ public class TurnSystem : MonoBehaviour
             aiTurnIndicator.SetActive(currentTurn == TurnState.AI);
         }
 
+        if (roundText != null)
+        {
+            roundText.text = $"Round {currentRound}";
+        }
+
         UpdateTurnTimerUI();
     }
 
-    void UpdateTurnTimerUI()
-    {
-        if (turnTimerSlider != null)
-        {
-            turnTimerSlider.maxValue = currentTurn == TurnState.Player ? playerTurnDuration : aiTurnDuration;
-            turnTimerSlider.value = currentTurnTime;
-        }
-
-        if (turnTimerText != null)
-        {
-            turnTimerText.text = Mathf.CeilToInt(currentTurnTime).ToString();
-            turnTimerText.color = currentTurnTime < 10f ? Color.red : Color.white;
-        }
-    }
-
-    // Called when skill animation starts
     public void OnSkillAnimationStart()
     {
         isAnimating = true;
-        Debug.Log($"Animation started - turn timer paused");
+        isTurnActive = false;
+        Debug.Log("Animation started - turn timer paused");
     }
 
-    // Called when skill animation ends
     public void OnSkillAnimationEnd()
     {
         isAnimating = false;
         Debug.Log("Animation completed");
 
-        // Start a coroutine to wait for feedback before ending turn
         StartCoroutine(WaitForFeedbackAndEndTurn());
     }
 
@@ -163,25 +261,19 @@ public class TurnSystem : MonoBehaviour
     {
         isWaitingForAnimation = true;
 
-        // Wait for feedback to display
         yield return new WaitForSeconds(animationBufferTime);
 
-        // Additional wait if FeedbackManager is processing
         if (FeedbackManager.Instance != null)
         {
             yield return new WaitForSeconds(0.5f);
         }
 
         isWaitingForAnimation = false;
-
-        // End the current turn
         EndCurrentTurn();
     }
 
-    // Called from BattleEnerlingManager when player finishes action
     public void PlayerSkillChosen()
     {
-        // Disable player input immediately
         if (playerManager != null)
         {
             playerManager.SetButtonsInteractable(false);
@@ -192,13 +284,10 @@ public class TurnSystem : MonoBehaviour
 
     void EndCurrentTurn()
     {
-        if (!isTurnActive) return;
-
-        isTurnActive = false;
+        if (isTurnActive) return;
 
         Debug.Log($"=== {currentTurn} TURN ENDED ===");
 
-        // Process end turn effects
         if (currentTurn == TurnState.Player)
         {
             if (playerManager != null)
@@ -211,7 +300,6 @@ public class TurnSystem : MonoBehaviour
                 battleManager.ProcessEndTurn();
             }
 
-            // Start AI turn after delay
             StartCoroutine(SwitchToAITurn());
         }
         else if (currentTurn == TurnState.AI)
@@ -221,35 +309,28 @@ public class TurnSystem : MonoBehaviour
                 aiManager.EndTurn();
             }
 
-            if (aiManager != null)
-            {
-                aiManager.ProcessEndTurn();
-            }
-
-            // Start Player turn after delay
             StartCoroutine(SwitchToPlayerTurn());
         }
     }
 
     IEnumerator SwitchToAITurn()
     {
-        yield return new WaitForSeconds(1f); // Brief pause between turns
+        yield return new WaitForSeconds(1f);
         StartAITurn();
     }
 
     IEnumerator SwitchToPlayerTurn()
     {
-        yield return new WaitForSeconds(1f); // Brief pause between turns
+        yield return new WaitForSeconds(1f);
+        currentRound++;
         StartPlayerTurn();
     }
 
-    // Public method to manually end turn (for testing)
     public void ForceEndTurn()
     {
         EndCurrentTurn();
     }
 
-    // Get current turn state
     public TurnState GetCurrentTurn()
     {
         return currentTurn;
@@ -272,8 +353,7 @@ public class TurnSystem : MonoBehaviour
 
     public int GetCurrentRound()
     {
-        // Simple round counter - you might want to implement this properly
-        return 1;
+        return currentRound;
     }
 
     public void Cleanup()
@@ -282,5 +362,6 @@ public class TurnSystem : MonoBehaviour
         isTurnActive = false;
         isAnimating = false;
         isWaitingForAnimation = false;
+        isGameTimerRunning = false;
     }
 }
