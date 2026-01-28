@@ -68,13 +68,25 @@ public class K3_KingAssessment : MonoBehaviour
     [Header("Scoring System")]
     [SerializeField] private PreserviaScoringSystem scoringSystem;
     
+    [Header("Collectibles UI")]
+    [SerializeField] private GameObject collectiblesParent; // The "Collectibles" game object
+    [SerializeField] private TMP_Text collectedPotionCountText; // "Collected Preservative: x/3"
+    [SerializeField] private TMP_Text preservedFoodCountText; // "Preserved Food: x/8"
+    
     private bool isPlayerNear = false;
     private int currentFoodIndex = -1;
+    
+    // Collection tracking
+    private int collectedPotionsCount = 0;
+    private int preservedFoodsCount = 0;
     
     // Food completion tracking
     private Dictionary<int, bool> foodCompleted = new Dictionary<int, bool>();
     private Dictionary<int, List<PreservativeType>> foodPreservativesUsed = new Dictionary<int, List<PreservativeType>>();
     private Dictionary<int, Dictionary<PreservativeType, float>> foodPreservationValues = new Dictionary<int, Dictionary<PreservativeType, float>>();
+    
+    // For polling preservative collection
+    private int lastCollectedCount = 0;
     
     private void Start()
     {
@@ -143,6 +155,12 @@ public class K3_KingAssessment : MonoBehaviour
             preservationSystem.SetConfirmButton(confirmButton);
         }
         
+        // Initialize collectibles UI
+        InitializeCollectiblesUI();
+        
+        // Check initial collection status
+        UpdateInitialCollectionStatus();
+        
         // Disable all food cameras initially
         DisableAllFoodCameras();
         
@@ -176,9 +194,97 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
     
+    private void InitializeCollectiblesUI()
+    {
+        // Ensure collectibles UI is disabled at start
+        if (collectiblesParent != null)
+        {
+            collectiblesParent.SetActive(false);
+        }
+        
+        // Initialize the count texts
+        UpdateCollectedPotionsCount();
+        UpdatePreservedFoodsCount();
+    }
+    
+    private void UpdateInitialCollectionStatus()
+    {
+        // Get initial collection count
+        collectedPotionsCount = GetCurrentPreservativeCount();
+        lastCollectedCount = collectedPotionsCount;
+        
+        // Activate collectibles UI if already collected some potions
+        if (collectedPotionsCount > 0 && collectiblesParent != null)
+        {
+            collectiblesParent.SetActive(true);
+            Debug.Log($"Collectibles UI activated - {collectedPotionsCount} preservatives already collected!");
+        }
+    }
+    
+    private int GetCurrentPreservativeCount()
+    {
+        int count = 0;
+        if (HasCollectedPreservative("0")) count++;
+        if (HasCollectedPreservative("1")) count++;
+        if (HasCollectedPreservative("2")) count++;
+        return count;
+    }
+    
     private void Update()
     {
         CheckPlayerProximity();
+        
+        // Poll for preservative collection changes
+        CheckForPreservativeCollectionChanges();
+    }
+    
+    private void CheckForPreservativeCollectionChanges()
+    {
+        int currentCount = GetCurrentPreservativeCount();
+        
+        if (currentCount != lastCollectedCount)
+        {
+            // Collection changed
+            collectedPotionsCount = currentCount;
+            
+            // Activate collectibles UI when first potion is collected
+            if (collectedPotionsCount == 1 && collectiblesParent != null && !collectiblesParent.activeSelf)
+            {
+                collectiblesParent.SetActive(true);
+                Debug.Log("Collectibles UI activated - first preservative collected!");
+            }
+            
+            UpdateCollectedPotionsCount();
+            lastCollectedCount = currentCount;
+            
+            Debug.Log($"Preservative collection changed: {collectedPotionsCount}/3");
+        }
+    }
+    
+    private void UpdateCollectedPotionsCount()
+    {
+        if (collectedPotionCountText != null)
+        {
+            // Update from actual count
+            collectedPotionsCount = GetCurrentPreservativeCount();
+            collectedPotionCountText.text = $"Collected Potion: {collectedPotionsCount}/3";
+        }
+    }
+    
+    private void UpdatePreservedFoodsCount()
+    {
+        if (preservedFoodCountText != null)
+        {
+            // Count preserved foods
+            int count = 0;
+            foreach (var kvp in foodCompleted)
+            {
+                if (kvp.Value) count++;
+            }
+            
+            preservedFoodsCount = count;
+            preservedFoodCountText.text = $"Preserved Food: {preservedFoodsCount}/8";
+        }
     }
     
     private void CheckPlayerProximity()
@@ -249,7 +355,7 @@ public class K3_KingAssessment : MonoBehaviour
         ClosePreservationPanel();
     }
     
-        private void OnConfirmButtonClicked()
+    private void OnConfirmButtonClicked()
     {
         if (currentFoodIndex == -1 || preservationSystem == null) return;
         
@@ -280,24 +386,24 @@ public class K3_KingAssessment : MonoBehaviour
         }
         
         // AWARD SCORING POINTS for successful preservation
-    if (scoringSystem != null)
-    {
-        float targetMin = GetTargetMinForFood(currentFoodIndex, currentPreservativeType);
-        float targetMax = GetTargetMaxForFood(currentFoodIndex, currentPreservativeType);
-        bool isPerfect = IsValuePerfect(currentSliderValue, targetMin, targetMax);
-        
-        // Use the correct scoring method (6 parameters)
-        scoringSystem.ManualFoodPreserved(
-            profile.foodName,
-            currentSliderValue,
-            targetMin,
-            targetMax,
-            isCorrectPreservative,
-            isPerfect
-        );
-        
-        Debug.Log($"Scoring awarded for {profile.foodName} with {currentPreservativeType} at {currentSliderValue:F0}");
-    }
+        if (scoringSystem != null)
+        {
+            float targetMin = GetTargetMinForFood(currentFoodIndex, currentPreservativeType);
+            float targetMax = GetTargetMaxForFood(currentFoodIndex, currentPreservativeType);
+            bool isPerfect = IsValuePerfect(currentSliderValue, targetMin, targetMax);
+            
+            // Use the correct scoring method (6 parameters)
+            scoringSystem.ManualFoodPreserved(
+                profile.foodName,
+                currentSliderValue,
+                targetMin,
+                targetMax,
+                isCorrectPreservative,
+                isPerfect
+            );
+            
+            Debug.Log($"Scoring awarded for {profile.foodName} with {currentPreservativeType} at {currentSliderValue:F0}");
+        }
         
         // Check if food is fully preserved (all required preservatives applied)
         bool isFullyPreserved = IsFoodFullyPreserved(currentFoodIndex);
@@ -305,6 +411,9 @@ public class K3_KingAssessment : MonoBehaviour
         if (isFullyPreserved)
         {
             foodCompleted[currentFoodIndex] = true;
+            
+            // Update preserved foods count when food is fully preserved
+            UpdatePreservedFoodsCount();
             
             // Update status through preservation system
             preservationSystem.UpdateStatusText(
@@ -319,7 +428,7 @@ public class K3_KingAssessment : MonoBehaviour
             // Switch particle systems
             SwitchToPreservedParticles(currentFoodIndex);
             
-            // FIX 1: INSTANTLY CLOSE PANEL - Remove the delayed auto-close
+            // Close the panel
             ClosePreservationPanel();
             
             CheckAllFoodsCompleted();
@@ -338,13 +447,11 @@ public class K3_KingAssessment : MonoBehaviour
             // Update button states through preservation system
             preservationSystem.UpdateButtonStates(currentFoodIndex, foodPreservativesUsed[currentFoodIndex]);
             
-            // FIX 1: Also close panel for partially complete foods
             // Wait a moment then close to show feedback
             StartCoroutine(ClosePanelAfterFeedback());
         }
     }
 
-    // Add this new method for Issue 1
     private IEnumerator ClosePanelAfterFeedback()
     {
         yield return new WaitForSeconds(0.2f); // Brief pause to see the feedback
@@ -387,12 +494,6 @@ public class K3_KingAssessment : MonoBehaviour
         float accuracyPercent = Mathf.Clamp01(1f - (distanceFromCenter / (rangeWidth / 2f))) * 100f;
         
         return accuracyPercent >= 90f || (value >= targetMin && value <= targetMax);
-    }
-    
-    private IEnumerator AutoClosePanelAfterSuccess()
-    {
-        yield return new WaitForSeconds(panelCloseDelay);
-        ClosePreservationPanel();
     }
     
     private bool IsCorrectPreservativeForFood(int foodIndex, PreservativeType type)
@@ -568,7 +669,7 @@ public class K3_KingAssessment : MonoBehaviour
         bool hasPotassiumSorbate = HasCollectedPreservative("1");
         bool hasSodiumBenzoate = HasCollectedPreservative("2");
         
-        string collectedText = "<b>Collected Preservatives:</b>\n";
+        string collectedText = "<b>Collected Potion:</b>\n";
         bool anyAvailable = false;
         
         if (hasAscorbicAcid) 
@@ -598,12 +699,15 @@ public class K3_KingAssessment : MonoBehaviour
         }
     }
     
-        private void SetupPreservationSystem(int foodIndex)
+    private void SetupPreservationSystem(int foodIndex)
     {
         if (foodDatabase == null || preservationSystem == null) return;
         
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(foodIndex);
         if (profile == null) return;
+        
+        // Update collection count before setup
+        UpdateCollectedPotionsCount();
         
         // Setup the preservation system for this food
         preservationSystem.SetupForFood(
@@ -682,6 +786,9 @@ public class K3_KingAssessment : MonoBehaviour
             {
                 scoringSystem.AwardFullCompletionBonus();
             }
+            
+            // Update preserved foods count one final time
+            UpdatePreservedFoodsCount();
         }
     }
     
@@ -751,6 +858,12 @@ public class K3_KingAssessment : MonoBehaviour
         return 0f;
     }
     
+    public void ForceUpdateCollectiblesUI()
+    {
+        UpdateCollectedPotionsCount();
+        UpdatePreservedFoodsCount();
+    }
+    
     [ContextMenu("Debug Collection Status")]
     public void DebugCollectionStatus()
     {
@@ -758,6 +871,9 @@ public class K3_KingAssessment : MonoBehaviour
         Debug.Log($"Ascorbic Acid (ID 0) Collected: {HasCollectedPreservative("0")}");
         Debug.Log($"Potassium Sorbate (ID 1) Collected: {HasCollectedPreservative("1")}");
         Debug.Log($"Sodium Benzoate (ID 2) Collected: {HasCollectedPreservative("2")}");
+        Debug.Log($"Collected Potions Count: {collectedPotionsCount}/3");
+        Debug.Log($"Preserved Foods Count: {preservedFoodsCount}/8");
+        Debug.Log($"Collectibles UI Active: {collectiblesParent != null && collectiblesParent.activeSelf}");
     }
     
     [ContextMenu("Debug Food Completion Status")]
@@ -772,6 +888,7 @@ public class K3_KingAssessment : MonoBehaviour
             
             Debug.Log($"Food {i}: {(completed ? "PRESERVED" : "Not preserved")} - Preservatives: {preservatives}");
         }
+        Debug.Log($"Total preserved: {preservedFoodsCount}/8");
     }
     
     private void OnDrawGizmosSelected()

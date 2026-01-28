@@ -239,7 +239,7 @@ public class K3_CollectKey : MonoBehaviour
         hasKey = true;
         
         // Record health at moment of key collection
-        SugariaPlayerStat playerHealth = GetComponent<SugariaPlayerStat>();
+        PreserviaPlayerStat playerHealth = GetComponent<PreserviaPlayerStat>();
         if (playerHealth != null)
         {
             healthAtKeyCollection = playerHealth.currentHealth;
@@ -266,9 +266,9 @@ public class K3_CollectKey : MonoBehaviour
         // Save key to GameData
         if (GameDataManager.Instance != null)
         {
-            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+            GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
             GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey saved to GameData");
+            Debug.Log("PreserviaKey saved to GameData");
         }
         
         // Disable timeline after key collection
