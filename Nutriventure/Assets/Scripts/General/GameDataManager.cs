@@ -53,7 +53,11 @@ public class GameDataManager : MonoBehaviour
             {
                 string jsonData = File.ReadAllText(saveFilePath);
                 CurrentGameData = JsonUtility.FromJson<GameData>(jsonData);
-                Debug.Log("Game data loaded successfully!");
+
+                // ADD THIS DEBUG LOG
+                Debug.Log($"=== GAME DATA LOADED ===");
+                Debug.Log($"Selected Character ID from save file: {CurrentGameData.selectedCharacterID}");
+                Debug.Log($"=== END LOAD ===");
             }
             catch (Exception e)
             {
@@ -66,6 +70,7 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
+        // DON'T CHANGE THESE - keep your existing methods
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
         UpdateEnergyBasedOnTime();
@@ -174,6 +179,9 @@ public class GameDataManager : MonoBehaviour
             return;
         }
 
+        // ADD THIS DEBUG LOG
+        Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
+
         foreach (var character in characterDatabase.characters)
         {
             if (character.unlockedByDefault)
@@ -185,6 +193,9 @@ public class GameDataManager : MonoBehaviour
                 }
             }
         }
+
+        // ADD THIS DEBUG LOG
+        Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
 
         SaveGameData();
     }

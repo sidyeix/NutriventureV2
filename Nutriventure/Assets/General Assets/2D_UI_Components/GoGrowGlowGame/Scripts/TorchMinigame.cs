@@ -959,6 +959,86 @@ public class TorchMinigame : MonoBehaviour
             gameManager.characterAnimator.SetBool("isCorrect", false);
     }
 
+    public void ResetTorch()
+    {
+        Debug.Log($"Resetting torch: {torchID}");
+
+        // Reset state
+        isLit = false;
+        isInTorchMode = false;
+        currentCorrectAnswers = 0;
+        currentFlameScale = 0f;
+
+        // Reset flame scale
+        if (fireObject != null)
+        {
+            fireObject.transform.localScale = Vector3.zero;
+            Debug.Log($"Fire object scale reset to zero for {torchID}");
+        }
+
+        // Reset wrong flame
+        if (wrongFlameObject != null)
+        {
+            wrongFlameObject.SetActive(false);
+        }
+
+        // Clear buttons
+        foreach (GameObject button in currentButtons)
+        {
+            if (button != null)
+            {
+                Destroy(button);
+            }
+        }
+        currentButtons.Clear();
+        currentRoundFoods.Clear();
+
+        // Reset button panel
+        if (buttonPanel != null)
+        {
+            buttonPanel.localPosition = buttonPanelHiddenPosition;
+            buttonPanel.gameObject.SetActive(false);
+        }
+
+        // Hide canvas
+        if (torchCanvas != null)
+        {
+            torchCanvas.SetActive(false);
+        }
+
+        // Hide lit button
+        if (litButton != null)
+        {
+            litButton.gameObject.SetActive(false);
+        }
+
+        // Hide damage panel
+        if (damagePanel != null)
+        {
+            damagePanel.SetActive(false);
+        }
+
+        // Reset trigger
+        if (triggerCollider != null)
+        {
+            triggerCollider.enabled = true;
+        }
+
+        Debug.Log($"Torch {torchID} fully reset");
+    }
+
+    // Public getter for fire object (optional, but helpful)
+    public GameObject GetFireObject()
+    {
+        return fireObject;
+    }
+
+    // Public getter for wrong flame object (optional)
+    public GameObject GetWrongFlameObject()
+    {
+        return wrongFlameObject;
+    }
+
     // Public getters
     public bool IsInTorchMode() => isInTorchMode;
     public float GetCurrentFlameScale() => currentFlameScale;

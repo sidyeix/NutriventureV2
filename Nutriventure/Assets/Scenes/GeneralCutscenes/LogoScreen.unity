@@ -1178,7 +1178,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationSound
   audioSource: {fileID: 1414674725}
-  star: {fileID: 8300000, guid: bb521e5ad74f8f44d81e6f6bdedc0d17, type: 3}
+  star: {fileID: 8300000, guid: 2799fc0d262c9ba48bdc4f1eacad1ade, type: 3}
   swoosh: {fileID: 8300000, guid: fecae2a77cef6694caa4dd7624c09ef9, type: 3}
 --- !u!1 &1472859292
 GameObject:
@@ -1241,7 +1241,7 @@ MonoBehaviour:
   m_text: 'Tip 1: Don''t be too fool.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
-  m_sharedMaterial: {fileID: -6719895914126404034, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
+  m_sharedMaterial: {fileID: 0}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1306,7 +1306,7 @@ MonoBehaviour:
   m_margin: {x: -224.45642, y: -12.7186985, z: -213.14624, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1472859295
@@ -1602,7 +1602,7 @@ MonoBehaviour:
   m_text: Loading...
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
-  m_sharedMaterial: {fileID: -6719895914126404034, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
+  m_sharedMaterial: {fileID: 0}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1667,7 +1667,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1939662048

@@ -55,12 +55,8 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  allergenDatabase: {fileID: 11400000, guid: 93d4396a1d8e9654c977e9e751eb0c63, type: 2}
   ingredientId: sesame
-  ingredientName: Sesame
-  ingredientDescription: Sesame allergy is becoming increasingly common and is often
-    severe. Sesame seeds, oil, and paste can trigger reactions. Recently recognized
-    as a major allergen in many countries.
-  ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
   pickupSFX: {fileID: 8300000, guid: d3969949d9ff1e646a385b63aa4619a8, type: 3}
   pickupVolume: 1
 --- !u!65 &4044667714333426352

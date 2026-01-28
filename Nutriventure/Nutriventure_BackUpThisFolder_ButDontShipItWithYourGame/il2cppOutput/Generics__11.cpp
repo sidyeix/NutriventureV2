@@ -201,7 +201,6 @@ struct Action_1_t66B514BE877E216616DEDD40416127189FE16FA3;
 struct Action_1_tAE453A6458E1DAD68CAF44DC8FF62EC18FEAA930;
 struct Action_1_t21FD3C63C847CD92920291C92517DD3E3D04358C;
 struct Action_2_tA1EAD43A5C76FF3E77D1705EC83B9AB7B1BE7D88;
-struct AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9;
 struct AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2;
 struct AsyncTextureSynchronizer_1_tF98D2858AFEC111E9DE245C8302AADE13FA69073;
 struct BaseCompositeField_3_t9F5F0841A66BBB8FDCD321F0944E362CAD139BA9;
@@ -364,7 +363,6 @@ struct FieldDescriptionU5BU5D_t460EB81643B70FDF21FE3AB038AF3C94136D6D57;
 struct FieldDescriptionU5BU5D_tC302D278E35C222466485A5404EC3CF6D600E068;
 struct FieldDescriptionU5BU5D_tDA5488AD6B6EFCE5A4B168126228376D9F6B5D4B;
 struct FieldDescriptionU5BU5D_t0B94B26613FBCCCEBA66EFAAF4BB0189741D7A0F;
-struct NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD;
 struct NativeArray_1U5BU5D_tE8EAD4F2075AC999DAF40EA42A8D756AE0F504D1;
 struct NativeArray_1U5BU5D_t304A55D558107E425E670466E78615C69E8C3045;
 struct CharU5BU5D_t799905CF001DD5F13F7DBB310181FC4D8B7D0AAB;
@@ -515,7 +513,6 @@ struct FieldDescriptionU5BU5D_t460EB81643B70FDF21FE3AB038AF3C94136D6D57;
 struct FieldDescriptionU5BU5D_tC302D278E35C222466485A5404EC3CF6D600E068;
 struct FieldDescriptionU5BU5D_tDA5488AD6B6EFCE5A4B168126228376D9F6B5D4B;
 struct FieldDescriptionU5BU5D_t0B94B26613FBCCCEBA66EFAAF4BB0189741D7A0F;
-struct NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD;
 struct NativeArray_1U5BU5D_tE8EAD4F2075AC999DAF40EA42A8D756AE0F504D1;
 struct NativeArray_1U5BU5D_t304A55D558107E425E670466E78615C69E8C3045;
 struct ObjectU5BU5D_t8061030B0A12A55D5AD8652A20C922FE99450918;
@@ -1290,18 +1287,6 @@ struct UxmlTraits_t45D4AB9B0148A110826C5201495FF23814A12E4B  : public UxmlTraits
 	UxmlAssetAttributeDescription_1_t439A790E395F97D948F0660D428ABBEABAA248C9* ___m_DataSource;
 	UxmlStringAttributeDescription_t60C9BE81B6A3251AD7A38A90E46F240E016293EF* ___m_DataSourcePath;
 };
-struct AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9  : public RuntimeObject
-{
-	NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* ___m_InternalBuffers;
-	int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A ___m_CurrentResolution;
-	int32_t ___m_CurrentSlices;
-	int32_t ___m_CurrentBuffer;
-	RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* ___m_InternalRT;
-	int32_t ___m_TargetTextureHash;
-	bool ___m_CurrentlyOnGoingJob;
-	int32_t ___m_InternalGraphicsFormat;
-	Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F* ___m_Callback;
-};
 struct AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2  : public RuntimeObject
 {
 	NativeArray_1U5BU5D_tE8EAD4F2075AC999DAF40EA42A8D756AE0F504D1* ___m_InternalBuffers;
@@ -1334,12 +1319,6 @@ struct AsyncValueTaskMethodBuilder_1_tD68A252326C589C51A86169E4223726A92E15727
 	bool ____useBuilder;
 };
 typedef Il2CppFullySharedGenericStruct AsyncValueTaskMethodBuilder_1_t98ECB0BE10685599154A63759D7078C9404EA6D9;
-struct NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 
-{
-	void* ___m_Buffer;
-	int32_t ___m_Length;
-	int32_t ___m_AllocatorLabel;
-};
 struct NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05 
 {
 	void* ___m_Buffer;
@@ -2915,38 +2894,6 @@ struct Label_tC160668F9119CE0F5567021FB208E64A5B1C5B70_StaticFields
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-struct NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD  : public RuntimeArray
-{
-	ALIGN_FIELD (8) NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 m_Items[1];
-
-	inline NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 GetAt(il2cpp_array_size_t index) const
-	{
-		IL2CPP_ARRAY_BOUNDS_CHECK(index, (uint32_t)(this)->max_length);
-		return m_Items[index];
-	}
-	inline NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* GetAddressAt(il2cpp_array_size_t index)
-	{
-		IL2CPP_ARRAY_BOUNDS_CHECK(index, (uint32_t)(this)->max_length);
-		return m_Items + index;
-	}
-	inline void SetAt(il2cpp_array_size_t index, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 value)
-	{
-		IL2CPP_ARRAY_BOUNDS_CHECK(index, (uint32_t)(this)->max_length);
-		m_Items[index] = value;
-	}
-	inline NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 GetAtUnchecked(il2cpp_array_size_t index) const
-	{
-		return m_Items[index];
-	}
-	inline NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* GetAddressAtUnchecked(il2cpp_array_size_t index)
-	{
-		return m_Items + index;
-	}
-	inline void SetAtUnchecked(il2cpp_array_size_t index, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 value)
-	{
-		m_Items[index] = value;
-	}
-};
 struct NativeArray_1U5BU5D_tE8EAD4F2075AC999DAF40EA42A8D756AE0F504D1  : public RuntimeArray
 {
 	ALIGN_FIELD (8) NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05 m_Items[1];
@@ -3464,7 +3411,6 @@ struct ObjectU5BU5D_t8061030B0A12A55D5AD8652A20C922FE99450918  : public RuntimeA
 
 
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void Action_1__ctor_m347338A163A1A0840FA150F7ACCC029D46339777_gshared (Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F* __this, RuntimeObject* ___0_object, intptr_t ___1_method, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void NativeArray_1__ctor_m788DE0F85C4051DDF092DDF96484DE655ACFB6F1_gshared (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* __this, int32_t ___0_length, int32_t ___1_allocator, int32_t ___2_options, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_SwapCurrentBuffer_m7FDD1B2F2ACD9CE037F6A04C27BC353343ED71F0_gshared (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05 AsyncTextureSynchronizer_1_CurrentBuffer_m6C79F48DC219AA6F61D44FE9CA2FABBEBAB594F3_gshared (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2* __this, const RuntimeMethod* method) ;
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_m0441C0AFD5A79DF48A448142A34321039F7C9A64_gshared_inline (NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05* __this, const RuntimeMethod* method) ;
@@ -3735,24 +3681,6 @@ inline void Action_1__ctor_m347338A163A1A0840FA150F7ACCC029D46339777 (Action_1_t
 	((  void (*) (Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F*, RuntimeObject*, intptr_t, const RuntimeMethod*))Action_1__ctor_m347338A163A1A0840FA150F7ACCC029D46339777_gshared)(__this, ___0_object, ___1_method, method);
 }
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool AsyncGPUReadbackRequest_get_hasError_m374BB20A32B9DCDBFD8F81BBE542847B82F04EE5 (AsyncGPUReadbackRequest_t6A735D3E0F1DEF8F43EBD0E6FE550FAE564519C7* __this, const RuntimeMethod* method) ;
-inline void NativeArray_1__ctor_m788DE0F85C4051DDF092DDF96484DE655ACFB6F1 (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* __this, int32_t ___0_length, int32_t ___1_allocator, int32_t ___2_options, const RuntimeMethod* method)
-{
-	((  void (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, int32_t, int32_t, int32_t, const RuntimeMethod*))NativeArray_1__ctor_m788DE0F85C4051DDF092DDF96484DE655ACFB6F1_gshared)(__this, ___0_length, ___1_allocator, ___2_options, method);
-}
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool Object_op_Equality_mB6120F782D83091EF56A198FCEBCF066DB4A9605 (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___0_x, Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___1_y, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t RenderTexture_get_volumeDepth_m049340EE670E9632FC824B640A5570B5D3FCFEBF (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602 (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___0_x, Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___1_y, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_Release_mE7399D6187A0E38945D2913D0FFB41247143AB1E (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture__ctor_m0C81127DE754F64FDD3E80E94BE11054B2791F98 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, int32_t ___0_width, int32_t ___1_height, int32_t ___2_depth, int32_t ___3_format, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_set_volumeDepth_mD9B1E6BA4BE6B1741427B34A23B9D48BA9493633 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, int32_t ___0_value, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_set_useMipMap_mB280A39DAB18372D3A0050FF20F730E5B0B44C32 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, bool ___0_value, const RuntimeMethod* method) ;
-IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A math_int2_m0A9A8113022D7954E7DA5BE5436989C2DF01650D_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t CoreUtils_GetTextureHash_mC1A04C25989D75266B27D32B5EB463DEEFEB9027 (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_texture, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B RenderTargetIdentifier_op_Implicit_mBF13C6AE62DCEDDEFDC1C7305BE646FE99D2F24C (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_tex, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void CommandBuffer_CopyTexture_mDA8B82E30D465C5CC29046C558507601E3CC5BAF (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* __this, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___0_src, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___1_dst, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void CommandBuffer_Blit_m8E6E60FA1AEC18E0B12428E2F45594AF30CE965F (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* __this, Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_source, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___1_dest, const RuntimeMethod* method) ;
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncGPUReadback_WaitAllRequests_m057D4F7C0F5B8AC74F96DA0D713010F5199E4178 (const RuntimeMethod* method) ;
-IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A int2_op_Implicit_m8CFB0C58F0EE9CF236FC42E64F57838140AF7D46_inline (int32_t ___0_v, const RuntimeMethod* method) ;
 inline void AsyncTextureSynchronizer_1_SwapCurrentBuffer_m7FDD1B2F2ACD9CE037F6A04C27BC353343ED71F0 (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2* __this, const RuntimeMethod* method)
 {
 	((  void (*) (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2*, const RuntimeMethod*))AsyncTextureSynchronizer_1_SwapCurrentBuffer_m7FDD1B2F2ACD9CE037F6A04C27BC353343ED71F0_gshared)(__this, method);
@@ -3777,10 +3705,22 @@ inline void AsyncTextureSynchronizer_1_ValidateNativeBuffer_m445AA848B13E108D365
 {
 	((  void (*) (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2*, NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05*, int32_t, const RuntimeMethod*))AsyncTextureSynchronizer_1_ValidateNativeBuffer_m445AA848B13E108D3651EF160B44892F33ACF691_gshared)(__this, ___0_buffer, ___1_textureSize, method);
 }
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool Object_op_Equality_mB6120F782D83091EF56A198FCEBCF066DB4A9605 (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___0_x, Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___1_y, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t RenderTexture_get_volumeDepth_m049340EE670E9632FC824B640A5570B5D3FCFEBF (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602 (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___0_x, Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C* ___1_y, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_Release_mE7399D6187A0E38945D2913D0FFB41247143AB1E (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture__ctor_m0C81127DE754F64FDD3E80E94BE11054B2791F98 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, int32_t ___0_width, int32_t ___1_height, int32_t ___2_depth, int32_t ___3_format, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_set_volumeDepth_mD9B1E6BA4BE6B1741427B34A23B9D48BA9493633 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, int32_t ___0_value, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void RenderTexture_set_useMipMap_mB280A39DAB18372D3A0050FF20F730E5B0B44C32 (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* __this, bool ___0_value, const RuntimeMethod* method) ;
+IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A math_int2_m0A9A8113022D7954E7DA5BE5436989C2DF01650D_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t CoreUtils_GetTextureHash_mC1A04C25989D75266B27D32B5EB463DEEFEB9027 (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_texture, const RuntimeMethod* method) ;
 inline void AsyncTextureSynchronizer_1_ValidateResources_m4ECE0BF5E75AA74E30D34C6F5006FBF408EB0ECA (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2* __this, int32_t ___0_width, int32_t ___1_height, int32_t ___2_slices, int32_t ___3_dimension, const RuntimeMethod* method)
 {
 	((  void (*) (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2*, int32_t, int32_t, int32_t, int32_t, const RuntimeMethod*))AsyncTextureSynchronizer_1_ValidateResources_m4ECE0BF5E75AA74E30D34C6F5006FBF408EB0ECA_gshared)(__this, ___0_width, ___1_height, ___2_slices, ___3_dimension, method);
 }
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B RenderTargetIdentifier_op_Implicit_mBF13C6AE62DCEDDEFDC1C7305BE646FE99D2F24C (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_tex, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void CommandBuffer_CopyTexture_mDA8B82E30D465C5CC29046C558507601E3CC5BAF (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* __this, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___0_src, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___1_dst, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void CommandBuffer_Blit_m8E6E60FA1AEC18E0B12428E2F45594AF30CE965F (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* __this, Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___0_source, RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B ___1_dest, const RuntimeMethod* method) ;
 inline int32_t AsyncTextureSynchronizer_1_NextBufferIndex_m9A4912B8C76C3967E647D91B5A2E927D96F48D21 (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2* __this, const RuntimeMethod* method)
 {
 	return ((  int32_t (*) (AsyncTextureSynchronizer_1_t45D5D9299A506CEAA7594307A312DB4B97641BE2*, const RuntimeMethod*))AsyncTextureSynchronizer_1_NextBufferIndex_m9A4912B8C76C3967E647D91B5A2E927D96F48D21_gshared)(__this, method);
@@ -3789,6 +3729,8 @@ inline void CommandBuffer_RequestAsyncReadbackIntoNativeArray_Tishalf_tE8A679214
 {
 	((  void (*) (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7*, NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05*, Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*, int32_t, int32_t, Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F*, const RuntimeMethod*))CommandBuffer_RequestAsyncReadbackIntoNativeArray_Tishalf_tE8A6792149696F478D662DD4B736964C0FF018AF_m8363C16AE2ACEEF16030E1781C34A528A188F2BA_gshared)(__this, ___0_output, ___1_src, ___2_mipIndex, ___3_dstFormat, ___4_callback, method);
 }
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncGPUReadback_WaitAllRequests_m057D4F7C0F5B8AC74F96DA0D713010F5199E4178 (const RuntimeMethod* method) ;
+IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A int2_op_Implicit_m8CFB0C58F0EE9CF236FC42E64F57838140AF7D46_inline (int32_t ___0_v, const RuntimeMethod* method) ;
 inline void AsyncTextureSynchronizer_1_SwapCurrentBuffer_mFF79648176627E3087707FF85E20A324EA642321 (AsyncTextureSynchronizer_1_tF98D2858AFEC111E9DE245C8302AADE13FA69073* __this, const RuntimeMethod* method)
 {
 	((  void (*) (AsyncTextureSynchronizer_1_tF98D2858AFEC111E9DE245C8302AADE13FA69073*, const RuntimeMethod*))AsyncTextureSynchronizer_1_SwapCurrentBuffer_mFF79648176627E3087707FF85E20A324EA642321_gshared)(__this, method);
@@ -4907,609 +4849,6 @@ inline EqualityComparer_1_t8576A23859AAB111A218EAE239E10E5E9E2D66FC* EqualityCom
 {
 	return ((  EqualityComparer_1_t8576A23859AAB111A218EAE239E10E5E9E2D66FC* (*) (const RuntimeMethod*))EqualityComparer_1_CreateComparer_m432C82F7354C37E610794C1DA866DFA7DAC9C35E_gshared)(method);
 }
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winvalid-offsetof"
-#pragma clang diagnostic ignored "-Wunused-variable"
-#endif
-// Method Definition Index: 6239
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1__ctor_mA8A4D20E59FC37178A32D637B390C41D6BD01254_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, int32_t ___0_format, const RuntimeMethod* method) 
-{
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
-	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:19>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_0 = (NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD*)(NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD*)SZArrayNew(il2cpp_rgctx_data(method->klass->rgctx_data, 0), (uint32_t)2);
-		__this->___m_InternalBuffers = L_0;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___m_InternalBuffers), (void*)L_0);
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:20>
-		int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A L_1;
-		memset((&L_1), 0, sizeof(L_1));
-		int2__ctor_m452D21510717D0961119C89A72BBB8D84DCD49F4_inline((&L_1), 0, 0, NULL);
-		__this->___m_CurrentResolution = L_1;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:24>
-		__this->___m_CurrentBuffer = (-1);
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:41>
-		Object__ctor_mE837C6B9FA8C6D5D109F4B2EC885D79919AC0EA2((RuntimeObject*)__this, NULL);
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:43>
-		int32_t L_2 = ___0_format;
-		__this->___m_InternalGraphicsFormat = L_2;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:44>
-		Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F* L_3 = (Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F*)il2cpp_codegen_object_new(Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F_il2cpp_TypeInfo_var);
-		Action_1__ctor_m347338A163A1A0840FA150F7ACCC029D46339777(L_3, (RuntimeObject*)__this, (intptr_t)((void*)il2cpp_rgctx_method(method->klass->rgctx_data, 3)), NULL);
-		__this->___m_Callback = L_3;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___m_Callback), (void*)L_3);
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:45>
-		return;
-	}
-}
-// Method Definition Index: 6240
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_OnReceive_m5B3629E3828014319942D118DF2E215D81DCAC97_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, AsyncGPUReadbackRequest_t6A735D3E0F1DEF8F43EBD0E6FE550FAE564519C7 ___0_request, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:49>
-		bool L_0;
-		L_0 = AsyncGPUReadbackRequest_get_hasError_m374BB20A32B9DCDBFD8F81BBE542847B82F04EE5((&___0_request), NULL);
-		if (L_0)
-		{
-			goto IL_000f;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:50>
-		((  void (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 4)))(__this, il2cpp_rgctx_method(method->klass->rgctx_data, 4));
-	}
-
-IL_000f:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:51>
-		__this->___m_CurrentlyOnGoingJob = (bool)0;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:52>
-		return;
-	}
-}
-// Method Definition Index: 6241
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool AsyncTextureSynchronizer_1_TryGetBuffer_mE8FA9401CEDA8A4F0C7261E850A7CF0D8BE22AF8_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* ___0_buffer, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:56>
-		int32_t L_0 = __this->___m_CurrentBuffer;
-		if ((!(((uint32_t)L_0) == ((uint32_t)(-1)))))
-		{
-			goto IL_0012;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:58>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_1 = ___0_buffer;
-		il2cpp_codegen_initobj(L_1, sizeof(NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:59>
-		return (bool)0;
-	}
-
-IL_0012:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:61>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_2 = ___0_buffer;
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 L_3;
-		L_3 = ((  NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 7)))(__this, il2cpp_rgctx_method(method->klass->rgctx_data, 7));
-		*(NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*)L_2 = L_3;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:62>
-		return (bool)1;
-	}
-}
-// Method Definition Index: 6242
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 AsyncTextureSynchronizer_1_CurrentBuffer_m6B9C141FCB1EBD686F9153947BEA7C1C6D77B2F8_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:67>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_0 = __this->___m_InternalBuffers;
-		int32_t L_1 = __this->___m_CurrentBuffer;
-		NullCheck(L_0);
-		int32_t L_2 = L_1;
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 L_3 = (L_0)->GetAt(static_cast<il2cpp_array_size_t>(L_2));
-		return L_3;
-	}
-}
-// Method Definition Index: 6243
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A AsyncTextureSynchronizer_1_CurrentResolution_m8140A4D6E92D0F8727CB035D68CBF176B779066C_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:72>
-		int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A L_0 = __this->___m_CurrentResolution;
-		return L_0;
-	}
-}
-// Method Definition Index: 6244
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t AsyncTextureSynchronizer_1_CurrentSlices_mDCF7507F3AA10E0FC5D43673B06968FC8A0C5F3E_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:77>
-		int32_t L_0 = __this->___m_CurrentSlices;
-		return L_0;
-	}
-}
-// Method Definition Index: 6245
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_SwapCurrentBuffer_m2F97B76D402631E16DCB6107B1AF45B4E0B11CD3_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:82>
-		int32_t L_0 = __this->___m_CurrentBuffer;
-		__this->___m_CurrentBuffer = ((int32_t)(((int32_t)il2cpp_codegen_add(L_0, 1))%2));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:83>
-		return;
-	}
-}
-// Method Definition Index: 6246
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t AsyncTextureSynchronizer_1_NextBufferIndex_m5C91E3E384C7DD9C627F178D363EA11FE152E81E_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:87>
-		int32_t L_0 = __this->___m_CurrentBuffer;
-		return ((int32_t)(((int32_t)il2cpp_codegen_add(L_0, 1))%2));
-	}
-}
-// Method Definition Index: 6247
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_ValidateNativeBuffer_m1772D12962F30F19C1E67918CE1CB7073C89D062_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* ___0_buffer, int32_t ___1_textureSize, const RuntimeMethod* method) 
-{
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:92>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_0 = ___0_buffer;
-		bool L_1;
-		L_1 = ((  bool (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 8)))(L_0, il2cpp_rgctx_method(method->klass->rgctx_data, 8));
-		if (!L_1)
-		{
-			goto IL_0011;
-		}
-	}
-	{
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_2 = ___0_buffer;
-		int32_t L_3;
-		L_3 = ((  int32_t (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 10)))(L_2, il2cpp_rgctx_method(method->klass->rgctx_data, 10));
-		int32_t L_4 = ___1_textureSize;
-		if ((((int32_t)L_3) == ((int32_t)L_4)))
-		{
-			goto IL_002d;
-		}
-	}
-
-IL_0011:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:94>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_5 = ___0_buffer;
-		bool L_6;
-		L_6 = ((  bool (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 8)))(L_5, il2cpp_rgctx_method(method->klass->rgctx_data, 8));
-		if (!L_6)
-		{
-			goto IL_001f;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:95>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_7 = ___0_buffer;
-		((  void (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 11)))(L_7, il2cpp_rgctx_method(method->klass->rgctx_data, 11));
-	}
-
-IL_001f:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:96>
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18* L_8 = ___0_buffer;
-		int32_t L_9 = ___1_textureSize;
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 L_10;
-		memset((&L_10), 0, sizeof(L_10));
-		NativeArray_1__ctor_m788DE0F85C4051DDF092DDF96484DE655ACFB6F1((&L_10), L_9, (int32_t)4, (int32_t)0, il2cpp_rgctx_method(method->klass->rgctx_data, 12));
-		*(NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*)L_8 = L_10;
-	}
-
-IL_002d:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:98>
-		return;
-	}
-}
-// Method Definition Index: 6248
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_ValidateResources_m8A2DA4BC99B525330058766ED473DCB771AF9189_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, int32_t ___0_width, int32_t ___1_height, int32_t ___2_slices, int32_t ___3_dimension, const RuntimeMethod* method) 
-{
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
-	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	int32_t V_0 = 0;
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:102>
-		int32_t L_0 = ___0_width;
-		int32_t L_1 = ___1_height;
-		int32_t L_2 = ___2_slices;
-		V_0 = ((int32_t)il2cpp_codegen_multiply(((int32_t)il2cpp_codegen_multiply(L_0, L_1)), L_2));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:103>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_3 = __this->___m_InternalBuffers;
-		NullCheck(L_3);
-		int32_t L_4 = V_0;
-		((  void (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, int32_t, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 13)))(__this, ((L_3)->GetAddressAt(static_cast<il2cpp_array_size_t>(0))), L_4, il2cpp_rgctx_method(method->klass->rgctx_data, 13));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:104>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_5 = __this->___m_InternalBuffers;
-		NullCheck(L_5);
-		int32_t L_6 = V_0;
-		((  void (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, int32_t, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 13)))(__this, ((L_5)->GetAddressAt(static_cast<il2cpp_array_size_t>(1))), L_6, il2cpp_rgctx_method(method->klass->rgctx_data, 13));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:107>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_7 = __this->___m_InternalRT;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_8;
-		L_8 = Object_op_Equality_mB6120F782D83091EF56A198FCEBCF066DB4A9605((Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)L_7, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (L_8)
-		{
-			goto IL_0064;
-		}
-	}
-	{
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_9 = __this->___m_InternalRT;
-		NullCheck((Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_9);
-		int32_t L_10;
-		L_10 = VirtualFuncInvoker0< int32_t >::Invoke(5, (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_9);
-		int32_t L_11 = ___0_width;
-		if ((!(((uint32_t)L_10) == ((uint32_t)L_11))))
-		{
-			goto IL_0064;
-		}
-	}
-	{
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_12 = __this->___m_InternalRT;
-		NullCheck((Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_12);
-		int32_t L_13;
-		L_13 = VirtualFuncInvoker0< int32_t >::Invoke(7, (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_12);
-		int32_t L_14 = ___1_height;
-		if ((!(((uint32_t)L_13) == ((uint32_t)L_14))))
-		{
-			goto IL_0064;
-		}
-	}
-	{
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_15 = __this->___m_InternalRT;
-		NullCheck(L_15);
-		int32_t L_16;
-		L_16 = RenderTexture_get_volumeDepth_m049340EE670E9632FC824B640A5570B5D3FCFEBF(L_15, NULL);
-		int32_t L_17 = ___2_slices;
-		if ((((int32_t)L_16) == ((int32_t)L_17)))
-		{
-			goto IL_00a7;
-		}
-	}
-
-IL_0064:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:109>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_18 = __this->___m_InternalRT;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_19;
-		L_19 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602((Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)L_18, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_19)
-		{
-			goto IL_007d;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:110>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_20 = __this->___m_InternalRT;
-		NullCheck(L_20);
-		RenderTexture_Release_mE7399D6187A0E38945D2913D0FFB41247143AB1E(L_20, NULL);
-	}
-
-IL_007d:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:111>
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:112>
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:113>
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:114>
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:115>
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:116>
-		int32_t L_21 = ___0_width;
-		int32_t L_22 = ___1_height;
-		int32_t L_23 = __this->___m_InternalGraphicsFormat;
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_24 = (RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27*)il2cpp_codegen_object_new(RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27_il2cpp_TypeInfo_var);
-		RenderTexture__ctor_m0C81127DE754F64FDD3E80E94BE11054B2791F98(L_24, L_21, L_22, 0, L_23, NULL);
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_25 = L_24;
-		int32_t L_26 = ___2_slices;
-		NullCheck(L_25);
-		RenderTexture_set_volumeDepth_mD9B1E6BA4BE6B1741427B34A23B9D48BA9493633(L_25, L_26, NULL);
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_27 = L_25;
-		int32_t L_28 = ___3_dimension;
-		NullCheck((Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_27);
-		VirtualActionInvoker1< int32_t >::Invoke(10, (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_27, L_28);
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_29 = L_27;
-		NullCheck(L_29);
-		RenderTexture_set_useMipMap_mB280A39DAB18372D3A0050FF20F730E5B0B44C32(L_29, (bool)0, NULL);
-		__this->___m_InternalRT = L_29;
-		Il2CppCodeGenWriteBarrier((void**)(&__this->___m_InternalRT), (void*)L_29);
-	}
-
-IL_00a7:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:118>
-		int32_t L_30 = ___0_width;
-		int32_t L_31 = ___1_height;
-		int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A L_32;
-		L_32 = math_int2_m0A9A8113022D7954E7DA5BE5436989C2DF01650D_inline(L_30, L_31, NULL);
-		__this->___m_CurrentResolution = L_32;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:119>
-		int32_t L_33 = ___2_slices;
-		__this->___m_CurrentSlices = L_33;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:120>
-		return;
-	}
-}
-// Method Definition Index: 6249
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int32_t AsyncTextureSynchronizer_1_EnqueueRequest_mC1E15E9A11E51AE4BD8C4E7B2B50061F9177F64C_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* ___0_cmd, Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* ___1_targetTexture, bool ___2_intermediateBlit, const RuntimeMethod* method) 
-{
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
-	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&CoreUtils_tEE57AB2B0DAE9561F4954B08800A8F957850B038_il2cpp_TypeInfo_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B_il2cpp_TypeInfo_var);
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	int32_t V_0 = 0;
-	int32_t V_1 = 0;
-	Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* V_2 = NULL;
-	NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 V_3;
-	memset((&V_3), 0, sizeof(V_3));
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:125>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_0 = ___1_targetTexture;
-		il2cpp_codegen_runtime_class_init_inline(CoreUtils_tEE57AB2B0DAE9561F4954B08800A8F957850B038_il2cpp_TypeInfo_var);
-		int32_t L_1;
-		L_1 = CoreUtils_GetTextureHash_mC1A04C25989D75266B27D32B5EB463DEEFEB9027(L_0, NULL);
-		V_0 = L_1;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:126>
-		int32_t L_2 = V_0;
-		int32_t L_3 = __this->___m_TargetTextureHash;
-		if ((!(((uint32_t)L_2) == ((uint32_t)L_3))))
-		{
-			goto IL_0012;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:127>
-		return (int32_t)(0);
-	}
-
-IL_0012:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:130>
-		bool L_4 = __this->___m_CurrentlyOnGoingJob;
-		if (!L_4)
-		{
-			goto IL_001c;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:131>
-		return (int32_t)(2);
-	}
-
-IL_001c:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:134>
-		__this->___m_CurrentlyOnGoingJob = (bool)1;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:135>
-		int32_t L_5 = V_0;
-		__this->___m_TargetTextureHash = L_5;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:137>
-		V_1 = 1;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:138>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_6 = ___1_targetTexture;
-		NullCheck(L_6);
-		int32_t L_7;
-		L_7 = VirtualFuncInvoker0< int32_t >::Invoke(9, L_6);
-		if ((!(((uint32_t)L_7) == ((uint32_t)5))))
-		{
-			goto IL_0041;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:139>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_8 = ___1_targetTexture;
-		NullCheck(((RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27*)CastclassClass((RuntimeObject*)L_8, RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27_il2cpp_TypeInfo_var)));
-		int32_t L_9;
-		L_9 = RenderTexture_get_volumeDepth_m049340EE670E9632FC824B640A5570B5D3FCFEBF(((RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27*)CastclassClass((RuntimeObject*)L_8, RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27_il2cpp_TypeInfo_var)), NULL);
-		V_1 = L_9;
-	}
-
-IL_0041:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:142>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_10 = ___1_targetTexture;
-		NullCheck(L_10);
-		int32_t L_11;
-		L_11 = VirtualFuncInvoker0< int32_t >::Invoke(5, L_10);
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_12 = ___1_targetTexture;
-		NullCheck(L_12);
-		int32_t L_13;
-		L_13 = VirtualFuncInvoker0< int32_t >::Invoke(7, L_12);
-		int32_t L_14 = V_1;
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_15 = ___1_targetTexture;
-		NullCheck(L_15);
-		int32_t L_16;
-		L_16 = VirtualFuncInvoker0< int32_t >::Invoke(9, L_15);
-		((  void (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, int32_t, int32_t, int32_t, int32_t, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 14)))(__this, L_11, L_13, L_14, L_16, il2cpp_rgctx_method(method->klass->rgctx_data, 14));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:145>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_17 = ___1_targetTexture;
-		V_2 = L_17;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:146>
-		bool L_18 = ___2_intermediateBlit;
-		if (!L_18)
-		{
-			goto IL_009a;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:148>
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_19 = ___1_targetTexture;
-		NullCheck(L_19);
-		int32_t L_20;
-		L_20 = VirtualFuncInvoker0< int32_t >::Invoke(9, L_19);
-		if ((!(((uint32_t)L_20) == ((uint32_t)5))))
-		{
-			goto IL_0081;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:149>
-		CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* L_21 = ___0_cmd;
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_22 = ___1_targetTexture;
-		il2cpp_codegen_runtime_class_init_inline(RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B_il2cpp_TypeInfo_var);
-		RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B L_23;
-		L_23 = RenderTargetIdentifier_op_Implicit_mBF13C6AE62DCEDDEFDC1C7305BE646FE99D2F24C(L_22, NULL);
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_24 = __this->___m_InternalRT;
-		RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B L_25;
-		L_25 = RenderTargetIdentifier_op_Implicit_mBF13C6AE62DCEDDEFDC1C7305BE646FE99D2F24C((Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_24, NULL);
-		NullCheck(L_21);
-		CommandBuffer_CopyTexture_mDA8B82E30D465C5CC29046C558507601E3CC5BAF(L_21, L_23, L_25, NULL);
-		goto IL_0093;
-	}
-
-IL_0081:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:151>
-		CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* L_26 = ___0_cmd;
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_27 = ___1_targetTexture;
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_28 = __this->___m_InternalRT;
-		il2cpp_codegen_runtime_class_init_inline(RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B_il2cpp_TypeInfo_var);
-		RenderTargetIdentifier_tA528663AC6EB3911D8E91AA40F7070FA5455442B L_29;
-		L_29 = RenderTargetIdentifier_op_Implicit_mBF13C6AE62DCEDDEFDC1C7305BE646FE99D2F24C((Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_28, NULL);
-		NullCheck(L_26);
-		CommandBuffer_Blit_m8E6E60FA1AEC18E0B12428E2F45594AF30CE965F(L_26, L_27, L_29, NULL);
-	}
-
-IL_0093:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:152>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_30 = __this->___m_InternalRT;
-		V_2 = (Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*)L_30;
-	}
-
-IL_009a:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:156>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_31 = __this->___m_InternalBuffers;
-		int32_t L_32;
-		L_32 = ((  int32_t (*) (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 15)))(__this, il2cpp_rgctx_method(method->klass->rgctx_data, 15));
-		NullCheck(L_31);
-		int32_t L_33 = L_32;
-		NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18 L_34 = (L_31)->GetAt(static_cast<il2cpp_array_size_t>(L_33));
-		V_3 = L_34;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:166>
-		CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7* L_35 = ___0_cmd;
-		Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700* L_36 = V_2;
-		int32_t L_37 = __this->___m_InternalGraphicsFormat;
-		Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F* L_38 = __this->___m_Callback;
-		NullCheck(L_35);
-		((  void (*) (CommandBuffer_tB56007DC84EF56296C325EC32DD12AC1E3DC91F7*, NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, Texture_t791CBB51219779964E0E8A2ED7C1AA5F92A4A700*, int32_t, int32_t, Action_1_t6AC29B34E68BC53AA807670D868CBB59CD5D995F*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 16)))(L_35, (&V_3), L_36, 0, L_37, L_38, il2cpp_rgctx_method(method->klass->rgctx_data, 16));
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:169>
-		return (int32_t)(1);
-	}
-}
-// Method Definition Index: 6250
-IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void AsyncTextureSynchronizer_1_ReleaseATSResources_m866161FFE892603B1F94889DB26C36B4D0694EB3_gshared (AsyncTextureSynchronizer_1_t869085D6834959F24CCE214E6FA42786FC9E1BE9* __this, const RuntimeMethod* method) 
-{
-	static bool s_Il2CppMethodInitialized;
-	if (!s_Il2CppMethodInitialized)
-	{
-		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		s_Il2CppMethodInitialized = true;
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:175>
-		bool L_0 = __this->___m_CurrentlyOnGoingJob;
-		if (!L_0)
-		{
-			goto IL_000d;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:176>
-		AsyncGPUReadback_WaitAllRequests_m057D4F7C0F5B8AC74F96DA0D713010F5199E4178(NULL);
-	}
-
-IL_000d:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:178>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_1 = __this->___m_InternalBuffers;
-		NullCheck(L_1);
-		bool L_2;
-		L_2 = ((  bool (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 8)))(((L_1)->GetAddressAt(static_cast<il2cpp_array_size_t>(0))), il2cpp_rgctx_method(method->klass->rgctx_data, 8));
-		if (!L_2)
-		{
-			goto IL_0031;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:179>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_3 = __this->___m_InternalBuffers;
-		NullCheck(L_3);
-		((  void (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 11)))(((L_3)->GetAddressAt(static_cast<il2cpp_array_size_t>(0))), il2cpp_rgctx_method(method->klass->rgctx_data, 11));
-	}
-
-IL_0031:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:181>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_4 = __this->___m_InternalBuffers;
-		NullCheck(L_4);
-		bool L_5;
-		L_5 = ((  bool (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 8)))(((L_4)->GetAddressAt(static_cast<il2cpp_array_size_t>(1))), il2cpp_rgctx_method(method->klass->rgctx_data, 8));
-		if (!L_5)
-		{
-			goto IL_0055;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:182>
-		NativeArray_1U5BU5D_t4BC8FD0BBBD51EF2E3A56BF78296DF37173EFDBD* L_6 = __this->___m_InternalBuffers;
-		NullCheck(L_6);
-		((  void (*) (NativeArray_1_tDB8B8DC66CC8E16ED6D9A8C75D2C1AFC80AC1E18*, const RuntimeMethod*))il2cpp_codegen_get_direct_method_pointer(il2cpp_rgctx_method(method->klass->rgctx_data, 11)))(((L_6)->GetAddressAt(static_cast<il2cpp_array_size_t>(1))), il2cpp_rgctx_method(method->klass->rgctx_data, 11));
-	}
-
-IL_0055:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:184>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_7 = __this->___m_InternalRT;
-		il2cpp_codegen_runtime_class_init_inline(Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C_il2cpp_TypeInfo_var);
-		bool L_8;
-		L_8 = Object_op_Inequality_mD0BE578448EAA61948F25C32F8DD55AB1F778602((Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)L_7, (Object_tC12DECB6760A7F2CBF65D9DCF18D044C2D97152C*)NULL, NULL);
-		if (!L_8)
-		{
-			goto IL_006e;
-		}
-	}
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:185>
-		RenderTexture_tBA90C4C3AD9EECCFDDCC632D97C29FAB80D60D27* L_9 = __this->___m_InternalRT;
-		NullCheck(L_9);
-		RenderTexture_Release_mE7399D6187A0E38945D2913D0FFB41247143AB1E(L_9, NULL);
-	}
-
-IL_006e:
-	{
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:187>
-		int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A L_10;
-		L_10 = int2_op_Implicit_m8CFB0C58F0EE9CF236FC42E64F57838140AF7D46_inline(0, NULL);
-		__this->___m_CurrentResolution = L_10;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:188>
-		__this->___m_TargetTextureHash = 0;
-		//<source_info:./Library/PackageCache/com.unity.render-pipelines.high-definition@28765669b6fe/Runtime/Water/AsyncTextureSynchronizer.cs:189>
-		return;
-	}
-}
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winvalid-offsetof"
@@ -25991,7 +25330,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void BaseField_1__cctor_m63390597F0E2622438BC
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-// Method Definition Index: 62414
+// Method Definition Index: 63014
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m452D21510717D0961119C89A72BBB8D84DCD49F4_inline (int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A* __this, int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	{
@@ -26005,7 +25344,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m452D21510717D096
 		return;
 	}
 }
-// Method Definition Index: 56724
+// Method Definition Index: 57324
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A math_int2_m0A9A8113022D7954E7DA5BE5436989C2DF01650D_inline (int32_t ___0_x, int32_t ___1_y, const RuntimeMethod* method) 
 {
 	{
@@ -26018,7 +25357,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B9
 		return L_2;
 	}
 }
-// Method Definition Index: 62425
+// Method Definition Index: 63025
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A int2_op_Implicit_m8CFB0C58F0EE9CF236FC42E64F57838140AF7D46_inline (int32_t ___0_v, const RuntimeMethod* method) 
 {
 	{
@@ -26064,7 +25403,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void Action_Invoke_m7126A54DACA72
 	typedef void (*FunctionPointerType) (RuntimeObject*, const RuntimeMethod*);
 	((FunctionPointerType)__this->___invoke_impl)((Il2CppObject*)__this->___method_code, reinterpret_cast<RuntimeMethod*>(__this->___method));
 }
-// Method Definition Index: 47679
+// Method Definition Index: 48278
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Rect_get_x_mB267B718E0D067F2BAE31BA477647FBF964916EB_inline (Rect_tA04E0F8A1830E767F40FB27ECD8D309303571F0D* __this, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -26080,7 +25419,7 @@ IL_000a:
 		return L_1;
 	}
 }
-// Method Definition Index: 49493
+// Method Definition Index: 50093
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR float Mathf_Max_mF5379E63D2BBAC76D090748695D833934F8AD051_inline (float ___0_a, float ___1_b, const RuntimeMethod* method) 
 {
 	float V_0 = 0.0f;
@@ -26142,7 +25481,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR String_t* VisualElement_get_viewD
 		return L_0;
 	}
 }
-// Method Definition Index: 46881
+// Method Definition Index: 47480
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_m0441C0AFD5A79DF48A448142A34321039F7C9A64_gshared_inline (NativeArray_1_t7951261EF95578F6CE9D8B640B76ED956EBC8F05* __this, const RuntimeMethod* method) 
 {
 	{
@@ -26150,7 +25489,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_
 		return (bool)((((int32_t)((((intptr_t)L_0) == ((intptr_t)((uintptr_t)0)))? 1 : 0)) == ((int32_t)0))? 1 : 0);
 	}
 }
-// Method Definition Index: 46881
+// Method Definition Index: 47480
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR bool NativeArray_1_get_IsCreated_mDFD5C1E178B396223B04A604617C07F295915EB8_gshared_inline (NativeArray_1_tC66166E8C80DAD221B27A4758AA52409D2C667C0* __this, const RuntimeMethod* method) 
 {
 	{
@@ -27082,7 +26421,7 @@ IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR int32_t Func_2_Invoke_m1F8EE2DF13
 	typedef int32_t (*FunctionPointerType) (RuntimeObject*, int32_t, const RuntimeMethod*);
 	return ((FunctionPointerType)__this->___invoke_impl)((Il2CppObject*)__this->___method_code, ___0_arg, reinterpret_cast<RuntimeMethod*>(__this->___method));
 }
-// Method Definition Index: 62416
+// Method Definition Index: 63016
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void int2__ctor_m1F683444787E63F08971693F833BBF8012827CE6_inline (int2_tF4AC25F87943DC0B2BB3456B0B919B3B42A9432A* __this, int32_t ___0_v, const RuntimeMethod* method) 
 {
 	{

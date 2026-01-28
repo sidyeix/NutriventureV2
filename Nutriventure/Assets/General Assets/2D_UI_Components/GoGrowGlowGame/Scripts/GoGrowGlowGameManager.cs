@@ -11,6 +11,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     public enum FoodType { Go, Grow, Glow }
 
+    [Header("Initial Slider Settings")]
+    [SerializeField] private FoodType initialZoneType = FoodType.Go;
+    [SerializeField] private Color initialSliderFillColor = Color.red;
+    [SerializeField] private Sprite initialSliderHandleSprite;
+
     [Header("Player Settings")]
     public ThirdPersonController playerController;
     public Transform playerTransform;
@@ -50,7 +55,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float junkFoodEnergyDeduction = 20f;
     private float currentEnergy = 0f;
     private float targetEnergy = 0f;
-    private bool isEnergyDecreasePaused = false; // New flag for pausing energy decrease
+    private bool isEnergyDecreasePaused = false;
 
     [Header("Smooth Transition Settings")]
     public float energyTransitionSpeed = 5f;
@@ -152,20 +157,32 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public Sprite glowFoodSprite;
     public Sprite junkFoodSprite;
 
-    [Header("Audio Integration")]
-    public AudioClip[] goFoodSounds;
-    public AudioClip[] growFoodSounds;
-    public AudioClip[] glowFoodSounds;
-    public AudioClip[] junkFoodSounds;
-    public AudioClip speedBoostSound;
-    public AudioClip sizeBoostSound;
-    public AudioClip glowBoostSound;
+    [Header("Audio Integration - Male")]
+    public AudioClip[] goFoodSoundsMale;
+    public AudioClip[] growFoodSoundsMale;
+    public AudioClip[] glowFoodSoundsMale;
+    public AudioClip[] junkFoodSoundsMale;
+    public AudioClip speedBoostSoundMale;
+
+    [Header("Audio Integration - Female")]
+    public AudioClip[] goFoodSoundsFemale;
+    public AudioClip[] growFoodSoundsFemale;
+    public AudioClip[] glowFoodSoundsFemale;
+    public AudioClip[] junkFoodSoundsFemale;
+    public AudioClip speedBoostSoundFemale;
+
+    [Header("Gender-Neutral Sounds")]
     public AudioClip loseLifeSound;
     public AudioClip collectionSound;
     public AudioClip respawnSound;
     public AudioClip knockbackSound;
     public AudioClip damageSound;
     public AudioClip deathSound;
+
+    [Header("Background Music Settings")]
+    public AudioSource backgroundMusicSource;
+    public AudioClip gameStartBGM;
+    public AudioClip gameEndBGM;
 
     [Header("Boost Effects")]
     public GameObject speedBoostEffect;
@@ -174,6 +191,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("Food Feedback UI")]
     public FoodFeedbackUI foodFeedbackUI;
+
+    [Header("Start Game Settings")]
+    public float startDelay = 2f;
+    public float startEnergy = 100f;
+    private bool isStartingGame = false;
+
+    [Header("Low Energy Warning")]
+    public GameObject lowEnergyCanvas;
+    public float lowEnergyThreshold = 20f;
+    public AudioSource lowEnergyAudioSource;
+    public AudioClip lowEnergySound;
 
     private bool inHealingZone = false;
     private Coroutine resetExciteCoroutine;
@@ -186,6 +214,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private bool playerSettingsInitialized = false;
     private CharacterController characterController;
     private float originalSpeed;
+    private bool isGameTimerPaused = false;
+    private float pausedTimerValue = 0f;
+    private bool wasLowEnergyLastFrame = false;
 
     private void Awake()
     {
@@ -206,8 +237,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         {
             energySlider.maxValue = 100f;
             energySlider.minValue = 0f;
-            energySlider.value = currentEnergy;
+            energySlider.value = 0f;
         }
+
+        // Set initial slider appearance
+        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
 
         if (playerController != null)
         {
@@ -221,7 +255,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
         HideAllBoostUI();
         if (oneLifePanel != null) oneLifePanel.SetActive(false);
 
-        targetEnergy = currentEnergy;
+        targetEnergy = 0f;
+        currentEnergy = 0f;
         targetSpeed = initialPlayerSpeed;
         targetSize = initialPlayerSize;
 
@@ -231,16 +266,70 @@ public class GoGrowGlowGameManager : MonoBehaviour
             startCheckpoint.Activate();
         }
 
+        // Initialize with initial zone type
+        currentFoodZone = initialZoneType;
+
         UpdateUI();
         SetGameActive(false);
+
+        // Set initial BGM to gameEndBGM
+        if (backgroundMusicSource != null && gameEndBGM != null)
+        {
+            backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.Play();
+        }
+
+        // Initialize low energy canvas
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+        }
+
+        // Initialize low energy audio source
+        if (lowEnergyAudioSource == null)
+        {
+            lowEnergyAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        if (lowEnergyAudioSource != null)
+        {
+            lowEnergyAudioSource.loop = true;
+            lowEnergyAudioSource.playOnAwake = false;
+        }
+
+        // Set initial feedback sprite based on starting zone
+        UpdateFeedbackSpriteForZone(initialZoneType);
+    }
+
+    // NEW: Method to set slider appearance
+    private void SetSliderAppearance(FoodType zoneType, Color fillColor, Sprite handleSprite)
+    {
+        if (sliderFillImage != null)
+        {
+            sliderFillImage.color = fillColor;
+        }
+
+        if (sliderHandleImage != null && handleSprite != null)
+        {
+            sliderHandleImage.sprite = handleSprite;
+        }
+
+        Debug.Log($"Set initial slider appearance: {zoneType} zone, Color: {fillColor}");
     }
 
     private void Update()
     {
         if (!gameIsActive) return;
 
-        gameTimer += Time.deltaTime;
-        UpdateTimerDisplay();
+        // Check energy for low energy warning
+        CheckLowEnergyWarning();
+
+        // Only update timer if not paused
+        if (!isGameTimerPaused)
+        {
+            gameTimer += Time.deltaTime;
+            UpdateTimerDisplay();
+        }
 
         // Only decrease energy if not paused and not in healing zone/boosted states
         if (!isEnergyDecreasePaused && !inHealingZone && !isSpeedBoosted && !isSizeBoosted)
@@ -280,6 +369,193 @@ public class GoGrowGlowGameManager : MonoBehaviour
             sizeBoostTimer -= Time.deltaTime;
             if (sizeBoostTimer <= 0f) EndSizeBoost();
         }
+    }
+
+    // ====== GENDER DETERMINATION ======
+    private bool IsCharacterMale()
+    {
+        // Get the current character ID from GameDataManager
+        int characterID = 0; // Default to Eyron (male)
+
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            characterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+            Debug.Log($"Character gender check - ID: {characterID}, Is Male: {characterID == 0 || characterID == 4 || characterID == 6}");
+        }
+        else
+        {
+            Debug.LogWarning("GameDataManager not found, using default male character");
+        }
+
+        // Male characters: Eyron (0), Kaya (4), Albert (6)
+        if (characterID == 0 || characterID == 4 || characterID == 6)
+        {
+            return true;
+        }
+
+        // Female characters: Claire (1), Amy (2), Jackie (3), Michelle (5)
+        return false;
+    }
+
+    // ====== RESET METHODS ======
+    public void ResetGameState()
+    {
+        Debug.Log("=== RESETTING GAME STATE ===");
+
+        // Reset all tracking variables
+        currentEnergy = 0f;
+        targetEnergy = 0f;
+        currentLifeAmount = maxLives;
+        currentLives = maxLives;
+        score = 0;
+        gameTimer = 0f;
+
+        // Reset boost states
+        isSpeedBoosted = false;
+        isSizeBoosted = false;
+        speedBoostTimer = 0f;
+        sizeBoostTimer = 0f;
+
+        // Reset animation states
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+            characterAnimator.SetBool(deathTrigger, false);
+        }
+
+        // Reset flags
+        isRespawning = false;
+        inHealingZone = false;
+        wasLowEnergyLastFrame = false;
+        isStartingGame = false;
+
+        // Reset UI
+        if (energySlider != null) energySlider.value = 0f;
+        UpdateHeartUI();
+        UpdateUI();
+        UpdateTimerDisplay();
+
+        // Reset slider to initial appearance
+        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
+
+        // Reset feedback sprite to initial zone
+        UpdateFeedbackSpriteForZone(initialZoneType);
+
+        // Hide all effects
+        HideAllVisualEffects();
+        HideAllBoostUI();
+
+        // Reset low energy warning
+        if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
+        StopLowEnergySound();
+
+        // Reset food spawner
+        if (foodSpawner != null)
+        {
+            foodSpawner.HideAllFood();
+        }
+
+        Debug.Log("Game state reset complete");
+    }
+
+    public void FullGameReset()
+    {
+        Debug.Log("=== FULL GAME RESET ===");
+
+        // IMPORTANT: Reset these BEFORE EndGame()
+        gameIsActive = false;
+        gameTimer = 0f;
+        score = 0;
+        currentEnergy = 0f;
+        targetEnergy = 0f;
+
+        // Reset timer UI immediately
+        UpdateTimerDisplay();
+        UpdateUI();
+
+        // Stop all coroutines first
+        StopAllCoroutines();
+
+        // Reset one life check
+        StopOneLifeCheck();
+
+        // Stop knockback
+        StopKnockback();
+
+        // End the current game
+        EndGame();
+
+        // Reset all game state
+        ResetGameState();
+
+        // Reset all checkpoints
+        Checkpoint[] allCheckpoints = FindObjectsOfType<Checkpoint>();
+        foreach (Checkpoint checkpoint in allCheckpoints)
+        {
+            if (checkpoint != null)
+                checkpoint.ResetCheckpoint();
+        }
+
+        // Re-enable all triggers and colliders
+        ResetAllTriggersAndColliders();
+
+        // IMPORTANT: Reset GameEndManager state
+        GameEndManager gameEndManager = FindObjectOfType<GameEndManager>();
+        if (gameEndManager != null)
+        {
+            gameEndManager.ResetGameEndState();
+            gameEndManager.ResetMinigames();
+        }
+
+        // Reset player position to start
+        if (startCheckpoint != null && playerTransform != null)
+        {
+            playerTransform.position = startCheckpoint.GetSpawnPosition();
+            playerTransform.rotation = startCheckpoint.GetSpawnRotation();
+        }
+
+        // Reset the player controller
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+            playerController.MoveSpeed = initialPlayerSpeed;
+        }
+
+        // Reset player size
+        if (playerArmature != null)
+        {
+            playerArmature.localScale = Vector3.one * initialPlayerSize;
+        }
+
+        // Reset all UI
+        if (energySlider != null) energySlider.value = 0f;
+        UpdateHeartUI();
+        UpdateUI();
+        UpdateTimerDisplay();
+
+        // Hide all effects
+        HideAllVisualEffects();
+        HideAllBoostUI();
+
+        // Reset feedback sprite to initial zone
+        UpdateFeedbackSpriteForZone(initialZoneType);
+
+        // Reset low energy warning
+        if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
+        StopLowEnergySound();
+
+        // Reset audio
+        if (backgroundMusicSource != null && gameEndBGM != null)
+        {
+            backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.Play();
+        }
+
+        Debug.Log("Full game reset complete");
     }
 
     // ====== ENERGY SLIDER PAUSE/RESUME LOGIC ======
@@ -492,19 +768,69 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== GAME FLOW ======
     public void StartGame()
     {
+        if (isStartingGame) return;
+
+        isStartingGame = true;
+        if (startButton != null) startButton.interactable = false;
+
+        StartCoroutine(DelayedGameStart());
+    }
+
+    private IEnumerator DelayedGameStart()
+    {
+        Debug.Log($"Game starting in {startDelay} seconds...");
+        yield return new WaitForSeconds(startDelay);
+        ActualGameStart();
+    }
+
+    private void ActualGameStart()
+    {
+        // Reset game state before starting
+        ResetGameState();
+
+        // Reset assessment system before starting
+        ResetAssessmentSystem();
+
+        // Ensure low energy canvas is hidden at game start
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+            wasLowEnergyLastFrame = false;
+        }
+
+        // Ensure low energy sound is stopped at game start
+        StopLowEnergySound();
+
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
         gameIsActive = true;
-        isEnergyDecreasePaused = false; // Reset pause state
+        isStartingGame = false;
+        isEnergyDecreasePaused = false;
+        isGameTimerPaused = false;
+
+        // Set starting energy to 100
+        currentEnergy = startEnergy;
+        targetEnergy = startEnergy;
+        if (energySlider != null) energySlider.value = currentEnergy;
+
         currentLives = maxLives;
         currentLifeAmount = maxLives;
-        currentEnergy = 0f;
-        targetEnergy = 0f;
         score = 0;
         gameTimer = 0f;
-        currentFoodZone = FoodType.Go;
 
-        Checkpoint[] allCheckpoints = FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
-        foreach (Checkpoint checkpoint in allCheckpoints) checkpoint.ResetCheckpoint();
+        // Always start in initial zone
+        currentFoodZone = initialZoneType;
+        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
+
+        // Set initial feedback sprite
+        UpdateFeedbackSpriteForZone(initialZoneType);
+
+        // Reset all checkpoints
+        Checkpoint[] allCheckpoints = FindObjectsOfType<Checkpoint>();
+        foreach (Checkpoint checkpoint in allCheckpoints)
+        {
+            if (checkpoint != null)
+                checkpoint.ResetCheckpoint();
+        }
 
         if (startCheckpoint != null)
         {
@@ -545,20 +871,44 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (uiElement != null) uiElement.SetActive(false);
 
         if (startButton != null) startButton.gameObject.SetActive(false);
-        if (foodSpawner != null) foodSpawner.StartSpawning();
+
+        // Reset food spawner before starting
+        if (foodSpawner != null)
+        {
+            foodSpawner.StopSpawning();
+            foodSpawner.StartSpawning();
+        }
         else Debug.LogError("FoodSpawner not assigned to GameManager!");
+
+        // Change background music
+        if (backgroundMusicSource != null && gameStartBGM != null)
+        {
+            backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.Play();
+        }
 
         UpdateUI();
         RespawnPlayer();
-        Debug.Log("Game Started!");
+        Debug.Log("Game Started! Starting energy: " + currentEnergy);
     }
 
     public void EndGame()
     {
         gameIsActive = false;
-        isEnergyDecreasePaused = false; // Reset pause state
+        isEnergyDecreasePaused = false;
+        isGameTimerPaused = false;
         StopOneLifeCheck();
         StopKnockback();
+
+        // Hide low energy canvas when game ends
+        if (lowEnergyCanvas != null)
+        {
+            lowEnergyCanvas.SetActive(false);
+            wasLowEnergyLastFrame = false;
+        }
+
+        // Stop low energy sound when game ends
+        StopLowEnergySound();
 
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(false);
         if (foodSpawner != null) foodSpawner.StopSpawning();
@@ -603,7 +953,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
-        if (startButton != null) startButton.gameObject.SetActive(true);
+        if (startButton != null)
+        {
+            startButton.gameObject.SetActive(true);
+            startButton.interactable = true;
+        }
         Debug.Log("Game Ended!");
     }
 
@@ -635,18 +989,76 @@ public class GoGrowGlowGameManager : MonoBehaviour
         else playerArmature.localScale = Vector3.one * targetSize;
     }
 
+    // ====== ZONE SWITCHING WITH FEEDBACK SPRITE UPDATE ======
     public void SetCurrentFoodZone(FoodType zoneType, Color fillColor, Sprite handleSprite)
     {
         if (!gameIsActive) return;
 
         currentFoodZone = zoneType;
-        if (sliderFillImage != null) sliderFillImage.color = fillColor;
-        if (sliderHandleImage != null && handleSprite != null) sliderHandleImage.sprite = handleSprite;
 
-        if (zoneType == FoodType.Grow && playerArmature != null) UpdatePlayerSize();
-        else if (zoneType == FoodType.Go && playerArmature != null) targetSize = initialPlayerSize;
+        if (sliderFillImage != null)
+        {
+            sliderFillImage.color = fillColor;
+        }
 
-        Debug.Log($"Switched to {zoneType} zone");
+        if (sliderHandleImage != null && handleSprite != null)
+        {
+            sliderHandleImage.sprite = handleSprite;
+        }
+
+        // Update feedback sprite based on zone
+        UpdateFeedbackSpriteForZone(zoneType);
+
+        if (zoneType == FoodType.Grow && playerArmature != null)
+        {
+            UpdatePlayerSize();
+        }
+        else if (zoneType == FoodType.Go && playerArmature != null)
+        {
+            targetSize = initialPlayerSize;
+        }
+
+        Debug.Log($"Switched to {zoneType} zone, feedback sprite updated");
+    }
+
+    // Helper method to update feedback sprite for zone
+    private void UpdateFeedbackSpriteForZone(FoodType zoneType)
+    {
+        if (feedbackSpriteObject == null) return;
+
+        Sprite feedbackSprite = null;
+        switch (zoneType)
+        {
+            case FoodType.Go:
+                feedbackSprite = goFoodSprite;
+                break;
+            case FoodType.Grow:
+                feedbackSprite = growFoodSprite;
+                break;
+            case FoodType.Glow:
+                feedbackSprite = glowFoodSprite;
+                break;
+        }
+
+        // Update the feedback sprite object
+        if (feedbackSprite != null)
+        {
+            SpriteRenderer spriteRenderer = feedbackSpriteObject.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = feedbackSprite;
+                Debug.Log($"Feedback sprite updated to {zoneType} sprite");
+            }
+            else
+            {
+                Image image = feedbackSpriteObject.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.sprite = feedbackSprite;
+                    Debug.Log($"Feedback image updated to {zoneType} sprite");
+                }
+            }
+        }
     }
 
     // ====== FOOD COLLECTION ======
@@ -743,8 +1155,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isSpeedBoosted = true;
         speedBoostTimer = speedBoostDuration;
 
-        if (AudioHandler.Instance != null && speedBoostSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(speedBoostSound);
+        PlaySpeedBoostSound();
 
         if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Go);
@@ -763,8 +1174,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isSizeBoosted = true;
         sizeBoostTimer = sizeBoostDuration;
 
-        if (AudioHandler.Instance != null && sizeBoostSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
+        // Note: You mentioned we don't need size boost sound
+        // if (AudioHandler.Instance != null && sizeBoostSound != null)
+        //     AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
 
         if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Grow);
@@ -864,6 +1276,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (currentLifeAmount <= 0f)
         {
             EndGame();
+
+            // Trigger Game Over screen
+            GameEndManager gameEndManager = FindObjectOfType<GameEndManager>();
+            if (gameEndManager != null)
+            {
+                gameEndManager.TriggerGameOver();
+            }
+
             yield break;
         }
 
@@ -1049,6 +1469,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
                 feedbackSpriteObject.SetActive(true);
                 spriteDisplayCoroutine = StartCoroutine(HideFeedbackSprite());
             }
+            else
+            {
+                Image image = feedbackSpriteObject.GetComponent<Image>();
+                if (image != null)
+                {
+                    if (spriteDisplayCoroutine != null) StopCoroutine(spriteDisplayCoroutine);
+                    image.sprite = sprite;
+                    feedbackSpriteObject.SetActive(true);
+                    spriteDisplayCoroutine = StartCoroutine(HideFeedbackSprite());
+                }
+            }
         }
     }
 
@@ -1059,29 +1490,88 @@ public class GoGrowGlowGameManager : MonoBehaviour
         spriteDisplayCoroutine = null;
     }
 
-    // ====== AUDIO ======
+    // ====== GENDER-BASED AUDIO ======
     private void PlayGoFoodSound()
     {
-        if (AudioHandler.Instance != null && goFoodSounds.Length > 0)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(goFoodSounds[Random.Range(0, goFoodSounds.Length)]);
+        bool isMale = IsCharacterMale();
+        AudioClip[] soundArray = isMale ? goFoodSoundsMale : goFoodSoundsFemale;
+
+        if (AudioHandler.Instance != null && soundArray != null && soundArray.Length > 0)
+        {
+            AudioClip sound = soundArray[Random.Range(0, soundArray.Length)];
+            if (sound != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(sound);
+        }
+        else
+        {
+            Debug.LogWarning($"No {(isMale ? "male" : "female")} Go food sounds found or AudioHandler not available");
+        }
     }
 
     private void PlayGrowFoodSound()
     {
-        if (AudioHandler.Instance != null && growFoodSounds.Length > 0)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(growFoodSounds[Random.Range(0, growFoodSounds.Length)]);
+        bool isMale = IsCharacterMale();
+        AudioClip[] soundArray = isMale ? growFoodSoundsMale : growFoodSoundsFemale;
+
+        if (AudioHandler.Instance != null && soundArray != null && soundArray.Length > 0)
+        {
+            AudioClip sound = soundArray[Random.Range(0, soundArray.Length)];
+            if (sound != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(sound);
+        }
+        else
+        {
+            Debug.LogWarning($"No {(isMale ? "male" : "female")} Grow food sounds found or AudioHandler not available");
+        }
     }
 
     private void PlayGlowFoodSound()
     {
-        if (AudioHandler.Instance != null && glowFoodSounds.Length > 0)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(glowFoodSounds[Random.Range(0, glowFoodSounds.Length)]);
+        bool isMale = IsCharacterMale();
+        AudioClip[] soundArray = isMale ? glowFoodSoundsMale : glowFoodSoundsFemale;
+
+        if (AudioHandler.Instance != null && soundArray != null && soundArray.Length > 0)
+        {
+            AudioClip sound = soundArray[Random.Range(0, soundArray.Length)];
+            if (sound != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(sound);
+        }
+        else
+        {
+            Debug.LogWarning($"No {(isMale ? "male" : "female")} Glow food sounds found or AudioHandler not available");
+        }
     }
 
     private void PlayJunkFoodSound()
     {
-        if (AudioHandler.Instance != null && junkFoodSounds.Length > 0)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(junkFoodSounds[Random.Range(0, junkFoodSounds.Length)]);
+        bool isMale = IsCharacterMale();
+        AudioClip[] soundArray = isMale ? junkFoodSoundsMale : junkFoodSoundsFemale;
+
+        if (AudioHandler.Instance != null && soundArray != null && soundArray.Length > 0)
+        {
+            AudioClip sound = soundArray[Random.Range(0, soundArray.Length)];
+            if (sound != null)
+                AudioHandler.Instance.soundEffectsSource.PlayOneShot(sound);
+        }
+        else
+        {
+            Debug.LogWarning($"No {(isMale ? "male" : "female")} Junk food sounds found or AudioHandler not available");
+        }
+    }
+
+    private void PlaySpeedBoostSound()
+    {
+        bool isMale = IsCharacterMale();
+        AudioClip sound = isMale ? speedBoostSoundMale : speedBoostSoundFemale;
+
+        if (AudioHandler.Instance != null && sound != null)
+        {
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(sound);
+        }
+        else
+        {
+            Debug.LogWarning($"No {(isMale ? "male" : "female")} speed boost sound found or AudioHandler not available");
+        }
     }
 
     private void PlayCollectionSound()
@@ -1093,7 +1583,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== UI ======
     private void UpdateUI()
     {
-        if (scoreText != null) scoreText.text = $"Score: {score}";
+        if (scoreText != null) scoreText.text = $"{score}";
         if (livesText != null) livesText.text = $"Lives: {Mathf.CeilToInt(currentLifeAmount)}";
     }
 
@@ -1152,7 +1642,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (playerTransform == null || currentCheckpoint == null) return;
         playerTransform.position = currentCheckpoint.GetSpawnPosition();
-        playerTransform.rotation = currentCheckpoint.GetSpawnRotation();
+
+        // Apply rotation to both player transform and armature
+        Quaternion spawnRotation = currentCheckpoint.GetSpawnRotation();
+        playerTransform.rotation = spawnRotation;
+
+        if (playerArmature != null)
+        {
+            playerArmature.rotation = spawnRotation;
+        }
+
         Debug.Log($"Respawned at: {currentCheckpoint.gameObject.name}");
     }
 
@@ -1173,26 +1672,34 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (!gameIsActive) return;
 
         score += points;
-        score = Mathf.Max(0, score); // Ensure score doesn't go negative
+        score = Mathf.Max(0, score);
         UpdateUI();
     }
 
     public void AddEnergy(float amount)
     {
-        if (!gameIsActive) return;
+        if (!gameIsActive)
+        {
+            Debug.LogWarning($"AddEnergy called but game is not active! Amount: {amount}");
+            return;
+        }
 
         targetEnergy += amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-        Debug.Log($"Energy added: {amount}. New target: {targetEnergy}");
+        Debug.Log($"Energy added: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
     }
 
     public void RemoveEnergy(float amount)
     {
-        if (!gameIsActive) return;
+        if (!gameIsActive)
+        {
+            Debug.LogWarning($"RemoveEnergy called but game is not active! Amount: {amount}");
+            return;
+        }
 
         targetEnergy -= amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-        Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}");
+        Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
     }
 
     public void SetEnergy(float amount)
@@ -1216,8 +1723,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isSpeedBoosted = true;
         speedBoostTimer = duration;
 
-        if (AudioHandler.Instance != null && speedBoostSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(speedBoostSound);
+        PlaySpeedBoostSound();
 
         if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Go);
@@ -1232,8 +1738,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isSizeBoosted = true;
         sizeBoostTimer = duration;
 
-        if (AudioHandler.Instance != null && sizeBoostSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
+        // Note: You mentioned we don't need size boost sound
+        // if (AudioHandler.Instance != null && sizeBoostSound != null)
+        //     AudioHandler.Instance.soundEffectsSource.PlayOneShot(sizeBoostSound);
 
         if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Grow);
@@ -1245,13 +1752,177 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (!gameIsActive || isRespawning) return;
 
-        if (AudioHandler.Instance != null && glowBoostSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(glowBoostSound);
+        // Note: You mentioned we don't need glow foods sound
+        // if (AudioHandler.Instance != null && glowBoostSound != null)
+        //     AudioHandler.Instance.soundEffectsSource.PlayOneShot(glowBoostSound);
 
         if (glowBoostEffect != null) glowBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Glow);
 
         Debug.Log($"Glow boost activated for {duration} seconds");
+    }
+
+    public void PauseGameTimer()
+    {
+        if (!gameIsActive) return;
+
+        isGameTimerPaused = true;
+        pausedTimerValue = gameTimer;
+        Debug.Log("Game timer paused");
+    }
+
+    public void ResumeGameTimer()
+    {
+        if (!gameIsActive) return;
+
+        isGameTimerPaused = false;
+        Debug.Log("Game timer resumed");
+    }
+
+    public bool IsGameTimerPaused()
+    {
+        return isGameTimerPaused;
+    }
+
+    // Method to check and update low energy warning
+    private void CheckLowEnergyWarning()
+    {
+        if (lowEnergyCanvas == null) return;
+
+        bool isLowEnergyNow = currentEnergy <= lowEnergyThreshold && currentEnergy > 0f;
+
+        if (isLowEnergyNow != wasLowEnergyLastFrame)
+        {
+            lowEnergyCanvas.SetActive(isLowEnergyNow);
+
+            // Handle low energy audio
+            if (isLowEnergyNow)
+            {
+                Debug.Log($"Low energy warning shown! Energy: {currentEnergy}");
+                PlayLowEnergySound();
+            }
+            else
+            {
+                Debug.Log($"Low energy warning hidden. Energy: {currentEnergy}");
+                StopLowEnergySound();
+            }
+        }
+
+        wasLowEnergyLastFrame = isLowEnergyNow;
+    }
+
+    // Method to play low energy sound
+    private void PlayLowEnergySound()
+    {
+        if (lowEnergyAudioSource != null && lowEnergySound != null)
+        {
+            lowEnergyAudioSource.clip = lowEnergySound;
+            lowEnergyAudioSource.loop = true;
+            if (!lowEnergyAudioSource.isPlaying)
+            {
+                lowEnergyAudioSource.Play();
+                Debug.Log("Started low energy warning sound");
+            }
+        }
+        else if (lowEnergyAudioSource == null)
+        {
+            Debug.LogWarning("Low energy audio source not assigned!");
+        }
+        else if (lowEnergySound == null)
+        {
+            Debug.LogWarning("Low energy sound clip not assigned!");
+        }
+    }
+
+    // Method to stop low energy sound
+    private void StopLowEnergySound()
+    {
+        if (lowEnergyAudioSource != null && lowEnergyAudioSource.isPlaying)
+        {
+            lowEnergyAudioSource.Stop();
+            Debug.Log("Stopped low energy warning sound");
+        }
+    }
+
+    private void ResetAssessmentSystem()
+    {
+        Debug.Log("=== RESETTING ASSESSMENT SYSTEM ===");
+
+        // Reset Grow Assessment Manager
+        GrowAssessmentManager assessmentManager = FindObjectOfType<GrowAssessmentManager>();
+        if (assessmentManager != null)
+        {
+            // DON'T call CompleteResetForNewGame at game start
+            // Only call EndGrowAssessment if it's active
+            if (assessmentManager.IsAssessmentActive() || assessmentManager.IsWaitingForEndTrigger())
+            {
+                assessmentManager.EndGrowAssessment();
+                Debug.Log("Ended active assessment at game start");
+            }
+            else
+            {
+                // Just reset the state without moving the panel
+                assessmentManager.ResetForNewAssessmentWithoutMovingPanel();
+                Debug.Log("Reset assessment state without moving panel");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No GrowAssessmentManager found in scene");
+        }
+
+        // Reset all Object Group Managers
+        ObjectGroupManager[] groupManagers = FindObjectsOfType<ObjectGroupManager>();
+        foreach (ObjectGroupManager manager in groupManagers)
+        {
+            if (manager != null)
+            {
+                manager.ResetGroupForNewGame();
+            }
+        }
+
+        // Reset all Assessment Triggers
+        AssessmentTrigger[] triggers = FindObjectsOfType<AssessmentTrigger>();
+        foreach (AssessmentTrigger trigger in triggers)
+        {
+            if (trigger != null)
+            {
+                trigger.ResetTrigger();
+            }
+        }
+
+        Debug.Log($"Assessment System reset: {groupManagers.Length} groups, {triggers.Length} triggers");
+    }
+
+    private void ResetAllTriggersAndColliders()
+    {
+        // Find all trigger colliders and re-enable them
+        AssessmentTrigger[] assessmentTriggers = FindObjectsOfType<AssessmentTrigger>();
+        foreach (AssessmentTrigger trigger in assessmentTriggers)
+        {
+            if (trigger != null)
+            {
+                Collider collider = trigger.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    collider.enabled = true;
+                }
+            }
+        }
+
+        // Reset glow part triggers
+        GlowPartTrigger[] glowTriggers = FindObjectsOfType<GlowPartTrigger>();
+        foreach (GlowPartTrigger trigger in glowTriggers)
+        {
+            if (trigger != null)
+            {
+                Collider collider = trigger.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    collider.enabled = true;
+                }
+            }
+        }
     }
 
     // ====== PUBLIC GETTERS ======
@@ -1268,4 +1939,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public bool IsRespawning() => isRespawning;
     public bool IsKnockbackActive() => isKnockbackActive;
     public bool IsDamageOnCooldown() => isDamageOnCooldown;
+    public float GetStartDelay() => startDelay;
+    public bool IsStartingGame() => isStartingGame;
+    public float GetLowEnergyThreshold() => lowEnergyThreshold;
+    public float GetGameTimer() => gameTimer;
+    public float GetRemainingHearts() => currentLifeAmount;
 }
