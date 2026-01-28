@@ -36,6 +36,17 @@ public class KartController : MonoBehaviour
         hasTriggered = false;
     }
 
+    // Add this when wagon phase is complete
+    public void CompleteWagonPhase()
+    {
+        if (AllerthriaGameManager.Instance.currentPhase == 
+            AllerthriaGameManager.GamePhase.WagonPhase)
+        {
+            // Check if player completed wagon challenge successfully
+            AllerthriaGameManager.Instance.CompleteWagonPhase();
+        }
+    }
+
     void Update()
     {
         ReadKeyboardAndGamepadInput();
@@ -125,22 +136,18 @@ public class KartController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!useTriggerDetection || hasArrived || !hasDestination) return;
-
-        if (destination != null && other.transform == destination)
+        if (other.CompareTag("Allergen"))
         {
-            ArrivedAtDestination();
-            hasTriggered = true;
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(destinationTag) && other.CompareTag(destinationTag))
-        {
-            if (destination != null && other.transform == destination)
+            // Update score
+            if (Kingdom4ScoreManager.Instance != null)
             {
-                ArrivedAtDestination();
-                hasTriggered = true;
+                Kingdom4ScoreManager.Instance.WagonHitAllergen();
             }
+        }
+        else if (other.CompareTag("Destination"))
+        {
+            // Player reached destination successfully
+            CompleteWagonPhase();
         }
     }
 

@@ -54,6 +54,11 @@ public k4ProductInformationManager productInfoManager;
             pickupVolume
         );
     }
+    // Notify game manager about allergen collection
+        if (!string.IsNullOrEmpty(ingredientId))
+        {
+            AllerthriaGameManager.Instance.CollectAllergen(ingredientId);
+        }
 
     // 📖 Add ingredient to book
     if (BookInteractable.Instance != null)
