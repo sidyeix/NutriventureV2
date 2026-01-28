@@ -104,7 +104,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         LoadSelectedEnerling();
     }
 
-
     void InitializeDatabase()
     {
         if (ingredientDatabase == null)
@@ -507,7 +506,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         Debug.Log($"Selected enerling: {enerlingName}");
     }
 
-
     void HighlightButton(GameObject buttonObj, bool highlight)
     {
         // Try to use EnerlingButtonController first
@@ -622,11 +620,31 @@ public class EnerlingSelectionManager : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Add organ images
-        List<string> organs = enerling.beneficialOrgans.Count > 0 ?
-            enerling.beneficialOrgans : enerling.targetOrgans;
+        // Combine all organs (beneficial and target)
+        List<string> allOrgans = new List<string>();
 
-        foreach (string organ in organs)
+        // Add beneficial organs
+        if (enerling.beneficialOrgans != null)
+        {
+            foreach (string organ in enerling.beneficialOrgans)
+            {
+                if (!string.IsNullOrEmpty(organ))
+                    allOrgans.Add(organ);
+            }
+        }
+
+        // Add target organs
+        if (enerling.targetOrgans != null)
+        {
+            foreach (string organ in enerling.targetOrgans)
+            {
+                if (!string.IsNullOrEmpty(organ))
+                    allOrgans.Add(organ);
+            }
+        }
+
+        // Add organ images to addedAbilityPanel
+        foreach (string organ in allOrgans)
         {
             if (organImagePrefab == null)
             {
@@ -637,25 +655,39 @@ public class EnerlingSelectionManager : MonoBehaviour
             GameObject organImage = Instantiate(organImagePrefab, addedAbilityPanel);
             Image image = organImage.GetComponent<Image>();
 
-            // Set sprite based on organ name
-            switch (organ.ToLower())
+            if (image != null)
             {
-                case "heart":
-                    image.sprite = heartSprite;
-                    break;
-                case "liver":
-                    image.sprite = liverSprite;
-                    break;
-                case "kidney":
-                case "kidneys":
-                    image.sprite = kidneySprite;
-                    break;
-                case "pancreas":
-                    image.sprite = pancreasSprite;
-                    break;
-                case "brain":
-                    image.sprite = brainSprite;
-                    break;
+                // Get the organ sprite from database
+                Sprite organSprite = ingredientDatabase.GetOrganSprite(organ);
+                if (organSprite != null)
+                {
+                    image.sprite = organSprite;
+                    image.preserveAspect = true;
+                }
+                else
+                {
+                    // Fallback to inspector sprites
+                    switch (organ.ToLower())
+                    {
+                        case "heart":
+                            image.sprite = heartSprite;
+                            break;
+                        case "liver":
+                            image.sprite = liverSprite;
+                            break;
+                        case "kidney":
+                        case "kidneys":
+                            image.sprite = kidneySprite;
+                            break;
+                        case "pancreas":
+                            image.sprite = pancreasSprite;
+                            break;
+                        case "brain":
+                            image.sprite = brainSprite;
+                            break;
+                    }
+                    image.preserveAspect = true;
+                }
             }
 
             // Add tooltip or text if needed
@@ -666,8 +698,9 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Added ability text with updated logic
-        addedAbilityText.text = GetUpdatedAddedAbilityText(enerling);
+        // Calculate and display added ability text
+        string addedAbility = CalculateAddedAbilityText(enerling);
+        addedAbilityText.text = addedAbility;
 
         // Display skills
         DisplaySkills(enerling);
@@ -681,43 +714,58 @@ public class EnerlingSelectionManager : MonoBehaviour
         return armorValue;
     }
 
-    string GetUpdatedAddedAbilityText(IngredientDatabase.IngredientInfo enerling)
+    string CalculateAddedAbilityText(IngredientDatabase.IngredientInfo enerling)
     {
-        int organCount = enerling.OrganCount;
+        int beneficialCount = enerling.beneficialOrgans?.Count ?? 0;
+        int targetCount = enerling.targetOrgans?.Count ?? 0;
+        int totalOrgans = beneficialCount + targetCount;
 
-        if (organCount == 0)
+        if (totalOrgans == 0)
             return "No additional abilities";
 
-        // Calculate bonus percentage: 5% per organ
-        int bonusPercent = organCount * 5;
+        // Calculate total bonus based on distribution logic
+        float bonusPercentage = CalculateTotalBonusPercentage(totalOrgans);
 
-        // Determine cooldown based on rarity
-        int cooldownTurns = 0;
-        switch (enerling.rarity)
+        // Get cooldown based on rarity
+        int cooldownTurns = GetOrganCooldown(enerling.rarity);
+
+        if (beneficialCount > 0)
         {
-            case IngredientDatabase.Rarity.Common:
-                cooldownTurns = 4;
-                break;
-            case IngredientDatabase.Rarity.Rare:
-                cooldownTurns = 3;
-                break;
-            case IngredientDatabase.Rarity.UltraRare:
-                cooldownTurns = 3;
-                break;
+            // Calculate healing amount (percentage of base life)
+            int healAmount = Mathf.RoundToInt(enerling.baseLife * (bonusPercentage / 100f));
+            return $"Has {beneficialCount} beneficial organ(s): +{healAmount} health every {cooldownTurns} turns";
         }
-
-        string organType = enerling.beneficialOrgans.Count > 0 ? "beneficial" : "target";
-
-        if (enerling.beneficialOrgans.Count > 0)
+        else if (targetCount > 0)
         {
-            return $"Has {organCount} {organType} organs: +{bonusPercent}% healing every {cooldownTurns} turns";
-        }
-        else if (enerling.targetOrgans.Count > 0)
-        {
-            return $"Has {organCount} {organType} organs: +{bonusPercent}% damage every {cooldownTurns} turns";
+            // Calculate damage bonus (percentage of base damage)
+            int damageBonus = Mathf.RoundToInt(enerling.baseDamage * (bonusPercentage / 100f));
+            return $"Has {targetCount} target organ(s): +{damageBonus} damage every {cooldownTurns} turns";
         }
 
         return "No additional abilities";
+    }
+
+    float CalculateTotalBonusPercentage(int organCount)
+    {
+        // Distribution logic:
+        // 1 organ = 5%
+        // 2 organs = 10% (5% each)
+        // 3 organs = 15% (5% each)
+        // 4 organs = 20% (5% each)
+        // 5 organs = 25% (5% each)
+
+        return organCount * 5f; // 5% per organ
+    }
+
+    int GetOrganCooldown(IngredientDatabase.Rarity rarity)
+    {
+        switch (rarity)
+        {
+            case IngredientDatabase.Rarity.Common: return 5;
+            case IngredientDatabase.Rarity.Rare: return 4;
+            case IngredientDatabase.Rarity.UltraRare: return 3;
+            default: return 5;
+        }
     }
 
     void DisplaySkills(IngredientDatabase.IngredientInfo enerling)
@@ -1078,7 +1126,6 @@ public class EnerlingSelectionManager : MonoBehaviour
     {
         RefreshEnerlingDisplay();
         UpdateSelectButton();
-
     }
 
     // Method to unlock an enerling (for testing or from scanning)

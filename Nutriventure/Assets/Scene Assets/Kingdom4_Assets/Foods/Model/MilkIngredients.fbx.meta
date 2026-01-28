@@ -5,15 +5,25 @@ ModelImporter:
   internalIDToNameTable: []
   externalObjects:
   - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: c_madmilk_glass
+    second: {fileID: 2100000, guid: 94da026b95789cf45bdac19c018654be, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: c_madmilk_liquid
+    second: {fileID: 2100000, guid: fbcaf0b86529b384aaf9c76157fcacc4, type: 2}
+  - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: c_madmilk_glass
-    second: {fileID: 2800000, guid: 9885ef64be5224748b99daba456d75b7, type: 3}
+    second: {fileID: 2800000, guid: 07f2a67ef8fd5244f921fb648b523acf, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: c_madmilk_liquid
-    second: {fileID: 2800000, guid: e3b209f9ab18f7f41919fe11941506c7, type: 3}
+    second: {fileID: 2800000, guid: 3af8d481a118c474fa910d28e55d3ca2, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

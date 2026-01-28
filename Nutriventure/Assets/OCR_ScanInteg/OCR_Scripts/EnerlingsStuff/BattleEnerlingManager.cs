@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
-using Cinemachine;
 using System.Collections.Generic;
 
 public class BattleEnerlingManager : MonoBehaviour
@@ -38,28 +37,9 @@ public class BattleEnerlingManager : MonoBehaviour
     public Sprite rareNameStatsBG;
     public Sprite ultraRareNameStatsBG;
 
-    [Header("Organ Sprites")]
-    public Sprite heartSprite;
-    public Sprite liverSprite;
-    public Sprite kidneySprite;
-    public Sprite pancreasSprite;
-    public Sprite brainSprite;
-
-    [Header("Skills Panel")]
-    public Transform skillsPanel;
-    public GameObject skillButtonPrefab;
-
     [Header("Enerling Spawning")]
     public Transform enerlingSpawningPoint;
     public Transform aiSpawningPoint;
-
-    [Header("Damage Feedback")]
-    public GameObject damageFeedbackPrefab;
-    public Transform playerFeedbackSpawnPoint;
-    public Transform enemyFeedbackSpawnPoint;
-
-    [Header("Animation Settings")]
-    public float animationBufferTime = 0.1f;
 
     // Current battle enerling
     private IngredientDatabase.IngredientInfo battleEnerling;
@@ -68,13 +48,16 @@ public class BattleEnerlingManager : MonoBehaviour
 
     // Defense tracking
     private int currentArmor = 0;
-    private int activeDefense = 0; // Active defense shield for next attack
-    private bool hasDefense = false; // Whether defense is active for next attack
+    private int activeDefense = 0;
+    private bool hasDefense = false;
 
     // Skill tracking
-    private List<GameObject> skillButtons = new List<GameObject>();
     private bool isAnimating = false;
-    private float animationEndTime = 0f;
+
+    // Organ cooldown tracking
+    private int organCooldownTimer = 0;
+    private int maxOrganCooldown = 5;
+    private bool organCooldownReady = false;
 
     // Reference to selection manager
     private EnerlingSelectionManager selectionManager;
@@ -83,8 +66,11 @@ public class BattleEnerlingManager : MonoBehaviour
     private Coroutine healthAnimationCoroutine;
     private Coroutine armorAnimationCoroutine;
 
-    // Feedback queue for spawning with intervals
-    private Queue<FeedbackInfo> feedbackQueue = new Queue<FeedbackInfo>();
+    private int organBonusDamage = 0;
+    private int organBonusHeal = 0;
+    private bool hasOrganDamageBonus = false;
+    private bool hasOrganHealBonus = false;
+    private List<string> organBonusNames = new List<string>();
 
     void Awake()
     {
@@ -104,30 +90,78 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
-    void Update()
+    // Call this from TurnSystem when organ bonus is ready
+    public void SetOrganDamageBonus(int bonusAmount, List<string> organs)
     {
-        // Process feedback queue
-        if (feedbackQueue.Count > 0)
-        {
-            ProcessFeedbackQueue();
-        }
+        organBonusDamage = bonusAmount;
+        organBonusNames = new List<string>(organs);
+        hasOrganDamageBonus = true;
+        Debug.Log($"Player organ damage bonus set: {bonusAmount} from {organs.Count} organs");
     }
 
-    void ProcessFeedbackQueue()
+    // Call this from TurnSystem when organ heal bonus is ready
+    public void SetOrganHealBonus(int bonusAmount, List<string> organs)
     {
-        if (!IsInvoking("ProcessNextFeedback"))
-        {
-            Invoke("ProcessNextFeedback", 0.5f); // CHANGED: 0.3f to 0.5f
-        }
+        organBonusHeal = bonusAmount;
+        organBonusNames = new List<string>(organs);
+        hasOrganHealBonus = true;
+        Debug.Log($"Player organ heal bonus set: {bonusAmount} from {organs.Count} organs");
     }
 
-    void ProcessNextFeedback()
+    // Apply organ bonus to damage
+    public BattleStructs.DamageBreakdown ApplyOrganDamageBonus(int baseDamage)
     {
-        if (feedbackQueue.Count > 0)
+        List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
+
+        if (hasOrganDamageBonus && organBonusNames.Count > 0)
         {
-            var feedback = feedbackQueue.Dequeue();
-            ShowDamageFeedback(feedback.amount, feedback.isHeal, feedback.spawnPoint, feedback.type, feedback.isOrganBonus, feedback.organName);
+            Debug.Log($"Player applying organ damage bonus: {organBonusDamage} from {organBonusNames.Count} organs");
+
+            // Calculate individual organ bonus: 5% of base damage per organ (minimum 1)
+            foreach (string organ in organBonusNames)
+            {
+                int organBonus = Mathf.RoundToInt(baseDamage * 0.05f);
+                if (organBonus < 1) organBonus = 1;
+
+                organBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonus));
+                Debug.Log($"Organ {organ}: {organBonus} damage (5% of {baseDamage})");
+            }
+
+            // Reset bonus
+            hasOrganDamageBonus = false;
+            organBonusDamage = 0;
+            organBonusNames.Clear();
         }
+
+        return new BattleStructs.DamageBreakdown(baseDamage, organBonuses);
+    }
+
+    // Apply organ bonus to heal
+    public BattleStructs.HealBreakdown ApplyOrganHealBonus(int baseHeal)
+    {
+        List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
+
+        if (hasOrganHealBonus && organBonusNames.Count > 0)
+        {
+            Debug.Log($"Player applying organ heal bonus: {organBonusHeal} from {organBonusNames.Count} organs");
+
+            // Calculate individual organ bonus: 5% of base heal per organ (minimum 1)
+            foreach (string organ in organBonusNames)
+            {
+                int organBonus = Mathf.RoundToInt(baseHeal * 0.05f);
+                if (organBonus < 1) organBonus = 1;
+
+                organBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonus));
+                Debug.Log($"Organ {organ}: {organBonus} heal (5% of {baseHeal})");
+            }
+
+            // Reset bonus
+            hasOrganHealBonus = false;
+            organBonusHeal = 0;
+            organBonusNames.Clear();
+        }
+
+        return new BattleStructs.HealBreakdown(baseHeal, organBonuses);
     }
 
     public void OnSelectButtonClickedFromSelection()
@@ -188,6 +222,7 @@ public class BattleEnerlingManager : MonoBehaviour
     {
         LoadBattleEnerlingByName(enerlingName);
         InitializeBattleState();
+        InitializeOrganCooldown();
         UpdateBattlefieldUI();
         SpawnEnerling();
 
@@ -213,7 +248,6 @@ public class BattleEnerlingManager : MonoBehaviour
             turnSystem.StartBattle();
         }
 
-        StartCoroutine(MonitorAnimationCompletion());
         Debug.Log($"Battlefield initialized with {enerlingName}");
     }
 
@@ -263,6 +297,30 @@ public class BattleEnerlingManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    void InitializeOrganCooldown()
+    {
+        if (battleEnerling == null) return;
+
+        // Set cooldown based on rarity
+        switch (battleEnerling.rarity)
+        {
+            case IngredientDatabase.Rarity.Common:
+                maxOrganCooldown = 5;
+                break;
+            case IngredientDatabase.Rarity.Rare:
+                maxOrganCooldown = 4;
+                break;
+            case IngredientDatabase.Rarity.UltraRare:
+                maxOrganCooldown = 3;
+                break;
+        }
+
+        organCooldownTimer = 0;
+        organCooldownReady = false;
+
+        Debug.Log($"Organ cooldown initialized: {maxOrganCooldown} turns for {battleEnerling.rarity}");
     }
 
     void UpdateBattlefieldUI()
@@ -430,53 +488,256 @@ public class BattleEnerlingManager : MonoBehaviour
         Debug.Log($"Spawned enerling: {battleEnerling.ingredientName}");
     }
 
-    void CreateSkillButtons()
+    public void OnSkillButtonClicked(int skillNumber)
     {
-        foreach (GameObject button in skillButtons)
+        if (isAnimating)
         {
-            Destroy(button);
+            Debug.Log("Animation in progress, please wait...");
+            return;
         }
-        skillButtons.Clear();
 
-        if (battleEnerling == null || skillButtonPrefab == null || skillsPanel == null) return;
-
-        for (int i = 1; i <= 4; i++)
+        // Check if it's player's turn
+        if (turnSystem != null && !turnSystem.IsPlayerTurn())
         {
-            IngredientDatabase.SkillInfo skill = GetSkillByNumber(i);
-            if (skill != null)
-            {
-                GameObject skillButton = Instantiate(skillButtonPrefab, skillsPanel);
+            Debug.Log("Not player's turn!");
+            return;
+        }
 
-                Transform skillNameTransform = skillButton.transform.Find("SkillName");
-                if (skillNameTransform != null)
+        // Check if turn system is animating
+        if (turnSystem != null && turnSystem.IsAnimating())
+        {
+            Debug.Log("System is busy, please wait...");
+            return;
+        }
+
+        if (enerlingAnimator == null)
+        {
+            Debug.LogWarning("No animator found for skill animation");
+            return;
+        }
+
+        if (battleEnerling != null && !battleEnerling.IsSkillReady(skillNumber))
+        {
+            Debug.Log($"Skill {skillNumber} is on cooldown!");
+            return;
+        }
+
+        // Notify turn system
+        if (turnSystem != null)
+        {
+            turnSystem.PlayerSkillChosen();
+        }
+
+        StartCoroutine(PlaySkillAnimationAndEffect(skillNumber));
+    }
+
+    string GetAnimationBoolName(int skillNumber)
+    {
+        switch (skillNumber)
+        {
+            case 1: return "isAttack";
+            case 2: return "isSkill1";
+            case 3: return "isSkill2";
+            case 4: return "isSkill3";
+            default: return "";
+        }
+    }
+
+    IEnumerator PlaySkillAnimationAndEffect(int skillNumber)
+    {
+        isAnimating = true;
+
+        // Notify turn system that animation is starting
+        if (turnSystem != null)
+        {
+            turnSystem.OnSkillAnimationStart();
+        }
+
+        string animationBool = GetAnimationBoolName(skillNumber);
+        if (!string.IsNullOrEmpty(animationBool))
+        {
+            enerlingAnimator.SetBool(animationBool, true);
+            Debug.Log($"Playing animation for skill {skillNumber}: {animationBool}");
+
+            // Wait for animation to complete
+            yield return StartCoroutine(WaitForAnimationToComplete(animationBool));
+
+            enerlingAnimator.SetBool(animationBool, false);
+        }
+        else
+        {
+            Debug.LogWarning($"No animation bool found for skill {skillNumber}");
+        }
+
+        // Apply skill effect AFTER animation completes
+        ApplySkillEffect(skillNumber);
+
+        if (battleEnerling != null)
+        {
+            battleEnerling.SetSkillCooldown(skillNumber);
+        }
+
+        // Notify turn system that animation is complete
+        if (turnSystem != null)
+        {
+            turnSystem.OnSkillAnimationEnd();
+        }
+
+        isAnimating = false;
+        Debug.Log($"Skill {skillNumber} executed");
+    }
+
+    IEnumerator WaitForAnimationToComplete(string animationBool)
+    {
+        // Wait until animation starts
+        yield return new WaitForSeconds(0.1f);
+
+        // Wait for current state to finish using FeedbackManager's utility
+        if (FeedbackManager.Instance != null && enerlingAnimator != null)
+        {
+            yield return StartCoroutine(FeedbackManager.Instance.WaitForCurrentStateToFinish(enerlingAnimator));
+        }
+        else
+        {
+            // Fallback: wait a fixed time
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
+    void ApplySkillEffect(int skillNumber)
+    {
+        if (battleEnerling == null) return;
+
+        IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
+        if (skill == null) return;
+
+        // Get BASE effect WITHOUT organ bonus
+        int baseEffect = skill.GetValue();
+
+        // Check for organ effects
+        bool hasBeneficialOrgans = battleEnerling.beneficialOrgans.Count > 0;
+        bool hasTargetOrgans = battleEnerling.targetOrgans.Count > 0;
+
+        switch (skill.type)
+        {
+            case IngredientDatabase.SkillInfo.SkillType.Heal:
+                // Apply organ heal bonus if available
+                BattleStructs.HealBreakdown healBreakdown = ApplyOrganHealBonus(baseEffect);
+
+                Debug.Log($"Player healing: Base={healBreakdown.baseHeal}, Total={healBreakdown.totalHeal}, OrganBonuses={healBreakdown.organBonuses?.Count ?? 0}");
+
+                // Show TOTAL heal with breakdown
+                if (FeedbackManager.Instance != null)
                 {
-                    TextMeshProUGUI skillNameText = skillNameTransform.GetComponent<TextMeshProUGUI>();
-                    if (skillNameText != null)
+                    FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
+                        FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                        healBreakdown.baseHeal,
+                        healBreakdown.organBonuses,
+                        true,
+                        "Player Heal"
+                    );
+                }
+
+                // Apply total heal
+                StartCoroutine(ApplyHeal(healBreakdown.totalHeal, 0));
+
+                // Beneficial organ healing (triggers when cooldown is ready)
+                if (hasBeneficialOrgans && organCooldownReady)
+                {
+                    Debug.Log($"Player Organ Heal Triggered! {battleEnerling.beneficialOrgans.Count} beneficial organs");
+
+                    // For EACH organ, calculate and show feedback
+                    int organCount = battleEnerling.beneficialOrgans.Count;
+                    int organBonusPerOrgan = Mathf.RoundToInt(baseEffect * 0.05f);
+                    if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
+
+                    List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
+                    foreach (string organ in battleEnerling.beneficialOrgans)
                     {
-                        skillNameText.text = skill.skillName;
+                        cooldownBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonusPerOrgan));
+                    }
+
+                    // Show organ cooldown bonuses
+                    if (FeedbackManager.Instance != null && cooldownBonuses.Count > 0)
+                    {
+                        FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
+                            FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                            0,
+                            cooldownBonuses,
+                            true,
+                            "Player Organ Cooldown"
+                        );
+                    }
+
+                    // Apply total organ heal
+                    int totalOrganHeal = organBonusPerOrgan * battleEnerling.beneficialOrgans.Count;
+                    StartCoroutine(ApplyHeal(totalOrganHeal, 0));
+
+                    // Reset organ cooldown
+                    organCooldownTimer = maxOrganCooldown;
+                    organCooldownReady = false;
+                    Debug.Log($"Player Organ Cooldown Reset: {organCooldownTimer} turns remaining");
+                }
+                else if (hasBeneficialOrgans)
+                {
+                    UpdateOrganCooldown();
+                }
+                break;
+
+            case IngredientDatabase.SkillInfo.SkillType.Damage:
+                if (aiEnerlingManager != null)
+                {
+                    // Apply organ damage bonus if available
+                    BattleStructs.DamageBreakdown damageBreakdown = ApplyOrganDamageBonus(baseEffect);
+
+                    Debug.Log($"Player attacking: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
+
+                    // Apply total damage
+                    StartCoroutine(aiEnerlingManager.TakeDamageWithFeedback(
+                        damageBreakdown,
+                        FeedbackManager.Instance != null ? FeedbackManager.Instance.aiFeedbackSpawnPoint : null
+                    ));
+
+                    // Target organ damage (only triggers when cooldown is ready)
+                    if (hasTargetOrgans && organCooldownReady)
+                    {
+                        Debug.Log($"Player Organ Damage Triggered! {battleEnerling.targetOrgans.Count} target organs");
+
+                        // For EACH organ, calculate bonus
+                        int organCount = battleEnerling.targetOrgans.Count;
+                        int organBonusPerOrgan = Mathf.RoundToInt(baseEffect * 0.05f);
+                        if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
+
+                        List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
+                        foreach (string organ in battleEnerling.targetOrgans)
+                        {
+                            cooldownBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonusPerOrgan));
+                        }
+
+                        // Create damage breakdown for cooldown bonuses
+                        BattleStructs.DamageBreakdown cooldownDamage = new BattleStructs.DamageBreakdown(0, cooldownBonuses);
+
+                        // Apply organ cooldown damage
+                        StartCoroutine(aiEnerlingManager.TakeDamageWithFeedback(
+                            cooldownDamage,
+                            FeedbackManager.Instance != null ? FeedbackManager.Instance.aiFeedbackSpawnPoint : null
+                        ));
+
+                        // Reset organ cooldown
+                        organCooldownTimer = maxOrganCooldown;
+                        organCooldownReady = false;
+                        Debug.Log($"Player Organ Cooldown Reset: {organCooldownTimer} turns remaining");
+                    }
+                    else if (hasTargetOrgans)
+                    {
+                        UpdateOrganCooldown();
                     }
                 }
+                break;
 
-                Image parentImage = skillButton.GetComponent<Image>();
-                if (parentImage != null && skill.skillSprite != null)
-                {
-                    parentImage.sprite = skill.skillSprite;
-                    parentImage.preserveAspect = true;
-                }
-
-                Button button = skillButton.GetComponent<Button>();
-                if (button != null)
-                {
-                    int skillNum = i;
-                    button.onClick.AddListener(() => OnSkillButtonClicked(skillNum));
-                }
-                else
-                {
-                    Debug.LogWarning("Skill button prefab has no Button component");
-                }
-
-                skillButtons.Add(skillButton);
-            }
+            case IngredientDatabase.SkillInfo.SkillType.Defend:
+                SetDefense(baseEffect);
+                break;
         }
     }
 
@@ -494,143 +755,9 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
-    public void OnSkillButtonClicked(int skillNumber)
+    public IEnumerator ApplyHeal(int totalHeal, int organBonus)
     {
-        if (isAnimating)
-        {
-            Debug.Log("Animation in progress, please wait...");
-            return;
-        }
-
-        if (enerlingAnimator == null)
-        {
-            Debug.LogWarning("No animator found for skill animation");
-            return;
-        }
-
-        if (battleEnerling != null && !battleEnerling.IsSkillReady(skillNumber))
-        {
-            Debug.Log($"Skill {skillNumber} is on cooldown!");
-            return;
-        }
-
-        string animationBool = GetAnimationBoolName(skillNumber);
-        if (!string.IsNullOrEmpty(animationBool))
-        {
-            StartCoroutine(PlayAnimationAndApplyEffect(animationBool, skillNumber));
-            Debug.Log($"Playing animation for skill {skillNumber}: {animationBool}");
-        }
-        else
-        {
-            Debug.LogWarning($"No animation bool found for skill {skillNumber}");
-        }
-    }
-
-    string GetAnimationBoolName(int skillNumber)
-    {
-        switch (skillNumber)
-        {
-            case 1: return "isAttack";
-            case 2: return "isSkill1";
-            case 3: return "isSkill2";
-            case 4: return "isSkill3";
-            default: return "";
-        }
-    }
-
-    IEnumerator PlayAnimationAndApplyEffect(string animationBool, int skillNumber)
-    {
-        isAnimating = true;
-
-        enerlingAnimator.SetBool(animationBool, true);
-        yield return new WaitForSeconds(0.1f);
-        animationEndTime = Time.time + animationBufferTime;
-        yield return new WaitForSeconds(0.5f);
-        enerlingAnimator.SetBool(animationBool, false);
-
-        ApplySkillEffect(skillNumber);
-
-        if (battleEnerling != null)
-        {
-            battleEnerling.SetSkillCooldown(skillNumber);
-        }
-
-        if (turnSystem != null)
-        {
-            turnSystem.PlayerSkillChosen();
-        }
-
-        Debug.Log($"Skill {skillNumber} executed");
-    }
-
-    void ApplySkillEffect(int skillNumber)
-    {
-        if (battleEnerling == null) return;
-
-        IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
-        if (skill == null) return;
-
-        int organCount = battleEnerling.OrganCount;
-        int totalEffect = skill.CalculateTotalEffect(organCount);
-        int organBonus = CalculateOrganBonus(battleEnerling.rarity, organCount);
-        int organEffect = 0;
-
-        // Calculate organ bonus based on skill type and enerling organs
-        if (skill.type == IngredientDatabase.SkillInfo.SkillType.Heal && battleEnerling.beneficialOrgans.Count > 0)
-        {
-            organEffect = Mathf.RoundToInt(totalEffect * (organBonus / 100f));
-        }
-        else if (skill.type == IngredientDatabase.SkillInfo.SkillType.Damage && battleEnerling.targetOrgans.Count > 0)
-        {
-            organEffect = Mathf.RoundToInt(totalEffect * (organBonus / 100f));
-        }
-
-        // Apply effect based on skill type
-        switch (skill.type)
-        {
-            case IngredientDatabase.SkillInfo.SkillType.Heal:
-                StartCoroutine(ApplyHeal(totalEffect, organEffect, true));
-                Debug.Log($"Healed for {totalEffect} HP (Base: {totalEffect - organEffect}, Organ Bonus: {organEffect})");
-                break;
-
-            case IngredientDatabase.SkillInfo.SkillType.Damage:
-                if (aiEnerlingManager != null)
-                {
-                    string organName = GetOrganForBonus(battleEnerling);
-                    StartCoroutine(aiEnerlingManager.TakeDamageWithFeedback(totalEffect, organEffect, enemyFeedbackSpawnPoint, organName));
-                    Debug.Log($"Dealt {totalEffect} damage to AI (Base: {totalEffect - organEffect}, Organ Bonus: {organEffect})");
-                }
-                break;
-
-            case IngredientDatabase.SkillInfo.SkillType.Defend:
-                SetDefense(totalEffect);
-                Debug.Log($"Defended with {totalEffect} armor for next attack");
-                break;
-        }
-    }
-
-    int CalculateOrganBonus(IngredientDatabase.Rarity rarity, int organCount)
-    {
-        // 5% per organ as per database logic
-        return organCount * 5;
-    }
-
-    IEnumerator ApplyHeal(int baseHeal, int organBonus, bool isPlayer)
-    {
-        int totalHeal = baseHeal + organBonus;
-
-        // Show base heal feedback
-        if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
-        {
-            feedbackQueue.Enqueue(new FeedbackInfo(baseHeal, true, playerFeedbackSpawnPoint, "Heal", false, ""));
-        }
-
-        // Show organ bonus heal feedback if any
-        if (organBonus > 0 && damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
-        {
-            string organName = GetOrganForBonus(battleEnerling);
-            feedbackQueue.Enqueue(new FeedbackInfo(organBonus, true, playerFeedbackSpawnPoint, "Organ Heal", true, organName));
-        }
+        // Show heal feedback - handled in ApplySkillEffect
 
         int targetHealth = Mathf.Min(battleEnerling.currentLife + totalHeal, battleEnerling.baseLife);
 
@@ -643,8 +770,11 @@ public class BattleEnerlingManager : MonoBehaviour
         yield return null;
     }
 
-    public IEnumerator ApplyDamageToPlayer(int totalDamage, int organBonusDamage, string organName = "")
+    public IEnumerator ApplyDamageToPlayer(BattleStructs.DamageBreakdown damageBreakdown, Transform feedbackSpawnPoint)
     {
+        Debug.Log($"Player receiving damage: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
+
+        int totalDamage = damageBreakdown.totalDamage;
         int remainingDamage = totalDamage;
 
         // Apply defense if active
@@ -655,9 +785,14 @@ public class BattleEnerlingManager : MonoBehaviour
             activeDefense -= defendedDamage;
 
             // Show defense feedback
-            if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
+            if (FeedbackManager.Instance != null)
             {
-                feedbackQueue.Enqueue(new FeedbackInfo(defendedDamage, false, playerFeedbackSpawnPoint, "Defend", false, ""));
+                FeedbackManager.Instance.ShowDefend(
+                    FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                    defendedDamage,
+                    false,
+                    "Player Defense"
+                );
             }
 
             if (activeDefense <= 0)
@@ -669,40 +804,32 @@ public class BattleEnerlingManager : MonoBehaviour
             yield return new WaitForSeconds(0.3f);
         }
 
-        // Damage goes to armor first
+        // Calculate armor damage
+        int armorDamage = 0;
         if (currentArmor > 0 && remainingDamage > 0)
         {
-            int armorDamage = Mathf.Min(currentArmor, remainingDamage);
-            StartCoroutine(SmoothArmorChange(currentArmor, currentArmor - armorDamage, 0.3f));
+            armorDamage = Mathf.Min(currentArmor, remainingDamage);
             currentArmor -= armorDamage;
             remainingDamage -= armorDamage;
+        }
 
-            // Show armor damage feedback
-            if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
-            {
-                feedbackQueue.Enqueue(new FeedbackInfo(armorDamage, false, playerFeedbackSpawnPoint, "Armor", false, ""));
-            }
+        // Show ALL damage feedback with breakdown
+        if (FeedbackManager.Instance != null && totalDamage > 0)
+        {
+            FeedbackManager.Instance.ShowTotalDamageWithOrganBreakdown(
+                FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                damageBreakdown.baseDamage,
+                damageBreakdown.organBonuses,
+                true,
+                "AI Attack"
+            );
+        }
 
+        // Apply armor change
+        if (armorDamage > 0)
+        {
+            StartCoroutine(SmoothArmorChange(currentArmor + armorDamage, currentArmor, 0.3f));
             yield return new WaitForSeconds(0.3f);
-        }
-
-        // Show base damage feedback (if any)
-        int baseDamage = totalDamage - organBonusDamage;
-        if (baseDamage > 0 && remainingDamage > 0)
-        {
-            if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
-            {
-                feedbackQueue.Enqueue(new FeedbackInfo(baseDamage, false, playerFeedbackSpawnPoint, "Damage", false, ""));
-            }
-        }
-
-        // Show organ bonus damage feedback (if any)
-        if (organBonusDamage > 0 && remainingDamage > 0)
-        {
-            if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
-            {
-                feedbackQueue.Enqueue(new FeedbackInfo(organBonusDamage, false, playerFeedbackSpawnPoint, "Organ", true, organName));
-            }
         }
 
         // Remaining damage goes to health
@@ -718,7 +845,6 @@ public class BattleEnerlingManager : MonoBehaviour
             healthAnimationCoroutine = StartCoroutine(SmoothHealthChange(battleEnerling.currentLife, targetHealth, 0.5f));
             battleEnerling.currentLife = targetHealth;
 
-            // Check if player is defeated
             if (battleEnerling.currentLife <= 0)
             {
                 Debug.Log("Player defeated!");
@@ -734,9 +860,14 @@ public class BattleEnerlingManager : MonoBehaviour
         hasDefense = true;
 
         // Show defense activation feedback
-        if (damageFeedbackPrefab != null && playerFeedbackSpawnPoint != null)
+        if (FeedbackManager.Instance != null)
         {
-            feedbackQueue.Enqueue(new FeedbackInfo(defenseAmount, false, playerFeedbackSpawnPoint, "Defend Active", false, ""));
+            FeedbackManager.Instance.ShowDefend(
+                FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                defenseAmount,
+                true,
+                "Player Defense"
+            );
         }
 
         Debug.Log($"Defense set to {defenseAmount} for next attack");
@@ -750,6 +881,25 @@ public class BattleEnerlingManager : MonoBehaviour
             hasDefense = false;
             activeDefense = 0;
         }
+    }
+
+    void UpdateOrganCooldown()
+    {
+        if (organCooldownTimer > 0)
+        {
+            organCooldownTimer--;
+            if (organCooldownTimer <= 0)
+            {
+                organCooldownReady = true;
+                Debug.Log("Organ cooldown ready!");
+            }
+        }
+    }
+
+    public void ProcessEndTurn()
+    {
+        UpdateOrganCooldown();
+        ClearDefense();
     }
 
     IEnumerator SmoothHealthChange(float startValue, float endValue, float duration)
@@ -843,159 +993,6 @@ public class BattleEnerlingManager : MonoBehaviour
         fillImage.color = originalColor;
     }
 
-    void ShowDamageFeedback(int amount, bool isHeal, Transform spawnPoint, string type, bool isOrganBonus, string organName = "")
-    {
-        if (damageFeedbackPrefab == null || spawnPoint == null) return;
-
-        GameObject feedback = Instantiate(damageFeedbackPrefab, spawnPoint);
-        feedback.transform.localPosition = Vector3.zero;
-
-        // Add upward movement
-        StartCoroutine(MoveFeedbackUpwards(feedback.transform));
-
-        Transform damageTransform = feedback.transform.Find("Damage");
-        if (damageTransform != null)
-        {
-            TextMeshProUGUI damageText = damageTransform.GetComponent<TextMeshProUGUI>();
-            if (damageText != null)
-            {
-                damageText.text = isHeal ? $"+{amount}" : $"-{amount}";
-
-                // Set color based on type
-                if (isHeal)
-                    damageText.color = Color.green;
-                else if (type == "Defend" || type == "Defend Active")
-                    damageText.color = Color.yellow;
-                else if (isOrganBonus)
-                    damageText.color = new Color(1f, 0.5f, 0f); // Orange for organ bonus
-                else
-                    damageText.color = Color.red;
-            }
-        }
-
-        Transform organTransform = feedback.transform.Find("Organ");
-        if (organTransform != null)
-        {
-            Image organImage = organTransform.GetComponent<Image>();
-            TextMeshProUGUI organText = organTransform.GetComponent<TextMeshProUGUI>();
-
-            if (isOrganBonus && !string.IsNullOrEmpty(organName))
-            {
-                // Show organ sprite for organ bonuses
-                organImage.gameObject.SetActive(true);
-
-                // Get the organ sprite
-                Sprite organSprite = GetOrganSprite(organName);
-                if (organImage != null && organSprite != null)
-                {
-                    organImage.sprite = organSprite;
-                    organImage.preserveAspect = true;
-                }
-
-                // Hide the text component
-                if (organText != null)
-                {
-                    organText.gameObject.SetActive(false);
-                }
-            }
-            else if (type == "Damage" || type == "Heal")
-            {
-                // Hide organ image for base damage/heal
-                organImage.gameObject.SetActive(false);
-
-                // Show text for other types if needed
-                if (organText != null)
-                {
-                    organText.text = type;
-                    organText.gameObject.SetActive(type != "Damage" && type != "Heal");
-                }
-            }
-            else
-            {
-                // For other types (Defend, Armor, etc.)
-                organImage.gameObject.SetActive(false);
-
-                if (organText != null)
-                {
-                    organText.text = type;
-                    organText.gameObject.SetActive(true);
-                }
-            }
-        }
-
-        // Add fade out
-        CanvasGroup canvasGroup = feedback.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = feedback.AddComponent<CanvasGroup>();
-
-        StartCoroutine(FadeOutFeedback(canvasGroup, feedback));
-    }
-
-    Sprite GetOrganSprite(string organName)
-    {
-        if (string.IsNullOrEmpty(organName)) return null;
-
-        switch (organName.ToLower())
-        {
-            case "heart":
-                return heartSprite;
-            case "liver":
-                return liverSprite;
-            case "kidney":
-            case "kidneys":
-                return kidneySprite;
-            case "pancreas":
-                return pancreasSprite;
-            case "brain":
-                return brainSprite;
-            default:
-                return ingredientDatabase.GetOrganSprite(organName);
-        }
-    }
-
-    string GetOrganForBonus(IngredientDatabase.IngredientInfo enerling)
-    {
-        List<string> organs = enerling.beneficialOrgans.Count > 0 ?
-            enerling.beneficialOrgans : enerling.targetOrgans;
-
-        if (organs.Count > 0)
-            return organs[0]; // Return first organ
-        return "";
-    }
-
-    IEnumerator MoveFeedbackUpwards(Transform feedbackTransform)
-    {
-        float duration = 1.5f;
-        float elapsed = 0f;
-        Vector3 startPos = feedbackTransform.localPosition;
-        Vector3 endPos = startPos + new Vector3(0, 0.33f, 0);
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            feedbackTransform.localPosition = Vector3.Lerp(startPos, endPos, t);
-            yield return null;
-        }
-    }
-
-    IEnumerator FadeOutFeedback(CanvasGroup canvasGroup, GameObject feedback)
-    {
-        yield return new WaitForSeconds(1f);
-
-        float fadeDuration = 0.5f;
-        float elapsed = 0f;
-
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            canvasGroup.alpha = 1f - (elapsed / fadeDuration);
-            yield return null;
-        }
-
-        Destroy(feedback);
-    }
-
     void UpdateHealthTextColor()
     {
         if (healthText == null || battleEnerling == null) return;
@@ -1023,32 +1020,6 @@ public class BattleEnerlingManager : MonoBehaviour
             armorText.color = new Color(1f, 0.5f, 0f);
         else
             armorText.color = Color.white;
-    }
-
-    IEnumerator MonitorAnimationCompletion()
-    {
-        while (true)
-        {
-            if (isAnimating && Time.time >= animationEndTime)
-            {
-                if (enerlingAnimator != null)
-                {
-                    AnimatorStateInfo stateInfo = enerlingAnimator.GetCurrentAnimatorStateInfo(0);
-
-                    if (stateInfo.normalizedTime >= 1f ||
-                        !stateInfo.IsName("Attack") &&
-                        !stateInfo.IsName("Skill1") &&
-                        !stateInfo.IsName("Skill2") &&
-                        !stateInfo.IsName("Skill3"))
-                    {
-                        isAnimating = false;
-                        Debug.Log("Animation completed, ready for next action");
-                    }
-                }
-            }
-
-            yield return new WaitForSeconds(0.1f);
-        }
     }
 
     public void UpdateBattleUI()
@@ -1084,12 +1055,6 @@ public class BattleEnerlingManager : MonoBehaviour
 
         CleanupSpawnedEnerling();
 
-        foreach (GameObject button in skillButtons)
-        {
-            Destroy(button);
-        }
-        skillButtons.Clear();
-
         if (organPanel != null)
         {
             foreach (Transform child in organPanel)
@@ -1113,12 +1078,16 @@ public class BattleEnerlingManager : MonoBehaviour
             turnSystem.Cleanup();
         }
 
+        if (FeedbackManager.Instance != null)
+        {
+            FeedbackManager.Instance.Cleanup();
+        }
+
         battleEnerling = null;
         currentArmor = 0;
         activeDefense = 0;
         hasDefense = false;
         isAnimating = false;
-        feedbackQueue.Clear();
     }
 
     public IngredientDatabase.IngredientInfo GetBattleEnerling()
@@ -1156,27 +1125,6 @@ public class BattleEnerlingManager : MonoBehaviour
             {
                 original.currentLife = battleEnerling.currentLife;
             }
-        }
-    }
-
-    // Helper struct for feedback queue
-    private struct FeedbackInfo
-    {
-        public int amount;
-        public bool isHeal;
-        public Transform spawnPoint;
-        public string type;
-        public bool isOrganBonus;
-        public string organName;
-
-        public FeedbackInfo(int amount, bool isHeal, Transform spawnPoint, string type, bool isOrganBonus, string organName)
-        {
-            this.amount = amount;
-            this.isHeal = isHeal;
-            this.spawnPoint = spawnPoint;
-            this.type = type;
-            this.isOrganBonus = isOrganBonus;
-            this.organName = organName;
         }
     }
 }
