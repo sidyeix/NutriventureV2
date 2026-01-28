@@ -9,18 +9,15 @@ public class PlayerEnerlingManager : MonoBehaviour
     [Header("UI References")]
     public GameObject playerEnerlingStats;
     public GameObject skillBG;
-    public Transform skillsPanel; // This should be the same skillsPanel from BattleEnerlingManager
+    public Transform skillsPanel;
 
     [Header("Skill Button Prefabs")]
-    public GameObject skillButtonPrefab; // This should be the original prefab from BattleEnerlingManager
+    public GameObject skillButtonPrefab;
 
     [Header("Skill Frame Sprites by Rarity")]
     public Sprite commonSkillFrame;
     public Sprite rareSkillFrame;
     public Sprite ultraRareSkillFrame;
-
-    [Header("Cooldown UI")]
-    public GameObject cooldownOverlayPrefab;
 
     // References
     private BattleEnerlingManager battleManager;
@@ -31,6 +28,7 @@ public class PlayerEnerlingManager : MonoBehaviour
     private Dictionary<int, GameObject> skillButtons = new Dictionary<int, GameObject>();
     private Dictionary<int, Slider> cooldownSliders = new Dictionary<int, Slider>();
     private Dictionary<int, int> currentCooldowns = new Dictionary<int, int>();
+    private Dictionary<int, int> maxCooldowns = new Dictionary<int, int>();
 
     // Animation
     private Animator skillBGAnimator;
@@ -103,6 +101,7 @@ public class PlayerEnerlingManager : MonoBehaviour
         skillButtons.Clear();
         cooldownSliders.Clear();
         currentCooldowns.Clear();
+        maxCooldowns.Clear();
 
         if (playerEnerling == null || skillButtonPrefab == null || skillsPanel == null) return;
 
@@ -141,7 +140,6 @@ public class PlayerEnerlingManager : MonoBehaviour
                     Image frameImage = skillFrameTransform.GetComponent<Image>();
                     if (frameImage != null)
                     {
-                        // Frame will be updated in UpdateSkillFrames()
                         frameImage.enabled = true;
                     }
                 }
@@ -154,12 +152,35 @@ public class PlayerEnerlingManager : MonoBehaviour
                     if (cooldownSlider != null)
                     {
                         cooldownSliders[i] = cooldownSlider;
-                        cooldownSlider.maxValue = skill.cooldownTurns;
-                        cooldownSlider.value = 0;
-                        cooldownSlider.gameObject.SetActive(false); // Hidden initially
+                        maxCooldowns[i] = skill.cooldownTurns;
+                        currentCooldowns[i] = skill.cooldownTurns; // Start with full cooldown
 
-                        // FIXED: Don't change the color of the cooldown slider fill
-                        // Keep it as is (the original color from the prefab)
+                        // Set up slider - value starts at 0 (empty) and fills to max as cooldown decreases
+                        cooldownSlider.maxValue = skill.cooldownTurns;
+                        cooldownSlider.minValue = 0;
+
+                        if (skill.cooldownTurns > 0)
+                        {
+                            // Start with value at max (full cooldown)
+                            cooldownSlider.value = 0; // Start at 0, will increase as cooldown decreases
+                            cooldownSlider.gameObject.SetActive(true);
+
+                            // Set cooldown text
+                            Transform cooldownTextTransform = skillButton.transform.Find("CooldownText");
+                            if (cooldownTextTransform != null)
+                            {
+                                TextMeshProUGUI cooldownText = cooldownTextTransform.GetComponent<TextMeshProUGUI>();
+                                if (cooldownText != null)
+                                {
+                                    cooldownText.text = skill.cooldownTurns.ToString();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // No cooldown, hide slider
+                            cooldownSlider.gameObject.SetActive(false);
+                        }
                     }
                 }
 
@@ -169,13 +190,16 @@ public class PlayerEnerlingManager : MonoBehaviour
                 {
                     int skillNum = i;
                     button.onClick.AddListener(() => OnSkillButtonClicked(skillNum));
-                    UpdateButtonAppearance(button, true);
+
+                    // Set initial button state based on cooldown
+                    bool isReady = currentCooldowns[i] <= 0;
+                    button.interactable = isReady;
+                    UpdateButtonAppearance(button, isReady);
                 }
 
                 skillButtons[i] = skillButton;
-                currentCooldowns[i] = 0;
 
-                Debug.Log($"Created skill button for Skill {i}: {skill.skillName}");
+                Debug.Log($"Created skill button for Skill {i}: {skill.skillName}, Cooldown: {skill.cooldownTurns}, Ready: {currentCooldowns[i] <= 0}");
             }
         }
 
@@ -228,12 +252,10 @@ public class PlayerEnerlingManager : MonoBehaviour
         {
             if (isEnabled)
             {
-                // White (#FFFFFF) when enabled
                 buttonImage.color = Color.white;
             }
             else
             {
-                // Gray (#746F6F) when disabled
                 buttonImage.color = new Color(0.455f, 0.435f, 0.435f, 1f);
             }
         }
@@ -269,15 +291,25 @@ public class PlayerEnerlingManager : MonoBehaviour
         {
             currentCooldowns[skillNumber] = skill.cooldownTurns;
 
-            // Show cooldown overlay
+            // Update cooldown slider - show it
             if (cooldownSliders.ContainsKey(skillNumber))
             {
                 cooldownSliders[skillNumber].gameObject.SetActive(true);
-                cooldownSliders[skillNumber].maxValue = skill.cooldownTurns;
-                cooldownSliders[skillNumber].value = skill.cooldownTurns; // Start full
+                cooldownSliders[skillNumber].value = 0; // Start at 0 (full cooldown)
+            }
 
-                // FIXED: Don't animate the slider value, keep it static
-                // The color changing should only happen to the button
+            // Update cooldown text
+            if (skillButtons.ContainsKey(skillNumber))
+            {
+                Transform cooldownTextTransform = skillButtons[skillNumber].transform.Find("CooldownText");
+                if (cooldownTextTransform != null)
+                {
+                    TextMeshProUGUI cooldownText = cooldownTextTransform.GetComponent<TextMeshProUGUI>();
+                    if (cooldownText != null)
+                    {
+                        cooldownText.text = skill.cooldownTurns.ToString();
+                    }
+                }
             }
 
             // Disable button and change appearance
@@ -307,7 +339,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         return currentCooldowns.ContainsKey(skillNumber) && currentCooldowns[skillNumber] <= 0;
     }
 
-    // Call this at the end of each turn
     public void EndTurn()
     {
         if (!isInitialized) return;
@@ -322,12 +353,27 @@ public class PlayerEnerlingManager : MonoBehaviour
                 // Update slider if active
                 if (cooldownSliders.ContainsKey(skillNum) && cooldownSliders[skillNum].gameObject.activeSelf)
                 {
-                    var skill = GetSkillByNumber(skillNum);
-                    if (skill != null && skill.cooldownTurns > 0)
+                    // Calculate remaining turns as percentage of max cooldown
+                    float remainingTurns = currentCooldowns[skillNum];
+                    float maxTurns = maxCooldowns[skillNum];
+
+                    // Slider value increases from 0 to max as cooldown decreases
+                    // Formula: (maxTurns - remainingTurns) / maxTurns * maxTurns
+                    float sliderValue = (maxTurns - remainingTurns) / maxTurns * maxTurns;
+                    cooldownSliders[skillNum].value = sliderValue;
+                }
+
+                // Update cooldown text
+                if (skillButtons.ContainsKey(skillNum))
+                {
+                    Transform cooldownTextTransform = skillButtons[skillNum].transform.Find("CooldownText");
+                    if (cooldownTextTransform != null)
                     {
-                        // Set slider value based on remaining cooldown
-                        float remainingValue = currentCooldowns[skillNum];
-                        cooldownSliders[skillNum].value = remainingValue;
+                        TextMeshProUGUI cooldownText = cooldownTextTransform.GetComponent<TextMeshProUGUI>();
+                        if (cooldownText != null)
+                        {
+                            cooldownText.text = currentCooldowns[skillNum] > 0 ? currentCooldowns[skillNum].ToString() : "";
+                        }
                     }
                 }
 
@@ -338,9 +384,9 @@ public class PlayerEnerlingManager : MonoBehaviour
                     button.interactable = true;
                     UpdateButtonAppearance(button, true);
 
+                    // Hide cooldown slider when cooldown is complete
                     if (cooldownSliders.ContainsKey(skillNum))
                     {
-                        // Hide the slider immediately (no fade)
                         cooldownSliders[skillNum].gameObject.SetActive(false);
                     }
                 }
@@ -348,7 +394,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         }
     }
 
-    // Enable/disable all skill buttons
     public void SetButtonsInteractable(bool interactable)
     {
         foreach (var kvp in skillButtons)
@@ -363,7 +408,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         }
     }
 
-    // Clean up
     public void Cleanup()
     {
         StopAllCoroutines();
@@ -385,18 +429,17 @@ public class PlayerEnerlingManager : MonoBehaviour
         skillButtons.Clear();
         cooldownSliders.Clear();
         currentCooldowns.Clear();
+        maxCooldowns.Clear();
 
         isInitialized = false;
         playerEnerling = null;
     }
 
-    // Get current cooldown for a skill
     public int GetSkillCooldown(int skillNumber)
     {
         return currentCooldowns.ContainsKey(skillNumber) ? currentCooldowns[skillNumber] : 0;
     }
 
-    // Check if any skill is available
     public bool HasAvailableSkills()
     {
         foreach (var cooldown in currentCooldowns.Values)

@@ -46,17 +46,17 @@ public class BattleEnerlingManager : MonoBehaviour
     private GameObject spawnedEnerling;
     private Animator enerlingAnimator;
 
-    // Defense tracking
+    // Defend tracking
     private int currentArmor = 0;
-    private int activeDefense = 0;
-    private bool hasDefense = false;
+    private int activeDefend = 0;
+    private bool hasDefend = false;
 
     // Skill tracking
     private bool isAnimating = false;
 
     // Organ cooldown tracking
     private int organCooldownTimer = 0;
-    private int maxOrganCooldown = 5;
+    private int maxOrganCooldown = 4; // Updated: Common=4, Rare=3, UltraRare=2
     private bool organCooldownReady = false;
 
     // Reference to selection manager
@@ -108,7 +108,7 @@ public class BattleEnerlingManager : MonoBehaviour
         Debug.Log($"Player organ heal bonus set: {bonusAmount} from {organs.Count} organs");
     }
 
-    // Apply organ bonus to damage
+    // Apply organ bonus to damage - PUBLIC method using BattleStructs
     public BattleStructs.DamageBreakdown ApplyOrganDamageBonus(int baseDamage)
     {
         List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
@@ -136,7 +136,7 @@ public class BattleEnerlingManager : MonoBehaviour
         return new BattleStructs.DamageBreakdown(baseDamage, organBonuses);
     }
 
-    // Apply organ bonus to heal
+    // Apply organ bonus to heal - PUBLIC method using BattleStructs
     public BattleStructs.HealBreakdown ApplyOrganHealBonus(int baseHeal)
     {
         List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
@@ -162,6 +162,55 @@ public class BattleEnerlingManager : MonoBehaviour
         }
 
         return new BattleStructs.HealBreakdown(baseHeal, organBonuses);
+    }
+
+    public void CheckAndApplyOrganHeal()
+    {
+        if (battleEnerling == null || battleEnerling.beneficialOrgans.Count == 0) return;
+
+        Debug.Log($"Player CheckAndApplyOrganHeal: Cooldown Ready={organCooldownReady}, Timer={organCooldownTimer}/{maxOrganCooldown}");
+
+        // Check if organ cooldown is ready
+        if (organCooldownReady)
+        {
+            // Calculate heal amount: 5% of base life per organ
+            int healPerOrgan = Mathf.RoundToInt(battleEnerling.baseLife * 0.05f);
+            int totalHeal = healPerOrgan * battleEnerling.beneficialOrgans.Count;
+
+            Debug.Log($"Player Organ Heal: BaseLife={battleEnerling.baseLife}, HealPerOrgan={healPerOrgan}, TotalHeal={totalHeal}, OrganCount={battleEnerling.beneficialOrgans.Count}");
+
+            // Create organ bonuses for feedback
+            List<FeedbackManager.OrganBonus> organBonuses = new List<FeedbackManager.OrganBonus>();
+            foreach (string organ in battleEnerling.beneficialOrgans)
+            {
+                organBonuses.Add(new FeedbackManager.OrganBonus(organ, healPerOrgan));
+            }
+
+            // Show organ heal feedback
+            if (FeedbackManager.Instance != null)
+            {
+                FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
+                    FeedbackManager.Instance.playerFeedbackSpawnPoint,
+                    0, // No base heal, only organ bonus
+                    organBonuses,
+                    true,
+                    "Beneficial Organ Heal"
+                );
+            }
+
+            // Apply the heal
+            StartCoroutine(ApplyHeal(totalHeal, 0));
+
+            // Reset organ cooldown to 0
+            organCooldownTimer = 0;
+            organCooldownReady = false;
+
+            Debug.Log($"Player Beneficial Organ Heal Applied: {totalHeal} HP. Cooldown reset to 0.");
+        }
+        else
+        {
+            Debug.Log($"Player Organ Cooldown: {organCooldownTimer}/{maxOrganCooldown} turns ({(organCooldownReady ? "READY" : "NOT READY")})");
+        }
     }
 
     public void OnSelectButtonClickedFromSelection()
@@ -276,8 +325,8 @@ public class BattleEnerlingManager : MonoBehaviour
         }
 
         currentArmor = CalculateArmorValue(battleEnerling);
-        activeDefense = 0;
-        hasDefense = false;
+        activeDefend = 0;
+        hasDefend = false;
 
         Debug.Log($"Battle enerling loaded: {battleEnerling.ingredientName} (Life: {battleEnerling.currentLife}/{battleEnerling.baseLife}, Armor: {currentArmor})");
     }
@@ -303,24 +352,24 @@ public class BattleEnerlingManager : MonoBehaviour
     {
         if (battleEnerling == null) return;
 
-        // Set cooldown based on rarity
+        // Set cooldown based on rarity - UPDATED VALUES
         switch (battleEnerling.rarity)
         {
             case IngredientDatabase.Rarity.Common:
-                maxOrganCooldown = 5;
+                maxOrganCooldown = 4;  // Changed from 5 to 4
                 break;
             case IngredientDatabase.Rarity.Rare:
-                maxOrganCooldown = 4;
+                maxOrganCooldown = 3;  // Changed from 4 to 3
                 break;
             case IngredientDatabase.Rarity.UltraRare:
-                maxOrganCooldown = 3;
+                maxOrganCooldown = 2;  // Changed from 3 to 2
                 break;
         }
 
-        organCooldownTimer = 0;
-        organCooldownReady = false;
+        organCooldownTimer = 0; // Start at 0
+        organCooldownReady = false; // Not ready until we reach max cooldown
 
-        Debug.Log($"Organ cooldown initialized: {maxOrganCooldown} turns for {battleEnerling.rarity}");
+        Debug.Log($"Organ cooldown initialized: Timer={organCooldownTimer}/{maxOrganCooldown} for {battleEnerling.rarity}");
     }
 
     void UpdateBattlefieldUI()
@@ -612,17 +661,17 @@ public class BattleEnerlingManager : MonoBehaviour
         if (skill == null) return;
 
         // Get BASE effect WITHOUT organ bonus
-        int baseEffect = skill.GetValue();
+        int skillValue = skill.GetValue();
 
         // Check for organ effects
-        bool hasBeneficialOrgans = battleEnerling.beneficialOrgans.Count > 0;
-        bool hasTargetOrgans = battleEnerling.targetOrgans.Count > 0;
+        bool playerHasBeneficialOrgans = battleEnerling.beneficialOrgans.Count > 0;
+        bool playerHasTargetOrgans = battleEnerling.targetOrgans.Count > 0;
 
         switch (skill.type)
         {
             case IngredientDatabase.SkillInfo.SkillType.Heal:
                 // Apply organ heal bonus if available
-                BattleStructs.HealBreakdown healBreakdown = ApplyOrganHealBonus(baseEffect);
+                BattleStructs.HealBreakdown healBreakdown = ApplyOrganHealBonus(skillValue);
 
                 Debug.Log($"Player healing: Base={healBreakdown.baseHeal}, Total={healBreakdown.totalHeal}, OrganBonuses={healBreakdown.organBonuses?.Count ?? 0}");
 
@@ -641,54 +690,35 @@ public class BattleEnerlingManager : MonoBehaviour
                 // Apply total heal
                 StartCoroutine(ApplyHeal(healBreakdown.totalHeal, 0));
 
-                // Beneficial organ healing (triggers when cooldown is ready)
-                if (hasBeneficialOrgans && organCooldownReady)
-                {
-                    Debug.Log($"Player Organ Heal Triggered! {battleEnerling.beneficialOrgans.Count} beneficial organs");
-
-                    // For EACH organ, calculate and show feedback
-                    int organCount = battleEnerling.beneficialOrgans.Count;
-                    int organBonusPerOrgan = Mathf.RoundToInt(baseEffect * 0.05f);
-                    if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
-
-                    List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
-                    foreach (string organ in battleEnerling.beneficialOrgans)
-                    {
-                        cooldownBonuses.Add(new FeedbackManager.OrganBonus(organ, organBonusPerOrgan));
-                    }
-
-                    // Show organ cooldown bonuses
-                    if (FeedbackManager.Instance != null && cooldownBonuses.Count > 0)
-                    {
-                        FeedbackManager.Instance.ShowTotalHealWithOrganBreakdown(
-                            FeedbackManager.Instance.playerFeedbackSpawnPoint,
-                            0,
-                            cooldownBonuses,
-                            true,
-                            "Player Organ Cooldown"
-                        );
-                    }
-
-                    // Apply total organ heal
-                    int totalOrganHeal = organBonusPerOrgan * battleEnerling.beneficialOrgans.Count;
-                    StartCoroutine(ApplyHeal(totalOrganHeal, 0));
-
-                    // Reset organ cooldown
-                    organCooldownTimer = maxOrganCooldown;
-                    organCooldownReady = false;
-                    Debug.Log($"Player Organ Cooldown Reset: {organCooldownTimer} turns remaining");
-                }
-                else if (hasBeneficialOrgans)
-                {
-                    UpdateOrganCooldown();
-                }
+                // NOTE: REMOVED the beneficial organ healing from here
+                // It will now happen automatically at the start of each turn
                 break;
 
             case IngredientDatabase.SkillInfo.SkillType.Damage:
                 if (aiEnerlingManager != null)
                 {
+                    // Check if opponent is immune to organ damage
+                    bool opponentImmune = false;
+                    if (aiEnerlingManager.GetAIEnerling() != null)
+                    {
+                        opponentImmune = aiEnerlingManager.GetAIEnerling().immuneToOrganDamage;
+                    }
+
+                    // Check if we should apply organ damage
+                    bool canApplyOrganDamage = !opponentImmune || !playerHasTargetOrgans;
+
                     // Apply organ damage bonus if available
-                    BattleStructs.DamageBreakdown damageBreakdown = ApplyOrganDamageBonus(baseEffect);
+                    BattleStructs.DamageBreakdown damageBreakdown;
+
+                    if (opponentImmune && playerHasTargetOrgans)
+                    {
+                        Debug.Log($"Opponent is immune to organ damage. Only base damage will be applied.");
+                        damageBreakdown = new BattleStructs.DamageBreakdown(skillValue, new List<FeedbackManager.OrganBonus>());
+                    }
+                    else
+                    {
+                        damageBreakdown = ApplyOrganDamageBonus(skillValue);
+                    }
 
                     Debug.Log($"Player attacking: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
 
@@ -698,14 +728,13 @@ public class BattleEnerlingManager : MonoBehaviour
                         FeedbackManager.Instance != null ? FeedbackManager.Instance.aiFeedbackSpawnPoint : null
                     ));
 
-                    // Target organ damage (only triggers when cooldown is ready)
-                    if (hasTargetOrgans && organCooldownReady)
+                    // Target organ damage (only triggers when cooldown is ready AND opponent is not immune)
+                    if (playerHasTargetOrgans && organCooldownReady && !opponentImmune)
                     {
                         Debug.Log($"Player Organ Damage Triggered! {battleEnerling.targetOrgans.Count} target organs");
 
                         // For EACH organ, calculate bonus
-                        int organCount = battleEnerling.targetOrgans.Count;
-                        int organBonusPerOrgan = Mathf.RoundToInt(baseEffect * 0.05f);
+                        int organBonusPerOrgan = Mathf.RoundToInt(skillValue * 0.05f);
                         if (organBonusPerOrgan < 1) organBonusPerOrgan = 1;
 
                         List<FeedbackManager.OrganBonus> cooldownBonuses = new List<FeedbackManager.OrganBonus>();
@@ -728,15 +757,19 @@ public class BattleEnerlingManager : MonoBehaviour
                         organCooldownReady = false;
                         Debug.Log($"Player Organ Cooldown Reset: {organCooldownTimer} turns remaining");
                     }
-                    else if (hasTargetOrgans)
+                    else if (playerHasTargetOrgans && !opponentImmune)
                     {
                         UpdateOrganCooldown();
+                    }
+                    else if (opponentImmune)
+                    {
+                        Debug.Log("Opponent immune to organ damage - organ cooldown not activated");
                     }
                 }
                 break;
 
             case IngredientDatabase.SkillInfo.SkillType.Defend:
-                SetDefense(baseEffect);
+                SetDefend(skillValue);  // Changed from SetDefense
                 break;
         }
     }
@@ -776,35 +809,46 @@ public class BattleEnerlingManager : MonoBehaviour
 
         int totalDamage = damageBreakdown.totalDamage;
         int remainingDamage = totalDamage;
+        int damageBlockedByDefend = 0;
 
-        // Apply defense if active
-        if (hasDefense && activeDefense > 0)
+        // Apply defend if active - DEFEND BLOCKS THE NEXT ATTACK ONLY
+        if (hasDefend && activeDefend > 0)
         {
-            int defendedDamage = Mathf.Min(activeDefense, remainingDamage);
-            remainingDamage -= defendedDamage;
-            activeDefense -= defendedDamage;
+            Debug.Log($"Player has defend: {activeDefend} against {totalDamage} damage");
 
-            // Show defense feedback
-            if (FeedbackManager.Instance != null)
+            // Calculate how much damage defend can block
+            damageBlockedByDefend = Mathf.Min(activeDefend, remainingDamage);
+            int damageThatGoesThrough = remainingDamage - damageBlockedByDefend;
+
+            // Reduce defend by the damage blocked
+            activeDefend -= damageBlockedByDefend;
+            remainingDamage = damageThatGoesThrough;
+
+            Debug.Log($"Defend blocked {damageBlockedByDefend} damage. Remaining defend: {activeDefend}, Damage that goes through: {damageThatGoesThrough}");
+
+            // Show defend feedback for blocked damage
+            if (FeedbackManager.Instance != null && damageBlockedByDefend > 0)
             {
                 FeedbackManager.Instance.ShowDefend(
-                    FeedbackManager.Instance.playerFeedbackSpawnPoint,
-                    defendedDamage,
-                    false,
-                    "Player Defense"
+                    feedbackSpawnPoint,
+                    damageBlockedByDefend,
+                    false, // Not activation, this is block effect
+                    "Player Defend"
                 );
             }
 
-            if (activeDefense <= 0)
+            // Check if defend is used up
+            if (activeDefend <= 0)
             {
-                hasDefense = false;
-                activeDefense = 0;
+                hasDefend = false;
+                activeDefend = 0;
+                Debug.Log("Player defend used up");
             }
 
             yield return new WaitForSeconds(0.3f);
         }
 
-        // Calculate armor damage
+        // Calculate armor damage (if defend didn't block all damage)
         int armorDamage = 0;
         if (currentArmor > 0 && remainingDamage > 0)
         {
@@ -813,13 +857,23 @@ public class BattleEnerlingManager : MonoBehaviour
             remainingDamage -= armorDamage;
         }
 
-        // Show ALL damage feedback with breakdown
-        if (FeedbackManager.Instance != null && totalDamage > 0)
+        // IMPORTANT FIX: Only show the damage that actually goes through to health!
+        if (FeedbackManager.Instance != null && remainingDamage > 0)
         {
+            // Create a new damage breakdown for the remaining damage
+            List<FeedbackManager.OrganBonus> effectiveOrganBonuses = CalculateEffectiveOrganBonuses(
+                damageBreakdown,
+                damageBlockedByDefend,
+                totalDamage
+            );
+
+            // Calculate effective base damage (after defend blocked some)
+            int effectiveBaseDamage = Mathf.Max(0, damageBreakdown.baseDamage - damageBlockedByDefend);
+
             FeedbackManager.Instance.ShowTotalDamageWithOrganBreakdown(
-                FeedbackManager.Instance.playerFeedbackSpawnPoint,
-                damageBreakdown.baseDamage,
-                damageBreakdown.organBonuses,
+                feedbackSpawnPoint,
+                effectiveBaseDamage,
+                effectiveOrganBonuses,
                 true,
                 "AI Attack"
             );
@@ -854,44 +908,78 @@ public class BattleEnerlingManager : MonoBehaviour
         yield return null;
     }
 
-    void SetDefense(int defenseAmount)
+    // Helper method to calculate organ bonuses after defend (ADD THIS NEW METHOD)
+    private List<FeedbackManager.OrganBonus> CalculateEffectiveOrganBonuses(
+        BattleStructs.DamageBreakdown originalBreakdown,
+        int damageBlocked,
+        int totalOriginalDamage)
     {
-        activeDefense = defenseAmount;
-        hasDefense = true;
+        List<FeedbackManager.OrganBonus> effectiveBonuses = new List<FeedbackManager.OrganBonus>();
 
-        // Show defense activation feedback
+        if (originalBreakdown.organBonuses == null || originalBreakdown.organBonuses.Count == 0)
+            return effectiveBonuses;
+
+        // If defend blocked all damage, no organ bonuses get through
+        if (damageBlocked >= totalOriginalDamage)
+            return effectiveBonuses;
+
+        // Calculate what percentage of damage got through
+        float penetrationRatio = 1f - ((float)damageBlocked / totalOriginalDamage);
+
+        foreach (var bonus in originalBreakdown.organBonuses)
+        {
+            int effectiveBonus = Mathf.RoundToInt(bonus.bonusAmount * penetrationRatio);
+            if (effectiveBonus > 0)
+            {
+                effectiveBonuses.Add(new FeedbackManager.OrganBonus(bonus.organName, effectiveBonus));
+            }
+        }
+
+        return effectiveBonuses;
+    }
+
+    void SetDefend(int defendAmount)
+    {
+        activeDefend = defendAmount;
+        hasDefend = true;
+
+        // Show defend activation feedback
         if (FeedbackManager.Instance != null)
         {
             FeedbackManager.Instance.ShowDefend(
                 FeedbackManager.Instance.playerFeedbackSpawnPoint,
-                defenseAmount,
+                defendAmount,
                 true,
-                "Player Defense"
+                "Player Defend"
             );
         }
 
-        Debug.Log($"Defense set to {defenseAmount} for next attack");
+        Debug.Log($"Defend set to {defendAmount} for next opponent's attack");
     }
 
-    public void ClearDefense()
+    public void ClearDefend()
     {
-        if (hasDefense)
+        if (hasDefend)
         {
-            Debug.Log($"Defense cleared (was {activeDefense})");
-            hasDefense = false;
-            activeDefense = 0;
+            Debug.Log($"Defend cleared (was {activeDefend})");
+            hasDefend = false;
+            activeDefend = 0;
         }
     }
 
     void UpdateOrganCooldown()
     {
-        if (organCooldownTimer > 0)
+        // Increase cooldown timer each turn
+        if (organCooldownTimer < maxOrganCooldown)
         {
-            organCooldownTimer--;
-            if (organCooldownTimer <= 0)
+            organCooldownTimer++;
+            Debug.Log($"Player Organ Cooldown: {organCooldownTimer}/{maxOrganCooldown}");
+
+            // Check if cooldown is now ready
+            if (organCooldownTimer >= maxOrganCooldown)
             {
                 organCooldownReady = true;
-                Debug.Log("Organ cooldown ready!");
+                Debug.Log("Player Organ cooldown ready!");
             }
         }
     }
@@ -899,7 +987,7 @@ public class BattleEnerlingManager : MonoBehaviour
     public void ProcessEndTurn()
     {
         UpdateOrganCooldown();
-        ClearDefense();
+        ClearDefend();
     }
 
     IEnumerator SmoothHealthChange(float startValue, float endValue, float duration)
@@ -1085,8 +1173,8 @@ public class BattleEnerlingManager : MonoBehaviour
 
         battleEnerling = null;
         currentArmor = 0;
-        activeDefense = 0;
-        hasDefense = false;
+        activeDefend = 0;
+        hasDefend = false;
         isAnimating = false;
     }
 
