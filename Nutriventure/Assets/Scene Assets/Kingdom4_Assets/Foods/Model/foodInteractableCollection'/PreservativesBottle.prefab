@@ -75,12 +75,11 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  productInfoManager: {fileID: 0}
+  allergenDatabase: {fileID: 0}
   ingredientId: milk
-  ingredientName: Milk
-  ingredientDescription: A common allergen primarily affecting children, though some
-    adults remain allergic. Caused by proteins in cow's milk including casein and
-    whey. Often confused with lactose intolerance which is a different condition.
-  ingredientIcon: {fileID: 21300000, guid: 786ff2d400483c64f89d8069a381ba04, type: 3}
+  pickupSFX: {fileID: 0}
+  pickupVolume: 1
 --- !u!1001 &3932893390514587077
 PrefabInstance:
   m_ObjectHideFlags: 0
