@@ -19,7 +19,6 @@ public class TurnSystem : MonoBehaviour
     public float aiTurnDuration = 10f;
     public float animationBufferTime = 0.5f;
 
-    // State
     private TurnState currentTurn = TurnState.Player;
     private float currentTurnTime = 0f;
     private bool isTurnActive = false;
@@ -29,7 +28,6 @@ public class TurnSystem : MonoBehaviour
     private float gameTimer = 0f;
     private bool isGameTimerRunning = false;
 
-    // References
     private BattleEnerlingManager battleManager;
     private AIEnerlingManager aiManager;
     private PlayerEnerlingManager playerManager;
@@ -50,39 +48,37 @@ public class TurnSystem : MonoBehaviour
     {
         if (battleManager == null)
             battleManager = FindObjectOfType<BattleEnerlingManager>();
-        
+
         if (aiManager == null)
             aiManager = FindObjectOfType<AIEnerlingManager>();
-        
+
         if (playerManager == null)
             playerManager = FindObjectOfType<PlayerEnerlingManager>();
-        
+
         Debug.Log($"TurnSystem references: BattleManager={battleManager != null}, AIManager={aiManager != null}, PlayerManager={playerManager != null}");
     }
 
-    // NEW METHOD: Initialize battle with managers
     public void InitializeBattle(BattleEnerlingManager playerBattleManager, AIEnerlingManager aiBattleManager)
     {
         Debug.Log("=== TurnSystem.InitializeBattle() called ===");
-        
+
         this.battleManager = playerBattleManager;
         this.aiManager = aiBattleManager;
-        
+
         if (playerManager == null)
         {
             playerManager = FindObjectOfType<PlayerEnerlingManager>();
         }
-        
-        Debug.Log($"TurnSystem initialized: PlayerBattleManager={battleManager != null}, AIBattleManager={aiManager != null}, PlayerManager={playerManager != null}");
-        
-        // Reset state
+
+        Debug.Log($"TurnSystem initialized: PlayerBattleManager={battleManager != null}, AIBattleManager={aiManager != null}");
+
         currentRound = 1;
         gameTimer = 0f;
         isGameTimerRunning = false;
         isTurnActive = false;
         isAnimating = false;
         isWaitingForAnimation = false;
-        
+
         InitializeUI();
     }
 
@@ -90,22 +86,22 @@ public class TurnSystem : MonoBehaviour
     {
         if (playerTurnTimerText != null)
             playerTurnTimerText.text = playerTurnDuration.ToString("F0");
-        
+
         if (aiTurnTimerText != null)
             aiTurnTimerText.text = aiTurnDuration.ToString("F0");
-        
+
         if (roundText != null)
             roundText.text = $"Round {currentRound}";
-        
+
         if (gameTimerText != null)
             gameTimerText.text = "0:00";
-        
+
         if (playerTurnIndicator != null)
             playerTurnIndicator.SetActive(false);
-        
+
         if (aiTurnIndicator != null)
             aiTurnIndicator.SetActive(false);
-        
+
         if (turnText != null)
         {
             turnText.text = "GET READY!";
@@ -136,7 +132,7 @@ public class TurnSystem : MonoBehaviour
     void UpdateGameTimerUI()
     {
         if (gameTimerText == null) return;
-        
+
         int minutes = Mathf.FloorToInt(gameTimer / 60f);
         int seconds = Mathf.FloorToInt(gameTimer % 60f);
         gameTimerText.text = $"{minutes}:{seconds:00}";
@@ -156,56 +152,52 @@ public class TurnSystem : MonoBehaviour
         }
     }
 
-    // UPDATED METHOD: Public method to start battle
     public void StartBattle()
     {
         Debug.Log("=== TurnSystem.StartBattle() called ===");
-        
-        // Check references
+
         if (battleManager == null || aiManager == null)
         {
             Debug.LogError("Cannot start battle: Managers not initialized!");
             InitializeReferences();
-            
+
             if (battleManager == null || aiManager == null)
             {
                 Debug.LogError("Still missing references after re-initialization!");
                 return;
             }
         }
-        
+
         currentRound = 1;
         gameTimer = 0f;
         isGameTimerRunning = true;
-        
+
         Debug.Log($"Starting battle: Player={battleManager.GetBattleEnerling()?.ingredientName}, AI={aiManager.GetAIEnerling()?.ingredientName}");
-        
+
         StartCoroutine(StartBattleSequence());
     }
 
     IEnumerator StartBattleSequence()
     {
         Debug.Log("Starting battle sequence...");
-        
-        // Brief pause for dramatic effect
+
         yield return new WaitForSeconds(0.5f);
-        
+
         if (turnText != null)
         {
             turnText.text = "BATTLE START!";
             turnText.color = Color.red;
         }
-        
+
         yield return new WaitForSeconds(1f);
-        
-        // Start with player turn
+
         StartPlayerTurn();
     }
 
     void StartPlayerTurn()
     {
         Debug.Log("=== STARTING PLAYER TURN ===");
-        
+
         currentTurn = TurnState.Player;
         currentTurnTime = playerTurnDuration;
         isTurnActive = true;
@@ -219,21 +211,23 @@ public class TurnSystem : MonoBehaviour
 
         UpdateTurnUI();
 
-        // Enable player input
         if (playerManager != null)
         {
             playerManager.SetButtonsInteractable(true);
+            playerManager.UpdateAllSkillButtons(); // Update skill buttons
         }
         else
         {
             Debug.LogWarning("PlayerEnerlingManager not found for enabling controls");
-            // Try to find it again
             playerManager = FindObjectOfType<PlayerEnerlingManager>();
             if (playerManager != null)
+            {
                 playerManager.SetButtonsInteractable(true);
+                playerManager.UpdateAllSkillButtons();
+            }
         }
 
-        // Apply beneficial organ heal automatically at the start of player's turn
+        // Apply beneficial organ heal for PLAYER at start of player turn
         ApplyBeneficialOrganHeal(true);
 
         Debug.Log($"=== PLAYER TURN STARTED - Round {currentRound} ===");
@@ -242,7 +236,7 @@ public class TurnSystem : MonoBehaviour
     void StartAITurn()
     {
         Debug.Log("=== STARTING AI TURN ===");
-        
+
         currentTurn = TurnState.AI;
         currentTurnTime = aiTurnDuration;
         isTurnActive = true;
@@ -256,16 +250,14 @@ public class TurnSystem : MonoBehaviour
 
         UpdateTurnUI();
 
-        // Disable player input during AI turn
         if (playerManager != null)
         {
             playerManager.SetButtonsInteractable(false);
         }
 
-        // Apply beneficial organ heal automatically at the start of AI's turn
+        // Apply beneficial organ heal for AI at start of AI turn
         ApplyBeneficialOrganHeal(false);
 
-        // Start AI decision making
         if (aiManager != null)
         {
             Debug.Log("Starting AI turn decision...");
@@ -282,15 +274,22 @@ public class TurnSystem : MonoBehaviour
     void ApplyBeneficialOrganHeal(bool isPlayer)
     {
         Debug.Log($"ApplyBeneficialOrganHeal called for {(isPlayer ? "Player" : "AI")}");
-        
-        // This applies heal from beneficial organs automatically at the start of each turn
+
         if (isPlayer)
         {
-            // For player
+            // Apply beneficial organ heal for PLAYER
             if (battleManager != null)
             {
-                Debug.Log("Calling battleManager.CheckAndApplyOrganHeal()");
-                battleManager.CheckAndApplyOrganHeal();
+                var playerEnerling = battleManager.GetBattleEnerling();
+                if (playerEnerling != null && playerEnerling.beneficialOrgans.Count > 0)
+                {
+                    Debug.Log($"Player has {playerEnerling.beneficialOrgans.Count} beneficial organs - applying heal");
+                    battleManager.CheckAndApplyOrganHeal(); // This will heal the player
+                }
+                else if (playerEnerling != null)
+                {
+                    Debug.Log($"Player has no beneficial organs ({playerEnerling.beneficialOrgans.Count}) - no heal applied");
+                }
             }
             else
             {
@@ -299,11 +298,19 @@ public class TurnSystem : MonoBehaviour
         }
         else
         {
-            // For AI
+            // Apply beneficial organ heal for AI
             if (aiManager != null)
             {
-                Debug.Log("Calling aiManager.CheckAndApplyOrganHeal()");
-                aiManager.CheckAndApplyOrganHeal();
+                var aiEnerling = aiManager.GetAIEnerling();
+                if (aiEnerling != null && aiEnerling.beneficialOrgans.Count > 0)
+                {
+                    Debug.Log($"AI has {aiEnerling.beneficialOrgans.Count} beneficial organs - applying heal");
+                    aiManager.CheckAndApplyOrganHeal(); // This will heal the AI
+                }
+                else if (aiEnerling != null)
+                {
+                    Debug.Log($"AI has no beneficial organs ({aiEnerling.beneficialOrgans.Count}) - no heal applied");
+                }
             }
             else
             {

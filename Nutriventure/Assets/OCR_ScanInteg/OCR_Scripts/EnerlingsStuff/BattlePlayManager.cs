@@ -14,7 +14,7 @@ public class BattlePlayManager : MonoBehaviour
     public IngredientDatabase ingredientDatabase;
 
     [Header("Playable Director & Assets")]
-    public PlayableDirector playableDirector;  // Single PlayableDirector
+    public PlayableDirector playableDirector;
 
     [Header("Timeline Assets")]
     public PlayableAsset nutriKingdomTimeline;
@@ -23,17 +23,17 @@ public class BattlePlayManager : MonoBehaviour
     public PlayableAsset preserviaTimeline;
 
     [Header("Camera References")]
-    public CinemachineVirtualCamera groceryCamera;  // Main grocery store camera
-    public CinemachineVirtualCamera battleFocusCamera;  // Battle focus camera
+    public CinemachineVirtualCamera groceryCamera;
+    public CinemachineVirtualCamera battleFocusCamera;
     public CinemachineVirtualCamera nutriKingdomCam;
     public CinemachineVirtualCamera alerthiaCam;
     public CinemachineVirtualCamera sugariaCam;
     public CinemachineVirtualCamera preserviaCam;
 
     [Header("Canvas References")]
-    public GameObject catchEnerlingCanvas;  // Canvas to disable during timeline
-    public GameObject enerlingInfoCanvas;  // Opponent info canvas
-    public GameObject enerlingPickingCanvas;  // Player selection canvas (from EnerlingSelectionManager)
+    public GameObject catchEnerlingCanvas;
+    public GameObject enerlingInfoCanvas;
+    public GameObject enerlingPickingCanvas;
 
     [Header("UI References")]
     public TextMeshProUGUI enerlingNameText;
@@ -74,26 +74,23 @@ public class BattlePlayManager : MonoBehaviour
     public TurnSystem turnSystem;
 
     [Header("Scene Names")]
-    public string scanOCRSceneName = "ScanOCR";  // Scene to return to when skipping
+    public string scanOCRSceneName = "ScanOCR";
 
     [Header("Settings")]
     public bool muteAllAudioOnStart = true;
     public bool stopAllAudioImmediately = true;
 
-    // State
     private IngredientDatabase.IngredientInfo opponentEnerling;
     private GameObject spawnedOpponent;
     private PlayableAsset currentTimeline;
     private bool timelinePlaying = false;
     private bool timelineAudioPrepared = false;
-    private bool isUnlocked = false;  // Track if opponent enerling is unlocked
-
-    // Store original camera settings
+    private bool isUnlocked = false;
+    private bool battleStarted = false;
     private CinemachineBlendDefinition originalBattleFocusBlend;
 
     void Start()
     {
-        // Store original blend settings for later restoration
         if (battleFocusCamera != null)
         {
             CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
@@ -103,22 +100,17 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        // Initialize audio control
         InitializeAudioControl();
 
-        // Disable CatchEnerlingCanvas initially
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(false);
 
-        // Disable enerling info canvas
         if (enerlingInfoCanvas != null)
             enerlingInfoCanvas.SetActive(false);
 
-        // Disable picking canvas
         if (enerlingPickingCanvas != null)
             enerlingPickingCanvas.SetActive(false);
 
-        // Start the battle sequence
         StartCoroutine(InitializeBattleScene());
     }
 
@@ -134,21 +126,16 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        // Set to manual update mode to prevent auto-playing
         playableDirector.timeUpdateMode = DirectorUpdateMode.Manual;
-
-        // Stop and reset immediately
         playableDirector.Stop();
         playableDirector.time = 0;
         playableDirector.Evaluate();
 
-        // Mute all timeline audio tracks
         if (playableDirector.playableAsset is TimelineAsset timeline)
         {
             MuteAllAudioTracks(timeline, true);
         }
 
-        // Additional safety: Stop all AudioSources in the scene
         if (stopAllAudioImmediately)
         {
             StopAllAudioSourcesInScene();
@@ -204,7 +191,6 @@ public class BattlePlayManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
 
-        // Get opponent enerling from PersistentDataManager
         string opponentName = "";
         if (PersistentDataManager.Instance != null)
         {
@@ -212,20 +198,17 @@ public class BattlePlayManager : MonoBehaviour
             Debug.Log($"Loaded opponent enerling from PersistentData: {opponentName}");
         }
 
-        // If no opponent found, use random
         if (string.IsNullOrEmpty(opponentName))
         {
             opponentName = GetRandomEnerlingName();
             Debug.LogWarning("No opponent found in PersistentData. Using random: " + opponentName);
 
-            // Save to PersistentDataManager
             if (PersistentDataManager.Instance != null)
             {
                 PersistentDataManager.Instance.SaveOpponentEnerling(opponentName);
             }
         }
 
-        // Load opponent data from database
         opponentEnerling = ingredientDatabase.GetIngredientInfo(opponentName);
         if (opponentEnerling == null)
         {
@@ -238,11 +221,9 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        // Check if opponent is unlocked
         isUnlocked = opponentEnerling.isUnlocked;
         Debug.Log($"Battle against: {opponentEnerling.ingredientName} from {opponentEnerling.kingdom}, Unlocked: {isUnlocked}");
 
-        // Update UI and start introduction
         UpdateEnerlingInfoUI();
         UpdateRarityVisuals();
         UpdateCatchFightButtonText();
@@ -252,36 +233,24 @@ public class BattlePlayManager : MonoBehaviour
 
     IEnumerator PlayIntroductionSequence()
     {
-        // STEP 1: Disable CatchEnerlingCanvas before timeline starts
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(false);
 
-        // STEP 2: Set ALL cameras to priority 0 initially
         SetAllCamerasPriority(0);
-
-        // STEP 3: Set the specific kingdom camera priority to 20 based on opponent's origin
         SetKingdomCameraPriorityByOrigin(opponentEnerling.kingdom, 20);
-
-        // STEP 4: Spawn opponent MODEL ONLY (no AI initialization yet)
         SpawnOpponentModel();
 
-        // Wait for spawn
         yield return new WaitForSeconds(0.5f);
 
-        // STEP 5: Play timeline based on kingdom
         yield return StartCoroutine(PlayKingdomTimeline());
 
-        // Wait for timeline to complete
         yield return new WaitForSeconds(1f);
 
-        // STEP 6: After timeline ends, keep the kingdom camera active (priority 20)
         SetKingdomCameraPriorityByOrigin(opponentEnerling.kingdom, 20);
 
-        // STEP 7: Enable CatchEnerlingCanvas
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(true);
 
-        // STEP 8: Show enerling info canvas
         if (enerlingInfoCanvas != null)
         {
             enerlingInfoCanvas.SetActive(true);
@@ -301,9 +270,7 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        // STEP 9: Setup button listeners
         SetupButtonListeners();
-
         timelinePlaying = true;
     }
 
@@ -322,11 +289,9 @@ public class BattlePlayManager : MonoBehaviour
             return;
         }
 
-        // Clean up any existing spawned opponent
         if (spawnedOpponent != null)
             Destroy(spawnedOpponent);
 
-        // Spawn new opponent MODEL ONLY (no AI components yet)
         spawnedOpponent = Instantiate(opponentEnerling.modelPrefab, spawnPoint);
         spawnedOpponent.transform.localPosition = Vector3.zero;
         spawnedOpponent.transform.localRotation = Quaternion.identity;
@@ -445,52 +410,25 @@ public class BattlePlayManager : MonoBehaviour
 
     void SetAllCamerasPriority(int priority)
     {
-        if (groceryCamera != null)
-        {
-            groceryCamera.Priority = priority;
-        }
-
-        if (battleFocusCamera != null)
-        {
-            battleFocusCamera.Priority = priority;
-        }
-
-        if (nutriKingdomCam != null)
-        {
-            nutriKingdomCam.Priority = priority;
-        }
-
-        if (alerthiaCam != null)
-        {
-            alerthiaCam.Priority = priority;
-        }
-
-        if (sugariaCam != null)
-        {
-            sugariaCam.Priority = priority;
-        }
-
-        if (preserviaCam != null)
-        {
-            preserviaCam.Priority = priority;
-        }
+        if (groceryCamera != null) groceryCamera.Priority = priority;
+        if (battleFocusCamera != null) battleFocusCamera.Priority = priority;
+        if (nutriKingdomCam != null) nutriKingdomCam.Priority = priority;
+        if (alerthiaCam != null) alerthiaCam.Priority = priority;
+        if (sugariaCam != null) sugariaCam.Priority = priority;
+        if (preserviaCam != null) preserviaCam.Priority = priority;
 
         Debug.Log($"Set all cameras priority to: {priority}");
     }
 
     void SetKingdomCameraPriorityByOrigin(IngredientDatabase.KingdomOrigin kingdom, int priority)
     {
-        // First, set all kingdom cameras to 0
         if (nutriKingdomCam != null) nutriKingdomCam.Priority = 0;
         if (alerthiaCam != null) alerthiaCam.Priority = 0;
         if (sugariaCam != null) sugariaCam.Priority = 0;
         if (preserviaCam != null) preserviaCam.Priority = 0;
-
-        // Set grocery and battle focus cameras to 0 as well
         if (groceryCamera != null) groceryCamera.Priority = 0;
         if (battleFocusCamera != null) battleFocusCamera.Priority = 0;
 
-        // Then set the specific kingdom camera to the desired priority
         switch (kingdom)
         {
             case IngredientDatabase.KingdomOrigin.NutriKingdom:
@@ -609,7 +547,6 @@ public class BattlePlayManager : MonoBehaviour
     {
         if (catchFightButtonText != null)
         {
-            // Set text based on isUnlocked status
             catchFightButtonText.text = isUnlocked ? "Fight" : "Catch";
         }
     }
@@ -629,11 +566,8 @@ public class BattlePlayManager : MonoBehaviour
         }
     }
 
-    // ==================== BUTTON HANDLERS ====================
-
     void OnSkipButtonClicked()
     {
-        // Go back to ScanOCR scene
         if (!string.IsNullOrEmpty(scanOCRSceneName))
         {
             SceneManager.LoadScene(scanOCRSceneName);
@@ -646,14 +580,13 @@ public class BattlePlayManager : MonoBehaviour
 
     void OnCatchFightButtonClicked()
     {
-        StartCoroutine(StartBattleSequence());
+        StartCoroutine(ShowPlayerSelectionScreen());
     }
 
-    IEnumerator StartBattleSequence()
+    IEnumerator ShowPlayerSelectionScreen()
     {
-        Debug.Log("Fight/Catch button clicked - starting battle sequence");
+        Debug.Log("Fight/Catch button clicked - showing player selection screen");
 
-        // Hide opponent info canvas with fade
         if (enerlingInfoCanvas != null)
         {
             CanvasGroup canvasGroup = enerlingInfoCanvas.GetComponent<CanvasGroup>();
@@ -672,52 +605,21 @@ public class BattlePlayManager : MonoBehaviour
             enerlingInfoCanvas.SetActive(false);
         }
 
-        // Disable CatchEnerlingCanvas
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(false);
 
-        // YOUR FIX: DISABLE THE PLAYABLE DIRECTOR GAMEOBJECT
-        if (playableDirector != null)
-        {
-            Debug.Log("Disabling Playable Director GameObject to release camera control");
-            playableDirector.gameObject.SetActive(false); // This stops timeline from controlling cameras
-        }
-
-        // STEP 1: Switch to BattleFocus camera
-        Debug.Log("Switching to BattleFocus camera");
-
-        // Set all cameras to priority 0
         SetAllCamerasPriority(0);
-
-        // Set BattleFocus camera to priority 20
         if (battleFocusCamera != null)
         {
             battleFocusCamera.Priority = 20;
-            Debug.Log($"BattleFocus camera priority set to: {battleFocusCamera.Priority}");
-        }
-        else
-        {
-            Debug.LogError("BattleFocus camera not assigned!");
         }
 
-        // Wait for camera to switch
         yield return new WaitForSeconds(0.5f);
 
-        // Debug which camera is active
-        CheckActiveCamera();
-
-        // STEP 2: Enable selection canvas
         if (enerlingPickingCanvas != null)
         {
             Debug.Log("Enabling player selection canvas");
             enerlingPickingCanvas.SetActive(true);
-
-            // Find and initialize the EnerlingSelectionManager
-            EnerlingSelectionManager selectionManager = enerlingPickingCanvas.GetComponent<EnerlingSelectionManager>();
-            if (selectionManager != null)
-            {
-                Debug.Log("EnerlingSelectionManager ready for selection");
-            }
         }
         else
         {
@@ -725,45 +627,18 @@ public class BattlePlayManager : MonoBehaviour
         }
     }
 
-    // Coroutine version of ForceCameraUpdate
-    IEnumerator ForceCameraUpdateCoroutine()
-    {
-        Debug.Log("Forcing camera system update...");
-
-        // Force Cinemachine to update immediately
-        CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
-        if (brain != null)
-        {
-            // Wait for one frame to ensure everything is processed
-            yield return null;
-
-            // Force manual update
-            brain.ManualUpdate();
-
-            // Wait another frame
-            yield return null;
-
-            brain.ManualUpdate();
-            Debug.Log("CinemachineBrain manual updates complete");
-        }
-
-        // Debug which camera is active
-        CheckActiveCamera();
-
-        Debug.Log("Camera system update forced");
-    }
-
-    // This method is called by EnerlingSelectionManager when player selects their enerling
     public void OnPlayerEnerlingSelected(string playerEnerlingName)
     {
-        StartCoroutine(InitializeBattleAfterSelection(playerEnerlingName));
+        if (battleStarted) return;
+
+        battleStarted = true;
+        StartCoroutine(StartBattleAfterSelection(playerEnerlingName));
     }
 
-    IEnumerator InitializeBattleAfterSelection(string playerEnerlingName)
+    IEnumerator StartBattleAfterSelection(string playerEnerlingName)
     {
-        Debug.Log($"Player selected enerling: {playerEnerlingName}");
+        Debug.Log($"Player selected enerling: {playerEnerlingName} - Starting battle sequence");
 
-        // Fade out the selection canvas
         if (enerlingPickingCanvas != null)
         {
             Debug.Log("Fading out player selection canvas");
@@ -783,27 +658,30 @@ public class BattlePlayManager : MonoBehaviour
             enerlingPickingCanvas.SetActive(false);
         }
 
-        // Wait a moment for canvas to fade out
         yield return new WaitForSeconds(0.3f);
 
-        // Camera is ALREADY on BattleFocus (set in StartBattleSequence)
-        // Confirm BattleFocus camera is still active
-        if (battleFocusCamera != null && battleFocusCamera.Priority < 20)
+        if (playableDirector != null)
         {
-            Debug.LogWarning("BattleFocus camera not active, setting priority to 20");
-            SetAllCamerasPriority(0);
-            battleFocusCamera.Priority = 20;
-
-            // Force camera update again
-            yield return StartCoroutine(ForceCameraUpdateCoroutine());
+            Debug.Log("Disabling Playable Director GameObject to release camera control");
+            playableDirector.gameObject.SetActive(false);
         }
 
-        Debug.Log("Camera is on BattleFocus view, ready for battle");
+        Debug.Log("Switching to BattleFocus camera");
+        SetAllCamerasPriority(0);
 
-        // Wait a moment for camera to settle
+        if (battleFocusCamera != null)
+        {
+            battleFocusCamera.Priority = 20;
+            Debug.Log($"BattleFocus camera priority set to: {battleFocusCamera.Priority}");
+        }
+        else
+        {
+            Debug.LogError("BattleFocus camera not assigned!");
+        }
+
         yield return new WaitForSeconds(0.5f);
 
-        // Now initialize the battle systems with the selected player enerling
+        Debug.Log("Initializing battlefield...");
         InitializeBattleSystems(playerEnerlingName);
     }
 
@@ -811,10 +689,8 @@ public class BattlePlayManager : MonoBehaviour
     {
         Debug.Log("Initializing battle systems...");
 
-        // STEP 1: Initialize PLAYER enerling using EXISTING method
         if (battleManager != null)
         {
-            // This method already exists in your BattleEnerlingManager
             battleManager.InitializeBattlefieldWithEnerling(playerEnerlingName);
         }
         else
@@ -822,32 +698,16 @@ public class BattlePlayManager : MonoBehaviour
             Debug.LogWarning("BattleEnerlingManager not assigned!");
         }
 
-        // STEP 2: Initialize AI opponent - NO SPAWN POINT PARAMETER NEEDED!
         if (aiManager != null && opponentEnerling != null)
         {
-            // Get the BATTLE SCENE spawn point from AIEnerlingManager (just for logging)
-            Transform aiBattleSpawnPoint = aiManager.aiSpawningPoint;
-
-            if (aiBattleSpawnPoint == null)
-            {
-                Debug.LogWarning("AI Battle spawn point not found in AIEnerlingManager!");
-            }
-            else
-            {
-                Debug.Log($"Using BATTLE SCENE spawn point: {aiBattleSpawnPoint.name}");
-            }
-
-            // Initialize with JUST 2 parameters now
             aiManager.InitializeAIEnerling(
                 opponentEnerling.ingredientName,
                 ingredientDatabase
-            // NO 3rd parameter - uses its own aiSpawningPoint
             );
 
             Debug.Log($"AI opponent initialized: {opponentEnerling.ingredientName}");
         }
 
-        // STEP 3: Initialize PlayerEnerlingManager skills UI
         if (playerManager != null && battleManager != null)
         {
             var playerEnerling = battleManager.GetBattleEnerling();
@@ -857,15 +717,10 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        // STEP 4: Start the turn system using EXISTING method
         if (turnSystem != null)
         {
-            // Initialize with managers
             turnSystem.InitializeBattle(battleManager, aiManager);
-
-            // Start the battle
             turnSystem.StartBattle();
-
             Debug.Log("Turn system started");
         }
         else
@@ -894,7 +749,6 @@ public class BattlePlayManager : MonoBehaviour
         StopTimelineImmediately();
     }
 
-    // Public methods for external control
     public void RestartBattleWithNewOpponent(string newOpponentName)
     {
         if (!string.IsNullOrEmpty(newOpponentName))
@@ -909,7 +763,7 @@ public class BattlePlayManager : MonoBehaviour
                 UpdateEnerlingInfoUI();
                 UpdateRarityVisuals();
                 UpdateCatchFightButtonText();
-                StartCoroutine(PlayIntroductionSequence());
+                // StartCoroutine(PlayIntroductionSequence());
             }
         }
     }
@@ -922,49 +776,5 @@ public class BattlePlayManager : MonoBehaviour
     public IngredientDatabase.IngredientInfo GetCurrentOpponent()
     {
         return opponentEnerling;
-    }
-
-    [ContextMenu("Debug Camera Priorities")]
-    public void DebugCameraPriorities()
-    {
-        Debug.Log("=== CURRENT CAMERA PRIORITIES ===");
-        if (groceryCamera != null)
-            Debug.Log($"Grocery Camera: {groceryCamera.Priority}");
-        if (battleFocusCamera != null)
-            Debug.Log($"BattleFocus Camera: {battleFocusCamera.Priority} {(battleFocusCamera.Priority >= 20 ? "(ACTIVE)" : "(INACTIVE)")}");
-        if (nutriKingdomCam != null)
-            Debug.Log($"NutriKingdom Camera: {nutriKingdomCam.Priority}");
-        if (alerthiaCam != null)
-            Debug.Log($"Alerthia Camera: {alerthiaCam.Priority}");
-        if (sugariaCam != null)
-            Debug.Log($"Sugaria Camera: {sugariaCam.Priority}");
-        if (preserviaCam != null)
-            Debug.Log($"Preservia Camera: {preserviaCam.Priority}");
-        Debug.Log("================================");
-    }
-
-    [ContextMenu("Check Active Camera")]
-    public void CheckActiveCamera()
-    {
-        CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
-        if (brain != null)
-        {
-            ICinemachineCamera activeCam = brain.ActiveVirtualCamera;
-            if (activeCam != null)
-            {
-                Debug.Log($"ACTIVE CAMERA: {activeCam.Name} (Priority: {activeCam.Priority})");
-            }
-            else
-            {
-                Debug.Log("No active virtual camera found");
-            }
-        }
-
-        // Also check all cameras
-        CinemachineVirtualCamera[] allCams = FindObjectsOfType<CinemachineVirtualCamera>();
-        foreach (var cam in allCams)
-        {
-            Debug.Log($"{cam.name}: Priority={cam.Priority}, {(cam.Priority >= 20 ? "SHOULD BE ACTIVE" : "INACTIVE")}");
-        }
     }
 }

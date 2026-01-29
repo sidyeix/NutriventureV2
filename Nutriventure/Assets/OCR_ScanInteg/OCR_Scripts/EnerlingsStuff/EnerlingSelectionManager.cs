@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
+using System.Linq;
 
 public class EnerlingSelectionManager : MonoBehaviour
 {
@@ -35,9 +38,9 @@ public class EnerlingSelectionManager : MonoBehaviour
     public Slider lifeSlider;
     public TextMeshProUGUI enerlingDescriptionText;
     public Image enerlingIconImage;
-    public TextMeshProUGUI baseAttackText; // Will show just the number
+    public TextMeshProUGUI baseAttackText;
     public TextMeshProUGUI organsLabelText;
-    public Transform addedAbilityPanel; // Parent for organ images
+    public Transform addedAbilityPanel;
     public GameObject organImagePrefab;
     public TextMeshProUGUI addedAbilityText;
 
@@ -46,20 +49,28 @@ public class EnerlingSelectionManager : MonoBehaviour
     public Slider armorSlider;
 
     [Header("UI References - Info Panel Frame")]
-    public Image infoPanelFrame; // Frame in the enerling side information
+    public Image infoPanelFrame;
 
     [Header("UI References - Skills Panel")]
-    public Transform skillsUIPanel; // Parent for skill buttons
-    public GameObject skillButtonPrefab; // Make sure this has Button component!
+    public Transform skillsUIPanel;
+    public GameObject skillButtonPrefab;
     public TextMeshProUGUI skillDescriptionText;
 
     [Header("UI References - Selection")]
     public Button selectButton;
     public TextMeshProUGUI selectButtonText;
 
+    [Header("Timeline System")]
+    public PlayableDirector timelineDirector;
+    public PlayableAsset selectionTimelineAsset;
+
+    [Header("Spawning References")]
+    public Transform playerSpawnPoint;
+    public Transform opponentSpawnPoint;
+
     [Header("Button Colors")]
     public Color normalButtonColor = Color.white;
-    public Color selectedButtonColor = new Color(0.52f, 0.52f, 0.52f); // #858585 in RGB (0-1)
+    public Color selectedButtonColor = new Color(0.52f, 0.52f, 0.52f);
     public Color disabledButtonColor = Color.gray;
 
     [Header("Organ Sprites Mapping")]
@@ -70,7 +81,7 @@ public class EnerlingSelectionManager : MonoBehaviour
     public Sprite brainSprite;
 
     [Header("Skill Button Settings")]
-    public Sprite defaultSkillIcon; // Fallback icon if skill has no sprite
+    public Sprite defaultSkillIcon;
 
     // Current filters
     private IngredientDatabase.Rarity currentRarityFilter = IngredientDatabase.Rarity.Common;
@@ -86,16 +97,19 @@ public class EnerlingSelectionManager : MonoBehaviour
     // Store current filtered list for auto-selection
     private List<IngredientDatabase.IngredientInfo> currentFilteredEnerlings = new List<IngredientDatabase.IngredientInfo>();
 
+    // Timeline and spawning state
+    private bool isTimelinePlaying = false;
+    private GameObject spawnedPlayerEnerling;
+    private GameObject spawnedOpponentEnerling;
+
     void Start()
     {
-        // Wait for PersistentDataManager to initialize
         StartCoroutine(InitializeAfterDelay());
     }
 
     IEnumerator InitializeAfterDelay()
     {
-        yield return null; // Wait one frame for PersistentDataManager to initialize
-
+        yield return null;
         InitializeDatabase();
         SetupFilterButtons();
         SetupKingdomButtons();
@@ -112,12 +126,9 @@ public class EnerlingSelectionManager : MonoBehaviour
             return;
         }
 
-        // CRITICAL: Wait for PersistentDataManager to be ready
         if (PersistentDataManager.Instance == null)
         {
-            Debug.LogError("PersistentDataManager not found! Make sure it's in the scene.");
-
-            // Create a temporary unlock for testing if no PersistentDataManager
+            Debug.LogError("PersistentDataManager not found!");
             if (ingredientDatabase.ingredients.Count > 0)
             {
                 Debug.LogWarning("No PersistentDataManager - unlocking first 3 for testing");
@@ -129,17 +140,14 @@ public class EnerlingSelectionManager : MonoBehaviour
             return;
         }
 
-        // Make sure the database reference is set in PersistentDataManager
         if (PersistentDataManager.Instance.ingredientDatabase == null)
         {
             PersistentDataManager.Instance.ingredientDatabase = ingredientDatabase;
             Debug.Log("Assigned ingredientDatabase to PersistentDataManager");
         }
 
-        // Check what's in the database
         Debug.Log($"Database initialized with {ingredientDatabase.ingredients.Count} total ingredients");
 
-        // Count unlocked ingredients
         int unlockedCount = 0;
         foreach (var ingredient in ingredientDatabase.ingredients)
         {
@@ -151,7 +159,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
         Debug.Log($"Total unlocked in database: {unlockedCount}");
 
-        // If still no unlocks, unlock first 3 for testing
         if (unlockedCount == 0 && ingredientDatabase.ingredients.Count > 0)
         {
             Debug.Log("No enerlings unlocked. Unlocking first 3 for testing...");
@@ -175,8 +182,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         commonFilterButton.onClick.AddListener(() => SetRarityFilter(true, IngredientDatabase.Rarity.Common));
         rareFilterButton.onClick.AddListener(() => SetRarityFilter(true, IngredientDatabase.Rarity.Rare));
         ultraRareFilterButton.onClick.AddListener(() => SetRarityFilter(true, IngredientDatabase.Rarity.UltraRare));
-
-        // Set initial state
         UpdateFilterButtonColors();
     }
 
@@ -187,8 +192,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         alerthiaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Alerthia));
         suragriaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Sugaria));
         preserviaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Preservia));
-
-        // Set initial state
         UpdateKingdomButtonColors();
     }
 
@@ -198,8 +201,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         currentRarityFilter = rarity;
         UpdateFilterButtonColors();
         RefreshEnerlingDisplay();
-
-        // After filtering, auto-select first enerling if current selection is not in filtered list
         AutoSelectFirstAfterFilter();
     }
 
@@ -209,14 +210,11 @@ public class EnerlingSelectionManager : MonoBehaviour
         currentKingdomFilter = kingdom;
         UpdateKingdomButtonColors();
         RefreshEnerlingDisplay();
-
-        // After filtering, auto-select first enerling if current selection is not in filtered list
         AutoSelectFirstAfterFilter();
     }
 
     void AutoSelectFirstAfterFilter()
     {
-        // Check if currently selected enerling is in the filtered list
         bool currentSelectionInFilter = false;
         foreach (var enerling in currentFilteredEnerlings)
         {
@@ -227,7 +225,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // If current selection is not in filtered list OR no selection exists, select first enerling
         if (!currentSelectionInFilter && currentFilteredEnerlings.Count > 0)
         {
             string firstEnerlingName = currentFilteredEnerlings[0].ingredientName;
@@ -236,7 +233,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
         else if (currentFilteredEnerlings.Count == 0)
         {
-            // No enerlings in filter, clear selection
             selectedEnerlingName = "";
             enerlingInfoPanel.SetActive(false);
             UpdateSelectButton();
@@ -246,13 +242,11 @@ public class EnerlingSelectionManager : MonoBehaviour
 
     void UpdateFilterButtonColors()
     {
-        // Reset all buttons
         allFilterButton.image.color = normalButtonColor;
         commonFilterButton.image.color = normalButtonColor;
         rareFilterButton.image.color = normalButtonColor;
         ultraRareFilterButton.image.color = normalButtonColor;
 
-        // Highlight selected
         if (!useRarityFilter)
         {
             allFilterButton.image.color = selectedButtonColor;
@@ -276,14 +270,12 @@ public class EnerlingSelectionManager : MonoBehaviour
 
     void UpdateKingdomButtonColors()
     {
-        // Reset all buttons
         allKingdomButton.image.color = normalButtonColor;
         nutriKingdomButton.image.color = normalButtonColor;
         alerthiaButton.image.color = normalButtonColor;
         suragriaButton.image.color = normalButtonColor;
         preserviaButton.image.color = normalButtonColor;
 
-        // Highlight selected
         if (!useKingdomFilter)
         {
             allKingdomButton.image.color = selectedButtonColor;
@@ -311,42 +303,28 @@ public class EnerlingSelectionManager : MonoBehaviour
     void RefreshEnerlingDisplay()
     {
         ClearCurrentDisplay();
-
-        // Get filtered enerlings and store them
         currentFilteredEnerlings = ingredientDatabase.GetIngredientsByFilter(
             currentRarityFilter,
             currentKingdomFilter,
             useRarityFilter,
             useKingdomFilter
         );
-
         DisplayEnerlings(currentFilteredEnerlings);
     }
 
     void DisplayAllUnlockedEnerlings()
     {
         ClearCurrentDisplay();
-
-        // Get unlocked enerlings from database
         var unlockedEnerlings = ingredientDatabase.GetUnlockedIngredients();
-        currentFilteredEnerlings = unlockedEnerlings; // Store for auto-selection
+        currentFilteredEnerlings = unlockedEnerlings;
 
         Debug.Log($"DisplayAllUnlockedEnerlings: Found {unlockedEnerlings.Count} unlocked enerlings");
 
         if (unlockedEnerlings.Count == 0)
         {
-            // If nothing is unlocked, show a message in UI
             Debug.LogWarning("No enerlings unlocked yet!");
             enerlingInfoPanel.SetActive(false);
             UpdateSelectButton();
-
-            // For debugging: List all ingredients and their unlocked status
-            Debug.Log("All ingredients status:");
-            foreach (var ingredient in ingredientDatabase.ingredients)
-            {
-                Debug.Log($"- {ingredient.ingredientName}: unlocked={ingredient.isUnlocked}");
-            }
-
             return;
         }
 
@@ -364,7 +342,6 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         Debug.Log($"Displaying {enerlings.Count} enerlings");
 
-        // Sort by rarity (Common -> Rare -> UltraRare), then by name
         enerlings.Sort((a, b) =>
         {
             int rarityCompare = a.rarity.CompareTo(b.rarity);
@@ -377,22 +354,18 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         while (enerlingIndex < enerlings.Count)
         {
-            // Create row (odd or even)
             GameObject rowPrefab = (rowIndex % 2 == 0) ? oddRowPrefab : evenRowPrefab;
             GameObject row = Instantiate(rowPrefab, contentParent);
             currentRows.Add(row);
 
-            // Get max buttons per row (4 for odd, 3 for even)
             int maxButtons = (rowIndex % 2 == 0) ? 4 : 3;
 
-            // Fill row with buttons
             for (int i = 0; i < maxButtons && enerlingIndex < enerlings.Count; i++)
             {
                 var enerling = enerlings[enerlingIndex];
                 CreateEnerlingButton(enerling, row.transform);
                 enerlingIndex++;
             }
-
             rowIndex++;
         }
     }
@@ -406,21 +379,17 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
 
         GameObject buttonObj = Instantiate(enerlingButtonPrefab, parent);
-
-        // Get the EnerlingButtonController component
         EnerlingButtonController buttonController = buttonObj.GetComponent<EnerlingButtonController>();
 
         if (buttonController != null)
         {
-            // Initialize the button controller with enerling data AND the database
             buttonController.Initialize(
                 enerling.ingredientName,
                 enerling.enerlingSprite,
                 enerling.rarity,
-                ingredientDatabase // Pass the database reference
+                ingredientDatabase
             );
 
-            // Get the button component for adding click listener
             Button button = buttonObj.GetComponent<Button>();
             if (button != null)
             {
@@ -430,8 +399,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         else
         {
             Debug.LogWarning("Enerling button prefab has no EnerlingButtonController component! Using fallback...");
-
-            // Fallback to old method
             Button button = buttonObj.GetComponent<Button>();
             if (button == null)
             {
@@ -439,7 +406,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 return;
             }
 
-            // Set the enerling sprite on the main button Image
             Image enerlingImage = buttonObj.GetComponent<Image>();
             if (enerlingImage != null && enerling.enerlingSprite != null)
             {
@@ -447,7 +413,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 enerlingImage.preserveAspect = true;
             }
 
-            // Set the frame sprite
             Sprite frameSprite = ingredientDatabase.GetFrameSprite(enerling.rarity);
             Transform frameTransform = buttonObj.transform.Find("Frame");
             if (frameTransform != null)
@@ -459,7 +424,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 }
             }
 
-            // Find and set the name text
             Transform nameTransform = buttonObj.transform.Find("NameText");
             if (nameTransform != null)
             {
@@ -467,7 +431,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 if (nameText != null)
                 {
                     nameText.text = enerling.ingredientName;
-                    // Initially hide the name text
                     nameText.gameObject.SetActive(false);
                 }
             }
@@ -475,10 +438,8 @@ public class EnerlingSelectionManager : MonoBehaviour
             button.onClick.AddListener(() => OnEnerlingButtonClicked(enerling.ingredientName));
         }
 
-        // Store reference
         enerlingButtons[enerling.ingredientName] = buttonObj;
 
-        // Highlight if this is the currently selected enerling
         if (enerling.ingredientName == selectedEnerlingName)
         {
             HighlightButton(buttonObj, true);
@@ -491,24 +452,18 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         selectedEnerlingName = enerlingName;
 
-        // Update all button highlights
         foreach (var kvp in enerlingButtons)
         {
             HighlightButton(kvp.Value, kvp.Key == enerlingName);
         }
 
-        // Display enerling info
         DisplayEnerlingInfo(enerlingName);
-
-        // Update select button
         UpdateSelectButton();
-
         Debug.Log($"Selected enerling: {enerlingName}");
     }
 
     void HighlightButton(GameObject buttonObj, bool highlight)
     {
-        // Try to use EnerlingButtonController first
         EnerlingButtonController buttonController = buttonObj.GetComponent<EnerlingButtonController>();
         if (buttonController != null)
         {
@@ -516,14 +471,10 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
         else
         {
-            // Fallback to old method
-            // Change button color to #858585 (RGB: 133, 133, 133 -> 0.52, 0.52, 0.52)
             Image image = buttonObj.GetComponent<Image>();
             if (image != null)
             {
                 image.color = highlight ? selectedButtonColor : Color.white;
-
-                // Also add/remove outline for better visual feedback
                 Outline outline = buttonObj.GetComponent<Outline>();
                 if (highlight)
                 {
@@ -543,7 +494,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 }
             }
 
-            // Also handle name text activation for fallback
             Transform nameTransform = buttonObj.transform.Find("NameText");
             if (nameTransform != null)
             {
@@ -563,45 +513,31 @@ public class EnerlingSelectionManager : MonoBehaviour
             return;
         }
 
-        // Show info panel
         enerlingInfoPanel.SetActive(true);
-
-        // Update enerling name text with the selected enerling's name
         enerlingNameText.text = enerling.ingredientName;
-
-        // Rarity icon
         rarityIconImage.sprite = ingredientDatabase.GetRarityIcon(enerling.rarity);
-
-        // Life info
         currentLifeText.text = enerling.LifeText;
         currentLifeText.color = enerling.LifeTextColor;
         lifeSlider.maxValue = enerling.baseLife;
         lifeSlider.value = enerling.currentLife;
 
-        // Armor info - Convert percentage to actual value
         int armorValue = CalculateArmorValue(enerling);
-        armorText.text = $"{armorValue}/{armorValue}"; // Always shows max armor value
+        armorText.text = $"{armorValue}/{armorValue}";
         armorSlider.maxValue = armorValue;
-        armorSlider.value = armorValue; // Always at max
+        armorSlider.value = armorValue;
 
-        // Update info panel frame based on rarity
         if (infoPanelFrame != null)
         {
             Sprite frameSprite = ingredientDatabase.GetFrameSprite(enerling.rarity);
             if (frameSprite != null)
             {
                 infoPanelFrame.sprite = frameSprite;
-                Debug.Log($"Updated info panel frame to {enerling.rarity} frame");
             }
         }
 
-        // Description
         enerlingDescriptionText.text = enerling.enerlingDescription;
-
-        // Icon
         enerlingIconImage.sprite = enerling.enerlingSprite;
 
-        // Base attack - Show only the number (no "Base Attack:" text)
         if (enerling.skill1 != null)
         {
             baseAttackText.text = enerling.skill1.baseValue.ToString();
@@ -611,19 +547,15 @@ public class EnerlingSelectionManager : MonoBehaviour
             baseAttackText.text = "0";
         }
 
-        // Organs label
         organsLabelText.text = enerling.OrgansLabel;
 
-        // Clear previous organ images
         foreach (Transform child in addedAbilityPanel)
         {
             Destroy(child.gameObject);
         }
 
-        // Combine all organs (beneficial and target)
         List<string> allOrgans = new List<string>();
 
-        // Add beneficial organs
         if (enerling.beneficialOrgans != null)
         {
             foreach (string organ in enerling.beneficialOrgans)
@@ -633,7 +565,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Add target organs
         if (enerling.targetOrgans != null)
         {
             foreach (string organ in enerling.targetOrgans)
@@ -643,7 +574,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Add organ images to addedAbilityPanel
         foreach (string organ in allOrgans)
         {
             if (organImagePrefab == null)
@@ -657,7 +587,6 @@ public class EnerlingSelectionManager : MonoBehaviour
 
             if (image != null)
             {
-                // Get the organ sprite from database
                 Sprite organSprite = ingredientDatabase.GetOrganSprite(organ);
                 if (organSprite != null)
                 {
@@ -666,7 +595,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 }
                 else
                 {
-                    // Fallback to inspector sprites
                     switch (organ.ToLower())
                     {
                         case "heart":
@@ -690,7 +618,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 }
             }
 
-            // Add tooltip or text if needed
             TextMeshProUGUI organText = organImage.GetComponentInChildren<TextMeshProUGUI>();
             if (organText != null)
             {
@@ -698,20 +625,15 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Calculate and display added ability text
         string addedAbility = CalculateAddedAbilityText(enerling);
         addedAbilityText.text = addedAbility;
-
-        // Display skills
         DisplaySkills(enerling);
     }
 
     int CalculateArmorValue(IngredientDatabase.IngredientInfo enerling)
     {
-        // Calculate armor value based on armor percentage and base life
         float armorDecimal = enerling.armorPercent / 100f;
-        int armorValue = Mathf.RoundToInt(enerling.baseLife * armorDecimal);
-        return armorValue;
+        return Mathf.RoundToInt(enerling.baseLife * armorDecimal);
     }
 
     string CalculateAddedAbilityText(IngredientDatabase.IngredientInfo enerling)
@@ -723,21 +645,16 @@ public class EnerlingSelectionManager : MonoBehaviour
         if (totalOrgans == 0)
             return "No additional abilities";
 
-        // Calculate total bonus based on distribution logic
         float bonusPercentage = CalculateTotalBonusPercentage(totalOrgans);
-
-        // Get cooldown based on rarity
         int cooldownTurns = GetOrganCooldown(enerling.rarity);
 
         if (beneficialCount > 0)
         {
-            // Calculate healing amount (percentage of base life)
             int healAmount = Mathf.RoundToInt(enerling.baseLife * (bonusPercentage / 100f));
             return $"Has {beneficialCount} beneficial organ(s): +{healAmount} health every {cooldownTurns} turns";
         }
         else if (targetCount > 0)
         {
-            // Calculate damage bonus (percentage of base damage)
             int damageBonus = Mathf.RoundToInt(enerling.baseDamage * (bonusPercentage / 100f));
             return $"Has {targetCount} target organ(s): +{damageBonus} damage every {cooldownTurns} turns";
         }
@@ -747,14 +664,7 @@ public class EnerlingSelectionManager : MonoBehaviour
 
     float CalculateTotalBonusPercentage(int organCount)
     {
-        // Distribution logic:
-        // 1 organ = 5%
-        // 2 organs = 10% (5% each)
-        // 3 organs = 15% (5% each)
-        // 4 organs = 20% (5% each)
-        // 5 organs = 25% (5% each)
-
-        return organCount * 5f; // 5% per organ
+        return organCount * 5f;
     }
 
     int GetOrganCooldown(IngredientDatabase.Rarity rarity)
@@ -770,16 +680,13 @@ public class EnerlingSelectionManager : MonoBehaviour
 
     void DisplaySkills(IngredientDatabase.IngredientInfo enerling)
     {
-        // Clear previous skill buttons
         foreach (Transform child in skillsUIPanel)
         {
             Destroy(child.gameObject);
         }
 
-        // Create skill buttons - with null checks
         if (skillButtonPrefab != null)
         {
-            // Store skill buttons for highlighting
             List<GameObject> skillButtons = new List<GameObject>();
 
             if (enerling.skill1 != null)
@@ -803,7 +710,6 @@ public class EnerlingSelectionManager : MonoBehaviour
                 if (skill4Button != null) skillButtons.Add(skill4Button);
             }
 
-            // Highlight first skill button
             if (skillButtons.Count > 0)
             {
                 HighlightSkillButton(skillButtons[0], true);
@@ -814,7 +720,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             Debug.LogError("SkillButtonPrefab is not assigned in the inspector!");
         }
 
-        // Set default skill description (first skill)
         if (enerling.skill1 != null)
         {
             skillDescriptionText.text = enerling.skill1.skillDescription;
@@ -834,29 +739,14 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
 
         GameObject buttonObj = Instantiate(skillButtonPrefab, skillsUIPanel);
-
-        // Try to get Button component
         Button button = buttonObj.GetComponent<Button>();
         if (button == null)
         {
-            Debug.LogError($"Skill button prefab has no Button component! Please add a Button component to {skillButtonPrefab.name}");
-
-            // Try to add Button component automatically
             button = buttonObj.AddComponent<Button>();
-            if (button != null)
-            {
-                Debug.Log($"Added Button component to {buttonObj.name}");
-            }
-            else
-            {
-                return null; // Cannot continue without a Button component
-            }
         }
 
-        // Set button name for debugging
         buttonObj.name = $"SkillButton_{skillNumber}_{skill.skillName}";
 
-        // Find and set the skill name text
         Transform nameTransform = buttonObj.transform.Find("SkillName");
         if (nameTransform != null)
         {
@@ -864,18 +754,11 @@ public class EnerlingSelectionManager : MonoBehaviour
             if (nameText != null)
             {
                 nameText.text = skill.skillName;
-                nameText.raycastTarget = false; // Don't block clicks
-            }
-            else
-            {
-                Debug.LogWarning($"SkillName child found but has no TextMeshProUGUI component");
+                nameText.raycastTarget = false;
             }
         }
         else
         {
-            Debug.LogWarning($"No 'SkillName' child found in skill button prefab. Looking for alternatives...");
-
-            // Try alternative names
             nameTransform = buttonObj.transform.Find("Text");
             if (nameTransform != null)
             {
@@ -888,7 +771,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Set the skill icon on the button's main Image component
         Image skillIconImage = buttonObj.GetComponent<Image>();
         if (skillIconImage != null)
         {
@@ -899,12 +781,10 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
             else if (defaultSkillIcon != null)
             {
-                // Use default icon if no skill sprite
                 skillIconImage.sprite = defaultSkillIcon;
             }
         }
 
-        // Set up button colors for visual feedback
         ColorBlock colors = button.colors;
         colors.normalColor = Color.white;
         colors.highlightedColor = new Color(0.9f, 0.9f, 0.9f, 1f);
@@ -915,8 +795,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         colors.fadeDuration = 0.1f;
         button.colors = colors;
 
-        // Add click listener
-        button.onClick.RemoveAllListeners(); // Clear any existing listeners
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
             Debug.Log($"Skill button clicked: {skill.skillName}");
@@ -936,9 +815,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         {
             if (highlight)
             {
-                image.color = new Color(0.8f, 0.8f, 0.8f, 1f); // Light gray for selected skill
-
-                // Add outline
+                image.color = new Color(0.8f, 0.8f, 0.8f, 1f);
                 Outline outline = buttonObj.GetComponent<Outline>();
                 if (outline == null) outline = buttonObj.AddComponent<Outline>();
                 outline.effectColor = Color.yellow;
@@ -947,8 +824,6 @@ public class EnerlingSelectionManager : MonoBehaviour
             else
             {
                 image.color = Color.white;
-
-                // Remove outline
                 Outline outline = buttonObj.GetComponent<Outline>();
                 if (outline != null) Destroy(outline);
             }
@@ -959,19 +834,14 @@ public class EnerlingSelectionManager : MonoBehaviour
     {
         if (skill != null)
         {
-            // Update skill description
             skillDescriptionText.text = skill.skillDescription;
 
-            // Highlight the clicked skill button
             if (buttonObj != null)
             {
-                // Unhighlight all other skill buttons
                 foreach (Transform child in skillsUIPanel)
                 {
                     HighlightSkillButton(child.gameObject, false);
                 }
-
-                // Highlight clicked button
                 HighlightSkillButton(buttonObj, true);
             }
         }
@@ -992,7 +862,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         {
             selectButton.interactable = true;
 
-            // Check if this is already the selected enerling
             if (PersistentDataManager.Instance != null &&
                 PersistentDataManager.Instance.GetSelectedEnerlingName() == selectedEnerlingName)
             {
@@ -1009,13 +878,13 @@ public class EnerlingSelectionManager : MonoBehaviour
     public void OnSelectButtonClicked()
     {
         if (string.IsNullOrEmpty(selectedEnerlingName)) return;
+        if (isTimelinePlaying) return;
 
         // Save to persistent data
         if (PersistentDataManager.Instance != null)
         {
             PersistentDataManager.Instance.SaveSelectedEnerling(selectedEnerlingName);
 
-            // Also save current life state
             var enerling = ingredientDatabase.GetIngredientInfo(selectedEnerlingName);
             if (enerling != null)
             {
@@ -1027,7 +896,67 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         UpdateSelectButton();
 
-        // NEW: Notify BattlePlayManager about the selection
+        // Disable select button to prevent multiple clicks
+        selectButton.interactable = false;
+
+        // Hide the entire selection UI
+        HideSelectionUI();
+
+        // Spawn both enerlings before timeline
+        SpawnBothEnerlings();
+
+        // Play timeline before starting battle
+        StartCoroutine(PlayTimelineAndStartBattle());
+    }
+
+    IEnumerator PlayTimelineAndStartBattle()
+    {
+        isTimelinePlaying = true;
+        Debug.Log("Playing selection timeline before starting battle...");
+
+        // Ensure timeline audio is not muted BEFORE playing
+        EnsureTimelineAudioNotMuted();
+
+        // Play the specific timeline asset if available
+        if (timelineDirector != null && selectionTimelineAsset != null)
+        {
+            Debug.Log($"Starting timeline playback: {selectionTimelineAsset.name}");
+
+            // Make sure we have the right timeline asset
+            if (timelineDirector.playableAsset != selectionTimelineAsset)
+            {
+                timelineDirector.playableAsset = selectionTimelineAsset;
+            }
+
+            // Double-check audio is unmuted right before playing
+            ForceCheckAudioUnmuted();
+
+            // Play the timeline
+            timelineDirector.Play();
+
+            // Wait for timeline to complete
+            while (timelineDirector.state == PlayState.Playing)
+            {
+                yield return null;
+            }
+
+            Debug.Log("Selection timeline playback completed");
+        }
+        else if (timelineDirector != null)
+        {
+            Debug.LogWarning("PlayableDirector found but no selectionTimelineAsset assigned!");
+            yield return new WaitForSeconds(1f);
+        }
+        else
+        {
+            Debug.LogWarning("No timeline director assigned. Proceeding directly to battle.");
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Clean up the spawned enerlings (they'll be re-spawned by battle managers)
+        CleanupSpawnedEnerlings();
+
+        // After timeline completes, notify BattlePlayManager
         BattlePlayManager battlePlayManager = FindObjectOfType<BattlePlayManager>();
         if (battlePlayManager != null)
         {
@@ -1036,8 +965,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         else
         {
             Debug.LogError("BattlePlayManager not found! Using fallback...");
-
-            // Fallback: Use BattleEnerlingManager directly (for testing)
             BattleEnerlingManager battleManager = FindObjectOfType<BattleEnerlingManager>();
             if (battleManager != null)
             {
@@ -1048,7 +975,261 @@ public class EnerlingSelectionManager : MonoBehaviour
                 Debug.LogError("BattleEnerlingManager not found either!");
             }
         }
+
+        isTimelinePlaying = false;
     }
+
+    private void ForceCheckAudioUnmuted()
+    {
+        if (timelineDirector == null) return;
+
+        if (timelineDirector.playableAsset is UnityEngine.Timeline.TimelineAsset timeline)
+        {
+            foreach (var track in timeline.GetOutputTracks())
+            {
+                if (track is UnityEngine.Timeline.AudioTrack audioTrack)
+                {
+                    audioTrack.muted = false;
+                    AudioSource audioSource = timelineDirector.GetGenericBinding(audioTrack) as AudioSource;
+                    if (audioSource != null)
+                    {
+                        audioSource.mute = false;
+                    }
+                }
+            }
+        }
+    }
+
+
+    // ==================== NEW METHODS FOR TIMELINE & SPAWNING ====================
+
+    private void HideSelectionUI()
+    {
+        // Get the root canvas that contains this manager
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.gameObject.SetActive(false);
+            Debug.Log("Selection UI hidden via parent canvas");
+            return;
+        }
+
+        // Fallback to BattlePlayManager reference
+        BattlePlayManager battleManager = FindObjectOfType<BattlePlayManager>();
+        if (battleManager != null && battleManager.enerlingPickingCanvas != null)
+        {
+            battleManager.enerlingPickingCanvas.SetActive(false);
+            Debug.Log("EnerlingPickingCanvas hidden via BattlePlayManager");
+            return;
+        }
+
+        Debug.LogWarning("Could not find selection UI to hide!");
+    }
+
+    private void SpawnBothEnerlings()
+    {
+        Debug.Log("Spawning both enerlings for timeline...");
+
+        // 1. Spawn player enerling
+        SpawnPlayerEnerling();
+
+        // 2. Spawn opponent enerling
+        SpawnOpponentEnerling();
+    }
+
+    private void SpawnPlayerEnerling()
+    {
+        if (string.IsNullOrEmpty(selectedEnerlingName)) return;
+
+        var playerEnerlingData = ingredientDatabase.GetIngredientInfo(selectedEnerlingName);
+        if (playerEnerlingData == null || playerEnerlingData.modelPrefab == null)
+        {
+            Debug.LogError($"Cannot spawn player enerling: {selectedEnerlingName} data or prefab is null");
+            return;
+        }
+
+        if (playerSpawnPoint == null)
+        {
+            Debug.LogError("Player spawn point not assigned!");
+            return;
+        }
+
+        // Clean up existing player enerling
+        if (spawnedPlayerEnerling != null)
+        {
+            Destroy(spawnedPlayerEnerling);
+        }
+
+        // Spawn player enerling
+        spawnedPlayerEnerling = Instantiate(playerEnerlingData.modelPrefab, playerSpawnPoint);
+        spawnedPlayerEnerling.transform.localPosition = Vector3.zero;
+        spawnedPlayerEnerling.transform.localRotation = Quaternion.identity;
+        spawnedPlayerEnerling.transform.localScale = Vector3.one;
+
+        Debug.Log($"Spawned player enerling: {selectedEnerlingName} at {playerSpawnPoint.name}");
+    }
+
+    private void SpawnOpponentEnerling()
+    {
+        // Get opponent enerling name from PersistentDataManager
+        string opponentName = "";
+        if (PersistentDataManager.Instance != null)
+        {
+            opponentName = PersistentDataManager.Instance.GetOpponentEnerlingName();
+        }
+
+        if (string.IsNullOrEmpty(opponentName))
+        {
+            opponentName = GetRandomOpponentName();
+            Debug.LogWarning($"No opponent found, using random: {opponentName}");
+        }
+
+        var opponentEnerlingData = ingredientDatabase.GetIngredientInfo(opponentName);
+        if (opponentEnerlingData == null || opponentEnerlingData.modelPrefab == null)
+        {
+            Debug.LogError($"Cannot spawn opponent enerling: {opponentName} data or prefab is null");
+            return;
+        }
+
+        if (opponentSpawnPoint == null)
+        {
+            Debug.LogError("Opponent spawn point not assigned!");
+            return;
+        }
+
+        // Clean up existing opponent enerling
+        if (spawnedOpponentEnerling != null)
+        {
+            Destroy(spawnedOpponentEnerling);
+        }
+
+        // Spawn opponent enerling
+        spawnedOpponentEnerling = Instantiate(opponentEnerlingData.modelPrefab, opponentSpawnPoint);
+        spawnedOpponentEnerling.transform.localPosition = Vector3.zero;
+        spawnedOpponentEnerling.transform.localRotation = Quaternion.identity;
+        spawnedOpponentEnerling.transform.localScale = Vector3.one;
+
+        Debug.Log($"Spawned opponent enerling: {opponentName} at {opponentSpawnPoint.name}");
+    }
+
+    private string GetRandomOpponentName()
+    {
+        if (ingredientDatabase == null) return "DefaultEnerling";
+
+        List<IngredientDatabase.IngredientInfo> possibleOpponents = new List<IngredientDatabase.IngredientInfo>();
+
+        foreach (var enerling in ingredientDatabase.GetUnlockedIngredients())
+        {
+            if (enerling.ingredientName != selectedEnerlingName)
+            {
+                possibleOpponents.Add(enerling);
+            }
+        }
+
+        if (possibleOpponents.Count == 0)
+        {
+            foreach (var enerling in ingredientDatabase.ingredients)
+            {
+                if (enerling.ingredientName != selectedEnerlingName)
+                {
+                    possibleOpponents.Add(enerling);
+                }
+            }
+        }
+
+        if (possibleOpponents.Count > 0)
+        {
+            return possibleOpponents[Random.Range(0, possibleOpponents.Count)].ingredientName;
+        }
+
+        return "DefaultEnerling";
+    }
+
+    private void CleanupSpawnedEnerlings()
+    {
+        if (spawnedPlayerEnerling != null)
+        {
+            Destroy(spawnedPlayerEnerling);
+            spawnedPlayerEnerling = null;
+        }
+
+        if (spawnedOpponentEnerling != null)
+        {
+            Destroy(spawnedOpponentEnerling);
+            spawnedOpponentEnerling = null;
+        }
+
+        Debug.Log("Cleaned up timeline enerlings");
+    }
+
+    private void EnsureTimelineAudioNotMuted()
+    {
+        if (timelineDirector == null)
+        {
+            Debug.LogError("timelineDirector is null!");
+            return;
+        }
+
+        Debug.Log("=== NUCLEAR UNMUTE FOR SELECTION TIMELINE ===");
+
+        // 1. Stop everything
+        timelineDirector.Stop();
+        timelineDirector.time = 0;
+
+        // 2. Set the timeline asset
+        if (selectionTimelineAsset != null)
+        {
+            timelineDirector.playableAsset = selectionTimelineAsset;
+        }
+
+        timelineDirector.Evaluate();
+
+        // 3. Mute ALL AudioSources first
+        AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>(true);
+        foreach (AudioSource audioSource in allAudioSources)
+        {
+            audioSource.mute = true;
+            audioSource.volume = 0f;
+            audioSource.enabled = false;
+        }
+
+        // 4. Unmute ONLY the timeline's audio
+        if (timelineDirector.playableAsset is UnityEngine.Timeline.TimelineAsset timeline)
+        {
+            // Unmute audio tracks
+            var audioTracks = timeline.GetOutputTracks()
+                .Where(track => track is UnityEngine.Timeline.AudioTrack)
+                .Cast<UnityEngine.Timeline.AudioTrack>();
+
+            foreach (var audioTrack in audioTracks)
+            {
+                audioTrack.muted = false;
+                Debug.Log($"Unmuted audio track: {audioTrack.name}");
+
+                // Find and unmute the bound AudioSource
+                AudioSource trackAudioSource = timelineDirector.GetGenericBinding(audioTrack) as AudioSource;
+                if (trackAudioSource != null)
+                {
+                    trackAudioSource.mute = false;
+                    trackAudioSource.volume = 1f;
+                    trackAudioSource.enabled = true;
+                    Debug.Log($"Unmuted bound AudioSource: {trackAudioSource.name}");
+                }
+            }
+        }
+
+        // 5. Enable AudioListener
+        AudioListener.volume = 1f;
+        AudioListener.pause = false;
+
+        // 6. Set update mode
+        timelineDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
+
+        Debug.Log("=== SELECTION TIMELINE UNMUTED ===");
+    }
+
+
+    // ==================== END OF NEW METHODS ====================
 
     void LoadSelectedEnerling()
     {
@@ -1057,14 +1238,12 @@ public class EnerlingSelectionManager : MonoBehaviour
             string savedEnerling = PersistentDataManager.Instance.GetSelectedEnerlingName();
             if (!string.IsNullOrEmpty(savedEnerling))
             {
-                // Check if this enerling exists and is unlocked
                 var enerling = ingredientDatabase.GetIngredientInfo(savedEnerling);
                 if (enerling != null && enerling.isUnlocked)
                 {
                     selectedEnerlingName = savedEnerling;
                     DisplayEnerlingInfo(savedEnerling);
 
-                    // Highlight the button
                     if (enerlingButtons.ContainsKey(savedEnerling))
                     {
                         HighlightButton(enerlingButtons[savedEnerling], true);
@@ -1077,69 +1256,41 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
 
         Debug.Log("No saved enerling selection found or enerling is not unlocked");
-
-        // Start coroutine to select first button after all buttons are created
         StartCoroutine(SelectFirstButtonAfterDelay());
     }
 
     IEnumerator SelectFirstButtonAfterDelay()
     {
-        yield return null; // Wait one frame
+        yield return null;
 
-        // Now all buttons should be created
         if (enerlingButtons.Count > 0)
         {
-            // Get the first button (first key in dictionary)
             foreach (var kvp in enerlingButtons)
             {
                 string firstEnerlingName = kvp.Key;
                 Debug.Log($"Auto-selecting first button (first in first row): {firstEnerlingName}");
                 OnEnerlingButtonClicked(firstEnerlingName);
-                break; // Only select first one
-            }
-        }
-    }
-
-    IEnumerator SelectFirstEnerlingCoroutine()
-    {
-        yield return null; // Wait one frame for buttons to be created
-
-        // Check if we have any buttons
-        if (enerlingButtons.Count > 0)
-        {
-            // Find the first button that was created
-            // The buttons are created in order, so first key in dictionary is first button
-            foreach (var kvp in enerlingButtons)
-            {
-                string firstEnerlingName = kvp.Key;
-                Debug.Log($"Auto-selecting first button in first row: {firstEnerlingName}");
-                OnEnerlingButtonClicked(firstEnerlingName);
-                break; // Only select the first one
+                break;
             }
         }
     }
 
     void ClearCurrentDisplay()
     {
-        // Clear all rows
         foreach (GameObject row in currentRows)
         {
             Destroy(row);
         }
         currentRows.Clear();
-
-        // Clear button references
         enerlingButtons.Clear();
     }
 
-    // Method to refresh display (call this when unlocking new enerlings)
     public void RefreshDisplay()
     {
         RefreshEnerlingDisplay();
         UpdateSelectButton();
     }
 
-    // Method to unlock an enerling (for testing or from scanning)
     public void UnlockEnerling(string enerlingName)
     {
         if (string.IsNullOrEmpty(enerlingName)) return;
@@ -1156,7 +1307,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         RefreshDisplay();
     }
 
-    // Method to heal all enerlings (for testing)
     public void HealAllEnerlings()
     {
         foreach (var enerling in ingredientDatabase.ingredients)
@@ -1171,58 +1321,9 @@ public class EnerlingSelectionManager : MonoBehaviour
             }
         }
 
-        // Refresh display if we're showing the currently selected enerling
         if (!string.IsNullOrEmpty(selectedEnerlingName))
         {
             DisplayEnerlingInfo(selectedEnerlingName);
         }
-    }
-
-    [ContextMenu("Test Auto-Select First")]
-    public void TestAutoSelectFirst()
-    {
-        if (currentFilteredEnerlings.Count > 0)
-        {
-            string firstEnerlingName = currentFilteredEnerlings[0].ingredientName;
-            Debug.Log($"Test: Auto-selecting first enerling: {firstEnerlingName}");
-            OnEnerlingButtonClicked(firstEnerlingName);
-        }
-    }
-
-    [ContextMenu("Debug Skill Button Setup")]
-    public void DebugSkillButtonSetup()
-    {
-        Debug.Log("=== DEBUG: Skill Button Setup ===");
-        Debug.Log($"Skill Button Prefab: {skillButtonPrefab}");
-
-        if (skillButtonPrefab != null)
-        {
-            Debug.Log($"Prefab has Button component: {skillButtonPrefab.GetComponent<Button>() != null}");
-            Debug.Log($"Prefab has Image component: {skillButtonPrefab.GetComponent<Image>() != null}");
-
-            // Check for SkillName child
-            Transform skillNameTransform = skillButtonPrefab.transform.Find("SkillName");
-            if (skillNameTransform != null)
-            {
-                Debug.Log($"Found SkillName child: {skillNameTransform.name}");
-                Debug.Log($"Has TextMeshProUGUI: {skillNameTransform.GetComponent<TextMeshProUGUI>() != null}");
-            }
-            else
-            {
-                Debug.LogWarning("No SkillName child found in prefab. Looking for alternatives...");
-
-                // List all children
-                foreach (Transform child in skillButtonPrefab.transform)
-                {
-                    Debug.Log($"  Child: {child.name}");
-                    TextMeshProUGUI text = child.GetComponent<TextMeshProUGUI>();
-                    if (text != null)
-                    {
-                        Debug.Log($"    - Has TextMeshProUGUI component");
-                    }
-                }
-            }
-        }
-        Debug.Log("=== END DEBUG ===");
     }
 }
