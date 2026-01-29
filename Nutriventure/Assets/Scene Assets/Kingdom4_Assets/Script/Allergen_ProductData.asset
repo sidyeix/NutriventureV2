@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ba805c88a7d48543b5fbf2cb5a7f4da, type: 3}
+  m_Name: Allergen_ProductData
+  m_EditorClassIdentifier: Assembly-CSharp::AllergenProductData
+  allProducts:
+  - productID: fish
+    displayName: Fish
+    foodCategory: 0
+    productPrefab: {fileID: 4701848276009545389, guid: 1b53c69028113a142bd84b57b1e14e40, type: 3}
+    productIcon: {fileID: 21300000, guid: eed61c787378b7643b7a9c0d2bc3b0fe, type: 3}
+    allergenType: 3
+    containsAllergen: 1
+    allergenWarning: Contains fish proteins that can cause allergic reactions.
+    description: Fish allergies come from proteins found in finned fish such as tuna,
+      salmon, and cod.
+    labelTip: Look for specific fish names like salmon, tuna, cod, or fish oil.
+    funFact: Some people are allergic to one type of fish but not all fish.
+  - productID: egg
+    displayName: Egg
+    foodCategory: 0
+    productPrefab: {fileID: 172383217655837440, guid: 3f950ef373510274b8464f96b1727ac9, type: 3}
+    productIcon: {fileID: 21300000, guid: c0a6a8a62de941b48a9bbb92fbfd9f28, type: 3}
+    allergenType: 2
+    containsAllergen: 1
+    allergenWarning: Contains egg proteins that may trigger allergic reactions.
+    description: Egg allergies are caused by proteins found mostly in egg whites,
+      but egg yolks can also cause reactions.
+    labelTip: Check labels for egg, albumin, ovalbumin, or egg powder.
+    funFact: Eggs are often hidden in baked goods like cakes and cookies.
+  - productID: milk
+    displayName: Milk
+    foodCategory: 0
+    productPrefab: {fileID: 8988653540863346682, guid: 2440b973ecab3cb4687f8475c832c9d6, type: 3}
+    productIcon: {fileID: 21300000, guid: 7ae4abda54a0f664a814c447479af74e, type: 3}
+    allergenType: 1
+    containsAllergen: 1
+    allergenWarning: Contains milk proteins that may cause allergic reactions in
+      sensitive individuals.
+    description: Milk allergies are caused by proteins found in dairy products such
+      as milk, cheese, butter, and yogurt.
+    labelTip: Look for words like milk, whey, casein, lactose, or dairy on food labels.
+    funFact: Milk allergy is common in children, but many outgrow it as they get
+      older.
+  - productID: sesame
+    displayName: Sesame
+    foodCategory: 0
+    productPrefab: {fileID: 2968943179990744368, guid: 2b63c562dbeae1b4d9839f4db9d154db, type: 3}
+    productIcon: {fileID: 21300000, guid: 7b0e50bd76de45b4d9da95ca78d8ae4d, type: 3}
+    allergenType: 9
+    containsAllergen: 1
+    allergenWarning: Contains sesame proteins that may cause allergic reactions.
+    description: Sesame allergy is caused by proteins found in sesame seeds and sesame
+      oil.
+    labelTip: Look for sesame, tahini, or sesame oil on labels.
+    funFact: Sesame was only recently added to the major allergen list in many countries.
+  - productID: shellfish
+    displayName: Shellfish
+    foodCategory: 0
+    productPrefab: {fileID: 2041191731044776010, guid: f3d4b0e8b39b0ba49a68fbf3baeec115, type: 3}
+    productIcon: {fileID: 21300000, guid: fdf5907be4dad0943b8e706751942321, type: 3}
+    allergenType: 4
+    containsAllergen: 1
+    allergenWarning: Contains shellfish proteins that may cause severe allergic reactions.
+    description: Shellfish allergies are caused by proteins in crustaceans and mollusks
+      like shrimp, crab, lobster, and clams.
+    labelTip: Watch for shrimp, crab, lobster, shellfish, or seafood flavoring.
+    funFact: Shellfish allergy is more common in adults than in children.
+  - productID: soybeans
+    displayName: Soybean
+    foodCategory: 0
+    productPrefab: {fileID: 1202323738888315927, guid: f1372c8fa107ec7408fec7f464c22d95, type: 3}
+    productIcon: {fileID: 21300000, guid: ed6d4643205cfd043b5b2440edc0356d, type: 3}
+    allergenType: 8
+    containsAllergen: 1
+    allergenWarning: Contains soy proteins that may trigger allergic reactions.
+    description: Soy allergy comes from proteins found in soybeans and soy-based
+      foods.
+    labelTip: Check for soy, soy lecithin, soybean oil, or edamame.
+    funFact: Soy is widely used in processed foods because it is affordable and versatile.
+  - productID: tree nuts
+    displayName: Treenuts
+    foodCategory: 0
+    productPrefab: {fileID: 902148506574596258, guid: e3459b27220ed584f841d9d60b1985fc, type: 3}
+    productIcon: {fileID: 21300000, guid: 96fd00010fd939b4ea0c699940240450, type: 3}
+    allergenType: 5
+    containsAllergen: 1
+    allergenWarning: Contains tree nut proteins that can cause allergic reactions.
+    description: Tree nut allergies include nuts such as almonds, walnuts, cashews,
+      pistachios, and hazelnuts.
+    labelTip: Look for specific nut names and phrases like may contain tree nuts.
+    funFact: Coconut is labeled as a tree nut, but many people with tree nut allergies
+      can still eat it safely.
+  - productID: wheat
+    displayName: Wheat
+    foodCategory: 0
+    productPrefab: {fileID: 6680558504880055370, guid: 4aa1e0adaa709b544bfe3e3fcda37ba4, type: 3}
+    productIcon: {fileID: 21300000, guid: 6eb742647711c3548b90c07e6728be35, type: 3}
+    allergenType: 7
+    containsAllergen: 1
+    allergenWarning: Contains wheat proteins that may cause allergic reactions.
+    description: Wheat allergy is triggered by proteins found in wheat and wheat-based
+      foods like bread and pasta.
+    labelTip: Look for wheat, flour, semolina, durum, or breadcrumbs.
+    funFact: Wheat allergy is different from gluten intolerance or celiac disease.
+  - productID: peanut
+    displayName: Peanut
+    foodCategory: 0
+    productPrefab: {fileID: 305353113482660628, guid: b51bdab8969f358418c3eca6769696cb, type: 3}
+    productIcon: {fileID: 21300000, guid: ce6982d371689bd4799926c1070a4743, type: 3}
+    allergenType: 6
+    containsAllergen: 1
+    allergenWarning: Contains peanut proteins that may cause severe allergic reactions.
+    description: "Peanut allergy is caused by proteins found in peanuts, which are
+      legumes\u2014not true nuts."
+    labelTip: Check for peanuts, peanut butter, peanut oil, or groundnuts.
+    funFact: Even tiny amounts of peanuts can cause serious reactions in allergic
+      individuals.

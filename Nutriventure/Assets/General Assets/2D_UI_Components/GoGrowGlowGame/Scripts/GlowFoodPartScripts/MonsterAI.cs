@@ -28,8 +28,8 @@ public class MonsterAI : MonoBehaviour
     [SerializeField] private string playerEnterParam = "PlayerEnter";
 
     [Header("Stealing Animation - Separate Animator")]
-    [SerializeField] private Animator stealingAnimator; // Assign the SECOND Animator here
-    [SerializeField] private string stealingParam = "isStealing"; // Parameter name in the SECOND Animator
+    [SerializeField] private Animator stealingAnimator;
+    [SerializeField] private string stealingParam = "isStealing";
 
     [Header("References")]
     [SerializeField] private Transform monsterBody;
@@ -39,7 +39,7 @@ public class MonsterAI : MonoBehaviour
     [SerializeField] private SphereCollider detectionCollider;
 
     [Header("Damage Panel")]
-    [SerializeField] private GameObject damagePanel; // ASSIGN THIS IN INSPECTOR!
+    [SerializeField] private GameObject damagePanel;
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource audioSource;
@@ -49,16 +49,15 @@ public class MonsterAI : MonoBehaviour
     [SerializeField] private AudioClip playerEnterSound;
     [SerializeField] private AudioClip warningSound;
     [SerializeField] private AudioClip playerHurtSound;
-    [SerializeField] private AudioClip stealingSound; // Optional stealing sound
+    [SerializeField] private AudioClip stealingSound;
 
     [Header("Timing")]
     [SerializeField] private float warningDuration = 1f;
     [SerializeField] private float attackAnimationDelay = 0.5f;
 
-    // State
     private Transform playerTransform;
     private Vector3 centerPosition;
-    private Animator monsterAnimator; // First animator (for idle/moving/attacking)
+    private Animator monsterAnimator;
     private bool isPlayerInDetectionRange = false;
     private bool isPlayerInCenterRange = true;
     private bool isAttacking = false;
@@ -68,11 +67,7 @@ public class MonsterAI : MonoBehaviour
     private Coroutine detectionCoroutine;
     private Coroutine warningCoroutine;
     private Coroutine attackCoroutine;
-
-    // Cache
     private GoGrowGlowGameManager gameManager;
-
-    // Audio state - Simplified
     private AudioClip currentLoopAudio;
 
     private void Start()
@@ -92,6 +87,11 @@ public class MonsterAI : MonoBehaviour
         if (player != null)
         {
             playerTransform = player.transform;
+            Debug.Log($"MonsterAI: Found player at position {playerTransform.position}");
+        }
+        else
+        {
+            Debug.LogError("MonsterAI: No player found with tag 'Player'!");
         }
 
         // Store center position
@@ -99,6 +99,10 @@ public class MonsterAI : MonoBehaviour
 
         // Cache references
         gameManager = GoGrowGlowGameManager.Instance;
+        if (gameManager == null)
+        {
+            Debug.LogError("MonsterAI: GoGrowGlowGameManager.Instance is null!");
+        }
 
         // Initialize audio source with fixed volume
         if (audioSource == null)
@@ -107,9 +111,9 @@ public class MonsterAI : MonoBehaviour
         }
 
         // Ensure audio source has proper settings
-        audioSource.loop = false; // We'll control looping manually
+        audioSource.loop = false;
         audioSource.playOnAwake = false;
-        audioSource.spatialBlend = 1f; // 3D audio
+        audioSource.spatialBlend = 1f;
 
         // Initialize damage panel
         if (damagePanel != null)
@@ -128,6 +132,7 @@ public class MonsterAI : MonoBehaviour
         if (playerTransform != null)
         {
             detectionCoroutine = StartCoroutine(DetectionRoutine());
+            Debug.Log("MonsterAI: Started detection routine");
         }
 
         // Initialize effects - Sleeping effect should be enabled by default
@@ -142,6 +147,12 @@ public class MonsterAI : MonoBehaviour
         if (stealingAnimator == null)
         {
             Debug.LogWarning("MonsterAI: Stealing Animator is not assigned in the Inspector! Stealing animations won't play.");
+        }
+
+        // Initialize detection collider
+        if (detectionCollider != null)
+        {
+            detectionCollider.radius = detectionRange;
         }
     }
 
@@ -188,6 +199,7 @@ public class MonsterAI : MonoBehaviour
     {
         if (isWarningPhase || isAttacking || isReturningToCenter) return;
 
+        Debug.Log($"MonsterAI: Player entered detection range at distance: {Vector3.Distance(transform.position, playerTransform.position)}");
         isPlayerInDetectionRange = true;
         isWarningPhase = true;
 
@@ -211,6 +223,7 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator ShowWarningAndMove()
     {
+        Debug.Log("MonsterAI: Starting warning phase");
         // Show warning effect
         if (warningEffect != null)
         {
@@ -225,6 +238,7 @@ public class MonsterAI : MonoBehaviour
 
         yield return new WaitForSeconds(warningDuration);
 
+        Debug.Log("MonsterAI: Warning phase ended, starting movement");
         // Hide warning effect
         if (warningEffect != null)
         {
@@ -240,14 +254,20 @@ public class MonsterAI : MonoBehaviour
         isWarningPhase = false;
 
         // Start moving towards player if still in range
-        if (isPlayerInDetectionRange && !isAttacking && !isReturningToCenter)
+        if (isPlayerInDetectionRange && !isAttacking && !isReturningToCenter && playerTransform != null)
         {
-            SetMovingState(true);
+            float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            if (distanceToPlayer <= detectionRange)
+            {
+                SetMovingState(true);
+                Debug.Log("MonsterAI: Started moving towards player");
+            }
         }
     }
 
     private void PlayerExitedDetectionRange()
     {
+        Debug.Log("MonsterAI: Player exited detection range");
         isPlayerInDetectionRange = false;
 
         // If player is still in center range, stop chasing but don't return yet
@@ -259,12 +279,18 @@ public class MonsterAI : MonoBehaviour
             // Only re-enable sleeping effect if monster is at center and idle
             // This will be handled in ReachedCenter() method
         }
+        else
+        {
+            // Player left both detection AND center range
+            PlayerExitedCenterRange();
+        }
     }
 
     private void PlayerExitedCenterRange()
     {
         if (isAttacking || isWarningPhase) return;
 
+        Debug.Log("MonsterAI: Player exited center range, returning to center");
         isReturningToCenter = true;
         SetMovingState(true);
 
@@ -278,6 +304,7 @@ public class MonsterAI : MonoBehaviour
 
     private void ReachedCenter()
     {
+        Debug.Log("MonsterAI: Reached center position");
         isReturningToCenter = false;
         SetMovingState(false);
         SetIdleState(true);
@@ -294,13 +321,13 @@ public class MonsterAI : MonoBehaviour
 
     private void Update()
     {
-        if (playerTransform == null) return;
+        if (playerTransform == null || gameManager == null) return;
 
         float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
         bool playerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
 
-        // If moving towards player and not in warning phase
-        if (monsterAnimator != null && monsterAnimator.GetBool(movingParam) && !isReturningToCenter && !isWarningPhase)
+        // If moving towards player and not in warning phase or returning to center
+        if (monsterAnimator != null && monsterAnimator.GetBool(movingParam) && !isReturningToCenter && !isWarningPhase && isPlayerInDetectionRange)
         {
             // Face and move towards player
             Vector3 directionToPlayer = (playerTransform.position - transform.position).normalized;
@@ -312,11 +339,13 @@ public class MonsterAI : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
 
+            // Check if player is still in center range
             if (playerInCenterRange)
             {
-                // If close enough to attack
+                // Check distance for attack
                 if (distanceToPlayer <= attackTriggerDistance && canAttack && !isAttacking)
                 {
+                    Debug.Log($"MonsterAI: Player in attack range! Distance: {distanceToPlayer}");
                     // Stop moving and attack
                     SetMovingState(false);
                     StartAttack();
@@ -357,12 +386,22 @@ public class MonsterAI : MonoBehaviour
                 ReachedCenter();
             }
         }
+        // If idle but player is in detection range and not warning phase
+        else if (monsterAnimator != null && monsterAnimator.GetBool(idleParam) &&
+                 isPlayerInDetectionRange && !isWarningPhase && !isReturningToCenter && playerInCenterRange)
+        {
+            // Check if we should start moving towards player
+            if (distanceToPlayer > attackTriggerDistance && distanceToPlayer <= detectionRange)
+            {
+                Debug.Log("MonsterAI: Idle but player in range, starting movement");
+                SetMovingState(true);
+            }
+        }
 
         // Additional check: If monster is at center and idle, ensure sleeping effect is enabled
         CheckAndUpdateSleepingEffect();
     }
 
-    // NEW METHOD: Check and update sleeping effect status
     private void CheckAndUpdateSleepingEffect()
     {
         if (sleepingEffect == null) return;
@@ -388,17 +427,18 @@ public class MonsterAI : MonoBehaviour
         if (sleepingEffect.activeSelf != shouldEnableSleeping)
         {
             sleepingEffect.SetActive(shouldEnableSleeping);
-            if (shouldEnableSleeping)
-                Debug.Log("Sleeping effect enabled: Monster is at center and idle");
-            else
-                Debug.Log("Sleeping effect disabled");
         }
     }
 
     private void StartAttack()
     {
-        if (!canAttack || isAttacking || isReturningToCenter || isWarningPhase) return;
+        if (!canAttack || isAttacking || isReturningToCenter || isWarningPhase)
+        {
+            Debug.Log($"MonsterAI: Cannot attack - canAttack={canAttack}, isAttacking={isAttacking}, isReturningToCenter={isReturningToCenter}, isWarningPhase={isWarningPhase}");
+            return;
+        }
 
+        Debug.Log("MonsterAI: Starting attack sequence");
         SetAttackingState(true);
         isAttacking = true;
 
@@ -416,6 +456,7 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator AttackSequence()
     {
+        Debug.Log("MonsterAI: Attack sequence started");
         // Wait for attack animation to reach hitting point
         yield return new WaitForSeconds(attackAnimationDelay);
 
@@ -423,14 +464,14 @@ public class MonsterAI : MonoBehaviour
         if (damagePanel != null)
         {
             damagePanel.SetActive(true);
-            Debug.Log("DAMAGE PANEL ACTIVATED!");
+            Debug.Log("MonsterAI: DAMAGE PANEL ACTIVATED!");
 
             // Auto-hide after 1 second (damage panel animation duration)
             StartCoroutine(HideDamagePanelAfterDelay());
         }
         else
         {
-            Debug.LogError("Damage panel is null! Did you assign it in the Inspector?");
+            Debug.LogError("MonsterAI: Damage panel is null! Did you assign it in the Inspector?");
         }
 
         // Apply damage to player
@@ -450,6 +491,7 @@ public class MonsterAI : MonoBehaviour
         // Wait for attack animation to finish
         yield return new WaitForSeconds(0.3f);
 
+        Debug.Log("MonsterAI: Attack sequence finished, starting cooldown");
         // After attack, start cooldown
         SetAttackingState(false);
         isAttacking = false;
@@ -458,17 +500,18 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator HideDamagePanelAfterDelay()
     {
-        yield return new WaitForSeconds(1f); // Wait for animation duration
+        yield return new WaitForSeconds(1f);
 
         if (damagePanel != null)
         {
             damagePanel.SetActive(false);
-            Debug.Log("Damage panel deactivated.");
+            Debug.Log("MonsterAI: Damage panel deactivated.");
         }
     }
 
     private IEnumerator AttackCooldownRoutine()
     {
+        Debug.Log("MonsterAI: Attack cooldown started");
         canAttack = false;
 
         // Set stealing animation to TRUE during cooldown (using separate animator)
@@ -483,38 +526,44 @@ public class MonsterAI : MonoBehaviour
         SetStealingState(false);
 
         canAttack = true;
+        Debug.Log("MonsterAI: Attack cooldown finished");
 
         // After cooldown, check what to do next
         if (playerTransform != null)
         {
             float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
             bool playerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
+            bool playerInDetectionRange = distanceToPlayer <= detectionRange;
+
+            Debug.Log($"MonsterAI: After cooldown - Distance to player: {distanceToPlayer}, Player in center: {playerInCenterRange}, Player in detection: {playerInDetectionRange}");
 
             if (distanceToPlayer <= attackTriggerDistance && playerInCenterRange)
             {
                 // Player is still in attack range, attack again
+                Debug.Log("MonsterAI: Player still in attack range, attacking again");
                 StartAttack();
             }
-            else if (distanceToPlayer <= detectionRange && playerInCenterRange)
+            else if (playerInDetectionRange && playerInCenterRange)
             {
                 // Player is in detection range but not attack range, move towards them
+                Debug.Log("MonsterAI: Player in detection range, moving towards player");
                 SetMovingState(true);
             }
             else
             {
                 // Player left range, start returning to center
+                Debug.Log("MonsterAI: Player left range, returning to center");
                 PlayerExitedDetectionRange();
                 PlayerExitedCenterRange();
             }
         }
     }
 
-    // Trigger for attack collider (only for knockback now)
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && isAttacking)
         {
-            // Only apply knockback here
+            Debug.Log("MonsterAI: Attack trigger collider hit player");
             ApplyKnockbackToPlayer();
         }
     }
@@ -527,9 +576,8 @@ public class MonsterAI : MonoBehaviour
             return;
         }
 
-        // Apply damage to player ENERGY instead of life
         gameManager.RemoveEnergy(attackDamage);
-        Debug.Log($"Applied {attackDamage} damage to player's energy!");
+        Debug.Log($"MonsterAI: Applied {attackDamage} damage to player's energy!");
 
         // Play player hurt sound at player position
         if (playerHurtSound != null && playerTransform != null)
@@ -547,18 +595,14 @@ public class MonsterAI : MonoBehaviour
             knockbackDirection.Normalize();
 
             gameManager.ApplyKnockback(knockbackDirection, knockbackForce, knockbackDuration);
-            Debug.Log("Applied knockback to player!");
+            Debug.Log("MonsterAI: Applied knockback to player!");
         }
     }
 
-    // SIMPLIFIED AUDIO MANAGEMENT WITH FIXED VOLUME
-
-    // Play a one-shot sound at fixed volume
     private void PlayOneShotSound(AudioClip clip)
     {
         if (clip == null || audioSource == null) return;
 
-        // Stop any currently playing sound
         if (audioSource.isPlaying)
         {
             audioSource.Stop();
@@ -567,12 +611,10 @@ public class MonsterAI : MonoBehaviour
         audioSource.PlayOneShot(clip);
     }
 
-    // Play looping sound at fixed volume
     private void PlayLoopingSound(AudioClip clip)
     {
         if (clip == null || audioSource == null) return;
 
-        // Only change if different clip
         if (currentLoopAudio != clip || !audioSource.isPlaying)
         {
             currentLoopAudio = clip;
@@ -582,7 +624,6 @@ public class MonsterAI : MonoBehaviour
         }
     }
 
-    // Stop current sound
     private void StopCurrentSound()
     {
         if (audioSource != null && audioSource.isPlaying)
@@ -592,7 +633,6 @@ public class MonsterAI : MonoBehaviour
         }
     }
 
-    // Animation state setters with SIMPLIFIED audio management
     private void SetIdleState(bool state)
     {
         if (monsterAnimator != null)
@@ -601,7 +641,6 @@ public class MonsterAI : MonoBehaviour
             monsterAnimator.SetBool(movingParam, !state);
             monsterAnimator.SetBool(attackingParam, false);
 
-            // Audio management - fixed volume
             if (state && idleSound != null)
             {
                 PlayLoopingSound(idleSound);
@@ -621,13 +660,11 @@ public class MonsterAI : MonoBehaviour
             monsterAnimator.SetBool(idleParam, !state);
             monsterAnimator.SetBool(attackingParam, false);
 
-            // Ensure sleeping effect is disabled when moving
             if (state && sleepingEffect != null && sleepingEffect.activeSelf)
             {
                 sleepingEffect.SetActive(false);
             }
 
-            // Audio management - fixed volume
             if (state && walkingSound != null)
             {
                 PlayLoopingSound(walkingSound);
@@ -644,16 +681,14 @@ public class MonsterAI : MonoBehaviour
         if (monsterAnimator != null)
         {
             monsterAnimator.SetBool(attackingParam, state);
-            monsterAnimator.SetBool(movingParam, !state);
+            monsterAnimator.SetBool(movingParam, false);
             monsterAnimator.SetBool(idleParam, false);
 
-            // Ensure sleeping effect is disabled when attacking
             if (state && sleepingEffect != null && sleepingEffect.activeSelf)
             {
                 sleepingEffect.SetActive(false);
             }
 
-            // Audio management - fixed volume
             if (state && attackingSound != null)
             {
                 PlayLoopingSound(attackingSound);
@@ -665,84 +700,33 @@ public class MonsterAI : MonoBehaviour
         }
     }
 
-    // STEALING ANIMATION SETTER - Uses separate animator
     private void SetStealingState(bool state)
     {
         if (stealingAnimator != null && !string.IsNullOrEmpty(stealingParam))
         {
             stealingAnimator.SetBool(stealingParam, state);
 
-            // Play stealing sound when starting to steal (one-shot)
             if (state && stealingSound != null)
             {
                 PlayOneShotSound(stealingSound);
             }
 
-            Debug.Log($"Stealing animation set to: {state}");
+            Debug.Log($"MonsterAI: Stealing animation set to: {state}");
         }
-        else if (state) // Only log warning when trying to enable stealing
+        else if (state)
         {
-            Debug.LogWarning($"Cannot set stealing animation: Animator={(stealingAnimator != null)}, Param={stealingParam}");
+            Debug.LogWarning($"MonsterAI: Cannot set stealing animation: Animator={(stealingAnimator != null)}, Param={stealingParam}");
         }
     }
 
-    // TEST METHOD - Add this to manually test the damage panel
-    [ContextMenu("TEST: Activate Damage Panel")]
-    public void TestActivateDamagePanel()
-    {
-        if (damagePanel != null)
-        {
-            damagePanel.SetActive(true);
-            Debug.Log("TEST: Damage panel activated via ContextMenu!");
-
-            StartCoroutine(TestHideDamagePanel());
-        }
-        else
-        {
-            Debug.LogError("TEST: Damage panel is null!");
-        }
-    }
-
-    // TEST METHOD - Add this to manually test stealing animation
-    [ContextMenu("TEST: Start Stealing Animation")]
-    public void TestStartStealing()
-    {
-        SetStealingState(true);
-        Debug.Log("TEST: Stealing animation started via ContextMenu!");
-
-        StartCoroutine(TestStopStealing());
-    }
-
-    private IEnumerator TestStopStealing()
-    {
-        yield return new WaitForSeconds(2f);
-        SetStealingState(false);
-        Debug.Log("TEST: Stealing animation stopped.");
-    }
-
-    private IEnumerator TestHideDamagePanel()
-    {
-        yield return new WaitForSeconds(1f);
-
-        if (damagePanel != null)
-        {
-            damagePanel.SetActive(false);
-            Debug.Log("TEST: Damage panel deactivated.");
-        }
-    }
-
-    // Gizmos for debugging
     private void OnDrawGizmosSelected()
     {
-        // Draw detection range
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
-        // Draw attack trigger distance
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackTriggerDistance);
 
-        // Draw center range
         Gizmos.color = Color.blue;
         if (Application.isPlaying)
         {

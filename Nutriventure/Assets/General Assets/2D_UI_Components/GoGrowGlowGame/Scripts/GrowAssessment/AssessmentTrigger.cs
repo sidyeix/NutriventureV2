@@ -8,12 +8,17 @@ public class AssessmentTrigger : MonoBehaviour
     [SerializeField] private GrowAssessmentManager assessmentManager;
 
     [Header("Settings")]
-    [SerializeField] private bool disableAfterTrigger = true;
+    [SerializeField] private bool disableAfterTrigger = false; // Keep as FALSE so it can be triggered again
+    [SerializeField] private bool resetOnGameEnd = true;
 
     private bool hasBeenTriggered = false;
+    private Collider triggerCollider;
 
     void Start()
     {
+        // Get the collider component
+        triggerCollider = GetComponent<Collider>();
+
         if (timelineManager == null)
             timelineManager = FindObjectOfType<TimelineSequenceManager>();
 
@@ -26,10 +31,13 @@ public class AssessmentTrigger : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!hasBeenTriggered && other.CompareTag("Player"))
+        // Remove the hasBeenTriggered check for the second playthrough
+        // Just check if it's the player
+        if (other.CompareTag("Player"))
         {
-            Debug.Log("Player entered assessment trigger");
+            Debug.Log("Player entered assessment trigger - Starting new playthrough");
 
+            // Store this as triggered
             hasBeenTriggered = true;
 
             // Start the timeline sequence
@@ -53,7 +61,6 @@ public class AssessmentTrigger : MonoBehaviour
                 sequenceManager.StartSequence();
             }
 
-            // DO NOT pause energy - it continues to decrease
             // Set energy to 100 at start of assessment
             if (GoGrowGlowGameManager.Instance != null)
             {
@@ -61,10 +68,17 @@ public class AssessmentTrigger : MonoBehaviour
                 Debug.Log("Energy set to 100 for assessment");
             }
 
-            // Disable trigger if configured
-            if (disableAfterTrigger)
+            // NEW: Enable the collider just in case
+            if (triggerCollider != null && !triggerCollider.enabled)
             {
-                GetComponent<Collider>().enabled = false;
+                triggerCollider.enabled = true;
+            }
+
+            // Only disable if explicitly set to (set this to FALSE in inspector)
+            if (disableAfterTrigger && triggerCollider != null)
+            {
+                triggerCollider.enabled = false;
+                Debug.Log("Trigger collider disabled after use");
             }
         }
     }
@@ -78,4 +92,43 @@ public class AssessmentTrigger : MonoBehaviour
             Gizmos.DrawCube(transform.position + col.center, col.size);
         }
     }
+
+    // Reset trigger for next game
+    public void ResetTrigger()
+    {
+        hasBeenTriggered = false;
+
+        if (triggerCollider != null && !triggerCollider.enabled)
+        {
+            triggerCollider.enabled = true;
+            Debug.Log($"AssessmentTrigger {gameObject.name} reset - collider re-enabled");
+        }
+        else
+        {
+            Debug.Log($"AssessmentTrigger {gameObject.name} reset");
+        }
+    }
+
+    // Force reset for new game
+    public void ForceResetForNewGame()
+    {
+        hasBeenTriggered = false;
+        if (triggerCollider != null)
+        {
+            triggerCollider.enabled = true;
+        }
+        Debug.Log("Assessment trigger force reset for new game");
+    }
+
+    // Call this when assessment completes to prepare for next run
+    public void OnAssessmentComplete()
+    {
+        if (resetOnGameEnd)
+        {
+            ResetTrigger();
+        }
+    }
+
+    // Public getter
+    public bool HasBeenTriggered() => hasBeenTriggered;
 }

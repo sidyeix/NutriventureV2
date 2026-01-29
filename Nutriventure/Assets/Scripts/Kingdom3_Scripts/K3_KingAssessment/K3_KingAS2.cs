@@ -47,6 +47,10 @@ public class K3_KingAS2 : MonoBehaviour
     [SerializeField] private bool enableHapticFeedback = true;
     [SerializeField] private bool enableShakeAnimations = true;
     
+    [Header("Collection System Reference")]
+    [SerializeField] private K3_CollectPreservatives collectionSystem;
+    [SerializeField] private PreservativesInformationManager infoManager;
+    
     // UI references
     private Slider ascorbicAcidSlider;
     private Slider potassiumSorbateSlider;
@@ -71,6 +75,11 @@ public class K3_KingAS2 : MonoBehaviour
     private float currentSpeed;
     private float holdDuration = 0f;
     private int currentFoodIndex = -1;
+    
+    // Collection tracking
+    private bool hasCollectedAscorbicAcid = false;
+    private bool hasCollectedPotassiumSorbate = false;
+    private bool hasCollectedSodiumBenzoate = false;
     
     // Food state tracking
     private Dictionary<int, Dictionary<PreservativeType, bool>> foodButtonRetryModes = new Dictionary<int, Dictionary<PreservativeType, bool>>();
@@ -131,6 +140,22 @@ public class K3_KingAS2 : MonoBehaviour
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
+        }
+        
+        // Initialize collection system references
+        InitializeCollectionReferences();
+    }
+    
+    private void InitializeCollectionReferences()
+    {
+        if (collectionSystem == null)
+        {
+            collectionSystem = FindObjectOfType<K3_CollectPreservatives>();
+        }
+        
+        if (infoManager == null)
+        {
+            infoManager = FindObjectOfType<PreservativesInformationManager>();
         }
     }
     
@@ -210,18 +235,23 @@ public class K3_KingAS2 : MonoBehaviour
         {
             buttonTransforms[PreservativeType.AscorbicAcid] = ascorbicAcidButton.GetComponent<RectTransform>();
             originalButtonScales[PreservativeType.AscorbicAcid] = buttonTransforms[PreservativeType.AscorbicAcid].localScale;
+            
+            // Initially disable all buttons until preservatives are collected
+            ascorbicAcidButton.interactable = false;
         }
         
         if (potassiumSorbateButton != null)
         {
             buttonTransforms[PreservativeType.PotassiumSorbate] = potassiumSorbateButton.GetComponent<RectTransform>();
             originalButtonScales[PreservativeType.PotassiumSorbate] = buttonTransforms[PreservativeType.PotassiumSorbate].localScale;
+            potassiumSorbateButton.interactable = false;
         }
         
         if (sodiumBenzoateButton != null)
         {
             buttonTransforms[PreservativeType.SodiumBenzoate] = sodiumBenzoateButton.GetComponent<RectTransform>();
             originalButtonScales[PreservativeType.SodiumBenzoate] = buttonTransforms[PreservativeType.SodiumBenzoate].localScale;
+            sodiumBenzoateButton.interactable = false;
         }
         
         SetupButtonHoldEvents(ascorbicAcidButton, PreservativeType.AscorbicAcid, ascorbicAcidSlider);
@@ -266,6 +296,53 @@ public class K3_KingAS2 : MonoBehaviour
         }
     }
     
+    // NEW METHOD: Update collection status
+    public void UpdateCollectionStatus()
+    {
+        if (infoManager != null)
+        {
+            hasCollectedAscorbicAcid = infoManager.IsPreservativeCollected("0");
+            hasCollectedPotassiumSorbate = infoManager.IsPreservativeCollected("1");
+            hasCollectedSodiumBenzoate = infoManager.IsPreservativeCollected("2");
+        }
+        else if (collectionSystem != null)
+        {
+            hasCollectedAscorbicAcid = collectionSystem.HasCollectedPreservative("0");
+            hasCollectedPotassiumSorbate = collectionSystem.HasCollectedPreservative("1");
+            hasCollectedSodiumBenzoate = collectionSystem.HasCollectedPreservative("2");
+        }
+        
+        // Update button interactability based on collection status
+        UpdateButtonInteractability();
+    }
+    
+    // NEW METHOD: Update button interactability based on collected preservatives
+    private void UpdateButtonInteractability()
+    {
+        if (currentFoodIndex == -1) return;
+        
+        bool isCompleted = foodCompleted[currentFoodIndex];
+        
+        // Only enable buttons if preservative is collected AND food is not completed
+        if (ascorbicAcidButton != null)
+        {
+            bool alreadyUsed = foodPreservativesUsed[currentFoodIndex].Contains(PreservativeType.AscorbicAcid);
+            ascorbicAcidButton.interactable = hasCollectedAscorbicAcid && !isCompleted && !alreadyUsed;
+        }
+        
+        if (potassiumSorbateButton != null)
+        {
+            bool alreadyUsed = foodPreservativesUsed[currentFoodIndex].Contains(PreservativeType.PotassiumSorbate);
+            potassiumSorbateButton.interactable = hasCollectedPotassiumSorbate && !isCompleted && !alreadyUsed;
+        }
+        
+        if (sodiumBenzoateButton != null)
+        {
+            bool alreadyUsed = foodPreservativesUsed[currentFoodIndex].Contains(PreservativeType.SodiumBenzoate);
+            sodiumBenzoateButton.interactable = hasCollectedSodiumBenzoate && !isCompleted && !alreadyUsed;
+        }
+    }
+    
     public void SetupForFood(int foodIndex, bool isCompleted, List<PreservativeType> usedPreservatives, Dictionary<PreservativeType, float> preservationValues)
     {
         currentFoodIndex = foodIndex;
@@ -286,6 +363,9 @@ public class K3_KingAS2 : MonoBehaviour
         
         foodCompleted[foodIndex] = isCompleted;
         
+        // Update collection status
+        UpdateCollectionStatus();
+        
         // Setup UI
         ResetPreservationState();
         RestoreFoodState(foodIndex);
@@ -298,7 +378,22 @@ public class K3_KingAS2 : MonoBehaviour
         Button button = GetButtonForPreservative(type);
         if (button != null)
         {
-            button.interactable = interactable;
+            // Only allow interactable if preservative is collected
+            bool hasPreservative = false;
+            switch (type)
+            {
+                case PreservativeType.AscorbicAcid:
+                    hasPreservative = hasCollectedAscorbicAcid;
+                    break;
+                case PreservativeType.PotassiumSorbate:
+                    hasPreservative = hasCollectedPotassiumSorbate;
+                    break;
+                case PreservativeType.SodiumBenzoate:
+                    hasPreservative = hasCollectedSodiumBenzoate;
+                    break;
+            }
+            
+            button.interactable = hasPreservative && interactable;
         }
     }
     
@@ -345,35 +440,40 @@ public class K3_KingAS2 : MonoBehaviour
         
         bool isCompleted = foodCompleted[foodIndex];
         
+        // Update collection status first
+        UpdateCollectionStatus();
+        
         if (ascorbicAcidButton != null)
         {
             bool alreadyUsed = foodPreservativesUsed[foodIndex].Contains(PreservativeType.AscorbicAcid);
-            ascorbicAcidButton.interactable = !isCompleted && !alreadyUsed;
+            bool canUse = hasCollectedAscorbicAcid && !isCompleted && !alreadyUsed;
+            ascorbicAcidButton.interactable = canUse;
             SetButtonIcon(PreservativeType.AscorbicAcid, foodButtonRetryModes[foodIndex][PreservativeType.AscorbicAcid]);
         }
         
         if (potassiumSorbateButton != null)
         {
             bool alreadyUsed = foodPreservativesUsed[foodIndex].Contains(PreservativeType.PotassiumSorbate);
-            potassiumSorbateButton.interactable = !isCompleted && !alreadyUsed;
+            bool canUse = hasCollectedPotassiumSorbate && !isCompleted && !alreadyUsed;
+            potassiumSorbateButton.interactable = canUse;
             SetButtonIcon(PreservativeType.PotassiumSorbate, foodButtonRetryModes[foodIndex][PreservativeType.PotassiumSorbate]);
         }
         
         if (sodiumBenzoateButton != null)
         {
             bool alreadyUsed = foodPreservativesUsed[foodIndex].Contains(PreservativeType.SodiumBenzoate);
-            sodiumBenzoateButton.interactable = !isCompleted && !alreadyUsed;
+            bool canUse = hasCollectedSodiumBenzoate && !isCompleted && !alreadyUsed;
+            sodiumBenzoateButton.interactable = canUse;
             SetButtonIcon(PreservativeType.SodiumBenzoate, foodButtonRetryModes[foodIndex][PreservativeType.SodiumBenzoate]);
         }
         
         UpdateStatusText();
     }
     
-        private void SetButtonIcon(PreservativeType type, bool isRetryMode)
+    private void SetButtonIcon(PreservativeType type, bool isRetryMode)
     {
         if (preservationUISettings == null || currentFoodIndex == -1) return;
         
-        // FIX 3: Always show retry icon when in retry mode
         bool shouldShowRetry = isRetryMode || foodButtonRetryModes[currentFoodIndex][type];
         
         switch (type)
@@ -381,7 +481,6 @@ public class K3_KingAS2 : MonoBehaviour
             case PreservativeType.AscorbicAcid:
                 if (preservationUISettings.ascorbicBTNimg != null)
                 {
-                    // FIX 3: Clear logic for icon switching
                     preservationUISettings.ascorbicBTNimg.sprite = shouldShowRetry ? retryIcon : ascorbicIcon;
                     preservationUISettings.ascorbicBTNimg.preserveAspect = true;
                 }
@@ -404,6 +503,7 @@ public class K3_KingAS2 : MonoBehaviour
                 break;
         }
     }
+    
     public void UpdateStatusText()
     {
         if (currentFoodIndex == -1 || preservationStatusText == null) return;
@@ -420,9 +520,27 @@ public class K3_KingAS2 : MonoBehaviour
         }
         else
         {
-            preservationStatusText.text = $"Select and hold preservative button to preserve";
+            // Update collection status message
+            string collectionMessage = GetCollectionStatusMessage();
+            preservationStatusText.text = $"{collectionMessage}\nSelect and hold preservative button to preserve";
             preservationStatusText.color = Color.black;
         }
+    }
+    
+    private string GetCollectionStatusMessage()
+    {
+        List<string> missingPreservatives = new List<string>();
+        
+        if (!hasCollectedAscorbicAcid) missingPreservatives.Add("Ascorbic Acid");
+        if (!hasCollectedPotassiumSorbate) missingPreservatives.Add("Potassium Sorbate");
+        if (!hasCollectedSodiumBenzoate) missingPreservatives.Add("Sodium Benzoate");
+        
+        if (missingPreservatives.Count == 3)
+            return "No preservatives collected! Find potions in the castle.";
+        else if (missingPreservatives.Count > 0)
+            return $"Missing: {string.Join(", ", missingPreservatives)}";
+        else
+            return "All preservatives collected!";
     }
     
     private void OnButtonPressed(PreservativeType type, Slider slider)
@@ -430,13 +548,20 @@ public class K3_KingAS2 : MonoBehaviour
         if (currentFoodIndex == -1) return;
         if (foodCompleted[currentFoodIndex]) return;
         
+        // Check if preservative is collected
+        if (!IsPreservativeCollected(type))
+        {
+            preservationStatusText.text = $"{type} not collected! Find the potion first.";
+            preservationStatusText.color = Color.red;
+            return;
+        }
+        
         ScaleButton(type, true);
         
-        // FIX 3: Clear the retry mode when button is pressed again
         if (foodButtonRetryModes[currentFoodIndex][type])
         {
             foodButtonRetryModes[currentFoodIndex][type] = false;
-            SetButtonIcon(type, false); // Reset to default icon
+            SetButtonIcon(type, false);
             ResetPreservationStateForType(type);
             preservationStatusText.text = "Ready to try again. Hold the button to start.";
             preservationStatusText.color = Color.black;
@@ -468,6 +593,24 @@ public class K3_KingAS2 : MonoBehaviour
         
         UpdateSliderUI(slider, type);
     }
+    
+    private bool IsPreservativeCollected(PreservativeType type)
+    {
+        switch (type)
+        {
+            case PreservativeType.AscorbicAcid:
+                return hasCollectedAscorbicAcid;
+            case PreservativeType.PotassiumSorbate:
+                return hasCollectedPotassiumSorbate;
+            case PreservativeType.SodiumBenzoate:
+                return hasCollectedSodiumBenzoate;
+            default:
+                return false;
+        }
+    }
+    
+    // Rest of the class remains the same...
+    // [The rest of the class code from the original remains unchanged]
     
     private void OnButtonReleased()
     {
@@ -577,7 +720,7 @@ public class K3_KingAS2 : MonoBehaviour
     
     private void CheckPreservationResult()
     {
-    if (currentFoodIndex == -1 || !isPreserving) return;
+        if (currentFoodIndex == -1 || !isPreserving) return;
         
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(currentFoodIndex);
         if (profile == null) return;
@@ -604,11 +747,9 @@ public class K3_KingAS2 : MonoBehaviour
             isCloseEnough = Mathf.Abs(CurrentSliderValue - ((profile.minSliderValue + profile.maxSliderValue) / 2)) <= minRequiredAccuracy;
         }
         
-        // FIX 4: Auto-reset condition - check if value is in incorrect range
         bool isInIncorrectRange = false;
         if (!isInRange && !isCloseEnough)
         {
-            // Check if value is in the "danger zone" (way off target)
             if (currentFoodIndex == 7)
             {
                 if (CurrentPreservativeType == PreservativeType.SodiumBenzoate)
@@ -649,8 +790,6 @@ public class K3_KingAS2 : MonoBehaviour
                 StartCoroutine(SuccessFeedback());
                 
                 foodSliderValues[currentFoodIndex][CurrentPreservativeType] = CurrentSliderValue;
-                
-                // SCORING: Notify scoring system of successful preservation attempt
             }
             else if (alreadyApplied)
             {
@@ -669,8 +808,7 @@ public class K3_KingAS2 : MonoBehaviour
                 }
                 
                 foodButtonRetryModes[currentFoodIndex][CurrentPreservativeType] = true;
-                SetButtonIcon(CurrentPreservativeType, true); // Add this line
-
+                SetButtonIcon(CurrentPreservativeType, true);
                 PlaySound(failureSound);
                 StartCoroutine(ShakeButton(GetButtonForPreservative(CurrentPreservativeType)));
                 TriggerHapticFeedback();
@@ -691,7 +829,7 @@ public class K3_KingAS2 : MonoBehaviour
                 }
                 
                 foodButtonRetryModes[currentFoodIndex][CurrentPreservativeType] = true;
-                SetButtonIcon(CurrentPreservativeType, true); // Add this line
+                SetButtonIcon(CurrentPreservativeType, true);
                 
                 PlaySound(failureSound);
                 StartCoroutine(FailureFeedback());
@@ -702,42 +840,38 @@ public class K3_KingAS2 : MonoBehaviour
         else
         {
             preservationStatusText.text = $"{CurrentSliderValue:F0} is not in target range. Try again!";
-        preservationStatusText.color = Color.red;
-        preservationComplete = false;
-        
-        if (confirmButton != null)
-        {
-            confirmButton.interactable = false;
+            preservationStatusText.color = Color.red;
+            preservationComplete = false;
+            
+            if (confirmButton != null)
+            {
+                confirmButton.interactable = false;
+            }
+            if (scoringSystem != null)
+            {
+                scoringSystem.DeductPointsForMistake(currentFoodIndex, 300);
+            }
+            
+            foodButtonRetryModes[currentFoodIndex][CurrentPreservativeType] = true;
+            SetButtonIcon(CurrentPreservativeType, true);
+            
+            if (isInIncorrectRange)
+            {
+                ResetPreservationStateForType(CurrentPreservativeType);
+                preservationStatusText.text = "Too far off target! Resetting slider. Try again.";
+            }
+            
+            PlaySound(failureSound);
+            StartCoroutine(FailureFeedback());
+            StartCoroutine(ShakePanel());
+            TriggerHapticFeedback();
         }
-        if (scoringSystem != null)
-        {
-            scoringSystem.DeductPointsForMistake(currentFoodIndex, 300);
-        }
         
-        // FIX 4: Always set retry mode for incorrect attempts
-        foodButtonRetryModes[currentFoodIndex][CurrentPreservativeType] = true;
-        SetButtonIcon(CurrentPreservativeType, true);
-        
-        // FIX 4: Auto-reset the slider if value is in incorrect range
-        if (isInIncorrectRange)
-        {
-            // Reset the slider value to 0
-            ResetPreservationStateForType(CurrentPreservativeType);
-            preservationStatusText.text = "Too far off target! Resetting slider. Try again.";
-        }
-        
-        PlaySound(failureSound);
-        StartCoroutine(FailureFeedback());
-        StartCoroutine(ShakePanel());
-        TriggerHapticFeedback();
+        isPreserving = false;
+        SetAllSlidersInteractable(false);
+        UpdateSliderColor(CurrentSliderValue, CurrentPreservativeType);
     }
     
-    isPreserving = false;
-    SetAllSlidersInteractable(false);
-    UpdateSliderColor(CurrentSliderValue, CurrentPreservativeType);
-    }
-    
-    // Helper methods
     private bool IsCorrectPreservativeForFood(int foodIndex, PreservativeType type)
     {
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(foodIndex);
@@ -845,7 +979,6 @@ public class K3_KingAS2 : MonoBehaviour
         }
     }
     
-    // Animation and feedback methods
     private void ScaleButton(PreservativeType type, bool scaleUp)
     {
         if (!buttonTransforms.ContainsKey(type) || !originalButtonScales.ContainsKey(type))
@@ -1018,7 +1151,6 @@ public class K3_KingAS2 : MonoBehaviour
         #endif
     }
     
-    // Utility methods
     private string GetPreservationLevelDescription(float value)
     {
         if (value <= 20) return "Minimal";
@@ -1062,9 +1194,12 @@ public class K3_KingAS2 : MonoBehaviour
     
     private void SetAllPreservativeButtonsInteractable(bool interactable)
     {
-        if (ascorbicAcidButton != null) ascorbicAcidButton.interactable = interactable;
-        if (potassiumSorbateButton != null) potassiumSorbateButton.interactable = interactable;
-        if (sodiumBenzoateButton != null) sodiumBenzoateButton.interactable = interactable;
+        if (ascorbicAcidButton != null) 
+            ascorbicAcidButton.interactable = hasCollectedAscorbicAcid && interactable;
+        if (potassiumSorbateButton != null) 
+            potassiumSorbateButton.interactable = hasCollectedPotassiumSorbate && interactable;
+        if (sodiumBenzoateButton != null) 
+            sodiumBenzoateButton.interactable = hasCollectedSodiumBenzoate && interactable;
     }
     
     private void SetAllSlidersInteractable(bool interactable)
@@ -1157,7 +1292,6 @@ public class K3_KingAS2 : MonoBehaviour
         }
     }
     
-    // Public API for other scripts
     public bool IsFoodPreserved(int foodIndex)
     {
         return foodCompleted.ContainsKey(foodIndex) && foodCompleted[foodIndex];
