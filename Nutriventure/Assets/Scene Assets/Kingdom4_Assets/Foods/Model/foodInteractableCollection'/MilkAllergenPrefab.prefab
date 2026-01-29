@@ -76,6 +76,7 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  productInfoManager: {fileID: 0}
   allergenDatabase: {fileID: 11400000, guid: 93d4396a1d8e9654c977e9e751eb0c63, type: 2}
   ingredientId: milk
   pickupSFX: {fileID: 8300000, guid: d3969949d9ff1e646a385b63aa4619a8, type: 3}

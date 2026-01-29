@@ -39,7 +39,7 @@ public class KartCollisionHandler : MonoBehaviour
     public float shieldBlockShakeDuration = 0.2f;
     
     [Header("References")]
-    public PlayerHealth playerHealth;
+    public PlayerHealthManager playerHealthManager; // Changed from PlayerHealth
     public KartController kartController;
     
     private Vector3 lastSafePosition;
@@ -62,12 +62,28 @@ public class KartCollisionHandler : MonoBehaviour
             cameraOriginalPosition = mainCamera.transform.localPosition;
         }
         
-        if (playerHealth == null)
+        // MODIFIED: Connect to PlayerHealthManager
+        if (playerHealthManager == null)
         {
-            playerHealth = FindAnyObjectByType<PlayerHealth>();
-            if (playerHealth == null)
+            // Try to find PlayerHealthManager (singleton pattern)
+            if (PlayerHealthManager.Instance != null)
             {
-                Debug.LogWarning("PlayerHealth not found!");
+                playerHealthManager = PlayerHealthManager.Instance;
+                Debug.Log("Connected to PlayerHealthManager");
+            }
+            else
+            {
+                // Fallback: search for it in the scene
+                PlayerHealthManager foundManager = FindObjectOfType<PlayerHealthManager>();
+                if (foundManager != null)
+                {
+                    playerHealthManager = foundManager;
+                    Debug.Log("Found PlayerHealthManager in scene");
+                }
+                else
+                {
+                    Debug.LogWarning("PlayerHealthManager not found! Damage won't work.");
+                }
             }
         }
         
@@ -82,6 +98,8 @@ public class KartCollisionHandler : MonoBehaviour
         if ((roadWaypoints == null || roadWaypoints.Length == 0) && findNearestWaypoint)
         {
             FindRoadWaypoints();
+            // ADDED: Ensure waypoints have correct rotation
+            EnsureWaypointRotations();
         }
     }
     
@@ -97,11 +115,61 @@ public class KartCollisionHandler : MonoBehaviour
                 roadWaypoints[i] = waypointObjects[i].transform;
             }
             Debug.Log($"Found {roadWaypoints.Length} waypoints for road reset");
+            
+            // ADDED: Fix rotations after finding waypoints
+            EnsureWaypointRotations();
         }
         else
         {
             Debug.LogWarning("No waypoints found with tag 'Waypoint'!");
         }
+    }
+    
+    void EnsureWaypointRotations()
+    {
+        if (roadWaypoints == null || roadWaypoints.Length == 0) return;
+        
+        foreach (Transform waypoint in roadWaypoints)
+        {
+            if (waypoint != null)
+            {
+                // Set rotation to Y 180 (facing forward in Unity's coordinate system)
+                Vector3 newRotation = waypoint.eulerAngles;
+                newRotation.y = 180f;
+                waypoint.rotation = Quaternion.Euler(newRotation);
+                
+                Debug.Log($"Set waypoint {waypoint.name} rotation to Y: 180");
+            }
+        }
+    }
+    
+    [ContextMenu("Fix All Waypoint Rotations")]
+    public void FixAllWaypointRotations()
+    {
+        // Refresh waypoints if needed
+        if (roadWaypoints == null || roadWaypoints.Length == 0)
+        {
+            FindRoadWaypoints();
+        }
+        
+        // Ensure rotations are correct
+        EnsureWaypointRotations();
+        
+        Debug.Log($"Fixed rotations for {roadWaypoints.Length} waypoints");
+    }
+    
+    public void InitializeWaypointsWithRotation(Transform[] newWaypoints)
+    {
+        roadWaypoints = newWaypoints;
+        EnsureWaypointRotations();
+        
+        Debug.Log($"Initialized {roadWaypoints.Length} waypoints with Y rotation 180");
+    }
+    
+    public void SetWaypointsAndFixRotation(Transform[] waypoints)
+    {
+        roadWaypoints = waypoints;
+        FixAllWaypointRotations();
     }
     
     // Handle regular collisions (for fences)
@@ -120,26 +188,25 @@ public class KartCollisionHandler : MonoBehaviour
     
     // Handle trigger collisions
     void OnTriggerEnter(Collider other)
-{
-    // Add DEBUG LOG to see what's triggering
-    Debug.Log($"🔵 Kart OnTriggerEnter: {other.gameObject.name}");
-    
-    // Check if it's a powerup FIRST
-    ItemCollectible item = other.GetComponent<ItemCollectible>();
-    if (item != null && item.itemData != null)
     {
-        if (item.itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
+        // Add DEBUG LOG to see what's triggering
+        Debug.Log($"🔵 Kart OnTriggerEnter: {other.gameObject.name}");
+        
+        // Check if it's a powerup FIRST
+        ItemCollectible item = other.GetComponent<ItemCollectible>();
+        if (item != null && item.itemData != null)
         {
-            Debug.Log($"🎯 POWERUP detected! Type: {item.itemData.itemType}");
-            Debug.Log($"   Skipping allergen handling for powerup");
-            return; // Don't handle powerups at all
+            if (item.itemData.category == SpawnableItemData.ItemCategory.SafePowerup)
+            {
+                Debug.Log($"🎯 POWERUP detected! Type: {item.itemData.itemType}");
+                Debug.Log($"   Skipping allergen handling for powerup");
+                return; // Don't handle powerups at all
+            }
         }
+        
+        // Only handle allergens (not powerups)
+        HandleAllergenTrigger(other);
     }
-    
-    // Only handle allergens (not powerups)
-    HandleAllergenTrigger(other);
-}
-
     
     void HandleFenceCollision(Collision collision)
     {
@@ -279,17 +346,25 @@ public class KartCollisionHandler : MonoBehaviour
         return false;
     }
     
-bool IsShieldActive()
-{
-    return ItemCollectible.IsShieldActive();
-}
+    bool IsShieldActive()
+    {
+        return ItemCollectible.IsShieldActive();
+    }
     
     void ApplyDamage()
     {
-        if (isInvulnerable || playerHealth == null) return;
+        if (isInvulnerable) return;
         
-        playerHealth.TakeDamage(damagePerCollision);
-        Debug.Log($"❤️ Player lost {damagePerCollision} heart(s)!");
+        // Use PlayerHealthManager
+        if (playerHealthManager != null)
+        {
+            playerHealthManager.TakeDamage(damagePerCollision);
+            Debug.Log($"❤️ Player lost {damagePerCollision} heart(s)! (via PlayerHealthManager)");
+        }
+        else
+        {
+            Debug.LogWarning("No PlayerHealthManager connected!");
+        }
     }
     
     IEnumerator ResetToRoad()
@@ -313,7 +388,16 @@ bool IsShieldActive()
         }
         
         Vector3 targetPosition = GetNearestRoadPoint();
-        Quaternion targetRotation = Quaternion.LookRotation(GetRoadDirection(targetPosition));
+        
+        // MODIFIED: Always use Y rotation 180
+        Vector3 targetDirection = GetRoadDirection(targetPosition);
+        Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+        
+        // Ensure Y rotation is exactly 180
+        Vector3 targetEuler = targetRotation.eulerAngles;
+        targetEuler.y = 180f;
+        targetRotation = Quaternion.Euler(targetEuler);
+        
         targetPosition += Vector3.up * resetHeight;
         
         float elapsedTime = 0f;
@@ -331,8 +415,11 @@ bool IsShieldActive()
             yield return null;
         }
         
+        // Final adjustment to ensure exact Y 180 rotation
+        Vector3 finalEuler = targetRotation.eulerAngles;
+        finalEuler.y = 180f;
+        transform.rotation = Quaternion.Euler(finalEuler);
         transform.position = targetPosition;
-        transform.rotation = targetRotation;
         
         yield return new WaitForSeconds(0.5f);
         
@@ -396,17 +483,27 @@ bool IsShieldActive()
                 }
             }
             
+            // Calculate direction based on waypoints
+            Vector3 direction = Vector3.forward; // Default
+            
             if (nearestIndex < roadWaypoints.Length - 1)
             {
-                return (roadWaypoints[nearestIndex + 1].position - roadWaypoints[nearestIndex].position).normalized;
+                direction = (roadWaypoints[nearestIndex + 1].position - roadWaypoints[nearestIndex].position).normalized;
             }
             else if (nearestIndex > 0)
             {
-                return (roadWaypoints[nearestIndex].position - roadWaypoints[nearestIndex - 1].position).normalized;
+                direction = (roadWaypoints[nearestIndex].position - roadWaypoints[nearestIndex - 1].position).normalized;
             }
+            
+            // Create rotation with Y always at 180
+            Quaternion rotation = Quaternion.LookRotation(direction);
+            Vector3 eulerAngles = rotation.eulerAngles;
+            eulerAngles.y = 180f; // Force Y rotation to 180
+            return Quaternion.Euler(eulerAngles) * Vector3.forward;
         }
         
-        return transform.forward;
+        // Fallback: return direction with Y rotation 180
+        return Quaternion.Euler(0, 180, 0) * Vector3.forward;
     }
     
     void PlayCollisionEffects(Vector3 collisionPoint)
@@ -526,6 +623,11 @@ bool IsShieldActive()
             System.Array.Resize(ref roadWaypoints, roadWaypoints.Length + 1);
             roadWaypoints[roadWaypoints.Length - 1] = waypoint;
         }
+        
+        // Fix the new waypoint's rotation
+        Vector3 newRotation = waypoint.eulerAngles;
+        newRotation.y = 180f;
+        waypoint.rotation = Quaternion.Euler(newRotation);
     }
     
     public void SetInvulnerable(bool invulnerable, float duration = 0f)
@@ -591,6 +693,12 @@ bool IsShieldActive()
                     {
                         Gizmos.DrawSphere(roadWaypoints[i].position, 0.5f);
                         
+                        // Draw rotation indicator (Y 180)
+                        Vector3 forward = roadWaypoints[i].rotation * Vector3.forward;
+                        Gizmos.color = Color.blue;
+                        Gizmos.DrawRay(roadWaypoints[i].position, forward * 2f);
+                        
+                        Gizmos.color = Color.green;
                         if (i < roadWaypoints.Length - 1 && roadWaypoints[i + 1] != null)
                         {
                             Gizmos.DrawLine(roadWaypoints[i].position, roadWaypoints[i + 1].position);

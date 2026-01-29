@@ -43,14 +43,15 @@ public class PlayerHealthManager : MonoBehaviour
     private Renderer playerRenderer;
     private Color originalPlayerColor;
     
-     // Add game over/phase reset logic
+    // ADDED: AudioSource component reference
+    private AudioSource audioSource;
+    
     private void Die()
     {
         Debug.Log("Player Died!");
         
-        // Play death sound
-        if (AudioHandler.Instance != null && deathSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(deathSound);
+        // Play death sound with fallback
+        PlaySoundEffect(deathSound);
         
         // Disable player controls
         ThirdPersonController playerController = GetComponent<ThirdPersonController>();
@@ -98,6 +99,13 @@ public class PlayerHealthManager : MonoBehaviour
         if (playerRenderer != null)
             originalPlayerColor = playerRenderer.material.color;
             
+        // ADDED: Get or add AudioSource component
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
         InitializeHearts();
         currentHealth = maxHearts;
         UpdateHeartsUI();
@@ -139,6 +147,10 @@ public class PlayerHealthManager : MonoBehaviour
         lastDamageTime = Time.time;
         
         UpdateHeartsUI();
+        
+        // ADDED: Play damage sound immediately when taking damage
+        PlayDamageSound();
+        
         PlayDamageEffects();
         
         if (damageCoroutine != null) StopCoroutine(damageCoroutine);
@@ -155,8 +167,8 @@ public class PlayerHealthManager : MonoBehaviour
         
         UpdateHeartsUI();
         
-        if (AudioHandler.Instance != null && healSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(healSound);
+        // ADDED: Use the new PlaySoundEffect method
+        PlaySoundEffect(healSound);
     }
     
     private void UpdateHeartsUI()
@@ -187,69 +199,65 @@ public class PlayerHealthManager : MonoBehaviour
     }
     
     private IEnumerator DamageSequence()
-{
-    isInvulnerable = true;
-    
-    // Activate damage overlay if it exists
-    if (damageOverlay != null)
     {
-        damageOverlay.gameObject.SetActive(true);
+        isInvulnerable = true;
         
-        float timer = 0f;
-        while (timer < overlayFadeTime)
+        // Activate damage overlay if it exists
+        if (damageOverlay != null)
         {
-            timer += Time.deltaTime;
-            float alpha = Mathf.Lerp(0f, 0.3f, timer / overlayFadeTime);
-            damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-            yield return null;
+            damageOverlay.gameObject.SetActive(true);
+            
+            float timer = 0f;
+            while (timer < overlayFadeTime)
+            {
+                timer += Time.deltaTime;
+                float alpha = Mathf.Lerp(0f, 0.3f, timer / overlayFadeTime);
+                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
+                yield return null;
+            }
+            
+            yield return new WaitForSeconds(0.1f);
+            
+            timer = 0f;
+            while (timer < overlayFadeTime)
+            {
+                timer += Time.deltaTime;
+                float alpha = Mathf.Lerp(0.3f, 0f, timer / overlayFadeTime);
+                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
+                yield return null;
+            }
+            
+            // Deactivate overlay after fade out
+            damageOverlay.gameObject.SetActive(false);
         }
         
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(invulnerabilityTime - overlayFadeTime * 2 - 0.1f);
         
-        timer = 0f;
-        while (timer < overlayFadeTime)
+        isInvulnerable = false;
+    }
+    
+    public void ResetHealth()
+    {
+        currentHealth = maxHearts;
+        UpdateHeartsUI();
+        isInvulnerable = false;
+        
+        // Ensure damage overlay is deactivated
+        if (damageOverlay != null)
         {
-            timer += Time.deltaTime;
-            float alpha = Mathf.Lerp(0.3f, 0f, timer / overlayFadeTime);
-            damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-            yield return null;
+            damageOverlay.color = new Color(1f, 0f, 0f, 0f);
+            damageOverlay.gameObject.SetActive(false);
         }
         
-        // Deactivate overlay after fade out
-        damageOverlay.gameObject.SetActive(false);
+        if (damageCoroutine != null)
+        {
+            StopCoroutine(damageCoroutine);
+            damageCoroutine = null;
+        }
     }
-    
-    yield return new WaitForSeconds(invulnerabilityTime - overlayFadeTime * 2 - 0.1f);
-    
-    isInvulnerable = false;
-}
-
-public void ResetHealth()
-{
-    currentHealth = maxHearts;
-    UpdateHeartsUI();
-    isInvulnerable = false;
-    
-    // Ensure damage overlay is deactivated
-    if (damageOverlay != null)
-    {
-        damageOverlay.color = new Color(1f, 0f, 0f, 0f);
-        damageOverlay.gameObject.SetActive(false);
-    }
-    
-    if (damageCoroutine != null)
-    {
-        StopCoroutine(damageCoroutine);
-        damageCoroutine = null;
-    }
-}
     
     private void PlayDamageEffects()
     {
-        // Play sound
-        if (AudioHandler.Instance != null && damageSound != null)
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(damageSound);
-        
         // Play particles
         if (damageParticles != null)
             damageParticles.Play();
@@ -257,6 +265,35 @@ public void ResetHealth()
         // Flash player
         if (playerRenderer != null)
             StartCoroutine(FlashPlayer());
+    }
+    
+    // ADDED: Separate method to play damage sound
+    private void PlayDamageSound()
+    {
+        PlaySoundEffect(damageSound);
+    }
+    
+    // ADDED: Generic method to play sound effects with multiple fallbacks
+    private void PlaySoundEffect(AudioClip clip)
+    {
+        if (clip == null) return;
+        
+        // Try AudioHandler first
+        if (AudioHandler.Instance != null && AudioHandler.Instance.soundEffectsSource != null)
+        {
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(clip);
+            return;
+        }
+        
+        // Fallback to local AudioSource
+        if (audioSource != null)
+        {
+            audioSource.PlayOneShot(clip);
+            return;
+        }
+        
+        // Last resort: Create a temporary AudioSource
+        AudioSource.PlayClipAtPoint(clip, transform.position);
     }
     
     private IEnumerator FlashPlayer()

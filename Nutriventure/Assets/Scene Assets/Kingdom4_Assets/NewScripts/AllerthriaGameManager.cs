@@ -32,6 +32,12 @@ public class AllerthriaGameManager : MonoBehaviour
     
     [Header("UI")]
     public TextMeshProUGUI questText;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI multiplierText;
+    public TextMeshProUGUI allergenCountText;
+    public TextMeshProUGUI wagonHitsText;
+    public GameObject gameCompletePanel;
+    public TextMeshProUGUI finalScoreText;
     
     void Awake()
     {
@@ -49,12 +55,75 @@ public class AllerthriaGameManager : MonoBehaviour
     void Start()
     {
         StartPhase(GamePhase.ScrollQuest);
+        
+        UpdateQuestText("Find the scroll");
+        UpdateScoreDisplay();
+        
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.OnScoreChanged.AddListener(OnScoreChanged);
+            Kingdom4ScoreManager.Instance.OnMultiplierChanged.AddListener(OnMultiplierChanged);
+        }
+    }
+    
+    void Update()
+    {
+        UpdatePhaseSpecificDisplay();
+    }
+    
+    private void UpdatePhaseSpecificDisplay()
+    {
+        switch (currentPhase)
+        {
+            case GamePhase.AllergenHunt:
+                if (allergenCountText != null && Kingdom4ScoreManager.Instance != null)
+                {
+                    allergenCountText.text = $"Allergens: {collectedAllergens.Count}/9";
+                }
+                break;
+                
+            case GamePhase.WagonPhase:
+                if (wagonHitsText != null && Kingdom4ScoreManager.Instance != null)
+                {
+                    wagonHitsText.text = $"Wagon Hits: {Kingdom4ScoreManager.Instance.totalWagonHits}";
+                }
+                break;
+        }
+    }
+    
+    private void OnScoreChanged(int newScore)
+    {
+        UpdateScoreDisplay();
+    }
+    
+    private void OnMultiplierChanged(int newMultiplier)
+    {
+        UpdateMultiplierDisplay();
+    }
+    
+    private void UpdateScoreDisplay()
+    {
+        if (scoreText != null && Kingdom4ScoreManager.Instance != null)
+        {
+            scoreText.text = $"SCORE: {Kingdom4ScoreManager.Instance.GetFinalScore()}";
+        }
+    }
+    
+    private void UpdateMultiplierDisplay()
+    {
+        if (multiplierText != null && Kingdom4ScoreManager.Instance != null)
+        {
+            multiplierText.text = $"x{Kingdom4ScoreManager.Instance.comboMultiplier}";
+            multiplierText.gameObject.SetActive(currentPhase == GamePhase.PlatformPhase);
+        }
     }
     
     public void StartPhase(GamePhase phase)
     {
         currentPhase = phase;
         Debug.Log($"Starting phase: {phase}");
+        
+        UpdateUIVisibility();
         
         switch (phase)
         {
@@ -80,6 +149,21 @@ public class AllerthriaGameManager : MonoBehaviour
                 StartEndGame();
                 break;
         }
+    }
+    
+    private void UpdateUIVisibility()
+    {
+        if (allergenCountText != null)
+        {
+            allergenCountText.gameObject.SetActive(currentPhase == GamePhase.AllergenHunt);
+        }
+        
+        if (wagonHitsText != null)
+        {
+            wagonHitsText.gameObject.SetActive(currentPhase == GamePhase.WagonPhase);
+        }
+        
+        UpdateMultiplierDisplay();
     }
     
     private void StartScrollQuest()
@@ -109,6 +193,12 @@ public class AllerthriaGameManager : MonoBehaviour
         if (!collectedAllergens.Contains(allergenId))
         {
             collectedAllergens.Add(allergenId);
+            
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.AddAllergenFound();
+            }
+            
             UpdateQuestText($"Find allergens: {collectedAllergens.Count}/9");
             
             if (collectedAllergens.Count >= 9)
@@ -120,7 +210,7 @@ public class AllerthriaGameManager : MonoBehaviour
     
     private void StartWagonPhase()
     {
-        UpdateQuestText("Drive the wagon");
+        UpdateQuestText("Drive the wagon to the platform");
         if (wagon != null)
             wagon.SetActive(true);
     }
@@ -130,9 +220,17 @@ public class AllerthriaGameManager : MonoBehaviour
         StartPhase(GamePhase.PlatformPhase);
     }
     
+    public void WagonHitAllergen()
+    {
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.WagonHitAllergen();
+        }
+    }
+    
     private void StartPlatformPhase()
     {
-        UpdateQuestText("Land on healthy foods");
+        UpdateQuestText("Land on healthy foods to build combo!");
         if (movingPlatform != null)
             movingPlatform.SetActive(true);
     }
@@ -143,9 +241,25 @@ public class AllerthriaGameManager : MonoBehaviour
         StartPhase(GamePhase.CastlePhase);
     }
     
+    public void HitHealthyFood()
+    {
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.HitHealthyFood();
+        }
+    }
+    
+    public void HitAllergenInPhase3()
+    {
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.HitAllergenInPhase3();
+        }
+    }
+    
     private void StartCastlePhase()
     {
-        UpdateQuestText("Go to the castle");
+        UpdateQuestText("Go to the castle and meet the queen");
     }
     
     public void ReachQueen()
@@ -156,7 +270,7 @@ public class AllerthriaGameManager : MonoBehaviour
     
     private void StartKeyPhase()
     {
-        UpdateQuestText("Get the key");
+        UpdateQuestText("Get the key from the queen");
     }
     
     public void ReceiveKey()
@@ -167,7 +281,7 @@ public class AllerthriaGameManager : MonoBehaviour
     
     private void StartEndGame()
     {
-        UpdateQuestText("Return to entrance");
+        UpdateQuestText("Return to the entrance with the key");
     }
     
     public void CompleteGame()
@@ -175,10 +289,28 @@ public class AllerthriaGameManager : MonoBehaviour
         UpdateQuestText("Mission Complete!");
         Debug.Log("Game Complete!");
         
-        // Optional: Add celebration effects, fade out, load menu, etc.
+        ShowFinalScore();
     }
     
-    // Safe method to update text
+    private void ShowFinalScore()
+    {
+        if (gameCompletePanel != null)
+        {
+            gameCompletePanel.SetActive(true);
+            
+            if (finalScoreText != null && Kingdom4ScoreManager.Instance != null)
+            {
+                int finalScore = Kingdom4ScoreManager.Instance.GetFinalScore();
+                finalScoreText.text = $"FINAL SCORE: {finalScore}";
+                
+                Debug.Log($"Final Score Breakdown:");
+                Debug.Log($"- Allergens Found: {Kingdom4ScoreManager.Instance.allergensFound}");
+                Debug.Log($"- Wagon Hits: {Kingdom4ScoreManager.Instance.totalWagonHits}");
+                Debug.Log($"- Time Bonus: {Kingdom4ScoreManager.Instance.timeBonus}");
+            }
+        }
+    }
+    
     private void UpdateQuestText(string text)
     {
         Debug.Log($"[QUEST] {text}");
@@ -189,9 +321,72 @@ public class AllerthriaGameManager : MonoBehaviour
         }
     }
     
-    // Helper method to check current phase
     public bool IsCurrentPhase(GamePhase phase)
     {
         return currentPhase == phase;
+    }
+    
+    public void ResetGame()
+    {
+        hasScroll = false;
+        collectedAllergens.Clear();
+        hasKey = false;
+        
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.ResetScore();
+        }
+        
+        UpdateScoreDisplay();
+        StartPhase(GamePhase.ScrollQuest);
+        
+        if (gameCompletePanel != null)
+        {
+            gameCompletePanel.SetActive(false);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            Kingdom4ScoreManager.Instance.OnScoreChanged.RemoveListener(OnScoreChanged);
+            Kingdom4ScoreManager.Instance.OnMultiplierChanged.RemoveListener(OnMultiplierChanged);
+        }
+    }
+    
+    void OnGUI()
+    {
+        if (GUI.Button(new Rect(10, 10, 200, 30), "Test: Add Allergen (+100)"))
+        {
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.AddAllergenFound();
+            }
+        }
+        
+        if (GUI.Button(new Rect(10, 50, 200, 30), "Test: Wagon Hit (-50)"))
+        {
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.WagonHitAllergen();
+            }
+        }
+        
+        if (GUI.Button(new Rect(10, 90, 200, 30), "Test: Healthy Food (+combo)"))
+        {
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.HitHealthyFood();
+            }
+        }
+        
+        if (GUI.Button(new Rect(10, 130, 200, 30), "Test: Reset Score"))
+        {
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.ResetScore();
+            }
+        }
     }
 }
