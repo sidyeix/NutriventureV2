@@ -103,7 +103,7 @@ public class BattleCutsceneManager : MonoBehaviour
                 case IngredientDatabase.KingdomOrigin.NutriKingdom:
                     kingdomOriginImage.sprite = nutriKingdomSprite;
                     break;
-                case IngredientDatabase.KingdomOrigin.Suragria:
+                case IngredientDatabase.KingdomOrigin.Sugaria:
                     kingdomOriginImage.sprite = suragriaSprite;
                     break;
                 case IngredientDatabase.KingdomOrigin.Alerthia:
@@ -144,7 +144,7 @@ public class BattleCutsceneManager : MonoBehaviour
         switch (kingdom)
         {
             case IngredientDatabase.KingdomOrigin.NutriKingdom: return nutriKingdomSpawnPoint;
-            case IngredientDatabase.KingdomOrigin.Suragria: return suragriaSpawnPoint;
+            case IngredientDatabase.KingdomOrigin.Sugaria: return suragriaSpawnPoint;
             case IngredientDatabase.KingdomOrigin.Alerthia: return alerthiaSpawnPoint;
             case IngredientDatabase.KingdomOrigin.Preservia: return preserviaSpawnPoint;
             default: return nutriKingdomSpawnPoint;
@@ -165,7 +165,7 @@ public class BattleCutsceneManager : MonoBehaviour
             case IngredientDatabase.KingdomOrigin.NutriKingdom:
                 if (nutriKingdomTimeline != null) nutriKingdomTimeline.Play();
                 break;
-            case IngredientDatabase.KingdomOrigin.Suragria:
+            case IngredientDatabase.KingdomOrigin.Sugaria:
                 if (suragriaTimeline != null) suragriaTimeline.Play();
                 break;
             case IngredientDatabase.KingdomOrigin.Alerthia:
@@ -192,7 +192,7 @@ public class BattleCutsceneManager : MonoBehaviour
             case IngredientDatabase.KingdomOrigin.NutriKingdom:
                 if (nutriKingdomCamera != null) nutriKingdomCamera.Priority = 20;
                 break;
-            case IngredientDatabase.KingdomOrigin.Suragria:
+            case IngredientDatabase.KingdomOrigin.Sugaria:
                 if (suragriaCamera != null) suragriaCamera.Priority = 20;
                 break;
             case IngredientDatabase.KingdomOrigin.Alerthia:
