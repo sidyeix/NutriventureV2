@@ -85,8 +85,10 @@ MonoBehaviour:
       skillDescription: Mineral dust slows all enemies and deals 20 damage.
     enerlingDescription: Bone-building Enerling essential for skeletal structure
       and nerve function.
-    enerlingStory: 
-    audioClip: {fileID: 0}
+    enerlingStory: "I\u2019m Calcium, the bone builder! I keep your skeleton strong
+      and your nerves firing right. But overload me and I might cause kidney stones.
+      Strong doesn\u2019t mean too much!"
+    audioClip: {fileID: 8300000, guid: ec834e3a0a9a041e58e015c0bf39ed52, type: 3}
   - ingredientName: Milk
     rarity: 0
     kingdom: 0
@@ -153,7 +155,10 @@ MonoBehaviour:
         damage.
     enerlingDescription: A calcium-rich Enerling that strengthens bones and brain
       function. Immune to organ damage.
-    enerlingStory: 
+    enerlingStory: "Hi! I\u2019m Milk! I help make your bones strong and your brain
+      sharp so you can jump, think, and play all day. I\u2019m great for growing
+      heroes! But hey\u2014too much of me can upset your tummy or cause bloating.
+      Balance is the key to keeping me happy!"
     audioClip: {fileID: 0}
   - ingredientName: Iron
     rarity: 0
@@ -218,7 +223,10 @@ MonoBehaviour:
         attack.
     enerlingDescription: An oxygen-carrying Enerling essential for blood health and
       energy production.
-    enerlingStory: 
+    enerlingStory: "I\u2019m Iron, the oxygen delivery expert! I keep your blood
+      strong and your energy high so you don\u2019t feel tired during battles. But
+      if you take too much of me, I can harm your organs. I\u2019m powerful\u2014handle
+      me wisely!"
     audioClip: {fileID: 0}
   - ingredientName: Vitamin C
     rarity: 0
@@ -282,7 +290,9 @@ MonoBehaviour:
       skillDescription: Releases antioxidants that deal 20 damage to all enemies.
     enerlingDescription: An antioxidant Enerling that boosts immunity and protects
       cells.
-    enerlingStory: 
+    enerlingStory: Vitamin C here! I shield your body from germs and help heal wounds
+      faster. I love fighting off colds! But overload me, and I might give you stomach
+      pain or diarrhea. Even heroes need limits!
     audioClip: {fileID: 0}
   - ingredientName: Vitamin A
     rarity: 0
@@ -345,7 +355,9 @@ MonoBehaviour:
       skillDescription: Creates a growth-enhanced shield that blocks 50 damage.
     enerlingDescription: Vision-enhancing Enerling that promotes eye health and cell
       growth.
-    enerlingStory: 
+    enerlingStory: "I\u2019m Vitamin A! I sharpen your eyesight and help your body
+      grow healthy new cells. But too much of me can blur your vision and damage
+      your liver. Don\u2019t let my glow blind you!"
     audioClip: {fileID: 0}
   - ingredientName: Egg
     rarity: 0
@@ -409,7 +421,9 @@ MonoBehaviour:
       skillDescription: Protein-rich strike with chance to stun. Deals 25 damage.
     enerlingDescription: Protein-packed Enerling with complete amino acids for muscle
       repair.
-    enerlingStory: 
+    enerlingStory: "Eggs reporting for duty! I\u2019m packed with protein to repair
+      muscles and fuel strength. But eat me too often, and I may raise cholesterol
+      for some people. Crack me responsibly!"
     audioClip: {fileID: 0}
   - ingredientName: Peanuts
     rarity: 0
@@ -471,7 +485,9 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: e65c8af32cbd84f4c9e77f1600465e85, type: 3}
       skillDescription: Explosive nut fragments deal 18 damage to all enemies.
     enerlingDescription: Energy-dense Enerling rich in healthy fats and protein.
-    enerlingStory: 
+    enerlingStory: "Hey! I\u2019m Peanut\u2014energy-packed and protein-rich! But
+      for some people, I\u2019m dangerous and can trigger serious allergies. Respect
+      me, or I strike hard!"
     audioClip: {fileID: 0}
   - ingredientName: Shrimp
     rarity: 0
@@ -535,7 +551,9 @@ MonoBehaviour:
       skillDescription: Ocean wave attack dealing 22 damage to all enemies.
     enerlingDescription: Marine Enerling packed with omega-3s and minerals for heart
       health.
-    enerlingStory: 
+    enerlingStory: "Shrimp at your service! I bring omega-3s and minerals for heart
+      health. But I\u2019m a common allergen, and too much cholesterol can be risky.
+      Sea power needs caution!"
     audioClip: {fileID: 0}
   - ingredientName: Sugar
     rarity: 0
@@ -601,7 +619,8 @@ MonoBehaviour:
       skillDescription: Toxic sugar buildup deals 15 damage over 3 turns.
     enerlingDescription: Sweet but harmful Enerling that damages multiple organs
       when consumed in excess.
-    enerlingStory: 
+    enerlingStory: Sugar here! I give quick energy and make food exciting. But too
+      much of me damages your heart, teeth, and organs. Sweet today, trouble tomorrow!
     audioClip: {fileID: 0}
   - ingredientName: Corn Syrup
     rarity: 0
@@ -666,7 +685,9 @@ MonoBehaviour:
         1 turns.
     enerlingDescription: Processed sweetener Enerling that stresses the liver and
       heart.
-    enerlingStory: 
+    enerlingStory: "I\u2019m Corn Syrup\u2014cheap, sweet, and sneaky! I overload
+      your liver and stress your heart when consumed often. I hide where you least
+      expect me!"
     audioClip: {fileID: 0}
   - ingredientName: Sodium Nitrite
     rarity: 1
@@ -730,7 +751,8 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: 8b3179f3488e0074997a14a3bae37d47, type: 3}
       skillDescription: Curing agent strike may stun opponent. Deals 35 damage.
     enerlingDescription: Preservative Enerling that can be toxic in large amounts.
-    enerlingStory: 
+    enerlingStory: "I preserve food and fight bacteria! But in large amounts, I can
+      become toxic. I protect food\u2014but don\u2019t let me rule it."
     audioClip: {fileID: 0}
   - ingredientName: Aspartame
     rarity: 1
@@ -794,7 +816,9 @@ MonoBehaviour:
       skillDescription: Causes mental confusion dealing 20 damage over 1 turn.
     enerlingDescription: Controversial artificial sweetener that may affect brain
       function.
-    enerlingStory: 
+    enerlingStory: "Aspartame here! I\u2019m super sweet with almost no calories.
+      But some people feel headaches or brain fog from me. Not every mind reacts
+      the same!"
     audioClip: {fileID: 0}
   - ingredientName: Sodium Benzoate
     rarity: 2
@@ -857,7 +881,8 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: 2f599b803a303d44c9cbaafa0f2c2951, type: 3}
       skillDescription: Toxic overload dealing 25 damage.
     enerlingDescription: Potent preservative Enerling with known toxicity concerns.
-    enerlingStory: 
+    enerlingStory: Sodium Benzoate here! I stop food from spoiling. But too much
+      exposure may cause health issues. Preservation has limits!
     audioClip: {fileID: 0}
   - ingredientName: Stevia Extract
     rarity: 2
@@ -920,7 +945,8 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: 8cef08b0ce8ce8c4a892952162e6b201, type: 3}
       skillDescription: Natural leaf extract heals 40 health.
     enerlingDescription: Natural sweetener Enerling derived from plant leaves.
-    enerlingStory: 
+    enerlingStory: "I\u2019m Stevia\u2014natural and plant-powered sweetness! But
+      too much can still upset digestion. Even nature needs moderation!"
     audioClip: {fileID: 0}
   - ingredientName: Sorbitol
     rarity: 2
@@ -983,7 +1009,8 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: d85721ae0c638084a8ef02391e32bcae, type: 3}
       skillDescription: Digestive disruption deals 18 damage over 3 turns.
     enerlingDescription: Sugar alcohol Enerling that can cause digestive issues.
-    enerlingStory: 
+    enerlingStory: "Sorbitol reporting! I\u2019m a sugar alcohol used in \u2018diet\u2019
+      foods. But overuse me and your stomach may rebel. I move things\u2026 fast."
     audioClip: {fileID: 0}
   - ingredientName: Sucralose
     rarity: 1
@@ -1046,7 +1073,8 @@ MonoBehaviour:
       skillSprite: {fileID: 21300000, guid: b81a8b55e08f74a4782c3da010c0b6a9, type: 3}
       skillDescription: Synthetic energy wave deals 30 damage to enemy.
     enerlingDescription: Artificial sweetener Enerling with potential organ toxicity.
-    enerlingStory: 
+    enerlingStory: Sucralose speaking! I bring sweetness without calories. But I
+      may disrupt your gut and organs if overused. Artificial power comes at a cost!
     audioClip: {fileID: 0}
   - ingredientName: Folic Acid
     rarity: 0
@@ -1110,5 +1138,7 @@ MonoBehaviour:
       skillDescription: Cellular growth burst dealing 22 damage to opponent.
     enerlingDescription: Cellular growth Enerling essential for DNA synthesis and
       repair.
-    enerlingStory: 
+    enerlingStory: "Call me Folic Acid! I help build DNA and repair cells\u2014perfect
+      for growing champions. But too much of me can hide other problems in your body.
+      I work best as part of a team!"
     audioClip: {fileID: 0}

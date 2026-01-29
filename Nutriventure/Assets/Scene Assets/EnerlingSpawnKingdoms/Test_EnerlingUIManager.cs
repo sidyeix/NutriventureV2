@@ -8,8 +8,35 @@ public class Test_EnerlingUIManager : MonoBehaviour
     [Header("UI References")]
     public GameObject viewEnerlingButton; // The button that appears when near an Enerling
     public GameObject enerlingInfoPanel;  // The panel that shows Enerling info
+    
+    // Basic Information Header
+    [Header("Basic Information")]
     public TextMeshProUGUI enerlingNameText; // Text to display Enerling name
+    public Image enerlingSpriteImage; // Image for Enerling sprite
+    public TextMeshProUGUI rarityText; // Text for rarity
+    public TextMeshProUGUI kingdomText; // Text for kingdom origin
+    public TextMeshProUGUI enerlingStoryText; // Text for Enerling story
+    
+    // Battle Information Header
+    [Header("Battle Information")]
+    public TextMeshProUGUI baseLifeText; // Text for base life
+    public TextMeshProUGUI armorPercentageText; // Text for armor percentage
+    public TextMeshProUGUI baseDamageText; // Text for base damage
+    
+    // Skills Visuals
+    [Header("Skill Visuals")]
+    public Image skill1Image; // Image for skill 1 sprite
+    public Image skill2Image; // Image for skill 2 sprite
+    public Image skill3Image; // Image for skill 3 sprite
+    public Image skill4Image; // Image for skill 4 sprite
+    
+    [Header("UI Buttons")]
     public Button closeButton; // Button to close the panel
+    public Button textToSpeechButton; // Button for Text-to-Speech
+    
+    [Header("Camera Reference")]
+    public EnerlingCameraController cameraController; // Camera controller
+    public Camera viewCamera; // The camera that will view the Enerling
     
     [Header("Database Reference")]
     public IngredientDatabase ingredientDatabase; // Assign this in inspector!
@@ -25,6 +52,9 @@ public class Test_EnerlingUIManager : MonoBehaviour
     [SerializeField] private float animationDuration = 0.5f;
     [SerializeField] private bool enableAnimation = true;
     
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource audioSource; // AudioSource for playing Enerling audio
+    
     private Test_EnerlingController currentNearbyEnerling;
     private GameObject player;
     private bool isPanelOpen = false;
@@ -34,6 +64,11 @@ public class Test_EnerlingUIManager : MonoBehaviour
     private CanvasGroup buttonCanvasGroup;
     private bool isAnimating = false;
     private bool buttonWasVisible = false;
+    private AudioClip currentEnerlingAudioClip;
+    
+    // Buffer to prevent immediate hiding
+    private float lastDetectionTime = 0f;
+    private const float DETECTION_BUFFER_TIME = 0.5f;
     
     void Start()
     {
@@ -43,6 +78,16 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (player == null)
         {
             Debug.LogError("No GameObject with 'Player' tag found!");
+        }
+        
+        // Get the view camera from camera controller
+        if (cameraController != null && viewCamera == null)
+        {
+            viewCamera = cameraController.GetComponentInChildren<Camera>();
+            if (viewCamera == null)
+            {
+                viewCamera = Camera.main;
+            }
         }
         
         // Initialize button animation components
@@ -70,6 +115,27 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(CloseEnerlingInfoPanel);
+        }
+        
+        if (textToSpeechButton != null)
+        {
+            textToSpeechButton.onClick.AddListener(PlayEnerlingAudio);
+        }
+        else
+        {
+            Debug.LogWarning("Text-to-Speech button not assigned!");
+        }
+        
+        // Setup AudioSource if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                Debug.Log("Added AudioSource component to Enerling UI Manager");
+            }
         }
         
         // Hide UI elements initially
@@ -124,17 +190,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
     
     void Update()
     {
-        if (player == null || isPanelOpen) 
+        if (player == null) 
         {
             // Try to find player again if null
-            if (player == null)
-                player = GameObject.FindGameObjectWithTag("Player");
-            
-            // If panel is open, make sure button is hidden
-            if (isPanelOpen && viewEnerlingButton != null && viewEnerlingButton.activeSelf)
-            {
-                HideButtonWithAnimation();
-            }
+            player = GameObject.FindGameObjectWithTag("Player");
             return;
         }
         
@@ -143,8 +202,21 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (timeSinceLastCheck >= checkInterval)
         {
             bool foundEnerling = FindNearestEnerling();
-            UpdateButtonVisibility(foundEnerling);
+            
+            // Only handle button visibility if panel is not open
+            if (!isPanelOpen)
+            {
+                UpdateButtonVisibility(foundEnerling);
+            }
+            
             timeSinceLastCheck = 0f;
+        }
+        
+        // If panel is open, keep button hidden
+        if (isPanelOpen && viewEnerlingButton != null && buttonWasVisible)
+        {
+            HideButtonWithAnimation();
+            buttonWasVisible = false;
         }
     }
     
@@ -175,10 +247,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
             }
         }
         
-        // If we found a different Enerling than before, log it
-        if (currentNearbyEnerling != null && currentNearbyEnerling != previousEnerling)
+        // Update detection time
+        if (currentNearbyEnerling != null)
         {
-            Debug.Log($"Found nearby Enerling: {currentNearbyEnerling.gameObject.name} (Distance: {closestDistance:F2})");
+            lastDetectionTime = Time.time;
         }
         
         return currentNearbyEnerling != null;
@@ -190,6 +262,12 @@ public class Test_EnerlingUIManager : MonoBehaviour
         
         // Check if state changed
         bool stateChanged = (shouldShow != buttonWasVisible);
+        
+        // Always hide button if no Enerling is detected and enough time has passed
+        if (!shouldShow && buttonWasVisible && (Time.time - lastDetectionTime) > DETECTION_BUFFER_TIME)
+        {
+            stateChanged = true;
+        }
         
         if (!stateChanged) return; // No change, no need to animate
         
@@ -297,6 +375,21 @@ public class Test_EnerlingUIManager : MonoBehaviour
             return;
         }
         
+        if (viewCamera == null)
+        {
+            Debug.LogError("View camera is not assigned!");
+            return;
+        }
+        
+        // Start interaction with Enerling, passing the camera
+        currentNearbyEnerling.StartInteraction(viewCamera);
+        
+        // Switch camera to view Enerling (first-person from player position)
+        if (cameraController != null)
+        {
+            cameraController.StartViewingEnerling(currentNearbyEnerling);
+        }
+        
         // Hide button with animation before opening panel
         HideButtonWithAnimation();
         
@@ -305,6 +398,22 @@ public class Test_EnerlingUIManager : MonoBehaviour
         
         if (ingredientInfo != null)
         {
+            // Store the audio clip for Text-to-Speech
+            currentEnerlingAudioClip = ingredientInfo.audioClip;
+            
+            // Enable/disable Text-to-Speech button based on audio availability
+            if (textToSpeechButton != null)
+            {
+                textToSpeechButton.interactable = (currentEnerlingAudioClip != null);
+                
+                // Optional: Change button color based on availability
+                var buttonImage = textToSpeechButton.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = (currentEnerlingAudioClip != null) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                }
+            }
+            
             // Update UI with Enerling info
             UpdateEnerlingInfoUI(ingredientInfo);
             
@@ -329,6 +438,12 @@ public class Test_EnerlingUIManager : MonoBehaviour
                 enerlingNameText.text = displayName;
             }
             
+            // Disable Text-to-Speech button for fallback
+            if (textToSpeechButton != null)
+            {
+                textToSpeechButton.interactable = false;
+            }
+            
             enerlingInfoPanel.SetActive(true);
             isPanelOpen = true;
         }
@@ -338,27 +453,16 @@ public class Test_EnerlingUIManager : MonoBehaviour
     {
         if (enerling == null) return null;
         
-        // First try: Use GetIngredientInfo method if available
         var method = enerling.GetType().GetMethod("GetIngredientInfo");
         if (method != null)
         {
             return method.Invoke(enerling, null) as IngredientDatabase.IngredientInfo;
         }
         
-        // Second try: Use reflection to get private field
-        var field = enerling.GetType().GetField("ingredientInfo", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (field != null)
-        {
-            return field.GetValue(enerling) as IngredientDatabase.IngredientInfo;
-        }
-        
-        // Third try: Get from database using name
         if (ingredientDatabase != null)
         {
             string enerlingName = enerling.gameObject.name;
             string ingredientName = ExtractIngredientName(enerlingName);
-            Debug.Log($"Looking for ingredient in database: {ingredientName}");
             return ingredientDatabase.GetIngredientInfo(ingredientName);
         }
         
@@ -367,7 +471,6 @@ public class Test_EnerlingUIManager : MonoBehaviour
     
     private string ExtractIngredientName(string enerlingName)
     {
-        // Remove common suffixes
         string name = enerlingName;
         name = name.Replace("_Enerling", "");
         name = name.Replace("_Enerling_Fallback", "");
@@ -377,60 +480,159 @@ public class Test_EnerlingUIManager : MonoBehaviour
     
     private void UpdateEnerlingInfoUI(IngredientDatabase.IngredientInfo info)
     {
-        if (enerlingNameText != null && info != null)
+        if (info == null) return;
+        
+        if (enerlingNameText != null)
         {
             enerlingNameText.text = info.ingredientName;
-            Debug.Log($"Updated UI with: {info.ingredientName}");
         }
+        
+        if (enerlingSpriteImage != null && info.enerlingSprite != null)
+        {
+            enerlingSpriteImage.sprite = info.enerlingSprite;
+            enerlingSpriteImage.preserveAspect = true;
+        }
+        
+        if (rarityText != null)
+        {
+            rarityText.text = info.rarity.ToString();
+            switch (info.rarity)
+            {
+                case IngredientDatabase.Rarity.Common:
+                    rarityText.color = Color.white;
+                    break;
+                case IngredientDatabase.Rarity.Rare:
+                    rarityText.color = Color.blue;
+                    break;
+                case IngredientDatabase.Rarity.UltraRare:
+                    rarityText.color = Color.yellow;
+                    break;
+            }
+        }
+        
+        if (kingdomText != null)
+        {
+            kingdomText.text = info.kingdom.ToString();
+        }
+        
+        if (enerlingStoryText != null)
+        {
+            if (string.IsNullOrEmpty(info.enerlingStory) || 
+                string.IsNullOrWhiteSpace(info.enerlingStory))
+            {
+                enerlingStoryText.text = "There's no enerling story available...";
+                enerlingStoryText.fontStyle = FontStyles.Italic;
+                enerlingStoryText.color = new Color(0.7f, 0.7f, 0.7f, 1f);
+            }
+            else
+            {
+                enerlingStoryText.text = info.enerlingStory;
+                enerlingStoryText.fontStyle = FontStyles.Normal;
+                enerlingStoryText.color = Color.white;
+            }
+        }
+        
+        if (baseLifeText != null)
+        {
+            baseLifeText.text = $"{info.baseLife}";
+        }
+        
+        if (armorPercentageText != null)
+        {
+            armorPercentageText.text = $"{info.armorPercent}%";
+        }
+        
+        if (baseDamageText != null)
+        {
+            baseDamageText.text = $"{info.baseDamage}";
+        }
+        
+        // Update Skill Visuals
+        UpdateSkillImage(skill1Image, info.skill1);
+        UpdateSkillImage(skill2Image, info.skill2);
+        UpdateSkillImage(skill3Image, info.skill3);
+        UpdateSkillImage(skill4Image, info.skill4);
+        
+        Debug.Log($"Updated UI with: {info.ingredientName}");
     }
     
-    public void CloseEnerlingInfoPanel()
+    private void UpdateSkillImage(Image skillImage, IngredientDatabase.SkillInfo skillInfo)
     {
-        if (enerlingInfoPanel != null)
+        if (skillImage != null)
         {
-            enerlingInfoPanel.SetActive(false);
-            isPanelOpen = false;
-            Debug.Log("Closed info panel");
-            
-            // After closing panel, check if we should show button again
-            if (currentNearbyEnerling != null && player != null)
+            if (skillInfo != null && skillInfo.skillSprite != null)
             {
-                float distance = Vector3.Distance(player.transform.position, currentNearbyEnerling.transform.position);
-                if (distance <= detectionRange)
-                {
-                    // Player is still near the Enerling, show button again
-                    ShowButtonWithAnimation();
-                }
+                skillImage.sprite = skillInfo.skillSprite;
+                skillImage.preserveAspect = true;
+                skillImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                skillImage.gameObject.SetActive(false);
             }
         }
     }
     
-    // Test method to manually open panel
-    public void TestOpenPanel()
+    public void PlayEnerlingAudio()
     {
-        Debug.Log("TestOpenPanel called");
-        if (enerlingNameText != null)
+        if (audioSource == null || currentEnerlingAudioClip == null) return;
+        
+        if (audioSource.isPlaying)
         {
-            enerlingNameText.text = "Test Enerling";
+            audioSource.Stop();
         }
-        if (enerlingInfoPanel != null)
-        {
-            enerlingInfoPanel.SetActive(true);
-            isPanelOpen = true;
-            HideButtonWithAnimation(); // Hide button when panel opens
-        }
+        
+        audioSource.clip = currentEnerlingAudioClip;
+        audioSource.Play();
+        
+        Debug.Log($"Playing audio for: {currentEnerlingAudioClip.name}");
     }
     
-    // Test method to toggle button visibility
-    public void TestToggleButton()
+    public void CloseEnerlingInfoPanel()
     {
-        if (buttonWasVisible)
+        if (enerlingInfoPanel == null) return;
+        
+        enerlingInfoPanel.SetActive(false);
+        isPanelOpen = false;
+        
+        // Stop any playing audio
+        if (audioSource != null && audioSource.isPlaying)
         {
-            HideButtonWithAnimation();
+            audioSource.Stop();
+        }
+        
+        // End interaction with Enerling
+        if (currentNearbyEnerling != null)
+        {
+            currentNearbyEnerling.EndInteraction();
+        }
+        
+        // Switch camera back to player
+        if (cameraController != null)
+        {
+            cameraController.StopViewingEnerling();
+        }
+        
+        Debug.Log("Closed info panel");
+        
+        // Check distance and decide whether to show button again
+        if (currentNearbyEnerling != null && player != null)
+        {
+            float distance = Vector3.Distance(player.transform.position, currentNearbyEnerling.transform.position);
+            if (distance <= detectionRange)
+            {
+                ShowButtonWithAnimation();
+            }
+            else
+            {
+                currentNearbyEnerling = null;
+                buttonWasVisible = false;
+            }
         }
         else
         {
-            ShowButtonWithAnimation();
+            currentNearbyEnerling = null;
+            buttonWasVisible = false;
         }
     }
     
@@ -451,61 +653,21 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.RemoveListener(CloseEnerlingInfoPanel);
         }
         
+        if (textToSpeechButton != null)
+        {
+            textToSpeechButton.onClick.RemoveListener(PlayEnerlingAudio);
+        }
+        
         // Stop any running coroutines
         if (buttonAnimationCoroutine != null)
         {
             StopCoroutine(buttonAnimationCoroutine);
         }
-    }
-    
-    // For debugging in the editor
-    void OnGUI()
-    {
-        if (!Application.isPlaying) return;
         
-        GUILayout.BeginArea(new Rect(10, 10, 300, 200));
-        GUILayout.Label("Enerling UI Manager Debug");
-        GUILayout.Label($"Panel Open: {isPanelOpen}");
-        GUILayout.Label($"Button Visible: {buttonWasVisible}");
-        GUILayout.Label($"Animating: {isAnimating}");
-        GUILayout.Label($"Nearby Enerling: {(currentNearbyEnerling != null ? currentNearbyEnerling.gameObject.name : "None")}");
-        
-        if (GUILayout.Button("Test Open Panel"))
+        // Stop any playing audio
+        if (audioSource != null && audioSource.isPlaying)
         {
-            TestOpenPanel();
-        }
-        
-        if (GUILayout.Button("Test Toggle Button"))
-        {
-            TestToggleButton();
-        }
-        
-        if (GUILayout.Button("Force Show Button"))
-        {
-            ShowButtonWithAnimation();
-        }
-        
-        if (GUILayout.Button("Force Hide Button"))
-        {
-            HideButtonWithAnimation();
-        }
-        
-        GUILayout.EndArea();
-    }
-    
-    // Gizmos for debugging
-    void OnDrawGizmosSelected()
-    {
-        if (player != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(player.transform.position, detectionRange);
-        }
-        else
-        {
-            // Draw at origin if no player
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(Vector3.zero, detectionRange);
+            audioSource.Stop();
         }
     }
 }

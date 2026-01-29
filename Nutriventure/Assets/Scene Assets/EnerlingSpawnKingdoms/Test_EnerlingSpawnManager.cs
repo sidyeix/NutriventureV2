@@ -151,7 +151,7 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
             case KingdomFilterMode.AlerthiaOnly:
                 return IngredientDatabase.KingdomOrigin.Alerthia;
             case KingdomFilterMode.SuragriaOnly:
-                return IngredientDatabase.KingdomOrigin.Suragria;
+                return IngredientDatabase.KingdomOrigin.Sugaria;
             case KingdomFilterMode.PreserviaOnly:
                 return IngredientDatabase.KingdomOrigin.Preservia;
             case KingdomFilterMode.SpecificKingdom:

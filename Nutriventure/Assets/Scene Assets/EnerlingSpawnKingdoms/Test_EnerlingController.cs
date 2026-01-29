@@ -14,6 +14,7 @@ public class Test_EnerlingController : MonoBehaviour
     
     [Header("Interaction Settings")]
     public float interactionRange = 3f;
+    public float lookAtSpeed = 5f; // Speed for looking at camera
     
     [Header("Idle Behavior")]
     public bool canIdleAnimate = true;
@@ -26,6 +27,10 @@ public class Test_EnerlingController : MonoBehaviour
     public float socialCheckInterval = 2f;
     public float followChance = 0.2f;
     
+    [Header("Interaction Animations")]
+    public string[] interactionIdleAnimations = { "Idle1", "Idle2", "LookAround", "Stretch" };
+    public float interactionAnimationInterval = 3f;
+    
     private NavMeshAgent navAgent;
     private Animator animator;
     private Vector3 spawnPosition;
@@ -34,21 +39,36 @@ public class Test_EnerlingController : MonoBehaviour
     private Test_EnerlingController followingTarget = null;
     private IngredientDatabase.IngredientInfo ingredientInfo;
     
+    // Interaction states
+    private bool isInteracting = false;
+    private Camera currentViewCamera = null;
+    private Quaternion originalRotation;
+    private Coroutine roamingCoroutine;
+    private Coroutine socialCoroutine;
+    private Coroutine interactionAnimationCoroutine;
+    
     void Start()
     {
         navAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         spawnPosition = transform.position;
+        originalRotation = transform.rotation;
         
         // Start roaming behavior
-        StartCoroutine(RoamingBehavior());
+        roamingCoroutine = StartCoroutine(RoamingBehavior());
         
         // Start social behavior checking
-        StartCoroutine(SocialBehaviorCheck());
+        socialCoroutine = StartCoroutine(SocialBehaviorCheck());
     }
     
     void Update()
     {
+        if (isInteracting && currentViewCamera != null)
+        {
+            // Look at the camera (not the player)
+            LookAtCamera(currentViewCamera.transform.position);
+        }
+        
         // Update animation parameters
         if (animator != null)
         {
@@ -56,8 +76,8 @@ public class Test_EnerlingController : MonoBehaviour
             animator.SetBool("IsMoving", navAgent.velocity.magnitude > 0.1f);
         }
         
-        // Handle idle behavior
-        if (!navAgent.pathPending && navAgent.remainingDistance <= navAgent.stoppingDistance)
+        // Handle idle behavior (only when not interacting)
+        if (!isInteracting && !navAgent.pathPending && navAgent.remainingDistance <= navAgent.stoppingDistance)
         {
             currentIdleTime += Time.deltaTime;
             
@@ -70,11 +90,23 @@ public class Test_EnerlingController : MonoBehaviour
         }
     }
     
+    private void LookAtCamera(Vector3 cameraPosition)
+    {
+        Vector3 direction = (cameraPosition - transform.position).normalized;
+        direction.y = 0; // Keep rotation horizontal only
+        
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, lookAtSpeed * Time.deltaTime);
+        }
+    }
+    
     private IEnumerator RoamingBehavior()
     {
         while (isRoaming)
         {
-            if (followingTarget == null)
+            if (!isInteracting && followingTarget == null)
             {
                 // Choose a random destination
                 Vector3 randomDirection = Random.insideUnitSphere * Random.Range(minRoamDistance, maxRoamDistance);
@@ -96,7 +128,7 @@ public class Test_EnerlingController : MonoBehaviour
                     yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
                 }
             }
-            else
+            else if (!isInteracting && followingTarget != null)
             {
                 // Following behavior
                 float distance = Vector3.Distance(transform.position, followingTarget.transform.position);
@@ -107,6 +139,11 @@ public class Test_EnerlingController : MonoBehaviour
                 
                 yield return new WaitForSeconds(1f);
             }
+            else
+            {
+                // If interacting, just wait
+                yield return new WaitForSeconds(0.5f);
+            }
         }
     }
     
@@ -116,19 +153,23 @@ public class Test_EnerlingController : MonoBehaviour
         {
             yield return new WaitForSeconds(socialCheckInterval);
             
-            // Check for nearby Enerlings
-            Collider[] nearbyEnerlings = Physics.OverlapSphere(transform.position, socialDistance * 2);
-            
-            foreach (Collider collider in nearbyEnerlings)
+            // Only check for social behavior when not interacting
+            if (!isInteracting)
             {
-                Test_EnerlingController otherEnerling = collider.GetComponent<Test_EnerlingController>();
-                if (otherEnerling != null && otherEnerling != this && followingTarget == null)
+                // Check for nearby Enerlings
+                Collider[] nearbyEnerlings = Physics.OverlapSphere(transform.position, socialDistance * 2);
+                
+                foreach (Collider collider in nearbyEnerlings)
                 {
-                    if (Random.value < followChance)
+                    Test_EnerlingController otherEnerling = collider.GetComponent<Test_EnerlingController>();
+                    if (otherEnerling != null && otherEnerling != this && followingTarget == null)
                     {
-                        followingTarget = otherEnerling;
-                        StartCoroutine(StopFollowingAfterTime(Random.Range(10f, 30f)));
-                        break;
+                        if (Random.value < followChance)
+                        {
+                            followingTarget = otherEnerling;
+                            StartCoroutine(StopFollowingAfterTime(Random.Range(10f, 30f)));
+                            break;
+                        }
                     }
                 }
             }
@@ -149,6 +190,108 @@ public class Test_EnerlingController : MonoBehaviour
             string randomTrigger = idleTriggers[Random.Range(0, idleTriggers.Length)];
             animator.SetTrigger(randomTrigger);
         }
+    }
+    
+    private IEnumerator InteractionAnimationRoutine()
+    {
+        while (isInteracting)
+        {
+            yield return new WaitForSeconds(interactionAnimationInterval);
+            
+            if (animator != null && interactionIdleAnimations.Length > 0)
+            {
+                string randomAnimation = interactionIdleAnimations[Random.Range(0, interactionIdleAnimations.Length)];
+                animator.SetTrigger(randomAnimation);
+                Debug.Log($"Playing interaction animation: {randomAnimation}");
+            }
+        }
+    }
+    
+    // Public method to start interaction
+    public void StartInteraction(Camera viewCamera)
+    {
+        if (isInteracting) return;
+        
+        isInteracting = true;
+        currentViewCamera = viewCamera;
+        
+        // Store original rotation
+        originalRotation = transform.rotation;
+        
+        // Stop current movement
+        navAgent.isStopped = true;
+        navAgent.ResetPath();
+        
+        // Stop other coroutines
+        if (roamingCoroutine != null)
+        {
+            StopCoroutine(roamingCoroutine);
+        }
+        if (socialCoroutine != null)
+        {
+            StopCoroutine(socialCoroutine);
+        }
+        
+        // Set idle animation
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("Speed", 0f);
+        }
+        
+        // Start interaction animations
+        if (interactionAnimationCoroutine != null)
+        {
+            StopCoroutine(interactionAnimationCoroutine);
+        }
+        interactionAnimationCoroutine = StartCoroutine(InteractionAnimationRoutine());
+        
+        Debug.Log($"{gameObject.name} started interaction with camera");
+    }
+    
+    // Public method to end interaction
+    public void EndInteraction()
+    {
+        if (!isInteracting) return;
+        
+        isInteracting = false;
+        currentViewCamera = null;
+        
+        // Stop interaction animations
+        if (interactionAnimationCoroutine != null)
+        {
+            StopCoroutine(interactionAnimationCoroutine);
+            interactionAnimationCoroutine = null;
+        }
+        
+        // Resume movement
+        navAgent.isStopped = false;
+        
+        // Restart behavior coroutines
+        roamingCoroutine = StartCoroutine(RoamingBehavior());
+        socialCoroutine = StartCoroutine(SocialBehaviorCheck());
+        
+        // Reset rotation to original
+        StartCoroutine(ResetRotation());
+        
+        Debug.Log($"{gameObject.name} ended interaction");
+    }
+    
+    private IEnumerator ResetRotation()
+    {
+        float elapsedTime = 0f;
+        float duration = 1f;
+        Quaternion startRotation = transform.rotation;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            transform.rotation = Quaternion.Slerp(startRotation, originalRotation, t);
+            yield return null;
+        }
+        
+        transform.rotation = originalRotation;
     }
     
     public void SetIngredientInfo(IngredientDatabase.IngredientInfo info)
@@ -181,10 +324,14 @@ public class Test_EnerlingController : MonoBehaviour
         }
     }
     
-    // ADD THIS METHOD - Important for UI manager to get info!
     public IngredientDatabase.IngredientInfo GetIngredientInfo()
     {
         return ingredientInfo;
+    }
+    
+    public bool IsInteracting()
+    {
+        return isInteracting;
     }
     
     void OnDrawGizmosSelected()
