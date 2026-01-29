@@ -4916,14 +4916,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 153139309}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.026818275, y: 0.8453472, z: -0.041714337, w: 0.5319106}
-  m_LocalPosition: {x: -989.92596, y: -552.2758, z: 79.23967}
+  m_LocalRotation: {x: 0, y: 0.766639, z: -0, w: -0.6420784}
+  m_LocalPosition: {x: -976.484, y: -454.513, z: 64.781}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 657357321}
   m_Father: {fileID: 339275595}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 259.89398, z: 0}
 --- !u!114 &153139311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12440,7 +12440,6 @@ MonoBehaviour:
   closeButton: {fileID: 808114899}
   textToSpeechButton: {fileID: 1843645094}
   cameraController: {fileID: 588966800}
-  viewCamera: {fileID: 0}
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
   detectionRange: 1.5
   checkInterval: 0.3
@@ -23404,12 +23403,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnerlingCameraController
   playerFollowCamera: {fileID: 309040882}
-  enerlingViewCamera: {fileID: 153139311}
-  cameraSwitchTime: 0.5
-  firstPersonOffset: {x: 0, y: 1.3, z: 0}
-  minCameraDistance: 2
-  maxCameraDistance: 5
-  defaultCameraDistance: 3
+  toDisableComponents:
+  - {fileID: 1701459691}
 --- !u!1001 &589606838
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -56737,7 +56732,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1356927629
 Transform:
   m_ObjectHideFlags: 0
@@ -80779,7 +80774,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 277, y: 0}
+  m_AnchoredPosition: {x: 334, y: 0}
   m_SizeDelta: {x: 1000, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1886621979

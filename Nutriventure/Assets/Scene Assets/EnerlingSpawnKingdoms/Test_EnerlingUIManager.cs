@@ -59,7 +59,6 @@ public class Test_EnerlingUIManager : MonoBehaviour
     
     [Header("Camera Reference")]
     public EnerlingCameraController cameraController; // Camera controller
-    public Camera viewCamera; // The camera that will view the Enerling
     
     [Header("Database Reference")]
     public IngredientDatabase ingredientDatabase; // Assign this in inspector!
@@ -106,16 +105,6 @@ public class Test_EnerlingUIManager : MonoBehaviour
             Debug.LogError("No GameObject with 'Player' tag found!");
         }
         
-        // Get the view camera from camera controller
-        if (cameraController != null && viewCamera == null)
-        {
-            viewCamera = cameraController.GetComponentInChildren<Camera>();
-            if (viewCamera == null)
-            {
-                viewCamera = Camera.main;
-            }
-        }
-        
         // Initialize button animation components
         InitializeButtonAnimation();
         
@@ -143,6 +132,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.AddListener(CloseEnerlingInfoPanel);
         }
         
+        // ADDED BACK: Text-to-Speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.AddListener(PlayEnerlingAudio);
@@ -217,6 +207,9 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (skill2Image == null) Debug.LogWarning("skill2Image Image component is not assigned!");
         if (skill3Image == null) Debug.LogWarning("skill3Image Image component is not assigned!");
         if (skill4Image == null) Debug.LogWarning("skill4Image Image component is not assigned!");
+        
+        // Validate text-to-speech button
+        if (textToSpeechButton == null) Debug.LogWarning("TextToSpeechButton is not assigned!");
     }
     
     private void InitializeButtonAnimation()
@@ -296,7 +289,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
         
         foreach (var enerling in allEnerlings)
         {
-            if (enerling == null) continue;
+            if (enerling == null || enerling.IsInteracting()) continue;
             
             float distance = Vector3.Distance(player.transform.position, enerling.transform.position);
             
@@ -435,20 +428,14 @@ public class Test_EnerlingUIManager : MonoBehaviour
             return;
         }
         
-        if (viewCamera == null)
+        if (cameraController == null)
         {
-            Debug.LogError("View camera is not assigned!");
+            Debug.LogError("Camera controller is not assigned!");
             return;
         }
         
-        // Start interaction with Enerling, passing the camera
-        currentNearbyEnerling.StartInteraction(viewCamera);
-        
-        // Switch camera to view Enerling (first-person from player position)
-        if (cameraController != null)
-        {
-            cameraController.StartViewingEnerling(currentNearbyEnerling);
-        }
+        // Switch camera to view Enerling using the specific virtual camera
+        cameraController.StartViewingEnerling(currentNearbyEnerling);
         
         // Hide button with animation before opening panel
         HideButtonWithAnimation();
@@ -461,11 +448,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
             // Store the audio clip for Text-to-Speech
             currentEnerlingAudioClip = ingredientInfo.audioClip;
             
-            // Enable/disable Text-to-Speech button based on audio availability
+            // ADDED BACK: Enable/disable Text-to-Speech button based on audio availability
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = (currentEnerlingAudioClip != null);
-                
             }
             
             // Update UI with Enerling info
@@ -492,7 +478,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
                 enerlingNameText.text = displayName;
             }
             
-            // Disable Text-to-Speech button for fallback
+            // ADDED BACK: Disable Text-to-Speech button for fallback
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = false;
@@ -838,6 +824,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
         }
     }
     
+    // ADDED BACK: PlayEnerlingAudio method
     public void PlayEnerlingAudio()
     {
         if (audioSource == null || currentEnerlingAudioClip == null) return;
@@ -869,13 +856,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             audioSource.Stop();
         }
         
-        // End interaction with Enerling
-        if (currentNearbyEnerling != null)
-        {
-            currentNearbyEnerling.EndInteraction();
-        }
-        
-        // Switch camera back to player
+        // Switch camera back to player and re-enable other enerlings
         if (cameraController != null)
         {
             cameraController.StopViewingEnerling();
@@ -921,6 +902,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.RemoveListener(CloseEnerlingInfoPanel);
         }
         
+        // ADDED BACK: Clean up text-to-speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.RemoveListener(PlayEnerlingAudio);
