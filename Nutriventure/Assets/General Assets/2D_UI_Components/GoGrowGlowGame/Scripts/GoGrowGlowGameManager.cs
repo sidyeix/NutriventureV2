@@ -1093,27 +1093,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
     }
 
     public void CollectGrowFood(GameObject foodObject = null)
+{
+    if (!gameIsActive) return;
+
+    PlayCollectionSound();
+    targetEnergy += growFoodEnergyGain;
+    targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+    score += foodPoints;
+
+    TriggerStrongAnimation();
+    ShowFoodReactionEffect();
+    ShowFeedbackSprite(growFoodSprite);
+    
+    PlayGrowFoodSound();  // <-- MOVE THIS OUTSIDE THE ZONE CHECK
+
+    if (currentFoodZone == FoodType.Grow)
     {
-        if (!gameIsActive) return;
-
-        PlayCollectionSound();
-        targetEnergy += growFoodEnergyGain;
-        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-        score += foodPoints;
-
-        TriggerStrongAnimation();
-        ShowFoodReactionEffect();
-        ShowFeedbackSprite(growFoodSprite);
-
-        if (currentFoodZone == FoodType.Grow)
-        {
-            if (targetEnergy >= 100f && !isSizeBoosted) StartSizeBoost();
-            else if (isSizeBoosted) sizeBoostTimer += 2f;
-            else PlayGrowFoodSound();
-        }
-
-        UpdateUI();
+        if (targetEnergy >= 100f && !isSizeBoosted) StartSizeBoost();
+        else if (isSizeBoosted) sizeBoostTimer += 2f;
     }
+
+    UpdateUI();
+}
 
     public void CollectGlowFood(GameObject foodObject = null)
     {

@@ -4,7 +4,6 @@ public class GrowFood : MonoBehaviour
 {
     [Header("Food Settings")]
     public int points = 100;
-    public float growEnergyGain = 22f;
     public Sprite foodSprite; // Add this field
 
     [Header("Optional Visual Effects")]

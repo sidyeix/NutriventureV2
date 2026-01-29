@@ -185,7 +185,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         allKingdomButton.onClick.AddListener(() => SetKingdomFilter(false, IngredientDatabase.KingdomOrigin.NutriKingdom));
         nutriKingdomButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.NutriKingdom));
         alerthiaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Alerthia));
-        suragriaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Suragria));
+        suragriaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Sugaria));
         preserviaButton.onClick.AddListener(() => SetKingdomFilter(true, IngredientDatabase.KingdomOrigin.Preservia));
 
         // Set initial state
@@ -298,7 +298,7 @@ public class EnerlingSelectionManager : MonoBehaviour
                 case IngredientDatabase.KingdomOrigin.Alerthia:
                     alerthiaButton.image.color = selectedButtonColor;
                     break;
-                case IngredientDatabase.KingdomOrigin.Suragria:
+                case IngredientDatabase.KingdomOrigin.Sugaria:
                     suragriaButton.image.color = selectedButtonColor;
                     break;
                 case IngredientDatabase.KingdomOrigin.Preservia:
