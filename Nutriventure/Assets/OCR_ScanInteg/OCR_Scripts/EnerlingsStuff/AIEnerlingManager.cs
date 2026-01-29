@@ -148,15 +148,13 @@ public class AIEnerlingManager : MonoBehaviour
         return new BattleStructs.HealBreakdown(baseHeal, organBonuses);
     }
 
-    public void InitializeAIEnerling(string enerlingName, IngredientDatabase database, Transform spawningPoint = null)
+    public void InitializeAIEnerling(string enerlingName, IngredientDatabase database) 
     {
         ingredientDatabase = database;
 
-        if (spawningPoint != null)
-        {
-            aiSpawningPoint = spawningPoint;
-        }
+        Debug.Log($"Initializing AI Enerling in BATTLE SCENE: {enerlingName}");
 
+        // Get the actual enerling data from database
         aiEnerling = CreateAICopy(enerlingName, database);
 
         if (aiEnerling == null)
@@ -170,7 +168,9 @@ public class AIEnerlingManager : MonoBehaviour
         hasAIDefend = false;
 
         InitializeAIOrganCooldown();
-        SpawnAIEnerling();
+
+        // Use the aiSpawningPoint that's already assigned in the battle scene
+        SpawnAIEnerling(); // This uses aiSpawningPoint directly
 
         for (int i = 1; i <= 4; i++)
         {
@@ -180,7 +180,8 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
         UpdateAIUI();
 
-        Debug.Log($"AI Enerling initialized: {aiEnerling.ingredientName}");
+        Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
+        Debug.Log($"- Using spawn point: {aiSpawningPoint?.name}");
     }
 
     IngredientDatabase.IngredientInfo CreateAICopy(string enerlingName, IngredientDatabase database)
@@ -238,23 +239,132 @@ public class AIEnerlingManager : MonoBehaviour
 
     void SpawnAIEnerling()
     {
-        if (aiEnerling == null || aiEnerling.modelPrefab == null) return;
+        // First, check if we have valid data
+        if (aiEnerling == null)
+        {
+            Debug.LogError("Cannot spawn AI enerling: aiEnerling is null!");
+            return;
+        }
 
+        // Debug: Check what we have
+        Debug.Log($"AI Spawning - Name: {aiEnerling.ingredientName}, Prefab: {aiEnerling.modelPrefab}");
+
+        // Get the actual model prefab from the database if it's null
+        if (aiEnerling.modelPrefab == null)
+        {
+            Debug.LogWarning($"AI enerling modelPrefab is null for: {aiEnerling.ingredientName}. Attempting to retrieve from database...");
+
+            if (ingredientDatabase != null)
+            {
+                var original = ingredientDatabase.GetIngredientInfo(aiEnerling.ingredientName);
+                if (original != null && original.modelPrefab != null)
+                {
+                    aiEnerling.modelPrefab = original.modelPrefab;
+                    Debug.Log($"Retrieved model prefab from database for: {aiEnerling.ingredientName}");
+                }
+                else
+                {
+                    Debug.LogError($"No model prefab found in database for: {aiEnerling.ingredientName}");
+                    return;
+                }
+            }
+            else
+            {
+                Debug.LogError("IngredientDatabase is null, cannot retrieve model prefab!");
+                return;
+            }
+        }
+
+        // Ensure we have a spawning point
+        if (aiSpawningPoint == null)
+        {
+            Debug.LogError("AI spawning point is null! Attempting to find it...");
+
+            // Try to find it in the scene
+            aiSpawningPoint = GameObject.Find("AISpawningPoint")?.transform;
+
+            if (aiSpawningPoint == null)
+            {
+                // Look for any object with "AI" or "Enemy" in the name
+                GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+                foreach (GameObject obj in allObjects)
+                {
+                    if (obj.name.Contains("AI") || obj.name.Contains("Enemy") || obj.name.Contains("Spawn"))
+                    {
+                        aiSpawningPoint = obj.transform;
+                        Debug.Log($"Found potential spawn point: {obj.name}");
+                        break;
+                    }
+                }
+
+                // If still not found, create one
+                if (aiSpawningPoint == null)
+                {
+                    GameObject spawnObj = new GameObject("AI_Enemy_Spawn_Point");
+                    aiSpawningPoint = spawnObj.transform;
+                    aiSpawningPoint.position = new Vector3(3, 0, 0); // Position it to the right
+                    aiSpawningPoint.rotation = Quaternion.identity;
+                    Debug.LogWarning("Created default AI spawn point at position (3, 0, 0)");
+                }
+            }
+        }
+
+        Debug.Log($"AI will spawn at: {aiSpawningPoint.name}, Position: {aiSpawningPoint.position}");
+
+        // Clean up any existing spawned opponent
         if (spawnedAIEnerling != null)
         {
+            Debug.Log($"Destroying existing AI enerling: {spawnedAIEnerling.name}");
             Destroy(spawnedAIEnerling);
         }
 
-        if (aiSpawningPoint == null) return;
-
-        spawnedAIEnerling = Instantiate(aiEnerling.modelPrefab, aiSpawningPoint);
-        spawnedAIEnerling.transform.localPosition = Vector3.zero;
-        spawnedAIEnerling.transform.localRotation = Quaternion.identity;
-
-        aiAnimator = spawnedAIEnerling.GetComponent<Animator>();
-        if (aiAnimator != null && aiEnerling.animatorController != null)
+        // Spawn the AI enerling
+        try
         {
-            aiAnimator.runtimeAnimatorController = aiEnerling.animatorController;
+            Debug.Log($"Instantiating AI enerling prefab: {aiEnerling.modelPrefab.name}");
+
+            spawnedAIEnerling = Instantiate(aiEnerling.modelPrefab, aiSpawningPoint.position, aiSpawningPoint.rotation);
+
+            // Make it a child of the spawning point for organization
+            spawnedAIEnerling.transform.SetParent(aiSpawningPoint);
+
+            // Reset local position and rotation to (0,0,0) relative to parent
+            spawnedAIEnerling.transform.localPosition = Vector3.zero;
+            spawnedAIEnerling.transform.localRotation = Quaternion.identity;
+            spawnedAIEnerling.transform.localScale = Vector3.one;
+
+            Debug.Log($"Successfully spawned AI enerling: {aiEnerling.ingredientName}");
+            Debug.Log($"- Parent: {aiSpawningPoint.name}");
+            Debug.Log($"- Local Position: {spawnedAIEnerling.transform.localPosition}");
+            Debug.Log($"- World Position: {spawnedAIEnerling.transform.position}");
+
+            // Add a debug component to make it visible
+            spawnedAIEnerling.name = $"AI_{aiEnerling.ingredientName}";
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to spawn AI enerling: {e.Message}");
+            Debug.LogError($"Stack Trace: {e.StackTrace}");
+            return;
+        }
+
+        // Set up animator
+        aiAnimator = spawnedAIEnerling.GetComponent<Animator>();
+        if (aiAnimator != null)
+        {
+            if (aiEnerling.animatorController != null)
+            {
+                aiAnimator.runtimeAnimatorController = aiEnerling.animatorController;
+                Debug.Log($"AI animator controller set: {aiEnerling.animatorController.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"No animator controller assigned for AI enerling: {aiEnerling.ingredientName}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"Spawned AI enerling '{aiEnerling.ingredientName}' has no Animator component");
         }
     }
 

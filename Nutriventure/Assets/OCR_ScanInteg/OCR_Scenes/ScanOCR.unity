@@ -205,7 +205,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &21421028
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5550,7 +5550,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &161199713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5558,7 +5558,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 161199712}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80994224fa542044ab308203dac40fdc, type: 3}
   m_Name: 
@@ -47836,33 +47836,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 742166143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e9b3f85d8085fcf41af5fab6e20d3ee6, type: 3}
+  m_Script: {fileID: 11500000, guid: 6423df2d74e38ed4983655df1b1a71ce, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OCRManager
-  imagePreview: {fileID: 1363579501}
+  m_EditorClassIdentifier: Assembly-CSharp::OCRManager_Simplified
+  cameraPreview: {fileID: 495856111}
   statusText: {fileID: 446285386}
-  resultsTextIngredient: {fileID: 558713637}
-  resultsTextCategory: {fileID: 188178111}
-  resultsTextScan: {fileID: 1826311160}
-  resultsPanel: {fileID: 21421027}
   warningText: {fileID: 1015260245}
+  fadePanel: {fileID: 2072489980}
   blurPanel: {fileID: 1735357784}
-  noIngredientText: {fileID: 1355242951}
+  noIngredientText: {fileID: 558713637}
   captureButton: {fileID: 1103833099}
   galleryButton: {fileID: 1680505945}
-  exitButton: {fileID: 4563829448356242765}
   instructionsButton: {fileID: 283032572}
   retryButton: {fileID: 370171437}
-  battleButton: {fileID: 0}
-  battleSceneName: BattleScene
-  fadePanel: {fileID: 2072489980}
-  fadeDuration: 1
-  audioSource: {fileID: 917810639}
-  scanSound: {fileID: 8300000, guid: 47b85bec70ddabc4eba1bbd8750edd52, type: 3}
-  sceneName: BattlePlay
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
-  modelManager: {fileID: 1459373150}
-  captureCooldownDuration: 2
+  nextSceneName: BattlePlay
+  sceneTransitionDelay: 1
+  fadeDuration: 0.5
+  useMockScan: 1
+  audioSource: {fileID: 917810639}
+  scanSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
 --- !u!1 &806951734
 GameObject:
   m_ObjectHideFlags: 0
@@ -53681,7 +53674,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 742166145}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: OCRManager, Assembly-CSharp
         m_MethodName: OnCaptureButtonClicked
         m_Mode: 1

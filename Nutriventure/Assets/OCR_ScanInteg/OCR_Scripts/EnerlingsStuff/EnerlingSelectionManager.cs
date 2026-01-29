@@ -1027,15 +1027,26 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         UpdateSelectButton();
 
-        // NEW: Switch to battlefield
-        BattleEnerlingManager battleManager = FindObjectOfType<BattleEnerlingManager>();
-        if (battleManager != null)
+        // NEW: Notify BattlePlayManager about the selection
+        BattlePlayManager battlePlayManager = FindObjectOfType<BattlePlayManager>();
+        if (battlePlayManager != null)
         {
-            battleManager.OnSelectButtonClickedFromSelection();
+            battlePlayManager.OnPlayerEnerlingSelected(selectedEnerlingName);
         }
         else
         {
-            Debug.LogError("BattleEnerlingManager not found in scene!");
+            Debug.LogError("BattlePlayManager not found! Using fallback...");
+
+            // Fallback: Use BattleEnerlingManager directly (for testing)
+            BattleEnerlingManager battleManager = FindObjectOfType<BattleEnerlingManager>();
+            if (battleManager != null)
+            {
+                battleManager.OnSelectButtonClickedFromSelection();
+            }
+            else
+            {
+                Debug.LogError("BattleEnerlingManager not found either!");
+            }
         }
     }
 

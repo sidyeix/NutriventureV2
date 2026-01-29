@@ -42,9 +42,46 @@ public class TurnSystem : MonoBehaviour
 
     void Start()
     {
-        battleManager = FindObjectOfType<BattleEnerlingManager>();
-        aiManager = FindObjectOfType<AIEnerlingManager>();
-        playerManager = FindObjectOfType<PlayerEnerlingManager>();
+        InitializeReferences();
+        InitializeUI();
+    }
+
+    void InitializeReferences()
+    {
+        if (battleManager == null)
+            battleManager = FindObjectOfType<BattleEnerlingManager>();
+        
+        if (aiManager == null)
+            aiManager = FindObjectOfType<AIEnerlingManager>();
+        
+        if (playerManager == null)
+            playerManager = FindObjectOfType<PlayerEnerlingManager>();
+        
+        Debug.Log($"TurnSystem references: BattleManager={battleManager != null}, AIManager={aiManager != null}, PlayerManager={playerManager != null}");
+    }
+
+    // NEW METHOD: Initialize battle with managers
+    public void InitializeBattle(BattleEnerlingManager playerBattleManager, AIEnerlingManager aiBattleManager)
+    {
+        Debug.Log("=== TurnSystem.InitializeBattle() called ===");
+        
+        this.battleManager = playerBattleManager;
+        this.aiManager = aiBattleManager;
+        
+        if (playerManager == null)
+        {
+            playerManager = FindObjectOfType<PlayerEnerlingManager>();
+        }
+        
+        Debug.Log($"TurnSystem initialized: PlayerBattleManager={battleManager != null}, AIBattleManager={aiManager != null}, PlayerManager={playerManager != null}");
+        
+        // Reset state
+        currentRound = 1;
+        gameTimer = 0f;
+        isGameTimerRunning = false;
+        isTurnActive = false;
+        isAnimating = false;
+        isWaitingForAnimation = false;
         
         InitializeUI();
     }
@@ -68,6 +105,12 @@ public class TurnSystem : MonoBehaviour
         
         if (aiTurnIndicator != null)
             aiTurnIndicator.SetActive(false);
+        
+        if (turnText != null)
+        {
+            turnText.text = "GET READY!";
+            turnText.color = Color.yellow;
+        }
     }
 
     void Update()
@@ -113,18 +156,56 @@ public class TurnSystem : MonoBehaviour
         }
     }
 
+    // UPDATED METHOD: Public method to start battle
     public void StartBattle()
     {
+        Debug.Log("=== TurnSystem.StartBattle() called ===");
+        
+        // Check references
+        if (battleManager == null || aiManager == null)
+        {
+            Debug.LogError("Cannot start battle: Managers not initialized!");
+            InitializeReferences();
+            
+            if (battleManager == null || aiManager == null)
+            {
+                Debug.LogError("Still missing references after re-initialization!");
+                return;
+            }
+        }
+        
         currentRound = 1;
         gameTimer = 0f;
         isGameTimerRunning = true;
         
-        InitializeUI();
+        Debug.Log($"Starting battle: Player={battleManager.GetBattleEnerling()?.ingredientName}, AI={aiManager.GetAIEnerling()?.ingredientName}");
+        
+        StartCoroutine(StartBattleSequence());
+    }
+
+    IEnumerator StartBattleSequence()
+    {
+        Debug.Log("Starting battle sequence...");
+        
+        // Brief pause for dramatic effect
+        yield return new WaitForSeconds(0.5f);
+        
+        if (turnText != null)
+        {
+            turnText.text = "BATTLE START!";
+            turnText.color = Color.red;
+        }
+        
+        yield return new WaitForSeconds(1f);
+        
+        // Start with player turn
         StartPlayerTurn();
     }
 
     void StartPlayerTurn()
     {
+        Debug.Log("=== STARTING PLAYER TURN ===");
+        
         currentTurn = TurnState.Player;
         currentTurnTime = playerTurnDuration;
         isTurnActive = true;
@@ -143,6 +224,14 @@ public class TurnSystem : MonoBehaviour
         {
             playerManager.SetButtonsInteractable(true);
         }
+        else
+        {
+            Debug.LogWarning("PlayerEnerlingManager not found for enabling controls");
+            // Try to find it again
+            playerManager = FindObjectOfType<PlayerEnerlingManager>();
+            if (playerManager != null)
+                playerManager.SetButtonsInteractable(true);
+        }
 
         // Apply beneficial organ heal automatically at the start of player's turn
         ApplyBeneficialOrganHeal(true);
@@ -152,6 +241,8 @@ public class TurnSystem : MonoBehaviour
 
     void StartAITurn()
     {
+        Debug.Log("=== STARTING AI TURN ===");
+        
         currentTurn = TurnState.AI;
         currentTurnTime = aiTurnDuration;
         isTurnActive = true;
@@ -177,7 +268,12 @@ public class TurnSystem : MonoBehaviour
         // Start AI decision making
         if (aiManager != null)
         {
+            Debug.Log("Starting AI turn decision...");
             aiManager.StartAITurn();
+        }
+        else
+        {
+            Debug.LogError("AI Manager not found for AI turn!");
         }
 
         Debug.Log($"=== AI TURN STARTED - Round {currentRound} ===");
@@ -315,12 +411,14 @@ public class TurnSystem : MonoBehaviour
 
     IEnumerator SwitchToAITurn()
     {
+        Debug.Log("Switching to AI turn...");
         yield return new WaitForSeconds(1f);
         StartAITurn();
     }
 
     IEnumerator SwitchToPlayerTurn()
     {
+        Debug.Log("Switching to Player turn...");
         yield return new WaitForSeconds(1f);
         currentRound++;
         StartPlayerTurn();
