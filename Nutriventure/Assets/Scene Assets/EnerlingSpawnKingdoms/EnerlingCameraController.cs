@@ -1,64 +1,58 @@
 using UnityEngine;
 using Cinemachine;
+using System.Collections.Generic;
 
 public class EnerlingCameraController : MonoBehaviour
 {
     [Header("Virtual Cameras")]
     public CinemachineVirtualCamera playerFollowCamera;
-    public CinemachineVirtualCamera enerlingViewCamera;
     
-    [Header("Camera Settings")]
-    public float cameraSwitchTime = 0.5f;
-    
-    [Header("First Person View Settings")]
-    public Vector3 firstPersonOffset = new Vector3(0, 1.7f, 0); // Player eye level
-    public float minCameraDistance = 2f;
-    public float maxCameraDistance = 5f;
-    public float defaultCameraDistance = 3f;
+    [Header("To Disable Components")]
+    [Tooltip("List of GameObjects to disable when interacting with Enerlings")]
+    public List<GameObject> toDisableComponents = new List<GameObject>();
     
     private Test_EnerlingController currentEnerling;
     private bool isViewingEnerling = false;
-    private GameObject player;
+    private List<Test_EnerlingController> otherEnerlings = new List<Test_EnerlingController>();
     
     void Start()
     {
-        // Find player
-        player = GameObject.FindGameObjectWithTag("Player");
-        
-        // Ensure cameras are properly set up
-        if (playerFollowCamera != null && enerlingViewCamera != null)
+        // Ensure player camera is properly set up
+        if (playerFollowCamera != null)
         {
-            // Start with player camera
-            SwitchToPlayerCamera();
-        }
-        else
-        {
-            Debug.LogError("Virtual cameras not assigned!");
+            playerFollowCamera.Priority = 10;
         }
     }
     
     public void StartViewingEnerling(Test_EnerlingController enerling)
     {
-        if (enerling == null || isViewingEnerling || player == null) return;
+        if (enerling == null || isViewingEnerling) return;
         
         currentEnerling = enerling;
         isViewingEnerling = true;
         
-        // Position camera at player's location (first-person view)
-        if (enerlingViewCamera != null && currentEnerling != null)
+        // Get all other enerlings in scene
+        FindAllOtherEnerlings();
+        
+        // Disable other enerlings
+        DisableOtherEnerlings();
+        
+        // Disable specified components
+        DisableComponents();
+        
+        // Get the specific virtual camera from this enerling
+        CinemachineVirtualCamera enerlingVirtualCamera = currentEnerling.GetVirtualCamera();
+        
+        if (enerlingVirtualCamera != null)
         {
-            // Camera is positioned at player's location with offset
-            Vector3 cameraPosition = player.transform.position + firstPersonOffset;
-            enerlingViewCamera.transform.position = cameraPosition;
+            // Switch to enerling camera by setting priority
+            SwitchToEnerlingCamera(enerlingVirtualCamera);
             
-            // Camera looks at the Enerling
-            enerlingViewCamera.LookAt = currentEnerling.transform;
-            
-            // Switch to enerling camera
-            SwitchToEnerlingCamera();
+            // Start interaction with this enerling
+            currentEnerling.StartInteraction(enerlingVirtualCamera);
         }
         
-        Debug.Log($"Started viewing Enerling: {currentEnerling.gameObject.name} from player position");
+        Debug.Log($"Started viewing Enerling: {currentEnerling.gameObject.name}");
     }
     
     public void StopViewingEnerling()
@@ -67,13 +61,82 @@ public class EnerlingCameraController : MonoBehaviour
         
         isViewingEnerling = false;
         
-        // Switch back to player camera
-        SwitchToPlayerCamera();
+        // Re-enable other enerlings
+        EnableOtherEnerlings();
         
+        // Re-enable specified components
+        EnableComponents();
+        
+        // End interaction with current enerling
         if (currentEnerling != null)
         {
+            currentEnerling.EndInteraction();
+            
+            // Switch back to player camera
+            SwitchToPlayerCamera();
+            
             Debug.Log($"Stopped viewing Enerling: {currentEnerling.gameObject.name}");
             currentEnerling = null;
+        }
+    }
+    
+    private void FindAllOtherEnerlings()
+    {
+        otherEnerlings.Clear();
+        Test_EnerlingController[] allEnerlings = FindObjectsOfType<Test_EnerlingController>();
+        
+        foreach (var enerling in allEnerlings)
+        {
+            if (enerling != currentEnerling)
+            {
+                otherEnerlings.Add(enerling);
+            }
+        }
+    }
+    
+    private void DisableOtherEnerlings()
+    {
+        foreach (var enerling in otherEnerlings)
+        {
+            if (enerling != null && enerling.gameObject != null)
+            {
+                // Store current state before disabling
+                enerling.gameObject.SetActive(false);
+            }
+        }
+    }
+    
+    private void EnableOtherEnerlings()
+    {
+        foreach (var enerling in otherEnerlings)
+        {
+            if (enerling != null && enerling.gameObject != null)
+            {
+                enerling.gameObject.SetActive(true);
+            }
+        }
+        otherEnerlings.Clear();
+    }
+    
+    private void DisableComponents()
+    {
+        foreach (GameObject component in toDisableComponents)
+        {
+            if (component != null)
+            {
+                component.SetActive(false);
+            }
+        }
+    }
+    
+    private void EnableComponents()
+    {
+        foreach (GameObject component in toDisableComponents)
+        {
+            if (component != null)
+            {
+                component.SetActive(true);
+            }
         }
     }
     
@@ -83,40 +146,23 @@ public class EnerlingCameraController : MonoBehaviour
         {
             playerFollowCamera.Priority = 10;
         }
-        
-        if (enerlingViewCamera != null)
-        {
-            enerlingViewCamera.Priority = 0;
-        }
     }
     
-    private void SwitchToEnerlingCamera()
+    private void SwitchToEnerlingCamera(CinemachineVirtualCamera enerlingCamera)
     {
         if (playerFollowCamera != null)
         {
             playerFollowCamera.Priority = 0;
         }
         
-        if (enerlingViewCamera != null)
+        if (enerlingCamera != null)
         {
-            enerlingViewCamera.Priority = 10;
+            enerlingCamera.Priority = 20;
         }
     }
     
     public bool IsViewingEnerling()
     {
         return isViewingEnerling;
-    }
-    
-    // Method to adjust camera distance (can be called from UI if needed)
-    public void SetCameraDistance(float distance)
-    {
-        if (enerlingViewCamera != null)
-        {
-            distance = Mathf.Clamp(distance, minCameraDistance, maxCameraDistance);
-            
-            // Adjust FOV or other settings if needed
-            // enerlingViewCamera.m_Lens.FieldOfView = Mathf.Lerp(40f, 60f, distance / maxCameraDistance);
-        }
     }
 }

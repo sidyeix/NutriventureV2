@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Test_EnerlingUIManager : MonoBehaviour
 {
@@ -17,6 +18,22 @@ public class Test_EnerlingUIManager : MonoBehaviour
     public TextMeshProUGUI kingdomText; // Text for kingdom origin
     public TextMeshProUGUI enerlingStoryText; // Text for Enerling story
     
+    // NEW: Banner and Rarity Images
+    public Image kingdomBannerImage; // Image for kingdom banner
+    public Image rarityImage; // Image for rarity icon
+    
+    // NEW: Sprite Assignments
+    [Header("Rarity Icons")]
+    public Sprite commonIcon;
+    public Sprite rareIcon;
+    public Sprite ultraRareIcon;
+    
+    [Header("Kingdom Banners")]
+    public Sprite nutriBanner;
+    public Sprite sugariabanner;
+    public Sprite preserviaBanner;
+    public Sprite allerthiaBanner;
+    
     // Battle Information Header
     [Header("Battle Information")]
     public TextMeshProUGUI baseLifeText; // Text for base life
@@ -30,13 +47,18 @@ public class Test_EnerlingUIManager : MonoBehaviour
     public Image skill3Image; // Image for skill 3 sprite
     public Image skill4Image; // Image for skill 4 sprite
     
+    // NEW: Organ Display
+    [Header("Organ Display")]
+    public TextMeshProUGUI organsTxt; // Text for "Beneficial Organs" or "Target Organs"
+    public GameObject organsToShow; // Grid Layout Group container for organ images
+    public GameObject organImagePrefab; // Prefab for organ image UI element
+    
     [Header("UI Buttons")]
     public Button closeButton; // Button to close the panel
     public Button textToSpeechButton; // Button for Text-to-Speech
     
     [Header("Camera Reference")]
     public EnerlingCameraController cameraController; // Camera controller
-    public Camera viewCamera; // The camera that will view the Enerling
     
     [Header("Database Reference")]
     public IngredientDatabase ingredientDatabase; // Assign this in inspector!
@@ -70,6 +92,9 @@ public class Test_EnerlingUIManager : MonoBehaviour
     private float lastDetectionTime = 0f;
     private const float DETECTION_BUFFER_TIME = 0.5f;
     
+    // Cache for organ image instances
+    private List<GameObject> organImageInstances = new List<GameObject>();
+    
     void Start()
     {
         // Find player by tag
@@ -78,16 +103,6 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (player == null)
         {
             Debug.LogError("No GameObject with 'Player' tag found!");
-        }
-        
-        // Get the view camera from camera controller
-        if (cameraController != null && viewCamera == null)
-        {
-            viewCamera = cameraController.GetComponentInChildren<Camera>();
-            if (viewCamera == null)
-            {
-                viewCamera = Camera.main;
-            }
         }
         
         // Initialize button animation components
@@ -117,6 +132,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.AddListener(CloseEnerlingInfoPanel);
         }
         
+        // ADDED BACK: Text-to-Speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.AddListener(PlayEnerlingAudio);
@@ -155,8 +171,45 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (enerlingInfoPanel != null)
             enerlingInfoPanel.SetActive(false);
         
+        // Clear organ display initially
+        ClearOrganDisplay();
+        
         // Log for debugging
         Debug.Log("Enerling UI Manager initialized with animation: " + enableAnimation);
+        
+        // Validate sprite assignments
+        ValidateSpriteAssignments();
+    }
+    
+    private void ValidateSpriteAssignments()
+    {
+        // Log warnings for missing sprite assignments
+        if (commonIcon == null) Debug.LogWarning("CommonIcon sprite is not assigned!");
+        if (rareIcon == null) Debug.LogWarning("RareIcon sprite is not assigned!");
+        if (ultraRareIcon == null) Debug.LogWarning("UltraRareIcon sprite is not assigned!");
+        
+        if (nutriBanner == null) Debug.LogWarning("NutriBanner sprite is not assigned!");
+        if (sugariabanner == null) Debug.LogWarning("SugariaBanner sprite is not assigned!");
+        if (preserviaBanner == null) Debug.LogWarning("PreserviaBanner sprite is not assigned!");
+        if (allerthiaBanner == null) Debug.LogWarning("AllerthiaBanner sprite is not assigned!");
+        
+        // Validate UI references
+        if (kingdomBannerImage == null) Debug.LogWarning("KingdomBanner Image component is not assigned!");
+        if (rarityImage == null) Debug.LogWarning("RarityImage Image component is not assigned!");
+        
+        // Validate organ display references
+        if (organsTxt == null) Debug.LogWarning("OrgansTxt TextMeshPro component is not assigned!");
+        if (organsToShow == null) Debug.LogWarning("OrgansToShow GameObject is not assigned!");
+        if (organImagePrefab == null) Debug.LogWarning("OrganImagePrefab is not assigned!");
+        
+        // Validate skill image references
+        if (skill1Image == null) Debug.LogWarning("skill1Image Image component is not assigned!");
+        if (skill2Image == null) Debug.LogWarning("skill2Image Image component is not assigned!");
+        if (skill3Image == null) Debug.LogWarning("skill3Image Image component is not assigned!");
+        if (skill4Image == null) Debug.LogWarning("skill4Image Image component is not assigned!");
+        
+        // Validate text-to-speech button
+        if (textToSpeechButton == null) Debug.LogWarning("TextToSpeechButton is not assigned!");
     }
     
     private void InitializeButtonAnimation()
@@ -236,7 +289,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
         
         foreach (var enerling in allEnerlings)
         {
-            if (enerling == null) continue;
+            if (enerling == null || enerling.IsInteracting()) continue;
             
             float distance = Vector3.Distance(player.transform.position, enerling.transform.position);
             
@@ -375,20 +428,14 @@ public class Test_EnerlingUIManager : MonoBehaviour
             return;
         }
         
-        if (viewCamera == null)
+        if (cameraController == null)
         {
-            Debug.LogError("View camera is not assigned!");
+            Debug.LogError("Camera controller is not assigned!");
             return;
         }
         
-        // Start interaction with Enerling, passing the camera
-        currentNearbyEnerling.StartInteraction(viewCamera);
-        
-        // Switch camera to view Enerling (first-person from player position)
-        if (cameraController != null)
-        {
-            cameraController.StartViewingEnerling(currentNearbyEnerling);
-        }
+        // Switch camera to view Enerling using the specific virtual camera
+        cameraController.StartViewingEnerling(currentNearbyEnerling);
         
         // Hide button with animation before opening panel
         HideButtonWithAnimation();
@@ -401,17 +448,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
             // Store the audio clip for Text-to-Speech
             currentEnerlingAudioClip = ingredientInfo.audioClip;
             
-            // Enable/disable Text-to-Speech button based on audio availability
+            // ADDED BACK: Enable/disable Text-to-Speech button based on audio availability
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = (currentEnerlingAudioClip != null);
-                
-                // Optional: Change button color based on availability
-                var buttonImage = textToSpeechButton.GetComponent<Image>();
-                if (buttonImage != null)
-                {
-                    buttonImage.color = (currentEnerlingAudioClip != null) ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
-                }
             }
             
             // Update UI with Enerling info
@@ -438,7 +478,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
                 enerlingNameText.text = displayName;
             }
             
-            // Disable Text-to-Speech button for fallback
+            // ADDED BACK: Disable Text-to-Speech button for fallback
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = false;
@@ -475,7 +515,8 @@ public class Test_EnerlingUIManager : MonoBehaviour
         name = name.Replace("_Enerling", "");
         name = name.Replace("_Enerling_Fallback", "");
         name = name.Replace("(Clone)", "");
-        return name.Trim();
+        name = name.Replace("[Unlocked]", "").Replace("[LOCKED]", "").Trim();
+        return name;
     }
     
     private void UpdateEnerlingInfoUI(IngredientDatabase.IngredientInfo info)
@@ -493,6 +534,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             enerlingSpriteImage.preserveAspect = true;
         }
         
+        // Update rarity text and image
         if (rarityText != null)
         {
             rarityText.text = info.rarity.ToString();
@@ -510,9 +552,115 @@ public class Test_EnerlingUIManager : MonoBehaviour
             }
         }
         
+        // Update rarity image
+        if (rarityImage != null)
+        {
+            switch (info.rarity)
+            {
+                case IngredientDatabase.Rarity.Common:
+                    if (commonIcon != null)
+                    {
+                        rarityImage.sprite = commonIcon;
+                        rarityImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        rarityImage.gameObject.SetActive(false);
+                        Debug.LogWarning("CommonIcon sprite is missing!");
+                    }
+                    break;
+                    
+                case IngredientDatabase.Rarity.Rare:
+                    if (rareIcon != null)
+                    {
+                        rarityImage.sprite = rareIcon;
+                        rarityImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        rarityImage.gameObject.SetActive(false);
+                        Debug.LogWarning("RareIcon sprite is missing!");
+                    }
+                    break;
+                    
+                case IngredientDatabase.Rarity.UltraRare:
+                    if (ultraRareIcon != null)
+                    {
+                        rarityImage.sprite = ultraRareIcon;
+                        rarityImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        rarityImage.gameObject.SetActive(false);
+                        Debug.LogWarning("UltraRareIcon sprite is missing!");
+                    }
+                    break;
+            }
+        }
+        
+        // Update kingdom text and banner
         if (kingdomText != null)
         {
             kingdomText.text = info.kingdom.ToString();
+        }
+        
+        // Update kingdom banner
+        if (kingdomBannerImage != null)
+        {
+            switch (info.kingdom)
+            {
+                case IngredientDatabase.KingdomOrigin.NutriKingdom:
+                    if (nutriBanner != null)
+                    {
+                        kingdomBannerImage.sprite = nutriBanner;
+                        kingdomBannerImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        kingdomBannerImage.gameObject.SetActive(false);
+                        Debug.LogWarning("NutriBanner sprite is missing!");
+                    }
+                    break;
+                    
+                case IngredientDatabase.KingdomOrigin.Sugaria:
+                    if (sugariabanner != null)
+                    {
+                        kingdomBannerImage.sprite = sugariabanner;
+                        kingdomBannerImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        kingdomBannerImage.gameObject.SetActive(false);
+                        Debug.LogWarning("SugariaBanner sprite is missing!");
+                    }
+                    break;
+                    
+                case IngredientDatabase.KingdomOrigin.Preservia:
+                    if (preserviaBanner != null)
+                    {
+                        kingdomBannerImage.sprite = preserviaBanner;
+                        kingdomBannerImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        kingdomBannerImage.gameObject.SetActive(false);
+                        Debug.LogWarning("PreserviaBanner sprite is missing!");
+                    }
+                    break;
+                    
+                case IngredientDatabase.KingdomOrigin.Alerthia:
+                    if (allerthiaBanner != null)
+                    {
+                        kingdomBannerImage.sprite = allerthiaBanner;
+                        kingdomBannerImage.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        kingdomBannerImage.gameObject.SetActive(false);
+                        Debug.LogWarning("AllerthiaBanner sprite is missing!");
+                    }
+                    break;
+            }
         }
         
         if (enerlingStoryText != null)
@@ -522,13 +670,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
             {
                 enerlingStoryText.text = "There's no enerling story available...";
                 enerlingStoryText.fontStyle = FontStyles.Italic;
-                enerlingStoryText.color = new Color(0.7f, 0.7f, 0.7f, 1f);
             }
             else
             {
                 enerlingStoryText.text = info.enerlingStory;
-                enerlingStoryText.fontStyle = FontStyles.Normal;
-                enerlingStoryText.color = Color.white;
             }
         }
         
@@ -547,11 +692,14 @@ public class Test_EnerlingUIManager : MonoBehaviour
             baseDamageText.text = $"{info.baseDamage}";
         }
         
-        // Update Skill Visuals
+        // Update Skill Visuals - Fixed: Set preserveAspect to false to use Image GameObject size
         UpdateSkillImage(skill1Image, info.skill1);
         UpdateSkillImage(skill2Image, info.skill2);
         UpdateSkillImage(skill3Image, info.skill3);
         UpdateSkillImage(skill4Image, info.skill4);
+        
+        // Update Organ Display
+        UpdateOrganDisplay(info);
         
         Debug.Log($"Updated UI with: {info.ingredientName}");
     }
@@ -563,8 +711,11 @@ public class Test_EnerlingUIManager : MonoBehaviour
             if (skillInfo != null && skillInfo.skillSprite != null)
             {
                 skillImage.sprite = skillInfo.skillSprite;
-                skillImage.preserveAspect = true;
+                skillImage.preserveAspect = false; // Set to false to use the Image GameObject's size
                 skillImage.gameObject.SetActive(true);
+                
+                // Log for debugging
+                Debug.Log($"Set skill sprite to {skillInfo.skillSprite.name} with preserveAspect: {skillImage.preserveAspect}");
             }
             else
             {
@@ -573,6 +724,107 @@ public class Test_EnerlingUIManager : MonoBehaviour
         }
     }
     
+    private void UpdateOrganDisplay(IngredientDatabase.IngredientInfo info)
+    {
+        // Clear previous organ display
+        ClearOrganDisplay();
+        
+        if (organsTxt == null || organsToShow == null || organImagePrefab == null)
+        {
+            Debug.LogWarning("Organ display components not properly assigned!");
+            return;
+        }
+        
+        // Determine which organ list to display
+        List<string> organsToDisplay = null;
+        string organLabel = "No Special Organs";
+        
+        if (info.beneficialOrgans != null && info.beneficialOrgans.Count > 0)
+        {
+            organsToDisplay = info.beneficialOrgans;
+            organLabel = "Beneficial Organs";
+        }
+        else if (info.targetOrgans != null && info.targetOrgans.Count > 0)
+        {
+            organsToDisplay = info.targetOrgans;
+            organLabel = "Target Organs";
+        }
+        
+        // Update the organ text label
+        organsTxt.text = organLabel;
+        
+        // If there are no organs, hide the container or show a message
+        if (organsToDisplay == null || organsToDisplay.Count == 0)
+        {
+            // Optional: Show a placeholder or disable the whole section
+            Debug.Log($"{info.ingredientName} has no special organs");
+            return;
+        }
+        
+        // Ensure organsToShow is active
+        organsToShow.SetActive(true);
+        
+        // Create organ images for each organ
+        foreach (string organName in organsToDisplay)
+        {
+            // Get the organ sprite from the database
+            Sprite organSprite = ingredientDatabase.GetOrganSprite(organName);
+            
+            if (organSprite != null)
+            {
+                // Instantiate a new organ image
+                GameObject organImageGO = Instantiate(organImagePrefab, organsToShow.transform);
+                organImageInstances.Add(organImageGO);
+                
+                // Set up the image component
+                Image organImage = organImageGO.GetComponent<Image>();
+                if (organImage != null)
+                {
+                    organImage.sprite = organSprite;
+                    organImage.preserveAspect = true;
+                    
+                    // Add a tooltip or label if needed
+                    Tooltip tooltip = organImageGO.GetComponent<Tooltip>();
+                    if (tooltip == null)
+                    {
+                        tooltip = organImageGO.AddComponent<Tooltip>();
+                    }
+                    tooltip.tooltipText = organName;
+                }
+                else
+                {
+                    Debug.LogWarning($"Organ image prefab doesn't have an Image component!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"No sprite found for organ: {organName}");
+            }
+        }
+        
+        Debug.Log($"Displayed {organsToDisplay.Count} organs for {info.ingredientName}");
+    }
+    
+    private void ClearOrganDisplay()
+    {
+        // Destroy all existing organ image instances
+        foreach (GameObject organImage in organImageInstances)
+        {
+            if (organImage != null)
+            {
+                Destroy(organImage);
+            }
+        }
+        organImageInstances.Clear();
+        
+        // Optional: Disable or reset the organs container
+        if (organsToShow != null)
+        {
+            // Reset to default state if needed
+        }
+    }
+    
+    // ADDED BACK: PlayEnerlingAudio method
     public void PlayEnerlingAudio()
     {
         if (audioSource == null || currentEnerlingAudioClip == null) return;
@@ -592,6 +844,9 @@ public class Test_EnerlingUIManager : MonoBehaviour
     {
         if (enerlingInfoPanel == null) return;
         
+        // Clear organ display before closing
+        ClearOrganDisplay();
+        
         enerlingInfoPanel.SetActive(false);
         isPanelOpen = false;
         
@@ -601,13 +856,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             audioSource.Stop();
         }
         
-        // End interaction with Enerling
-        if (currentNearbyEnerling != null)
-        {
-            currentNearbyEnerling.EndInteraction();
-        }
-        
-        // Switch camera back to player
+        // Switch camera back to player and re-enable other enerlings
         if (cameraController != null)
         {
             cameraController.StopViewingEnerling();
@@ -653,6 +902,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.RemoveListener(CloseEnerlingInfoPanel);
         }
         
+        // ADDED BACK: Clean up text-to-speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.RemoveListener(PlayEnerlingAudio);
@@ -669,5 +919,57 @@ public class Test_EnerlingUIManager : MonoBehaviour
         {
             audioSource.Stop();
         }
+        
+        // Clear organ display
+        ClearOrganDisplay();
+    }
+    
+    // Public method to test UI updates with a specific ingredient
+    public void TestUIWithIngredient(string ingredientName)
+    {
+        if (ingredientDatabase != null)
+        {
+            var ingredientInfo = ingredientDatabase.GetIngredientInfo(ingredientName);
+            if (ingredientInfo != null)
+            {
+                UpdateEnerlingInfoUI(ingredientInfo);
+                Debug.Log($"Tested UI with ingredient: {ingredientName}");
+            }
+            else
+            {
+                Debug.LogWarning($"Ingredient not found: {ingredientName}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Ingredient Database is not assigned!");
+        }
+    }
+    
+    // Public method to manually set the current Enerling for testing
+    public void SetCurrentEnerlingForTesting(Test_EnerlingController testEnerling)
+    {
+        currentNearbyEnerling = testEnerling;
+        if (testEnerling != null)
+        {
+            var ingredientInfo = GetIngredientInfoFromEnerling(testEnerling);
+            if (ingredientInfo != null)
+            {
+                UpdateEnerlingInfoUI(ingredientInfo);
+            }
+        }
+    }
+}
+
+// Simple Tooltip component for organ images (optional)
+public class Tooltip : MonoBehaviour
+{
+    public string tooltipText = "";
+    private GameObject tooltipObject;
+    
+    void Start()
+    {
+        // You can implement tooltip display logic here
+        // For example, show on hover using EventTrigger component
     }
 }
