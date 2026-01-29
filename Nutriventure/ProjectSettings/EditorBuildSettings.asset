@@ -27,7 +27,7 @@ EditorBuildSettings:
     path: Assets/Scenes/GeneralCutscenes/LoadingScreen.unity
     guid: 23e0adf84f1003e4594810161ca4de27
   - enabled: 0
-    path: Assets/OCR_ScanInteg/ScanOCR.unity
+    path: Assets/OCR_ScanInteg/OCR_Scenes/ScanOCR.unity
     guid: 06de7b59885bfbc40a8285731392e76c
   - enabled: 0
     path: Assets/Scenes/2_Lobby.unity
