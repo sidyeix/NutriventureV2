@@ -9,7 +9,7 @@ public class IngredientDatabase : ScriptableObject
     {
         NutriKingdom,
         Alerthia,
-        Suragria,
+        Sugaria,
         Preservia
     }
 

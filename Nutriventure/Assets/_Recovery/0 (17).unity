@@ -12426,8 +12426,7 @@ MonoBehaviour:
   skill4Image: {fileID: 1479849165}
   closeButton: {fileID: 808114899}
   textToSpeechButton: {fileID: 1843645094}
-  cameraController: {fileID: 588966800}
-  viewCamera: {fileID: 0}
+  conversationCamera: {fileID: 588966800}
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
   detectionRange: 1.5
   checkInterval: 0.3
@@ -19042,12 +19041,11 @@ MonoBehaviour:
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
   spawnAreaCenter: {fileID: 443481596}
   spawnRadius: 20
-  maxSpawnAttempts: 30
-  spawnHeight: 0.5
-  kingdomFilterMode: 1
-  specificKingdom: 0
-  spawnOnlyUnlocked: 1
-  globalScaleMultiplier: 0.53
+  maxSpawnAttempts: 10
+  spawnHeight: 1
+  kingdomFilterMode: 0
+  specificKingdom: 2
+  globalScaleMultiplier: 0.51
   minRandomScale: 0.8
   maxRandomScale: 1.2
   useRandomScale: 0
@@ -19060,6 +19058,7 @@ MonoBehaviour:
   isTrigger: 0
   minDistanceBetweenEnerlings: 2
   maxEnerlingsInScene: 20
+  spawnOnlyUnlocked: 1
   spawnOnStart: 1
   spawnDelay: 0.5
   enerlingsParent: {fileID: 2033546041}
@@ -23154,12 +23153,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnerlingCameraController
   playerFollowCamera: {fileID: 309040882}
-  enerlingViewCamera: {fileID: 153139311}
-  cameraSwitchTime: 0.5
-  firstPersonOffset: {x: 0, y: 1.3, z: 0}
-  minCameraDistance: 2
-  maxCameraDistance: 5
-  defaultCameraDistance: 3
+  enerlingConversationCamera: {fileID: 153139311}
+  horizontalFraming: -0.527
+  verticalFraming: 0
+  cameraDistance: 3
+  cameraHeight: 1
+  horizontalAngle: 0
+  verticalAngle: 15
+  switchSpeed: 0.5
 --- !u!1001 &589606838
 PrefabInstance:
   m_ObjectHideFlags: 0
