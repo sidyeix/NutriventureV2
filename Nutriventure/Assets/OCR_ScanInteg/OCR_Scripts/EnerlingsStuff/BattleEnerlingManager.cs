@@ -267,9 +267,22 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
-    public void InitializeBattlefieldWithEnerling(string enerlingName)
+    public void InitializeBattlefieldWithEnerling(string playerEnerlingName)
     {
-        LoadBattleEnerlingByName(enerlingName);
+        Debug.Log($"Switching to battlefield with player enerling: {playerEnerlingName}");
+
+        if (selectionCanvas != null)
+        {
+            selectionCanvas.SetActive(false);
+        }
+
+        if (battlefieldCanvas != null)
+        {
+            battlefieldCanvas.SetActive(true);
+        }
+
+        // Initialize player enerling
+        LoadBattleEnerlingByName(playerEnerlingName);
         InitializeBattleState();
         InitializeOrganCooldown();
         UpdateBattlefieldUI();
@@ -277,18 +290,37 @@ public class BattleEnerlingManager : MonoBehaviour
 
         if (playerEnerlingManager != null)
         {
-            playerEnerlingManager.InitializePlayerEnerling(enerlingName);
+            playerEnerlingManager.InitializePlayerEnerling(playerEnerlingName);
         }
 
+        // Initialize AI enerling (GET FROM CUTSCENE MANAGER)
         if (aiEnerlingManager != null && ingredientDatabase != null)
         {
-            var unlocked = ingredientDatabase.GetUnlockedIngredients();
-            if (unlocked.Count > 0)
+            // Try to get AI enerling from cutscene manager
+            BattleCutsceneManager cutsceneManager = FindObjectOfType<BattleCutsceneManager>();
+            string aiEnerlingName = "";
+
+            if (cutsceneManager != null)
             {
-                int randomIndex = Random.Range(0, unlocked.Count);
-                string randomAIEnerling = unlocked[randomIndex].ingredientName;
-                aiEnerlingManager.InitializeAIEnerling(randomAIEnerling, ingredientDatabase, aiSpawningPoint);
+                aiEnerlingName = cutsceneManager.GetAIEnerlingName();
+            }
+
+            // Fallback: use random unlocked enerling
+            if (string.IsNullOrEmpty(aiEnerlingName))
+            {
+                var unlocked = ingredientDatabase.GetUnlockedIngredients();
+                if (unlocked.Count > 0)
+                {
+                    int randomIndex = Random.Range(0, unlocked.Count);
+                    aiEnerlingName = unlocked[randomIndex].ingredientName;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(aiEnerlingName))
+            {
+                aiEnerlingManager.InitializeAIEnerling(aiEnerlingName, ingredientDatabase, aiSpawningPoint);
                 aiEnerlingManager.UpdateAIUI();
+                Debug.Log($"AI Enerling initialized: {aiEnerlingName}");
             }
         }
 
@@ -297,7 +329,7 @@ public class BattleEnerlingManager : MonoBehaviour
             turnSystem.StartBattle();
         }
 
-        Debug.Log($"Battlefield initialized with {enerlingName}");
+        Debug.Log($"Battle initialized - Player: {playerEnerlingName}");
     }
 
     void LoadBattleEnerlingByName(string enerlingName)
