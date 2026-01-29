@@ -1096,18 +1096,47 @@ public class OCRManager : MonoBehaviour
     IEnumerator MockProcessImage()
     {
         yield return new WaitForSeconds(1.5f);
-        
-        string[] testIngredients = {
-            "Calcium"
-        };
-        
-        string randomIngredient = testIngredients[UnityEngine.Random.Range(0, testIngredients.Length)];
-        
-        string mockJson = $"{{\"ingredient\":\"{randomIngredient}\",\"status\":\"success\"," +
-                         "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3}";
-        
-        Debug.Log($"Mock test with ingredient: {randomIngredient}");
-        OnOCRResult(mockJson);
+
+        // Get random ingredient from database
+        if (ingredientDatabase != null && ingredientDatabase.ingredients.Count > 0)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, ingredientDatabase.ingredients.Count);
+            string randomIngredient = ingredientDatabase.ingredients[randomIndex].ingredientName;
+
+            string mockJson = $"{{\"ingredient\":\"{randomIngredient}\",\"status\":\"success\"," +
+                             "\"mode\":\"manual\",\"fingerprint\":\"mock123\",\"total_detected\":3}";
+
+            Debug.Log($"Mock test with ingredient: {randomIngredient}");
+
+            // Save to PersistentDataManager
+            SaveScannedIngredient(randomIngredient);
+
+            OnOCRResult(mockJson);
+        }
+        else
+        {
+            Debug.LogError("Ingredient database not found or empty!");
+        }
+    }
+
+    // Add this method to OCRManager.cs:
+    private void SaveScannedIngredient(string ingredientName)
+    {
+        // Make sure PersistentDataManager exists
+        if (PersistentDataManager.Instance == null)
+        {
+            Debug.LogWarning("PersistentDataManager not found, creating one...");
+            GameObject persistentDataObj = new GameObject("PersistentDataManager");
+            persistentDataObj.AddComponent<PersistentDataManager>();
+            DontDestroyOnLoad(persistentDataObj);
+        }
+
+        if (PersistentDataManager.Instance != null)
+        {
+            // Save as selected enerling (this will be the AI opponent)
+            PersistentDataManager.Instance.SaveSelectedEnerling(ingredientName);
+            Debug.Log($"Saved scanned enerling as AI opponent: {ingredientName}");
+        }
     }
 
     void OnDestroy()
