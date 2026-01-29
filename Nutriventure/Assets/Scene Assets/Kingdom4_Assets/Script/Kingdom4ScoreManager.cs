@@ -1,12 +1,10 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-
 public class Kingdom4ScoreManager : MonoBehaviour
 {
     public UnityEvent<int> OnScoreChanged;
     public UnityEvent<int> OnMultiplierChanged;
-
 
     public static Kingdom4ScoreManager Instance;
 
@@ -24,89 +22,85 @@ public class Kingdom4ScoreManager : MonoBehaviour
     public int maxCombo = 5;
 
     private int totalScore = 0;
-    private float timeBonus = 0f;
-
+    public float timeBonus = 0f;
+    private bool timeBonusApplied = false;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance == null) 
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // Add this if you want it persistent
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     // ---------------- PHASE 1 ----------------
     public void AddAllergenFound()
-{
-    allergensFound++;
-    totalScore += pointsPerAllergen;
-
-    OnScoreChanged?.Invoke(totalScore);
-}
-
+    {
+        allergensFound++;
+        totalScore += pointsPerAllergen;
+        OnScoreChanged?.Invoke(totalScore);
+    }
 
     // ---------------- PHASE 2 ----------------
     public void WagonHitAllergen()
-{
-    totalWagonHits++;
-    totalScore -= wagonHitPenalty;
-    totalScore = Mathf.Max(0, totalScore);
-
-    OnScoreChanged?.Invoke(totalScore);
-}
-
+    {
+        totalWagonHits++;
+        totalScore -= wagonHitPenalty;
+        totalScore = Mathf.Max(0, totalScore);
+        OnScoreChanged?.Invoke(totalScore);
+    }
 
     // ---------------- PHASE 3 ----------------
     public void HitHealthyFood()
-{
-    comboMultiplier = Mathf.Clamp(comboMultiplier + 1, 1, maxCombo);
-    int gained = healthyFoodBasePoints * comboMultiplier;
-    totalScore += gained;
-
-    OnScoreChanged?.Invoke(totalScore);
-    OnMultiplierChanged?.Invoke(comboMultiplier);
-}
-
+    {
+        comboMultiplier = Mathf.Clamp(comboMultiplier + 1, 1, maxCombo);
+        int gained = healthyFoodBasePoints * comboMultiplier;
+        totalScore += gained;
+        OnScoreChanged?.Invoke(totalScore);
+        OnMultiplierChanged?.Invoke(comboMultiplier);
+    }
 
     public void HitAllergenInPhase3()
     {
-        comboMultiplier = 1; // reset combo
+        comboMultiplier = 1;
         OnMultiplierChanged?.Invoke(comboMultiplier);
     }
 
     // ---------------- TIME BONUS ----------------
-   private bool timeBonusApplied = false;
+    public void CalculateTimeBonus(float completionTime)
+    {
+        if (timeBonusApplied) return;
 
-public void CalculateTimeBonus(float completionTime)
-{
-    if (timeBonusApplied) return;
+        if (completionTime <= 10 * 60)
+            timeBonus = 500;
+        else if (completionTime <= 15 * 60)
+            timeBonus = 300;
+        else
+            timeBonus = 100;
 
-    if (completionTime <= 10 * 60)
-        timeBonus = 500;
-    else if (completionTime <= 15 * 60)
-        timeBonus = 300;
-    else
-        timeBonus = 100;
+        totalScore += Mathf.RoundToInt(timeBonus);
+        timeBonusApplied = true;
+        OnScoreChanged?.Invoke(totalScore);
+    }
 
-    totalScore += Mathf.RoundToInt(timeBonus);
-    timeBonusApplied = true;
-
-    OnScoreChanged?.Invoke(totalScore);
-}
-
-
-public void ResetScore()
-{
-    allergensFound = 0;
-    totalWagonHits = 0;
-    comboMultiplier = 1;
-    totalScore = 0;
-    timeBonusApplied = false;
-    comboMultiplier = 1;
-    OnMultiplierChanged?.Invoke(comboMultiplier);
-}
-
+    public void ResetScore()
+    {
+        allergensFound = 0;
+        totalWagonHits = 0;
+        comboMultiplier = 1;
+        totalScore = 0;
+        timeBonusApplied = false;
+        OnMultiplierChanged?.Invoke(comboMultiplier);
+        OnScoreChanged?.Invoke(totalScore);
+    }
 
     public int GetFinalScore()
-{
-    return totalScore;
-}
+    {
+        return totalScore;
+    }
 }

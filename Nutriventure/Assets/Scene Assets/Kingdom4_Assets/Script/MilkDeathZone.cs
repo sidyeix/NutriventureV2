@@ -3,7 +3,7 @@ using UnityEngine;
 public class MilkDeathZone : MonoBehaviour
 {
     [Header("Damage Settings")]
-    public int damageAmount = 1;
+    public float damageAmount = 1f; // Changed to float to match PlayerHealthManager
 
     void OnTriggerEnter(Collider other)
     {
@@ -16,13 +16,17 @@ public class MilkDeathZone : MonoBehaviour
             return;
         }
 
-        // ❤️ Reduce heart
-        PlayerHealth health = other.GetComponent<PlayerHealth>();
-        if (health != null)
+        // ❤️ Apply damage using PlayerHealthManager
+        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
+        if (healthManager != null)
         {
-            int before = health.currentHearts;
-            health.TakeDamage(damageAmount);
-            Debug.Log($"🥛 Milk damage! Hearts: {before} → {health.currentHearts}");
+            float before = healthManager.currentHealth;
+            healthManager.TakeDamage(damageAmount);
+            Debug.Log($"🥛 Milk damage! Health: {before} → {healthManager.currentHealth}");
+        }
+        else
+        {
+            Debug.LogWarning("PlayerHealthManager not found!");
         }
 
         // 🔥 Force detach from moving platform

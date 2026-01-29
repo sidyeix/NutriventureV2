@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using Cinemachine;
 
 public class Test_EnerlingController : MonoBehaviour
 {
@@ -41,11 +42,14 @@ public class Test_EnerlingController : MonoBehaviour
     
     // Interaction states
     private bool isInteracting = false;
-    private Camera currentViewCamera = null;
+    private CinemachineVirtualCamera currentVirtualCamera;
     private Quaternion originalRotation;
     private Coroutine roamingCoroutine;
     private Coroutine socialCoroutine;
     private Coroutine interactionAnimationCoroutine;
+    
+    // Virtual Camera reference
+    private CinemachineVirtualCamera virtualCamera;
     
     void Start()
     {
@@ -53,6 +57,9 @@ public class Test_EnerlingController : MonoBehaviour
         animator = GetComponent<Animator>();
         spawnPosition = transform.position;
         originalRotation = transform.rotation;
+        
+        // Create virtual camera as child
+        CreateVirtualCamera();
         
         // Start roaming behavior
         roamingCoroutine = StartCoroutine(RoamingBehavior());
@@ -63,10 +70,10 @@ public class Test_EnerlingController : MonoBehaviour
     
     void Update()
     {
-        if (isInteracting && currentViewCamera != null)
+        if (isInteracting && currentVirtualCamera != null)
         {
             // Look at the camera (not the player)
-            LookAtCamera(currentViewCamera.transform.position);
+            LookAtCamera(currentVirtualCamera.transform.position);
         }
         
         // Update animation parameters
@@ -88,6 +95,31 @@ public class Test_EnerlingController : MonoBehaviour
                 currentIdleTime = 0f;
             }
         }
+    }
+    
+    private void CreateVirtualCamera()
+    {
+        // Create a new GameObject for the virtual camera
+        GameObject vcamGO = new GameObject("EnerlingVirtualCamera");
+        vcamGO.transform.SetParent(transform);
+        
+        // Set transform properties as specified
+        vcamGO.transform.localPosition = new Vector3(-0.695f, 1.24005f, 1.799f);
+        vcamGO.transform.localRotation = Quaternion.Euler(0, 190.004f, 0);
+        vcamGO.transform.localScale = new Vector3(1.886793f, 1.886793f, 1.886793f);
+        
+        // Add CinemachineVirtualCamera component
+        virtualCamera = vcamGO.AddComponent<CinemachineVirtualCamera>();
+        
+        // Configure camera settings
+        virtualCamera.Priority = 0; // Default priority (inactive)
+        virtualCamera.m_Lens.FieldOfView = 60f;
+        
+        // Don't set LookAt or Follow - these should remain null as per requirements
+        virtualCamera.LookAt = null;
+        virtualCamera.Follow = null;
+        
+        Debug.Log($"Created virtual camera for {gameObject.name}");
     }
     
     private void LookAtCamera(Vector3 cameraPosition)
@@ -208,12 +240,12 @@ public class Test_EnerlingController : MonoBehaviour
     }
     
     // Public method to start interaction
-    public void StartInteraction(Camera viewCamera)
+    public void StartInteraction(CinemachineVirtualCamera vcam = null)
     {
         if (isInteracting) return;
         
         isInteracting = true;
-        currentViewCamera = viewCamera;
+        currentVirtualCamera = vcam != null ? vcam : virtualCamera;
         
         // Store original rotation
         originalRotation = transform.rotation;
@@ -232,6 +264,12 @@ public class Test_EnerlingController : MonoBehaviour
             StopCoroutine(socialCoroutine);
         }
         
+        // Activate virtual camera
+        if (virtualCamera != null)
+        {
+            virtualCamera.Priority = 20; // Set to high priority when interacting
+        }
+        
         // Set idle animation
         if (animator != null)
         {
@@ -246,7 +284,7 @@ public class Test_EnerlingController : MonoBehaviour
         }
         interactionAnimationCoroutine = StartCoroutine(InteractionAnimationRoutine());
         
-        Debug.Log($"{gameObject.name} started interaction with camera");
+        Debug.Log($"{gameObject.name} started interaction with virtual camera");
     }
     
     // Public method to end interaction
@@ -255,7 +293,13 @@ public class Test_EnerlingController : MonoBehaviour
         if (!isInteracting) return;
         
         isInteracting = false;
-        currentViewCamera = null;
+        currentVirtualCamera = null;
+        
+        // Deactivate virtual camera
+        if (virtualCamera != null)
+        {
+            virtualCamera.Priority = 0; // Set back to low priority
+        }
         
         // Stop interaction animations
         if (interactionAnimationCoroutine != null)
@@ -332,6 +376,11 @@ public class Test_EnerlingController : MonoBehaviour
     public bool IsInteracting()
     {
         return isInteracting;
+    }
+    
+    public CinemachineVirtualCamera GetVirtualCamera()
+    {
+        return virtualCamera;
     }
     
     void OnDrawGizmosSelected()

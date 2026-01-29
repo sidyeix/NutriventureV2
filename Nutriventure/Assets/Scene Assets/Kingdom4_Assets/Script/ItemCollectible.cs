@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ItemCollectible : MonoBehaviour
 {
@@ -41,6 +42,24 @@ public class ItemCollectible : MonoBehaviour
     public GameObject heartPowerupParticles;
     public Vector3 particleOffset = new Vector3(0, 1f, 0);
     
+    [Header("HEALTHY FOOD AUDIO FEEDBACK")]
+    [Tooltip("List of audio clips to randomly play when collecting ANY healthy food")]
+    public List<AudioClip> healthyFoodAudioClips = new List<AudioClip>();
+    
+    // Volume control for different feedback types
+    [Range(0f, 1f)] public float healthyFoodVolume = 0.8f;
+    [Range(0f, 1f)] public float allergenVolume = 1f;
+    [Range(0f, 1f)] public float powerupVolume = 1f;
+    
+    // Settings for random audio behavior
+    [Header("Audio Randomization Settings")]
+    [Tooltip("If true, will never play the same sound twice in a row")]
+    public bool preventRepeatSounds = true;
+    [Tooltip("Minimum pitch variation")]
+    [Range(0.5f, 1.5f)] public float minPitch = 0.9f;
+    [Tooltip("Maximum pitch variation")]
+    [Range(0.5f, 1.5f)] public float maxPitch = 1.1f;
+    
     private SphereCollider triggerCollider;
     private bool isCollected = false;
     private GameObject playerObject;
@@ -59,22 +78,11 @@ public class ItemCollectible : MonoBehaviour
     private static float heartParticlesEndTime = 0f;
     private static Coroutine heartParticleCheckCoroutine;
     
-    public void Initialize(SpawnableItemData data)
-    {
-        itemData = data;
-        SetupCollider();
-        ApplyVisualMaterial();
-        SetupFloating();
-        
-        if (itemData != null && itemData.category == SpawnableItemData.ItemCategory.NotSafe)
-        {
-            damageAmount = 1;
-        }
-        
-        playerObject = GameObject.FindGameObjectWithTag("Player");
-        
-        Debug.Log($"Initialized {itemData.itemType} ({itemData.category}) at {transform.position}");
-    }
+    // Audio source for spatial audio
+    private AudioSource audioSource;
+    
+    // Audio tracking
+    private static AudioClip lastPlayedHealthySound;
     
     void Start()
     {
@@ -86,7 +94,26 @@ public class ItemCollectible : MonoBehaviour
         {
             SetupCollider();
             SetupFloating();
+            SetupAudioSource();
         }
+        
+        playerObject = GameObject.FindGameObjectWithTag("Player");
+    }
+    
+    void SetupAudioSource()
+    {
+        // Add AudioSource if not present
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        audioSource.spatialBlend = 1f; // 3D sound
+        audioSource.minDistance = 1f;
+        audioSource.maxDistance = 20f;
+        audioSource.playOnAwake = false;
+        audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
     }
     
     void SetupCollider()
@@ -133,18 +160,6 @@ public class ItemCollectible : MonoBehaviour
         }
     }
     
-    void ApplyVisualMaterial()
-    {
-        if (itemData.material != null)
-        {
-            Renderer renderer = GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.material = itemData.material;
-            }
-        }
-    }
-    
     void OnTriggerEnter(Collider other)
     {
         if (isCollected) return;
@@ -167,13 +182,15 @@ public class ItemCollectible : MonoBehaviour
         
         StopAllCoroutines();
         
+        // Disable visuals immediately
         Collider collider = GetComponent<Collider>();
         if (collider != null) collider.enabled = false;
         
         Renderer renderer = GetComponent<Renderer>();
         if (renderer != null) renderer.enabled = false;
         
-        PlayCollectionEffects();
+        // Play collection effects (visual only, audio handled in specific handlers)
+        PlayVisualCollectionEffects();
         
         switch (itemData.category)
         {
@@ -188,17 +205,69 @@ public class ItemCollectible : MonoBehaviour
                 break;
         }
         
-        Destroy(gameObject, 0.1f);
+        // Destroy the GameObject immediately
+        Destroy(gameObject);
     }
     
     void HandleCoinCollection()
     {
         Debug.Log("🥗 Healthy food collected");
-
+        
+        // Play random healthy food sound from the list
+        PlayRandomHealthyFoodSound();
+        
         if (currentPhase == Kingdom4Phase.Phase3_MovingRocks)
         {
             Kingdom4ScoreManager.Instance?.HitHealthyFood();
         }
+    }
+    
+    void PlayRandomHealthyFoodSound()
+    {
+        if (healthyFoodAudioClips == null || healthyFoodAudioClips.Count == 0)
+        {
+            Debug.LogWarning("No healthy food audio clips assigned in the list!");
+            return;
+        }
+        
+        List<AudioClip> availableClips = new List<AudioClip>(healthyFoodAudioClips);
+        availableClips.RemoveAll(clip => clip == null);
+        
+        if (availableClips.Count == 0)
+        {
+            Debug.LogWarning("All healthy food audio clips are null!");
+            return;
+        }
+        
+        if (preventRepeatSounds && availableClips.Count > 1)
+        {
+            if (lastPlayedHealthySound != null)
+            {
+                availableClips.Remove(lastPlayedHealthySound);
+            }
+        }
+        
+        int randomIndex = Random.Range(0, availableClips.Count);
+        AudioClip selectedClip = availableClips[randomIndex];
+        lastPlayedHealthySound = selectedClip;
+        
+        float pitch = Random.Range(minPitch, maxPitch);
+        
+        // Create a temporary GameObject to play the sound
+        GameObject tempAudioObj = new GameObject("TempAudio_" + selectedClip.name);
+        tempAudioObj.transform.position = transform.position;
+        AudioSource tempAudioSource = tempAudioObj.AddComponent<AudioSource>();
+        tempAudioSource.clip = selectedClip;
+        tempAudioSource.volume = healthyFoodVolume;
+        tempAudioSource.pitch = pitch;
+        tempAudioSource.spatialBlend = 1f;
+        tempAudioSource.minDistance = 1f;
+        tempAudioSource.maxDistance = 20f;
+        tempAudioSource.Play();
+        
+        Destroy(tempAudioObj, selectedClip.length + 0.1f);
+        
+        Debug.Log($"Playing healthy food sound: {selectedClip.name} (Pitch: {pitch:F2})");
     }
     
     void HandleAllergenCollection()
@@ -224,12 +293,10 @@ public class ItemCollectible : MonoBehaviour
     
     void ApplyAllergenDamage()
     {
-        // FIXED: Use PlayerHealthManager instead of PlayerHealth
         PlayerHealthManager healthManager = PlayerHealthManager.Instance;
         
         if (healthManager == null)
         {
-            // Fallback: try to find it on player
             healthManager = playerObject?.GetComponent<PlayerHealthManager>();
             if (healthManager == null)
             {
@@ -251,13 +318,10 @@ public class ItemCollectible : MonoBehaviour
     
     void PlayAllergenDamageEffects()
     {
-        if (damageSound != null)
+        AudioClip sound = damageSound ?? itemData?.collectSound;
+        if (sound != null)
         {
-            AudioSource.PlayClipAtPoint(damageSound, transform.position);
-        }
-        else if (itemData.collectSound != null)
-        {
-            AudioSource.PlayClipAtPoint(itemData.collectSound, transform.position);
+            PlaySoundAtPosition(sound, transform.position, allergenVolume, 1.0f);
         }
         
         if (damageParticles != null)
@@ -270,13 +334,13 @@ public class ItemCollectible : MonoBehaviour
     
     void PlayShieldBlockEffect()
     {
-        AudioClip sound = shieldActivationSound ?? itemData.collectSound;
+        AudioClip sound = shieldActivationSound ?? itemData?.collectSound;
         if (sound != null)
         {
-            AudioSource.PlayClipAtPoint(sound, transform.position);
+            PlaySoundAtPosition(sound, transform.position, powerupVolume, 1.0f);
         }
         
-        ParticleSystem particles = shieldActivationParticles ?? itemData.collectParticles;
+        ParticleSystem particles = shieldActivationParticles ?? itemData?.collectParticles;
         if (particles != null)
         {
             ParticleSystem instance = Instantiate(particles, transform.position, Quaternion.identity);
@@ -298,7 +362,6 @@ public class ItemCollectible : MonoBehaviour
             Debug.Log("❤️ Heart collected! Healing player...");
             AttachHeartParticlesToKart();
             
-            // FIXED: Use PlayerHealthManager
             PlayerHealthManager healthManager = PlayerHealthManager.Instance;
             if (healthManager == null)
             {
@@ -320,6 +383,22 @@ public class ItemCollectible : MonoBehaviour
         {
             Debug.LogError($"Unknown powerup type: {itemData.itemType}");
         }
+    }
+    
+    void PlaySoundAtPosition(AudioClip clip, Vector3 position, float volume, float pitch)
+    {
+        GameObject tempAudioObj = new GameObject("TempAudio_Damage");
+        tempAudioObj.transform.position = position;
+        AudioSource tempAudioSource = tempAudioObj.AddComponent<AudioSource>();
+        tempAudioSource.clip = clip;
+        tempAudioSource.volume = volume;
+        tempAudioSource.pitch = pitch;
+        tempAudioSource.spatialBlend = 1f;
+        tempAudioSource.minDistance = 1f;
+        tempAudioSource.maxDistance = 20f;
+        tempAudioSource.Play();
+        
+        Destroy(tempAudioObj, clip.length + 0.1f);
     }
     
     void AttachShieldParticlesToKart()
@@ -541,16 +620,13 @@ public class ItemCollectible : MonoBehaviour
     
     void PlayShieldActivationEffects()
     {
-        if (shieldActivationSound != null)
+        AudioClip sound = shieldActivationSound ?? itemData?.collectSound;
+        if (sound != null)
         {
-            AudioSource.PlayClipAtPoint(shieldActivationSound, transform.position);
-        }
-        else if (itemData.collectSound != null)
-        {
-            AudioSource.PlayClipAtPoint(itemData.collectSound, transform.position);
+            PlaySoundAtPosition(sound, transform.position, powerupVolume, 1.0f);
         }
         
-        ParticleSystem particles = shieldActivationParticles ?? itemData.collectParticles;
+        ParticleSystem particles = shieldActivationParticles ?? itemData?.collectParticles;
         if (particles != null)
         {
             ParticleSystem instance = Instantiate(particles, transform.position, Quaternion.identity);
@@ -559,15 +635,9 @@ public class ItemCollectible : MonoBehaviour
         }
     }
     
-    void PlayCollectionEffects()
+    void PlayVisualCollectionEffects()
     {
-        AudioClip sound = overrideCollectSound ?? itemData.collectSound;
-        if (sound != null)
-        {
-            AudioSource.PlayClipAtPoint(sound, transform.position);
-        }
-        
-        ParticleSystem particles = overrideCollectParticles ?? itemData.collectParticles;
+        ParticleSystem particles = overrideCollectParticles ?? itemData?.collectParticles;
         if (particles != null)
         {
             ParticleSystem instance = Instantiate(particles, transform.position, Quaternion.identity);
