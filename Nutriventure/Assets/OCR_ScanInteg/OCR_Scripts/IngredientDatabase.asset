@@ -231,7 +231,7 @@ MonoBehaviour:
   - ingredientName: Vitamin C
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
     enerlingSprite: {fileID: 21300000, guid: eba0a1b3a78943a4cb6c136b5b9b0651, type: 3}
     modelPrefab: {fileID: 2427407394295479639, guid: 46dd489de903f3a42a4fc3c68fae7ace, type: 3}
     animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}

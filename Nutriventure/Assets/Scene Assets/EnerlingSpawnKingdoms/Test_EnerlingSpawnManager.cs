@@ -18,6 +18,10 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
     public KingdomFilterMode kingdomFilterMode = KingdomFilterMode.All;
     public IngredientDatabase.KingdomOrigin specificKingdom = IngredientDatabase.KingdomOrigin.NutriKingdom;
     
+    [Header("Unlock Filtering")]
+    [Tooltip("Check to spawn only unlocked Enerlings. Uncheck to spawn all including locked ones")]
+    public bool spawnOnlyUnlocked = true;
+    
     [Header("Enerling Scale Settings")]
     [Range(0.1f, 3f)]
     public float globalScaleMultiplier = 1f;
@@ -41,7 +45,6 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
     public int maxEnerlingsInScene = 20;
     
     [Header("Spawning Behavior")]
-    public bool spawnOnlyUnlocked = true;
     public bool spawnOnStart = true;
     public float spawnDelay = 0.5f;
     
@@ -85,6 +88,7 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         }
         
         Debug.Log($"Found {ingredientsToSpawn.Count} ingredients matching filter: {kingdomFilterMode}");
+        Debug.Log($"Spawn only unlocked: {spawnOnlyUnlocked}");
         
         // Limit the number of Enerlings if needed
         if (maxEnerlingsInScene > 0 && ingredientsToSpawn.Count > maxEnerlingsInScene)
@@ -96,26 +100,43 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         {
             if (ingredient.modelPrefab != null)
             {
-                SpawnEnerling(ingredient);
-                yield return new WaitForSeconds(spawnDelay);
+                // Check if ingredient is unlocked if we're filtering by unlocked status
+                if (!spawnOnlyUnlocked || ingredient.isUnlocked)
+                {
+                    SpawnEnerling(ingredient);
+                    yield return new WaitForSeconds(spawnDelay);
+                }
+                else
+                {
+                    Debug.Log($"Skipping locked ingredient: {ingredient.ingredientName}");
+                }
             }
         }
         
         Debug.Log($"Spawned {spawnedEnerlings.Count} Enerlings");
+        
+        // Report statistics
+        int unlockedCount = 0;
+        int lockedCount = 0;
+        foreach (var enerling in spawnedEnerlings)
+        {
+            if (enerling != null && enerling.GetIngredientInfo() != null)
+            {
+                if (enerling.GetIngredientInfo().isUnlocked)
+                    unlockedCount++;
+                else
+                    lockedCount++;
+            }
+        }
+        Debug.Log($"Spawned Enerlings - Unlocked: {unlockedCount}, Locked: {lockedCount}");
     }
     
     private List<IngredientDatabase.IngredientInfo> GetFilteredIngredients()
     {
         List<IngredientDatabase.IngredientInfo> filteredIngredients;
         
-        if (spawnOnlyUnlocked)
-        {
-            filteredIngredients = ingredientDatabase.GetUnlockedIngredients();
-        }
-        else
-        {
-            filteredIngredients = new List<IngredientDatabase.IngredientInfo>(ingredientDatabase.ingredients);
-        }
+        // Get all ingredients (both unlocked and locked) from the database
+        filteredIngredients = new List<IngredientDatabase.IngredientInfo>(ingredientDatabase.ingredients);
         
         // Apply kingdom filter
         return FilterByKingdom(filteredIngredients);
@@ -193,8 +214,9 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
                 enerlingGO.transform.SetParent(enerlingsParent);
             }
             
-            // Name the GameObject
-            enerlingGO.name = $"{ingredient.ingredientName}_Enerling";
+            // Name the GameObject with locked status indicator
+            string lockedStatus = ingredient.isUnlocked ? "Unlocked" : "LOCKED";
+            enerlingGO.name = $"{ingredient.ingredientName}_Enerling [{lockedStatus}]";
             
             // Store original scale before modification
             if (preserveOriginalScale)
@@ -231,6 +253,12 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
                 }
             }
             
+            // Visual indicator for locked Enerlings (optional)
+            if (!ingredient.isUnlocked)
+            {
+                ApplyLockedVisualEffect(enerlingGO);
+            }
+            
             spawnedEnerlings.Add(controller);
             
             // Track spawn counts
@@ -240,12 +268,35 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
             }
             spawnedCounts[ingredient.ingredientName]++;
             
-            Debug.Log($"✓ Spawned {ingredient.ingredientName} ({ingredient.kingdom}) at {spawnPosition}");
+            string statusMsg = ingredient.isUnlocked ? "✓" : "🔒";
+            Debug.Log($"{statusMsg} Spawned {ingredient.ingredientName} ({ingredient.kingdom}) at {spawnPosition} - Locked: {!ingredient.isUnlocked}");
         }
         else
         {
             Debug.LogWarning($"Failed to find valid spawn position for {ingredient.ingredientName}");
         }
+    }
+    
+    private void ApplyLockedVisualEffect(GameObject enerlingGO)
+    {
+        // Option 1: Add a visual indicator (like a lock icon or different color)
+        // You can modify this based on your visual requirements
+        
+        // Example: Add a semi-transparent grey material to indicate locked status
+        Renderer[] renderers = enerlingGO.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            // You can either change the material or add an overlay
+            // For now, we'll just log it for debugging
+        }
+        
+        // Option 2: Add a lock icon as a child object
+        // GameObject lockIcon = new GameObject("LockedIndicator");
+        // lockIcon.transform.SetParent(enerlingGO.transform);
+        // lockIcon.transform.localPosition = Vector3.up * 2f;
+        // Add sprite renderer or mesh to show lock icon
+        
+        Debug.Log($"Applied locked visual effect to {enerlingGO.name}");
     }
     
     private Vector3 FindValidSpawnPosition()
@@ -399,41 +450,54 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         Debug.Log($"Specific kingdom set to: {kingdom}");
     }
     
-    public void SpawnWithFilter(KingdomFilterMode mode)
+    public void SetUnlockFilter(bool onlyUnlocked)
+    {
+        spawnOnlyUnlocked = onlyUnlocked;
+        Debug.Log($"Spawn only unlocked set to: {onlyUnlocked}");
+    }
+    
+    public void SpawnWithFilter(KingdomFilterMode mode, bool onlyUnlocked = true)
     {
         kingdomFilterMode = mode;
+        spawnOnlyUnlocked = onlyUnlocked;
         RespawnAllEnerlings();
     }
     
-    public void SpawnAllKingdoms()
+    public void SpawnAllKingdoms(bool includeLocked = false)
     {
-        SpawnWithFilter(KingdomFilterMode.All);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.All, spawnOnlyUnlocked);
     }
     
-    public void SpawnNutriKingdomOnly()
+    public void SpawnNutriKingdomOnly(bool includeLocked = false)
     {
-        SpawnWithFilter(KingdomFilterMode.NutriKingdomOnly);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.NutriKingdomOnly, spawnOnlyUnlocked);
     }
     
-    public void SpawnAlerthiaOnly()
+    public void SpawnAlerthiaOnly(bool includeLocked = false)
     {
-        SpawnWithFilter(KingdomFilterMode.AlerthiaOnly);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.AlerthiaOnly, spawnOnlyUnlocked);
     }
     
-    public void SpawnSuragriaOnly()
+    public void SpawnSuragriaOnly(bool includeLocked = false)
     {
-        SpawnWithFilter(KingdomFilterMode.SuragriaOnly);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.SuragriaOnly, spawnOnlyUnlocked);
     }
     
-    public void SpawnPreserviaOnly()
+    public void SpawnPreserviaOnly(bool includeLocked = false)
     {
-        SpawnWithFilter(KingdomFilterMode.PreserviaOnly);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.PreserviaOnly, spawnOnlyUnlocked);
     }
     
-    public void SpawnSpecificKingdomOnly(IngredientDatabase.KingdomOrigin kingdom)
+    public void SpawnSpecificKingdomOnly(IngredientDatabase.KingdomOrigin kingdom, bool includeLocked = false)
     {
         specificKingdom = kingdom;
-        SpawnWithFilter(KingdomFilterMode.SpecificKingdom);
+        spawnOnlyUnlocked = !includeLocked;
+        SpawnWithFilter(KingdomFilterMode.SpecificKingdom, spawnOnlyUnlocked);
     }
     
     public void ResizeAllEnerlings(float newScaleMultiplier)
@@ -487,6 +551,12 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         var ingredient = ingredientDatabase.GetIngredientInfo(ingredientName);
         if (ingredient != null)
         {
+            // Check unlock status if spawnOnlyUnlocked is true
+            if (spawnOnlyUnlocked && !ingredient.isUnlocked)
+            {
+                Debug.LogWarning($"Cannot spawn {ingredientName} because it's locked and spawnOnlyUnlocked is enabled");
+                return;
+            }
             SpawnEnerling(ingredient);
         }
         else
@@ -538,6 +608,52 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
             }
         }
         return count;
+    }
+    
+    // New methods for unlock status
+    public int GetUnlockedSpawnedCount()
+    {
+        int count = 0;
+        foreach (var enerling in spawnedEnerlings)
+        {
+            if (enerling != null && enerling.GetIngredientInfo() != null && enerling.GetIngredientInfo().isUnlocked)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    public int GetLockedSpawnedCount()
+    {
+        int count = 0;
+        foreach (var enerling in spawnedEnerlings)
+        {
+            if (enerling != null && enerling.GetIngredientInfo() != null && !enerling.GetIngredientInfo().isUnlocked)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    public void ToggleUnlockFilter()
+    {
+        spawnOnlyUnlocked = !spawnOnlyUnlocked;
+        Debug.Log($"Toggled spawnOnlyUnlocked to: {spawnOnlyUnlocked}");
+        RespawnAllEnerlings();
+    }
+    
+    public void SpawnOnlyUnlocked()
+    {
+        spawnOnlyUnlocked = true;
+        RespawnAllEnerlings();
+    }
+    
+    public void SpawnAllIncludingLocked()
+    {
+        spawnOnlyUnlocked = false;
+        RespawnAllEnerlings();
     }
     
     void OnDrawGizmosSelected()

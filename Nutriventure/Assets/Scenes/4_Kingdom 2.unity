@@ -19042,11 +19042,12 @@ MonoBehaviour:
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
   spawnAreaCenter: {fileID: 443481596}
   spawnRadius: 20
-  maxSpawnAttempts: 10
-  spawnHeight: 1
-  kingdomFilterMode: 0
-  specificKingdom: 2
-  globalScaleMultiplier: 0.51
+  maxSpawnAttempts: 30
+  spawnHeight: 0.5
+  kingdomFilterMode: 1
+  specificKingdom: 0
+  spawnOnlyUnlocked: 1
+  globalScaleMultiplier: 0.53
   minRandomScale: 0.8
   maxRandomScale: 1.2
   useRandomScale: 0
@@ -19059,7 +19060,6 @@ MonoBehaviour:
   isTrigger: 0
   minDistanceBetweenEnerlings: 2
   maxEnerlingsInScene: 20
-  spawnOnlyUnlocked: 1
   spawnOnStart: 1
   spawnDelay: 0.5
   enerlingsParent: {fileID: 2033546041}
