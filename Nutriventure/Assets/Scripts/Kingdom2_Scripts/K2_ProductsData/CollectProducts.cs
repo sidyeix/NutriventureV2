@@ -19,8 +19,8 @@ public class CollectProducts : MonoBehaviour
     public Button dummyPickupButton; // Separate button for dummy products
     
     [Header("Instruction UI for Dummy Products")]
-    public RawImage instructionImage1; // Instruction when near DummyProduct
-    public RawImage instructionImage2; // Instruction after collecting DummyProduct and info panel shows
+    public Canvas instructionCanvas1; // Canvas when near DummyProduct
+    public Canvas instructionCanvas2; // Canvas after collecting DummyProduct and info panel shows
     
     [Header("Player Movement")]
     public MonoBehaviour playerMovementScript; // Assign your ThirdPersonController here
@@ -63,9 +63,9 @@ public class CollectProducts : MonoBehaviour
             playerMovementScript = GetComponent<StarterAssets.ThirdPersonController>();
         }
         
-        // Get or add AudioSource component - FIXED LOGIC
+        // Get or add AudioSource component
         audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)  // FIXED: Changed from != to ==
+        if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.spatialBlend = 1f; // 3D sound
@@ -107,17 +107,17 @@ public class CollectProducts : MonoBehaviour
             Debug.LogError("Dummy Pickup Button not assigned in Inspector!");
         }
         
-        // Initialize instruction images
-        if (instructionImage1 != null)
+        // Initialize instruction canvases
+        if (instructionCanvas1 != null)
         {
-            instructionImage1.gameObject.SetActive(false);
-            Debug.Log("Instruction Image 1 initialized and hidden");
+            instructionCanvas1.gameObject.SetActive(false);
+            Debug.Log("Instruction Canvas 1 initialized and hidden");
         }
         
-        if (instructionImage2 != null)
+        if (instructionCanvas2 != null)
         {
-            instructionImage2.gameObject.SetActive(false);
-            Debug.Log("Instruction Image 2 initialized and hidden");
+            instructionCanvas2.gameObject.SetActive(false);
+            Debug.Log("Instruction Canvas 2 initialized and hidden");
         }
         
         if (playerAnimator == null)
@@ -169,11 +169,11 @@ public class CollectProducts : MonoBehaviour
     {
         Debug.Log("Product panel shown event received");
         
-        // Show instruction image 2 ONLY if we just collected a dummy product
-        if (currentProductType == ProductType.Dummy && instructionImage2 != null)
+        // Show instruction canvas 2 ONLY if we just collected a dummy product
+        if (currentProductType == ProductType.Dummy && instructionCanvas2 != null)
         {
-            instructionImage2.gameObject.SetActive(true);
-            Debug.Log("Showing instruction image 2 - Dummy product panel is showing");
+            instructionCanvas2.gameObject.SetActive(true);
+            Debug.Log("Showing instruction canvas 2 - Dummy product panel is showing");
         }
     }
     
@@ -181,11 +181,11 @@ public class CollectProducts : MonoBehaviour
     {
         Debug.Log("Product panel hidden event received");
         
-        // ALWAYS hide instruction image 2 when panel is closed
-        if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+        // ALWAYS hide instruction canvas 2 when panel is closed
+        if (instructionCanvas2 != null && instructionCanvas2.gameObject.activeSelf)
         {
-            instructionImage2.gameObject.SetActive(false);
-            Debug.Log("Hiding instruction image 2 - Panel closed");
+            instructionCanvas2.gameObject.SetActive(false);
+            Debug.Log("Hiding instruction canvas 2 - Panel closed");
         }
     }
     
@@ -328,17 +328,17 @@ public class CollectProducts : MonoBehaviour
         {
             isNearDummyProduct = showDummyButton;
             
-            // Show/hide instruction image 1 based on proximity to dummy product
-            if (instructionImage1 != null)
+            // Show/hide instruction canvas 1 based on proximity to dummy product
+            if (instructionCanvas1 != null)
             {
-                instructionImage1.gameObject.SetActive(showDummyButton && !hasCollectedDummyProduct);
+                instructionCanvas1.gameObject.SetActive(showDummyButton && !hasCollectedDummyProduct);
                 if (showDummyButton && !hasCollectedDummyProduct)
                 {
-                    Debug.Log("Showing instruction image 1 - Near DummyProduct");
+                    Debug.Log("Showing instruction canvas 1 - Near DummyProduct");
                 }
-                else if (instructionImage1.gameObject.activeSelf)
+                else if (instructionCanvas1.gameObject.activeSelf)
                 {
-                    Debug.Log("Hiding instruction image 1");
+                    Debug.Log("Hiding instruction canvas 1");
                 }
             }
         }
@@ -392,10 +392,10 @@ public class CollectProducts : MonoBehaviour
         // Hide pickup buttons immediately
         HideAllPickupButtons();
         
-        // Hide instruction image 1 if it's a dummy product
-        if (currentProductType == ProductType.Dummy && instructionImage1 != null)
+        // Hide instruction canvas 1 if it's a dummy product
+        if (currentProductType == ProductType.Dummy && instructionCanvas1 != null)
         {
-            instructionImage1.gameObject.SetActive(false);
+            instructionCanvas1.gameObject.SetActive(false);
         }
         
         // Trigger the pickup animation
@@ -482,9 +482,8 @@ public class CollectProducts : MonoBehaviour
             currentNearbyProduct = null;
         }
         
-            
-            Debug.Log("Pickup completed successfully");
-        }
+        Debug.Log("Pickup completed successfully");
+    }
     
     private void HandleDummyProductCollection(string productName)
     {
@@ -501,7 +500,7 @@ public class CollectProducts : MonoBehaviour
             // Show product information WITHOUT adding to collection
             productInfoManager.ShowProductInfoForDummy(productID);
             
-            // Instruction image 2 will be shown by OnProductPanelShown event
+            // Instruction canvas 2 will be shown by OnProductPanelShown event
             // when the panel actually appears
         }
         else
@@ -539,13 +538,13 @@ public class CollectProducts : MonoBehaviour
             productInfoManager.ShowProductInfo(productID);
             
             // If this is a soda product and we've collected a dummy product before,
-            // make sure instruction image 2 is hidden
+            // make sure instruction canvas 2 is hidden
             if ((productID.Contains("SODA") || productID.Contains("SODA_")) && hasCollectedDummyProduct)
             {
-                if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+                if (instructionCanvas2 != null && instructionCanvas2.gameObject.activeSelf)
                 {
-                    instructionImage2.gameObject.SetActive(false);
-                    Debug.Log("Hiding instruction image 2 - Real soda collected");
+                    instructionCanvas2.gameObject.SetActive(false);
+                    Debug.Log("Hiding instruction canvas 2 - Real soda collected");
                 }
             }
         }
@@ -688,14 +687,14 @@ public class CollectProducts : MonoBehaviour
                 HideAllPickupButtons();
             }
             
-            // Reset instruction images
-            if (instructionImage1 != null && instructionImage1.gameObject.activeSelf)
+            // Reset instruction canvases
+            if (instructionCanvas1 != null && instructionCanvas1.gameObject.activeSelf)
             {
-                instructionImage1.gameObject.SetActive(false);
+                instructionCanvas1.gameObject.SetActive(false);
             }
-            if (instructionImage2 != null && instructionImage2.gameObject.activeSelf)
+            if (instructionCanvas2 != null && instructionCanvas2.gameObject.activeSelf)
             {
-                instructionImage2.gameObject.SetActive(false);
+                instructionCanvas2.gameObject.SetActive(false);
             }
             
             Debug.Log("Pickup animation force stopped");
@@ -812,9 +811,9 @@ public class CollectProducts : MonoBehaviour
     public void ResetDummyProductCollection()
     {
         hasCollectedDummyProduct = false;
-        if (instructionImage2 != null)
+        if (instructionCanvas2 != null)
         {
-            instructionImage2.gameObject.SetActive(false);
+            instructionCanvas2.gameObject.SetActive(false);
         }
         Debug.Log("Dummy product collection state reset");
     }
@@ -869,7 +868,7 @@ public class CollectProducts : MonoBehaviour
         Debug.Log($"Dummy button visible: {isDummyButtonVisible}");
         Debug.Log($"Is picking up: {isPickingUp}");
         Debug.Log($"Has collected dummy product: {hasCollectedDummyProduct}");
-        Debug.Log($"Instruction Image 2 active: {(instructionImage2 != null ? instructionImage2.gameObject.activeSelf.ToString() : "null")}");
+        Debug.Log($"Instruction Canvas 2 active: {(instructionCanvas2 != null ? instructionCanvas2.gameObject.activeSelf.ToString() : "null")}");
     }
     
     // Test sound method
