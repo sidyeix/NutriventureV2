@@ -10338,7 +10338,7 @@ MonoBehaviour:
   buttonScaleDuration: 0.2
   buttonScaleFactor: 1.2
   audioSource: {fileID: 0}
-  sliderFillSound: {fileID: 0}
+  sliderFillSound: {fileID: 8300000, guid: a9e3fee688cf000499bded40dd54ff48, type: 3}
   bounceSound: {fileID: 8300000, guid: 13c242d1c3bf4db4fbfc19aae7fe7da1, type: 3}
   successSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
   failureSound: {fileID: 8300000, guid: c2eaae29c09b4e241974e0e123e5047f, type: 3}
@@ -14129,6 +14129,8 @@ MonoBehaviour:
   animationDuration: 0.5
   enableAnimation: 1
   audioSource: {fileID: 0}
+  disableDuringAudio:
+  - {fileID: 546614796}
 --- !u!1 &397941440
 GameObject:
   m_ObjectHideFlags: 0
@@ -55570,7 +55572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 5
+  sensitivity: 0.1
   invertX: 0
   invertY: 1
   uiInput: {fileID: 1580538451}
@@ -56882,7 +56884,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2899809711238474648, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1847283144}
   m_SourcePrefab: {fileID: 100100000, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
 --- !u!4 &1139048139 stripped
 Transform:
@@ -103464,6 +103469,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8035913780005954674, guid: 665472638cdd3aa408cd365ba0af8ece, type: 3}
   m_PrefabInstance: {fileID: 1847158528}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1847283139 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2899809711238474648, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
+  m_PrefabInstance: {fileID: 1139048138}
+  m_PrefabAsset: {fileID: 0}
+--- !u!208 &1847283144
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1847283139}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.935, y: 0.33, z: 0.155}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0.629, z: -0.03}
+  m_TimeToStationary: 0.5
 --- !u!1001 &1848196226
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -110617,6 +110643,7 @@ MonoBehaviour:
   playerFollowCamera: {fileID: 1862087425}
   toDisableComponents:
   - {fileID: 1580538452}
+  - {fileID: 1938089353}
 --- !u!1 &1907903660
 GameObject:
   m_ObjectHideFlags: 0
@@ -217309,7 +217336,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 1.0810001, y: 1.6, z: 0.62}
+  m_Extents: {x: 2.365, y: 3, z: 0.62}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
