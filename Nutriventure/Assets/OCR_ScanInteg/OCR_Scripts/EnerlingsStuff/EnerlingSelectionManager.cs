@@ -110,12 +110,36 @@ public class EnerlingSelectionManager : MonoBehaviour
     IEnumerator InitializeAfterDelay()
     {
         yield return null;
+
+        // STOP OTHER PLAYABLE DIRECTORS FIRST
+        StopOtherPlayableDirectors();
+
         InitializeDatabase();
         SetupFilterButtons();
         SetupKingdomButtons();
         DisplayAllUnlockedEnerlings();
         UpdateSelectButton();
         LoadSelectedEnerling();
+    }
+
+    // SIMPLE FIX: Stop other PlayableDirectors
+    void StopOtherPlayableDirectors()
+    {
+        Debug.Log("=== STOPPING OTHER PLAYABLE DIRECTORS ===");
+
+        PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>(true);
+        Debug.Log($"Found {allDirectors.Length} PlayableDirectors in scene");
+
+        foreach (PlayableDirector director in allDirectors)
+        {
+            // Skip our own director
+            if (director == timelineDirector) continue;
+
+            Debug.Log($"Stopping PlayableDirector: {director.name}");
+            director.Stop();
+            director.time = 0;
+            director.Evaluate();
+        }
     }
 
     void InitializeDatabase()
@@ -875,6 +899,8 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
     }
 
+    // ==================== UPDATED: MAIN SELECTION FLOW ====================
+
     public void OnSelectButtonClicked()
     {
         if (string.IsNullOrEmpty(selectedEnerlingName)) return;
@@ -899,106 +925,84 @@ public class EnerlingSelectionManager : MonoBehaviour
         // Disable select button to prevent multiple clicks
         selectButton.interactable = false;
 
-        // Hide the entire selection UI
-        HideSelectionUI();
-
-        // Spawn both enerlings before timeline
+        // === UPDATED: Spawn enerlings BEFORE timeline ===
         SpawnBothEnerlings();
 
-        // Play timeline before starting battle
+        // Hide the selection UI
+        HideSelectionUI();
+
+        // Play timeline BEFORE starting battle
         StartCoroutine(PlayTimelineAndStartBattle());
     }
 
-    private void PrepareSelectionTimeline()
-    {
-        if (timelineDirector == null || selectionTimelineAsset == null)
-        {
-            Debug.LogError("TimelineDirector or selectionTimelineAsset is null!");
-            return;
-        }
-
-        Debug.Log("=== PREPARING SELECTION TIMELINE ===");
-
-        // Reset the timeline director
-        timelineDirector.Stop();
-        timelineDirector.time = 0;
-        timelineDirector.playableAsset = selectionTimelineAsset;
-        timelineDirector.Evaluate();
-
-        // Activation tracks in the timeline will handle audio GameObjects automatically
-        Debug.Log("=== SELECTION TIMELINE PREPARED ===");
-    }
-
+    // ==================== UPDATED: Timeline playback ====================
     IEnumerator PlayTimelineAndStartBattle()
     {
         isTimelinePlaying = true;
-        Debug.Log("Playing selection timeline before starting battle...");
+        Debug.Log("=== TIMELINE START ===");
 
-        // Prepare the timeline (audio will be handled by Activation tracks)
-        PrepareSelectionTimeline();
-
-        // Play the specific timeline asset if available
         if (timelineDirector != null && selectionTimelineAsset != null)
         {
-            Debug.Log($"Starting timeline playback: {selectionTimelineAsset.name}");
-
-            // Play the timeline
+            Debug.Log($"Playing timeline: {selectionTimelineAsset.name}");
+            timelineDirector.playableAsset = selectionTimelineAsset;
+            timelineDirector.time = 0;
             timelineDirector.Play();
-            timelineDirector.stopped += OnSelectionTimelineFinished;
 
-            // Wait for timeline to complete
             while (timelineDirector.state == PlayState.Playing)
             {
                 yield return null;
             }
-
-            Debug.Log("Selection timeline playback completed");
-        }
-        else if (timelineDirector != null)
-        {
-            Debug.LogWarning("PlayableDirector found but no selectionTimelineAsset assigned!");
-            yield return new WaitForSeconds(1f);
+            Debug.Log("=== TIMELINE COMPLETE ===");
         }
         else
         {
-            Debug.LogWarning("No timeline director assigned. Proceeding directly to battle.");
+            Debug.LogWarning("No timeline director found. Proceeding directly.");
             yield return new WaitForSeconds(1f);
         }
 
-        // Clean up the spawned enerlings (they'll be re-spawned by battle managers)
-        CleanupSpawnedEnerlings();
+        // === AFTER TIMELINE: Start actual battle with existing enerlings ===
+        Debug.Log("Starting actual battle with spawned enerlings...");
 
-        // After timeline completes, notify BattlePlayManager
-        BattlePlayManager battlePlayManager = FindObjectOfType<BattlePlayManager>();
-        if (battlePlayManager != null)
+        // Pass the spawned enerlings to BattleEnerlingManager
+        BattleEnerlingManager battleManager = FindObjectOfType<BattleEnerlingManager>();
+        if (battleManager != null)
         {
-            battlePlayManager.OnPlayerEnerlingSelected(selectedEnerlingName);
+            battleManager.StartBattleWithExistingEnerlings(
+                selectedEnerlingName,
+                spawnedPlayerEnerling,
+                spawnedOpponentEnerling
+            );
         }
         else
         {
-            Debug.LogError("BattlePlayManager not found! Using fallback...");
-            BattleEnerlingManager battleManager = FindObjectOfType<BattleEnerlingManager>();
+            Debug.LogError("BattleEnerlingManager not found! Using fallback...");
+            // Fallback: find it
+            battleManager = FindObjectOfType<BattleEnerlingManager>();
             if (battleManager != null)
             {
-                battleManager.OnSelectButtonClickedFromSelection();
+                battleManager.StartBattleWithExistingEnerlings(
+                    selectedEnerlingName,
+                    spawnedPlayerEnerling,
+                    spawnedOpponentEnerling
+                );
             }
             else
             {
-                Debug.LogError("BattleEnerlingManager not found either!");
+                Debug.LogError("BattleEnerlingManager not found at all!");
+                // Last resort: use old method (will cause glitch)
+                battleManager = FindObjectOfType<BattleEnerlingManager>();
+                if (battleManager != null)
+                {
+                    battleManager.OnSelectButtonClickedFromSelection();
+                }
             }
         }
 
-        isTimelinePlaying = false;
-    }
+        // Clear our references (battle manager now owns them)
+        spawnedPlayerEnerling = null;
+        spawnedOpponentEnerling = null;
 
-    // Optional: Add a finished handler like BattlePlayManager does
-    private void OnSelectionTimelineFinished(PlayableDirector director)
-    {
-        if (director == timelineDirector)
-        {
-            Debug.Log("Selection timeline finished playing");
-            timelineDirector.stopped -= OnSelectionTimelineFinished;
-        }
+        isTimelinePlaying = false;
     }
 
     // ==================== METHODS FOR TIMELINE & SPAWNING ====================
@@ -1143,23 +1147,6 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
 
         return "DefaultEnerling";
-    }
-
-    private void CleanupSpawnedEnerlings()
-    {
-        if (spawnedPlayerEnerling != null)
-        {
-            Destroy(spawnedPlayerEnerling);
-            spawnedPlayerEnerling = null;
-        }
-
-        if (spawnedOpponentEnerling != null)
-        {
-            Destroy(spawnedOpponentEnerling);
-            spawnedOpponentEnerling = null;
-        }
-
-        Debug.Log("Cleaned up timeline enerlings");
     }
 
     void LoadSelectedEnerling()

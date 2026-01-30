@@ -90,6 +90,102 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
+    // ==================== NEW METHOD: Start battle with existing enerlings ====================
+    public void StartBattleWithExistingEnerlings(string playerEnerlingName, GameObject existingPlayerEnerling, GameObject existingOpponentEnerling)
+    {
+        Debug.Log($"=== BATTLEENERLINGMANAGER: Starting battle with existing enerlings ===");
+
+        // 1. Switch to battlefield WITHOUT spawning new enerling
+        SwitchToBattlefieldWithExistingEnerling(playerEnerlingName, existingPlayerEnerling);
+
+        // 2. Initialize AI with existing enerling
+        InitializeAIOpponentWithExisting(existingOpponentEnerling);
+
+        // 3. Start the battle systems
+        StartBattle();
+
+        Debug.Log($"=== BATTLE STARTED WITH EXISTING ENERLINGS ===");
+    }
+
+    // ==================== NEW METHOD: Switch to battlefield with existing enerling ====================
+    public void SwitchToBattlefieldWithExistingEnerling(string playerEnerlingName, GameObject existingPlayerEnerling)
+    {
+        Debug.Log($"Switching to battlefield with existing enerling: {playerEnerlingName}");
+
+        if (selectionCanvas != null)
+            selectionCanvas.SetActive(false);
+
+        if (battlefieldCanvas != null)
+            battlefieldCanvas.SetActive(true);
+
+        // Load data
+        LoadBattleEnerlingByName(playerEnerlingName);
+        InitializeBattleState();
+        InitializeOrganCooldown();
+        UpdateBattlefieldUI();
+
+        // Use existing enerling instead of spawning
+        if (existingPlayerEnerling != null)
+        {
+            spawnedEnerling = existingPlayerEnerling;
+
+            // Reparent to our spawn point
+            if (enerlingSpawningPoint != null)
+            {
+                spawnedEnerling.transform.SetParent(enerlingSpawningPoint);
+                spawnedEnerling.transform.localPosition = Vector3.zero;
+                spawnedEnerling.transform.localRotation = Quaternion.identity;
+                spawnedEnerling.transform.localScale = Vector3.one;
+            }
+
+            // Setup animator
+            enerlingAnimator = spawnedEnerling.GetComponent<Animator>();
+            if (enerlingAnimator != null && battleEnerling != null && battleEnerling.animatorController != null)
+            {
+                enerlingAnimator.runtimeAnimatorController = battleEnerling.animatorController;
+            }
+
+            Debug.Log($"Using existing player enerling: {playerEnerlingName}");
+        }
+        else
+        {
+            // Fallback to spawning new one
+            SpawnEnerling();
+        }
+
+        if (playerEnerlingManager != null)
+        {
+            playerEnerlingManager.InitializePlayerEnerling(playerEnerlingName);
+        }
+
+        Debug.Log($"Player battle enerling initialized: {playerEnerlingName}");
+    }
+
+    // ==================== NEW METHOD: Initialize AI with existing enerling ====================
+    private void InitializeAIOpponentWithExisting(GameObject existingOpponentEnerling)
+    {
+        // Get opponent enerling name
+        string opponentName = PersistentDataManager.Instance?.GetOpponentEnerlingName();
+        if (string.IsNullOrEmpty(opponentName))
+        {
+            opponentName = GetRandomOpponent();
+            PersistentDataManager.Instance?.SaveOpponentEnerling(opponentName);
+        }
+
+        Debug.Log($"Initializing AI opponent with existing enerling: {opponentName}");
+
+        if (aiEnerlingManager != null && ingredientDatabase != null)
+        {
+            // Initialize AI with existing enerling
+            aiEnerlingManager.InitializeWithExistingAIEnerling(opponentName, ingredientDatabase, existingOpponentEnerling);
+            Debug.Log($"AI opponent initialized with existing enerling: {opponentName}");
+        }
+        else
+        {
+            Debug.LogError("Cannot initialize AI: aiEnerlingManager or ingredientDatabase is null!");
+        }
+    }
+
     // Call this from TurnSystem when organ bonus is ready
     public void SetOrganDamageBonus(int bonusAmount, List<string> organs)
     {
@@ -502,7 +598,42 @@ public class BattleEnerlingManager : MonoBehaviour
         activeDefend = 0;
         hasDefend = false;
 
+        // Initialize skill cooldowns based on database values
+        InitializeSkillCooldowns();
+
         Debug.Log($"Battle enerling loaded: {battleEnerling.ingredientName} (Life: {battleEnerling.currentLife}/{battleEnerling.baseLife}, Armor: {currentArmor})");
+    }
+
+    void InitializeSkillCooldowns()
+    {
+        if (battleEnerling == null) return;
+
+        // Set initial cooldowns for skills that have cooldown
+        // Skills should start with their cooldown value (not available at round 1 if cooldown > 0)
+        for (int i = 1; i <= 4; i++)
+        {
+            var skill = GetSkillByNumber(i);
+            if (skill != null && skill.cooldownTurns > 0)
+            {
+                // Set the skill to be on cooldown at battle start
+                switch (i)
+                {
+                    case 1:
+                        battleEnerling.skill1Cooldown = skill.cooldownTurns;
+                        break;
+                    case 2:
+                        battleEnerling.skill2Cooldown = skill.cooldownTurns;
+                        break;
+                    case 3:
+                        battleEnerling.skill3Cooldown = skill.cooldownTurns;
+                        break;
+                    case 4:
+                        battleEnerling.skill4Cooldown = skill.cooldownTurns;
+                        break;
+                }
+                Debug.Log($"Skill {i} starts on cooldown: {skill.cooldownTurns} turns");
+            }
+        }
     }
 
     void InitializeBattleState()
@@ -754,6 +885,7 @@ public class BattleEnerlingManager : MonoBehaviour
         StartCoroutine(PlaySkillAnimationAndEffect(skillNumber));
     }
 
+
     string GetAnimationBoolName(int skillNumber)
     {
         switch (skillNumber)
@@ -797,7 +929,14 @@ public class BattleEnerlingManager : MonoBehaviour
 
         if (battleEnerling != null)
         {
+            // Set the skill cooldown (this method already exists)
             battleEnerling.SetSkillCooldown(skillNumber);
+        }
+
+        // Update player skill buttons UI
+        if (playerEnerlingManager != null)
+        {
+            playerEnerlingManager.UpdateSkillButton(skillNumber);
         }
 
         // Notify turn system that animation is complete
@@ -861,11 +1000,8 @@ public class BattleEnerlingManager : MonoBehaviour
                     );
                 }
 
-                // Apply total heal
+                // Apply total heal to PLAYER
                 StartCoroutine(ApplyHeal(healBreakdown.totalHeal, 0));
-
-                // NOTE: REMOVED the beneficial organ healing from here
-                // It will now happen automatically at the start of each turn
                 break;
 
             case IngredientDatabase.SkillInfo.SkillType.Damage:
@@ -943,7 +1079,7 @@ public class BattleEnerlingManager : MonoBehaviour
                 break;
 
             case IngredientDatabase.SkillInfo.SkillType.Defend:
-                SetDefend(skillValue);  // Changed from SetDefense
+                SetDefend(skillValue);
                 break;
         }
     }
@@ -979,7 +1115,7 @@ public class BattleEnerlingManager : MonoBehaviour
 
     public IEnumerator ApplyDamageToPlayer(BattleStructs.DamageBreakdown damageBreakdown, Transform feedbackSpawnPoint)
     {
-        Debug.Log($"Player receiving damage: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}, OrganBonuses={damageBreakdown.organBonuses?.Count ?? 0}");
+        Debug.Log($"Player receiving damage: Base={damageBreakdown.baseDamage}, Total={damageBreakdown.totalDamage}");
 
         int totalDamage = damageBreakdown.totalDamage;
         int remainingDamage = totalDamage;
@@ -1001,14 +1137,28 @@ public class BattleEnerlingManager : MonoBehaviour
             Debug.Log($"Defend blocked {damageBlockedByDefend} damage. Remaining defend: {activeDefend}, Damage that goes through: {damageThatGoesThrough}");
 
             // Show defend feedback for blocked damage
-            if (FeedbackManager.Instance != null && damageBlockedByDefend > 0)
+            if (FeedbackManager.Instance != null)
             {
-                FeedbackManager.Instance.ShowDefend(
-                    feedbackSpawnPoint,
-                    damageBlockedByDefend,
-                    false, // Not activation, this is block effect
-                    "Player Defend"
-                );
+                if (damageBlockedByDefend > 0)
+                {
+                    FeedbackManager.Instance.ShowDefend(
+                        feedbackSpawnPoint,
+                        damageBlockedByDefend,
+                        false, // Not activation, this is block effect
+                        "Player Defend Block"
+                    );
+                }
+
+                // If defend blocked all damage, show special feedback
+                if (damageBlockedByDefend >= totalDamage)
+                {
+                    FeedbackManager.Instance.ShowDefend(
+                        feedbackSpawnPoint,
+                        totalDamage,
+                        false,
+                        "Player Defend Complete Block"
+                    );
+                }
             }
 
             // Check if defend is used up
@@ -1029,9 +1179,11 @@ public class BattleEnerlingManager : MonoBehaviour
             armorDamage = Mathf.Min(currentArmor, remainingDamage);
             currentArmor -= armorDamage;
             remainingDamage -= armorDamage;
+
+            Debug.Log($"Armor blocked {armorDamage} damage. Remaining armor: {currentArmor}");
         }
 
-        // IMPORTANT FIX: Only show the damage that actually goes through to health!
+        // Show remaining damage that goes through to health
         if (FeedbackManager.Instance != null && remainingDamage > 0)
         {
             // Create a new damage breakdown for the remaining damage
@@ -1082,7 +1234,7 @@ public class BattleEnerlingManager : MonoBehaviour
         yield return null;
     }
 
-    // Helper method to calculate organ bonuses after defend (ADD THIS NEW METHOD)
+    // Helper method to calculate organ bonuses after defend
     private List<FeedbackManager.OrganBonus> CalculateEffectiveOrganBonuses(
         BattleStructs.DamageBreakdown originalBreakdown,
         int damageBlocked,
@@ -1306,7 +1458,7 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
-    void CleanupBattlefield()
+    public void CleanupBattlefield()
     {
         StopAllCoroutines();
 
@@ -1350,6 +1502,15 @@ public class BattleEnerlingManager : MonoBehaviour
         activeDefend = 0;
         hasDefend = false;
         isAnimating = false;
+    }
+
+    // ==================== Updated: Initialize with existing enerling (for backward compatibility) ====================
+    public void InitializeWithExistingEnerling(string enerlingName, GameObject existingEnerling)
+    {
+        Debug.Log($"BattleEnerlingManager: Initializing with existing enerling: {enerlingName}");
+
+        // This is now just an alias for the new method
+        SwitchToBattlefieldWithExistingEnerling(enerlingName, existingEnerling);
     }
 
     public IngredientDatabase.IngredientInfo GetBattleEnerling()

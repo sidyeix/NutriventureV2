@@ -488,6 +488,8 @@ public class IngredientDatabase : ScriptableObject
         return ingredients.FindIndex(i => i.ingredientName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
     }
 
+
+
     // Create a battle-ready copy of an ingredient
     public IngredientInfo CreateBattleCopy(string name)
     {
