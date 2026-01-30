@@ -88118,7 +88118,7 @@ Transform:
   m_GameObject: {fileID: 1556002738}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2.909, y: 0, z: -2.349}
   m_LocalScale: {x: 1, y: 0.58331, z: 4.5821214}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -103158,7 +103158,7 @@ MonoBehaviour:
   m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 1
-  m_Size: {x: 10, y: 2, z: 10}
+  m_Size: {x: 40, y: 10, z: 40}
   m_Center: {x: 0, y: 0, z: 0}
   m_LayerMask:
     serializedVersion: 2
@@ -110666,7 +110666,7 @@ MonoBehaviour:
   spawnRadius: 20
   maxSpawnAttempts: 30
   spawnHeight: 0.5
-  kingdomFilterMode: 0
+  kingdomFilterMode: 4
   specificKingdom: 0
   spawnOnlyUnlocked: 0
   globalScaleMultiplier: 0.53
@@ -151771,6 +151771,7 @@ GameObject:
   - component: {fileID: 3993951949527679692}
   - component: {fileID: 4933726526575962363}
   - component: {fileID: 7374278237222202189}
+  - component: {fileID: 7772226820964578591}
   m_Layer: 0
   m_Name: WallGateCircleTowers
   m_TagString: Untagged
@@ -217298,6 +217299,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1241210984935719707}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!208 &7772226820964578591
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351694451358871069}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 1.0810001, y: 1.6, z: 0.62}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0.62700003, z: -0.4}
+  m_TimeToStationary: 0.5
 --- !u!1 &7803803977048714392
 GameObject:
   m_ObjectHideFlags: 0
