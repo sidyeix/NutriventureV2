@@ -153,6 +153,7 @@ public class AIEnerlingManager : MonoBehaviour
         hasAIDefend = false;
 
         InitializeAIOrganCooldown();
+        InitializeAISkillCooldowns(); // NEW: Initialize AI skill cooldowns
         SpawnAIEnerling();
 
         for (int i = 1; i <= 4; i++)
@@ -164,6 +165,27 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAIUI();
 
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
+    }
+
+    void InitializeAISkillCooldowns()
+    {
+        if (aiEnerling == null) return;
+
+        // Set initial cooldowns for AI skills
+        for (int i = 1; i <= 4; i++)
+        {
+            var skill = GetSkillByNumber(i);
+            if (skill != null && skill.cooldownTurns > 0)
+            {
+                // Set the skill to be on cooldown at battle start
+                skillCooldowns[i] = skill.cooldownTurns;
+                Debug.Log($"AI Skill {i} starts on cooldown: {skill.cooldownTurns} turns");
+            }
+            else
+            {
+                skillCooldowns[i] = 0;
+            }
+        }
     }
 
     IngredientDatabase.IngredientInfo CreateAICopy(string enerlingName, IngredientDatabase database)
@@ -867,6 +889,8 @@ public class AIEnerlingManager : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log($"AI available skills: {availableSkills.Count}");
     }
 
     public IEnumerator TakeDamageWithFeedback(BattleStructs.DamageBreakdown damageBreakdown, Transform feedbackSpawnPoint)
@@ -888,14 +912,28 @@ public class AIEnerlingManager : MonoBehaviour
 
             Debug.Log($"AI Defend blocked {damageBlocked} damage. Remaining defend: {activeAIDefend}, Damage that goes through: {damageThatGoesThrough}");
 
-            if (FeedbackManager.Instance != null && damageBlocked > 0)
+            if (FeedbackManager.Instance != null)
             {
-                FeedbackManager.Instance.ShowDefend(
-                    FeedbackManager.Instance.aiFeedbackSpawnPoint,
-                    damageBlocked,
-                    false,
-                    "AI Defend"
-                );
+                if (damageBlocked > 0)
+                {
+                    FeedbackManager.Instance.ShowDefend(
+                        FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                        damageBlocked,
+                        false,
+                        "AI Defend Block"
+                    );
+                }
+
+                // If defend blocked all damage, show special feedback
+                if (damageBlocked >= totalDamage)
+                {
+                    FeedbackManager.Instance.ShowDefend(
+                        FeedbackManager.Instance.aiFeedbackSpawnPoint,
+                        totalDamage,
+                        false,
+                        "AI Defend Complete Block"
+                    );
+                }
             }
 
             if (activeAIDefend <= 0)
@@ -914,9 +952,11 @@ public class AIEnerlingManager : MonoBehaviour
             armorDamage = Mathf.Min(currentAIArmor, remainingDamage);
             currentAIArmor -= armorDamage;
             remainingDamage -= armorDamage;
+
+            Debug.Log($"AI Armor blocked {armorDamage} damage. Remaining armor: {currentAIArmor}");
         }
 
-        if (FeedbackManager.Instance != null && totalDamage > 0)
+        if (FeedbackManager.Instance != null && remainingDamage > 0)
         {
             FeedbackManager.Instance.ShowTotalDamageWithOrganBreakdown(
                 FeedbackManager.Instance.aiFeedbackSpawnPoint,
@@ -1119,6 +1159,72 @@ public class AIEnerlingManager : MonoBehaviour
             aiArmorText.text = $"{(int)endValue}";
             UpdateAIArmorTextColor();
         }
+    }
+
+    // ==================== NEW METHOD: Initialize with existing AI enerling ====================
+    public void InitializeWithExistingAIEnerling(string enerlingName, IngredientDatabase database, GameObject existingEnerling)
+    {
+        ingredientDatabase = database;
+        Debug.Log($"AIEnerlingManager: Initializing with existing AI enerling: {enerlingName}");
+
+        // Load data
+        aiEnerling = CreateAICopy(enerlingName, database);
+        if (aiEnerling == null)
+        {
+            Debug.LogError("Failed to create AI enerling copy");
+            return;
+        }
+
+        currentAIArmor = CalculateArmorValue(aiEnerling);
+        activeAIDefend = 0;
+        hasAIDefend = false;
+
+        InitializeAIOrganCooldown();
+
+        // Use existing enerling
+        if (existingEnerling != null)
+        {
+            spawnedAIEnerling = existingEnerling;
+
+            // Reparent to AI spawn point if needed
+            if (aiSpawningPoint != null)
+            {
+                spawnedAIEnerling.transform.SetParent(aiSpawningPoint);
+                spawnedAIEnerling.transform.localPosition = Vector3.zero;
+                spawnedAIEnerling.transform.localRotation = Quaternion.identity;
+                spawnedAIEnerling.transform.localScale = Vector3.one;
+            }
+            else
+            {
+                // If no spawn point, just use current transform
+                Debug.LogWarning("AI spawn point not assigned, keeping current transform");
+            }
+
+            // Setup animator
+            aiAnimator = spawnedAIEnerling.GetComponent<Animator>();
+            if (aiAnimator != null && aiEnerling.animatorController != null)
+            {
+                aiAnimator.runtimeAnimatorController = aiEnerling.animatorController;
+            }
+
+            Debug.Log($"Using existing AI enerling: {aiEnerling.ingredientName}");
+        }
+        else
+        {
+            // Fallback to spawning new one
+            SpawnAIEnerling();
+        }
+
+        // Initialize cooldowns
+        for (int i = 1; i <= 4; i++)
+        {
+            skillCooldowns[i] = 0;
+        }
+
+        UpdateAvailableSkills();
+        UpdateAIUI();
+
+        Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
     }
 
     IEnumerator PulseAIHealthSliderRed()

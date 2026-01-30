@@ -124,7 +124,8 @@ public class TurnSystem : MonoBehaviour
 
             if (currentTurnTime <= 0f)
             {
-                EndCurrentTurn();
+                Debug.Log($"Turn time expired! Ending {currentTurn} turn.");
+                ForceEndTurn();
             }
         }
     }
@@ -348,7 +349,7 @@ public class TurnSystem : MonoBehaviour
     public void OnSkillAnimationStart()
     {
         isAnimating = true;
-        isTurnActive = false;
+        isTurnActive = false; // Pause timer during animation
         Debug.Log("Animation started - turn timer paused");
     }
 
@@ -372,7 +373,18 @@ public class TurnSystem : MonoBehaviour
         }
 
         isWaitingForAnimation = false;
-        EndCurrentTurn();
+
+        // Only end turn if timer is already at 0 or skill was used
+        if (currentTurnTime <= 0f || !isTurnActive)
+        {
+            EndCurrentTurn();
+        }
+        else
+        {
+            // Resume timer if there's still time left
+            isTurnActive = true;
+            Debug.Log($"Resuming turn timer: {currentTurnTime} seconds left");
+        }
     }
 
     public void PlayerSkillChosen()
@@ -387,9 +399,15 @@ public class TurnSystem : MonoBehaviour
 
     void EndCurrentTurn()
     {
-        if (isTurnActive) return;
+        if (isAnimating || isWaitingForAnimation)
+        {
+            Debug.Log("Cannot end turn: animation in progress");
+            return;
+        }
 
         Debug.Log($"=== {currentTurn} TURN ENDED ===");
+
+        isTurnActive = false;
 
         if (currentTurn == TurnState.Player)
         {
@@ -433,6 +451,7 @@ public class TurnSystem : MonoBehaviour
 
     public void ForceEndTurn()
     {
+        Debug.Log("Force ending current turn");
         EndCurrentTurn();
     }
 
@@ -443,12 +462,12 @@ public class TurnSystem : MonoBehaviour
 
     public bool IsPlayerTurn()
     {
-        return currentTurn == TurnState.Player;
+        return currentTurn == TurnState.Player && isTurnActive && !isAnimating;
     }
 
     public bool IsAITurn()
     {
-        return currentTurn == TurnState.AI;
+        return currentTurn == TurnState.AI && isTurnActive && !isAnimating;
     }
 
     public bool IsAnimating()

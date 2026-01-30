@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Video; // Add this for VideoClip support
 
 [CreateAssetMenu(fileName = "IngredientDatabase", menuName = "NutriVenture/Ingredient Database")]
 public class IngredientDatabase : ScriptableObject
@@ -143,6 +144,10 @@ public class IngredientDatabase : ScriptableObject
 
         [Header("Audio")]
         public AudioClip audioClip;
+
+        [Header("Ending Cutscene")]
+        [Tooltip("Video file for the ending cutscene when this enerling wins")]
+        public VideoClip endingCutscene; // Add this field for video files
 
         // Battle status (runtime only)
         [System.NonSerialized]
@@ -517,7 +522,8 @@ public class IngredientDatabase : ScriptableObject
             skill4 = original.skill4,
             enerlingDescription = original.enerlingDescription,
             enerlingStory = original.enerlingStory,
-            audioClip = original.audioClip
+            audioClip = original.audioClip,
+            endingCutscene = original.endingCutscene // Copy the video reference
         };
 
         return copy;
