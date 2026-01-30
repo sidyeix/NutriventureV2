@@ -55570,7 +55570,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 5
+  sensitivity: 0.1
   invertX: 0
   invertY: 1
   uiInput: {fileID: 1580538451}
