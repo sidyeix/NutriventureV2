@@ -77,6 +77,10 @@ public class Test_EnerlingUIManager : MonoBehaviour
     [Header("Audio Settings")]
     [SerializeField] private AudioSource audioSource; // AudioSource for playing Enerling audio
     
+    [Header("Components to Disable During Audio")]
+    [Tooltip("GameObjects that will be disabled while audio is playing")]
+    public List<GameObject> disableDuringAudio = new List<GameObject>();
+    
     private Test_EnerlingController currentNearbyEnerling;
     private GameObject player;
     private bool isPanelOpen = false;
@@ -94,6 +98,9 @@ public class Test_EnerlingUIManager : MonoBehaviour
     
     // Cache for organ image instances
     private List<GameObject> organImageInstances = new List<GameObject>();
+    
+    // Track original active states of disabled components
+    private Dictionary<GameObject, bool> originalComponentStates = new Dictionary<GameObject, bool>();
     
     void Start()
     {
@@ -132,7 +139,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.AddListener(CloseEnerlingInfoPanel);
         }
         
-        // ADDED BACK: Text-to-Speech button listener
+        // Text-to-Speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.AddListener(PlayEnerlingAudio);
@@ -179,6 +186,20 @@ public class Test_EnerlingUIManager : MonoBehaviour
         
         // Validate sprite assignments
         ValidateSpriteAssignments();
+        
+        // Initialize component states
+        InitializeComponentStates();
+    }
+    
+    private void InitializeComponentStates()
+    {
+        foreach (GameObject obj in disableDuringAudio)
+        {
+            if (obj != null)
+            {
+                originalComponentStates[obj] = obj.activeSelf;
+            }
+        }
     }
     
     private void ValidateSpriteAssignments()
@@ -448,7 +469,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             // Store the audio clip for Text-to-Speech
             currentEnerlingAudioClip = ingredientInfo.audioClip;
             
-            // ADDED BACK: Enable/disable Text-to-Speech button based on audio availability
+            // Enable/disable Text-to-Speech button based on audio availability
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = (currentEnerlingAudioClip != null);
@@ -478,7 +499,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
                 enerlingNameText.text = displayName;
             }
             
-            // ADDED BACK: Disable Text-to-Speech button for fallback
+            // Disable Text-to-Speech button for fallback
             if (textToSpeechButton != null)
             {
                 textToSpeechButton.interactable = false;
@@ -824,7 +845,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
         }
     }
     
-    // ADDED BACK: PlayEnerlingAudio method
+    // PlayEnerlingAudio method with component disabling
     public void PlayEnerlingAudio()
     {
         if (audioSource == null || currentEnerlingAudioClip == null) return;
@@ -832,29 +853,87 @@ public class Test_EnerlingUIManager : MonoBehaviour
         if (audioSource.isPlaying)
         {
             audioSource.Stop();
+            ReenableComponents(); // Re-enable if we're stopping
         }
+        else
+        {
+            // Store current states before disabling
+            StoreComponentStates();
+            
+            // Disable specified components
+            DisableComponents();
+            
+            // Play the audio
+            audioSource.clip = currentEnerlingAudioClip;
+            audioSource.Play();
+            
+            // Start coroutine to re-enable when audio finishes
+            StartCoroutine(ReenableComponentsAfterAudio());
+            
+            Debug.Log($"Playing audio for: {currentEnerlingAudioClip.name}");
+        }
+    }
+    
+    private void StoreComponentStates()
+    {
+        foreach (GameObject obj in disableDuringAudio)
+        {
+            if (obj != null)
+            {
+                originalComponentStates[obj] = obj.activeSelf;
+            }
+        }
+    }
+    
+    private void DisableComponents()
+    {
+        foreach (GameObject obj in disableDuringAudio)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(false);
+            }
+        }
+    }
+    
+    private void ReenableComponents()
+    {
+        foreach (GameObject obj in disableDuringAudio)
+        {
+            if (obj != null && originalComponentStates.ContainsKey(obj))
+            {
+                obj.SetActive(originalComponentStates[obj]);
+            }
+        }
+    }
+    
+    private IEnumerator ReenableComponentsAfterAudio()
+    {
+        // Wait for the audio to finish playing
+        yield return new WaitWhile(() => audioSource.isPlaying);
         
-        audioSource.clip = currentEnerlingAudioClip;
-        audioSource.Play();
+        // Re-enable the components
+        ReenableComponents();
         
-        Debug.Log($"Playing audio for: {currentEnerlingAudioClip.name}");
+        Debug.Log("Audio finished, components re-enabled");
     }
     
     public void CloseEnerlingInfoPanel()
     {
         if (enerlingInfoPanel == null) return;
         
+        // Stop any audio and re-enable components
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.Stop();
+            ReenableComponents();
+        }
+        
         // Clear organ display before closing
         ClearOrganDisplay();
         
         enerlingInfoPanel.SetActive(false);
         isPanelOpen = false;
-        
-        // Stop any playing audio
-        if (audioSource != null && audioSource.isPlaying)
-        {
-            audioSource.Stop();
-        }
         
         // Switch camera back to player and re-enable other enerlings
         if (cameraController != null)
@@ -902,7 +981,7 @@ public class Test_EnerlingUIManager : MonoBehaviour
             closeButton.onClick.RemoveListener(CloseEnerlingInfoPanel);
         }
         
-        // ADDED BACK: Clean up text-to-speech button listener
+        // Clean up text-to-speech button listener
         if (textToSpeechButton != null)
         {
             textToSpeechButton.onClick.RemoveListener(PlayEnerlingAudio);
@@ -914,10 +993,11 @@ public class Test_EnerlingUIManager : MonoBehaviour
             StopCoroutine(buttonAnimationCoroutine);
         }
         
-        // Stop any playing audio
+        // Stop any playing audio and re-enable components
         if (audioSource != null && audioSource.isPlaying)
         {
             audioSource.Stop();
+            ReenableComponents();
         }
         
         // Clear organ display
@@ -957,6 +1037,31 @@ public class Test_EnerlingUIManager : MonoBehaviour
             {
                 UpdateEnerlingInfoUI(ingredientInfo);
             }
+        }
+    }
+    
+    // Method to add a GameObject to the disable list dynamically
+    public void AddComponentToDisableList(GameObject component)
+    {
+        if (component != null && !disableDuringAudio.Contains(component))
+        {
+            disableDuringAudio.Add(component);
+            originalComponentStates[component] = component.activeSelf;
+            Debug.Log($"Added {component.name} to disable during audio list");
+        }
+    }
+    
+    // Method to remove a GameObject from the disable list
+    public void RemoveComponentFromDisableList(GameObject component)
+    {
+        if (disableDuringAudio.Contains(component))
+        {
+            disableDuringAudio.Remove(component);
+            if (originalComponentStates.ContainsKey(component))
+            {
+                originalComponentStates.Remove(component);
+            }
+            Debug.Log($"Removed {component.name} from disable during audio list");
         }
     }
 }

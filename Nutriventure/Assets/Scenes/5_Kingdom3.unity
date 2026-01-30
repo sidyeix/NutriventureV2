@@ -10338,7 +10338,7 @@ MonoBehaviour:
   buttonScaleDuration: 0.2
   buttonScaleFactor: 1.2
   audioSource: {fileID: 0}
-  sliderFillSound: {fileID: 0}
+  sliderFillSound: {fileID: 8300000, guid: a9e3fee688cf000499bded40dd54ff48, type: 3}
   bounceSound: {fileID: 8300000, guid: 13c242d1c3bf4db4fbfc19aae7fe7da1, type: 3}
   successSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
   failureSound: {fileID: 8300000, guid: c2eaae29c09b4e241974e0e123e5047f, type: 3}
@@ -14129,6 +14129,8 @@ MonoBehaviour:
   animationDuration: 0.5
   enableAnimation: 1
   audioSource: {fileID: 0}
+  disableDuringAudio:
+  - {fileID: 546614796}
 --- !u!1 &397941440
 GameObject:
   m_ObjectHideFlags: 0
@@ -56882,7 +56884,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2899809711238474648, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1847283144}
   m_SourcePrefab: {fileID: 100100000, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
 --- !u!4 &1139048139 stripped
 Transform:
@@ -88118,7 +88123,7 @@ Transform:
   m_GameObject: {fileID: 1556002738}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2.909, y: 0, z: -2.349}
   m_LocalScale: {x: 1, y: 0.58331, z: 4.5821214}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -103158,7 +103163,7 @@ MonoBehaviour:
   m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 1
-  m_Size: {x: 10, y: 2, z: 10}
+  m_Size: {x: 40, y: 10, z: 40}
   m_Center: {x: 0, y: 0, z: 0}
   m_LayerMask:
     serializedVersion: 2
@@ -103464,6 +103469,27 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8035913780005954674, guid: 665472638cdd3aa408cd365ba0af8ece, type: 3}
   m_PrefabInstance: {fileID: 1847158528}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1847283139 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2899809711238474648, guid: dc07df76fa6da5646a7b3a0c6a34dd86, type: 3}
+  m_PrefabInstance: {fileID: 1139048138}
+  m_PrefabAsset: {fileID: 0}
+--- !u!208 &1847283144
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1847283139}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.935, y: 0.33, z: 0.155}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0.629, z: -0.03}
+  m_TimeToStationary: 0.5
 --- !u!1001 &1848196226
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -110617,6 +110643,7 @@ MonoBehaviour:
   playerFollowCamera: {fileID: 1862087425}
   toDisableComponents:
   - {fileID: 1580538452}
+  - {fileID: 1938089353}
 --- !u!1 &1907903660
 GameObject:
   m_ObjectHideFlags: 0
@@ -110666,7 +110693,7 @@ MonoBehaviour:
   spawnRadius: 20
   maxSpawnAttempts: 30
   spawnHeight: 0.5
-  kingdomFilterMode: 0
+  kingdomFilterMode: 4
   specificKingdom: 0
   spawnOnlyUnlocked: 0
   globalScaleMultiplier: 0.53
@@ -151771,6 +151798,7 @@ GameObject:
   - component: {fileID: 3993951949527679692}
   - component: {fileID: 4933726526575962363}
   - component: {fileID: 7374278237222202189}
+  - component: {fileID: 7772226820964578591}
   m_Layer: 0
   m_Name: WallGateCircleTowers
   m_TagString: Untagged
@@ -217298,6 +217326,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1241210984935719707}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!208 &7772226820964578591
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351694451358871069}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 2.365, y: 3, z: 0.62}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0.62700003, z: -0.4}
+  m_TimeToStationary: 0.5
 --- !u!1 &7803803977048714392
 GameObject:
   m_ObjectHideFlags: 0

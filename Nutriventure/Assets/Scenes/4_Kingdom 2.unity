@@ -13423,6 +13423,8 @@ MonoBehaviour:
   animationDuration: 0.5
   enableAnimation: 1
   audioSource: {fileID: 0}
+  disableDuringAudio:
+  - {fileID: 1356927628}
 --- !u!1001 &316396911
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -25852,6 +25854,7 @@ MonoBehaviour:
   playerFollowCamera: {fileID: 309040882}
   toDisableComponents:
   - {fileID: 1701459691}
+  - {fileID: 1809557552}
 --- !u!1001 &589606838
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -83376,7 +83379,7 @@ MonoBehaviour:
   m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
-  m_sharedMaterial: {fileID: -6719895914126404034, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
+  m_sharedMaterial: {fileID: -7944792008120196131, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -96144,7 +96147,7 @@ MonoBehaviour:
   m_text: Sugardino
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
-  m_sharedMaterial: {fileID: -6719895914126404034, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
+  m_sharedMaterial: {fileID: -7944792008120196131, guid: 9376bbd3f5e35db4887d2f83a8c8030a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
