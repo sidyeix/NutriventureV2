@@ -909,7 +909,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         StartCoroutine(PlayTimelineAndStartBattle());
     }
 
-    private void PrepareSelectionTimelineAudio()
+    private void PrepareSelectionTimeline()
     {
         if (timelineDirector == null || selectionTimelineAsset == null)
         {
@@ -917,113 +917,16 @@ public class EnerlingSelectionManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("=== PREPARING SELECTION TIMELINE AUDIO ===");
+        Debug.Log("=== PREPARING SELECTION TIMELINE ===");
 
-        // 1. FIRST, UNMUTE ALL AUDIO SOURCES IN THE SCENE
-        AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>(true);
-        Debug.Log($"Found {allAudioSources.Length} AudioSources in scene");
-
-        foreach (AudioSource audioSource in allAudioSources)
-        {
-            audioSource.mute = false;  // Unmute it
-            audioSource.volume = 1f;   // Set volume to max
-            audioSource.enabled = true; // Make sure it's enabled
-            Debug.Log($"Unmuted AudioSource: {audioSource.name} (on {audioSource.gameObject.name})");
-        }
-
-        // 2. Reset the timeline director
+        // Reset the timeline director
         timelineDirector.Stop();
         timelineDirector.time = 0;
         timelineDirector.playableAsset = selectionTimelineAsset;
         timelineDirector.Evaluate();
 
-        // 3. Unmute ALL tracks in the timeline
-        if (selectionTimelineAsset is TimelineAsset timeline)
-        {
-            Debug.Log($"Processing timeline: {timeline.name}");
-
-            // Get ALL tracks, not just audio tracks
-            var allTracks = timeline.GetOutputTracks();
-            Debug.Log($"Found {allTracks.Count()} total tracks in timeline");
-
-            foreach (var track in allTracks)
-            {
-                Debug.Log($"Processing track: {track.name} (type: {track.GetType().Name})");
-
-                // Unmute ALL track types
-                track.muted = false;
-
-                // Try to get the binding
-                UnityEngine.Object binding = timelineDirector.GetGenericBinding(track);
-                if (binding != null)
-                {
-                    Debug.Log($"  Track bound to: {binding.name} ({binding.GetType().Name})");
-
-                    // If it's an AudioSource, unmute it
-                    if (binding is AudioSource audioSource)
-                    {
-                        audioSource.mute = false;
-                        audioSource.volume = 1f;
-                        audioSource.enabled = true;
-                        Debug.Log($"  -> Unmuted bound AudioSource: {audioSource.name}");
-                    }
-                }
-                else
-                {
-                    Debug.Log($"  Track has NO binding");
-
-                    // Try to find AudioSource by name pattern
-                    if (track.name.Contains("Audio") || track is AudioTrack)
-                    {
-                        Debug.Log($"  Looking for matching AudioSource for track: {track.name}");
-
-                        // Search for AudioSources that might match this track
-                        foreach (AudioSource audioSource in allAudioSources)
-                        {
-                            if (audioSource.name.Contains(track.name) || track.name.Contains(audioSource.name))
-                            {
-                                audioSource.mute = false;
-                                audioSource.volume = 1f;
-                                audioSource.enabled = true;
-                                Debug.Log($"  -> Found and unmuted matching AudioSource: {audioSource.name}");
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 4. Specifically handle AudioTracks
-            var audioTracks = timeline.GetOutputTracks()
-                .Where(track => track is AudioTrack)
-                .Cast<AudioTrack>();
-
-            Debug.Log($"Found {audioTracks.Count()} specific AudioTracks");
-
-            foreach (var audioTrack in audioTracks)
-            {
-                Debug.Log($"AudioTrack: {audioTrack.name}");
-                audioTrack.muted = false;
-
-                // Try direct binding
-                AudioSource trackAudioSource = timelineDirector.GetGenericBinding(audioTrack) as AudioSource;
-                if (trackAudioSource != null)
-                {
-                    trackAudioSource.mute = false;
-                    trackAudioSource.volume = 1f;
-                    trackAudioSource.enabled = true;
-                    Debug.Log($"  -> Directly bound AudioSource: {trackAudioSource.name}");
-                }
-            }
-        }
-
-        // 5. Enable AudioListener
-        AudioListener.volume = 1f;
-        AudioListener.pause = false;
-
-        // 6. Set update mode
-        timelineDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
-
-        Debug.Log("=== SELECTION TIMELINE AUDIO PREPARED ===");
+        // Activation tracks in the timeline will handle audio GameObjects automatically
+        Debug.Log("=== SELECTION TIMELINE PREPARED ===");
     }
 
     IEnumerator PlayTimelineAndStartBattle()
@@ -1031,15 +934,15 @@ public class EnerlingSelectionManager : MonoBehaviour
         isTimelinePlaying = true;
         Debug.Log("Playing selection timeline before starting battle...");
 
-        // Use the SAME LOGIC as BattlePlayManager
-        PrepareSelectionTimelineAudio();
+        // Prepare the timeline (audio will be handled by Activation tracks)
+        PrepareSelectionTimeline();
 
         // Play the specific timeline asset if available
         if (timelineDirector != null && selectionTimelineAsset != null)
         {
             Debug.Log($"Starting timeline playback: {selectionTimelineAsset.name}");
 
-            // Play the timeline (same as BattlePlayManager)
+            // Play the timeline
             timelineDirector.Play();
             timelineDirector.stopped += OnSelectionTimelineFinished;
 
@@ -1098,29 +1001,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
     }
 
-    private void ForceCheckAudioUnmuted()
-    {
-        if (timelineDirector == null) return;
-
-        if (timelineDirector.playableAsset is UnityEngine.Timeline.TimelineAsset timeline)
-        {
-            foreach (var track in timeline.GetOutputTracks())
-            {
-                if (track is UnityEngine.Timeline.AudioTrack audioTrack)
-                {
-                    audioTrack.muted = false;
-                    AudioSource audioSource = timelineDirector.GetGenericBinding(audioTrack) as AudioSource;
-                    if (audioSource != null)
-                    {
-                        audioSource.mute = false;
-                    }
-                }
-            }
-        }
-    }
-
-
-    // ==================== NEW METHODS FOR TIMELINE & SPAWNING ====================
+    // ==================== METHODS FOR TIMELINE & SPAWNING ====================
 
     private void HideSelectionUI()
     {
@@ -1280,75 +1161,6 @@ public class EnerlingSelectionManager : MonoBehaviour
 
         Debug.Log("Cleaned up timeline enerlings");
     }
-
-    private void EnsureTimelineAudioNotMuted()
-    {
-        if (timelineDirector == null)
-        {
-            Debug.LogError("timelineDirector is null!");
-            return;
-        }
-
-        Debug.Log("=== NUCLEAR UNMUTE FOR SELECTION TIMELINE ===");
-
-        // 1. Stop everything
-        timelineDirector.Stop();
-        timelineDirector.time = 0;
-
-        // 2. Set the timeline asset
-        if (selectionTimelineAsset != null)
-        {
-            timelineDirector.playableAsset = selectionTimelineAsset;
-        }
-
-        timelineDirector.Evaluate();
-
-        // 3. Mute ALL AudioSources first
-        AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>(true);
-        foreach (AudioSource audioSource in allAudioSources)
-        {
-            audioSource.mute = true;
-            audioSource.volume = 0f;
-            audioSource.enabled = false;
-        }
-
-        // 4. Unmute ONLY the timeline's audio
-        if (timelineDirector.playableAsset is UnityEngine.Timeline.TimelineAsset timeline)
-        {
-            // Unmute audio tracks
-            var audioTracks = timeline.GetOutputTracks()
-                .Where(track => track is UnityEngine.Timeline.AudioTrack)
-                .Cast<UnityEngine.Timeline.AudioTrack>();
-
-            foreach (var audioTrack in audioTracks)
-            {
-                audioTrack.muted = false;
-                Debug.Log($"Unmuted audio track: {audioTrack.name}");
-
-                // Find and unmute the bound AudioSource
-                AudioSource trackAudioSource = timelineDirector.GetGenericBinding(audioTrack) as AudioSource;
-                if (trackAudioSource != null)
-                {
-                    trackAudioSource.mute = false;
-                    trackAudioSource.volume = 1f;
-                    trackAudioSource.enabled = true;
-                    Debug.Log($"Unmuted bound AudioSource: {trackAudioSource.name}");
-                }
-            }
-        }
-
-        // 5. Enable AudioListener
-        AudioListener.volume = 1f;
-        AudioListener.pause = false;
-
-        // 6. Set update mode
-        timelineDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
-
-        Debug.Log("=== SELECTION TIMELINE UNMUTED ===");
-    }
-
-
-    // ==================== END OF NEW METHODS ====================
 
     void LoadSelectedEnerling()
     {
