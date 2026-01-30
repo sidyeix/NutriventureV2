@@ -78,12 +78,25 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f); // Initial delay
         
+        Debug.Log($"=== SPAWN DEBUG ===");
+        Debug.Log($"Kingdom Filter Mode: {kingdomFilterMode}");
+        Debug.Log($"Spawn Only Unlocked: {spawnOnlyUnlocked}");
+        Debug.Log($"Max Enerlings: {maxEnerlingsInScene}");
         // Get filtered ingredients based on kingdom filter
         List<IngredientDatabase.IngredientInfo> ingredientsToSpawn = GetFilteredIngredients();
-        
+        Debug.Log($"Ingredients to spawn after all filters: {ingredientsToSpawn.Count}");
+
         if (ingredientsToSpawn.Count == 0)
         {
-            Debug.LogWarning("No ingredients match the current filter settings!");
+            Debug.LogError("❌ No ingredients match the current filter settings!");
+            
+            // List possible causes
+            Debug.LogError("Possible causes:");
+            Debug.LogError("1. Database has no ingredients");
+            Debug.LogError($"2. Kingdom filter ({kingdomFilterMode}) filters out all ingredients");
+            Debug.LogError($"3. Unlock filter (spawnOnlyUnlocked={spawnOnlyUnlocked}) filters out all ingredients");
+            Debug.LogError($"4. Specific kingdom: {specificKingdom} doesn't match any ingredients");
+            
             yield break;
         }
         
@@ -138,10 +151,48 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         // Get all ingredients (both unlocked and locked) from the database
         filteredIngredients = new List<IngredientDatabase.IngredientInfo>(ingredientDatabase.ingredients);
         
+        // === DEBUG: Check what's in the database ===
+        Debug.Log($"=== DATABASE DEBUG ===");
+        Debug.Log($"Database reference: {ingredientDatabase.name}");
+        Debug.Log($"Total ingredients in database: {filteredIngredients.Count}");
+        
+        if (filteredIngredients.Count == 0)
+        {
+            Debug.LogError("❌ Database has NO ingredients!");
+            return new List<IngredientDatabase.IngredientInfo>();
+        }
+        
+        // Log all ingredients with their kingdom and unlock status
+        foreach (var ingredient in filteredIngredients)
+        {
+            string unlocked = ingredient.isUnlocked ? "✓" : "🔒";
+            Debug.Log($"{unlocked} {ingredient.ingredientName} - Kingdom: {ingredient.kingdom}, Prefab: {ingredient.modelPrefab != null}");
+        }
+        Debug.Log($"=== END DATABASE DEBUG ===");
+        
         // Apply kingdom filter
-        return FilterByKingdom(filteredIngredients);
+        var kingdomFiltered = FilterByKingdom(filteredIngredients);
+        
+        // === DEBUG: Check kingdom filtering ===
+        Debug.Log($"After kingdom filter ({kingdomFilterMode}): {kingdomFiltered.Count} ingredients");
+        
+        // Apply unlock filter if needed
+        if (spawnOnlyUnlocked)
+        {
+            var unlockedOnly = new List<IngredientDatabase.IngredientInfo>();
+            foreach (var ingredient in kingdomFiltered)
+            {
+                if (ingredient.isUnlocked)
+                {
+                    unlockedOnly.Add(ingredient);
+                }
+            }
+            Debug.Log($"After unlock filter (spawnOnlyUnlocked={spawnOnlyUnlocked}): {unlockedOnly.Count} ingredients");
+            return unlockedOnly;
+        }
+        
+        return kingdomFiltered;
     }
-    
     private List<IngredientDatabase.IngredientInfo> FilterByKingdom(List<IngredientDatabase.IngredientInfo> ingredients)
     {
         if (kingdomFilterMode == KingdomFilterMode.All)
