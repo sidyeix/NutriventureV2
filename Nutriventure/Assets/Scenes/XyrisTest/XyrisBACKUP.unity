@@ -9270,13 +9270,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74788066}
   serializedVersion: 2
-<<<<<<< HEAD
   m_LocalRotation: {x: -0.08034438, y: -0.04408608, z: 0.01716139, w: -0.99564385}
   m_LocalPosition: {x: -9.697449, y: 1.1944895, z: -78.486465}
-=======
-  m_LocalRotation: {x: -0.06328964, y: 0.9328345, z: -0.20355184, w: -0.29048386}
-  m_LocalPosition: {x: -29.810144, y: 2.9221687, z: -30.691666}
->>>>>>> parent of 6d96c0fd (Enerling cutscenes complete)
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11219,6 +11214,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -46408,6 +46404,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -83866,6 +83863,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -151787,6 +151785,38 @@ MonoBehaviour:
         m_Calls: []
   m_LegacyBlendHint: 0
   m_ComponentOwner: {fileID: 243957782}
+--- !u!1 &1196062892
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1196062893}
+  m_Layer: 0
+  m_Name: Egg
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1196062893
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196062892}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 22, y: -2.52, z: 64.19}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1430243607}
+  m_Father: {fileID: 2024333662}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1196309088
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -197339,11 +197369,7 @@ PlayableDirector:
   m_GameObject: {fileID: 1555225637}
   m_Enabled: 1
   serializedVersion: 3
-<<<<<<< HEAD
-  m_PlayableAsset: {fileID: 0}
-=======
-  m_PlayableAsset: {fileID: 11400000, guid: c501acfd3a65a964d8529adda150c890, type: 2}
->>>>>>> parent of 6d96c0fd (Enerling cutscenes complete)
+  m_PlayableAsset: {fileID: 11400000, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -197352,7 +197378,7 @@ PlayableDirector:
   - key: {fileID: -8512577611277057159, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
     value: {fileID: 74788072}
   - key: {fileID: 3547343790089948834, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
-    value: {fileID: 0}
+    value: {fileID: 1430243608}
   - key: {fileID: 1417263699172083284, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
     value: {fileID: 0}
   - key: {fileID: 5542415674861416184, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
@@ -197482,6 +197508,20 @@ PlayableDirector:
   - key: {fileID: 933348536579502366, guid: e5a804827edb71940a85f576c3be7151, type: 2}
     value: {fileID: 0}
   - key: {fileID: -1868085791764331074, guid: e5a804827edb71940a85f576c3be7151, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 5164258445357453631, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 5983533280091541531, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -1728545037658750504, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -2321580780631262482, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -6043180107126259740, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 6266964369812368756, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -7497965923837868951, guid: d2da3684d1d4d65478b88218d342cde1, type: 2}
     value: {fileID: 0}
   m_ExposedReferences:
     m_References:
@@ -280085,11 +280125,11 @@ Transform:
   m_GameObject: {fileID: 2024333661}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -21.18175, y: 6.31242, z: 139.96088}
+  m_LocalPosition: {x: -21.18, y: 6.31242, z: 139.96088}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1430243607}
+  - {fileID: 1196062893}
   - {fileID: 1131449664}
   - {fileID: 1472904087}
   - {fileID: 1186037649}
