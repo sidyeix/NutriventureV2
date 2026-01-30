@@ -77,14 +77,12 @@ public class BattlePlayManager : MonoBehaviour
     public string scanOCRSceneName = "ScanOCR";
 
     [Header("Settings")]
-    public bool muteAllAudioOnStart = true;
     public bool stopAllAudioImmediately = true;
 
     private IngredientDatabase.IngredientInfo opponentEnerling;
     private GameObject spawnedOpponent;
     private PlayableAsset currentTimeline;
     private bool timelinePlaying = false;
-    private bool timelineAudioPrepared = false;
     private bool isUnlocked = false;
     private bool battleStarted = false;
     private CinemachineBlendDefinition originalBattleFocusBlend;
@@ -100,7 +98,7 @@ public class BattlePlayManager : MonoBehaviour
             }
         }
 
-        InitializeAudioControl();
+        InitializeTimelineControl();
 
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(false);
@@ -114,7 +112,7 @@ public class BattlePlayManager : MonoBehaviour
         StartCoroutine(InitializeBattleScene());
     }
 
-    void InitializeAudioControl()
+    void InitializeTimelineControl()
     {
         if (playableDirector == null)
         {
@@ -131,58 +129,23 @@ public class BattlePlayManager : MonoBehaviour
         playableDirector.time = 0;
         playableDirector.Evaluate();
 
-        if (playableDirector.playableAsset is TimelineAsset timeline)
-        {
-            MuteAllAudioTracks(timeline, true);
-        }
-
-        if (stopAllAudioImmediately)
-        {
-            StopAllAudioSourcesInScene();
-        }
-
-        Debug.Log("Timeline audio control initialized");
+        Debug.Log("Timeline control initialized");
     }
 
-    void StopAllAudioSourcesInScene()
+    void StopAllAudioGameObjects()
     {
-        AudioSource[] allAudioSources = FindObjectsOfType<AudioSource>(true);
-        foreach (AudioSource audioSource in allAudioSources)
+        // Deactivate common audio GameObjects
+        string[] audioObjectNames = {
+            "BattleIntroAudioSource", "Audio Source", "Music", "SFX"
+        };
+
+        foreach (string name in audioObjectNames)
         {
-            if (audioSource.isPlaying)
+            GameObject audioObj = GameObject.Find(name);
+            if (audioObj != null)
             {
-                audioSource.Stop();
-                audioSource.time = 0;
-            }
-
-            if (muteAllAudioOnStart)
-            {
-                audioSource.mute = true;
-            }
-        }
-    }
-
-    void MuteAllAudioTracks(TimelineAsset timeline, bool mute)
-    {
-        if (timeline == null) return;
-
-        var audioTracks = timeline.GetOutputTracks()
-            .Where(track => track is AudioTrack)
-            .Cast<AudioTrack>();
-
-        foreach (AudioTrack audioTrack in audioTracks)
-        {
-            audioTrack.muted = mute;
-
-            AudioSource audioSource = playableDirector.GetGenericBinding(audioTrack) as AudioSource;
-            if (audioSource != null)
-            {
-                audioSource.mute = mute;
-                if (mute)
-                {
-                    audioSource.Stop();
-                    audioSource.time = 0;
-                }
+                audioObj.SetActive(false);
+                Debug.Log($"Deactivated audio GameObject: {name}");
             }
         }
     }
@@ -322,13 +285,12 @@ public class BattlePlayManager : MonoBehaviour
         if (playableDirector == null)
             yield break;
 
-        StopTimelineImmediately();
+        StopCurrentTimeline();
         currentTimeline = GetKingdomTimelineAsset(opponentEnerling.kingdom);
 
         if (currentTimeline != null)
         {
             playableDirector.playableAsset = currentTimeline;
-            PrepareTimelineAudio(currentTimeline);
             yield return null;
             playableDirector.timeUpdateMode = DirectorUpdateMode.GameTime;
             playableDirector.Play();
@@ -353,34 +315,7 @@ public class BattlePlayManager : MonoBehaviour
         }
     }
 
-    void PrepareTimelineAudio(PlayableAsset timelineAsset)
-    {
-        if (playableDirector == null || timelineAsset == null) return;
-
-        if (timelineAsset is TimelineAsset timeline)
-        {
-            MuteAllAudioTracks(timeline, false);
-
-            var audioTracks = timeline.GetOutputTracks()
-                .Where(track => track is AudioTrack)
-                .Cast<AudioTrack>();
-
-            foreach (AudioTrack audioTrack in audioTracks)
-            {
-                AudioSource audioSource = playableDirector.GetGenericBinding(audioTrack) as AudioSource;
-                if (audioSource != null)
-                {
-                    audioSource.mute = false;
-                    audioSource.Stop();
-                    audioSource.time = 0;
-                }
-            }
-        }
-
-        timelineAudioPrepared = true;
-    }
-
-    void StopTimelineImmediately()
+    void StopCurrentTimeline()
     {
         if (playableDirector == null) return;
 
@@ -390,13 +325,7 @@ public class BattlePlayManager : MonoBehaviour
         playableDirector.time = 0;
         playableDirector.Evaluate();
 
-        if (playableDirector.playableAsset is TimelineAsset currentTimeline)
-        {
-            MuteAllAudioTracks(currentTimeline, true);
-        }
-
         timelinePlaying = false;
-        timelineAudioPrepared = false;
     }
 
     void OnTimelineFinished(PlayableDirector director)
@@ -746,7 +675,7 @@ public class BattlePlayManager : MonoBehaviour
         if (spawnedOpponent != null)
             Destroy(spawnedOpponent);
 
-        StopTimelineImmediately();
+        StopCurrentTimeline();
     }
 
     public void RestartBattleWithNewOpponent(string newOpponentName)
@@ -763,7 +692,6 @@ public class BattlePlayManager : MonoBehaviour
                 UpdateEnerlingInfoUI();
                 UpdateRarityVisuals();
                 UpdateCatchFightButtonText();
-                // StartCoroutine(PlayIntroductionSequence());
             }
         }
     }
