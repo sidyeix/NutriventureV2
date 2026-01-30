@@ -19,7 +19,6 @@ TagManager:
   - SpawnPoint
   - Fence
   - Destination
-  - Inverted
   - Interactable
   - NPC
   - FxTemporaire
@@ -27,6 +26,8 @@ TagManager:
   - K3_OxidantGEM
   - K3_PreservativePotion
   - K3_KAFoods
+  - Pushable
+  - SpilledMilk
   layers:
   - Default
   - TransparentFX

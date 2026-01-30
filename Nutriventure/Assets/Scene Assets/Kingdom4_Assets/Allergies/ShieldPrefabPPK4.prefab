@@ -64,7 +64,7 @@ MonoBehaviour:
   floatSpeed: 2
   shieldPowerupParticles: {fileID: 6424583148328831481, guid: d2ffbc8b168cdf74a9dbb7c6c1cfdf2f, type: 3}
   heartPowerupParticles: {fileID: 0}
-  particleOffset: {x: 0, y: 0.5, z: 0}
+  particleOffset: {x: 0, y: -1, z: 0}
 --- !u!65 &-909280819971800203
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -10,6 +10,7 @@ public class PersistentDataManager : MonoBehaviour
 
     // Saved data
     private string selectedEnerlingName = "";
+    private string opponentEnerlingName = "";
     private Dictionary<string, int> enerlingCurrentLife = new Dictionary<string, int>();
     private HashSet<string> unlockedEnerlings = new HashSet<string>();
 
@@ -65,7 +66,7 @@ public class PersistentDataManager : MonoBehaviour
         }
     }
 
-    // Save selected enerling
+    // Save selected enerling (player's enerling)
     public void SaveSelectedEnerling(string enerlingName)
     {
         if (string.IsNullOrEmpty(enerlingName)) return;
@@ -76,10 +77,36 @@ public class PersistentDataManager : MonoBehaviour
         Debug.Log($"Saved selected enerling: {enerlingName}");
     }
 
-    // Get selected enerling
+    // Get selected enerling (player's enerling)
     public string GetSelectedEnerlingName()
     {
         return selectedEnerlingName;
+    }
+
+    // Save opponent enerling (AI opponent to fight against)
+    public void SaveOpponentEnerling(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        opponentEnerlingName = enerlingName;
+        PlayerPrefs.SetString("OpponentEnerling", enerlingName);
+        PlayerPrefs.Save();
+        Debug.Log($"Saved opponent enerling: {enerlingName}");
+    }
+
+    // Get opponent enerling (AI opponent to fight against)
+    public string GetOpponentEnerlingName()
+    {
+        return opponentEnerlingName;
+    }
+
+    // Clear opponent data (useful when restarting)
+    public void ClearOpponentData()
+    {
+        opponentEnerlingName = "";
+        PlayerPrefs.DeleteKey("OpponentEnerling");
+        PlayerPrefs.Save();
+        Debug.Log("Cleared opponent data");
     }
 
     // Save enerling current life
@@ -166,6 +193,10 @@ public class PersistentDataManager : MonoBehaviour
         selectedEnerlingName = PlayerPrefs.GetString("SelectedEnerling", "");
         Debug.Log($"Loaded selected enerling: {selectedEnerlingName}");
 
+        // Load opponent enerling
+        opponentEnerlingName = PlayerPrefs.GetString("OpponentEnerling", "");
+        Debug.Log($"Loaded opponent enerling: {opponentEnerlingName}");
+
         // Load unlocked enerlings
         unlockedEnerlings.Clear();
         if (ingredientDatabase != null)
@@ -206,6 +237,7 @@ public class PersistentDataManager : MonoBehaviour
     {
         PlayerPrefs.DeleteAll();
         selectedEnerlingName = "";
+        opponentEnerlingName = "";
         enerlingCurrentLife.Clear();
         unlockedEnerlings.Clear();
 
