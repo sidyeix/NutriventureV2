@@ -9270,8 +9270,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74788066}
   serializedVersion: 2
+<<<<<<< HEAD
   m_LocalRotation: {x: -0.08034438, y: -0.04408608, z: 0.01716139, w: -0.99564385}
   m_LocalPosition: {x: -9.697449, y: 1.1944895, z: -78.486465}
+=======
+  m_LocalRotation: {x: -0.06328964, y: 0.9328345, z: -0.20355184, w: -0.29048386}
+  m_LocalPosition: {x: -29.810144, y: 2.9221687, z: -30.691666}
+>>>>>>> parent of 6d96c0fd (Enerling cutscenes complete)
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -197334,7 +197339,11 @@ PlayableDirector:
   m_GameObject: {fileID: 1555225637}
   m_Enabled: 1
   serializedVersion: 3
+<<<<<<< HEAD
   m_PlayableAsset: {fileID: 0}
+=======
+  m_PlayableAsset: {fileID: 11400000, guid: c501acfd3a65a964d8529adda150c890, type: 2}
+>>>>>>> parent of 6d96c0fd (Enerling cutscenes complete)
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
