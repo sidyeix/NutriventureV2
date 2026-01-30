@@ -9,7 +9,7 @@ public class IngredientDatabase : ScriptableObject
     {
         NutriKingdom,
         Alerthia,
-        Suragria,
+        Sugaria,
         Preservia
     }
 
@@ -136,6 +136,13 @@ public class IngredientDatabase : ScriptableObject
         [Header("Description")]
         [TextArea(3, 5)]
         public string enerlingDescription;
+
+        [Header("Enerling Story")]
+        [TextArea(10, 20)]
+        public string enerlingStory;
+
+        [Header("Audio")]
+        public AudioClip audioClip;
 
         // Battle status (runtime only)
         [System.NonSerialized]
@@ -508,7 +515,9 @@ public class IngredientDatabase : ScriptableObject
             skill2 = original.skill2,
             skill3 = original.skill3,
             skill4 = original.skill4,
-            enerlingDescription = original.enerlingDescription
+            enerlingDescription = original.enerlingDescription,
+            enerlingStory = original.enerlingStory,
+            audioClip = original.audioClip
         };
 
         return copy;

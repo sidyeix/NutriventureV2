@@ -42,9 +42,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4612522477107977084}
-  - component: {fileID: 4504652874631650363}
   - component: {fileID: 4281531132902258869}
   - component: {fileID: 2433726382581059561}
+  - component: {fileID: 3853447586236708282}
   m_Layer: 0
   m_Name: Cabbage
   m_TagString: Untagged
@@ -69,21 +69,6 @@ Transform:
   - {fileID: 8098743440440833986}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4504652874631650363
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6862407478176981671}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b633e235145707d40972ccb7c42310f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoFood
-  points: 30
-  foodSprite: {fileID: 21300000, guid: a1a9c349d4f49b846b6ba4654decd755, type: 3}
-  collectionEffect: {fileID: 0}
 --- !u!135 &4281531132902258869
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -127,6 +112,21 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3853447586236708282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6862407478176981671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec828e892aec4dc4784cc5d333f1bc77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlowFood
+  points: 30
+  foodSprite: {fileID: 21300000, guid: a1a9c349d4f49b846b6ba4654decd755, type: 3}
+  collectionEffect: {fileID: 0}
 --- !u!1 &6931622412031941110
 GameObject:
   m_ObjectHideFlags: 0
