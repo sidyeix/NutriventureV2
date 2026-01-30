@@ -12495,6 +12495,8 @@ MonoBehaviour:
   animationDuration: 0.5
   enableAnimation: 1
   audioSource: {fileID: 0}
+  disableDuringAudio:
+  - {fileID: 1356927628}
 --- !u!1001 &316396911
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23405,6 +23407,7 @@ MonoBehaviour:
   playerFollowCamera: {fileID: 309040882}
   toDisableComponents:
   - {fileID: 1701459691}
+  - {fileID: 1809557552}
 --- !u!1001 &589606838
 PrefabInstance:
   m_ObjectHideFlags: 0
