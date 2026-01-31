@@ -1,319 +1,247 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using UnityEngine.SceneManagement;
-using StarterAssets;
 
 public class PlayerHealthManager : MonoBehaviour
 {
-    public static PlayerHealthManager Instance { get; private set; }
+    public static PlayerHealthManager Instance;
 
-    [Header("Health Settings")]
+    [Header("Health")]
     public int maxHearts = 5;
     public float currentHealth;
-    
-    [Header("UI References")]
-    public Transform heartsContainer;
-    public GameObject heartPrefab;
-    public Sprite fullHeartSprite;
-    public Sprite halfHeartSprite;
-    public Sprite emptyHeartSprite;
-    
-    [Header("Damage Settings")]
+
+    [Header("Damage")]
     public float damageCooldown = 1f;
-    public float invulnerabilityTime = 1f;
-    public Image damageOverlay;
-    public float overlayFadeTime = 0.5f;
-    
-    [Header("Audio")]
-    public AudioClip damageSound;
-    public AudioClip healSound;
-    public AudioClip deathSound;
-    
-    [Header("Effects")]
-    public ParticleSystem damageParticles;
-    public float damageFlashDuration = 0.3f;
-    
-    private List<Image> heartImages = new List<Image>();
     private float lastDamageTime;
-    private bool isInvulnerable = false;
-    private Coroutine damageCoroutine;
-    private Renderer playerRenderer;
-    private Color originalPlayerColor;
-    
-    // ADDED: AudioSource component reference
-    private AudioSource audioSource;
-    
-    private void Die()
-    {
-        Debug.Log("Player Died!");
-        
-        // Play death sound with fallback
-        PlaySoundEffect(deathSound);
-        
-        // Disable player controls
-        ThirdPersonController playerController = GetComponent<ThirdPersonController>();
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
-        
-        // Trigger game over in Kingdom4GameEndManager
-        if (Kingdom4GameEndManager.Instance != null)
-        {
-            Kingdom4GameEndManager.Instance.HandleKingdom4GameOver();
-        }
-        else
-        {
-            // Fallback: Try to find it in the scene
-            Kingdom4GameEndManager gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
-            if (gameEndManager != null)
-            {
-                gameEndManager.HandleKingdom4GameOver();
-            }
-            else
-            {
-                Debug.LogWarning("Kingdom4GameEndManager not found! Game over screen won't show.");
-            }
-        }
-    }
+
+    [Header("UI References")]
+    public Transform heartsContainer; // Drag your existing container here
+    public GameObject heartPrefab; // Drag your heart prefab here
+
+    [Header("Heart Sprites")]
+    public Sprite fullHeartSprite;
+    public Sprite halfHeartSprite; // Optional
+    public Sprite emptyHeartSprite;
+
+    [Header("Game End Reference")]
+    public Kingdom4GameEndManager gameEndManager; // Assign in Inspector
+
+    private List<Image> hearts = new List<Image>();
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null)
         {
             Destroy(gameObject);
+            return;
         }
-    }
-    
-    void Start()
-    {
-        playerRenderer = GetComponentInChildren<Renderer>();
-        if (playerRenderer != null)
-            originalPlayerColor = playerRenderer.material.color;
-            
-        // ADDED: Get or add AudioSource component
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        
-        InitializeHearts();
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         currentHealth = maxHearts;
-        UpdateHeartsUI();
+        InitializeHealthUI();
         
-        if (damageOverlay != null)
+        // Find GameEndManager if not assigned
+        if (gameEndManager == null)
         {
-            damageOverlay.color = new Color(1f, 0f, 0f, 0f);
-        }
-    }
-    
-    private void InitializeHearts()
-    {
-        if (heartsContainer == null || heartPrefab == null) return;
-        
-        heartImages.Clear();
-        
-        foreach (Transform child in heartsContainer)
-            Destroy(child.gameObject);
-        
-        for (int i = 0; i < maxHearts; i++)
-        {
-            GameObject heart = Instantiate(heartPrefab, heartsContainer);
-            Image heartImage = heart.GetComponent<Image>();
-            if (heartImage != null)
+            gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
+            if (gameEndManager == null)
             {
-                heartImages.Add(heartImage);
-                heartImage.sprite = fullHeartSprite;
+                Debug.LogWarning("Kingdom4GameEndManager not found! Game over screen may not show properly.");
             }
         }
     }
-    
-    public void TakeDamage(float damage)
+
+    void InitializeHealthUI()
     {
-        if (isInvulnerable || Time.time < lastDamageTime + damageCooldown) return;
+        // Clear any existing hearts in the container (optional safety measure)
+        ClearExistingHearts();
         
-        currentHealth -= damage;
-        currentHealth = Mathf.Max(0, currentHealth);
-        
+        // Create hearts from prefab
+        CreateHearts();
+        UpdateHearts();
+    }
+
+    void ClearExistingHearts()
+    {
+        if (heartsContainer == null)
+        {
+            Debug.LogError("Hearts container is not assigned!");
+            return;
+        }
+
+        // Remove any existing heart GameObjects from previous runs
+        foreach (Transform child in heartsContainer)
+        {
+            if (child.name.Contains("Heart"))
+                Destroy(child.gameObject);
+        }
+    }
+
+    void CreateHearts()
+    {
+        hearts.Clear();
+
+        if (heartsContainer == null)
+        {
+            Debug.LogError("Hearts container is not assigned! Please drag your UI container to the inspector.");
+            return;
+        }
+
+        if (heartPrefab == null)
+        {
+            Debug.LogError("Heart prefab is not assigned! Please drag your heart prefab to the inspector.");
+            return;
+        }
+
+        for (int i = 0; i < maxHearts; i++)
+        {
+            GameObject heartGO = Instantiate(heartPrefab, heartsContainer);
+            heartGO.name = "Heart_" + i;
+            
+            // Optional: Reset local position/scale if prefab has unusual values
+            heartGO.transform.localPosition = Vector3.zero;
+            heartGO.transform.localScale = Vector3.one;
+            
+            Image img = heartGO.GetComponent<Image>();
+            if (img == null)
+            {
+                img = heartGO.AddComponent<Image>();
+                Debug.LogWarning("Heart prefab didn't have Image component, added one.");
+            }
+
+            // Set initial sprite
+            if (fullHeartSprite != null)
+                img.sprite = fullHeartSprite;
+            else
+                Debug.LogWarning("Full heart sprite is not assigned!");
+
+            hearts.Add(img);
+        }
+    }
+
+    #region HEALTH LOGIC
+    public void TakeDamage(float amount)
+    {
+        if (Time.time < lastDamageTime + damageCooldown) return;
+
         lastDamageTime = Time.time;
-        
-        UpdateHeartsUI();
-        
-        // ADDED: Play damage sound immediately when taking damage
-        PlayDamageSound();
-        
-        PlayDamageEffects();
-        
-        if (damageCoroutine != null) StopCoroutine(damageCoroutine);
-        damageCoroutine = StartCoroutine(DamageSequence());
-        
+        currentHealth = Mathf.Max(0, currentHealth - amount);
+        UpdateHearts();
+
         if (currentHealth <= 0)
             Die();
     }
-    
+
     public void Heal(float amount)
     {
-        currentHealth += amount;
-        currentHealth = Mathf.Min(currentHealth, maxHearts);
-        
-        UpdateHeartsUI();
-        
-        // ADDED: Use the new PlaySoundEffect method
-        PlaySoundEffect(healSound);
+        currentHealth = Mathf.Min(maxHearts, currentHealth + amount);
+        UpdateHearts();
     }
-    
-    private void UpdateHeartsUI()
+
+    void UpdateHearts()
     {
-        if (heartImages.Count == 0) return;
-        
-        float remainingHealth = currentHealth;
-        
-        for (int i = 0; i < heartImages.Count; i++)
+        float hp = currentHealth;
+
+        for (int i = 0; i < hearts.Count; i++)
         {
-            if (heartImages[i] == null) continue;
+            if (hearts[i] == null) continue;
             
-            if (remainingHealth >= 1f)
+            if (hp >= 1)
             {
-                heartImages[i].sprite = fullHeartSprite;
-                remainingHealth -= 1f;
+                hearts[i].sprite = fullHeartSprite;
+                hp -= 1;
             }
-            else if (remainingHealth >= 0.5f)
+            else if (hp >= 0.5f)
             {
-                heartImages[i].sprite = halfHeartSprite;
-                remainingHealth -= 0.5f;
+                // Show half heart if sprite exists, otherwise show full or empty
+                if (halfHeartSprite != null)
+                    hearts[i].sprite = halfHeartSprite;
+                else
+                    hearts[i].sprite = fullHeartSprite; // or emptyHeartSprite based on your preference
+                hp -= 0.5f;
             }
             else
             {
-                heartImages[i].sprite = emptyHeartSprite;
+                hearts[i].sprite = emptyHeartSprite;
             }
         }
     }
-    
-    private IEnumerator DamageSequence()
+
+    public void SetMaxHearts(int newMax)
     {
-        isInvulnerable = true;
+        maxHearts = newMax;
+        currentHealth = Mathf.Min(currentHealth, maxHearts);
         
-        // Activate damage overlay if it exists
-        if (damageOverlay != null)
+        // Clear old hearts
+        foreach (Image heart in hearts)
         {
-            damageOverlay.gameObject.SetActive(true);
-            
-            float timer = 0f;
-            while (timer < overlayFadeTime)
-            {
-                timer += Time.deltaTime;
-                float alpha = Mathf.Lerp(0f, 0.3f, timer / overlayFadeTime);
-                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-                yield return null;
-            }
-            
-            yield return new WaitForSeconds(0.1f);
-            
-            timer = 0f;
-            while (timer < overlayFadeTime)
-            {
-                timer += Time.deltaTime;
-                float alpha = Mathf.Lerp(0.3f, 0f, timer / overlayFadeTime);
-                damageOverlay.color = new Color(1f, 0f, 0f, alpha);
-                yield return null;
-            }
-            
-            // Deactivate overlay after fade out
-            damageOverlay.gameObject.SetActive(false);
+            if (heart != null && heart.gameObject != null)
+                Destroy(heart.gameObject);
         }
+        hearts.Clear();
         
-        yield return new WaitForSeconds(invulnerabilityTime - overlayFadeTime * 2 - 0.1f);
-        
-        isInvulnerable = false;
+        // Create new hearts
+        CreateHearts();
+        UpdateHearts();
     }
+
+    public void SetHealth(float newHealth)
+    {
+        currentHealth = Mathf.Clamp(newHealth, 0, maxHearts);
+        UpdateHearts();
+    }
+
+    void Die()
+    {
+        Debug.Log("Player Died - Showing Game Summary");
+        
+        // Call Kingdom4GameEndManager to show game over screen
+        if (gameEndManager != null)
+        {
+            gameEndManager.HandleKingdom4GameOver();
+        }
+        else
+        {
+            Debug.LogError("Kingdom4GameEndManager is not assigned or found!");
+            // Fallback - just show a debug message
+            Debug.Log("GAME OVER - No lives remaining");
+        }
+    }
+    #endregion
+
+    #region FOR TESTING (Remove in production)
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+            TakeDamage(0.5f);
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+            TakeDamage(1f);
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+            Heal(1f);
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+            SetMaxHearts(maxHearts + 1);
+        if (Input.GetKeyDown(KeyCode.Alpha5))
+            SetMaxHearts(Mathf.Max(1, maxHearts - 1));
+        if (Input.GetKeyDown(KeyCode.R))
+            SetHealth(maxHearts); // Reset health
+        if (Input.GetKeyDown(KeyCode.G))
+            Die(); // Force game over for testing
+    }
+    #endregion
     
+    #region PUBLIC METHODS FOR RESET
     public void ResetHealth()
     {
         currentHealth = maxHearts;
-        UpdateHeartsUI();
-        isInvulnerable = false;
-        
-        // Ensure damage overlay is deactivated
-        if (damageOverlay != null)
-        {
-            damageOverlay.color = new Color(1f, 0f, 0f, 0f);
-            damageOverlay.gameObject.SetActive(false);
-        }
-        
-        if (damageCoroutine != null)
-        {
-            StopCoroutine(damageCoroutine);
-            damageCoroutine = null;
-        }
+        UpdateHearts();
     }
     
-    private void PlayDamageEffects()
+    public void FullHeal()
     {
-        // Play particles
-        if (damageParticles != null)
-            damageParticles.Play();
-        
-        // Flash player
-        if (playerRenderer != null)
-            StartCoroutine(FlashPlayer());
+        currentHealth = maxHearts;
+        UpdateHearts();
     }
-    
-    // ADDED: Separate method to play damage sound
-    private void PlayDamageSound()
-    {
-        PlaySoundEffect(damageSound);
-    }
-    
-    // ADDED: Generic method to play sound effects with multiple fallbacks
-    private void PlaySoundEffect(AudioClip clip)
-    {
-        if (clip == null) return;
-        
-        // Try AudioHandler first
-        if (AudioHandler.Instance != null && AudioHandler.Instance.soundEffectsSource != null)
-        {
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(clip);
-            return;
-        }
-        
-        // Fallback to local AudioSource
-        if (audioSource != null)
-        {
-            audioSource.PlayOneShot(clip);
-            return;
-        }
-        
-        // Last resort: Create a temporary AudioSource
-        AudioSource.PlayClipAtPoint(clip, transform.position);
-    }
-    
-    private IEnumerator FlashPlayer()
-    {
-        if (playerRenderer == null) yield break;
-        
-        playerRenderer.material.color = Color.red;
-        yield return new WaitForSeconds(damageFlashDuration);
-        playerRenderer.material.color = originalPlayerColor;
-    }
-    
-    public void SetMaxHearts(int newMax)
-    {
-        maxHearts = Mathf.Max(1, newMax);
-        InitializeHearts();
-        currentHealth = Mathf.Min(currentHealth, maxHearts);
-        UpdateHeartsUI();
-    }
-    
-    public bool IsFullHealth() => currentHealth >= maxHearts;
-    public float GetMissingHealth() => maxHearts - currentHealth;
-    public bool CanTakeDamage() => Time.time >= lastDamageTime + damageCooldown && !isInvulnerable;
+    #endregion
 }
