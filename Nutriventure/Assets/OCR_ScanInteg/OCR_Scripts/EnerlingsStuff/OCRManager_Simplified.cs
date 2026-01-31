@@ -3,7 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 using TMPro;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using System.IO;
+#endif
 
 public class OCRManager_Simplified : MonoBehaviour
 {
@@ -20,17 +22,20 @@ public class OCRManager_Simplified : MonoBehaviour
     public Button galleryButton;
     public Button instructionsButton;
     public Button retryButton;
+    public Button exitButton;
 
     [Header("Database Reference")]
     public IngredientDatabase ingredientDatabase;
 
     [Header("Scene Transition")]
     public string nextSceneName = "BattlePlay";
+    public string mainMenuScene = "MainMenu";
     public float sceneTransitionDelay = 1f;
     public float fadeDuration = 0.5f;
 
-    [Header("Mock Settings")]
-    public bool useMockScan = true; // Set to false when building for Android
+    [Header("Camera Settings")]
+    public bool useMockScan = false; // Set to false when building for Android
+    public float captureCooldownDuration = 2f;
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -38,6 +43,8 @@ public class OCRManager_Simplified : MonoBehaviour
 
     // State
     private bool isProcessing = false;
+    private bool isCaptureOnCooldown = false;
+    private Coroutine captureCooldownCoroutine;
     private string selectedEnerlingName = "";
     private Texture2D currentImage;
 
@@ -66,7 +73,11 @@ public class OCRManager_Simplified : MonoBehaviour
         if (instructionsButton != null)
             instructionsButton.onClick.AddListener(OnInstructionsButtonClicked);
 
+        if (exitButton != null)
+            exitButton.onClick.AddListener(OnExitButtonClicked);
+
         UpdateStatus("Ready to scan ingredient");
+        UpdateButtonStates();
     }
 
     void SetupUI()
@@ -87,6 +98,29 @@ public class OCRManager_Simplified : MonoBehaviour
             noIngredientText.gameObject.SetActive(false);
     }
 
+    void UpdateButtonStates()
+    {
+        bool canInteract = !isProcessing && !isCaptureOnCooldown;
+        
+        if (captureButton != null)
+            captureButton.interactable = canInteract;
+        
+        if (galleryButton != null)
+            galleryButton.interactable = !isProcessing;
+        
+        if (instructionsButton != null)
+            instructionsButton.interactable = !isProcessing;
+        
+        if (exitButton != null)
+            exitButton.interactable = !isProcessing;
+    }
+
+    void UpdateStatus(string message)
+    {
+        if (statusText != null)
+            statusText.text = message;
+    }
+
     void InitializeCameraPreview()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -103,19 +137,32 @@ public class OCRManager_Simplified : MonoBehaviour
 #endif
     }
 
+    // ==================== CAMERA FUNCTIONALITY ====================
+
 #if UNITY_ANDROID && !UNITY_EDITOR
     IEnumerator StartCameraPreview()
     {
         UpdateStatus("Initializing camera...");
         
         // Request camera permission
-        yield return StartCoroutine(RequestCameraPermission());
-        
+        if (!HasCameraPermission())
+        {
+            yield return StartCoroutine(RequestCameraPermission());
+            
+            if (!HasCameraPermission())
+            {
+                UpdateStatus("Camera permission denied");
+                useMockScan = true;
+                yield break;
+            }
+        }
+
         // Get available cameras
         WebCamDevice[] devices = WebCamTexture.devices;
         if (devices == null || devices.Length == 0)
         {
             UpdateStatus("No camera found");
+            useMockScan = true;
             yield break;
         }
 
@@ -145,25 +192,264 @@ public class OCRManager_Simplified : MonoBehaviour
         catch (System.Exception e)
         {
             UpdateStatus("Camera error: " + e.Message);
-            useMockScan = true; // Fallback to mock
+            useMockScan = true;
         }
     }
-    
+
+    bool HasCameraPermission()
+    {
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var packageManager = currentActivity.Call<AndroidJavaObject>("getPackageManager"))
+            using (var packageName = currentActivity.Call<AndroidJavaObject>("getPackageName"))
+            {
+                int permissionGranted = packageManager.Call<int>("checkPermission", 
+                    "android.permission.CAMERA", packageName);
+                return permissionGranted == 0;
+            }
+        }
+        catch (System.Exception)
+        {
+            return false;
+        }
+    }
+
     IEnumerator RequestCameraPermission()
     {
-        // Android permission request logic
-        // (Keep your existing permission code here)
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+            {
+                string[] permissions = new string[] { "android.permission.CAMERA" };
+                currentActivity.Call("requestPermissions", permissions, 0);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("Permission request error: " + e.Message);
+        }
+        
+        yield return new WaitForSeconds(1f);
+    }
+
+    IEnumerator RestartCameraPreview()
+    {
+        if (liveCameraTexture != null)
+        {
+            if (liveCameraTexture.isPlaying) 
+                liveCameraTexture.Stop();
+            liveCameraTexture = null;
+        }
+
+        yield return new WaitForSeconds(0.3f);
+        
+        if (cameraPreview != null)
+        {
+            cameraPreview.texture = null;
+            cameraPreview.color = new Color(0.2f, 0.2f, 0.2f);
+        }
+        
+        yield return StartCoroutine(StartCameraPreview());
+        UpdateStatus("Camera ready - Tap Capture to scan");
+    }
+
+    IEnumerator TakePhotoCoroutine()
+    {
+        UpdateStatus("Preparing capture...");
+
+        if (!HasCameraPermission())
+        {
+            UpdateStatus("Camera permission required");
+            ResetProcessingState();
+            yield break;
+        }
+
+        bool usingLive = (liveCameraTexture != null && liveCameraTexture.isPlaying);
+        WebCamTexture tempWebcam = null;
+
+        if (!usingLive)
+        {
+            WebCamDevice[] devices = WebCamTexture.devices;
+            if (devices == null || devices.Length == 0)
+            {
+                UpdateStatus("No camera found");
+                ResetProcessingState();
+                yield break;
+            }
+
+            string cameraName = devices[0].name;
+            foreach (var device in devices)
+                if (!device.isFrontFacing) { cameraName = device.name; break; }
+
+            bool tempCamStarted = false;
+
+            try
+            {
+                tempWebcam = new WebCamTexture(cameraName, 1280, 720);
+                if (cameraPreview != null)
+                {
+                    cameraPreview.texture = tempWebcam;
+                    cameraPreview.color = Color.white;
+                }
+                tempWebcam.Play();
+                tempCamStarted = true;
+            }
+            catch (System.Exception e)
+            {
+                UpdateStatus("Camera error: " + e.Message);
+                ResetProcessingState();
+                yield break;
+            }
+
+            // ✅ yield happens OUTSIDE try/catch
+            if (tempCamStarted)
+            {
+                yield return new WaitForSeconds(1.2f);
+            }
+        }
+
+        // Capture photo from webcam (moved outside try-catch)
+        WebCamTexture source = usingLive ? liveCameraTexture : tempWebcam;
+        yield return StartCoroutine(CapturePhotoFromWebcam(source));
+
+        // Clean up temp webcam if we created one
+        if (tempWebcam != null)
+        {
+            tempWebcam.Stop();
+        }
+    }
+
+    IEnumerator CapturePhotoFromWebcam(WebCamTexture webcam)
+    {
+        UpdateStatus("Capturing photo...");
+        yield return new WaitForEndOfFrame();
+
+        Texture2D photo = null;
+        bool captureSuccess = false;
+
+        try
+        {
+            photo = new Texture2D(webcam.width, webcam.height);
+            photo.SetPixels(webcam.GetPixels());
+            photo.Apply();
+            captureSuccess = true;
+        }
+        catch (System.Exception e)
+        {
+            UpdateStatus("Capture error: " + e.Message);
+            ResetProcessingState();
+            yield break;
+        }
+
+        if (captureSuccess && photo != null)
+        {
+            if (currentImage != null) 
+                Destroy(currentImage);
+            
+            currentImage = photo;
+            
+            if (cameraPreview != null)
+            {
+                cameraPreview.texture = currentImage;
+                cameraPreview.color = Color.white;
+            }
+
+            // Process the captured image
+            StartCoroutine(ProcessRealScan());
+        }
+    }
+
+    IEnumerator PickImageViaNativeGallery()
+    {
+        isProcessing = true;
+        UpdateButtonStates();
+        UpdateStatus("Opening gallery...");
+        
+        NativeGallery.GetImageFromGallery((string path) =>
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                UpdateStatus("No image selected or not accessible.");
+                isProcessing = false;
+                UpdateButtonStates();
+                return;
+            }
+            StartCoroutine(LoadImageFromPath(path));
+        }, "Select an image", "image/*");
+
         yield return null;
     }
+
+    IEnumerator LoadImageFromPath(string imagePath)
+    {
+        bool success = false;
+        
+        try
+        {
+            byte[] imageData = File.ReadAllBytes(imagePath);
+            Texture2D texture = new Texture2D(2, 2);
+
+            if (texture.LoadImage(imageData))
+            {
+                if (currentImage != null) 
+                    Destroy(currentImage);
+                
+                currentImage = texture;
+                
+                if (cameraPreview != null)
+                {
+                    cameraPreview.texture = currentImage;
+                    cameraPreview.color = Color.white;
+                }
+                
+                UpdateStatus("Image loaded - Processing...");
+                success = true;
+            }
+            else 
+            {
+                UpdateStatus("Failed to load image");
+            }
+        }
+        catch (System.Exception e) 
+        { 
+            UpdateStatus("Error loading image: " + e.Message); 
+        }
+
+        isProcessing = false;
+        UpdateButtonStates();
+
+        if (success) 
+        {
+            StartCoroutine(ProcessRealScan());
+        }
+        
+        yield return null; // Ensure the coroutine has a yield statement
+    }
+
+    IEnumerator ProcessRealScan()
+    {
+        // Simulate OCR processing time
+        UpdateStatus("Processing image...");
+        yield return new WaitForSeconds(1.5f);
+
+        // For now, use mock result - you can integrate your real OCR here
+        StartCoroutine(MockScanCoroutine());
+    }
+
 #endif
 
     // ==================== BUTTON HANDLERS ====================
 
     public void OnCaptureButtonClicked()
     {
-        if (isProcessing) return;
+        if (isProcessing || isCaptureOnCooldown) return;
 
         isProcessing = true;
+        UpdateButtonStates();
+        StartCaptureCooldown();
         UpdateStatus("Scanning...");
 
         // Play scan sound
@@ -172,13 +458,15 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (useMockScan || Application.isEditor)
         {
-            // Mock scan - randomly select enerling
+            // Mock scan
             StartCoroutine(MockScanCoroutine());
         }
         else
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             StartCoroutine(TakePhotoCoroutine());
+#else
+            StartCoroutine(MockScanCoroutine());
 #endif
         }
     }
@@ -187,23 +475,115 @@ public class OCRManager_Simplified : MonoBehaviour
     {
         if (isProcessing) return;
 
-        isProcessing = true;
-        UpdateStatus("Selecting from gallery...");
-
-        // For now, use mock for gallery too
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!useMockScan)
+        {
+            StartCoroutine(PickImageViaNativeGallery());
+        }
+        else
+        {
+            StartCoroutine(MockScanCoroutine());
+        }
+#else
         StartCoroutine(MockScanCoroutine());
+#endif
     }
 
     public void OnRetryButtonClicked()
     {
         ResetScanState();
+        ClearError();
+        
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!useMockScan)
+        {
+            StartCoroutine(RestartCameraPreview());
+        }
+        else
+        {
+            UpdateStatus("Ready to scan again");
+        }
+#else
         UpdateStatus("Ready to scan again");
+#endif
     }
 
     public void OnInstructionsButtonClicked()
     {
-        // Show instructions
         UpdateStatus("Point camera at ingredient label and tap Capture");
+    }
+
+    public void OnExitButtonClicked()
+    {
+        if (!string.IsNullOrEmpty(mainMenuScene))
+        {
+            SceneManager.LoadScene(mainMenuScene);
+        }
+    }
+
+    // ==================== CAPTURE COOLDOWN ====================
+
+    void StartCaptureCooldown()
+    {
+        if (captureCooldownCoroutine != null)
+            StopCoroutine(captureCooldownCoroutine);
+        
+        captureCooldownCoroutine = StartCoroutine(CaptureCooldownCoroutine());
+    }
+
+    IEnumerator CaptureCooldownCoroutine()
+    {
+        isCaptureOnCooldown = true;
+        UpdateButtonStates();
+        
+        if (captureButton != null)
+        {
+            Image buttonImage = captureButton.GetComponent<Image>();
+            if (buttonImage != null)
+            {
+                Color originalColor = buttonImage.color;
+                buttonImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.5f);
+            }
+        }
+
+        float cooldownTimer = captureCooldownDuration;
+        
+        while (cooldownTimer > 0)
+        {
+            cooldownTimer -= Time.deltaTime;
+            
+            if (captureButton != null)
+            {
+                TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
+                if (buttonText != null)
+                {
+                    buttonText.text = $"Wait {cooldownTimer:F1}s";
+                }
+            }
+            
+            yield return null;
+        }
+
+        if (captureButton != null)
+        {
+            Image buttonImage = captureButton.GetComponent<Image>();
+            if (buttonImage != null)
+            {
+                Color originalColor = buttonImage.color;
+                buttonImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 1f);
+            }
+            
+            TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
+            if (buttonText != null)
+            {
+                buttonText.text = "Capture";
+            }
+        }
+
+        isCaptureOnCooldown = false;
+        UpdateButtonStates();
+        
+        captureCooldownCoroutine = null;
     }
 
     // ==================== SCANNING LOGIC ====================
@@ -238,7 +618,7 @@ public class OCRManager_Simplified : MonoBehaviour
         {
             UpdateStatus("Database not loaded");
             ShowError("No ingredients in database");
-            isProcessing = false;
+            ResetProcessingState();
         }
     }
 
@@ -302,21 +682,7 @@ public class OCRManager_Simplified : MonoBehaviour
         }
     }
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-    IEnumerator TakePhotoCoroutine()
-    {
-        // Your existing camera capture code here
-        // This should eventually call ProcessRealOCR()
-        yield return null;
-    }
-    
-    void ProcessRealOCR(Texture2D photo)
-    {
-        // This is where real OCR would happen
-        // For now, we'll use mock
-        StartCoroutine(MockScanCoroutine());
-    }
-#endif
+    // ==================== ERROR HANDLING ====================
 
     void ShowError(string message)
     {
@@ -354,29 +720,27 @@ public class OCRManager_Simplified : MonoBehaviour
             noIngredientText.gameObject.SetActive(false);
     }
 
+    void ResetProcessingState()
+    {
+        isProcessing = false;
+        UpdateButtonStates();
+    }
+
     void ResetScanState()
     {
         isProcessing = false;
         selectedEnerlingName = "";
         ClearError();
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // Restart camera if using real camera
-        if (!useMockScan && liveCameraTexture != null)
+        UpdateButtonStates();
+        
+        if (cameraPreview != null && currentImage != null)
         {
-            if (!liveCameraTexture.isPlaying)
-                liveCameraTexture.Play();
+            cameraPreview.texture = null;
+            cameraPreview.color = new Color(0.2f, 0.2f, 0.2f);
         }
-#endif
     }
 
     // ==================== UI UTILITIES ====================
-
-    void UpdateStatus(string message)
-    {
-        if (statusText != null)
-            statusText.text = message;
-    }
 
     IEnumerator FadeIn()
     {
@@ -435,6 +799,9 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (currentImage != null)
             Destroy(currentImage);
+
+        if (captureCooldownCoroutine != null)
+            StopCoroutine(captureCooldownCoroutine);
     }
 
     // Optional: Method to switch between mock and real scanning
