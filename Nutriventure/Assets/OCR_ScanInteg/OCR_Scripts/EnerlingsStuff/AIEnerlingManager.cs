@@ -1339,6 +1339,19 @@ public class AIEnerlingManager : MonoBehaviour
         }
     }
 
+    public bool IsAIDefeated()
+    {
+        if (aiEnerling == null) return false;
+        return aiEnerling.currentLife <= 0;
+    }
+
+    public Animator GetAIAnimator()
+    {
+        if (spawnedAIEnerling != null)
+            return spawnedAIEnerling.GetComponent<Animator>();
+        return null;
+    }
+
     public void Cleanup()
     {
         StopAllCoroutines();

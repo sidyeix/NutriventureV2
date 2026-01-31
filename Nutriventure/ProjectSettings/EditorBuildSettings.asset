@@ -20,19 +20,19 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/4_Kingdom 2.unity
     guid: edeb95cd8763d9d449c4f26820989060
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/5_Kingdom3.unity
     guid: ce9ff593cd1714b4aa82da03770fd58b
   - enabled: 1
     path: Assets/Scenes/6_Kingdom4.unity
     guid: 2f572999887977549abe98b88002efd8
-  - enabled: 0
+  - enabled: 1
     path: Assets/OCR_ScanInteg/OCR_Scenes/ScanOCR.unity
     guid: 06de7b59885bfbc40a8285731392e76c
   - enabled: 0
     path: Assets/Scenes/2_Lobby.unity
     guid: 746f0a973f52feb489d563780b4e81a1
-  - enabled: 0
+  - enabled: 1
     path: Assets/OCR_ScanInteg/OCR_Scenes/BattlePlay.unity
     guid: 7852dd38051f47c4c8f6cdcbf75a4390
   m_configObjects:
