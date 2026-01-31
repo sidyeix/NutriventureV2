@@ -13,7 +13,6 @@ public class EnerlingCameraController : MonoBehaviour
     
     private Test_EnerlingController currentEnerling;
     private bool isViewingEnerling = false;
-    private List<Test_EnerlingController> otherEnerlings = new List<Test_EnerlingController>();
     
     void Start()
     {
@@ -31,11 +30,8 @@ public class EnerlingCameraController : MonoBehaviour
         currentEnerling = enerling;
         isViewingEnerling = true;
         
-        // Get all other enerlings in scene
-        FindAllOtherEnerlings();
-        
-        // Disable other enerlings
-        DisableOtherEnerlings();
+        // Pause ALL other enerlings (stop their movement completely)
+        Test_EnerlingController.PauseAllEnerlings();
         
         // Disable specified components
         DisableComponents();
@@ -51,6 +47,11 @@ public class EnerlingCameraController : MonoBehaviour
             // Start interaction with this enerling
             currentEnerling.StartInteraction(enerlingVirtualCamera);
         }
+        else
+        {
+            // If no virtual camera, just start interaction
+            currentEnerling.StartInteraction();
+        }
         
         Debug.Log($"Started viewing Enerling: {currentEnerling.gameObject.name}");
     }
@@ -61,13 +62,7 @@ public class EnerlingCameraController : MonoBehaviour
         
         isViewingEnerling = false;
         
-        // Re-enable other enerlings
-        EnableOtherEnerlings();
-        
-        // Re-enable specified components
-        EnableComponents();
-        
-        // End interaction with current enerling
+        // End interaction with current enerling FIRST
         if (currentEnerling != null)
         {
             currentEnerling.EndInteraction();
@@ -76,46 +71,15 @@ public class EnerlingCameraController : MonoBehaviour
             SwitchToPlayerCamera();
             
             Debug.Log($"Stopped viewing Enerling: {currentEnerling.gameObject.name}");
-            currentEnerling = null;
         }
-    }
-    
-    private void FindAllOtherEnerlings()
-    {
-        otherEnerlings.Clear();
-        Test_EnerlingController[] allEnerlings = FindObjectsOfType<Test_EnerlingController>();
         
-        foreach (var enerling in allEnerlings)
-        {
-            if (enerling != currentEnerling)
-            {
-                otherEnerlings.Add(enerling);
-            }
-        }
-    }
-    
-    private void DisableOtherEnerlings()
-    {
-        foreach (var enerling in otherEnerlings)
-        {
-            if (enerling != null && enerling.gameObject != null)
-            {
-                // Store current state before disabling
-                enerling.gameObject.SetActive(false);
-            }
-        }
-    }
-    
-    private void EnableOtherEnerlings()
-    {
-        foreach (var enerling in otherEnerlings)
-        {
-            if (enerling != null && enerling.gameObject != null)
-            {
-                enerling.gameObject.SetActive(true);
-            }
-        }
-        otherEnerlings.Clear();
+        // Then resume movement for ALL enerlings (including the current one)
+        Test_EnerlingController.ResumeAllEnerlings();
+        
+        // Re-enable specified components
+        EnableComponents();
+        
+        currentEnerling = null;
     }
     
     private void DisableComponents()
@@ -164,5 +128,25 @@ public class EnerlingCameraController : MonoBehaviour
     public bool IsViewingEnerling()
     {
         return isViewingEnerling;
+    }
+    
+    // Method to add a GameObject to the disable list dynamically
+    public void AddComponentToDisableList(GameObject component)
+    {
+        if (component != null && !toDisableComponents.Contains(component))
+        {
+            toDisableComponents.Add(component);
+            Debug.Log($"Added {component.name} to disable list");
+        }
+    }
+    
+    // Method to remove a GameObject from the disable list
+    public void RemoveComponentFromDisableList(GameObject component)
+    {
+        if (toDisableComponents.Contains(component))
+        {
+            toDisableComponents.Remove(component);
+            Debug.Log($"Removed {component.name} from disable list");
+        }
     }
 }

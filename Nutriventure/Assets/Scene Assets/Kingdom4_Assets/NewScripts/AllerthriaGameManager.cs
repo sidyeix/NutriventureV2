@@ -355,38 +355,4 @@ public class AllerthriaGameManager : MonoBehaviour
         }
     }
     
-    void OnGUI()
-    {
-        if (GUI.Button(new Rect(10, 10, 200, 30), "Test: Add Allergen (+100)"))
-        {
-            if (Kingdom4ScoreManager.Instance != null)
-            {
-                Kingdom4ScoreManager.Instance.AddAllergenFound();
-            }
-        }
-        
-        if (GUI.Button(new Rect(10, 50, 200, 30), "Test: Wagon Hit (-50)"))
-        {
-            if (Kingdom4ScoreManager.Instance != null)
-            {
-                Kingdom4ScoreManager.Instance.WagonHitAllergen();
-            }
-        }
-        
-        if (GUI.Button(new Rect(10, 90, 200, 30), "Test: Healthy Food (+combo)"))
-        {
-            if (Kingdom4ScoreManager.Instance != null)
-            {
-                Kingdom4ScoreManager.Instance.HitHealthyFood();
-            }
-        }
-        
-        if (GUI.Button(new Rect(10, 130, 200, 30), "Test: Reset Score"))
-        {
-            if (Kingdom4ScoreManager.Instance != null)
-            {
-                Kingdom4ScoreManager.Instance.ResetScore();
-            }
-        }
-    }
 }

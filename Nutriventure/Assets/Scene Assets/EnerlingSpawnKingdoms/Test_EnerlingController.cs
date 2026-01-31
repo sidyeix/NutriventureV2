@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
 using Cinemachine;
+using System.Collections.Generic;
 
 public class Test_EnerlingController : MonoBehaviour
 {
@@ -28,11 +29,16 @@ public class Test_EnerlingController : MonoBehaviour
     public float socialCheckInterval = 2f;
     public float followChance = 0.2f;
     
+    [Header("Collision Avoidance")]
+    public float minDistanceBetweenEnerlings = 2f;
+    public float avoidanceCheckInterval = 1f;
+    public float avoidanceForce = 2f;
+    
     [Header("Interaction Animations")]
     public string[] interactionIdleAnimations = { "Idle1", "Idle2", "LookAround", "Stretch" };
     public float interactionAnimationInterval = 3f;
     
-    private NavMeshAgent navAgent;
+    [HideInInspector] public NavMeshAgent navAgent;
     private Animator animator;
     private Vector3 spawnPosition;
     private bool isRoaming = true;
@@ -47,9 +53,25 @@ public class Test_EnerlingController : MonoBehaviour
     private Coroutine roamingCoroutine;
     private Coroutine socialCoroutine;
     private Coroutine interactionAnimationCoroutine;
+    private Coroutine avoidanceCoroutine;
     
     // Virtual Camera reference
     private CinemachineVirtualCamera virtualCamera;
+    
+    // Static reference to all enerlings for coordinated movement
+    private static List<Test_EnerlingController> allEnerlings = new List<Test_EnerlingController>();
+    
+    // Track if behavior coroutines are running
+    private bool isBehaviorRunning = false;
+    
+    void Awake()
+    {
+        // Register this enerling
+        if (!allEnerlings.Contains(this))
+        {
+            allEnerlings.Add(this);
+        }
+    }
     
     void Start()
     {
@@ -61,18 +83,17 @@ public class Test_EnerlingController : MonoBehaviour
         // Create virtual camera as child
         CreateVirtualCamera();
         
-        // Start roaming behavior
-        roamingCoroutine = StartCoroutine(RoamingBehavior());
+        // Start behavior coroutines
+        StartBehaviorCoroutines();
         
-        // Start social behavior checking
-        socialCoroutine = StartCoroutine(SocialBehaviorCheck());
+        Debug.Log($"Enerling {gameObject.name} initialized and added to movement coordination");
     }
     
     void Update()
     {
-        if (isInteracting && currentVirtualCamera != null)
+        // Only look at camera if we have a valid camera reference that's not our own
+        if (isInteracting && currentVirtualCamera != null && currentVirtualCamera != virtualCamera)
         {
-            // Look at the camera (not the player)
             LookAtCamera(currentVirtualCamera.transform.position);
         }
         
@@ -134,9 +155,40 @@ public class Test_EnerlingController : MonoBehaviour
         }
     }
     
+    private void StartBehaviorCoroutines()
+    {
+        isBehaviorRunning = true;
+        roamingCoroutine = StartCoroutine(RoamingBehavior());
+        socialCoroutine = StartCoroutine(SocialBehaviorCheck());
+        avoidanceCoroutine = StartCoroutine(CollisionAvoidanceCheck());
+    }
+    
+    private void StopBehaviorCoroutines()
+    {
+        isBehaviorRunning = false;
+        
+        if (roamingCoroutine != null)
+        {
+            StopCoroutine(roamingCoroutine);
+            roamingCoroutine = null;
+        }
+        
+        if (socialCoroutine != null)
+        {
+            StopCoroutine(socialCoroutine);
+            socialCoroutine = null;
+        }
+        
+        if (avoidanceCoroutine != null)
+        {
+            StopCoroutine(avoidanceCoroutine);
+            avoidanceCoroutine = null;
+        }
+    }
+    
     private IEnumerator RoamingBehavior()
     {
-        while (isRoaming)
+        while (isRoaming && isBehaviorRunning)
         {
             if (!isInteracting && followingTarget == null)
             {
@@ -148,16 +200,25 @@ public class Test_EnerlingController : MonoBehaviour
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(randomDirection, out hit, maxRoamDistance, NavMesh.AllAreas))
                 {
-                    navAgent.speed = Random.value > 0.7f ? runSpeed : walkSpeed;
-                    navAgent.SetDestination(hit.position);
-                    
-                    // Wait until reaching destination
-                    yield return new WaitUntil(() => 
-                        !navAgent.pathPending && 
-                        navAgent.remainingDistance <= navAgent.stoppingDistance);
-                    
-                    // Wait for random time before next roam
-                    yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
+                    // Check if destination is too close to other enerlings
+                    if (!IsTooCloseToOtherEnerlings(hit.position))
+                    {
+                        navAgent.speed = Random.value > 0.7f ? runSpeed : walkSpeed;
+                        navAgent.SetDestination(hit.position);
+                        
+                        // Wait until reaching destination
+                        yield return new WaitUntil(() => 
+                            !navAgent.pathPending && 
+                            navAgent.remainingDistance <= navAgent.stoppingDistance);
+                        
+                        // Wait for random time before next roam
+                        yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
+                    }
+                    else
+                    {
+                        // If too close, wait a bit and try again
+                        yield return new WaitForSeconds(1f);
+                    }
                 }
             }
             else if (!isInteracting && followingTarget != null)
@@ -179,9 +240,69 @@ public class Test_EnerlingController : MonoBehaviour
         }
     }
     
+    private bool IsTooCloseToOtherEnerlings(Vector3 position)
+    {
+        foreach (var enerling in allEnerlings)
+        {
+            if (enerling != null && enerling != this && enerling.gameObject.activeInHierarchy && !enerling.isInteracting)
+            {
+                float distance = Vector3.Distance(position, enerling.transform.position);
+                if (distance < minDistanceBetweenEnerlings)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private IEnumerator CollisionAvoidanceCheck()
+    {
+        while (isBehaviorRunning)
+        {
+            yield return new WaitForSeconds(avoidanceCheckInterval);
+            
+            if (!isInteracting && navAgent.hasPath)
+            {
+                // Check for nearby enerlings and avoid them
+                Vector3 avoidanceVector = Vector3.zero;
+                int nearbyCount = 0;
+                
+                foreach (var enerling in allEnerlings)
+                {
+                    if (enerling != null && enerling != this && enerling.gameObject.activeInHierarchy && !enerling.isInteracting)
+                    {
+                        float distance = Vector3.Distance(transform.position, enerling.transform.position);
+                        if (distance < minDistanceBetweenEnerlings)
+                        {
+                            Vector3 awayDirection = (transform.position - enerling.transform.position).normalized;
+                            avoidanceVector += awayDirection * (1f - (distance / minDistanceBetweenEnerlings));
+                            nearbyCount++;
+                        }
+                    }
+                }
+                
+                if (nearbyCount > 0)
+                {
+                    // Calculate new destination with avoidance
+                    avoidanceVector /= nearbyCount;
+                    Vector3 currentDestination = navAgent.destination;
+                    Vector3 newDestination = currentDestination + avoidanceVector * avoidanceForce;
+                    
+                    // Sample position on NavMesh
+                    NavMeshHit hit;
+                    if (NavMesh.SamplePosition(newDestination, out hit, 2f, NavMesh.AllAreas))
+                    {
+                        navAgent.SetDestination(hit.position);
+                    }
+                }
+            }
+        }
+    }
+    
     private IEnumerator SocialBehaviorCheck()
     {
-        while (true)
+        while (isBehaviorRunning)
         {
             yield return new WaitForSeconds(socialCheckInterval);
             
@@ -194,7 +315,7 @@ public class Test_EnerlingController : MonoBehaviour
                 foreach (Collider collider in nearbyEnerlings)
                 {
                     Test_EnerlingController otherEnerling = collider.GetComponent<Test_EnerlingController>();
-                    if (otherEnerling != null && otherEnerling != this && followingTarget == null)
+                    if (otherEnerling != null && otherEnerling != this && followingTarget == null && !otherEnerling.isInteracting)
                     {
                         if (Random.value < followChance)
                         {
@@ -254,15 +375,8 @@ public class Test_EnerlingController : MonoBehaviour
         navAgent.isStopped = true;
         navAgent.ResetPath();
         
-        // Stop other coroutines
-        if (roamingCoroutine != null)
-        {
-            StopCoroutine(roamingCoroutine);
-        }
-        if (socialCoroutine != null)
-        {
-            StopCoroutine(socialCoroutine);
-        }
+        // Stop behavior coroutines
+        StopBehaviorCoroutines();
         
         // Activate virtual camera
         if (virtualCamera != null)
@@ -312,8 +426,7 @@ public class Test_EnerlingController : MonoBehaviour
         navAgent.isStopped = false;
         
         // Restart behavior coroutines
-        roamingCoroutine = StartCoroutine(RoamingBehavior());
-        socialCoroutine = StartCoroutine(SocialBehaviorCheck());
+        StartBehaviorCoroutines();
         
         // Reset rotation to original
         StartCoroutine(ResetRotation());
@@ -383,6 +496,57 @@ public class Test_EnerlingController : MonoBehaviour
         return virtualCamera;
     }
     
+    // Static method to pause all enerlings (COMPLETELY stop them)
+    public static void PauseAllEnerlings()
+    {
+        foreach (var enerling in allEnerlings)
+        {
+            if (enerling != null && !enerling.isInteracting)
+            {
+                // Stop NavMeshAgent
+                enerling.navAgent.isStopped = true;
+                enerling.navAgent.ResetPath();
+                
+                // Stop all behavior coroutines
+                enerling.StopBehaviorCoroutines();
+                
+                // Stop animations
+                if (enerling.animator != null)
+                {
+                    enerling.animator.SetBool("IsMoving", false);
+                    enerling.animator.SetFloat("Speed", 0f);
+                }
+            }
+        }
+        Debug.Log($"Paused {allEnerlings.Count} enerlings");
+    }
+    
+    // Static method to resume all enerlings
+    public static void ResumeAllEnerlings()
+    {
+        foreach (var enerling in allEnerlings)
+        {
+            if (enerling != null && !enerling.isInteracting)
+            {
+                // Resume NavMeshAgent
+                enerling.navAgent.isStopped = false;
+                
+                // Restart behavior coroutines
+                enerling.StartBehaviorCoroutines();
+            }
+        }
+        Debug.Log($"Resumed {allEnerlings.Count} enerlings");
+    }
+    
+    void OnDestroy()
+    {
+        // Unregister this enerling
+        if (allEnerlings.Contains(this))
+        {
+            allEnerlings.Remove(this);
+        }
+    }
+    
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
@@ -393,5 +557,8 @@ public class Test_EnerlingController : MonoBehaviour
         
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, socialDistance * 2);
+        
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, minDistanceBetweenEnerlings);
     }
 }
