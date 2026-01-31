@@ -80347,7 +80347,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8191e55ef044faa49b267f2e6595bba5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameDataResetManager
+  m_EditorClassIdentifier: Assembly-CSharp::GameDataResetter
 --- !u!1 &1687603480
 GameObject:
   m_ObjectHideFlags: 0
