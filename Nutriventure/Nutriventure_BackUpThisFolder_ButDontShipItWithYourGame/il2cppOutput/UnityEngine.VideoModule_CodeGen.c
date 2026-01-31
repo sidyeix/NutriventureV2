@@ -19,10 +19,8 @@ extern void VideoPlayer_get_isPrepared_mF2F3AD27BE0FD06695EE9DEE762B68F431E15767
 extern void VideoPlayer_set_waitForFirstFrame_m43D97D5C3971060018A9BF5D04B9CEDDBA1056AA (void);
 extern void VideoPlayer_set_playOnAwake_m658E574E0109125AD1754D61FE81DD7BB02411A0 (void);
 extern void VideoPlayer_Play_m8E99607F39F1D214BDD704F3E130DD2418787ACE (void);
-extern void VideoPlayer_Pause_m1975BF6BEE27064602EEB8191C963888CF5B226E (void);
 extern void VideoPlayer_Stop_m1F2DE73183E042998140A56FF69432A200430BF1 (void);
 extern void VideoPlayer_get_isPlaying_mC4CCA87F909A3A14209D632D16D7C8FC34F01520 (void);
-extern void VideoPlayer_set_frame_mDD1CBF9BD07C3720DC8B1798CE434BAD5B75803B (void);
 extern void VideoPlayer_set_isLooping_m37563E7D24110FDBBBB4E48EA90E639BE778264E (void);
 extern void VideoPlayer_set_skipOnDrop_m3AF58ACDD78E0331942DA2C82075EE09D824B6B9 (void);
 extern void VideoPlayer_set_audioOutputMode_mB6388A630434913121DD37D2E48CF66E81BF8574 (void);
@@ -44,10 +42,8 @@ extern void VideoPlayer_get_isPrepared_Injected_m153FE64618686CFAF64685210AE685E
 extern void VideoPlayer_set_waitForFirstFrame_Injected_mBE8CF7E0550AEC37CD903277AB8997A6E2058855 (void);
 extern void VideoPlayer_set_playOnAwake_Injected_m8AEA7124AD5AB3A9C1DFF7833C32F4D1587B801D (void);
 extern void VideoPlayer_Play_Injected_m6AB297C015723C8F94E805F269EF8A03D1E7835A (void);
-extern void VideoPlayer_Pause_Injected_m32C748E0C23A6B8FA856C5C18BD4982FC6B78D41 (void);
 extern void VideoPlayer_Stop_Injected_mD404E9FE0EE18FE42FAE2D9D927D211F18A934E7 (void);
 extern void VideoPlayer_get_isPlaying_Injected_mAE638F31F731B79322962B2B53A02BCB48B97C4B (void);
-extern void VideoPlayer_set_frame_Injected_mD362E00FCE5F32E1214D0003BF700173DF919A80 (void);
 extern void VideoPlayer_set_isLooping_Injected_mDFF375EC3EA1A2167C2589C9D52836677A63F46D (void);
 extern void VideoPlayer_set_skipOnDrop_Injected_mD7771E4E8505EC86B4F7BE52936A6546C7491303 (void);
 extern void VideoPlayer_set_audioOutputMode_Injected_m6356A028F8B855EADF191119F34DEB41A38E058C (void);
@@ -59,7 +55,7 @@ extern void FrameReadyEventHandler__ctor_mD875F736BCA2A2128427AB0546B5081ED3B22D
 extern void FrameReadyEventHandler_Invoke_m73FF71F81A620194421226D8A98C64FB82E7B235 (void);
 extern void TimeEventHandler__ctor_m7BF78A616C8FF71B3A7CA62B1A03446A5C581309 (void);
 extern void TimeEventHandler_Invoke_m2327761543815FB7181FFF73E87FC5EC0F84349D (void);
-static Il2CppMethodPointer s_methodPointers[52] = 
+static Il2CppMethodPointer s_methodPointers[48] = 
 {
 	VideoClipPlayable_GetHandle_m1D990903234220E9FE756F2DA895650EBDC1415D,
 	VideoClipPlayable_Equals_mDBA2CCE1368B628829B065EA8DEDE84512B2723E,
@@ -73,10 +69,8 @@ static Il2CppMethodPointer s_methodPointers[52] =
 	VideoPlayer_set_waitForFirstFrame_m43D97D5C3971060018A9BF5D04B9CEDDBA1056AA,
 	VideoPlayer_set_playOnAwake_m658E574E0109125AD1754D61FE81DD7BB02411A0,
 	VideoPlayer_Play_m8E99607F39F1D214BDD704F3E130DD2418787ACE,
-	VideoPlayer_Pause_m1975BF6BEE27064602EEB8191C963888CF5B226E,
 	VideoPlayer_Stop_m1F2DE73183E042998140A56FF69432A200430BF1,
 	VideoPlayer_get_isPlaying_mC4CCA87F909A3A14209D632D16D7C8FC34F01520,
-	VideoPlayer_set_frame_mDD1CBF9BD07C3720DC8B1798CE434BAD5B75803B,
 	VideoPlayer_set_isLooping_m37563E7D24110FDBBBB4E48EA90E639BE778264E,
 	VideoPlayer_set_skipOnDrop_m3AF58ACDD78E0331942DA2C82075EE09D824B6B9,
 	VideoPlayer_set_audioOutputMode_mB6388A630434913121DD37D2E48CF66E81BF8574,
@@ -98,10 +92,8 @@ static Il2CppMethodPointer s_methodPointers[52] =
 	VideoPlayer_set_waitForFirstFrame_Injected_mBE8CF7E0550AEC37CD903277AB8997A6E2058855,
 	VideoPlayer_set_playOnAwake_Injected_m8AEA7124AD5AB3A9C1DFF7833C32F4D1587B801D,
 	VideoPlayer_Play_Injected_m6AB297C015723C8F94E805F269EF8A03D1E7835A,
-	VideoPlayer_Pause_Injected_m32C748E0C23A6B8FA856C5C18BD4982FC6B78D41,
 	VideoPlayer_Stop_Injected_mD404E9FE0EE18FE42FAE2D9D927D211F18A934E7,
 	VideoPlayer_get_isPlaying_Injected_mAE638F31F731B79322962B2B53A02BCB48B97C4B,
-	VideoPlayer_set_frame_Injected_mD362E00FCE5F32E1214D0003BF700173DF919A80,
 	VideoPlayer_set_isLooping_Injected_mDFF375EC3EA1A2167C2589C9D52836677A63F46D,
 	VideoPlayer_set_skipOnDrop_Injected_mD7771E4E8505EC86B4F7BE52936A6546C7491303,
 	VideoPlayer_set_audioOutputMode_Injected_m6356A028F8B855EADF191119F34DEB41A38E058C,
@@ -121,66 +113,62 @@ static Il2CppTokenAdjustorThunkPair s_adjustorThunks[2] =
 	{ 0x06000001, VideoClipPlayable_GetHandle_m1D990903234220E9FE756F2DA895650EBDC1415D_AdjustorThunk },
 	{ 0x06000002, VideoClipPlayable_Equals_mDBA2CCE1368B628829B065EA8DEDE84512B2723E_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[52] = 
+static const int32_t s_InvokerIndices[48] = 
 {
-	17076,
-	9556,
-	17296,
-	13132,
-	13060,
-	13132,
-	13132,
-	17296,
-	16818,
-	12888,
-	12888,
-	17296,
-	17296,
-	17296,
-	16818,
-	13061,
-	12888,
-	12888,
-	13060,
-	27936,
-	24964,
-	27936,
-	27936,
-	27936,
-	24971,
-	27936,
-	24956,
-	17296,
-	24754,
-	24752,
-	24754,
-	24754,
-	27934,
-	27160,
-	24749,
-	24749,
-	27934,
-	27934,
-	27934,
-	27160,
-	24753,
-	24749,
-	24749,
-	24752,
-	6813,
-	13132,
-	6813,
-	6820,
-	6813,
-	6811,
-	6813,
-	6802,
+	16987,
+	9506,
+	17207,
+	13062,
+	12991,
+	13062,
+	13062,
+	17207,
+	16729,
+	12820,
+	12820,
+	17207,
+	17207,
+	16729,
+	12820,
+	12820,
+	12991,
+	27834,
+	24862,
+	27834,
+	27834,
+	27834,
+	24869,
+	27834,
+	24854,
+	17207,
+	24652,
+	24651,
+	24652,
+	24652,
+	27832,
+	27058,
+	24648,
+	24648,
+	27832,
+	27832,
+	27058,
+	24648,
+	24648,
+	24651,
+	6775,
+	13062,
+	6775,
+	6782,
+	6775,
+	6773,
+	6775,
+	6764,
 };
 IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_VideoModule_CodeGenModule;
 const Il2CppCodeGenModule g_UnityEngine_VideoModule_CodeGenModule = 
 {
 	"UnityEngine.VideoModule.dll",
-	52,
+	48,
 	s_methodPointers,
 	2,
 	s_adjustorThunks,
