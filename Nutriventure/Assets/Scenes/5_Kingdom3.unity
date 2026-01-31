@@ -3352,6 +3352,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4222126599281790919, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
   m_PrefabInstance: {fileID: 1580538449}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &91310583 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2321043943444295902, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
+  m_PrefabInstance: {fileID: 1580538449}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91310582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &92648276
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3576,6 +3587,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4635207389212637381, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
   m_PrefabInstance: {fileID: 1580538449}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &93930148 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6556555379238635484, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
+  m_PrefabInstance: {fileID: 1580538449}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93930143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &95521156
 GameObject:
   m_ObjectHideFlags: 0
@@ -5149,6 +5171,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 116345349}
   m_CullTransparentMesh: 1
+--- !u!1 &116590682
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 116590683}
+  - component: {fileID: 116590684}
+  m_Layer: 0
+  m_Name: GameDataReset
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &116590683
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116590682}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1552823937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &116590684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 116590682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8191e55ef044faa49b267f2e6595bba5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameDataResetManager
 --- !u!1 &116936347
 GameObject:
   m_ObjectHideFlags: 0
@@ -57474,6 +57540,11 @@ MonoBehaviour:
   onCutsceneSkipped:
     m_PersistentCalls:
       m_Calls: []
+--- !u!224 &1065677569 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 9139165769254981990, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
+  m_PrefabInstance: {fileID: 1580538449}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1066288778
 GameObject:
   m_ObjectHideFlags: 0
@@ -63375,6 +63446,11 @@ CanvasRenderer:
 --- !u!1 &1204469347 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4716308930547129209, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
+  m_PrefabInstance: {fileID: 1580538449}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &1204469348 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4700314800559521240, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
   m_PrefabInstance: {fileID: 1580538449}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1204968273
@@ -93805,6 +93881,7 @@ Transform:
   - {fileID: 546614797}
   - {fileID: 1862137004}
   - {fileID: 859737803}
+  - {fileID: 116590683}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1556002738
@@ -124179,6 +124256,7 @@ GameObject:
   - component: {fileID: 1938089367}
   - component: {fileID: 1938089368}
   - component: {fileID: 1938089369}
+  - component: {fileID: 1938089370}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -124588,6 +124666,34 @@ MonoBehaviour:
   onKeyCollected:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1938089370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1938089353}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 903ad002f59604d4bbaf95ec67ccc166, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeyboardToUISync
+  joystickHandle: {fileID: 1065677569}
+  joystickContainer: {fileID: 1204469348}
+  joystickMaxOffset: 100
+  jumpButton: {fileID: 93930148}
+  sprintButton: {fileID: 91310583}
+  crawlButton: {fileID: 0}
+  pushButton: {fileID: 0}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  pressedColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  activeStateColor: {r: 0.2, g: 0.8, b: 0.2, a: 1}
+  pushingColor: {r: 0.8, g: 0.4, b: 0.2, a: 1}
+  buttonPressScale: 0.9
+  animationSpeed: 10
+  directionIndicator: {fileID: 0}
+  indicatorRotationSpeed: 5
+  indicatorMaxAlpha: 0.5
 --- !u!1 &1939526110
 GameObject:
   m_ObjectHideFlags: 0

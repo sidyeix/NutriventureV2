@@ -41,7 +41,7 @@ MonoBehaviour:
         amount: 203
         type: 1
       timelineAsset: {fileID: 0}
-      status: 3
+      status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Nutri Kingdom
     kingdomName: Nutri Kingdom
