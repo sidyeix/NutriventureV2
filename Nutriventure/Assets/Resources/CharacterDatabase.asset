@@ -243,7 +243,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 1
+    unlockedByDefault: 0
     coinsToUnlock: 1000
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
@@ -289,7 +289,7 @@ MonoBehaviour:
     jumpForceMultiplier: 0
     healthMultiplier: 0
     energyMultiplier: 0
-    unlockedByDefault: 0
+    unlockedByDefault: 1
     coinsToUnlock: 800
     levelRequirement: 0
     characterColor: {r: 0, g: 0, b: 0, a: 0}
