@@ -161,7 +161,7 @@ MonoBehaviour:
       heroes! But hey\u2014too much of me can upset your tummy or cause bloating.
       Balance is the key to keeping me happy!"
     audioClip: {fileID: 8300000, guid: 9066f73846a4b4c4a82627b381fd5db8, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: 7b33a3070e23f324d9b1d75d533b6e41, type: 3}
   - ingredientName: Iron
     rarity: 0
     kingdom: 0
@@ -297,7 +297,7 @@ MonoBehaviour:
       faster. I love fighting off colds! But overload me, and I might give you stomach
       pain or diarrhea. Even heroes need limits!
     audioClip: {fileID: 8300000, guid: b6946350f1758424fa27211a0d5380d7, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: 37fd0d0ac2ee6ea4280fd4b6e29039ed, type: 3}
   - ingredientName: Vitamin A
     rarity: 0
     kingdom: 0
@@ -363,7 +363,7 @@ MonoBehaviour:
       grow healthy new cells. But too much of me can blur your vision and damage
       your liver. Don\u2019t let my glow blind you!"
     audioClip: {fileID: 8300000, guid: ecb14aebf1b609d429ea9710b09d268d, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: aca3980babb8c6c48aecf02695532534, type: 3}
   - ingredientName: Egg
     rarity: 0
     kingdom: 0
@@ -630,7 +630,7 @@ MonoBehaviour:
     enerlingStory: Sugar here! I give quick energy and make food exciting. But too
       much of me damages your heart, teeth, and organs. Sweet today, trouble tomorrow!
     audioClip: {fileID: 8300000, guid: d6e874e5b6cbe4d42b98460b5baa4486, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: fa482c00413691748963fb8045738899, type: 3}
   - ingredientName: Corn Syrup
     rarity: 0
     kingdom: 2
@@ -896,7 +896,7 @@ MonoBehaviour:
     enerlingStory: Sodium Benzoate here! I stop food from spoiling. But too much
       exposure may cause health issues. Preservation has limits!
     audioClip: {fileID: 8300000, guid: 265ffdae7eee25345bddf5172fa65ad4, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: 5dc63db8d6cdfe04583b8f35ecb9c035, type: 3}
   - ingredientName: Stevia Extract
     rarity: 2
     kingdom: 2
@@ -961,7 +961,7 @@ MonoBehaviour:
     enerlingStory: "I\u2019m Stevia\u2014natural and plant-powered sweetness! But
       too much can still upset digestion. Even nature needs moderation!"
     audioClip: {fileID: 8300000, guid: d648e662397403f4f9ce923ac640a138, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: 211fb3efdbcf1534dbd785175357aef6, type: 3}
   - ingredientName: Sorbitol
     rarity: 2
     kingdom: 2
@@ -1026,7 +1026,7 @@ MonoBehaviour:
     enerlingStory: "Sorbitol reporting! I\u2019m a sugar alcohol used in \u2018diet\u2019
       foods. But overuse me and your stomach may rebel. I move things\u2026 fast."
     audioClip: {fileID: 8300000, guid: 0298278b031296e4f9a929ca31f22456, type: 3}
-    endingCutscene: {fileID: 0}
+    endingCutscene: {fileID: 32900000, guid: 87eb64423fe94734b8a639817d4845e8, type: 3}
   - ingredientName: Sucralose
     rarity: 1
     kingdom: 2
