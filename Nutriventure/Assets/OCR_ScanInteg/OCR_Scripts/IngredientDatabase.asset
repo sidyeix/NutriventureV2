@@ -89,6 +89,7 @@ MonoBehaviour:
       and your nerves firing right. But overload me and I might cause kidney stones.
       Strong doesn\u2019t mean too much!"
     audioClip: {fileID: 8300000, guid: 8ee47551e487d804eaf30435e79bab8d, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Milk
     rarity: 0
     kingdom: 0
@@ -160,6 +161,7 @@ MonoBehaviour:
       heroes! But hey\u2014too much of me can upset your tummy or cause bloating.
       Balance is the key to keeping me happy!"
     audioClip: {fileID: 8300000, guid: 9066f73846a4b4c4a82627b381fd5db8, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Iron
     rarity: 0
     kingdom: 0
@@ -228,6 +230,7 @@ MonoBehaviour:
       if you take too much of me, I can harm your organs. I\u2019m powerful\u2014handle
       me wisely!"
     audioClip: {fileID: 0}
+    endingCutscene: {fileID: 0}
   - ingredientName: Vitamin C
     rarity: 0
     kingdom: 0
@@ -294,6 +297,7 @@ MonoBehaviour:
       faster. I love fighting off colds! But overload me, and I might give you stomach
       pain or diarrhea. Even heroes need limits!
     audioClip: {fileID: 8300000, guid: b6946350f1758424fa27211a0d5380d7, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Vitamin A
     rarity: 0
     kingdom: 0
@@ -359,6 +363,7 @@ MonoBehaviour:
       grow healthy new cells. But too much of me can blur your vision and damage
       your liver. Don\u2019t let my glow blind you!"
     audioClip: {fileID: 8300000, guid: ecb14aebf1b609d429ea9710b09d268d, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Egg
     rarity: 0
     kingdom: 0
@@ -425,6 +430,7 @@ MonoBehaviour:
       muscles and fuel strength. But eat me too often, and I may raise cholesterol
       for some people. Crack me responsibly!"
     audioClip: {fileID: 8300000, guid: 609306a8afa30f24aab3aaa71684ac24, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Peanuts
     rarity: 0
     kingdom: 1
@@ -489,6 +495,7 @@ MonoBehaviour:
       for some people, I\u2019m dangerous and can trigger serious allergies. Respect
       me, or I strike hard!"
     audioClip: {fileID: 8300000, guid: 016d7a45b0bad2e47b8a5a023b17217b, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Shrimp
     rarity: 0
     kingdom: 1
@@ -555,6 +562,7 @@ MonoBehaviour:
       health. But I\u2019m a common allergen, and too much cholesterol can be risky.
       Sea power needs caution!"
     audioClip: {fileID: 8300000, guid: 5115c8885914a3648aacdb929a59e22f, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Sugar
     rarity: 0
     kingdom: 2
@@ -622,6 +630,7 @@ MonoBehaviour:
     enerlingStory: Sugar here! I give quick energy and make food exciting. But too
       much of me damages your heart, teeth, and organs. Sweet today, trouble tomorrow!
     audioClip: {fileID: 8300000, guid: d6e874e5b6cbe4d42b98460b5baa4486, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Corn Syrup
     rarity: 0
     kingdom: 2
@@ -689,6 +698,7 @@ MonoBehaviour:
       your liver and stress your heart when consumed often. I hide where you least
       expect me!"
     audioClip: {fileID: 8300000, guid: d8793cc0745f7734fa05a26faa26ff27, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Sodium Nitrite
     rarity: 1
     kingdom: 3
@@ -754,6 +764,7 @@ MonoBehaviour:
     enerlingStory: "I preserve food and fight bacteria! But in large amounts, I can
       become toxic. I protect food\u2014but don\u2019t let me rule it."
     audioClip: {fileID: 8300000, guid: 8b551e65e2c6e894c81614bea9f75970, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Aspartame
     rarity: 1
     kingdom: 2
@@ -820,6 +831,7 @@ MonoBehaviour:
       But some people feel headaches or brain fog from me. Not every mind reacts
       the same!"
     audioClip: {fileID: 8300000, guid: 0ea3cc7fc36d2264696c9a07a7c35a92, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Sodium Benzoate
     rarity: 2
     kingdom: 3
@@ -884,6 +896,7 @@ MonoBehaviour:
     enerlingStory: Sodium Benzoate here! I stop food from spoiling. But too much
       exposure may cause health issues. Preservation has limits!
     audioClip: {fileID: 8300000, guid: 265ffdae7eee25345bddf5172fa65ad4, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Stevia Extract
     rarity: 2
     kingdom: 2
@@ -948,6 +961,7 @@ MonoBehaviour:
     enerlingStory: "I\u2019m Stevia\u2014natural and plant-powered sweetness! But
       too much can still upset digestion. Even nature needs moderation!"
     audioClip: {fileID: 8300000, guid: d648e662397403f4f9ce923ac640a138, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Sorbitol
     rarity: 2
     kingdom: 2
@@ -1012,6 +1026,7 @@ MonoBehaviour:
     enerlingStory: "Sorbitol reporting! I\u2019m a sugar alcohol used in \u2018diet\u2019
       foods. But overuse me and your stomach may rebel. I move things\u2026 fast."
     audioClip: {fileID: 8300000, guid: 0298278b031296e4f9a929ca31f22456, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Sucralose
     rarity: 1
     kingdom: 2
@@ -1076,6 +1091,7 @@ MonoBehaviour:
     enerlingStory: Sucralose speaking! I bring sweetness without calories. But I
       may disrupt your gut and organs if overused. Artificial power comes at a cost!
     audioClip: {fileID: 8300000, guid: 6dd74601e5171c84a9b0a40b4c2c65c9, type: 3}
+    endingCutscene: {fileID: 0}
   - ingredientName: Folic Acid
     rarity: 0
     kingdom: 0
@@ -1142,3 +1158,4 @@ MonoBehaviour:
       for growing champions. But too much of me can hide other problems in your body.
       I work best as part of a team!"
     audioClip: {fileID: 8300000, guid: 3146485e5cd693343b2f994f8863a9dc, type: 3}
+    endingCutscene: {fileID: 0}
