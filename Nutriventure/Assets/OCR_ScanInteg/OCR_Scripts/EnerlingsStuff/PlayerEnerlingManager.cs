@@ -238,7 +238,7 @@ public class PlayerEnerlingManager : MonoBehaviour
 
     public void OnSkillButtonClicked(int skillNumber)
     {
-        Debug.Log($"Skill {skillNumber} button clicked");
+        Debug.Log($"=== Skill {skillNumber} button clicked ===");
 
         if (playerEnerling == null)
         {
@@ -246,10 +246,11 @@ public class PlayerEnerlingManager : MonoBehaviour
             return;
         }
 
-        // Check if skill is ready
+        // Check if skill is ready FIRST
         if (!playerEnerling.IsSkillReady(skillNumber))
         {
-            Debug.Log($"Skill {skillNumber} is on cooldown! Cannot use.");
+            int cooldown = GetSkillCooldownValue(skillNumber);
+            Debug.Log($"Skill {skillNumber} is on cooldown! Cooldown={cooldown}");
             StartCoroutine(FlashButtonCooldown(skillNumber));
             return;
         }
@@ -268,11 +269,24 @@ public class PlayerEnerlingManager : MonoBehaviour
             return;
         }
 
+        // Check if skill exists
+        var skill = GetSkillByNumber(skillNumber);
+        if (skill == null)
+        {
+            Debug.LogError($"Skill {skillNumber} not found!");
+            return;
+        }
+
+        Debug.Log($"Skill {skillNumber} is ready to use. Cooldown turns: {skill.cooldownTurns}");
+
         // Disable all buttons while processing
         SetButtonsInteractable(false);
 
-        // Set skill cooldown (this method already exists in IngredientInfo)
+        // Set skill cooldown BEFORE using the skill
         playerEnerling.SetSkillCooldown(skillNumber);
+        Debug.Log($"Set cooldown for skill {skillNumber} to {skill.cooldownTurns} turns");
+
+        // Immediately update the button UI to show cooldown
         UpdateSkillButton(skillNumber);
 
         // Notify BattleEnerlingManager
@@ -294,7 +308,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         }
     }
 
-    // Make this method public so TurnSystem can access it
     public void UpdateSkillButton(int skillNumber)
     {
         if (playerEnerling == null) return;
@@ -313,33 +326,32 @@ public class PlayerEnerlingManager : MonoBehaviour
         // Get the cooldown slider
         Slider cooldownSlider = GetCooldownSliderByNumber(skillNumber);
 
-        // Update cooldown slider
-        if (cooldownSlider != null)
-        {
-            IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
-            if (skill != null)
-            {
-                if (cooldown > 0)
-                {
-                    // Skill is on cooldown
-                    cooldownSlider.maxValue = skill.cooldownTurns;
-                    // Current slider value should be: maxValue - remainingCooldown
-                    // Example: If cooldown is 3 turns, after using: remaining=3, slider=0
-                    // After 1 turn: remaining=2, slider=1
-                    // After 2 turns: remaining=1, slider=2
-                    // After 3 turns: remaining=0, slider=3 (ready, slider hidden)
-                    int currentSliderValue = Mathf.Max(0, skill.cooldownTurns - cooldown);
-                    cooldownSlider.value = currentSliderValue;
-                    cooldownSlider.gameObject.SetActive(true);
+        // Get skill info for max cooldown
+        IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
 
-                    Debug.Log($"Skill {skillNumber}: Cooldown={cooldown}, Max={skill.cooldownTurns}, SliderValue={currentSliderValue}");
-                }
-                else
-                {
-                    // Skill is ready
-                    cooldownSlider.value = skill.cooldownTurns; // Set to max
-                    cooldownSlider.gameObject.SetActive(false); // Hide slider
-                }
+        // Update cooldown slider
+        if (cooldownSlider != null && skill != null)
+        {
+            if (cooldown > 0)
+            {
+                // Skill is on cooldown
+                cooldownSlider.maxValue = skill.cooldownTurns;
+                // Slider shows progress: (maxCooldown - remainingCooldown) / maxCooldown
+                // When cooldown = max (just used): slider value = 0
+                // When cooldown = 1 (almost ready): slider value = (max-1)/max
+                // When cooldown = 0 (ready): slider hidden
+                int remainingCooldown = cooldown;
+                int currentSliderValue = skill.cooldownTurns - remainingCooldown;
+                cooldownSlider.value = currentSliderValue;
+                cooldownSlider.gameObject.SetActive(true);
+
+                Debug.Log($"Skill {skillNumber}: Cooldown={cooldown}, Max={skill.cooldownTurns}, SliderValue={currentSliderValue}");
+            }
+            else
+            {
+                // Skill is ready - hide slider
+                cooldownSlider.value = skill.cooldownTurns;
+                cooldownSlider.gameObject.SetActive(false);
             }
         }
 
@@ -457,7 +469,7 @@ public class PlayerEnerlingManager : MonoBehaviour
     {
         if (playerEnerling != null)
         {
-            // Reduce cooldowns (this method already exists in IngredientInfo)
+            // Reduce cooldowns
             playerEnerling.ReduceCooldowns();
             Debug.Log("Reduced player skill cooldowns");
 

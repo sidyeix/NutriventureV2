@@ -480,6 +480,31 @@ public class TurnSystem : MonoBehaviour
         return currentRound;
     }
 
+    public void StopBattle()
+    {
+        isTurnActive = false;
+        isGameTimerRunning = false;
+        Cleanup();
+        Debug.Log("Battle stopped by EndingManager");
+    }
+
+    public void StartBattleWithAudio()
+    {
+        // Start battle as before
+        StartBattle();
+
+        // Start battle audio
+        if (AudioManagerBattleField.Instance != null)
+        {
+            AudioManagerBattleField.Instance.StartBattleAudio();
+        }
+        else
+        {
+            Debug.LogWarning("AudioManagerBattleField instance not found. Battle audio won't play.");
+        }
+    }
+
+
     public void Cleanup()
     {
         StopAllCoroutines();
@@ -487,5 +512,11 @@ public class TurnSystem : MonoBehaviour
         isAnimating = false;
         isWaitingForAnimation = false;
         isGameTimerRunning = false;
+
+        // Stop battle audio
+        if (AudioManagerBattleField.Instance != null)
+        {
+            AudioManagerBattleField.Instance.StopBattleAudio();
+        }
     }
 }
