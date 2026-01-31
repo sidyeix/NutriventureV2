@@ -3,61 +3,58 @@ using System.Collections.Generic;
 
 public static class IngredientCategory
 {
-    // Define categories for each canonical ingredient
+    // Define categories for each canonical ingredient - MUST MATCH JAVA LIST
     private static Dictionary<string, string> ingredientCategoryMap = new Dictionary<string, string>
     {
-        // PRESERVATIVES
-        {"Sodium nitrite", "PRESERVATIVE"},
-        {"Sodium benzoate", "PRESERVATIVE"},
+        // PRESERVATIVES (from Java)
+        {"Sodium Nitrite", "PRESERVATIVE"},
+        {"Sodium Benzoate", "PRESERVATIVE"},
         
-        // NUTRIFICANTS
+        // NUTRIFICANTS (from Java)
         {"Calcium", "NUTRIFICANT"},
+        {"Iron", "NUTRIFICANT"},
         {"Vitamin C", "NUTRIFICANT"},
+        {"Vitamin A", "NUTRIFICANT"},
+        {"Folic Acid", "NUTRIFICANT"},
         
-        // ALLERGENS
-        {"Shrimp", "ALLERGEN"},
+        // ALLERGENS (from Java)
+        {"Milk", "ALLERGEN"},
+        {"Egg", "ALLERGEN"},
         {"Peanuts", "ALLERGEN"},
-        {"Eggs", "ALLERGEN"},
-        {"Corn", "ALLERGEN"},
+        {"Shrimp", "ALLERGEN"},
         
-        // SWEETENERS
+        // SWEETENERS (from Java)
         {"Sugar", "SWEETENER"},
-        {"Sorbitol", "SWEETENER"}
+        {"Corn Syrup", "SWEETENER"},
+        {"Aspartame", "SWEETENER"},
+        {"Stevia Extract", "SWEETENER"},
+        {"Sorbitol", "SWEETENER"},
+        {"Sucralose", "SWEETENER"}
     };
 
-    // Map synonyms to their canonical names (same as Java)
+    // Map synonyms to their canonical names (must match Java)
     private static Dictionary<string, string> ingredientSynonyms = new Dictionary<string, string>
     {
-        // Calcium synonyms
-        {"calcium carbonate", "Calcium"},
-        {"calcium phosphate", "Calcium"},
-        {"calcium lactate", "Calcium"},
-
-        // Vitamin C synonyms
-        {"ascorbic acid", "Vitamin C"},
-        {"sodium ascorbate", "Vitamin C"},
-
-        // Shrimp / shellfish
-        {"crustacean shellfish", "Shrimp"},
-
-        // Peanuts / tree nuts
-        {"almonds", "Peanuts"},
-        {"cashews", "Peanuts"},
-        {"tree nuts", "Peanuts"},
-
-        // Eggs
-        {"albumin", "Eggs"},
-
-        // Corn derivatives
-        {"corn syrup", "Corn"},
-        {"corn starch", "Corn"},
-        {"corn oil", "Corn"},
-
-        // Sugar variants
-        {"cane sugar", "Sugar"},
-        {"brown sugar", "Sugar"},
-        {"glucose", "Sugar"},
-        {"fructose", "Sugar"}
+        // Exact matches to Java list - NO EXTRA SYNONYMS
+        // The Java only has exact matching, so we should too
+        {"calcium", "Calcium"},
+        {"iron", "Iron"},
+        {"vitamin c", "Vitamin C"},
+        {"vitamin a", "Vitamin A"},
+        {"milk", "Milk"},
+        {"egg", "Egg"},
+        {"eggs", "Egg"},
+        {"peanut", "Peanuts"},
+        {"shrimp", "Shrimp"},
+        {"sugar", "Sugar"},
+        {"corn syrup", "Corn Syrup"},
+        {"sodium nitrite", "Sodium Nitrite"},
+        {"aspartame", "Aspartame"},
+        {"sodium benzoate", "Sodium Benzoate"},
+        {"stevia extract", "Stevia Extract"},
+        {"sorbitol", "Sorbitol"},
+        {"sucralose", "Sucralose"},
+        {"folic acid", "Folic Acid"}
     };
 
     public static string GetCategory(string ingredientName)
@@ -67,7 +64,7 @@ public static class IngredientCategory
 
         string lowerName = ingredientName.ToLower().Trim();
         
-        // First, check if it's a synonym and get canonical name
+        // First, get canonical name from synonyms (matches Java)
         string canonicalName = ingredientName;
         if (ingredientSynonyms.ContainsKey(lowerName))
         {
@@ -102,25 +99,25 @@ public static class IngredientCategory
         
         // Check for preservatives
         if (lowerName.Contains("nitrite") || lowerName.Contains("benzoate") || 
-            lowerName.Contains("sorbate") || lowerName.Contains("preservative"))
+            lowerName.Contains("preservative") || lowerName.Contains("aspartame"))
             return "PRESERVATIVE";
             
         // Check for sweeteners
-        if (lowerName.Contains("sugar") || lowerName.Contains("sorbitol") || 
-            lowerName.Contains("fructose") || lowerName.Contains("glucose") ||
-            lowerName.Contains("syrup") || lowerName.Contains("sweetener"))
+        if (lowerName.Contains("sugar") || lowerName.Contains("syrup") || 
+            lowerName.Contains("sorbitol") || lowerName.Contains("sucralose") ||
+            lowerName.Contains("stevia") || lowerName.Contains("sweetener"))
             return "SWEETENER";
             
         // Check for nutrificants
-        if (lowerName.Contains("calcium") || lowerName.Contains("vitamin") ||
-            lowerName.Contains("ascorbic") || lowerName.Contains("mineral"))
+        if (lowerName.Contains("calcium") || lowerName.Contains("iron") ||
+            lowerName.Contains("vitamin") || lowerName.Contains("folic") ||
+            lowerName.Contains("mineral") || lowerName.Contains("acid"))
             return "NUTRIFICANT";
             
         // Check for allergens
-        if (lowerName.Contains("shrimp") || lowerName.Contains("peanut") ||
-            lowerName.Contains("almond") || lowerName.Contains("cashew") ||
-            lowerName.Contains("egg") || lowerName.Contains("corn") ||
-            lowerName.Contains("shellfish") || lowerName.Contains("nut"))
+        if (lowerName.Contains("milk") || lowerName.Contains("egg") ||
+            lowerName.Contains("peanut") || lowerName.Contains("shrimp") ||
+            lowerName.Contains("allergen"))
             return "ALLERGEN";
             
         return "OTHER";
@@ -138,7 +135,7 @@ public static class IngredientCategory
         }
     }
     
-    // Helper method to get canonical name (optional, for debugging)
+    // Helper method to get canonical name (matches Java logic)
     public static string GetCanonicalName(string ingredientName)
     {
         if (string.IsNullOrEmpty(ingredientName))
@@ -161,5 +158,47 @@ public static class IngredientCategory
         }
         
         return ingredientName;
+    }
+    
+    // NEW: Get all valid ingredients from Java list
+    public static string[] GetJavaIngredientList()
+    {
+        return new string[]
+        {
+            "Calcium",
+            "Milk",
+            "Iron",
+            "Vitamin C",
+            "Vitamin A",
+            "Egg",
+            "Peanuts",
+            "Shrimp",
+            "Sugar",
+            "Corn Syrup",
+            "Sodium Nitrite",
+            "Aspartame",
+            "Sodium Benzoate",
+            "Stevia Extract",
+            "Sorbitol",
+            "Sucralose",
+            "Folic Acid"
+        };
+    }
+    
+    // NEW: Check if an ingredient is in the Java list
+    public static bool IsInJavaList(string ingredientName)
+    {
+        if (string.IsNullOrEmpty(ingredientName))
+            return false;
+            
+        string canonical = GetCanonicalName(ingredientName);
+        foreach (string javaIngredient in GetJavaIngredientList())
+        {
+            if (canonical.Equals(javaIngredient, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
