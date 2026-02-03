@@ -28757,6 +28757,10 @@ MonoBehaviour:
   starsEarnedText: {fileID: 1797930875}
   starAnimator: {fileID: 1620517386}
   starParameterName: Stars
+  countAnimationDuration: 2
+  countTickSound: {fileID: 8300000, guid: 78a8938d649e660428de8c8a868defb3, type: 3}
+  countCompleteSound: {fileID: 8300000, guid: 2a71d8e8ea428e0409d3df636b9f0192, type: 3}
+  countAudioSource: {fileID: 0}
   KeyImageunlocking: {fileID: 1779641468}
   failGameObject1: {fileID: 528345827}
   failGameObject2: {fileID: 2013962994}

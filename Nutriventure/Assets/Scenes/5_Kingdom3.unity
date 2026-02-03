@@ -47167,6 +47167,10 @@ MonoBehaviour:
   soundVolume: 0.7
   backgroundMusicSource: {fileID: 1729832189}
   backgroundMusicVolumeDuringSummary: 0.2
+  countAnimationDuration: 1
+  countTickSound: {fileID: 8300000, guid: 78a8938d649e660428de8c8a868defb3, type: 3}
+  countCompleteSound: {fileID: 8300000, guid: 2a71d8e8ea428e0409d3df636b9f0192, type: 3}
+  countAudioSource: {fileID: 0}
   unlockedColor: {r: 0, g: 1, b: 0, a: 1}
   lockedColor: {r: 1, g: 0, b: 0, a: 1}
   coinsPerStar: 10
@@ -47178,6 +47182,9 @@ MonoBehaviour:
   playerFollowCamera: {fileID: 1862087425}
   characterVisualSwapper: {fileID: 1938089356}
   lookAroundParameter: LookAround
+  characterAnimator: {fileID: 1938089362}
+  danceParameter: isDance
+  thinkParameter: isThinking
   joystickCanvas: {fileID: 1580538452}
   completeRestartOnConfirm: 1
   sceneToReload: 
