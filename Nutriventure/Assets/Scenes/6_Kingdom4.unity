@@ -52153,7 +52153,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1000276811}
   m_Layer: 0
-  m_Name: WorldMap (1)
+  m_Name: WorldMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
