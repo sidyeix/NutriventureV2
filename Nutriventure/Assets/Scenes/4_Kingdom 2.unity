@@ -20327,17 +20327,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
   m_PrefabInstance: {fileID: 446456432}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &451600073 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6556555379238635484, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
-  m_PrefabInstance: {fileID: 97491390}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &459170925
 GameObject:
   m_ObjectHideFlags: 0
@@ -21707,17 +21696,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 488512880}
   m_CullTransparentMesh: 1
---- !u!114 &490283650 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2321043943444295902, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
-  m_PrefabInstance: {fileID: 97491390}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &492284547 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
@@ -26861,11 +26839,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 598005829}
   m_CullTransparentMesh: 1
---- !u!224 &605203289 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4700314800559521240, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
-  m_PrefabInstance: {fileID: 97491390}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &606922594
 GameObject:
   m_ObjectHideFlags: 0
@@ -40728,11 +40701,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 901755012}
   m_CullTransparentMesh: 1
---- !u!224 &903051200 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 9139165769254981990, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
-  m_PrefabInstance: {fileID: 97491390}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &903638679
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -87471,7 +87439,6 @@ GameObject:
   - component: {fileID: 1809557562}
   - component: {fileID: 1809557564}
   - component: {fileID: 1809557563}
-  - component: {fileID: 1809557565}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -87857,34 +87824,6 @@ MonoBehaviour:
   onKeyCollected:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1809557565
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1809557552}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 903ad002f59604d4bbaf95ec67ccc166, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KeyboardToUISync
-  joystickHandle: {fileID: 903051200}
-  joystickContainer: {fileID: 605203289}
-  joystickMaxOffset: 100
-  jumpButton: {fileID: 451600073}
-  sprintButton: {fileID: 490283650}
-  crawlButton: {fileID: 1930648390}
-  pushButton: {fileID: 0}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
-  pressedColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
-  activeStateColor: {r: 0.2, g: 0.8, b: 0.2, a: 1}
-  pushingColor: {r: 0.8, g: 0.4, b: 0.2, a: 1}
-  buttonPressScale: 0.9
-  animationSpeed: 10
-  directionIndicator: {fileID: 0}
-  indicatorRotationSpeed: 5
-  indicatorMaxAlpha: 0.5
 --- !u!1 &1809652634
 GameObject:
   m_ObjectHideFlags: 0
@@ -92446,17 +92385,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CrawlButtonToggle
   playerController: {fileID: 1809557555}
---- !u!114 &1930648390 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2478905580774955251, guid: 9e55d9b4642484f41be20c69a9b48063, type: 3}
-  m_PrefabInstance: {fileID: 1930648386}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930648388}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1933085069 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
