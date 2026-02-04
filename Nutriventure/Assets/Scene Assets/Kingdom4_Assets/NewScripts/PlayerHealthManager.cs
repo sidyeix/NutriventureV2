@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.InputSystem; // Add this line
 
 public class PlayerHealthManager : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public class PlayerHealthManager : MonoBehaviour
     public Kingdom4GameEndManager gameEndManager; // Assign in Inspector
 
     private List<Image> hearts = new List<Image>();
+    private Keyboard keyboard; // Cache keyboard reference
 
     void Awake()
     {
@@ -51,6 +53,12 @@ public class PlayerHealthManager : MonoBehaviour
                 Debug.LogWarning("Kingdom4GameEndManager not found! Game over screen may not show properly.");
             }
         }
+    }
+
+    void Start()
+    {
+        // Get keyboard reference
+        keyboard = Keyboard.current;
     }
 
     void InitializeHealthUI()
@@ -214,19 +222,26 @@ public class PlayerHealthManager : MonoBehaviour
     #region FOR TESTING (Remove in production)
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        // Check if keyboard is available
+        if (keyboard == null)
+        {
+            keyboard = Keyboard.current;
+            return;
+        }
+        
+        if (keyboard.digit1Key.wasPressedThisFrame)
             TakeDamage(0.5f);
-        if (Input.GetKeyDown(KeyCode.Alpha2))
+        if (keyboard.digit2Key.wasPressedThisFrame)
             TakeDamage(1f);
-        if (Input.GetKeyDown(KeyCode.Alpha3))
+        if (keyboard.digit3Key.wasPressedThisFrame)
             Heal(1f);
-        if (Input.GetKeyDown(KeyCode.Alpha4))
+        if (keyboard.digit4Key.wasPressedThisFrame)
             SetMaxHearts(maxHearts + 1);
-        if (Input.GetKeyDown(KeyCode.Alpha5))
+        if (keyboard.digit5Key.wasPressedThisFrame)
             SetMaxHearts(Mathf.Max(1, maxHearts - 1));
-        if (Input.GetKeyDown(KeyCode.R))
+        if (keyboard.rKey.wasPressedThisFrame)
             SetHealth(maxHearts); // Reset health
-        if (Input.GetKeyDown(KeyCode.G))
+        if (keyboard.gKey.wasPressedThisFrame)
             Die(); // Force game over for testing
     }
     #endregion

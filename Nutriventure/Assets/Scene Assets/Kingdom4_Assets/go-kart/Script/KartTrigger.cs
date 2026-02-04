@@ -23,6 +23,15 @@ public class KartTrigger : MonoBehaviour
     public AudioClip countdownBeepSound;
     public AudioClip countdownGoSound;
     
+    [Header("Horse Sound Effects")]
+    public AudioClip horseIdleSound; // Sound when player is near the kart/horse
+    public AudioClip horseRunningSound; // Sound when kart/horse is moving
+    [Range(0f, 1f)]
+    public float idleVolume = 0.5f;
+    [Range(0f, 1f)]
+    public float runningVolume = 0.7f;
+    public float fadeInOutDuration = 0.5f; // Duration for crossfading sounds
+    
     [Header("Player UI Elements")]
     public GameObject[] playerUIElementsToHide;
 
@@ -39,7 +48,11 @@ public class KartTrigger : MonoBehaviour
 
     private Dictionary<GameObject, bool> playerUIElementStates = new Dictionary<GameObject, bool>();
     private AudioSource audioSource;
+    private AudioSource horseIdleSource;
+    private AudioSource horseRunningSource;
     private Coroutine countdownCoroutine;
+    private Coroutine idleFadeCoroutine;
+    private Coroutine runningFadeCoroutine;
 
     // Store player's original position and rotation for cancellation
     private Vector3 playerOriginalPosition;
@@ -49,10 +62,41 @@ public class KartTrigger : MonoBehaviour
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
+        
+        // Setup main audio source for countdown sounds
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        // Setup separate audio sources for horse sounds (for better control)
+        horseIdleSource = gameObject.AddComponent<AudioSource>();
+        horseIdleSource.spatialBlend = 1.0f; // Make it 3D sound
+        horseIdleSource.rolloffMode = AudioRolloffMode.Linear;
+        horseIdleSource.minDistance = 5f;
+        horseIdleSource.maxDistance = 20f;
+        horseIdleSource.loop = true;
+        
+        horseRunningSource = gameObject.AddComponent<AudioSource>();
+        horseRunningSource.spatialBlend = 1.0f; // Make it 3D sound
+        horseRunningSource.rolloffMode = AudioRolloffMode.Linear;
+        horseRunningSource.minDistance = 5f;
+        horseRunningSource.maxDistance = 30f;
+        horseRunningSource.loop = true;
+        
+        // Configure horse idle sound if assigned
+        if (horseIdleSound != null)
+        {
+            horseIdleSource.clip = horseIdleSound;
+            horseIdleSource.volume = 0f; // Start with zero volume
+        }
+        
+        // Configure horse running sound if assigned
+        if (horseRunningSound != null)
+        {
+            horseRunningSource.clip = horseRunningSound;
+            horseRunningSource.volume = 0f; // Start with zero volume
         }
 
         if (playerUIElementsToHide != null)
@@ -91,6 +135,9 @@ public class KartTrigger : MonoBehaviour
     public void StartDriveSequence()
     {
         if (!playerInside || isDriving || isCountingDown) return;
+        
+        // Fade out idle sound
+        FadeOutHorseIdleSound();
         
         // Hide player UI and drive UI immediately
         HidePlayerUIElements();
@@ -221,12 +268,90 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = true;
 
+        // Start horse running sound
+        StartHorseRunningSound();
+
         // KartDrivingUI is already active from StartDriveSequence
         // Just enable the kart controller
         if (kartController != null)
         {
             kartController.SetControllable(true);
             UpdateDestinationUI();
+        }
+    }
+
+    // Start horse idle sound with fade in
+    private void StartHorseIdleSound()
+    {
+        if (horseIdleSource == null || horseIdleSound == null) return;
+        
+        horseIdleSource.Play();
+        
+        // Start fade in coroutine
+        if (idleFadeCoroutine != null)
+        {
+            StopCoroutine(idleFadeCoroutine);
+        }
+        idleFadeCoroutine = StartCoroutine(FadeAudioSource(horseIdleSource, 0f, idleVolume, fadeInOutDuration));
+    }
+
+    // Fade out horse idle sound
+    private void FadeOutHorseIdleSound()
+    {
+        if (horseIdleSource == null || !horseIdleSource.isPlaying) return;
+        
+        if (idleFadeCoroutine != null)
+        {
+            StopCoroutine(idleFadeCoroutine);
+        }
+        idleFadeCoroutine = StartCoroutine(FadeAudioSource(horseIdleSource, horseIdleSource.volume, 0f, fadeInOutDuration, true));
+    }
+
+    // Start horse running sound with fade in
+    private void StartHorseRunningSound()
+    {
+        if (horseRunningSource == null || horseRunningSound == null) return;
+        
+        horseRunningSource.Play();
+        
+        // Start fade in coroutine
+        if (runningFadeCoroutine != null)
+        {
+            StopCoroutine(runningFadeCoroutine);
+        }
+        runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, 0f, runningVolume, fadeInOutDuration));
+    }
+
+    // Fade out horse running sound
+    private void FadeOutHorseRunningSound()
+    {
+        if (horseRunningSource == null || !horseRunningSource.isPlaying) return;
+        
+        if (runningFadeCoroutine != null)
+        {
+            StopCoroutine(runningFadeCoroutine);
+        }
+        runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, horseRunningSource.volume, 0f, fadeInOutDuration, true));
+    }
+
+    // Generic audio fade coroutine
+    private IEnumerator FadeAudioSource(AudioSource source, float startVolume, float endVolume, float duration, bool stopAfterFade = false)
+    {
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            source.volume = Mathf.Lerp(startVolume, endVolume, t);
+            yield return null;
+        }
+        
+        source.volume = endVolume;
+        
+        if (stopAfterFade && endVolume <= 0f)
+        {
+            source.Stop();
         }
     }
 
@@ -241,12 +366,22 @@ public class KartTrigger : MonoBehaviour
             {
                 PlayDestinationTimeline();
             }
+            
+            // Optionally adjust running sound based on kart speed
+            if (kartController != null && horseRunningSource != null)
+            {
+                // You can adjust volume or pitch based on speed if desired
+                // Example: horseRunningSource.pitch = Mathf.Lerp(0.8f, 1.2f, kartController.CurrentSpeed / kartController.maxSpeed);
+            }
         }
     }
 
     void PlayDestinationTimeline()
     {
         hasPlayedTimeline = true;
+
+        // Fade out running sound
+        FadeOutHorseRunningSound();
 
         // Disable kart control
         if (kartController != null)
@@ -283,6 +418,8 @@ public class KartTrigger : MonoBehaviour
             if (!isCountingDown && !isDriving)
             {
                 driveUI?.SetActive(true);
+                // Start horse idle sound when player approaches
+                StartHorseIdleSound();
             }
         }
     }
@@ -293,6 +430,9 @@ public class KartTrigger : MonoBehaviour
         {
             playerInside = false;
             driveUI?.SetActive(false);
+            
+            // Fade out horse idle sound when player leaves
+            FadeOutHorseIdleSound();
             
             // Cancel countdown if player leaves during countdown
             if (isCountingDown)
@@ -323,6 +463,8 @@ public class KartTrigger : MonoBehaviour
         if (playerInside)
         {
             driveUI?.SetActive(true);
+            // Restart idle sound
+            StartHorseIdleSound();
         }
     }
 
@@ -349,6 +491,9 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = false;
         playerInside = false;
+
+        // Fade out running sound
+        FadeOutHorseRunningSound();
 
         ShowPlayerUIElements();
 
@@ -520,6 +665,19 @@ public class KartTrigger : MonoBehaviour
             {
                 playerUIElementStates[uiElement] = active;
             }
+        }
+    }
+    
+    // Clean up coroutines when destroyed
+    private void OnDestroy()
+    {
+        if (idleFadeCoroutine != null)
+        {
+            StopCoroutine(idleFadeCoroutine);
+        }
+        if (runningFadeCoroutine != null)
+        {
+            StopCoroutine(runningFadeCoroutine);
         }
     }
 }

@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Collider))] // Add this line
+[RequireComponent(typeof(Collider))]
 public class BookInteractable : Interactable
 {
     public static BookInteractable Instance { get; private set; }
 
     public bool IsClaimed { get; private set; } = false;
+    
     [Header("First Ingredient Unlock")]
     [SerializeField] private GameObject firstIngredient;
 
@@ -19,10 +21,10 @@ public class BookInteractable : Interactable
     [Header("Timeline")]
     public PlayableDirector pickupTimeline;
 
-    [Header("Tap Settings")]
-    public float maxTapDistance = 3f; // How close player needs to be
-    public GameObject bookHighlight; // Visual feedback
-    
+    [Header("Visual Feedback")]
+    public GameObject bookHighlight; // Visual feedback when player is in range
+    public GameObject pickupPrompt; // Optional: "Press E to pickup" text/image
+
     [Header("Collected Ingredients")]
     public List<IngredientData> collectedIngredients = new List<IngredientData>();
 
@@ -37,7 +39,6 @@ public class BookInteractable : Interactable
     }
 
     private BookUIManager bookManager;
-    private Transform playerTransform;
     private bool isPlayerInRange = false;
 
     void Awake()
@@ -50,6 +51,13 @@ public class BookInteractable : Interactable
         else
         {
             Destroy(gameObject);
+        }
+        
+        // Configure collider as trigger
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.isTrigger = true;
         }
     }
 
@@ -66,62 +74,87 @@ public class BookInteractable : Interactable
             firstIngredient.SetActive(false); // 🔒 locked at start
         }
         
-        // Find player
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        // Initialize visual feedback
+        if (bookHighlight != null) bookHighlight.SetActive(false);
+        if (pickupPrompt != null) pickupPrompt.SetActive(false);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if player entered trigger
+        if (other.CompareTag("Player") && !IsClaimed)
         {
-            playerTransform = player.transform;
-        }
-        
-        // Ensure we have a collider for tapping
-        if (GetComponent<Collider>() == null)
-        {
-            gameObject.AddComponent<BoxCollider>();
+            isPlayerInRange = true;
+            
+            // Show visual feedback
+            if (bookHighlight != null) bookHighlight.SetActive(true);
+            if (pickupPrompt != null) pickupPrompt.SetActive(true);
+            
+            Debug.Log("Player is near the book");
         }
     }
-    
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Check if player exited trigger
+        if (other.CompareTag("Player"))
+        {
+            isPlayerInRange = false;
+            
+            // Hide visual feedback
+            if (bookHighlight != null) bookHighlight.SetActive(false);
+            if (pickupPrompt != null) pickupPrompt.SetActive(false);
+            
+            Debug.Log("Player moved away from the book");
+        }
+    }
+
     void Update()
     {
-        // Check if player is close enough to tap
-        if (playerTransform != null)
+        // Check for input when player is in range and book isn't claimed
+        if (isPlayerInRange && !IsClaimed)
         {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            isPlayerInRange = distance <= maxTapDistance;
-            
-            // Show/hide visual feedback
-            if (bookHighlight != null)
+            // Check for keyboard input (PC)
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
-                bookHighlight.SetActive(isPlayerInRange && !IsClaimed);
+                Pickup();
+            }
+            
+            // Check for touch input (Mobile) - might want a UI button instead
+            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            {
+                Pickup();
             }
         }
     }
 
-    // This makes the book tappable (works with mobile touch!)
-    private void OnMouseDown()
+    // Alternative: Simple automatic pickup when player enters trigger
+    public void AutoPickupOnEnter()
     {
-        if (IsClaimed) return; // Already collected
-        
-        if (playerTransform != null)
+        if (isPlayerInRange && !IsClaimed)
         {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            if (distance <= maxTapDistance)
-            {
-                Pickup();
-            }
-            else
-            {
-                Debug.Log("Move closer to pick up the book!");
-                // Optional: Show floating text or sound
-            }
+            Pickup();
         }
-        else
+    }
+
+    // Optional: Call this from a UI button for mobile
+    public void PickupFromUIButton()
+    {
+        if (isPlayerInRange && !IsClaimed)
         {
-            Pickup(); // Fallback if no player
+            Pickup();
+        }
+        else if (!isPlayerInRange)
+        {
+            Debug.Log("Move closer to pick up the book!");
+            // Optional: Show floating text or sound
         }
     }
 
     public override void Pickup()
     {
+        if (IsClaimed) return; // prevent double pickup
+        
         if (firstIngredient != null)
         {
             firstIngredient.SetActive(true); // 🔓 unlocked
@@ -133,8 +166,6 @@ public class BookInteractable : Interactable
         {
             AllerthriaGameManager.Instance.CollectScroll();
         }
-        
-        if (IsClaimed) return; // prevent double pickup
 
         IsClaimed = true;
 
@@ -169,10 +200,20 @@ public class BookInteractable : Interactable
         {
             bookHighlight.SetActive(false);
         }
+        if (pickupPrompt != null)
+        {
+            pickupPrompt.SetActive(false);
+        }
+        
+        // Disable the trigger after pickup
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
         
         // Optional: Hide the book model after pickup
         // GetComponent<Renderer>().enabled = false;
-        // GetComponent<Collider>().enabled = false;
     }
 
     public void AddIngredient(string ingredientId, string name, string description, Sprite icon)
@@ -217,11 +258,44 @@ public class BookInteractable : Interactable
         return collectedIngredients.Count;
     }
 
-    // Visualize tap range in editor
+    // Visualize the trigger area in the editor
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, maxTapDistance);
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            Gizmos.color = Color.blue;
+            
+            if (collider is BoxCollider boxCollider)
+            {
+                Gizmos.DrawWireCube(
+                    transform.position + boxCollider.center,
+                    boxCollider.size
+                );
+            }
+            else if (collider is SphereCollider sphereCollider)
+            {
+                Gizmos.DrawWireSphere(
+                    transform.position + sphereCollider.center,
+                    sphereCollider.radius
+                );
+            }
+            else if (collider is CapsuleCollider capsuleCollider)
+            {
+                // Draw capsule outline
+                Vector3 top = transform.position + capsuleCollider.center + Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
+                Vector3 bottom = transform.position + capsuleCollider.center - Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
+                
+                Gizmos.DrawWireSphere(top, capsuleCollider.radius);
+                Gizmos.DrawWireSphere(bottom, capsuleCollider.radius);
+                
+                // Draw connecting lines
+                Gizmos.DrawLine(top + Vector3.right * capsuleCollider.radius, bottom + Vector3.right * capsuleCollider.radius);
+                Gizmos.DrawLine(top - Vector3.right * capsuleCollider.radius, bottom - Vector3.right * capsuleCollider.radius);
+                Gizmos.DrawLine(top + Vector3.forward * capsuleCollider.radius, bottom + Vector3.forward * capsuleCollider.radius);
+                Gizmos.DrawLine(top - Vector3.forward * capsuleCollider.radius, bottom - Vector3.forward * capsuleCollider.radius);
+            }
+        }
     }
 
     [ContextMenu("Add Test Ingredient")]
@@ -263,4 +337,4 @@ public class BookInteractable : Interactable
         int count = GetCollectedCount();
         Debug.Log($"📊 Progress: {count}/9");
     }
-}
+}   

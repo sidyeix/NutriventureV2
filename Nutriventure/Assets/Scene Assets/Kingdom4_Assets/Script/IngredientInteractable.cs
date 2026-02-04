@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Collider))] // Makes sure there's a collider for tapping
-public class IngredientInteractable : Interactable, IPointerClickHandler
+public class IngredientInteractable : Interactable
 {
     [Header("UI Manager")]
     public k4ProductInformationManager productInfoManager;
@@ -18,12 +18,11 @@ public class IngredientInteractable : Interactable, IPointerClickHandler
     public AudioClip pickupSFX;
     [Range(0f, 1f)] public float pickupVolume = 1f;
 
-    [Header("Tap Settings")]
-    public float maxTapDistance = 3f; // How close player needs to be to tap
-    public GameObject tapHighlight; // Visual feedback when tappable
-    
+    [Header("Visual Feedback")]
+    public GameObject highlightObject; // Visual feedback when player is in range
+    public GameObject pickupPrompt; // Optional: "Press E to pickup" text/image
+
     private AllergenProductData.ProductInfo productInfo;
-    private Transform playerTransform;
     private bool isPlayerInRange = false;
 
     private void Awake()
@@ -47,56 +46,83 @@ public class IngredientInteractable : Interactable, IPointerClickHandler
             productInfoManager = FindAnyObjectByType<k4ProductInformationManager>();
         }
 
-        // Find player
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            playerTransform = player.transform;
-        }
+        // Configure collider as trigger
+        Collider collider = GetComponent<Collider>();
+        collider.isTrigger = true;
 
-        // Make sure we have a collider for tapping
-        if (GetComponent<Collider>() == null)
-        {
-            gameObject.AddComponent<BoxCollider>();
-        }
-
-        // Add EventTrigger if using Input System (for mobile touch)
-        SetupEventSystemSupport();
+        // Initialize visual feedback
+        if (highlightObject != null) highlightObject.SetActive(false);
+        if (pickupPrompt != null) pickupPrompt.SetActive(false);
     }
 
-    private void SetupEventSystemSupport()
+    private void OnTriggerEnter(Collider other)
     {
-        // This makes sure the ingredient can receive pointer events
-        var eventSystem = FindObjectOfType<EventSystem>();
-        if (eventSystem == null)
+        // Check if player entered trigger
+        if (other.CompareTag("Player"))
         {
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            isPlayerInRange = true;
+            
+            // Show visual feedback
+            if (highlightObject != null) highlightObject.SetActive(true);
+            if (pickupPrompt != null) pickupPrompt.SetActive(true);
+            
+            Debug.Log("Player entered ingredient range");
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Check if player exited trigger
+        if (other.CompareTag("Player"))
+        {
+            isPlayerInRange = false;
+            
+            // Hide visual feedback
+            if (highlightObject != null) highlightObject.SetActive(false);
+            if (pickupPrompt != null) pickupPrompt.SetActive(false);
+            
+            Debug.Log("Player exited ingredient range");
         }
     }
 
     private void Update()
     {
-        // Check if player is close enough to tap
-        if (playerTransform != null)
+        // Check for input when player is in range
+        if (isPlayerInRange)
         {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            isPlayerInRange = distance <= maxTapDistance;
-            
-            // Show/hide visual feedback
-            if (tapHighlight != null)
+            // Check for keyboard input (PC)
+            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
-                tapHighlight.SetActive(isPlayerInRange);
+                Pickup();
+            }
+            
+            // Check for touch input (Mobile)
+            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            {
+                // For mobile, you might want to check touch position or use a UI button instead
+                Pickup();
+            }
+            
+            // Check for gamepad input
+            if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
+            {
+                Pickup();
             }
         }
     }
 
-    // This is called when the ingredient is clicked/tapped (WORKS ON MOBILE!)
-    public void OnPointerClick(PointerEventData eventData)
+    // Alternative: Simple automatic pickup when player enters trigger
+    public void AutoPickupOnEnter()
     {
-        // Only allow left click or touch
-        if (eventData.button != PointerEventData.InputButton.Left)
-            return;
-        
+        if (isPlayerInRange)
+        {
+            Pickup();
+        }
+    }
+
+    // Optional: Call this from a UI button for mobile
+    public void PickupFromUIButton()
+    {
         if (isPlayerInRange)
         {
             Pickup();
@@ -108,30 +134,9 @@ public class IngredientInteractable : Interactable, IPointerClickHandler
         }
     }
 
-    // Optional: Visual feedback when hovered (for PC)
-    private void OnMouseEnter()
-    {
-        if (isPlayerInRange)
-        {
-            // Add any hover effect you want
-        }
-    }
-
-    private void OnMouseExit()
-    {
-        // Remove hover effect
-    }
-
-    // Visualize the tap range in the editor
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, maxTapDistance);
-    }
-
     public override void Pickup()
     {
-        if (productInfo == null)
+        if (productInfo == null || !isPlayerInRange)
             return;
 
         // 🔊 Play pickup sound
@@ -147,7 +152,7 @@ public class IngredientInteractable : Interactable, IPointerClickHandler
         // Notify game manager about allergen collection
         if (!string.IsNullOrEmpty(ingredientId))
         {
-            AllerthriaGameManager.Instance.CollectAllergen(ingredientId);
+            AllerthriaGameManager.Instance?.CollectAllergen(ingredientId);
         }
 
         // 📖 Add ingredient to book
@@ -180,5 +185,48 @@ public class IngredientInteractable : Interactable, IPointerClickHandler
 
         // ❗ Destroy / disable ingredient
         base.Pickup();
+        
+        // Disable the trigger after pickup
+        GetComponent<Collider>().enabled = false;
+    }
+
+    // Visualize the trigger area in the editor
+    private void OnDrawGizmosSelected()
+    {
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            Gizmos.color = Color.green;
+            
+            if (collider is BoxCollider boxCollider)
+            {
+                Gizmos.DrawWireCube(
+                    transform.position + boxCollider.center,
+                    boxCollider.size
+                );
+            }
+            else if (collider is SphereCollider sphereCollider)
+            {
+                Gizmos.DrawWireSphere(
+                    transform.position + sphereCollider.center,
+                    sphereCollider.radius
+                );
+            }
+            else if (collider is CapsuleCollider capsuleCollider)
+            {
+                // Draw capsule outline
+                Vector3 top = transform.position + capsuleCollider.center + Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
+                Vector3 bottom = transform.position + capsuleCollider.center - Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
+                
+                Gizmos.DrawWireSphere(top, capsuleCollider.radius);
+                Gizmos.DrawWireSphere(bottom, capsuleCollider.radius);
+                
+                // Draw connecting lines
+                Gizmos.DrawLine(top + Vector3.right * capsuleCollider.radius, bottom + Vector3.right * capsuleCollider.radius);
+                Gizmos.DrawLine(top - Vector3.right * capsuleCollider.radius, bottom - Vector3.right * capsuleCollider.radius);
+                Gizmos.DrawLine(top + Vector3.forward * capsuleCollider.radius, bottom + Vector3.forward * capsuleCollider.radius);
+                Gizmos.DrawLine(top - Vector3.forward * capsuleCollider.radius, bottom - Vector3.forward * capsuleCollider.radius);
+            }
+        }
     }
 }
