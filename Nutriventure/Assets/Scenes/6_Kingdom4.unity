@@ -10018,9 +10018,9 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 237715214}
   m_LocalRotation: {x: -0, y: -0.000000029802315, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.00009256519}
-  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2037839267}
   m_Father: {fileID: 624284575}
@@ -22872,6 +22872,7 @@ GameObject:
   - component: {fileID: 473338268}
   - component: {fileID: 473338267}
   - component: {fileID: 473338266}
+  - component: {fileID: 473338269}
   m_Layer: 5
   m_Name: UI_Virtual_Swipe_Look
   m_TagString: Untagged
@@ -22910,7 +22911,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 0.1
+  sensitivity: 5
   invertX: 0
   invertY: 1
   uiInput: {fileID: 624284576}
@@ -22952,6 +22953,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 473338264}
   m_CullTransparentMesh: 1
+--- !u!114 &473338269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 473338264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5242c60de33fdd74994752ea054e10a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LookUIRaycastController
 --- !u!1001 &475770413
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -25637,6 +25650,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6751388636123340836, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
       insertIndex: -1
       addedObject: {fileID: 624284577}
+    - targetCorrespondingSourceObject: {fileID: 6751388636123340836, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 624284582}
   m_SourcePrefab: {fileID: 100100000, guid: 2f7f3dde7ae722a4aafffe20691ad702, type: 3}
 --- !u!1 &517038289
 GameObject:
@@ -30640,6 +30656,18 @@ MonoBehaviour:
   updateInterval: 0.5
   countUp: 1
   initialTime: 0
+--- !u!225 &624284582
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 624284574}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &625325963 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7068749273655172611, guid: 34d0b7630492b654489ea653bd45d1f3, type: 3}
@@ -40972,6 +41000,9 @@ MonoBehaviour:
   fullHeartSprite: {fileID: 21300000, guid: 1b70546f0ceb62c46a9ffe7d25b291d2, type: 3}
   halfHeartSprite: {fileID: 21300000, guid: d6d1756d60c673744a6aa737535fa3e2, type: 3}
   emptyHeartSprite: {fileID: 21300000, guid: 77cc114089eb299468c8621d99945165, type: 3}
+  damageOverlayObject: {fileID: 1374276672}
+  overlayDuration: 0.5
+  overlayFadeTime: 0.2
   gameEndManager: {fileID: 1768622033}
 --- !u!1001 &807421197
 PrefabInstance:
@@ -67666,7 +67697,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1320496174
 Transform:
   m_ObjectHideFlags: 0
@@ -91692,7 +91723,17 @@ MonoBehaviour:
   bookIcon: {fileID: 21300000, guid: 5e08234b1d82c5c42bc098e91daee226, type: 3}
   pickupTimeline: {fileID: 1860291308}
   bookHighlight: {fileID: 0}
-  pickupPrompt: {fileID: 0}
+  pickupPrompt: {fileID: 1715386929}
+  maxPickupDistance: 10
+  raycastLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  requireLineOfSight: 1
+  showOnScreenIndicator: 1
+  screenIndicatorPrefab: {fileID: 1715386929}
+  showDebugGizmos: 1
+  pickupRangeColor: {r: 0, g: 1, b: 0, a: 0.2}
+  simulateMobileInEditor: 1
   collectedIngredients: []
 --- !u!1 &1799946334
 GameObject:
@@ -116516,6 +116557,7 @@ MonoBehaviour:
   OnInteract:
     m_PersistentCalls:
       m_Calls: []
+  maxPickupDistance: 8
   productInfoManager: {fileID: 449870658}
   allergenDatabase: {fileID: 11400000, guid: 93d4396a1d8e9654c977e9e751eb0c63, type: 2}
   ingredientId: peanut

@@ -5,6 +5,14 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(Collider))] // Makes sure there's a collider for tapping
 public class IngredientInteractable : Interactable
 {
+    [Header("Pickup Distance")]
+[SerializeField] private float maxPickupDistance = 8f;
+private Transform playerTransform;
+
+private bool hasRequestedTouch = false;
+
+    protected virtual void OnCollected() { }
+
     [Header("UI Manager")]
     public k4ProductInformationManager productInfoManager;
 
@@ -24,9 +32,29 @@ public class IngredientInteractable : Interactable
 
     private AllergenProductData.ProductInfo productInfo;
     private bool isPlayerInRange = false;
+    private Camera mainCamera;
+
+private bool isCollected = false;
+
+private bool IsPlayerInRangeByDistance()
+{
+    if (playerTransform == null)
+        return false;
+
+    return Vector3.Distance(transform.position, playerTransform.position) <= maxPickupDistance;
+}
+
 
     private void Awake()
     {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+if (player != null)
+{
+    playerTransform = player.transform;
+}
+
+        mainCamera = Camera.main;
+
         if (allergenDatabase == null)
         {
             Debug.LogError("Allergen database not assigned!");
@@ -86,30 +114,75 @@ public class IngredientInteractable : Interactable
     }
 
     private void Update()
+{
+    bool canInteract = IsPlayerInRangeByDistance();
+
+if (canInteract && !hasRequestedTouch)
+{
+    LookUIRaycastController.Instance?.RequestWorldTouch(this);
+    hasRequestedTouch = true;
+}
+else if (!canInteract && hasRequestedTouch)
+{
+    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+    hasRequestedTouch = false;
+}
+
+
+
+    // PC keyboard
+    if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
     {
-        // Check for input when player is in range
-        if (isPlayerInRange)
+        Pickup();
+    }
+
+    // Mobile tap
+    CheckMobileTap();
+
+    // Gamepad
+    if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
+    {
+        Pickup();
+    }
+}
+
+
+
+   private void CheckMobileTap()
+{
+    if (Touchscreen.current == null || mainCamera == null) return;
+
+    var touch = Touchscreen.current.primaryTouch;
+    if (!touch.press.wasPressedThisFrame) return;
+
+    Vector2 touchPos = touch.position.ReadValue();
+
+    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        return;
+
+    Ray ray = mainCamera.ScreenPointToRay(touchPos);
+    RaycastHit hit;
+
+    // 1️⃣ Direct tap
+    if (Physics.Raycast(ray, out hit, 1000f))
+    {
+        if (hit.collider != null && hit.collider.gameObject == gameObject)
         {
-            // Check for keyboard input (PC)
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-            {
-                Pickup();
-            }
-            
-            // Check for touch input (Mobile)
-            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
-            {
-                // For mobile, you might want to check touch position or use a UI button instead
-                Pickup();
-            }
-            
-            // Check for gamepad input
-            if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
-            {
-                Pickup();
-            }
+            Pickup();
+            return;
         }
     }
+
+    // 2️⃣ Fallback tap near ingredient
+    Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
+    float dist = Vector2.Distance(touchPos, screenPos);
+
+    if (dist < 120f)
+    {
+        Pickup();
+    }
+}
+
 
     // Alternative: Simple automatic pickup when player enters trigger
     public void AutoPickupOnEnter()
@@ -136,8 +209,11 @@ public class IngredientInteractable : Interactable
 
     public override void Pickup()
     {
-        if (productInfo == null || !isPlayerInRange)
-            return;
+   if (productInfo == null || !IsPlayerInRangeByDistance())
+    return;
+
+    if (isCollected) return;
+    isCollected = true;
 
         // 🔊 Play pickup sound
         if (pickupSFX != null)
@@ -188,6 +264,15 @@ public class IngredientInteractable : Interactable
         
         // Disable the trigger after pickup
         GetComponent<Collider>().enabled = false;
+        OnCollected();
+
+        if (LookUIRaycastController.Instance != null)
+{
+    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+hasRequestedTouch = false;
+
+}
+
     }
 
     // Visualize the trigger area in the editor

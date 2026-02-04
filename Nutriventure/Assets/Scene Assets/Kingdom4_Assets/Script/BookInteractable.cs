@@ -2,11 +2,13 @@ using UnityEngine;
 using UnityEngine.Playables;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Collider))]
 public class BookInteractable : Interactable
 {
     public static BookInteractable Instance { get; private set; }
+private bool hasRequestedTouch = false;
 
     public bool IsClaimed { get; private set; } = false;
     
@@ -24,6 +26,21 @@ public class BookInteractable : Interactable
     [Header("Visual Feedback")]
     public GameObject bookHighlight; // Visual feedback when player is in range
     public GameObject pickupPrompt; // Optional: "Press E to pickup" text/image
+    
+    [Header("Mobile Settings")]
+    [SerializeField] private float maxPickupDistance = 10f; // How far away player can be to pickup
+    [SerializeField] private LayerMask raycastLayers = ~0; // Layers to raycast against
+    public bool requireLineOfSight = false; // Does player need direct line of sight?
+    
+    [Header("Screen Detection")]
+    [SerializeField] private bool showOnScreenIndicator = true; // Show when book is on screen
+    [SerializeField] private GameObject screenIndicatorPrefab; // Prefab to show when book is on screen
+    private GameObject screenIndicatorInstance;
+    
+    [Header("Debug/Testing")]
+    [SerializeField] private bool showDebugGizmos = true;
+    [SerializeField] private Color pickupRangeColor = new Color(0, 1, 0, 0.2f);
+    public bool simulateMobileInEditor = true; // Toggle to simulate mobile input in editor
 
     [Header("Collected Ingredients")]
     public List<IngredientData> collectedIngredients = new List<IngredientData>();
@@ -39,7 +56,10 @@ public class BookInteractable : Interactable
     }
 
     private BookUIManager bookManager;
-    private bool isPlayerInRange = false;
+    private Transform playerTransform;
+    private Camera mainCamera;
+    private bool isVisibleOnScreen = false;
+
 
     void Awake()
     {
@@ -53,11 +73,12 @@ public class BookInteractable : Interactable
             Destroy(gameObject);
         }
         
-        // Configure collider as trigger
+        // Configure collider (not necessarily as trigger anymore)
         Collider collider = GetComponent<Collider>();
         if (collider != null)
         {
-            collider.isTrigger = true;
+            // We can keep it as non-trigger since we're using screen detection
+            collider.isTrigger = false;
         }
     }
 
@@ -69,6 +90,16 @@ public class BookInteractable : Interactable
             Debug.LogError("BookUIManager not found!");
         }
 
+
+        mainCamera = Camera.main;
+        
+        // Find player by tag
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTransform = player.transform;
+        }
+
         if (firstIngredient != null)
         {
             firstIngredient.SetActive(false); // 🔒 locked at start
@@ -77,78 +108,209 @@ public class BookInteractable : Interactable
         // Initialize visual feedback
         if (bookHighlight != null) bookHighlight.SetActive(false);
         if (pickupPrompt != null) pickupPrompt.SetActive(false);
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        // Check if player entered trigger
-        if (other.CompareTag("Player") && !IsClaimed)
+        
+        // Create screen indicator if needed
+        if (showOnScreenIndicator && screenIndicatorPrefab != null)
         {
-            isPlayerInRange = true;
-            
-            // Show visual feedback
-            if (bookHighlight != null) bookHighlight.SetActive(true);
-            if (pickupPrompt != null) pickupPrompt.SetActive(true);
-            
-            Debug.Log("Player is near the book");
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        // Check if player exited trigger
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = false;
-            
-            // Hide visual feedback
-            if (bookHighlight != null) bookHighlight.SetActive(false);
-            if (pickupPrompt != null) pickupPrompt.SetActive(false);
-            
-            Debug.Log("Player moved away from the book");
+            screenIndicatorInstance = Instantiate(screenIndicatorPrefab, transform.position, Quaternion.identity);
+            screenIndicatorInstance.SetActive(false);
         }
     }
 
     void Update()
     {
-        // Check for input when player is in range and book isn't claimed
-        if (isPlayerInRange && !IsClaimed)
+        if (IsClaimed || mainCamera == null) return;
+        
+        // Check if book is visible on screen
+        CheckScreenVisibility();
+        
+        // Update screen indicator
+        UpdateScreenIndicator();
+        
+        // For testing in Unity Editor: simulate mobile with mouse click
+        bool isSimulatingMobile = simulateMobileInEditor && Application.isEditor;
+        
+        // Check for PC input
+        if (isVisibleOnScreen && IsPlayerInRange())
         {
             // Check for keyboard input (PC)
             if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
                 Pickup();
+                return;
             }
+        }
+
+        // Check for mobile touch input
+        CheckMobileTouchInput(isSimulatingMobile);
+
+       bool canInteract = isVisibleOnScreen && IsPlayerInRange();
+
+if (canInteract && !hasRequestedTouch)
+{
+    LookUIRaycastController.Instance?.RequestWorldTouch(this);
+    hasRequestedTouch = true;
+}
+else if (!canInteract && hasRequestedTouch)
+{
+    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+    hasRequestedTouch = false;
+}
+
+
+    }
+
+   private void HandleTouchInput(Vector2 screenPosition)
+{
+    if (IsClaimed || mainCamera == null) return;
+
+    // 1️⃣ DIRECT TAP (raycast)
+    Ray ray = mainCamera.ScreenPointToRay(screenPosition);
+    RaycastHit hit;
+
+    if (Physics.Raycast(ray, out hit, 1000f, raycastLayers))
+    {
+        if (hit.collider != null && hit.collider.gameObject == gameObject)
+        {
+            if (!IsPlayerInRange())
+                return;
+
+            Pickup();
+            return; // ⛔ stop here
+        }
+    }
+
+    // 2️⃣ FALLBACK: tap near book (mobile-friendly)
+    Vector3 bookScreenPos = mainCamera.WorldToScreenPoint(transform.position);
+    float screenDist = Vector2.Distance(screenPosition, bookScreenPos);
+
+    if (screenDist < 120f && IsPlayerInRange())
+    {
+        Pickup();
+    }
+}
+
+
+
+
+    private void UpdateScreenIndicator()
+    {
+        if (screenIndicatorInstance == null || !showOnScreenIndicator) return;
+        
+        if (isVisibleOnScreen && IsPlayerInRange() && !IsClaimed)
+        {
+            // Book is on screen and player can collect it
+            screenIndicatorInstance.SetActive(true);
             
-            // Check for touch input (Mobile) - might want a UI button instead
-            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            // Position indicator near the book (could be a UI element in screen space)
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
+            
+            // Convert to world position slightly above the book
+            Vector3 worldPos = transform.position + Vector3.up * 2f;
+            screenIndicatorInstance.transform.position = worldPos;
+            
+            // Face the camera
+            screenIndicatorInstance.transform.LookAt(mainCamera.transform);
+            screenIndicatorInstance.transform.Rotate(0, 180, 0);
+        }
+        else
+        {
+            screenIndicatorInstance.SetActive(false);
+        }
+    }
+
+    private bool IsPlayerInRange()
+    {
+        if (playerTransform == null) return false;
+        
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        if (distance > maxPickupDistance) return false;
+        
+        // Check line of sight if required
+        if (requireLineOfSight)
+        {
+            Vector3 direction = (transform.position - playerTransform.position).normalized;
+            Ray ray = new Ray(playerTransform.position, direction);
+            RaycastHit hit;
+            
+            if (Physics.Raycast(ray, out hit, maxPickupDistance, raycastLayers))
             {
-                Pickup();
+                // Check if we hit this book or something else
+                if (hit.collider.gameObject != gameObject)
+                {
+                    return false; // Something is blocking the view
+                }
             }
         }
+        
+        return true;
     }
 
-    // Alternative: Simple automatic pickup when player enters trigger
-    public void AutoPickupOnEnter()
+    private void CheckMobileTouchInput(bool simulateMobile = false)
+{
+    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        return;
+
+    // REAL MOBILE TOUCH
+    if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
     {
-        if (isPlayerInRange && !IsClaimed)
+        Vector2 touchPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+        HandleTouchInput(touchPosition);
+    }
+}
+
+
+    private void CheckScreenVisibility()
+{
+    Vector3 vp = mainCamera.WorldToViewportPoint(transform.position);
+    isVisibleOnScreen = vp.z > 0 && vp.x > 0 && vp.x < 1 && vp.y > 0 && vp.y < 1;
+}
+
+
+    private System.Collections.IEnumerator FlashHighlight()
+    {
+        if (bookHighlight != null)
         {
-            Pickup();
+            bookHighlight.SetActive(true);
+            yield return new WaitForSeconds(0.3f);
+            bookHighlight.SetActive(false);
         }
     }
 
-    // Optional: Call this from a UI button for mobile
-    public void PickupFromUIButton()
+    // For testing from Unity Editor - Add this to easily test pickup
+    [ContextMenu("Test Pickup")]
+    public void TestPickup()
     {
-        if (isPlayerInRange && !IsClaimed)
+        if (!IsClaimed)
         {
+            Debug.Log("🧪 Testing Pickup from Context Menu");
             Pickup();
         }
-        else if (!isPlayerInRange)
+        else
         {
-            Debug.Log("Move closer to pick up the book!");
-            // Optional: Show floating text or sound
+            Debug.Log("Book already claimed!");
         }
+    }
+
+    // For testing from Unity Editor - Reset book state
+    [ContextMenu("Reset Book State")]
+    public void ResetBookState()
+    {
+        IsClaimed = false;
+        
+        // Re-enable collider
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+        {
+            collider.enabled = true;
+        }
+        
+        // Reset visual feedback
+        if (bookHighlight != null) bookHighlight.SetActive(false);
+        if (pickupPrompt != null) pickupPrompt.SetActive(false);
+        if (screenIndicatorInstance != null) screenIndicatorInstance.SetActive(false);
+        
+        Debug.Log("Book state reset - ready for pickup");
     }
 
     public override void Pickup()
@@ -205,17 +367,30 @@ public class BookInteractable : Interactable
             pickupPrompt.SetActive(false);
         }
         
-        // Disable the trigger after pickup
+        // Disable screen indicator
+        if (screenIndicatorInstance != null)
+        {
+            screenIndicatorInstance.SetActive(false);
+        }
+        
+        // Disable the collider after pickup
         Collider collider = GetComponent<Collider>();
         if (collider != null)
         {
             collider.enabled = false;
         }
-        
-        // Optional: Hide the book model after pickup
-        // GetComponent<Renderer>().enabled = false;
+
+        if (LookUIRaycastController.Instance != null)
+{
+   LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+hasRequestedTouch = false;
+
+
+}
+
     }
 
+    // Rest of your methods remain the same...
     public void AddIngredient(string ingredientId, string name, string description, Sprite icon)
     {
         if (IsIngredientCollected(ingredientId)) return;
@@ -258,42 +433,33 @@ public class BookInteractable : Interactable
         return collectedIngredients.Count;
     }
 
-    // Visualize the trigger area in the editor
-    private void OnDrawGizmosSelected()
+    // Visualize the pickup range in the editor
+    private void OnDrawGizmos()
     {
-        Collider collider = GetComponent<Collider>();
-        if (collider != null)
+        if (!showDebugGizmos) return;
+        
+        // Draw pickup range sphere
+        Gizmos.color = pickupRangeColor;
+        Gizmos.DrawSphere(transform.position, maxPickupDistance);
+        
+        // Draw line to player if in range
+        if (Application.isPlaying && playerTransform != null && IsPlayerInRange())
         {
-            Gizmos.color = Color.blue;
+            Gizmos.color = isVisibleOnScreen ? Color.green : Color.yellow;
+            Gizmos.DrawLine(transform.position, playerTransform.position);
             
-            if (collider is BoxCollider boxCollider)
+            // Draw camera frustum lines
+            if (mainCamera != null)
             {
-                Gizmos.DrawWireCube(
-                    transform.position + boxCollider.center,
-                    boxCollider.size
-                );
-            }
-            else if (collider is SphereCollider sphereCollider)
-            {
-                Gizmos.DrawWireSphere(
-                    transform.position + sphereCollider.center,
-                    sphereCollider.radius
-                );
-            }
-            else if (collider is CapsuleCollider capsuleCollider)
-            {
-                // Draw capsule outline
-                Vector3 top = transform.position + capsuleCollider.center + Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
-                Vector3 bottom = transform.position + capsuleCollider.center - Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
+                Gizmos.color = Color.cyan;
+                Vector3[] frustumCorners = new Vector3[4];
+                mainCamera.CalculateFrustumCorners(new Rect(0, 0, 1, 1), mainCamera.nearClipPlane, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
                 
-                Gizmos.DrawWireSphere(top, capsuleCollider.radius);
-                Gizmos.DrawWireSphere(bottom, capsuleCollider.radius);
-                
-                // Draw connecting lines
-                Gizmos.DrawLine(top + Vector3.right * capsuleCollider.radius, bottom + Vector3.right * capsuleCollider.radius);
-                Gizmos.DrawLine(top - Vector3.right * capsuleCollider.radius, bottom - Vector3.right * capsuleCollider.radius);
-                Gizmos.DrawLine(top + Vector3.forward * capsuleCollider.radius, bottom + Vector3.forward * capsuleCollider.radius);
-                Gizmos.DrawLine(top - Vector3.forward * capsuleCollider.radius, bottom - Vector3.forward * capsuleCollider.radius);
+                for (int i = 0; i < 4; i++)
+                {
+                    Vector3 worldCorner = mainCamera.transform.TransformVector(frustumCorners[i]);
+                    Gizmos.DrawLine(mainCamera.transform.position, mainCamera.transform.position + worldCorner * maxPickupDistance);
+                }
             }
         }
     }
@@ -337,4 +503,4 @@ public class BookInteractable : Interactable
         int count = GetCollectedCount();
         Debug.Log($"📊 Progress: {count}/9");
     }
-}   
+}
