@@ -31,7 +31,6 @@ private bool hasRequestedTouch = false;
     public GameObject pickupPrompt; // Optional: "Press E to pickup" text/image
 
     private AllergenProductData.ProductInfo productInfo;
-    private bool isPlayerInRange = false;
     private Camera mainCamera;
 
 private bool isCollected = false;
@@ -74,143 +73,49 @@ if (player != null)
             productInfoManager = FindAnyObjectByType<k4ProductInformationManager>();
         }
 
-        // Configure collider as trigger
-        Collider collider = GetComponent<Collider>();
-        collider.isTrigger = true;
-
         // Initialize visual feedback
         if (highlightObject != null) highlightObject.SetActive(false);
         if (pickupPrompt != null) pickupPrompt.SetActive(false);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        // Check if player entered trigger
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = true;
-            
-            // Show visual feedback
-            if (highlightObject != null) highlightObject.SetActive(true);
-            if (pickupPrompt != null) pickupPrompt.SetActive(true);
-            
-            Debug.Log("Player entered ingredient range");
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        // Check if player exited trigger
-        if (other.CompareTag("Player"))
-        {
-            isPlayerInRange = false;
-            
-            // Hide visual feedback
-            if (highlightObject != null) highlightObject.SetActive(false);
-            if (pickupPrompt != null) pickupPrompt.SetActive(false);
-            
-            Debug.Log("Player exited ingredient range");
-        }
-    }
-
-    private void Update()
+   private void Update()
 {
-    bool canInteract = IsPlayerInRangeByDistance();
-
-if (canInteract && !hasRequestedTouch)
-{
-    LookUIRaycastController.Instance?.RequestWorldTouch(this);
-    hasRequestedTouch = true;
-}
-else if (!canInteract && hasRequestedTouch)
-{
-    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
-    hasRequestedTouch = false;
-}
-
-
-
-    // PC keyboard
-    if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-    {
-        Pickup();
-    }
-
-    // Mobile tap
     CheckMobileTap();
-
-    // Gamepad
-    if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame)
-    {
-        Pickup();
-    }
 }
 
 
 
-   private void CheckMobileTap()
+
+  private void CheckMobileTap()
 {
-    if (Touchscreen.current == null || mainCamera == null) return;
+    if (Touchscreen.current == null || mainCamera == null)
+        return;
 
     var touch = Touchscreen.current.primaryTouch;
-    if (!touch.press.wasPressedThisFrame) return;
+
+    if (!touch.press.wasPressedThisFrame)
+        return;
 
     Vector2 touchPos = touch.position.ReadValue();
-
-    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-        return;
 
     Ray ray = mainCamera.ScreenPointToRay(touchPos);
     RaycastHit hit;
 
-    // 1️⃣ Direct tap
     if (Physics.Raycast(ray, out hit, 1000f))
     {
         if (hit.collider != null && hit.collider.gameObject == gameObject)
         {
             Pickup();
-            return;
         }
-    }
-
-    // 2️⃣ Fallback tap near ingredient
-    Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
-    float dist = Vector2.Distance(touchPos, screenPos);
-
-    if (dist < 120f)
-    {
-        Pickup();
     }
 }
 
 
-    // Alternative: Simple automatic pickup when player enters trigger
-    public void AutoPickupOnEnter()
-    {
-        if (isPlayerInRange)
-        {
-            Pickup();
-        }
-    }
-
-    // Optional: Call this from a UI button for mobile
-    public void PickupFromUIButton()
-    {
-        if (isPlayerInRange)
-        {
-            Pickup();
-        }
-        else
-        {
-            Debug.Log("Too far to collect! Move closer.");
-            // Optional: Show a message to the player
-        }
-    }
-
     public override void Pickup()
     {
-   if (productInfo == null || !IsPlayerInRangeByDistance())
+   if (productInfo == null)
     return;
+
 
     if (isCollected) return;
     isCollected = true;
@@ -265,13 +170,6 @@ else if (!canInteract && hasRequestedTouch)
         // Disable the trigger after pickup
         GetComponent<Collider>().enabled = false;
         OnCollected();
-
-        if (LookUIRaycastController.Instance != null)
-{
-    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
-hasRequestedTouch = false;
-
-}
 
     }
 

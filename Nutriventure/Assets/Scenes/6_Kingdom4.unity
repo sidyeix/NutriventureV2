@@ -6540,7 +6540,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1105325862}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: WagonBlocker, Assembly-CSharp
         m_MethodName: RemoveBlocker
         m_Mode: 1
@@ -20207,12 +20207,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 411996297}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -47, y: 0.99254, z: 101}
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1579877362}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &412594923
 GameObject:
@@ -25349,6 +25349,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: EA03_Fence_rockDesk_End_01a
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: a147f4f3d76c88d438190a38b3eca73c, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: a147f4f3d76c88d438190a38b3eca73c, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: a147f4f3d76c88d438190a38b3eca73c, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: a147f4f3d76c88d438190a38b3eca73c, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: a147f4f3d76c88d438190a38b3eca73c, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.78787005
@@ -30243,12 +30259,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 617963673}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -64, y: 0.99254, z: 100}
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -17, y: 0, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1579877362}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &618537341 stripped
 GameObject:
@@ -50924,6 +50940,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 543450653684416316}
     m_Modifications:
+    - target: {fileID: 684837414281441225, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1205021609740332654, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
       propertyPath: m_LocalScale.x
       value: 4.0886264
@@ -50980,8 +51000,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: Magic shield blue
       objectReference: {fileID: 0}
+    - target: {fileID: 1289543790355709915, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2955197092750843386, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3420514587834401623, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6296318069342208415, guid: b99922c2f59b1a542bdd06ae8bee47ae, type: 3}
+      propertyPath: m_Layer
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -51106,7 +51138,7 @@ Transform:
   m_GameObject: {fileID: 982627633}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -9.949734, y: -0.12794113, z: 20.401834}
+  m_LocalPosition: {x: -9.949734, y: -0.1279411, z: 20.40183}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -57958,7 +57990,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1105325861}
   - component: {fileID: 1105325860}
-  - component: {fileID: 1105325862}
   m_Layer: 0
   m_Name: WagonBlocker
   m_TagString: Untagged
@@ -57995,28 +58026,16 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1105325859}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -58, y: 0.99254, z: 97}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -11, y: 0, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 222301371}
   - {fileID: 1401089593}
   - {fileID: 277605305}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1579877362}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1105325862
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1105325859}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 34caf0df38540c043aafdeeabd10e695, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WagonBlocker
 --- !u!1001 &1110128528
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -80635,6 +80654,40 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: f01c51099a9686f4a9405d4e7e5cb26a, type: 3}
+--- !u!1 &1579877361
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1579877362}
+  m_Layer: 0
+  m_Name: WagonBlocker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1579877362
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579877361}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -47, y: 0.99254, z: 101}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1105325861}
+  - {fileID: 617963675}
+  - {fileID: 411996299}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1580156419 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1736254623067858, guid: f2bcea84332d3b5418c7fb64b9fc7d89, type: 3}
@@ -85378,8 +85431,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1666723752}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.009306647, y: -0.9816766, z: -0.04972966, w: -0.18371566}
-  m_LocalPosition: {x: -1537.8, y: -392.5, z: 115}
+  m_LocalRotation: {x: 0.00556056, y: -0.9926689, z: -0.050286513, w: -0.109766915}
+  m_LocalPosition: {x: -1536.2, y: -393, z: 112.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -94921,17 +94974,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
   m_Events:
     m_Signals:
-    - {fileID: 11400000, guid: 9be19eb0ddc62564a9ae8647713caf28, type: 2}
+    - {fileID: 11400000, guid: 45e0bf23fac5f9b4f9011e56e94dd3fd, type: 2}
     m_Events:
     - m_PersistentCalls:
         m_Calls:
         - m_Target: {fileID: 1860291314}
           m_TargetAssemblyTypeName: TimelinePauseManager1, Assembly-CSharp
           m_MethodName: PauseTimeline
-          m_Mode: 1
+          m_Mode: 2
           m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_ObjectArgument: {fileID: 1860291308}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Playables.PlayableDirector,
+              UnityEngine
             m_IntArgument: 0
             m_FloatArgument: 0
             m_StringArgument: 
@@ -94949,7 +95003,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb4a56765443e57459038130e185e5e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimelinePauseManager1
-  timeline: {fileID: 1860291308}
 --- !u!1 &1860461965
 GameObject:
   m_ObjectHideFlags: 0
@@ -110330,7 +110383,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KartTrigger
   destinationDirector: {fileID: 877564519}
   playerUI: {fileID: 624284574}
-  driveUI: {fileID: 141044146}
   kartDrivingUI: {fileID: 1569002053}
   destinationText: {fileID: 0}
   countdownUI: {fileID: 854858455}
@@ -110346,8 +110398,12 @@ MonoBehaviour:
   playerUIElementsToHide:
   - {fileID: 1298319994}
   - {fileID: 893251760}
+  - {fileID: 819993368}
+  - {fileID: 1951852602}
   - {fileID: 1152087185}
-  - {fileID: 1152087185}
+  - {fileID: 1087108802}
+  - {fileID: 1498789227}
+  wagonBlocker: {fileID: 1579877361}
   kartController: {fileID: 1112556100}
   kartSeatPosition: {fileID: 439787321148372721}
   destinations:
@@ -110402,7 +110458,7 @@ GameObject:
   - component: {fileID: 1799520373}
   - component: {fileID: 3469287837535252635}
   - component: {fileID: 3469287837535252636}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: ScrollOfAllergen
   m_TagString: Interactable
   m_Icon: {fileID: 0}
@@ -116398,7 +116454,7 @@ GameObject:
   - component: {fileID: 6426981122081135940}
   - component: {fileID: 1043804021018473453}
   - component: {fileID: 1895193598273472742}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Papel_Viejo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -117463,9 +117519,7 @@ SceneRoots:
   - {fileID: 529308153}
   - {fileID: 1258971861}
   - {fileID: 1420168335}
-  - {fileID: 1105325861}
-  - {fileID: 617963675}
-  - {fileID: 411996299}
+  - {fileID: 1579877362}
   - {fileID: 604545773}
   - {fileID: 1333657261}
   - {fileID: 1320496174}

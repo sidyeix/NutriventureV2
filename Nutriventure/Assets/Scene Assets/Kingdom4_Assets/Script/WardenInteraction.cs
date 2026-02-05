@@ -182,18 +182,27 @@ public class NPCInteraction : MonoBehaviour
 {
     yield return null;
 
-    while (timelineDirector.state == PlayState.Playing)
+    while (timelineDirector != null)
     {
+        // If timeline stopped → exit
+        if (timelineDirector.state == PlayState.Paused)
+        {
+            // Wait until resumed
+            yield return new WaitUntil(() =>
+                timelineDirector.state != PlayState.Paused);
+        }
+
+        if (timelineDirector.state != PlayState.Playing)
+            break;
+
         yield return null;
     }
 
     isTimelinePlaying = false;
 
-    // Only show again if player is still nearby
     if (isPlayerInRange)
-    {
         ShowTalkButton();
-    }
 }
+
 
 }
