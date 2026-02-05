@@ -117,49 +117,90 @@ private bool hasRequestedTouch = false;
         }
     }
 
-    void Update()
+private bool isTouchRequestActive = false;
+
+  void Update()
+{
+    if (IsClaimed || mainCamera == null) return;
+    
+    // Check if book is visible on screen
+    CheckScreenVisibility();
+    
+    // Update screen indicator
+    UpdateScreenIndicator();
+    
+    // For testing in Unity Editor: simulate mobile with mouse click
+    bool isSimulatingMobile = simulateMobileInEditor && Application.isEditor;
+    
+    // Check for PC input
+    if (isVisibleOnScreen && IsPlayerInRange())
     {
-        if (IsClaimed || mainCamera == null) return;
-        
-        // Check if book is visible on screen
-        CheckScreenVisibility();
-        
-        // Update screen indicator
-        UpdateScreenIndicator();
-        
-        // For testing in Unity Editor: simulate mobile with mouse click
-        bool isSimulatingMobile = simulateMobileInEditor && Application.isEditor;
-        
-        // Check for PC input
-        if (isVisibleOnScreen && IsPlayerInRange())
+        // Check for keyboard input (PC)
+        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
-            // Check for keyboard input (PC)
-            if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-            {
-                Pickup();
-                return;
-            }
+            Pickup();
+            return;
         }
-
-        // Check for mobile touch input
-        CheckMobileTouchInput(isSimulatingMobile);
-
-       bool canInteract = isVisibleOnScreen && IsPlayerInRange();
-
-if (canInteract && !hasRequestedTouch)
-{
-    LookUIRaycastController.Instance?.RequestWorldTouch(this);
-    hasRequestedTouch = true;
-}
-else if (!canInteract && hasRequestedTouch)
-{
-    LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
-    hasRequestedTouch = false;
-}
-
-
+        
+        // Handle mouse click for editor simulation
+        if (isSimulatingMobile && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            // Don't process if over UI in editor
+            if (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
+            {
+                ProcessTouch(Mouse.current.position.ReadValue());
+            }
+            return;
+        }
     }
 
+    // Handle mobile touch input
+    HandleMobileTouch();
+}
+private void HandleMobileTouch()
+{
+    if (Touchscreen.current == null) return;
+    
+    var touch = Touchscreen.current.primaryTouch;
+    if (!touch.press.wasPressedThisFrame) return;
+    
+    Vector2 touchPos = touch.position.ReadValue();
+    
+    // First try direct raycast (like ingredient)
+    ProcessTouch(touchPos);
+}
+
+private void ProcessTouch(Vector2 screenPosition)
+{
+    // Check for direct tap on book (same as ingredient)
+    Ray ray = mainCamera.ScreenPointToRay(screenPosition);
+    RaycastHit hit;
+    
+    // First, check for direct hit
+    if (Physics.Raycast(ray, out hit, maxPickupDistance * 2f, raycastLayers))
+    {
+        if (hit.collider != null && hit.collider.gameObject == gameObject)
+        {
+            if (IsPlayerInRange())
+            {
+                Pickup();
+            }
+            return;
+        }
+    }
+    
+    // Fallback: tap near book (mobile-friendly)
+    if (isVisibleOnScreen && IsPlayerInRange())
+    {
+        Vector3 bookScreenPos = mainCamera.WorldToScreenPoint(transform.position);
+        float screenDist = Vector2.Distance(screenPosition, bookScreenPos);
+        
+        if (screenDist < 120f) // Adjust this threshold as needed
+        {
+            Pickup();
+        }
+    }
+}
    private void HandleTouchInput(Vector2 screenPosition)
 {
     if (IsClaimed || mainCamera == null) return;
@@ -313,84 +354,86 @@ else if (!canInteract && hasRequestedTouch)
         Debug.Log("Book state reset - ready for pickup");
     }
 
-    public override void Pickup()
-    {
-        if (IsClaimed) return; // prevent double pickup
-        
-        if (firstIngredient != null)
-        {
-            firstIngredient.SetActive(true); // 🔓 unlocked
-            Debug.Log("🥇 First ingredient activated!");
-        }
-
-        // Notify game manager
-        if (!AllerthriaGameManager.Instance.hasScroll)
-        {
-            AllerthriaGameManager.Instance.CollectScroll();
-        }
-
-        IsClaimed = true;
-
-        if (bookManager != null)
-        {
-            bookManager.SetMainBook(this);
-            bookManager.AddBookToUI(bookId, bookName, bookIcon);
-        }
-
-        Debug.Log($"📖 Book collected: {bookName}");
-
-        // ✅ Spawn allergens AFTER scroll is claimed
-        AllergenSpawnManager spawner = FindAnyObjectByType<AllergenSpawnManager>();
-        if (spawner != null)
-        {
-            spawner.SpawnNow(); // 🔥 THIS WAS MISSING
-            Debug.Log("🌱 Allergens spawned because scroll was claimed!");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ AllergenSpawnManager not found!");
-        }
-
-        // 🎬 Play timeline
-        if (pickupTimeline != null)
-        {
-            pickupTimeline.Play();
-        }
-        
-        // Hide visual feedback after pickup
-        if (bookHighlight != null)
-        {
-            bookHighlight.SetActive(false);
-        }
-        if (pickupPrompt != null)
-        {
-            pickupPrompt.SetActive(false);
-        }
-        
-        // Disable screen indicator
-        if (screenIndicatorInstance != null)
-        {
-            screenIndicatorInstance.SetActive(false);
-        }
-        
-        // Disable the collider after pickup
-        Collider collider = GetComponent<Collider>();
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-
-        if (LookUIRaycastController.Instance != null)
+public override void Pickup()
 {
-   LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
-hasRequestedTouch = false;
-
-
-}
-
+    if (IsClaimed) return; // prevent double pickup
+    
+    // Clean up touch request
+    if (isTouchRequestActive)
+    {
+        LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+        isTouchRequestActive = false;
+    }
+    else if (hasRequestedTouch) // Backward compatibility
+    {
+        LookUIRaycastController.Instance?.ReleaseWorldTouch(this);
+        hasRequestedTouch = false;
     }
 
-    // Rest of your methods remain the same...
+    if (firstIngredient != null)
+    {
+        firstIngredient.SetActive(true); // 🔓 unlocked
+        Debug.Log("🥇 First ingredient activated!");
+    }
+
+    // Notify game manager
+    if (!AllerthriaGameManager.Instance.hasScroll)
+    {
+        AllerthriaGameManager.Instance.CollectScroll();
+    }
+
+    IsClaimed = true;
+
+    if (bookManager != null)
+    {
+        bookManager.SetMainBook(this);
+        bookManager.AddBookToUI(bookId, bookName, bookIcon);
+    }
+
+    Debug.Log($"📖 Book collected: {bookName}");
+
+    // ✅ Spawn allergens AFTER scroll is claimed
+    AllergenSpawnManager spawner = FindAnyObjectByType<AllergenSpawnManager>();
+    if (spawner != null)
+    {
+        spawner.SpawnNow(); // 🔥 THIS WAS MISSING
+        Debug.Log("🌱 Allergens spawned because scroll was claimed!");
+    }
+    else
+    {
+        Debug.LogWarning("⚠️ AllergenSpawnManager not found!");
+    }
+
+    // 🎬 Play timeline
+    if (pickupTimeline != null)
+    {
+        pickupTimeline.Play();
+    }
+    
+    // Hide visual feedback after pickup
+    if (bookHighlight != null)
+    {
+        bookHighlight.SetActive(false);
+    }
+    if (pickupPrompt != null)
+    {
+        pickupPrompt.SetActive(false);
+    }
+    
+    // Disable screen indicator
+    if (screenIndicatorInstance != null)
+    {
+        screenIndicatorInstance.SetActive(false);
+    }
+    
+    // Disable the collider after pickup
+    Collider collider = GetComponent<Collider>();
+    if (collider != null)
+    {
+        collider.enabled = false;
+    }
+}
+    
     public void AddIngredient(string ingredientId, string name, string description, Sprite icon)
     {
         if (IsIngredientCollected(ingredientId)) return;
