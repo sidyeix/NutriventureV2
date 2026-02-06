@@ -108,6 +108,12 @@ public class AllerthriaGameManager : MonoBehaviour
             scoreText.text = $"SCORE: {Kingdom4ScoreManager.Instance.GetFinalScore()}";
         }
     }
+
+    public bool CanAccessCastle()
+    {
+        // Allow castle access during PlatformPhase OR CastlePhase
+        return currentPhase == GamePhase.PlatformPhase || currentPhase == GamePhase.CastlePhase;
+    }
     
     private void UpdateMultiplierDisplay()
     {

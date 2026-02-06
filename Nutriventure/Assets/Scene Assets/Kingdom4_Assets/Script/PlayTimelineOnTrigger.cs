@@ -4,139 +4,271 @@ using System.Collections;
 
 public class PlayTimelineOnTrigger : MonoBehaviour
 {
+    [Header("References")]
     public PlayableDirector playableDirector;
+    
+    [Header("Settings")]
     public bool playOnlyOnce = true;
-
-    [Header("Phase Trigger Settings")]
-    public bool triggerOnPlatformPhase = true;
+    public bool skipToSummaryIfHasKey = true;
+    public float timelineDelay = 0.5f;
+    
+    [Header("Phase Settings")]
     public bool triggerOnCastlePhase = true;
     public bool triggerOnEndGame = true;
-    
-    [Header("Auto-play Timeline")]
-    public bool autoPlayTimeline = true;
-    public float timelineDelay = 0.5f;
-
-    [Header("Phase Actions")]
-    [Tooltip("What to do when Platform Phase is triggered")]
-    public bool completePlatformPhase = true;
-    [Tooltip("What to do when Castle Phase is triggered")]
+    public bool triggerOnPlatformPhase = true;
     public bool reachQueen = true;
-    [Tooltip("What to do when End Game is triggered")]
     public bool completeGame = true;
-
-    [Header("Key Activation (For Castle Phase)")]
-    public GameObject keyGameObject; // Drag your 3D key here
-    public bool activateKeyAfterTimeline = true;
-    public float keyActivationDelay = 0f;
-    public bool makeKeyCollectible = true; // If using CollectibleKey script
-
+    
     private bool hasPlayed = false;
-
+    
     void Start()
     {
         // Ensure playableDirector is found if not assigned
         if (playableDirector == null)
         {
             playableDirector = GetComponent<PlayableDirector>();
-            if (playableDirector == null)
-            {
-                Debug.LogWarning($"No PlayableDirector found on {gameObject.name}");
-            }
         }
-
-        // Initialize key state
-        InitializeKey();
+        
+        // Initialize key check after a short delay
+        Invoke("InitializeKeyCheck", 0.5f);
     }
-
-    void InitializeKey()
+    
+    void InitializeKeyCheck()
     {
-        if (keyGameObject != null && activateKeyAfterTimeline)
+        // This ensures managers are loaded before we check
+        bool hasKey = CheckIfPlayerHasKey();
+        Debug.Log($"PlayTimelineOnTrigger initialized. Has Key: {hasKey}");
+        
+        // If player already has key, make sure game manager is in EndGame phase
+        if (hasKey && AllerthriaGameManager.Instance != null)
         {
-            // Start with key inactive
-            keyGameObject.SetActive(false);
-            
-            // Also disable the CollectibleKey script to prevent Update() running
-            CollectibleKey collectibleKey = keyGameObject.GetComponent<CollectibleKey>();
-            if (collectibleKey != null)
-            {
-                collectibleKey.isCollectible = false;
-                collectibleKey.enabled = false; // Disable script until activated
-            }
-            
-            Debug.Log("Key initialized as inactive (GameObject and script disabled)");
+            AllerthriaGameManager.Instance.hasKey = true;
+            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+            Debug.Log("Player already has key - set phase to EndGame");
         }
     }
-
+    
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && !hasTriggered())
         {
-            // Check current phase and trigger appropriate actions
-            if (triggerOnPlatformPhase && 
-                AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
+            Debug.Log($"Player entered trigger. Checking phase...");
+            
+            // Check current phase
+            if (AllerthriaGameManager.Instance == null)
             {
-                Debug.Log("Trigger: Platform Phase - Player completed platform section");
-                
-                // Trigger platform phase completion
-                if (completePlatformPhase)
-                {
-                    AllerthriaGameManager.Instance.CompletePlatformPhase();
-                }
-                
-                // Play timeline if assigned
-                if (autoPlayTimeline && playableDirector != null)
-                {
-                    StartCoroutine(PlayTimelineWithDelay());
-                }
-                
-                MarkAsPlayed();
+                Debug.LogError("AllerthriaGameManager.Instance is null!");
+                return;
             }
-            else if (triggerOnCastlePhase && 
-                     AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.CastlePhase)
+            
+            Debug.Log($"Current Phase: {AllerthriaGameManager.Instance.currentPhase}");
+            
+            // Check if player already has key (returning player)
+            bool hasKeyAlready = CheckIfPlayerHasKey();
+            Debug.Log($"Player has key already: {hasKeyAlready}");
+            
+            // Handle Castle Phase OR Platform Phase (first arrival OR returning without key collected yet)
+            if ((triggerOnCastlePhase && 
+                 AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.CastlePhase) ||
+                (triggerOnPlatformPhase && 
+                 AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase))
             {
-                Debug.Log("Trigger: Castle Phase - Player reached queen area");
-                
-                // Trigger castle phase actions
-                if (reachQueen)
-                {
-                    AllerthriaGameManager.Instance.ReachQueen();
-                }
-                
-                // Play timeline if assigned
-                if (autoPlayTimeline && playableDirector != null)
-                {
-                    StartCoroutine(PlayTimelineWithDelay());
-                }
-                else
-                {
-                    // If no timeline, just activate the key
-                    ActivateKey();
-                }
-                
-                MarkAsPlayed();
+                Debug.Log("Trigger: Platform or Castle Phase - Player reached queen area");
+                HandleCastlePhase(hasKeyAlready);
             }
+            // Handle End Game Phase (returning with key)
             else if (triggerOnEndGame && 
                      AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.EndGame)
             {
                 Debug.Log("Trigger: End Game - Player returned with key");
-                
-                // Trigger end game actions
-                if (completeGame)
-                {
-                    AllerthriaGameManager.Instance.CompleteGame();
-                }
-                
-                // Play timeline if assigned
-                if (autoPlayTimeline && playableDirector != null)
-                {
-                    StartCoroutine(PlayTimelineWithDelay());
-                }
-                
-                MarkAsPlayed();
+                HandleEndGamePhase(hasKeyAlready);
+            }
+            // Handle Key Phase (player has key but game manager might not be in EndGame yet)
+            else if (hasKeyAlready && AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.KeyPhase)
+            {
+                Debug.Log("Trigger: Player has key but still in KeyPhase - transitioning to EndGame");
+                AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+                HandleEndGamePhase(true);
             }
         }
     }
-
+    
+    private void HandleCastlePhase(bool hasKeyAlready)
+    {
+        // If player already has key AND we should skip to summary
+        if (hasKeyAlready && skipToSummaryIfHasKey)
+        {
+            Debug.Log("Player already has key in Castle Phase - going straight to summary");
+            
+            // Trigger castle phase actions
+            if (reachQueen)
+            {
+                AllerthriaGameManager.Instance.ReachQueen();
+            }
+            
+            // If we're in Platform Phase, transition to Castle Phase first
+            if (AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
+            {
+                AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
+            }
+            
+            // Go straight to game summary
+            TriggerGameSummary();
+            
+            MarkAsPlayed();
+            return;
+        }
+        
+        // If we're in Platform Phase, transition to Castle Phase first
+        if (AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
+        {
+            Debug.Log("Transitioning from Platform Phase to Castle Phase");
+            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
+        }
+        
+        // Normal flow (first time or if we're not skipping)
+        if (reachQueen)
+        {
+            AllerthriaGameManager.Instance.ReachQueen();
+        }
+        
+        // Play timeline if assigned (only for first time)
+        if (playableDirector != null && !hasKeyAlready)
+        {
+            StartCoroutine(PlayTimelineWithDelay());
+        }
+        else if (hasKeyAlready)
+        {
+            Debug.Log("Player has key but timeline not played (skipToSummaryIfHasKey is false)");
+        }
+        
+        MarkAsPlayed();
+    }
+    
+    private void HandleEndGamePhase(bool hasKeyAlready)
+    {
+        // Player should definitely have key if they're in EndGame phase
+        if (!hasKeyAlready)
+        {
+            Debug.LogWarning("Player in EndGame phase but doesn't have key! Checking saved data...");
+            hasKeyAlready = CheckIfPlayerHasKey(); // Re-check
+        }
+        
+        if (hasKeyAlready)
+        {
+            Debug.Log("Player in EndGame phase with key - showing summary");
+            
+            // Trigger end game actions
+            if (completeGame)
+            {
+                AllerthriaGameManager.Instance.CompleteGame();
+            }
+            
+            // Trigger game summary immediately (no timeline)
+            TriggerGameSummary();
+        }
+        else
+        {
+            Debug.LogError("Player in EndGame phase but no key found!");
+        }
+        
+        MarkAsPlayed();
+    }
+    
+    private bool CheckIfPlayerHasKey()
+    {
+        try
+        {
+            // Method 1: Check AllerthriaGameManager (current session)
+            if (AllerthriaGameManager.Instance != null && AllerthriaGameManager.Instance.hasKey)
+            {
+                Debug.Log("Key found in AllerthriaGameManager");
+                return true;
+            }
+            
+            // Method 2: Check GameDataManager (saved data)
+            if (GameDataManager1.Instance != null && GameDataManager1.Instance.currentGameData.hasKey)
+            {
+                Debug.Log("Key found in GameDataManager");
+                // Sync with AllerthriaGameManager
+                if (AllerthriaGameManager.Instance != null)
+                {
+                    AllerthriaGameManager.Instance.hasKey = true;
+                    // Only set to EndGame if we're not in the middle of getting the key
+                    if (AllerthriaGameManager.Instance.currentPhase != AllerthriaGameManager.GamePhase.KeyPhase)
+                    {
+                        AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+                    }
+                    Debug.Log("Synced key to AllerthriaGameManager");
+                }
+                return true;
+            }
+            
+            // Method 3: Check PlayerPrefs as fallback
+            if (PlayerPrefs.GetInt("KeyCollected_castle_key", 0) == 1)
+            {
+                Debug.Log("Key found in PlayerPrefs");
+                // Sync with both managers
+                if (AllerthriaGameManager.Instance != null)
+                {
+                    AllerthriaGameManager.Instance.hasKey = true;
+                    // Only set to EndGame if we're not in the middle of getting the key
+                    if (AllerthriaGameManager.Instance.currentPhase != AllerthriaGameManager.GamePhase.KeyPhase)
+                    {
+                        AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+                    }
+                }
+                if (GameDataManager1.Instance != null)
+                {
+                    GameDataManager1.Instance.currentGameData.hasKey = true;
+                    GameDataManager1.Instance.SaveGameProgress();
+                }
+                return true;
+            }
+            
+            Debug.Log("Key not found in any system");
+            return false;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error checking key: {e.Message}");
+            return false;
+        }
+    }
+    
+    private void TriggerGameSummary()
+    {
+        Debug.Log("Triggering game summary...");
+        
+        // Try K4GameSummary first
+        K4GameSummary gameSummary = FindObjectOfType<K4GameSummary>();
+        if (gameSummary != null)
+        {
+            gameSummary.TriggerSummaryFromKey();
+            Debug.Log("Triggered game summary via K4GameSummary");
+            return;
+        }
+        
+        // Fallback to Kingdom4GameEndManager
+        Kingdom4GameEndManager gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
+        if (gameEndManager != null)
+        {
+            gameEndManager.HandleKingdom4Complete();
+            Debug.Log("Triggered game summary via Kingdom4GameEndManager");
+            return;
+        }
+        
+        // Fallback to AllerthriaGameManager's CompleteGame
+        if (AllerthriaGameManager.Instance != null)
+        {
+            AllerthriaGameManager.Instance.CompleteGame();
+            Debug.Log("Triggered game completion via AllerthriaGameManager");
+            return;
+        }
+        
+        Debug.LogWarning("No game summary manager found!");
+    }
+    
     private IEnumerator PlayTimelineWithDelay()
     {
         yield return new WaitForSeconds(timelineDelay);
@@ -144,96 +276,15 @@ public class PlayTimelineOnTrigger : MonoBehaviour
         if (playableDirector != null)
         {
             Debug.Log($"Playing timeline: {playableDirector.name}");
-            
-            // Subscribe to timeline completion
-            playableDirector.stopped += OnTimelineStopped;
-            
             playableDirector.Play();
-            
-            // Optional: Wait for timeline to complete
-            yield return new WaitForSeconds((float)playableDirector.duration);
-            Debug.Log("Timeline completed");
-        }
-        else
-        {
-            // If no timeline, just activate the key
-            ActivateKey();
         }
     }
-
-    private void OnTimelineStopped(PlayableDirector director)
-    {
-        // Unsubscribe to prevent multiple calls
-        director.stopped -= OnTimelineStopped;
-        
-        // Activate key after timeline completes
-        if (activateKeyAfterTimeline)
-        {
-            StartCoroutine(ActivateKeyWithDelay());
-        }
-    }
-
-    private IEnumerator ActivateKeyWithDelay()
-    {
-        yield return new WaitForSeconds(keyActivationDelay);
-        ActivateKey();
-    }
-
-    private void ActivateKey()
-    {
-        if (keyGameObject != null)
-        {
-            // Activate the GameObject
-            keyGameObject.SetActive(true);
-            Debug.Log($"Key GameObject activated: {keyGameObject.name}");
-            
-            // Enable the CollectibleKey script
-            CollectibleKey collectibleKey = keyGameObject.GetComponent<CollectibleKey>();
-            if (collectibleKey != null)
-            {
-                collectibleKey.enabled = true; // Enable the script
-                
-                // If using CollectibleKey script, make it collectible
-                if (makeKeyCollectible)
-                {
-                    // Wait one frame to ensure script is fully enabled
-                    StartCoroutine(MakeKeyCollectibleAfterDelay(collectibleKey));
-                }
-                else
-                {
-                    // Just enable it but don't make collectible yet
-                    collectibleKey.isCollectible = true;
-                    Debug.Log("Key script enabled but not glowing yet");
-                }
-            }
-            else
-            {
-                Debug.LogWarning("No CollectibleKey script found on key GameObject!");
-            }
-            
-            // Optional: Trigger event for UI or other systems
-            OnKeyActivated();
-        }
-    }
-
-    private IEnumerator MakeKeyCollectibleAfterDelay(CollectibleKey keyScript)
-    {
-        yield return null; // Wait one frame for script to initialize
-        keyScript.MakeCollectible();
-        Debug.Log("Key is now collectible!");
-    }
-
-    protected virtual void OnKeyActivated()
-    {
-        // Override this method for custom behavior
-        Debug.Log("Key activation event fired");
-    }
-
+    
     private bool hasTriggered()
     {
         return playOnlyOnce && hasPlayed;
     }
-
+    
     private void MarkAsPlayed()
     {
         if (playOnlyOnce)
@@ -249,91 +300,55 @@ public class PlayTimelineOnTrigger : MonoBehaviour
             }
         }
     }
-
-    // Method to manually trigger the timeline (for testing)
-    [ContextMenu("Test Play Timeline")]
-    public void TestPlayTimeline()
+    
+    // For debugging
+    [ContextMenu("Test Check Key Status")]
+    public void TestCheckKeyStatus()
     {
-        if (playableDirector != null)
-        {
-            playableDirector.Play();
-            Debug.Log("Manually playing timeline");
-        }
-        else
-        {
-            Debug.LogError("No PlayableDirector assigned!");
-        }
+        bool hasKey = CheckIfPlayerHasKey();
+        Debug.Log($"=== KEY STATUS TEST ===");
+        Debug.Log($"AllerthriaGameManager.Instance: {AllerthriaGameManager.Instance}");
+        Debug.Log($"AllerthriaGameManager.hasKey: {(AllerthriaGameManager.Instance != null ? AllerthriaGameManager.Instance.hasKey.ToString() : "N/A")}");
+        Debug.Log($"AllerthriaGameManager.Phase: {(AllerthriaGameManager.Instance != null ? AllerthriaGameManager.Instance.currentPhase.ToString() : "N/A")}");
+        Debug.Log($"GameDataManager1.Instance: {GameDataManager1.Instance}");
+        Debug.Log($"GameDataManager1.hasKey: {(GameDataManager1.Instance != null ? GameDataManager1.Instance.currentGameData.hasKey.ToString() : "N/A")}");
+        Debug.Log($"PlayerPrefs Key: {PlayerPrefs.GetInt("KeyCollected_castle_key", 0)}");
+        Debug.Log($"Player has key: {hasKey}");
+        Debug.Log($"========================");
     }
-
-    [ContextMenu("Test Activate Key")]
-    public void TestActivateKey()
+    
+    [ContextMenu("Force Set Has Key")]
+    public void ForceSetHasKey()
     {
-        ActivateKey();
+        if (AllerthriaGameManager.Instance != null)
+        {
+            AllerthriaGameManager.Instance.hasKey = true;
+            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+        }
+        if (GameDataManager1.Instance != null)
+        {
+            GameDataManager1.Instance.currentGameData.hasKey = true;
+            GameDataManager1.Instance.SaveGameProgress();
+        }
+        PlayerPrefs.SetInt("KeyCollected_castle_key", 1);
+        PlayerPrefs.Save();
+        Debug.Log("Key force-set for testing! Phase set to EndGame.");
     }
-
-    // Method to reset the trigger
-    [ContextMenu("Reset Trigger")]
-    public void ResetTrigger()
+    
+    [ContextMenu("Reset Key")]
+    public void ResetKey()
     {
-        hasPlayed = false;
-        Debug.Log("Trigger reset - will fire again");
-        
-        // Re-enable collider if disabled
-        Collider collider = GetComponent<Collider>();
-        if (collider != null)
+        if (AllerthriaGameManager.Instance != null)
         {
-            collider.enabled = true;
+            AllerthriaGameManager.Instance.hasKey = false;
+            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.ScrollQuest);
         }
-        
-        // Reset key state
-        if (keyGameObject != null)
+        if (GameDataManager1.Instance != null)
         {
-            CollectibleKey collectibleKey = keyGameObject.GetComponent<CollectibleKey>();
-            if (collectibleKey != null)
-            {
-                collectibleKey.ResetKey();
-                collectibleKey.enabled = false; // Disable script
-            }
-            
-            keyGameObject.SetActive(false);
+            GameDataManager1.Instance.currentGameData.hasKey = false;
+            GameDataManager1.Instance.SaveGameProgress();
         }
+        PlayerPrefs.DeleteKey("KeyCollected_castle_key");
+        Debug.Log("Key reset! Phase set to ScrollQuest.");
     }
-
-    // Optional: Draw gizmos for visibility
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, 1f);
-        
-        if (playableDirector != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, playableDirector.transform.position);
-        }
-        
-        if (keyGameObject != null)
-        {
-            Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.5f); // Gold color
-            Gizmos.DrawLine(transform.position, keyGameObject.transform.position);
-            Gizmos.DrawWireCube(keyGameObject.transform.position, Vector3.one * 0.5f);
-        }
-    }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = new Color(1f, 0.5f, 0f, 0.5f);
-        Gizmos.DrawSphere(transform.position, 1.5f);
-        
-        // Draw the phase it triggers on
-        string triggerInfo = $"Triggers on:\n- Platform Phase: {triggerOnPlatformPhase}\n- Castle Phase: {triggerOnCastlePhase}\n- End Game: {triggerOnEndGame}";
-        
-        if (keyGameObject != null && activateKeyAfterTimeline)
-        {
-            triggerInfo += $"\n\nActivates Key: Yes\nDelay: {keyActivationDelay}s";
-        }
-        
-        UnityEditor.Handles.Label(transform.position + Vector3.up * 2f, triggerInfo);
-    }
-#endif
 }
