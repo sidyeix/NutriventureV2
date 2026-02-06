@@ -869,15 +869,56 @@ public class Kingdom4GameEndManager : MonoBehaviour
     }
 
     public void HandleKingdom4Complete()
+{
+    try
     {
+        Debug.Log("=== HANDLE KINGDOM 4 COMPLETE ===");
+        
         completionTime = 0f;
-        playerScore = scoreManager != null ? scoreManager.GetFinalScore() : 0;
-        allergensCollected = gameManager != null ? gameManager.collectedAllergens.Count : 0;
-        wagonHits = scoreManager != null ? scoreManager.totalWagonHits : 0;
+        
+        // Get score from Kingdom4ScoreManager
+        if (scoreManager != null)
+        {
+            playerScore = scoreManager.GetFinalScore();
+            wagonHits = scoreManager.totalWagonHits;
+        }
+        else
+        {
+            Debug.LogWarning("ScoreManager not found, using default values");
+            playerScore = 1000;
+            wagonHits = 0;
+        }
+        
+        // Get data from AllerthriaGameManager
+        if (gameManager != null)
+        {
+            allergensCollected = gameManager.collectedAllergens.Count;
+        }
+        else
+        {
+            Debug.LogWarning("GameManager not found, using default values");
+            allergensCollected = 9;
+        }
+        
+        Debug.Log($"Game Summary: Score={playerScore}, Allergens={allergensCollected}, WagonHits={wagonHits}");
+        
         starsEarned = CalculateKingdom4StarRating(true);
         CalculateKingdom4Rewards();
+        
+        // Ensure game summary parent exists
+        if (gameSummaryParent == null)
+        {
+            Debug.LogError("gameSummaryParent is null! Cannot show game summary.");
+            return;
+        }
+        
         ShowGameEndScreen(true);
     }
+    catch (System.Exception e)
+    {
+        Debug.LogError($"Error in HandleKingdom4Complete: {e.Message}");
+    }
+}
 
     public void TriggerKingdom4Complete() => HandleKingdom4Complete();
     public void TriggerKingdom4GameOver() => HandleKingdom4GameOver();
@@ -909,4 +950,140 @@ public class Kingdom4GameEndManager : MonoBehaviour
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
     public int GetAllergensCollected() => allergensCollected;
     public int GetWagonHits() => wagonHits;
+
+    // ADD THIS SECTION - DEBUG AND TESTING METHODS
+    [Header("Debug Settings")]
+    [SerializeField] private bool enableDebugControls = true;
+    [SerializeField] private KeyCode debugShowKey = KeyCode.F1;
+    [SerializeField] private KeyCode debugHideKey = KeyCode.F2;
+    [SerializeField] private KeyCode debugTestKey = KeyCode.T;
+
+    // ADD THIS Update() method to your Kingdom4GameEndManager class
+// Place it anywhere in the class, preferably near the other methods
+
+private void Update()
+{
+    if (enableDebugControls)
+    {
+        // Press F1 to manually show game summary
+        if (Input.GetKeyDown(debugShowKey))
+        {
+            Debug.Log("Manual trigger - Showing game summary");
+            
+            // Ensure we have data
+            if (scoreManager == null) scoreManager = FindObjectOfType<Kingdom4ScoreManager>();
+            if (gameManager == null) gameManager = FindObjectOfType<AllerthriaGameManager>();
+            
+            HandleKingdom4Complete();
+        }
+        
+        // Press F2 to manually hide game summary
+        if (Input.GetKeyDown(debugHideKey))
+        {
+            Debug.Log("Manual trigger - Hiding game summary");
+            ResetGameEndState();
+        }
+        
+        // Press T to test with sample data
+        if (Input.GetKeyDown(debugTestKey))
+        {
+            Debug.Log("Test trigger - Showing game summary with test data");
+            TestWithSampleData();
+        }
+    }
+}
+
+    // Test method with sample data
+    private void TestWithSampleData()
+    {
+        playerScore = 1500;
+        allergensCollected = 9;
+        wagonHits = 1;
+        starsEarned = CalculateKingdom4StarRating(true);
+        CalculateKingdom4Rewards();
+        ShowGameEndScreen(true);
+    }
+
+    // Context menu for testing in editor
+    [ContextMenu("Test Show Game Summary")]
+    public void TestShowGameSummary()
+    {
+        Debug.Log("=== TESTING GAME SUMMARY ===");
+        
+        // Set test data
+        playerScore = 1200;
+        allergensCollected = 8;
+        wagonHits = 2;
+        
+        starsEarned = CalculateKingdom4StarRating(true);
+        CalculateKingdom4Rewards();
+        
+        ShowGameEndScreen(true);
+    }
+
+    [ContextMenu("Check UI References")]
+    public void CheckUIReferences()
+    {
+        Debug.Log("=== CHECKING UI REFERENCES ===");
+        Debug.Log($"gameSummaryParent: {(gameSummaryParent != null ? "SET" : "NULL")}");
+        Debug.Log($"pointsText: {(pointsText != null ? "SET" : "NULL")}");
+        Debug.Log($"collectedText: {(collectedText != null ? "SET" : "NULL")}");
+        Debug.Log($"wagonHitsText: {(wagonHitsText != null ? "SET" : "NULL")}");
+        Debug.Log($"buttonContainer: {(buttonContainer != null ? "SET" : "NULL")}");
+        Debug.Log($"resultBackground: {(resultBackground != null ? "SET" : "NULL")}");
+        Debug.Log($"starsContainer: {(starsContainer != null ? "SET" : "NULL")}");
+        Debug.Log($"starsAnimator: {(starsAnimator != null ? "SET" : "NULL")}");
+        Debug.Log("==============================");
+    }
+
+    [ContextMenu("Reset Everything")]
+    public void ResetEverything()
+    {
+        Debug.Log("Resetting everything...");
+        
+        ResetGameEndState();
+        
+        // Reset data
+        playerScore = 0;
+        allergensCollected = 0;
+        wagonHits = 0;
+        starsEarned = 0;
+        
+        // Reset AllerthriaGameManager if it exists
+        if (gameManager != null)
+        {
+            gameManager.hasKey = false;
+            gameManager.hasScroll = false;
+            gameManager.collectedAllergens.Clear();
+            gameManager.StartPhase(AllerthriaGameManager.GamePhase.ScrollQuest);
+        }
+        
+        // Reset GameDataManager if it exists
+        if (GameDataManager1.Instance != null)
+        {
+            GameDataManager1.Instance.currentGameData.hasKey = false;
+            GameDataManager1.Instance.SaveGameProgress();
+        }
+        
+        // Reset PlayerPrefs
+        PlayerPrefs.DeleteKey("KeyCollected_castle_key");
+        PlayerPrefs.Save();
+        
+        Debug.Log("Everything reset!");
+    }
+
+    // Method to force show game summary even if managers are not set
+    public void ForceShowGameSummary(int score = 1000, int allergens = 9, int hits = 0)
+    {
+        Debug.Log("Force showing game summary with custom data");
+        
+        playerScore = score;
+        allergensCollected = allergens;
+        wagonHits = hits;
+        
+        starsEarned = CalculateKingdom4StarRating(true);
+        CalculateKingdom4Rewards();
+        
+        ShowGameEndScreen(true);
+    }
 }

@@ -66,10 +66,25 @@ public class KartTrigger : MonoBehaviour
     private Transform playerOriginalParent;
 
     private bool hasPlayedTimeline = false;
+    
+    // Add references for disabling movement/animation
+    private StarterAssets.ThirdPersonController thirdPersonController;
+    private StarterAssets.StarterAssetsInputs starterAssetsInputs;
+    private Animator playerAnimator;
+    private CharacterController characterController;
 
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
+        
+        // Get player components for movement/animation control
+        if (player != null)
+        {
+            thirdPersonController = player.GetComponent<StarterAssets.ThirdPersonController>();
+            starterAssetsInputs = player.GetComponent<StarterAssets.StarterAssetsInputs>();
+            playerAnimator = player.GetComponent<Animator>();
+            characterController = player.GetComponent<CharacterController>();
+        }
         
         // Setup main audio source for countdown sounds
         audioSource = GetComponent<AudioSource>();
@@ -216,11 +231,20 @@ public class KartTrigger : MonoBehaviour
         player.transform.localPosition = Vector3.zero;
         player.transform.localRotation = Quaternion.identity;
 
+        // Reset player movement and disable controllers
+        ResetPlayerMovement();
+        
         // Disable player controllers
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-        if (cc != null) cc.enabled = false;
-        if (tpc != null) tpc.enabled = false;
+        if (characterController != null) characterController.enabled = false;
+        if (thirdPersonController != null) thirdPersonController.enabled = false;
+        if (starterAssetsInputs != null) starterAssetsInputs.enabled = false;
+        
+        // Enable animator and set IsDriving parameter
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.SetBool("IsDriving", true);
+        }
     }
 
     public void StartCountdown()
@@ -393,16 +417,17 @@ public class KartTrigger : MonoBehaviour
     // Start horse running sound with fade in
     private void StartHorseRunningSound()
     {
-        if (horseRunningSource == null || horseRunningSound == null) return;
-        
-        horseRunningSource.Play();
-        
-        // Start fade in coroutine
-        if (runningFadeCoroutine != null)
+        if (horseRunningSource == null || horseRunningSound != null)
         {
-            StopCoroutine(runningFadeCoroutine);
+            horseRunningSource.Play();
+            
+            // Start fade in coroutine
+            if (runningFadeCoroutine != null)
+            {
+                StopCoroutine(runningFadeCoroutine);
+            }
+            runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, 0f, runningVolume, fadeInOutDuration));
         }
-        runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, 0f, runningVolume, fadeInOutDuration));
     }
 
     // Fade out horse running sound
@@ -523,11 +548,8 @@ public class KartTrigger : MonoBehaviour
         player.transform.position = playerOriginalPosition;
         player.transform.rotation = playerOriginalRotation;
 
-        // Re-enable player controller
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-        if (tpc != null) tpc.enabled = true;
-        if (cc != null) cc.enabled = true;
+        // Re-enable player controller and animation
+        EnablePlayerMovementAndAnimation();
         
         // Show player UI again
         ShowPlayerUIElements();
@@ -536,6 +558,45 @@ public class KartTrigger : MonoBehaviour
         if (!isDriving)
         {
             hasBeenUsed = false;
+        }
+    }
+
+    // Helper method to enable player movement and animation
+    private void EnablePlayerMovementAndAnimation()
+    {
+        if (characterController != null) characterController.enabled = true;
+        if (thirdPersonController != null) thirdPersonController.enabled = true;
+        if (starterAssetsInputs != null) starterAssetsInputs.enabled = true;
+        if (playerAnimator != null) 
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.SetBool("IsDriving", false); // Reset driving animation
+        }
+    }
+    
+    // Helper method to reset player movement
+    private void ResetPlayerMovement()
+    {
+        if (thirdPersonController != null)
+        {
+            // Reset any movement state
+            thirdPersonController.enabled = false;
+        }
+        
+        if (starterAssetsInputs != null)
+        {
+            // Reset inputs to zero
+            starterAssetsInputs.move = Vector2.zero;
+            starterAssetsInputs.jump = false;
+            starterAssetsInputs.sprint = false;
+        }
+        
+        // Stop any rigidbody movement
+        Rigidbody playerRb = player.GetComponent<Rigidbody>();
+        if (playerRb != null)
+        {
+            playerRb.linearVelocity = Vector3.zero;
+            playerRb.angularVelocity = Vector3.zero;
         }
     }
 
@@ -564,11 +625,8 @@ public class KartTrigger : MonoBehaviour
             player.transform.position = kartController.transform.position + Vector3.right * 2f;
         }
 
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-
-        if (tpc != null) tpc.enabled = true;
-        if (cc != null) cc.enabled = true;
+        // Re-enable player movement and animation
+        EnablePlayerMovementAndAnimation();
 
         if (kartController != null)
             kartController.SetControllable(false);
@@ -584,7 +642,8 @@ public class KartTrigger : MonoBehaviour
         isDriving = false;
         if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
 
-        Invoke("CompleteAutoExit", 1.5f);
+        // Immediately exit kart and enable movement after timeline
+        CompleteAutoExit();
     }
 
     void CompleteAutoExit()
@@ -595,18 +654,17 @@ public class KartTrigger : MonoBehaviour
 
         ShowPlayerUIElements();
 
+        // Reset player parent
         player.transform.SetParent(null);
+        
         // Position player near the kart at destination
         if (kartController != null && kartController.CurrentDestination != null)
         {
             player.transform.position = kartController.CurrentDestination.position + Vector3.right * 2f;
         }
 
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-
-        if (tpc != null) tpc.enabled = true;
-        if (cc != null) cc.enabled = true;
+        // RE-ENABLE player movement and animation after timeline finishes
+        EnablePlayerMovementAndAnimation();
 
         GoToNextDestination();
     }
