@@ -35,7 +35,6 @@ public class PlayerHealthManager : MonoBehaviour
     public Kingdom4GameEndManager gameEndManager; // Assign in Inspector
 
     private List<Image> hearts = new List<Image>();
-    private Keyboard keyboard; // Cache keyboard reference
 
     void Awake()
     {
@@ -70,12 +69,6 @@ public class PlayerHealthManager : MonoBehaviour
         {
             Debug.LogWarning("Damage overlay object is not assigned! Please drag your inactive GameObject from Hierarchy.");
         }
-    }
-
-    void Start()
-    {
-        // Get keyboard reference
-        keyboard = Keyboard.current;
     }
 
     void InitializeHealthUI()
@@ -354,6 +347,11 @@ public class PlayerHealthManager : MonoBehaviour
     {
         currentHealth = maxHearts;
         UpdateHearts();
+    }
+    
+    public int GetCurrentHealth()
+    {
+        return Mathf.CeilToInt(currentHealth);
     }
     #endregion
     

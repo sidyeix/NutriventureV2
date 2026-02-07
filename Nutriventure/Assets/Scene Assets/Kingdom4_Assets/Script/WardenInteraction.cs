@@ -1,3 +1,4 @@
+// WardenInteraction.cs (UPDATED)
 using UnityEngine;
 using UnityEngine.Playables;
 using System.Collections;
@@ -23,6 +24,13 @@ public class WardenInteraction : MonoBehaviour
     [SerializeField] private bool isKeyGiverNPC = true; // Is this the NPC that gives the key?
     [SerializeField] private bool showButtonOnlyOnce = false; // Only show button once per visit
     
+    [Header("Game Start Settings")]
+    [SerializeField] private bool startsGameTimer = true; // Should this NPC start the game timer?
+    [SerializeField] private bool isFirstWardenInteraction = true; // Is this the initial game start?
+    
+    // Timer reference
+    private GameTimer gameTimer;
+    
     private bool isTimelinePlaying = false;
     private bool isPlayerInRange = false;
     private bool isUIVisible = false;
@@ -33,7 +41,11 @@ public class WardenInteraction : MonoBehaviour
     private void Start()
     {
         // Make sure collider is trigger
-        GetComponent<Collider>().isTrigger = true;
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.isTrigger = true;
+        }
         
         // Deactivate UI completely at start
         if (talkButtonUI != null)
@@ -53,8 +65,38 @@ public class WardenInteraction : MonoBehaviour
             talkButton.onClick.AddListener(StartAppropriateTimeline);
         }
         
+        // Find the game timer
+        FindGameTimer();
+        
         // Check if player already has key
         CheckIfKeyAlreadyCollected();
+    }
+    
+    private void FindGameTimer()
+    {
+        // Find the GameTimer in the scene
+        gameTimer = GameTimer.Instance;
+        if (gameTimer == null)
+        {
+            Debug.LogWarning("GameTimer not found in scene! Timer won't start automatically.");
+            
+            // Try to find it manually
+            gameTimer = FindObjectOfType<GameTimer>();
+            if (gameTimer != null)
+            {
+                Debug.Log($"Found GameTimer: {gameTimer.gameObject.name}");
+            }
+        }
+        else
+        {
+            Debug.Log($"Found GameTimer Instance: {gameTimer.gameObject.name}");
+            
+            // If this is the first warden and timer should start, ensure timer is reset
+            if (isFirstWardenInteraction && startsGameTimer)
+            {
+                gameTimer.ResetTimer(false);
+            }
+        }
     }
     
     private void OnEnable()
@@ -107,10 +149,13 @@ public class WardenInteraction : MonoBehaviour
             return AllerthriaGameManager.Instance.hasKey;
         }
         
+        // If you have a GameDataManager1, check there too
+        /*
         if (GameDataManager1.Instance != null)
         {
             return GameDataManager1.Instance.currentGameData.hasKey;
         }
+        */
         
         // Check PlayerPrefs as fallback
         string keyId = "castle_key"; // You might want to make this configurable
@@ -253,6 +298,9 @@ public class WardenInteraction : MonoBehaviour
             // Force-hide UI immediately
             HideTalkButton();
 
+            // NEW: Start the game timer if this is the first warden interaction
+            StartGameTimerIfNeeded();
+
             timelineToPlay.Play();
             StartCoroutine(WaitForTimelineEnd(timelineToPlay));
             
@@ -268,6 +316,72 @@ public class WardenInteraction : MonoBehaviour
         {
             Debug.LogError("No Timeline Director assigned!");
         }
+    }
+    
+    // Method to start the game timer
+    private void StartGameTimerIfNeeded()
+    {
+        if (startsGameTimer && isFirstWardenInteraction && gameTimer != null)
+        {
+            if (gameTimer.CanStartTimer())
+            {
+                gameTimer.StartTimerFromInteraction();
+                
+                // Also trigger game start in other systems if needed
+                TriggerGameStartEvents();
+            }
+            else
+            {
+                Debug.LogWarning("Timer cannot start (already running or not ready)");
+            }
+        }
+        else if (startsGameTimer && gameTimer == null)
+        {
+            Debug.LogWarning("Game timer not found, but this NPC should start it!");
+        }
+    }
+    
+    // Trigger other game start events
+    private void TriggerGameStartEvents()
+    {
+        // Notify AllerthriaGameManager that game has started
+        if (AllerthriaGameManager.Instance != null)
+        {
+            // You might need to check the actual method name in your AllerthriaGameManager
+            AllerthriaGameManager.Instance.OnGameTimerStarted();
+            Debug.Log("Notified AllerthriaGameManager that game timer has started");
+        }
+        else
+        {
+            Debug.LogWarning("AllerthriaGameManager.Instance is null!");
+        }
+        
+        // Notify Kingdom4ScoreManager that game has started
+        if (Kingdom4ScoreManager.Instance != null)
+        {
+            // You might want to add a game start method to your score manager
+            Kingdom4ScoreManager.Instance.OnGameStarted();
+            Debug.Log("Notified Kingdom4ScoreManager that game timer has started");
+        }
+        else
+        {
+            Debug.LogWarning("Kingdom4ScoreManager.Instance is null!");
+        }
+        
+        // Notify Kingdom4GameEndManager that game has started
+        if (Kingdom4GameEndManager.Instance != null)
+        {
+            // You might want to add a game start method to your game end manager
+            Kingdom4GameEndManager.Instance.OnGameStarted();
+            Debug.Log("Notified Kingdom4GameEndManager that game timer has started");
+        }
+        else
+        {
+            Debug.LogWarning("Kingdom4GameEndManager.Instance is null!");
+        }
+        
+        // You could also trigger UI elements, audio, etc.
+        Debug.Log("GAME STARTED! Timer is now running.");
     }
     
     private IEnumerator WaitForTimelineEnd(PlayableDirector director)
@@ -326,6 +440,22 @@ public class WardenInteraction : MonoBehaviour
         return CheckPlayerHasKey() && keyReturnTimeline != null;
     }
     
+    // Public method to check if this NPC starts the timer
+    public bool DoesStartTimer()
+    {
+        return startsGameTimer;
+    }
+    
+    // Public method to manually start timer (for debugging or other triggers)
+    public void ManuallyStartGameTimer()
+    {
+        if (gameTimer != null && !gameTimer.IsActive)
+        {
+            gameTimer.StartTimerFromInteraction();
+            Debug.Log("Game timer manually started by NPC");
+        }
+    }
+    
     // For debugging in the Inspector
     [ContextMenu("Test Check Key Status")]
     public void TestCheckKeyStatus()
@@ -342,6 +472,10 @@ public class WardenInteraction : MonoBehaviour
         {
             isTimelinePlaying = true;
             firstArrivalTimeline.Play();
+            
+            // Also start timer if this is the first warden
+            StartGameTimerIfNeeded();
+            
             StartCoroutine(WaitForTimelineEnd(firstArrivalTimeline));
         }
     }
@@ -354,6 +488,29 @@ public class WardenInteraction : MonoBehaviour
             isTimelinePlaying = true;
             keyReturnTimeline.Play();
             StartCoroutine(WaitForTimelineEnd(keyReturnTimeline));
+        }
+    }
+    
+    [ContextMenu("Test Timer Start")]
+    public void TestTimerStart()
+    {
+        if (gameTimer != null)
+        {
+            Debug.Log($"Timer state: Active={gameTimer.IsActive}, CanStart={gameTimer.CanStartTimer()}");
+            
+            if (gameTimer.CanStartTimer())
+            {
+                gameTimer.StartTimerFromInteraction();
+                Debug.Log("Timer started via test");
+            }
+            else
+            {
+                Debug.Log("Timer cannot start (already running or not ready)");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Game timer not found!");
         }
     }
 }
