@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System;
 #if UNITY_ANDROID && !UNITY_EDITOR
 using System.IO;
 #endif
@@ -47,6 +48,8 @@ public class OCRManager_Simplified : MonoBehaviour
     private Coroutine captureCooldownCoroutine;
     private string selectedEnerlingName = "";
     private Texture2D currentImage;
+    private bool waitingForPluginResponse = false;
+    private float maxProcessingTime = 10f;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private WebCamTexture liveCameraTexture;
@@ -76,7 +79,7 @@ public class OCRManager_Simplified : MonoBehaviour
         if (exitButton != null)
             exitButton.onClick.AddListener(OnExitButtonClicked);
 
-        UpdateStatus("Ready to scan ingredient");
+        UpdateStatus("Ready to scan ingredient list");
         UpdateButtonStates();
     }
 
@@ -100,19 +103,19 @@ public class OCRManager_Simplified : MonoBehaviour
 
     void UpdateButtonStates()
     {
-        bool canInteract = !isProcessing && !isCaptureOnCooldown;
+        bool canInteract = !isProcessing && !isCaptureOnCooldown && !waitingForPluginResponse;
         
         if (captureButton != null)
             captureButton.interactable = canInteract;
         
         if (galleryButton != null)
-            galleryButton.interactable = !isProcessing;
+            galleryButton.interactable = !isProcessing && !waitingForPluginResponse;
         
         if (instructionsButton != null)
-            instructionsButton.interactable = !isProcessing;
+            instructionsButton.interactable = !isProcessing && !waitingForPluginResponse;
         
         if (exitButton != null)
-            exitButton.interactable = !isProcessing;
+            exitButton.interactable = !isProcessing && !waitingForPluginResponse;
     }
 
     void UpdateStatus(string message)
@@ -187,7 +190,7 @@ public class OCRManager_Simplified : MonoBehaviour
                 cameraPreview.color = Color.white;
             }
             liveCameraTexture.Play();
-            UpdateStatus("Camera ready - Tap Capture to scan");
+            UpdateStatus("Camera ready - Point at ingredient list and tap Capture");
         }
         catch (System.Exception e)
         {
@@ -253,7 +256,7 @@ public class OCRManager_Simplified : MonoBehaviour
         }
         
         yield return StartCoroutine(StartCameraPreview());
-        UpdateStatus("Camera ready - Tap Capture to scan");
+        UpdateStatus("Camera ready - Point at ingredient list and tap Capture");
     }
 
     IEnumerator TakePhotoCoroutine()
@@ -304,14 +307,13 @@ public class OCRManager_Simplified : MonoBehaviour
                 yield break;
             }
 
-            // ✅ yield happens OUTSIDE try/catch
             if (tempCamStarted)
             {
                 yield return new WaitForSeconds(1.2f);
             }
         }
 
-        // Capture photo from webcam (moved outside try-catch)
+        // Capture photo from webcam
         WebCamTexture source = usingLive ? liveCameraTexture : tempWebcam;
         yield return StartCoroutine(CapturePhotoFromWebcam(source));
 
@@ -358,7 +360,7 @@ public class OCRManager_Simplified : MonoBehaviour
             }
 
             // Process the captured image
-            StartCoroutine(ProcessRealScan());
+            yield return StartCoroutine(ProcessRealScan());
         }
     }
 
@@ -386,11 +388,12 @@ public class OCRManager_Simplified : MonoBehaviour
     IEnumerator LoadImageFromPath(string imagePath)
     {
         bool success = false;
+        Texture2D texture = null;
         
         try
         {
             byte[] imageData = File.ReadAllBytes(imagePath);
-            Texture2D texture = new Texture2D(2, 2);
+            texture = new Texture2D(2, 2);
 
             if (texture.LoadImage(imageData))
             {
@@ -411,11 +414,13 @@ public class OCRManager_Simplified : MonoBehaviour
             else 
             {
                 UpdateStatus("Failed to load image");
+                if (texture != null) Destroy(texture);
             }
         }
         catch (System.Exception e) 
         { 
-            UpdateStatus("Error loading image: " + e.Message); 
+            UpdateStatus("Error loading image: " + e.Message);
+            if (texture != null) Destroy(texture);
         }
 
         isProcessing = false;
@@ -423,20 +428,10 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (success) 
         {
-            StartCoroutine(ProcessRealScan());
+            yield return StartCoroutine(ProcessRealScan());
         }
         
-        yield return null; // Ensure the coroutine has a yield statement
-    }
-
-    IEnumerator ProcessRealScan()
-    {
-        // Simulate OCR processing time
-        UpdateStatus("Processing image...");
-        yield return new WaitForSeconds(1.5f);
-
-        // For now, use mock result - you can integrate your real OCR here
-        StartCoroutine(MockScanCoroutine());
+        yield return null;
     }
 
 #endif
@@ -445,7 +440,7 @@ public class OCRManager_Simplified : MonoBehaviour
 
     public void OnCaptureButtonClicked()
     {
-        if (isProcessing || isCaptureOnCooldown) return;
+        if (isProcessing || isCaptureOnCooldown || waitingForPluginResponse) return;
 
         isProcessing = true;
         UpdateButtonStates();
@@ -473,7 +468,7 @@ public class OCRManager_Simplified : MonoBehaviour
 
     public void OnGalleryButtonClicked()
     {
-        if (isProcessing) return;
+        if (isProcessing || waitingForPluginResponse) return;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!useMockScan)
@@ -586,33 +581,191 @@ public class OCRManager_Simplified : MonoBehaviour
         captureCooldownCoroutine = null;
     }
 
-    // ==================== SCANNING LOGIC ====================
+    // ==================== REAL OCR PROCESSING ====================
+
+    IEnumerator ProcessRealScan()
+{
+    if (currentImage == null)
+    {
+        UpdateStatus("No image to process");
+        ResetProcessingState();
+        yield break;
+    }
+
+    #if UNITY_ANDROID && !UNITY_EDITOR
+        UpdateStatus("Processing with ML Kit...");
+        
+        // Convert image to Base64 for the plugin
+        byte[] imageBytes = currentImage.EncodeToJPG(85);
+        string base64Image = System.Convert.ToBase64String(imageBytes);
+        
+        bool pluginCallSuccessful = false;
+        
+        try
+        {
+            // Call the Android plugin
+            using (AndroidJavaClass pluginClass = new AndroidJavaClass("com.nutriventure.mlkit.MLKitOcr"))
+            {
+                // For camera scan (automatic mode - looks for "ingredients" text)
+                pluginClass.CallStatic("recognizeTextFromBase64", 
+                    base64Image, 
+                    gameObject.name, 
+                    "OnOCRResult");
+            }
+            
+            pluginCallSuccessful = true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Android plugin error: {e.Message}");
+            ShowError("Plugin error - using mock scan");
+            StartCoroutine(MockScanCoroutine());
+            yield break; // Exit early
+        }
+        
+        // Now handle the waiting logic OUTSIDE the try-catch block
+        if (pluginCallSuccessful)
+        {
+            waitingForPluginResponse = true;
+            
+            // Wait for plugin response with timeout
+            float timeoutTimer = 0f;
+            while (waitingForPluginResponse && timeoutTimer < maxProcessingTime)
+            {
+                timeoutTimer += Time.deltaTime;
+                UpdateStatus($"Processing... {Mathf.FloorToInt(maxProcessingTime - timeoutTimer)}s");
+                yield return null; // ← Now this is outside try-catch!
+            }
+            
+            if (waitingForPluginResponse)
+            {
+                // Timeout
+                ShowError("Processing timeout - try again");
+                ResetProcessingState();
+            }
+        }
+    #else
+        // In Unity Editor, use mock scan
+        yield return StartCoroutine(MockScanCoroutine());
+    #endif
+    }
+
+    // ==================== OCR RESULT HANDLING ====================
+
+    public void OnOCRResult(string jsonResult)
+    {
+        Debug.Log($"Android plugin result: {jsonResult}");
+        StartCoroutine(HandleOCRResultCoroutine(jsonResult));
+    }
+
+    IEnumerator HandleOCRResultCoroutine(string jsonResult)
+    {
+        waitingForPluginResponse = false;
+        
+        yield return null;
+
+        // Parse the JSON result
+        IngredientData ingredientData = JsonParser.ParseIngredientResponse(jsonResult);
+        
+        if (ingredientData == null)
+        {
+            Debug.LogError("Failed to parse OCR result");
+            ShowError("Failed to process scan results");
+            yield break;
+        }
+        
+        if (!ingredientData.IsValid())
+        {
+            ShowError("No ingredient detected");
+            yield break;
+        }
+
+        if (ingredientData.status != "success")
+        {
+            ShowError("Scan failed: " + ingredientData.status);
+            yield break;
+        }
+
+        // Check for duplicate product
+        if (ingredientData.IsDuplicateProduct())
+        {
+            TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
+            string timeString = FormatTimeSpan(cooldown);
+            ShowError($"Product already scanned 3 times today.\nTry again in {timeString}.");
+            yield break;
+        }
+
+        // Check global cooldown
+        if (!CooldownSystem.CanScanAnyIngredient())
+        {
+            TimeSpan remaining = CooldownSystem.GetGlobalCooldown();
+            ShowError($"Please wait {remaining.Seconds} seconds before scanning again.");
+            yield break;
+        }
+
+        // SUCCESS! Process the scanned ingredient
+        ProcessSuccessfulScan(ingredientData);
+    }
+
+    void ProcessSuccessfulScan(IngredientData ingredientData)
+    {
+        // Record in systems
+        CooldownSystem.RecordScan(ingredientData.ingredient);
+        ProductManager.RecordProductScan(ingredientData.fingerprint, ingredientData.ingredient);
+        
+        // Get the selected ingredient name
+        selectedEnerlingName = ingredientData.ingredient;
+        
+        // Show scanning animation/effect
+        StartCoroutine(ShowScanSuccessEffect());
+        
+        // Save to persistent data
+        SaveScannedEnerling(selectedEnerlingName);
+        
+        // Update status
+        string category = IngredientCategory.GetCategory(selectedEnerlingName);
+        UpdateStatus($"Found: {selectedEnerlingName} ({category})");
+        
+        // Transition to next scene
+        StartCoroutine(TransitionToNextScene());
+    }
+
+    // ==================== MOCK SCAN SYSTEM ====================
 
     IEnumerator MockScanCoroutine()
     {
         // Simulate scanning delay
-        yield return new WaitForSeconds(1.5f);
+        UpdateStatus("Analyzing image...");
+        yield return new WaitForSeconds(0.5f);
+        
+        UpdateStatus("Detecting text...");
+        yield return new WaitForSeconds(0.5f);
+        
+        UpdateStatus("Matching ingredients...");
+        yield return new WaitForSeconds(0.5f);
 
         // Randomly select an enerling from database
         if (ingredientDatabase != null && ingredientDatabase.ingredients.Count > 0)
         {
-            int randomIndex = Random.Range(0, ingredientDatabase.ingredients.Count);
+            int randomIndex = UnityEngine.Random.Range(0, ingredientDatabase.ingredients.Count);
             selectedEnerlingName = ingredientDatabase.ingredients[randomIndex].ingredientName;
             var selectedEnerling = ingredientDatabase.ingredients[randomIndex];
 
             Debug.Log($"Mock scan selected: {selectedEnerlingName} from {selectedEnerling.kingdom}");
 
-            // Show scanning animation/effect
-            yield return StartCoroutine(ShowScanSuccessEffect());
+            // Create mock ingredient data
+            IngredientData mockData = new IngredientData
+            {
+                ingredient = selectedEnerlingName,
+                status = "success",
+                fingerprint = System.Guid.NewGuid().ToString().Substring(0, 8),
+                total_detected = UnityEngine.Random.Range(1, 4),
+                mode = "mock",
+                all_ingredients = new string[] { selectedEnerlingName }
+            };
 
-            // Save to persistent data
-            SaveScannedEnerling(selectedEnerlingName);
-
-            // Update status
-            UpdateStatus($"Found: {selectedEnerlingName}");
-
-            // Transition to next scene
-            yield return StartCoroutine(TransitionToNextScene());
+            // Process as if real scan
+            ProcessSuccessfulScan(mockData);
         }
         else
         {
@@ -723,12 +876,14 @@ public class OCRManager_Simplified : MonoBehaviour
     void ResetProcessingState()
     {
         isProcessing = false;
+        waitingForPluginResponse = false;
         UpdateButtonStates();
     }
 
     void ResetScanState()
     {
         isProcessing = false;
+        waitingForPluginResponse = false;
         selectedEnerlingName = "";
         ClearError();
         UpdateButtonStates();
@@ -789,6 +944,17 @@ public class OCRManager_Simplified : MonoBehaviour
         fadePanel.SetActive(false);
     }
 
+    // Helper method to format time for display
+    string FormatTimeSpan(TimeSpan timeSpan)
+    {
+        if (timeSpan.TotalHours >= 1)
+            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
+        else if (timeSpan.TotalMinutes >= 1)
+            return $"{timeSpan.Minutes}m {timeSpan.Seconds}s";
+        else
+            return $"{timeSpan.Seconds}s";
+    }
+
     void OnDestroy()
     {
         // Cleanup
@@ -802,6 +968,21 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (captureCooldownCoroutine != null)
             StopCoroutine(captureCooldownCoroutine);
+
+        // Cleanup Android plugin
+        try
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            using (AndroidJavaClass pluginClass = new AndroidJavaClass("com.nutriventure.mlkit.MLKitOcr"))
+            {
+                pluginClass.CallStatic("cleanup");
+            }
+#endif
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("Plugin cleanup error: " + e.Message);
+        }
     }
 
     // Optional: Method to switch between mock and real scanning
