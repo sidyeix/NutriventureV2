@@ -165,7 +165,7 @@ MonoBehaviour:
   - ingredientName: Iron
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
     enerlingSprite: {fileID: 21300000, guid: e89d6d13f906d2648a3b4d3cc181674b, type: 3}
     modelPrefab: {fileID: 57221022565497146, guid: 7c809fe56dd518a4c897bfe374f529b4, type: 3}
     animatorController: {fileID: 0}
