@@ -398,6 +398,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     }
 
     // ====== RESET METHODS ======
+    // ====== RESET METHODS ======
     public void ResetGameState()
     {
         Debug.Log("=== RESETTING GAME STATE ===");
@@ -508,15 +509,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (gameEndManager != null)
         {
             gameEndManager.ResetGameEndState();
-            gameEndManager.ResetMinigames();
+
+            // FIXED: DO NOT call ResetMinigames() here - it's already called by the button handlers
+            // This was causing the PlayableDirector to be re-enabled during Home button click
+            // gameEndManager.ResetMinigames(); // <-- REMOVED THIS LINE
         }
 
-        // Reset player position to start
-        if (startCheckpoint != null && playerTransform != null)
-        {
-            playerTransform.position = startCheckpoint.GetSpawnPosition();
-            playerTransform.rotation = startCheckpoint.GetSpawnRotation();
-        }
+        // REMOVED: Player position reset - GameEndManager handles this
 
         // Reset the player controller
         if (playerController != null)
