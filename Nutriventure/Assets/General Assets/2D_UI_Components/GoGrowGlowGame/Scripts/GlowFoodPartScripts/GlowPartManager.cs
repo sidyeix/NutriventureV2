@@ -85,6 +85,12 @@ public class GlowPartManager : MonoBehaviour
     [SerializeField] private float playerRotationSpeed = 8f;
     [SerializeField] private float lookAtAngleThreshold = 10f;
 
+    [Header("Camera Transition Settings")]
+    [SerializeField] private float cameraBlendTime = 1.2f;
+    [SerializeField] private AnimationCurve cameraBlendCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+    [SerializeField] private int towerCameraPriority = 50;
+    [SerializeField] private int towerCameraIdlePriority = 0;
+
     [Header("Timeline Settings")]
     [SerializeField] private PlayableDirector playableDirector;
     [SerializeField] private PlayableAsset timelineToPlay;
@@ -107,6 +113,7 @@ public class GlowPartManager : MonoBehaviour
     private Coroutine panelSlideCoroutine;
     private Coroutine energyPanelAnimationCoroutine;
     private Coroutine transferCoroutine;
+    private Coroutine cameraTransitionCoroutine;
     private AudioSource audioSource;
     private AudioSource transferAudioSource;
     private AudioSource fillingAudioSource;
@@ -120,6 +127,7 @@ public class GlowPartManager : MonoBehaviour
     private Vector3 targetEndPos;
     private Coroutine lightsaberCoroutine;
     private bool hasCompleted = false;
+    private CinemachineBrain cinemachineBrain;
 
     private Dictionary<GlowTower, float> initialTowerEnergies = new Dictionary<GlowTower, float>();
     private Dictionary<GlowTower, bool> initialTowerStates = new Dictionary<GlowTower, bool>();
@@ -165,9 +173,17 @@ public class GlowPartManager : MonoBehaviour
             Debug.LogError("GlowPartManager: No player object found!");
         }
 
+        // Find Cinemachine Brain
+        cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+        if (cinemachineBrain == null)
+        {
+            Debug.LogWarning("No CinemachineBrain found! Camera transitions won't be smooth.");
+        }
+
+        // Initialize tower camera with 0 priority (inactive)
         if (towerFocusVirtualCamera != null)
         {
-            towerFocusVirtualCamera.Priority = 10;
+            towerFocusVirtualCamera.Priority = towerCameraIdlePriority;
         }
 
         InitializeLightsaber();
@@ -184,6 +200,69 @@ public class GlowPartManager : MonoBehaviour
         StoreInitialTowerStates();
 
         DisableObjectsOnStart();
+    }
+
+    // NEW: Smooth camera transition for tower focus
+    private IEnumerator SmoothCameraTransition(int targetPriority, float duration)
+    {
+        if (towerFocusVirtualCamera == null) yield break;
+
+        if (cinemachineBrain != null)
+        {
+            // Store original blend settings
+            var originalBlendStyle = cinemachineBrain.m_DefaultBlend.m_Style;
+            var originalBlendTime = cinemachineBrain.m_DefaultBlend.m_Time;
+
+            // Set to smooth blend for this transition
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
+            cinemachineBrain.m_DefaultBlend.m_Time = duration;
+        }
+
+        int startPriority = towerFocusVirtualCamera.Priority;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+
+            // Apply the blend curve for smooth acceleration/deceleration
+            float smoothT = cameraBlendCurve.Evaluate(t);
+
+            // Smoothly lerp the priority
+            towerFocusVirtualCamera.Priority = (int)Mathf.Lerp(startPriority, targetPriority, smoothT);
+
+            yield return null;
+        }
+
+        // Ensure final priority is exactly set
+        towerFocusVirtualCamera.Priority = targetPriority;
+
+        cameraTransitionCoroutine = null;
+    }
+
+    // MODIFIED: Set tower focus camera priority with smooth transition
+    private void SetTowerFocusCameraPriority(int priority, bool smooth = true)
+    {
+        if (towerFocusVirtualCamera != null)
+        {
+            if (smooth && cameraBlendTime > 0f)
+            {
+                // Stop any ongoing camera transition
+                if (cameraTransitionCoroutine != null)
+                    StopCoroutine(cameraTransitionCoroutine);
+
+                // Start smooth transition
+                cameraTransitionCoroutine = StartCoroutine(SmoothCameraTransition(priority, cameraBlendTime));
+                Debug.Log($"Smooth camera transition to priority {priority} over {cameraBlendTime}s");
+            }
+            else
+            {
+                // Instant priority change (fallback)
+                towerFocusVirtualCamera.Priority = priority;
+                Debug.Log($"Instant camera priority set to {priority}");
+            }
+        }
     }
 
     private void StoreInitialTowerStates()
@@ -820,6 +899,7 @@ public class GlowPartManager : MonoBehaviour
         // Continuously called while button is held
     }
 
+    // MODIFIED: Start rotation with smooth camera transition
     private void StartRotationToTower()
     {
         if (!isGlowPartActive || currentActiveTower == null || currentActiveTower.IsFullyLit())
@@ -835,7 +915,10 @@ public class GlowPartManager : MonoBehaviour
         SetCharacterTransferAnimation(true);
         EnableObjectsWhenHolding();
         DisableObjectsWhenHolding();
-        SetTowerFocusCameraPriority(50);
+
+        // Smooth camera transition to tower focus
+        SetTowerFocusCameraPriority(towerCameraPriority, true);
+
         currentActiveTower.SetLightingAnimation(true);
 
         ShowEnergySliderIndicator();
@@ -871,6 +954,7 @@ public class GlowPartManager : MonoBehaviour
         PlaySound(transferStartSound);
     }
 
+    // MODIFIED: Stop transfer with smooth camera transition back to idle
     private void StopTransfer()
     {
         if (!isRotatingToTower && !isTransferring) return;
@@ -897,16 +981,10 @@ public class GlowPartManager : MonoBehaviour
             currentActiveTower.SetLightingAnimation(false);
         }
 
-        SetTowerFocusCameraPriority(10);
-        HideEnergySliderIndicator();
-    }
+        // Smooth camera transition back to idle priority
+        SetTowerFocusCameraPriority(towerCameraIdlePriority, true);
 
-    private void SetTowerFocusCameraPriority(int priority)
-    {
-        if (towerFocusVirtualCamera != null)
-        {
-            towerFocusVirtualCamera.Priority = priority;
-        }
+        HideEnergySliderIndicator();
     }
 
     private void EnableObjectsWhenHolding()
@@ -1083,6 +1161,7 @@ public class GlowPartManager : MonoBehaviour
         Debug.Log("GlowPartManager: Transfer Energy Routine Ended");
     }
 
+    // MODIFIED: On tower fully lit - smooth camera transition back to idle
     private void OnTowerFullyLit(GlowTower tower)
     {
         Debug.Log($"GlowPartManager: Tower {tower.gameObject.name} is fully lit!");
@@ -1101,7 +1180,10 @@ public class GlowPartManager : MonoBehaviour
         DisableObjectsWhenNotHolding();
         EnableObjectsWhenNotHolding();
         StartLightsaberRetraction();
-        SetTowerFocusCameraPriority(10);
+
+        // Smooth camera transition back to idle
+        SetTowerFocusCameraPriority(towerCameraIdlePriority, true);
+
         HideEnergySliderIndicator();
 
         StopLoopAudio();
@@ -1352,6 +1434,19 @@ public class GlowPartManager : MonoBehaviour
 
         StopAllCoroutines();
 
+        // Stop any ongoing camera transition
+        if (cameraTransitionCoroutine != null)
+        {
+            StopCoroutine(cameraTransitionCoroutine);
+            cameraTransitionCoroutine = null;
+        }
+
+        // Reset tower camera to idle priority
+        if (towerFocusVirtualCamera != null)
+        {
+            towerFocusVirtualCamera.Priority = towerCameraIdlePriority;
+        }
+
         if (lightsaber != null)
         {
             lightsaber.EndPos = Vector3.zero;
@@ -1532,4 +1627,17 @@ public class GlowPartManager : MonoBehaviour
     public void SetTimelineDelay(float delay) => timelineDelay = Mathf.Max(0f, delay);
     public void SetTimelineToPlay(PlayableAsset timeline) => timelineToPlay = timeline;
     public void SetPlayableDirector(PlayableDirector director) => playableDirector = director;
+
+    // Public methods to control camera transition settings
+    public void SetCameraBlendTime(float blendTime)
+    {
+        cameraBlendTime = Mathf.Max(0.1f, blendTime);
+        Debug.Log($"GlowPartManager: Camera blend time set to {cameraBlendTime}s");
+    }
+
+    public void SetTowerCameraPriority(int priority)
+    {
+        towerCameraPriority = priority;
+        Debug.Log($"GlowPartManager: Tower camera active priority set to {priority}");
+    }
 }

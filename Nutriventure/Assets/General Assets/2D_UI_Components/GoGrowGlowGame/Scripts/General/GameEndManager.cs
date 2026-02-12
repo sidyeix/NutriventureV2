@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using StarterAssets;
 using Cinemachine;
+using UnityEngine.Playables;
 
 public class GameEndManager : MonoBehaviour
 {
@@ -28,6 +29,7 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private AudioClip countTickSound;
     [SerializeField] private AudioClip countCompleteSound;
     [SerializeField] private AudioSource countAudioSource;
+    [SerializeField] private float minTickInterval = 0.05f;
 
     [Header("Result Background")]
     [SerializeField] private Image resultBackground;
@@ -46,12 +48,14 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera gameEndVirtualCamera;
     [SerializeField] private CinemachineVirtualCamera playerFollowCamera;
     [SerializeField] private int gameEndCameraPriority = 100;
-    [SerializeField] private int playerCameraPriority = 10;
+    [SerializeField] private int playerCameraPriority = 20;
 
     [Header("Spawn Points")]
     [SerializeField] private Transform resultCharacterSpawnPoint;
     [SerializeField] private Transform lobbyPoint;
-    [SerializeField] private Transform startingPoint;
+
+    [Header("Player Armature - DRAG HERE")]
+    [SerializeField] private Transform playerArmature;
 
     [Header("Quest System")]
     [SerializeField] private string kingdomID = "general_quests";
@@ -81,10 +85,16 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private Animator characterAnimator;
     [SerializeField] private string danceParameter = "isDancing";
     [SerializeField] private string thinkParameter = "isThinking";
+    [SerializeField] private string freefallParameter = "FreeFall";
+    [SerializeField] private string groundedParameter = "Grounded";
+    [SerializeField] private string jumpParameter = "Jump";
 
     [Header("UI Controls")]
     [SerializeField] private GameObject uiControlsCanvas;
-    [SerializeField] private MechanicsBoardManager mechanicsBoardManager;
+
+    [Header("PLAYABLE DIRECTOR OBJECT CONTROL")]
+    [SerializeField] private GameObject playableDirectorObject; // The entire GameObject containing the PlayableDirector
+    [SerializeField] private float homeButtonReactivateDelay = 2f; // Time to wait before reactivating on Home button
 
     [Header("References")]
     [SerializeField] private GoGrowGlowGameManager gameManager;
@@ -107,6 +117,11 @@ public class GameEndManager : MonoBehaviour
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
     private bool isCountingAnimationComplete = false;
+    private bool isPlayableDirectorReactivating = false; // Track if we're waiting to reactivate
+
+    // Audio control variables
+    private bool isCountAudioPlaying = false;
+    private float lastTickTime = 0f;
 
     private Dictionary<GameObject, TransformData> initialTransformData = new Dictionary<GameObject, TransformData>();
 
@@ -141,9 +156,6 @@ public class GameEndManager : MonoBehaviour
         if (startingSequenceManager == null)
             startingSequenceManager = FindObjectOfType<StartingSequenceManager>();
 
-        if (mechanicsBoardManager != null)
-            mechanicsBoardManager = FindObjectOfType<MechanicsBoardManager>();
-
         // Find Cinemachine Brain
         cinemachineBrain = FindObjectOfType<CinemachineBrain>();
         if (cinemachineBrain != null)
@@ -176,14 +188,16 @@ public class GameEndManager : MonoBehaviour
             playerFollowCamera = FindObjectOfType<CinemachineVirtualCamera>();
         }
 
-        // Try to find starting point if not assigned
-        if (startingPoint == null)
+        // Warn if player armature is not assigned
+        if (playerArmature == null)
         {
-            GameObject startPointObj = GameObject.Find("StartingPoint");
-            if (startPointObj != null)
-            {
-                startingPoint = startPointObj.transform;
-            }
+            Debug.LogWarning("Player Armature is not assigned in the Inspector! Please drag the PlayerArmature GameObject to the field.");
+        }
+
+        // Warn if playable director object is not assigned
+        if (playableDirectorObject == null)
+        {
+            Debug.LogWarning("Playable Director Object is not assigned in the Inspector! Timeline control will not work.");
         }
     }
 
@@ -223,24 +237,233 @@ public class GameEndManager : MonoBehaviour
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
 
-        // Make sure mechanics board is hidden initially
-        if (mechanicsBoardManager != null && mechanicsBoardManager.mechanicsBoard != null)
-        {
-            mechanicsBoardManager.mechanicsBoard.SetActive(false);
-        }
-
         if (storeInitialPositionsOnStart)
         {
             StoreInitialTransforms();
         }
 
         // IMPORTANT: Don't auto-search for background music
-        // It should be assigned in the Inspector
         if (backgroundMusicSource == null)
         {
             Debug.LogWarning("BackgroundMusicSource is not assigned in the Inspector!");
         }
     }
+
+    // ========== PLAYABLE DIRECTOR OBJECT CONTROL ==========
+
+    /// <summary>
+    /// Disables the Playable Director GameObject immediately
+    /// Called when game ends or player reaches result point
+    /// </summary>
+    private void DisablePlayableDirectorObject()
+    {
+        if (playableDirectorObject != null)
+        {
+            playableDirectorObject.SetActive(false);
+            Debug.Log("?? Playable Director Object DISABLED - Home button clicked");
+        }
+    }
+
+    /// <summary>
+    /// Enables the Playable Director GameObject immediately
+    /// Called when restart button is clicked
+    /// </summary>
+    private void EnablePlayableDirectorObject()
+    {
+        if (playableDirectorObject != null)
+        {
+            playableDirectorObject.SetActive(true);
+            Debug.Log("?? Playable Director Object ENABLED - Restart button clicked");
+        }
+    }
+
+    /// <summary>
+    /// Disables the Playable Director GameObject and re-enables it after a delay
+    /// Called when home button is clicked
+    /// </summary>
+    private void DisableAndReenablePlayableDirectorObject()
+    {
+        if (playableDirectorObject != null)
+        {
+            // Stop any existing reactivation coroutine
+            if (isPlayableDirectorReactivating)
+            {
+                StopCoroutine(ReenablePlayableDirectorObjectAfterDelay(homeButtonReactivateDelay));
+                isPlayableDirectorReactivating = false;
+            }
+
+            // Disable immediately
+            playableDirectorObject.SetActive(false);
+            Debug.Log("?? Playable Director Object DISABLED - Home button clicked");
+
+            // Start coroutine to re-enable after delay
+            StartCoroutine(ReenablePlayableDirectorObjectAfterDelay(homeButtonReactivateDelay));
+        }
+    }
+
+    private IEnumerator ReenablePlayableDirectorObjectAfterDelay(float delay)
+    {
+        isPlayableDirectorReactivating = true;
+        Debug.Log($"?? Waiting {delay} seconds before re-enabling Playable Director Object...");
+
+        yield return new WaitForSeconds(delay);
+
+        if (playableDirectorObject != null)
+        {
+            playableDirectorObject.SetActive(true);
+            Debug.Log("?? Playable Director Object RE-ENABLED after delay");
+        }
+
+        isPlayableDirectorReactivating = false;
+    }
+
+    // ========== ANIMATOR STATE RESET ==========
+
+    private void ResetAnimatorBeforeTeleport()
+    {
+        if (characterAnimator == null) return;
+
+        if (!string.IsNullOrEmpty(freefallParameter))
+            characterAnimator.SetBool(freefallParameter, false);
+
+        if (!string.IsNullOrEmpty(groundedParameter))
+            characterAnimator.SetBool(groundedParameter, true);
+
+        if (!string.IsNullOrEmpty(jumpParameter))
+            characterAnimator.SetBool(jumpParameter, false);
+
+        characterAnimator.ResetTrigger("Jump");
+        characterAnimator.ResetTrigger("jump");
+    }
+
+    // ========== CONTINUE BUTTON RESET LOGIC ==========
+
+    private void ResetAllContinueButtons()
+    {
+        ContinueButton[] continueButtons = FindObjectsOfType<ContinueButton>(true);
+        if (continueButtons.Length == 0) return;
+
+        foreach (ContinueButton continueButton in continueButtons)
+        {
+            if (continueButton != null)
+            {
+                continueButton.ResetButton();
+            }
+        }
+    }
+
+    public void TriggerContinueButtonReset()
+    {
+        ResetAllContinueButtons();
+    }
+
+    // ========== TELEPORTATION METHODS ==========
+
+    private void TeleportPlayerToTransform(Transform targetTransform, string locationName)
+    {
+        if (playerController == null || targetTransform == null)
+        {
+            Debug.LogError($"Cannot teleport player - PlayerController or {locationName} Transform is null!");
+            return;
+        }
+
+        Vector3 targetPosition = targetTransform.position;
+        Quaternion targetRotation = targetTransform.rotation;
+
+        Debug.Log($"Teleporting player to {locationName}: {targetPosition}");
+
+        ResetAnimatorBeforeTeleport();
+
+        if (playerArmature != null && playerController.transform != null)
+        {
+            if (playerArmature.parent != playerController.transform)
+            {
+                playerArmature.SetParent(playerController.transform);
+            }
+
+            playerArmature.localPosition = Vector3.zero;
+            playerArmature.localRotation = Quaternion.identity;
+        }
+
+        playerController.transform.position = targetPosition;
+        playerController.transform.rotation = targetRotation;
+
+        if (characterAnimator != null)
+        {
+            characterAnimator.Update(0f);
+        }
+    }
+
+    private void TeleportPlayerToResultPoint()
+    {
+        TeleportPlayerToTransform(resultCharacterSpawnPoint, "Result Point");
+    }
+
+    private void TeleportPlayerToLobbyPoint()
+    {
+        TeleportPlayerToTransform(lobbyPoint, "Lobby Point");
+    }
+
+    // ========== AUDIO METHODS ==========
+
+    private void StopCountAudio()
+    {
+        if (countAudioSource != null && countAudioSource.isPlaying)
+        {
+            countAudioSource.Stop();
+        }
+        isCountAudioPlaying = false;
+    }
+
+    private void PlayCountTick()
+    {
+        if (countTickSound == null || countAudioSource == null) return;
+        if (Time.time - lastTickTime < minTickInterval) return;
+
+        countAudioSource.PlayOneShot(countTickSound);
+        lastTickTime = Time.time;
+        isCountAudioPlaying = true;
+    }
+
+    private void PlayLobbyMusic()
+    {
+        if (backgroundMusicSource == null) return;
+
+        if (!backgroundMusicSource.gameObject.activeSelf)
+            backgroundMusicSource.gameObject.SetActive(true);
+
+        if (!backgroundMusicSource.enabled)
+            backgroundMusicSource.enabled = true;
+
+        if (lobbyMusicClip != null)
+        {
+            backgroundMusicSource.Stop();
+            backgroundMusicSource.clip = lobbyMusicClip;
+            backgroundMusicSource.loop = true;
+            backgroundMusicSource.Play();
+        }
+    }
+
+    private void PlayRestartMusic()
+    {
+        if (backgroundMusicSource == null) return;
+
+        if (!backgroundMusicSource.gameObject.activeSelf)
+            backgroundMusicSource.gameObject.SetActive(true);
+
+        if (!backgroundMusicSource.enabled)
+            backgroundMusicSource.enabled = true;
+
+        if (restartMusicClip != null)
+        {
+            backgroundMusicSource.Stop();
+            backgroundMusicSource.clip = restartMusicClip;
+            backgroundMusicSource.loop = false;
+            backgroundMusicSource.Play();
+        }
+    }
+
+    // ========== TRANSFORM STORAGE ==========
 
     private void StoreInitialTransforms()
     {
@@ -273,7 +496,6 @@ public class GameEndManager : MonoBehaviour
                 obj.transform.rotation = data.rotation;
                 obj.transform.localScale = data.localScale;
 
-                // Reset Rigidbody if exists
                 Rigidbody rb = obj.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
@@ -285,66 +507,44 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
+    // ========== GAME END SCREEN ==========
+
     public void ShowGameEndScreen(bool playerWon)
     {
         Debug.Log($"=== SHOWING GAME END SCREEN - {(playerWon ? "WIN" : "LOSE")} ===");
 
-        // Hide stars when showing summary
+        // CRITICAL: Disable Playable Director Object when game ends / result point reached
+        DisablePlayableDirectorObject();
+
         HideStarsWhenShowingSummary();
-
-        // Disable objects that should be hidden when game ends
         DisableObjectsOnGameEnd();
-
-        // Switch to game end camera with CUT blend
         SwitchToGameEndCameraWithCut();
-
-        // Teleport player to result spawn point
         TeleportPlayerToResultPoint();
 
-        // Collect game data
         completionTime = gameManager.GetGameTimer();
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
 
-        // Calculate star rating
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-
-        // Calculate rewards
         CalculateRewards();
 
-        // Set up UI - Set correct background based on win/lose
         if (resultBackground != null)
         {
             resultBackground.sprite = playerWon ? winBackground : loseBackground;
         }
 
-        // Handle character animation based on stars
         HandleCharacterAnimation(playerWon, starsEarned);
-
-        // Handle background music - ONLY if we have a valid source
         HandleBackgroundMusic(playerWon && starsEarned > 0);
 
-        // Handle win/lose specific logic
-        if (!playerWon)
-        {
-            HandleLose();
-        }
-        else
-        {
-            HandleWin();
-        }
+        if (!playerWon) HandleLose();
+        else HandleWin();
 
-        // Handle key unlocked object based on quest status AND stars
         HandleKeyUnlockedObject(playerWon);
 
-        // Show the game summary
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(true);
 
-        // Reset counting animation flag
         isCountingAnimationComplete = false;
-
-        // Start animations
         StartCoroutine(GameEndSequence());
     }
 
@@ -353,9 +553,7 @@ public class GameEndManager : MonoBehaviour
         foreach (GameObject star in starsToHide)
         {
             if (star != null && star.activeSelf)
-            {
                 star.SetActive(false);
-            }
         }
     }
 
@@ -373,8 +571,7 @@ public class GameEndManager : MonoBehaviour
             if (quest != null)
             {
                 if ((quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress) &&
-                    starsEarned >= 2 &&
-                    playerWon)
+                    starsEarned >= 2 && playerWon)
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
@@ -389,19 +586,13 @@ public class GameEndManager : MonoBehaviour
     {
         if (characterAnimator == null) return;
 
-        // Reset all animation parameters first
         characterAnimator.SetBool(danceParameter, false);
         characterAnimator.SetBool(thinkParameter, false);
 
-        // Set animation based on stars
         if (stars == 0)
-        {
             characterAnimator.SetBool(thinkParameter, true);
-        }
         else if (playerWon)
-        {
             characterAnimator.SetBool(danceParameter, true);
-        }
     }
 
     private void ResetCharacterAnimation()
@@ -417,33 +608,20 @@ public class GameEndManager : MonoBehaviour
     {
         foreach (GameObject obj in objectsToDisableOnGameEnd)
         {
-            // CRITICAL: Check if this is our background music source
             if (obj != null && obj.activeSelf)
             {
-                // Skip disabling if this is the background music source
                 if (backgroundMusicSource != null && obj == backgroundMusicSource.gameObject)
-                {
-                    Debug.Log($"Skipping disable of background music: {obj.name}");
                     continue;
-                }
 
                 obj.SetActive(false);
             }
         }
 
-        // Also disable UI controls canvas if assigned
         if (uiControlsCanvas != null && uiControlsCanvas.activeSelf)
-        {
             uiControlsCanvas.SetActive(false);
-        }
-
-        // Also disable mechanics board if it's open
-        if (mechanicsBoardManager != null && mechanicsBoardManager.mechanicsBoard != null &&
-            mechanicsBoardManager.mechanicsBoard.activeSelf)
-        {
-            mechanicsBoardManager.CloseMechanicsBoard();
-        }
     }
+
+    // ========== CAMERA METHODS ==========
 
     private void SetCameraBlendToCut()
     {
@@ -494,38 +672,24 @@ public class GameEndManager : MonoBehaviour
             playerFollowCamera.Priority = playerCameraPriority;
 
             if (cinemachineBrain != null)
-            {
                 cinemachineBrain.ManualUpdate();
-            }
         }
     }
 
-    private void TeleportPlayerToResultPoint()
+    private IEnumerator RestoreCameraBlendAfterTeleport()
     {
-        if (playerController != null && resultCharacterSpawnPoint != null)
-        {
-            playerController.transform.position = resultCharacterSpawnPoint.position;
-            playerController.transform.rotation = resultCharacterSpawnPoint.rotation;
-        }
+        yield return null;
+        RestoreOriginalCameraBlend();
     }
 
-    private void TeleportPlayerToStartingPoint()
-    {
-        if (playerController != null && startingPoint != null)
-        {
-            playerController.transform.position = startingPoint.position;
-            playerController.transform.rotation = startingPoint.rotation;
-        }
-    }
+    // ========== WIN/LOSE HANDLING ==========
 
     private void HandleLose()
     {
         foreach (GameObject obj in objectsToEnableOnLose)
         {
             if (obj != null && !obj.activeSelf)
-            {
                 obj.SetActive(true);
-            }
         }
     }
 
@@ -534,9 +698,7 @@ public class GameEndManager : MonoBehaviour
         foreach (GameObject obj in objectsToEnableOnWin)
         {
             if (obj != null && !obj.activeSelf)
-            {
                 obj.SetActive(true);
-            }
         }
     }
 
@@ -545,18 +707,29 @@ public class GameEndManager : MonoBehaviour
         foreach (GameObject obj in objectsToEnableOnHomeButton)
         {
             if (obj != null && !obj.activeSelf)
-            {
                 obj.SetActive(true);
-            }
         }
     }
+
+    private void DisableWinLoseObjects()
+    {
+        foreach (GameObject obj in objectsToEnableOnWin)
+        {
+            if (obj != null && obj.activeSelf) obj.SetActive(false);
+        }
+
+        foreach (GameObject obj in objectsToEnableOnLose)
+        {
+            if (obj != null && obj.activeSelf) obj.SetActive(false);
+        }
+    }
+
+    // ========== ANIMATION SEQUENCES ==========
 
     private IEnumerator GameEndSequence()
     {
         yield return new WaitForSeconds(0.5f);
-
         yield return StartCoroutine(AnimateStars());
-
         yield return StartCoroutine(AnimateCountingNumbers());
 
         isCountingAnimationComplete = true;
@@ -571,12 +744,10 @@ public class GameEndManager : MonoBehaviour
             yield break;
 
         starsContainer.SetActive(true);
-
         yield return new WaitForSeconds(0.3f);
 
         starsAnimator.SetInteger(starParameter, 0);
         starsAnimator.Play("Default", -1, 0f);
-
         yield return null;
 
         starsAnimator.SetInteger(starParameter, starsEarned);
@@ -596,6 +767,8 @@ public class GameEndManager : MonoBehaviour
         if (pointsText == null || timeText == null || coinsText == null || expText == null)
             yield break;
 
+        StopCountAudio();
+
         pointsText.text = "0";
         timeText.text = "00:00";
         coinsText.text = "0";
@@ -605,6 +778,7 @@ public class GameEndManager : MonoBehaviour
 
         float elapsedTime = 0f;
         int lastIntegerValue = 0;
+        bool hasPlayedCompleteSound = false;
 
         while (elapsedTime < countAnimationDuration)
         {
@@ -618,9 +792,10 @@ public class GameEndManager : MonoBehaviour
             float currentExp = Mathf.Lerp(0, totalExp, smoothProgress);
 
             int currentInteger = Mathf.FloorToInt(currentPoints);
-            if (currentInteger > lastIntegerValue && countTickSound != null && countAudioSource != null)
+
+            if (currentInteger > lastIntegerValue)
             {
-                countAudioSource.PlayOneShot(countTickSound);
+                PlayCountTick();
                 lastIntegerValue = currentInteger;
             }
 
@@ -632,14 +807,17 @@ public class GameEndManager : MonoBehaviour
             yield return null;
         }
 
+        StopCountAudio();
+
         pointsText.text = playerPoints.ToString("N0");
         timeText.text = FormatTime(completionTime);
         coinsText.text = totalCoins.ToString("N0");
         expText.text = totalExp.ToString("N0");
 
-        if (countCompleteSound != null && countAudioSource != null)
+        if (countCompleteSound != null && countAudioSource != null && !hasPlayedCompleteSound)
         {
             countAudioSource.PlayOneShot(countCompleteSound);
+            hasPlayedCompleteSound = true;
         }
     }
 
@@ -663,14 +841,10 @@ public class GameEndManager : MonoBehaviour
     {
         switch (starsEarned)
         {
-            case 3:
-                baseCoins = 1000; baseExp = 1000; break;
-            case 2:
-                baseCoins = 500; baseExp = 500; break;
-            case 1:
-                baseCoins = 100; baseExp = 100; break;
-            default:
-                baseCoins = 0; baseExp = 0; break;
+            case 3: baseCoins = 1000; baseExp = 1000; break;
+            case 2: baseCoins = 500; baseExp = 500; break;
+            case 1: baseCoins = 100; baseExp = 100; break;
+            default: baseCoins = 0; baseExp = 0; break;
         }
 
         int bonusExpFromPoints = Mathf.FloorToInt(playerPoints / 7f);
@@ -686,23 +860,151 @@ public class GameEndManager : MonoBehaviour
         totalCoins = baseCoins + bonusCoinsFromPoints + lifeBonusCoins;
     }
 
+    // ========== BUTTON HANDLERS ==========
+
     private void OnButtonClicked()
     {
+        StopCountAudio();
         DisableWinLoseObjects();
         EnablePlayerControl();
     }
 
+    private void EnablePlayerControl()
+    {
+        if (playerController != null) playerController.enabled = true;
+    }
+
+    // ========== HOME BUTTON ==========
+    // Disable Playable Director Object -> Teleport -> NO reactivation
+    private void OnHomeClicked()
+    {
+        if (!isCountingAnimationComplete) return;
+
+        Debug.Log("=== HOME BUTTON CLICKED ===");
+
+        StopCountAudio();
+        OnButtonClicked();
+        PlayLobbyMusic();
+        ResetGameEndState();
+        ResetMinigames(); // This now ONLY resets minigames, no PlayableDirector control
+        ResetAllContinueButtons();
+
+        // DISABLE Playable Director Object - stays disabled until Restart
+        DisablePlayableDirectorObject();
+
+        // IMMEDIATELY switch to player camera
+        SwitchToPlayerCameraWithCut();
+
+        // Teleport to LOBBY POINT
+        TeleportPlayerToLobbyPoint();
+
+        if (playerController != null && !playerController.gameObject.activeSelf)
+            playerController.gameObject.SetActive(true);
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        if (isFirstTimeCompletion && questManager != null)
+        {
+            Quest quest = questManager.GetQuest(questID);
+            if (quest != null)
+            {
+                questManager.CompleteTask(questID, $"{questID}_task_1");
+                questManager.ClaimQuest(questID);
+            }
+        }
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+
+        Debug.Log("=== HOME BUTTON COMPLETE ===");
+        Debug.Log("Playable Director Object DISABLED - Will remain disabled until Restart button");
+    }
+
+
+    // ========== RESTART BUTTON ==========
+    // ENABLE Playable Director Object FIRST, then do everything else
+    private void OnRestartClicked()
+    {
+        if (!isCountingAnimationComplete) return;
+
+        Debug.Log("=== RESTART BUTTON CLICKED ===");
+
+        // CRITICAL: Enable Playable Director Object IMMEDIATELY before any other logic
+        EnablePlayableDirectorObject();
+
+        StopCountAudio();
+        OnButtonClicked();
+        PlayRestartMusic();
+        ResetGameEndState();
+
+        Debug.Log("STEP 1: Performing complete game reset...");
+        ResetMinigames();
+        ResetAllContinueButtons();
+
+        if (gameManager != null)
+        {
+            gameManager.FullGameReset(); // This no longer calls ResetMinigames() again
+            Debug.Log("GameManager fully reset");
+        }
+
+        Debug.Log("STEP 2: Teleporting to lobby point...");
+        TeleportPlayerToLobbyPoint();
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = playerCameraPriority;
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+
+        Debug.Log("=== RESTART BUTTON COMPLETE ===");
+        Debug.Log("Playable Director Object ENABLED - Ready for timeline");
+    }
+
+
+    private void OnNextClicked()
+    {
+        if (!isCountingAnimationComplete) return;
+
+        Debug.Log("=== NEXT BUTTON CLICKED ===");
+
+        StopCountAudio();
+        OnButtonClicked();
+        PlayLobbyMusic();
+        ResetGameEndState();
+        ResetMinigames();
+
+        if (isFirstTimeCompletion && questManager != null)
+        {
+            Quest quest = questManager.GetQuest(questID);
+            if (quest != null)
+            {
+                questManager.CompleteTask(questID, $"{questID}_task_1");
+                questManager.ClaimQuest(questID);
+            }
+        }
+
+        TeleportPlayerToLobbyPoint();
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+    }
+
+    // ========== RESET METHODS ==========
+
     public void ResetGameEndState()
     {
+        StopCountAudio();
         ResetCharacterAnimation();
         SwitchToPlayerCameraWithCut();
         DisableWinLoseObjects();
 
         if (starsAnimator != null) starsAnimator.SetInteger(starParameter, 0);
         if (starsContainer != null) starsContainer.SetActive(false);
-
-        if (keyUnlockedObject != null && keyUnlockedObject.activeSelf)
-            keyUnlockedObject.SetActive(false);
+        if (keyUnlockedObject != null && keyUnlockedObject.activeSelf) keyUnlockedObject.SetActive(false);
 
         if (pointsText != null) pointsText.text = "0";
         if (timeText != null) timeText.text = "00:00";
@@ -713,31 +1015,27 @@ public class GameEndManager : MonoBehaviour
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
     }
 
-    private void DisableWinLoseObjects()
-    {
-        foreach (GameObject obj in objectsToEnableOnWin)
-        {
-            if (obj != null && obj.activeSelf) obj.SetActive(false);
-        }
-
-        foreach (GameObject obj in objectsToEnableOnLose)
-        {
-            if (obj != null && obj.activeSelf) obj.SetActive(false);
-        }
-    }
-
-    private void EnablePlayerControl()
-    {
-        if (playerController != null) playerController.enabled = true;
-    }
-
     public void ResetMinigames()
     {
-        if (growAssessmentManager != null) growAssessmentManager.EndGrowAssessment();
+        Debug.Log("=== COMPLETE MINIGAMES RESET ===");
+
+        if (growAssessmentManager != null)
+        {
+            growAssessmentManager.EndGrowAssessment();
+            growAssessmentManager.CompleteResetForNewGame();
+        }
+
         ResetGlowTowers();
         ResetDayNightTransition();
 
-        if (startingSequenceManager != null) startingSequenceManager.EnableAllControlsAndUI();
+        if (startingSequenceManager != null)
+        {
+            startingSequenceManager.EnableAllControlsAndUI();
+            var resetMethod = startingSequenceManager.GetType().GetMethod("ForceCameraReset");
+            if (resetMethod != null)
+                resetMethod.Invoke(startingSequenceManager, new object[] { 0f });
+        }
+
         ResetTorchMinigame();
 
         AssessmentTrigger assessmentTrigger = FindObjectOfType<AssessmentTrigger>();
@@ -748,6 +1046,8 @@ public class GameEndManager : MonoBehaviour
 
         ResetObjectsToInitialState();
         ResetOneTimeAnimations();
+
+        Debug.Log("=== MINIGAMES COMPLETELY RESET ===");
     }
 
     private void ResetGlowTowers()
@@ -826,146 +1126,12 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    private void OnHomeClicked()
-    {
-        if (!isCountingAnimationComplete) return;
-
-        OnButtonClicked();
-        PlayLobbyMusic();
-        ResetGameEndState();
-        ResetMinigames();
-
-        if (playerController != null && lobbyPoint != null)
-        {
-            playerController.transform.position = lobbyPoint.position;
-            playerController.transform.rotation = lobbyPoint.rotation;
-        }
-
-        if (playerController != null && !playerController.gameObject.activeSelf)
-            playerController.gameObject.SetActive(true);
-
-        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
-            uiControlsCanvas.SetActive(true);
-
-        EnableObjectsOnHomeButton();
-
-        if (isFirstTimeCompletion && questManager != null)
-        {
-            Quest quest = questManager.GetQuest(questID);
-            if (quest != null)
-            {
-                questManager.CompleteTask(questID, $"{questID}_task_1");
-                questManager.ClaimQuest(questID);
-            }
-        }
-
-        StartCoroutine(RestoreCameraBlendAfterTeleport());
-    }
-
-    private IEnumerator RestoreCameraBlendAfterTeleport()
-    {
-        yield return null;
-        RestoreOriginalCameraBlend();
-    }
-
-    // FIXED: This method now ONLY changes the music clip, doesn't disable/create AudioSources
-    private void PlayLobbyMusic()
-    {
-        if (backgroundMusicSource == null)
-        {
-            Debug.LogWarning("BackgroundMusicSource is null. Cannot play lobby music.");
-            return;
-        }
-
-        if (lobbyMusicClip != null)
-        {
-            // Just change the clip, don't disable/enable the GameObject
-            backgroundMusicSource.Stop();
-            backgroundMusicSource.clip = lobbyMusicClip;
-            backgroundMusicSource.loop = true;
-            backgroundMusicSource.Play();
-
-            Debug.Log($"Changed to lobby music: {lobbyMusicClip.name}");
-        }
-        else
-        {
-            Debug.LogWarning("Lobby music clip not assigned!");
-        }
-    }
-
-    private void OnRestartClicked()
-    {
-        if (!isCountingAnimationComplete) return;
-
-        OnButtonClicked();
-        ResetGameEndState();
-        ResetMinigames();
-        TeleportPlayerToStartingPoint();
-
-        if (playerFollowCamera != null)
-            playerFollowCamera.Priority = playerCameraPriority;
-
-        if (gameManager != null)
-            gameManager.FullGameReset();
-
-        if (mechanicsBoardManager != null)
-            mechanicsBoardManager.OpenMechanicsBoard();
-
-        PlayRestartMusic();
-        StartCoroutine(RestoreCameraBlendAfterTeleport());
-    }
-
-    // FIXED: This method now ONLY changes the music clip
-    private void PlayRestartMusic()
-    {
-        if (backgroundMusicSource == null)
-        {
-            Debug.LogWarning("BackgroundMusicSource is null. Cannot play restart music.");
-            return;
-        }
-
-        if (restartMusicClip != null)
-        {
-            // Just change the clip, don't disable/enable the GameObject
-            backgroundMusicSource.Stop();
-            backgroundMusicSource.clip = restartMusicClip;
-            backgroundMusicSource.loop = false;
-            backgroundMusicSource.Play();
-
-            Debug.Log($"Changed to restart music: {restartMusicClip.name}");
-        }
-    }
-
-    private void OnNextClicked()
-    {
-        if (!isCountingAnimationComplete) return;
-
-        OnButtonClicked();
-        PlayLobbyMusic();
-        ResetGameEndState();
-        ResetMinigames();
-
-        if (isFirstTimeCompletion && questManager != null)
-        {
-            Quest quest = questManager.GetQuest(questID);
-            if (quest != null)
-            {
-                questManager.CompleteTask(questID, $"{questID}_task_1");
-                questManager.ClaimQuest(questID);
-            }
-        }
-
-        if (playerController != null && lobbyPoint != null)
-        {
-            playerController.transform.position = lobbyPoint.position;
-            playerController.transform.rotation = lobbyPoint.rotation;
-        }
-
-        StartCoroutine(RestoreCameraBlendAfterTeleport());
-    }
+    // ========== PUBLIC HANDLERS ==========
 
     public void HandleGameOver()
     {
+        StopCountAudio();
+
         if (gameManager != null && gameManager.IsGameActive())
             gameManager.EndGame();
 
@@ -979,6 +1145,8 @@ public class GameEndManager : MonoBehaviour
 
     public void HandleLevelComplete()
     {
+        StopCountAudio();
+
         if (gameManager != null && gameManager.IsGameActive())
             gameManager.EndGame();
 
@@ -992,35 +1160,26 @@ public class GameEndManager : MonoBehaviour
     public void TriggerLevelComplete() => HandleLevelComplete();
     public void TriggerGameOver() => HandleGameOver();
 
-    // FIXED: This method now ONLY changes the music clip
     private void HandleBackgroundMusic(bool isWin)
     {
-        if (backgroundMusicSource == null)
-        {
-            Debug.LogWarning("Background music source is null. Skipping music change.");
-            return;
-        }
+        if (backgroundMusicSource == null) return;
 
         AudioClip musicToPlay = isWin ? winMusicClip : loseMusicClip;
 
         if (musicToPlay != null)
         {
-            // Just change the clip, don't disable/enable the GameObject
             backgroundMusicSource.Stop();
             backgroundMusicSource.clip = musicToPlay;
             backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
-
-            Debug.Log($"Changed background music to: {(isWin ? "WIN" : "LOSE")} music");
-        }
-        else
-        {
-            Debug.LogWarning($"No {(isWin ? "win" : "lose")} music clip assigned!");
         }
     }
 
     public void ShowGameEndAfterKingTimeline()
     {
+        // CRITICAL: Disable Playable Director Object when game ends
+        DisablePlayableDirectorObject();
+
         HideStarsWhenShowingSummary();
         DisableObjectsOnGameEnd();
         SwitchToGameEndCameraWithCut();
@@ -1050,6 +1209,8 @@ public class GameEndManager : MonoBehaviour
         StartCoroutine(GameEndSequence());
     }
 
+    // ========== PUBLIC GETTERS ==========
+
     public Transform GetResultSpawnPoint() => resultCharacterSpawnPoint;
 
     public void CompleteQuestAfterKingTimeline(string questID)
@@ -1076,4 +1237,9 @@ public class GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
+
+    public void ForceStopCountAudio()
+    {
+        StopCountAudio();
+    }
 }
