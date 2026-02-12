@@ -92,9 +92,13 @@ public class GameEndManager : MonoBehaviour
     [Header("UI Controls")]
     [SerializeField] private GameObject uiControlsCanvas;
 
-    [Header("PLAYABLE DIRECTOR OBJECT CONTROL")]
-    [SerializeField] private GameObject playableDirectorObject; // The entire GameObject containing the PlayableDirector
-    [SerializeField] private float homeButtonReactivateDelay = 2f; // Time to wait before reactivating on Home button
+    [Header("PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON")]
+    [SerializeField] private GameObject playableDirectorObject; // Entire GameObject with PlayableDirector - DISABLED on Home
+
+    [Header("PLAYABLE DIRECTOR - RESTART BUTTON TIMELINE")]
+    [SerializeField] private PlayableDirector restartPlayableDirector; // Direct reference for Restart timeline
+    [SerializeField] private PlayableAsset restartPlayableAsset;
+    [SerializeField] private float restartTimelineDelay = 0.5f;
 
     [Header("References")]
     [SerializeField] private GoGrowGlowGameManager gameManager;
@@ -117,7 +121,6 @@ public class GameEndManager : MonoBehaviour
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
     private bool isCountingAnimationComplete = false;
-    private bool isPlayableDirectorReactivating = false; // Track if we're waiting to reactivate
 
     // Audio control variables
     private bool isCountAudioPlaying = false;
@@ -194,10 +197,21 @@ public class GameEndManager : MonoBehaviour
             Debug.LogWarning("Player Armature is not assigned in the Inspector! Please drag the PlayerArmature GameObject to the field.");
         }
 
-        // Warn if playable director object is not assigned
+        // Warn if playable director object is not assigned (Home button control)
         if (playableDirectorObject == null)
         {
-            Debug.LogWarning("Playable Director Object is not assigned in the Inspector! Timeline control will not work.");
+            Debug.LogWarning("Playable Director Object is not assigned in the Inspector! Home button timeline control will not work.");
+        }
+
+        // Validate Playable Director setup (Restart button)
+        if (restartPlayableDirector == null)
+        {
+            Debug.LogWarning("Restart Playable Director is not assigned! Timeline will not play on restart.");
+        }
+
+        if (restartPlayableAsset == null)
+        {
+            Debug.LogWarning("Restart Playable Asset is not assigned! Timeline will not play on restart.");
         }
     }
 
@@ -249,12 +263,8 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    // ========== PLAYABLE DIRECTOR OBJECT CONTROL ==========
+    // ========== PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON ==========
 
-    /// <summary>
-    /// Disables the Playable Director GameObject immediately
-    /// Called when game ends or player reaches result point
-    /// </summary>
     private void DisablePlayableDirectorObject()
     {
         if (playableDirectorObject != null)
@@ -264,57 +274,36 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Enables the Playable Director GameObject immediately
-    /// Called when restart button is clicked
-    /// </summary>
-    private void EnablePlayableDirectorObject()
+    // ========== PLAYABLE DIRECTOR CONTROL - RESTART BUTTON ==========
+
+    private void PlayRestartTimelineSequence()
     {
-        if (playableDirectorObject != null)
+        if (restartPlayableDirector == null)
         {
-            playableDirectorObject.SetActive(true);
-            Debug.Log("?? Playable Director Object ENABLED - Restart button clicked");
-        }
-    }
-
-    /// <summary>
-    /// Disables the Playable Director GameObject and re-enables it after a delay
-    /// Called when home button is clicked
-    /// </summary>
-    private void DisableAndReenablePlayableDirectorObject()
-    {
-        if (playableDirectorObject != null)
-        {
-            // Stop any existing reactivation coroutine
-            if (isPlayableDirectorReactivating)
-            {
-                StopCoroutine(ReenablePlayableDirectorObjectAfterDelay(homeButtonReactivateDelay));
-                isPlayableDirectorReactivating = false;
-            }
-
-            // Disable immediately
-            playableDirectorObject.SetActive(false);
-            Debug.Log("?? Playable Director Object DISABLED - Home button clicked");
-
-            // Start coroutine to re-enable after delay
-            StartCoroutine(ReenablePlayableDirectorObjectAfterDelay(homeButtonReactivateDelay));
-        }
-    }
-
-    private IEnumerator ReenablePlayableDirectorObjectAfterDelay(float delay)
-    {
-        isPlayableDirectorReactivating = true;
-        Debug.Log($"?? Waiting {delay} seconds before re-enabling Playable Director Object...");
-
-        yield return new WaitForSeconds(delay);
-
-        if (playableDirectorObject != null)
-        {
-            playableDirectorObject.SetActive(true);
-            Debug.Log("?? Playable Director Object RE-ENABLED after delay");
+            Debug.LogError("Cannot play restart timeline - Playable Director is not assigned!");
+            return;
         }
 
-        isPlayableDirectorReactivating = false;
+        if (restartPlayableAsset == null)
+        {
+            Debug.LogError("Cannot play restart timeline - Playable Asset is not assigned!");
+            return;
+        }
+
+        // Ensure PlayableDirector is enabled
+        restartPlayableDirector.enabled = true;
+
+        // Stop any currently playing timeline
+        if (restartPlayableDirector.state == PlayState.Playing)
+        {
+            restartPlayableDirector.Stop();
+        }
+
+        // Assign the asset and play
+        restartPlayableDirector.playableAsset = restartPlayableAsset;
+        restartPlayableDirector.Play();
+
+        Debug.Log("?? Restart timeline STARTED");
     }
 
     // ========== ANIMATOR STATE RESET ==========
@@ -512,9 +501,6 @@ public class GameEndManager : MonoBehaviour
     public void ShowGameEndScreen(bool playerWon)
     {
         Debug.Log($"=== SHOWING GAME END SCREEN - {(playerWon ? "WIN" : "LOSE")} ===");
-
-        // CRITICAL: Disable Playable Director Object when game ends / result point reached
-        DisablePlayableDirectorObject();
 
         HideStarsWhenShowingSummary();
         DisableObjectsOnGameEnd();
@@ -875,21 +861,22 @@ public class GameEndManager : MonoBehaviour
     }
 
     // ========== HOME BUTTON ==========
-    // Disable Playable Director Object -> Teleport -> NO reactivation
+    // COMPLETELY BYPASSES STARTING SEQUENCE MANAGER - DISABLES PlayableDirectorObject - NO TIMELINE
     private void OnHomeClicked()
     {
         if (!isCountingAnimationComplete) return;
 
         Debug.Log("=== HOME BUTTON CLICKED ===");
+        Debug.Log("HOME BUTTON: No timeline - completely bypassed");
 
         StopCountAudio();
         OnButtonClicked();
         PlayLobbyMusic();
         ResetGameEndState();
-        ResetMinigames(); // This now ONLY resets minigames, no PlayableDirector control
+        ResetMinigamesForHomeButton(); // NO StartingSequenceManager
         ResetAllContinueButtons();
 
-        // DISABLE Playable Director Object - stays disabled until Restart
+        // DISABLE Playable Director Object - stays disabled (Home button feature)
         DisablePlayableDirectorObject();
 
         // IMMEDIATELY switch to player camera
@@ -919,20 +906,16 @@ public class GameEndManager : MonoBehaviour
         StartCoroutine(RestoreCameraBlendAfterTeleport());
 
         Debug.Log("=== HOME BUTTON COMPLETE ===");
-        Debug.Log("Playable Director Object DISABLED - Will remain disabled until Restart button");
+        Debug.Log("No timeline played - PlayableDirectorObject DISABLED - Player at lobby with follow camera");
     }
 
-
     // ========== RESTART BUTTON ==========
-    // ENABLE Playable Director Object FIRST, then do everything else
+    // FULL RESET + PLAY TIMELINE (using restartPlayableDirector)
     private void OnRestartClicked()
     {
         if (!isCountingAnimationComplete) return;
 
         Debug.Log("=== RESTART BUTTON CLICKED ===");
-
-        // CRITICAL: Enable Playable Director Object IMMEDIATELY before any other logic
-        EnablePlayableDirectorObject();
 
         StopCountAudio();
         OnButtonClicked();
@@ -940,12 +923,12 @@ public class GameEndManager : MonoBehaviour
         ResetGameEndState();
 
         Debug.Log("STEP 1: Performing complete game reset...");
-        ResetMinigames();
+        ResetMinigames(); // Full reset with StartingSequenceManager
         ResetAllContinueButtons();
 
         if (gameManager != null)
         {
-            gameManager.FullGameReset(); // This no longer calls ResetMinigames() again
+            gameManager.FullGameReset();
             Debug.Log("GameManager fully reset");
         }
 
@@ -960,12 +943,73 @@ public class GameEndManager : MonoBehaviour
 
         EnableObjectsOnHomeButton();
 
+        Debug.Log("STEP 3: Playing restart timeline...");
+        StartCoroutine(PlayRestartTimeline());
+
         StartCoroutine(RestoreCameraBlendAfterTeleport());
 
         Debug.Log("=== RESTART BUTTON COMPLETE ===");
-        Debug.Log("Playable Director Object ENABLED - Ready for timeline");
+        Debug.Log("Restart timeline started - Game reset complete");
     }
 
+    // Coroutine to play restart timeline
+    private IEnumerator PlayRestartTimeline()
+    {
+        // Validate playable director and asset
+        if (restartPlayableDirector == null)
+        {
+            Debug.LogError("Cannot play restart timeline - Playable Director is not assigned!");
+            yield break;
+        }
+
+        if (restartPlayableAsset == null)
+        {
+            Debug.LogError("Cannot play restart timeline - Playable Asset is not assigned!");
+            yield break;
+        }
+
+        // Wait for the specified delay
+        if (restartTimelineDelay > 0)
+        {
+            Debug.Log($"Waiting {restartTimelineDelay}s before playing restart timeline...");
+            yield return new WaitForSeconds(restartTimelineDelay);
+        }
+
+        Debug.Log("?? Playing restart timeline...");
+
+        // Stop any currently playing timeline
+        if (restartPlayableDirector.state == PlayState.Playing)
+        {
+            restartPlayableDirector.Stop();
+        }
+
+        // Make sure player controller is disabled during timeline
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+
+        // Ensure PlayableDirector is enabled
+        restartPlayableDirector.enabled = true;
+
+        // Assign the asset and play
+        restartPlayableDirector.playableAsset = restartPlayableAsset;
+        restartPlayableDirector.Play();
+
+        // Wait for the timeline to finish
+        while (restartPlayableDirector.state == PlayState.Playing)
+        {
+            yield return null;
+        }
+
+        Debug.Log("Restart timeline finished - Game is now ready to play");
+
+        // Re-enable player controller
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
+    }
 
     private void OnNextClicked()
     {
@@ -977,7 +1021,7 @@ public class GameEndManager : MonoBehaviour
         OnButtonClicked();
         PlayLobbyMusic();
         ResetGameEndState();
-        ResetMinigames();
+        ResetMinigamesForHomeButton();
 
         if (isFirstTimeCompletion && questManager != null)
         {
@@ -994,6 +1038,76 @@ public class GameEndManager : MonoBehaviour
     }
 
     // ========== RESET METHODS ==========
+
+    // SPECIAL ResetMinigames for Home Button - NO StartingSequenceManager
+    public void ResetMinigamesForHomeButton()
+    {
+        Debug.Log("=== COMPLETE MINIGAMES RESET (HOME BUTTON - NO STARTING SEQUENCE) ===");
+
+        if (growAssessmentManager != null)
+        {
+            growAssessmentManager.EndGrowAssessment();
+            growAssessmentManager.CompleteResetForNewGame();
+        }
+
+        ResetGlowTowers();
+        ResetDayNightTransition();
+
+        // CRITICAL: DO NOT call any StartingSequenceManager methods here
+        // COMPLETELY BYPASSED FOR HOME BUTTON
+
+        ResetTorchMinigame();
+
+        AssessmentTrigger assessmentTrigger = FindObjectOfType<AssessmentTrigger>();
+        if (assessmentTrigger != null) assessmentTrigger.ForceResetForNewGame();
+
+        EndGameTrigger endGameTrigger = FindObjectOfType<EndGameTrigger>();
+        if (endGameTrigger != null) endGameTrigger.ResetEndTrigger();
+
+        ResetObjectsToInitialState();
+        ResetOneTimeAnimations();
+
+        Debug.Log("=== MINIGAMES COMPLETELY RESET (HOME BUTTON) ===");
+    }
+
+    // Full ResetMinigames for Restart button - WITH StartingSequenceManager
+    public void ResetMinigames()
+    {
+        Debug.Log("=== COMPLETE MINIGAMES RESET (RESTART BUTTON) ===");
+
+        if (growAssessmentManager != null)
+        {
+            growAssessmentManager.EndGrowAssessment();
+            growAssessmentManager.CompleteResetForNewGame();
+        }
+
+        ResetGlowTowers();
+        ResetDayNightTransition();
+
+        // ONLY for Restart button - StartingSequenceManager needs to be reset
+        if (startingSequenceManager != null)
+        {
+            startingSequenceManager.EnableAllControlsAndUI();
+            var resetMethod = startingSequenceManager.GetType().GetMethod("ForceCameraReset");
+            if (resetMethod != null)
+                resetMethod.Invoke(startingSequenceManager, new object[] { 0f });
+
+            Debug.Log("StartingSequenceManager reset for restart");
+        }
+
+        ResetTorchMinigame();
+
+        AssessmentTrigger assessmentTrigger = FindObjectOfType<AssessmentTrigger>();
+        if (assessmentTrigger != null) assessmentTrigger.ForceResetForNewGame();
+
+        EndGameTrigger endGameTrigger = FindObjectOfType<EndGameTrigger>();
+        if (endGameTrigger != null) endGameTrigger.ResetEndTrigger();
+
+        ResetObjectsToInitialState();
+        ResetOneTimeAnimations();
+
+        Debug.Log("=== MINIGAMES COMPLETELY RESET (RESTART BUTTON) ===");
+    }
 
     public void ResetGameEndState()
     {
@@ -1013,41 +1127,6 @@ public class GameEndManager : MonoBehaviour
 
         if (buttonContainer != null) buttonContainer.SetActive(false);
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
-    }
-
-    public void ResetMinigames()
-    {
-        Debug.Log("=== COMPLETE MINIGAMES RESET ===");
-
-        if (growAssessmentManager != null)
-        {
-            growAssessmentManager.EndGrowAssessment();
-            growAssessmentManager.CompleteResetForNewGame();
-        }
-
-        ResetGlowTowers();
-        ResetDayNightTransition();
-
-        if (startingSequenceManager != null)
-        {
-            startingSequenceManager.EnableAllControlsAndUI();
-            var resetMethod = startingSequenceManager.GetType().GetMethod("ForceCameraReset");
-            if (resetMethod != null)
-                resetMethod.Invoke(startingSequenceManager, new object[] { 0f });
-        }
-
-        ResetTorchMinigame();
-
-        AssessmentTrigger assessmentTrigger = FindObjectOfType<AssessmentTrigger>();
-        if (assessmentTrigger != null) assessmentTrigger.ForceResetForNewGame();
-
-        EndGameTrigger endGameTrigger = FindObjectOfType<EndGameTrigger>();
-        if (endGameTrigger != null) endGameTrigger.ResetEndTrigger();
-
-        ResetObjectsToInitialState();
-        ResetOneTimeAnimations();
-
-        Debug.Log("=== MINIGAMES COMPLETELY RESET ===");
     }
 
     private void ResetGlowTowers()
@@ -1177,9 +1256,6 @@ public class GameEndManager : MonoBehaviour
 
     public void ShowGameEndAfterKingTimeline()
     {
-        // CRITICAL: Disable Playable Director Object when game ends
-        DisablePlayableDirectorObject();
-
         HideStarsWhenShowingSummary();
         DisableObjectsOnGameEnd();
         SwitchToGameEndCameraWithCut();
