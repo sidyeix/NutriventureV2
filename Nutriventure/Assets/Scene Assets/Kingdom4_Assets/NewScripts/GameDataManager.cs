@@ -43,6 +43,12 @@ public class GameDataManager1 : MonoBehaviour
         }
     }
     
+    void Start()
+    {
+        // AUTO-LOAD GAME DATA WHEN MANAGER STARTS
+        LoadGameProgress();
+    }
+    
     void Initialize()
     {
         savePath = Application.persistentDataPath + "/gameData.save";
@@ -89,6 +95,7 @@ public class GameDataManager1 : MonoBehaviour
                 stream.Close();
                 
                 Debug.Log("Game loaded successfully!");
+                Debug.Log($"Loaded data - Has Key: {currentGameData.hasKey}");
                 ApplyLoadedData();
             }
             catch (Exception e)
@@ -144,10 +151,12 @@ public class GameDataManager1 : MonoBehaviour
             if (currentGameData.hasKey)
             {
                 AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+                Debug.Log("Loaded: Player has key, setting to EndGame phase");
             }
             else if (currentGameData.hasScroll)
             {
                 AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.AllergenHunt);
+                Debug.Log("Loaded: Player has scroll, setting to AllergenHunt phase");
             }
         }
         

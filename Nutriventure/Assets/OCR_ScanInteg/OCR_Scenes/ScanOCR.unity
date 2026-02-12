@@ -47847,7 +47847,7 @@ MonoBehaviour:
   noIngredientText: {fileID: 558713637}
   captureButton: {fileID: 1103833099}
   galleryButton: {fileID: 1680505945}
-  instructionsButton: {fileID: 283032572}
+  instructionsButton: {fileID: 0}
   retryButton: {fileID: 370171437}
   exitButton: {fileID: 4563829448356242765}
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
@@ -47856,7 +47856,7 @@ MonoBehaviour:
   sceneTransitionDelay: 1
   fadeDuration: 0.5
   useMockScan: 1
-  captureCooldownDuration: 2
+  captureCooldownDuration: 1
   audioSource: {fileID: 917810639}
   scanSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
 --- !u!1 &806951734

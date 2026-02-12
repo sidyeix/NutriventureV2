@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class PlayerHealthManager : MonoBehaviour
 {
@@ -22,6 +24,12 @@ public class PlayerHealthManager : MonoBehaviour
     public Sprite fullHeartSprite;
     public Sprite halfHeartSprite; // Optional
     public Sprite emptyHeartSprite;
+
+    [Header("Damage Overlay")]
+    public GameObject damageOverlayObject; // Assign your inactive GameObject from Hierarchy here
+    public float overlayDuration = 0.5f; // How long the overlay stays visible
+    public float overlayFadeTime = 0.2f; // Fade in/out time
+    private Coroutine overlayCoroutine;
 
     [Header("Game End Reference")]
     public Kingdom4GameEndManager gameEndManager; // Assign in Inspector
@@ -50,6 +58,16 @@ public class PlayerHealthManager : MonoBehaviour
             {
                 Debug.LogWarning("Kingdom4GameEndManager not found! Game over screen may not show properly.");
             }
+        }
+        
+        // Ensure damage overlay is inactive at start
+        if (damageOverlayObject != null)
+        {
+            damageOverlayObject.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("Damage overlay object is not assigned! Please drag your inactive GameObject from Hierarchy.");
         }
     }
 
@@ -128,6 +146,10 @@ public class PlayerHealthManager : MonoBehaviour
 
         lastDamageTime = Time.time;
         currentHealth = Mathf.Max(0, currentHealth - amount);
+        
+        // Show damage overlay
+        ShowDamageOverlay();
+        
         UpdateHearts();
 
         if (currentHealth <= 0)
@@ -211,23 +233,105 @@ public class PlayerHealthManager : MonoBehaviour
     }
     #endregion
 
-    #region FOR TESTING (Remove in production)
-    void Update()
+    #region DAMAGE OVERLAY SYSTEM
+    void ShowDamageOverlay()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            TakeDamage(0.5f);
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-            TakeDamage(1f);
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-            Heal(1f);
-        if (Input.GetKeyDown(KeyCode.Alpha4))
-            SetMaxHearts(maxHearts + 1);
-        if (Input.GetKeyDown(KeyCode.Alpha5))
-            SetMaxHearts(Mathf.Max(1, maxHearts - 1));
-        if (Input.GetKeyDown(KeyCode.R))
-            SetHealth(maxHearts); // Reset health
-        if (Input.GetKeyDown(KeyCode.G))
-            Die(); // Force game over for testing
+        // Check if damage overlay object is assigned
+        if (damageOverlayObject == null)
+        {
+            Debug.LogWarning("Damage overlay object is not assigned!");
+            return;
+        }
+        
+        // Stop any existing overlay coroutine
+        if (overlayCoroutine != null)
+        {
+            StopCoroutine(overlayCoroutine);
+        }
+        
+        // Start new overlay
+        overlayCoroutine = StartCoroutine(DamageOverlayRoutine());
+    }
+
+    IEnumerator DamageOverlayRoutine()
+    {
+        // Activate the GameObject
+        damageOverlayObject.SetActive(true);
+        
+        // Get CanvasGroup for fading (optional - add if your GameObject doesn't have it)
+        CanvasGroup canvasGroup = damageOverlayObject.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = damageOverlayObject.AddComponent<CanvasGroup>();
+        }
+        
+        // Fade in (optional)
+        float timer = 0f;
+        while (timer < overlayFadeTime)
+        {
+            timer += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(0, 1, timer / overlayFadeTime);
+            yield return null;
+        }
+        canvasGroup.alpha = 1;
+        
+        // Wait for duration
+        yield return new WaitForSeconds(overlayDuration);
+        
+        // Fade out (optional)
+        timer = 0f;
+        while (timer < overlayFadeTime)
+        {
+            timer += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(1, 0, timer / overlayFadeTime);
+            yield return null;
+        }
+        canvasGroup.alpha = 0;
+        
+        // Deactivate the GameObject
+        damageOverlayObject.SetActive(false);
+        
+        // Reset alpha to 1 for next time (if fading is used)
+        canvasGroup.alpha = 1;
+        
+        overlayCoroutine = null;
+    }
+
+    // Simple version without fading (if you prefer)
+    IEnumerator SimpleDamageOverlayRoutine()
+    {
+        // Activate the GameObject
+        damageOverlayObject.SetActive(true);
+        
+        // Wait for duration
+        yield return new WaitForSeconds(overlayDuration);
+        
+        // Deactivate the GameObject
+        damageOverlayObject.SetActive(false);
+        
+        overlayCoroutine = null;
+    }
+
+    // Call this to manually turn off overlay (optional)
+    public void HideDamageOverlay()
+    {
+        if (overlayCoroutine != null)
+        {
+            StopCoroutine(overlayCoroutine);
+            overlayCoroutine = null;
+        }
+        
+        if (damageOverlayObject != null)
+        {
+            damageOverlayObject.SetActive(false);
+            
+            // Reset alpha if using CanvasGroup
+            CanvasGroup canvasGroup = damageOverlayObject.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1;
+            }
+        }
     }
     #endregion
     
@@ -236,6 +340,7 @@ public class PlayerHealthManager : MonoBehaviour
     {
         currentHealth = maxHearts;
         UpdateHearts();
+        HideDamageOverlay(); // Ensure overlay is off when resetting
     }
     
     public void FullHeal()
@@ -243,5 +348,16 @@ public class PlayerHealthManager : MonoBehaviour
         currentHealth = maxHearts;
         UpdateHearts();
     }
+    
+    public int GetCurrentHealth()
+    {
+        return Mathf.CeilToInt(currentHealth);
+    }
     #endregion
+    
+    // Clean up when object is destroyed
+    void OnDestroy()
+    {
+        HideDamageOverlay();
+    }
 }

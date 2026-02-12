@@ -1,287 +1,137 @@
 using UnityEngine;
-using UnityEngine.Events;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using System.Collections;
 
+[RequireComponent(typeof(Collider))]
 public class CollectibleKey : MonoBehaviour
 {
     [Header("Key Settings")]
     public string keyId = "castle_key";
-    public bool isCollectible = false;
     
     [Header("Debug Settings")]
     public bool debugMode = true;
     
-    [Header("Timeline Integration")]
-    public bool activatedByTimeline = true;
-    
-    [Header("Input System Settings")]
-    public bool useInputSystem = true;
-    public float interactionRange = 5f;
+    [Header("Activation Settings")]
+    public bool activateWhenNoKey = true; // Active when player doesn't have key
+    public bool deactivateWhenHasKey = true; // Inactive when player has key
     
     [Header("Visual Settings")]
     public float rotationSpeed = 90f;
     public float floatHeight = 0.5f;
     public float floatSpeed = 2f;
     
-    [Header("Collectible Visual Effects")]
-    public Material inactiveMaterial;
-    public Material collectibleMaterial;
-    public GameObject glowEffect;
-    public ParticleSystem collectibleParticles;
-    public float glowIntensity = 2f;
-    public float pulseSpeed = 1.5f;
+    [Header("Sound FX")]
+    public AudioClip pickupSFX;
+    [Range(0f, 1f)] public float pickupVolume = 1f;
     
-    [Header("Collection Effects")]
-    public GameObject collectEffect;
-    public AudioClip collectSound;
-    public float effectDuration = 2f;
-    
-    [Header("Audio")]
-    public AudioClip becomeCollectibleSound;
-    
-    [Header("UI/Text")]
-    public GameObject collectPrompt;
-    public string collectText = "Press E to Collect!";
-    
-    [Header("Game Summary")]
-    public Kingdom4GameEndManager gameEndManager;
-    public float summaryDelay = 1f;
-    
-    [Header("Events")]
-    public UnityEvent onKeyCollected;
-    public UnityEvent onKeyBecameCollectible;
-
-    private PlayerInput playerInput;
-    private InputAction interactAction;
-    
-    private List<Renderer> allKeyRenderers = new List<Renderer>();
-    private List<Material[]> originalMaterials = new List<Material[]>();
-    
+    private Camera mainCamera;
     private Vector3 startPosition;
     private bool isCollected = false;
-    private AudioSource audioSource;
-    private TextMesh promptText;
-    private bool isInitialized = false;
+    private bool shouldBeActive = true;
     
-    private GameObject player;
-    private bool playerInRange = false;
-    
-    void Awake()
+    void Start()
     {
-        if (activatedByTimeline)
-        {
-            return;
-        }
-    }
-    
-    void OnEnable()
-    {
-        if (!isInitialized)
-        {
-            InitializeKey();
-        }
-    }
-    
-    void OnDisable()
-    {
-        // Clean up Input System subscription
-        if (interactAction != null)
-        {
-            interactAction.performed -= OnCollectActionPerformed;
-        }
+        InitializeKey();
     }
     
     void InitializeKey()
     {
         startPosition = transform.position;
+        mainCamera = Camera.main;
         
-        // Find ALL renderers in children
-        Renderer[] childRenderers = GetComponentsInChildren<Renderer>(true);
-        allKeyRenderers.AddRange(childRenderers);
+        // Start checking saved state after a short delay
+        StartCoroutine(CheckSavedStateAfterDelay());
+    }
+    
+    private IEnumerator CheckSavedStateAfterDelay()
+    {
+        // Wait for one frame to ensure all managers are initialized
+        yield return null;
         
-        if (allKeyRenderers.Count == 0)
+        // Check if player already has the key
+        bool playerHasKey = CheckIfPlayerHasKey();
+        
+        // Set activation based on player's key status
+        if (activateWhenNoKey && deactivateWhenHasKey)
         {
-            Debug.LogError("No Renderers found in Key GameObject or its children!");
-            enabled = false;
-            return;
+            // Show key only if player doesn't have it
+            shouldBeActive = !playerHasKey;
+        }
+        else if (activateWhenNoKey)
+        {
+            // Always show if activateWhenNoKey is true
+            shouldBeActive = true;
+        }
+        else if (deactivateWhenHasKey)
+        {
+            // Hide only if player has key
+            shouldBeActive = !playerHasKey;
         }
         
-        if (debugMode) Debug.Log($"Found {allKeyRenderers.Count} renderer(s) in key");
-        
-        // Store original materials
-        foreach (Renderer renderer in allKeyRenderers)
+        // Apply activation state
+        if (shouldBeActive)
         {
-            originalMaterials.Add(renderer.materials);
+            // Key should be visible and collectible
+            isCollected = false;
+            gameObject.SetActive(true);
+            
+            if (debugMode) Debug.Log($"Key '{keyId}' is ACTIVE (player doesn't have key)");
         }
-        
-        // Get or add AudioSource
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
+        else
         {
-            audioSource = gameObject.AddComponent<AudioSource>();
-        }
-        
-        // Initialize prompt
-        if (collectPrompt != null)
-        {
-            promptText = collectPrompt.GetComponentInChildren<TextMesh>();
-            if (promptText != null)
-                promptText.text = "";
-            collectPrompt.SetActive(false);
-        }
-        
-        // Find game end manager
-        if (gameEndManager == null)
-        {
-            gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
-        }
-        
-        // Find player
-        player = GameObject.FindGameObjectWithTag("Player");
-        
-        // Setup Input System
-        SetupInputSystem();
-        
-        // Load saved state
-        if (PlayerPrefs.HasKey($"KeyCollected_{keyId}"))
-        {
+            // Player already has key, hide it
             isCollected = true;
             gameObject.SetActive(false);
-            if (debugMode) Debug.Log("Key was already collected.");
-            return;
-        }
-        
-        // Ensure collider exists
-        SetupCollider();
-        
-        // Start as NOT collectible
-        isCollectible = false;
-        SetInactiveVisuals();
-        
-        isInitialized = true;
-        
-        if (debugMode) 
-        {
-            Debug.Log("=== PARENT KEY INITIALIZED ===");
-            Debug.Log($"Interaction Range: {interactionRange}");
-            Debug.Log($"Press E or click when close to collect!");
-        }
-    }
-    
-    void SetupInputSystem()
-    {
-        if (!useInputSystem || player == null) return;
-        
-        // Get PlayerInput component
-        playerInput = player.GetComponent<PlayerInput>();
-        if (playerInput == null)
-        {
-            Debug.LogWarning("PlayerInput component not found on Player!");
-            return;
-        }
-        
-        // Try to find the interact action - check common action names
-        string[] possibleActionNames = { "Interact", "Pickup", "Use", "Action", "Fire", "Attack" };
-        
-        foreach (string actionName in possibleActionNames)
-        {
-            try
-            {
-                interactAction = playerInput.actions.FindAction(actionName);
-                if (interactAction != null)
-                {
-                    if (debugMode) Debug.Log($"Found action: {actionName}");
-                    break;
-                }
-            }
-            catch
-            {
-                // Action not found, continue searching
-                continue;
-            }
-        }
-        
-        // If no action found, try direct keyboard input
-        if (interactAction == null)
-        {
-            if (debugMode) Debug.Log("No interact action found. Using direct keyboard input.");
-            return;
-        }
-        
-        // Subscribe to action
-        interactAction.performed += OnCollectActionPerformed;
-        interactAction.Enable();
-        
-        if (debugMode) Debug.Log($"Subscribed to Input System action: {interactAction.name}");
-    }
-    
-    void SetupCollider()
-    {
-        Collider parentCollider = GetComponent<Collider>();
-        if (parentCollider == null)
-        {
-            parentCollider = gameObject.AddComponent<BoxCollider>();
             
-            Bounds totalBounds = CalculateTotalBounds();
-            BoxCollider boxCollider = (BoxCollider)parentCollider;
-            boxCollider.center = totalBounds.center - transform.position;
-            boxCollider.size = totalBounds.size;
-            
-            if (debugMode) Debug.Log($"Created parent collider with size: {totalBounds.size}");
+            if (debugMode) Debug.Log($"Key '{keyId}' is INACTIVE (player already has key)");
         }
         
-        parentCollider.isTrigger = true;
-    }
-    
-    void OnCollectActionPerformed(InputAction.CallbackContext context)
-    {
-        if (!playerInRange)
+        #if UNITY_EDITOR
+        // In Editor debug mode, we might want to override
+        if (debugMode && PlayerPrefs.HasKey($"KeyCollected_{keyId}"))
         {
-            if (debugMode) Debug.Log("Pressed Interact but NOT in range");
-            return;
+            Debug.LogWarning($"Key '{keyId}' was previously collected but is active for testing.");
+            // Don't auto-disable in Editor for testing if we want to test collection again
+            // isCollected = false;
+            // gameObject.SetActive(true);
         }
-
-        if (!isCollectible || isCollected)
-            return;
-
-        if (debugMode) Debug.Log("Interact pressed — collecting key!");
-        CollectKey();
+        #endif
     }
     
-    Bounds CalculateTotalBounds()
+    private bool CheckIfPlayerHasKey()
     {
-        Bounds totalBounds = new Bounds(transform.position, Vector3.zero);
-        
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
+        try
         {
-            if (renderer is MeshRenderer || renderer is SkinnedMeshRenderer)
+            // Check AllerthriaGameManager (current session)
+            if (AllerthriaGameManager.Instance != null && AllerthriaGameManager.Instance.hasKey)
             {
-                totalBounds.Encapsulate(renderer.bounds);
+                return true;
             }
+            
+            // Check GameDataManager (saved data)
+            if (GameDataManager1.Instance != null && GameDataManager1.Instance.currentGameData.hasKey)
+            {
+                return true;
+            }
+            
+            // Check PlayerPrefs as fallback
+            if (PlayerPrefs.GetInt($"KeyCollected_{keyId}", 0) == 1)
+            {
+                return true;
+            }
+            
+            return false;
         }
-        
-        if (renderers.Length == 0)
+        catch (System.Exception e)
         {
-            totalBounds = new Bounds(transform.position, new Vector3(1, 1, 1));
-        }
-        
-        return totalBounds;
-    }
-    
-    void Start()
-    {
-        if (!activatedByTimeline && !isInitialized)
-        {
-            InitializeKey();
+            Debug.LogError($"Error checking key: {e.Message}");
+            return false;
         }
     }
     
     void Update()
     {
-        if (!isCollected && isCollectible)
+        if (!isCollected && gameObject.activeSelf && shouldBeActive)
         {
             // Floating animation
             float newY = startPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatHeight;
@@ -290,157 +140,60 @@ public class CollectibleKey : MonoBehaviour
             // Rotation animation
             transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime, Space.World);
             
-            // Update visuals
-            UpdateCollectibleVisuals();
-            
-            // Check player distance
-            CheckPlayerDistance();
-            
-            // Show prompt
-            ShowPromptWhenNear();
-            
-            // Check for E key directly (fallback if Input System fails)
-            CheckDirectKeyboardInput();
-        }
-    }
-    
-    void CheckDirectKeyboardInput()
-    {
-        // Direct keyboard check as fallback
-        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && playerInRange)
-        {
-            if (isCollectible && !isCollected)
-            {
-                if (debugMode) Debug.Log("E key pressed directly!");
-                CollectKey();
-            }
-        }
-    }
-    
-    void CheckPlayerDistance()
-    {
-        if (player == null) return;
-
-        float distance = Vector3.Distance(transform.position, player.transform.position);
-        bool wasInRange = playerInRange;
-        playerInRange = distance <= interactionRange;
-
-        if (debugMode && playerInRange != wasInRange)
-        {
-            Debug.Log(playerInRange
-                ? $"Player entered interaction range ({distance:F1}m)"
-                : $"Player left interaction range ({distance:F1}m)");
-        }
-    }
-    
-    void SetInactiveVisuals()
-    {
-        foreach (Renderer renderer in allKeyRenderers)
-        {
-            if (renderer != null)
-            {
-                if (inactiveMaterial != null)
-                {
-                    Material[] mats = new Material[renderer.materials.Length];
-                    for (int i = 0; i < mats.Length; i++)
-                    {
-                        mats[i] = inactiveMaterial;
-                    }
-                    renderer.materials = mats;
-                }
-                else
-                {
-                    foreach (Material mat in renderer.materials)
-                    {
-                        mat.color = Color.gray;
-                    }
-                }
-            }
-        }
-        
-        if (glowEffect != null) glowEffect.SetActive(false);
-        if (collectibleParticles != null && collectibleParticles.isPlaying) 
-            collectibleParticles.Stop();
-        if (collectPrompt != null) collectPrompt.SetActive(false);
-    }
-    
-    void UpdateCollectibleVisuals()
-    {
-        if (collectibleMaterial != null)
-        {
-            float pulse = Mathf.PingPong(Time.time * pulseSpeed, 0.3f) + 0.7f;
-            Color pulseColor = Color.yellow * pulse * glowIntensity;
-            
-            foreach (Renderer renderer in allKeyRenderers)
-            {
-                if (renderer != null && renderer.material.HasProperty("_EmissionColor"))
-                {
-                    renderer.material.SetColor("_EmissionColor", pulseColor);
-                }
-            }
-        }
-    }
-    
-    void ShowPromptWhenNear()
-    {
-        if (collectPrompt == null || Camera.main == null) return;
-        
-        Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position);
-        
-        if (screenPos.z > 0 && playerInRange)
-        {
-            collectPrompt.SetActive(true);
-            
-            if (promptText != null)
-            {
-                promptText.text = collectText;
-            }
-        }
-        else
-        {
-            collectPrompt.SetActive(false);
+            // Check for mobile tap
+            CheckMobileTap();
         }
     }
     
     void OnMouseDown()
     {
-        if (isCollectible && !isCollected)
+        if (!isCollected && shouldBeActive)
         {
-            if (debugMode) Debug.Log("Clicked on parent key GameObject!");
+            if (debugMode) Debug.Log("Key clicked with mouse!");
             CollectKey();
         }
     }
     
-    void OnTriggerEnter(Collider other)
+    void CheckMobileTap()
     {
-        if (other.CompareTag("Player"))
+        if (Touchscreen.current == null || mainCamera == null)
+            return;
+        
+        var touch = Touchscreen.current.primaryTouch;
+        
+        if (!touch.press.wasPressedThisFrame)
+            return;
+        
+        Vector2 touchPos = touch.position.ReadValue();
+        Ray ray = mainCamera.ScreenPointToRay(touchPos);
+        RaycastHit hit;
+        
+        if (Physics.Raycast(ray, out hit, 1000f))
         {
-            playerInRange = true;
-            if (debugMode) Debug.Log("Player entered key interaction trigger");
-        }
-    }
-    
-    void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerInRange = false;
-            if (collectPrompt != null) collectPrompt.SetActive(false);
-            if (debugMode) Debug.Log("Player left key interaction trigger");
+            if (hit.collider != null && hit.collider.gameObject == gameObject)
+            {
+                if (!isCollected && shouldBeActive)
+                {
+                    if (debugMode) Debug.Log("Key tapped on mobile!");
+                    CollectKey();
+                }
+            }
         }
     }
     
     public void CollectKey()
     {
-        if (isCollected || !isCollectible) return;
-        
-        if (!playerInRange && useInputSystem)
-        {
-            if (debugMode) Debug.Log("Can't collect - player not in range!");
-            return;
-        }
+        if (isCollected || !shouldBeActive) return;
         
         isCollected = true;
+        
+        if (debugMode) Debug.Log($"Key '{keyId}' collected!");
+        
+        // Play collect sound
+        if (pickupSFX != null)
+        {
+            AudioSource.PlayClipAtPoint(pickupSFX, transform.position, pickupVolume);
+        }
         
         // Notify Game Manager
         if (AllerthriaGameManager.Instance != null)
@@ -448,300 +201,115 @@ public class CollectibleKey : MonoBehaviour
             AllerthriaGameManager.Instance.ReceiveKey();
         }
         
-        // Play effects
-        PlayCollectionEffects();
-        
-        // Invoke events
-        onKeyCollected?.Invoke();
-        
-        // Save state
+        // Save to ALL systems
         SaveKeyState();
         
-        // Show game summary
-        ShowGameSummary();
-        
-        // Hide the key
-        StartCoroutine(HideKeyWithDelay());
-        
-        if (debugMode) Debug.Log($"Parent Key '{keyId}' collected!");
-    }
-    
-    void PlayCollectionEffects()
-    {
-        if (collectEffect != null)
+        // Save to GameDataManager
+        if (GameDataManager1.Instance != null)
         {
-            GameObject effect = Instantiate(collectEffect, transform.position, Quaternion.identity);
-            Destroy(effect, effectDuration);
+            GameDataManager1.Instance.currentGameData.hasKey = true;
+            GameDataManager1.Instance.currentGameData.kingdom4Completed = true;
+            GameDataManager1.Instance.SaveGameProgress();
+            if (debugMode) Debug.Log("Key saved to GameDataManager!");
         }
         
-        if (collectSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(collectSound);
-        }
+        // Trigger the game summary
+        TriggerGameSummary();
         
-        if (collectPrompt != null)
-            collectPrompt.SetActive(false);
+        // Disable the key
+        gameObject.SetActive(false);
     }
     
-    System.Collections.IEnumerator HideKeyWithDelay()
+    void TriggerGameSummary()
     {
-        yield return new WaitForSeconds(0.5f);
-        
-        foreach (Renderer renderer in allKeyRenderers)
+        // Try K4GameSummary first
+        K4GameSummary gameSummary = FindObjectOfType<K4GameSummary>();
+        if (gameSummary != null)
         {
-            if (renderer != null)
-                renderer.enabled = false;
+            gameSummary.TriggerSummaryFromKey();
+            if (debugMode) Debug.Log("Triggered game summary via K4GameSummary");
+            return;
         }
         
-        Collider parentCollider = GetComponent<Collider>();
-        if (parentCollider != null)
-            parentCollider.enabled = false;
-        
-        if (glowEffect != null) glowEffect.SetActive(false);
-        if (collectibleParticles != null) collectibleParticles.Stop();
-        
-        yield return new WaitForSeconds(effectDuration - 0.5f);
-        
-        Destroy(gameObject);
-    }
-    
-    void ShowGameSummary()
-    {
-        if (gameEndManager != null)
-        {
-            StartCoroutine(ShowSummaryWithDelay());
-        }
-    }
-    
-    System.Collections.IEnumerator ShowSummaryWithDelay()
-    {
-        yield return new WaitForSeconds(summaryDelay);
-        
+        // Fallback to Kingdom4GameEndManager
+        Kingdom4GameEndManager gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
         if (gameEndManager != null)
         {
             gameEndManager.HandleKingdom4Complete();
+            if (debugMode) Debug.Log("Triggered game summary via Kingdom4GameEndManager");
+            return;
         }
+        
+        Debug.LogWarning("No game summary manager found!");
     }
     
     void SaveKeyState()
     {
         PlayerPrefs.SetInt($"KeyCollected_{keyId}", 1);
         PlayerPrefs.Save();
+        
+        if (debugMode) Debug.Log($"Saved key state: {keyId} = collected");
     }
     
-    public void MakeCollectible()
+    [ContextMenu("Check Key Status")]
+    public void CheckKeyStatus()
     {
-        if (isCollected) return;
-        
-        isCollectible = true;
-        
-        if (debugMode) Debug.Log("★ PARENT KEY IS NOW COLLECTIBLE! ★");
-        
-        StartCoroutine(BecomeCollectibleSequence());
-    }
-    
-    System.Collections.IEnumerator BecomeCollectibleSequence()
-    {
-        if (becomeCollectibleSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(becomeCollectibleSound);
-        }
-        
-        onKeyBecameCollectible?.Invoke();
-        
-        yield return StartCoroutine(PulseEffect());
-        
-        SetCollectibleVisuals();
-    }
-    
-    void SetCollectibleVisuals()
-    {
-        foreach (Renderer renderer in allKeyRenderers)
-        {
-            if (renderer != null)
-            {
-                if (collectibleMaterial != null)
-                {
-                    Material[] mats = new Material[renderer.materials.Length];
-                    for (int i = 0; i < mats.Length; i++)
-                    {
-                        mats[i] = collectibleMaterial;
-                    }
-                    renderer.materials = mats;
-                }
-                else
-                {
-                    foreach (Material mat in renderer.materials)
-                    {
-                        mat.color = Color.yellow;
-                    }
-                }
-            }
-        }
-        
-        if (glowEffect != null) glowEffect.SetActive(true);
-        if (collectibleParticles != null) collectibleParticles.Play();
-        
-        StartCoroutine(ContinuousPulse());
-    }
-    
-    System.Collections.IEnumerator PulseEffect()
-    {
-        if (allKeyRenderers.Count == 0) yield break;
-        
-        List<Color[]> originalColors = new List<Color[]>();
-        foreach (Renderer renderer in allKeyRenderers)
-        {
-            if (renderer != null)
-            {
-                Color[] colors = new Color[renderer.materials.Length];
-                for (int i = 0; i < renderer.materials.Length; i++)
-                {
-                    colors[i] = renderer.materials[i].color;
-                }
-                originalColors.Add(colors);
-            }
-        }
-        
-        for (int pulseCount = 0; pulseCount < 5; pulseCount++)
-        {
-            foreach (Renderer renderer in allKeyRenderers)
-            {
-                if (renderer != null)
-                {
-                    foreach (Material mat in renderer.materials)
-                    {
-                        mat.color = Color.yellow;
-                    }
-                }
-            }
-            if (glowEffect != null) glowEffect.SetActive(true);
-            yield return new WaitForSeconds(0.2f);
-            
-            for (int i = 0; i < allKeyRenderers.Count; i++)
-            {
-                if (allKeyRenderers[i] != null && i < originalColors.Count)
-                {
-                    for (int j = 0; j < allKeyRenderers[i].materials.Length; j++)
-                    {
-                        if (j < originalColors[i].Length)
-                        {
-                            allKeyRenderers[i].materials[j].color = originalColors[i][j];
-                        }
-                    }
-                }
-            }
-            if (glowEffect != null) glowEffect.SetActive(false);
-            yield return new WaitForSeconds(0.2f);
-        }
-    }
-    
-    System.Collections.IEnumerator ContinuousPulse()
-    {
-        while (isCollectible && !isCollected)
-        {
-            if (glowEffect != null)
-            {
-                float intensity = Mathf.PingPong(Time.time * 2f, 0.5f) + 0.5f;
-                Renderer glowRenderer = glowEffect.GetComponent<Renderer>();
-                if (glowRenderer != null && glowRenderer.material.HasProperty("_Color"))
-                {
-                    Color glowColor = glowRenderer.material.color;
-                    glowColor.a = intensity;
-                    glowRenderer.material.color = glowColor;
-                }
-            }
-            yield return null;
-        }
-    }
-    
-    [ContextMenu("Test Make Collectible")]
-    public void TestMakeCollectible()
-    {
-        MakeCollectible();
+        bool playerHasKey = CheckIfPlayerHasKey();
+        Debug.Log($"=== KEY STATUS ===");
+        Debug.Log($"Player has key: {playerHasKey}");
+        Debug.Log($"Key should be active: {!playerHasKey}");
+        Debug.Log($"Key object active: {gameObject.activeSelf}");
+        Debug.Log($"Key isCollected: {isCollected}");
+        Debug.Log($"==================");
     }
     
     [ContextMenu("Test Collect Key")]
     public void TestCollectKey()
     {
-        if (!isCollectible)
+        if (!isCollected && shouldBeActive)
         {
-            Debug.Log("Making key collectible first...");
-            MakeCollectible();
-            StartCoroutine(CollectAfterDelay());
+            CollectKey();
         }
         else
         {
-            playerInRange = true;
-            CollectKey();
+            Debug.Log($"Cannot collect key: isCollected={isCollected}, shouldBeActive={shouldBeActive}");
         }
-    }
-    
-    System.Collections.IEnumerator CollectAfterDelay()
-    {
-        yield return new WaitForSeconds(0.5f);
-        playerInRange = true;
-        CollectKey();
     }
     
     [ContextMenu("Reset Key")]
     public void ResetKey()
     {
         isCollected = false;
-        isCollectible = false;
-        playerInRange = false;
-        
-        if (gameObject != null)
-        {
-            for (int i = 0; i < allKeyRenderers.Count; i++)
-            {
-                if (allKeyRenderers[i] != null && i < originalMaterials.Count)
-                {
-                    allKeyRenderers[i].enabled = true;
-                    allKeyRenderers[i].materials = originalMaterials[i];
-                }
-            }
-            
-            Collider collider = GetComponent<Collider>();
-            if (collider != null) collider.enabled = true;
-            
-            if (glowEffect != null) glowEffect.SetActive(false);
-            if (collectibleParticles != null) 
-                collectibleParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            
-            if (collectPrompt != null) collectPrompt.SetActive(false);
-        }
+        shouldBeActive = true;
+        gameObject.SetActive(true);
         
         PlayerPrefs.DeleteKey($"KeyCollected_{keyId}");
         
-        Debug.Log("Parent Key reset to inactive state");
+        if (GameDataManager1.Instance != null)
+        {
+            GameDataManager1.Instance.currentGameData.hasKey = false;
+            GameDataManager1.Instance.currentGameData.kingdom4Completed = false;
+            GameDataManager1.Instance.SaveGameProgress();
+        }
+        
+        if (debugMode) Debug.Log($"Key '{keyId}' reset and activated");
     }
     
-    void OnGUI()
+    [ContextMenu("Force Activate Key")]
+    public void ForceActivateKey()
     {
-        if (debugMode)
+        // Force activate key regardless of saved state
+        isCollected = false;
+        shouldBeActive = true;
+        gameObject.SetActive(true);
+        PlayerPrefs.DeleteKey($"KeyCollected_{keyId}");
+        
+        if (GameDataManager1.Instance != null)
         {
-            GUIStyle style = new GUIStyle(GUI.skin.label);
-            style.fontSize = 14;
-            style.normal.textColor = Color.white;
-            
-            GUILayout.BeginArea(new Rect(10, 10, 400, 150));
-            GUILayout.Label($"Parent Key: {(isCollected ? "COLLECTED" : (isCollectible ? "COLLECTIBLE" : "INACTIVE"))}", style);
-            GUILayout.Label($"Player in Range: {playerInRange}", style);
-            GUILayout.Label($"Distance: {(player != null ? Vector3.Distance(transform.position, player.transform.position).ToString("F1") : "N/A")}m", style);
-            
-            if (isCollectible && !isCollected)
-            {
-                if (playerInRange)
-                {
-                    GUILayout.Label($"✓ Press E or click to collect!", style);
-                }
-                else
-                {
-                    GUILayout.Label($"✗ Get closer to collect ({interactionRange}m range)", style);
-                }
-            }
-            GUILayout.EndArea();
+            GameDataManager1.Instance.currentGameData.hasKey = false;
+            GameDataManager1.Instance.currentGameData.kingdom4Completed = false;
         }
+        
+        if (debugMode) Debug.Log($"Key '{keyId}' force activated");
     }
 }

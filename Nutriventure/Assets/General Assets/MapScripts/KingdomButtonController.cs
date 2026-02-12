@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Collections;
 
 public class KingdomButtonController : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class KingdomButtonController : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private Button kingdomButton;
-    [SerializeField] private GameObject loadingIndicator;
+    [SerializeField] private CanvasGroup loadingIndicator; // 🔥 CanvasGroup instead
 
     [Header("Audio")]
     [SerializeField] private AudioClip clickSound;
@@ -17,63 +18,76 @@ public class KingdomButtonController : MonoBehaviour
 
     private void Start()
     {
-        // Get button reference if not set
         if (kingdomButton == null)
             kingdomButton = GetComponent<Button>();
 
-        // Add click listener
         if (kingdomButton != null)
-        {
             kingdomButton.onClick.AddListener(OnKingdomButtonClick);
-        }
 
-        // Get AudioSource
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null && clickSound != null)
-        {
             audioSource = gameObject.AddComponent<AudioSource>();
-        }
 
-        // Hide loading indicator initially
+        // Hide loading indicator visually (NOT SetActive)
         if (loadingIndicator != null)
         {
-            loadingIndicator.SetActive(false);
+            loadingIndicator.alpha = 0;
+            loadingIndicator.blocksRaycasts = false;
+            loadingIndicator.interactable = false;
         }
     }
 
     private void OnKingdomButtonClick()
     {
-        // Play sound if available
         if (clickSound != null && audioSource != null)
-        {
             audioSource.PlayOneShot(clickSound);
-        }
 
-        // Show loading indicator
-        if (loadingIndicator != null)
-        {
-            loadingIndicator.SetActive(true);
-        }
+        ShowLoading();
 
-        // Load the scene
-        LoadKingdomScene();
+        // Optional: prevent double click
+        kingdomButton.interactable = false;
+
+        StartCoroutine(LoadKingdomSceneAsync());
     }
 
-    public void LoadKingdomScene()
+    private void ShowLoading()
     {
-        if (!string.IsNullOrEmpty(sceneToLoad))
-        {
-            SceneManager.LoadScene(sceneToLoad);
-        }
-        else
+        if (loadingIndicator == null) return;
+
+        loadingIndicator.alpha = 1;
+        loadingIndicator.blocksRaycasts = true;
+        loadingIndicator.interactable = true;
+    }
+
+    private void HideLoading()
+    {
+        if (loadingIndicator == null) return;
+
+        loadingIndicator.alpha = 0;
+        loadingIndicator.blocksRaycasts = false;
+        loadingIndicator.interactable = false;
+    }
+
+    private IEnumerator LoadKingdomSceneAsync()
+    {
+        if (string.IsNullOrEmpty(sceneToLoad))
         {
             Debug.LogError($"Scene name not set for {gameObject.name}!");
-
-            // Hide loading indicator if there was an error
-            if (loadingIndicator != null)
-            {
-                loadingIndicator.SetActive(false);
-            }
+            HideLoading();
+            yield break;
         }
+
+        AsyncOperation loadOp = SceneManager.LoadSceneAsync(sceneToLoad);
+        loadOp.allowSceneActivation = false;
+
+        // Optional: small delay so animation is visible
+        yield return new WaitForSeconds(0.2f);
+
+        while (loadOp.progress < 0.9f)
+        {
+            yield return null;
+        }
+
+        loadOp.allowSceneActivation = true;
     }
 }

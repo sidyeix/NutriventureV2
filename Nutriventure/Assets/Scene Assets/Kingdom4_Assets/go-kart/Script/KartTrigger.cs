@@ -12,7 +12,6 @@ public class KartTrigger : MonoBehaviour
     public PlayableDirector destinationDirector;
 
     public GameObject playerUI;
-    public GameObject driveUI;
     public GameObject kartDrivingUI;
     public TextMeshProUGUI destinationText;
     
@@ -23,8 +22,20 @@ public class KartTrigger : MonoBehaviour
     public AudioClip countdownBeepSound;
     public AudioClip countdownGoSound;
     
+    [Header("Horse Sound Effects")]
+    public AudioClip horseIdleSound; // Sound when player is near the kart/horse
+    public AudioClip horseRunningSound; // Sound when kart/horse is moving
+    [Range(0f, 1f)]
+    public float idleVolume = 0.5f;
+    [Range(0f, 1f)]
+    public float runningVolume = 0.7f;
+    public float fadeInOutDuration = 0.5f; // Duration for crossfading sounds
+    
     [Header("Player UI Elements")]
     public GameObject[] playerUIElementsToHide;
+
+    [Header("Wagon Blocker")]
+    public GameObject wagonBlocker; // Assign the wagon blocker GameObject here (the parent of 3 blockers)
 
     public KartController kartController;
     public Transform kartSeatPosition;
@@ -37,22 +48,78 @@ public class KartTrigger : MonoBehaviour
     private bool isDriving = false;
     private bool isCountingDown = false;
 
+    // Flags to control triggering
+    private bool hasBeenUsed = false; // Kart can only be used once
+    private bool hasTriggeredThisEntry = false; // Prevent re-triggering in current entry
+
     private Dictionary<GameObject, bool> playerUIElementStates = new Dictionary<GameObject, bool>();
     private AudioSource audioSource;
+    private AudioSource horseIdleSource;
+    private AudioSource horseRunningSource;
     private Coroutine countdownCoroutine;
+    private Coroutine idleFadeCoroutine;
+    private Coroutine runningFadeCoroutine;
 
     // Store player's original position and rotation for cancellation
     private Vector3 playerOriginalPosition;
     private Quaternion playerOriginalRotation;
     private Transform playerOriginalParent;
 
+    private bool hasPlayedTimeline = false;
+    
+    // Add references for disabling movement/animation
+    private StarterAssets.ThirdPersonController thirdPersonController;
+    private StarterAssets.StarterAssetsInputs starterAssetsInputs;
+    private Animator playerAnimator;
+    private CharacterController characterController;
+
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
+        
+        // Get player components for movement/animation control
+        if (player != null)
+        {
+            thirdPersonController = player.GetComponent<StarterAssets.ThirdPersonController>();
+            starterAssetsInputs = player.GetComponent<StarterAssets.StarterAssetsInputs>();
+            playerAnimator = player.GetComponent<Animator>();
+            characterController = player.GetComponent<CharacterController>();
+        }
+        
+        // Setup main audio source for countdown sounds
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
+        }
+        
+        // Setup separate audio sources for horse sounds (for better control)
+        horseIdleSource = gameObject.AddComponent<AudioSource>();
+        horseIdleSource.spatialBlend = 1.0f; // Make it 3D sound
+        horseIdleSource.rolloffMode = AudioRolloffMode.Linear;
+        horseIdleSource.minDistance = 5f;
+        horseIdleSource.maxDistance = 20f;
+        horseIdleSource.loop = true;
+        
+        horseRunningSource = gameObject.AddComponent<AudioSource>();
+        horseRunningSource.spatialBlend = 1.0f; // Make it 3D sound
+        horseRunningSource.rolloffMode = AudioRolloffMode.Linear;
+        horseRunningSource.minDistance = 5f;
+        horseRunningSource.maxDistance = 30f;
+        horseRunningSource.loop = true;
+        
+        // Configure horse idle sound if assigned
+        if (horseIdleSound != null)
+        {
+            horseIdleSource.clip = horseIdleSound;
+            horseIdleSource.volume = 0f; // Start with zero volume
+        }
+        
+        // Configure horse running sound if assigned
+        if (horseRunningSound != null)
+        {
+            horseRunningSource.clip = horseRunningSound;
+            horseRunningSource.volume = 0f; // Start with zero volume
         }
 
         if (playerUIElementsToHide != null)
@@ -66,38 +133,82 @@ public class KartTrigger : MonoBehaviour
             }
         }
 
-        driveUI?.SetActive(false);
-        kartDrivingUI?.SetActive(false);
+        // Initialize UI states
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
         if (countdownUI != null) countdownUI.SetActive(false);
+        
+        // Make sure wagon blocker is active at start
+        if (wagonBlocker != null)
+        {
+            wagonBlocker.SetActive(true);
+        }
     }
-
-    private bool hasPlayedTimeline = false;
 
     private void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+        // Optional: Keep this for emergency exit if needed
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && isDriving)
         {
-            if (playerInside && !isDriving && !isCountingDown)
+            ExitKart();
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player") && !hasBeenUsed && !hasTriggeredThisEntry)
+        {
+            playerInside = true;
+            hasTriggeredThisEntry = true; // Set flag to prevent re-triggering in this entry
+            
+            // Force stop the kart immediately when player enters
+            ForceStopKart();
+            
+            // Automatically start the drive sequence
+            if (!isCountingDown && !isDriving)
             {
                 StartDriveSequence();
             }
-            else if (isDriving && !kartController.HasArrived)
+            
+            // Start horse idle sound when player approaches
+            StartHorseIdleSound();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerInside = false;
+            
+            // Only reset the trigger flag if we're not currently driving or counting down
+            if (!isDriving && !isCountingDown && !hasBeenUsed)
             {
-                ExitKart();
+                hasTriggeredThisEntry = false;
+            }
+            
+            // Fade out horse idle sound when player leaves
+            FadeOutHorseIdleSound();
+            
+            // Cancel countdown if player leaves during countdown
+            if (isCountingDown)
+            {
+                StopCountdown();
             }
         }
     }
 
     public void StartDriveSequence()
     {
-        if (!playerInside || isDriving || isCountingDown) return;
+        if (!playerInside || isDriving || isCountingDown || hasBeenUsed) return;
         
-        // Hide player UI and drive UI immediately
+        // Fade out idle sound
+        FadeOutHorseIdleSound();
+        
+        // Hide player UI immediately
         HidePlayerUIElements();
-        driveUI?.SetActive(false);
         
         // Show kart driving UI at the start of sequence
-        kartDrivingUI?.SetActive(true);
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(true);
         
         // Position player to kart seat
         PreparePlayerForDriving();
@@ -108,6 +219,8 @@ public class KartTrigger : MonoBehaviour
 
     private void PreparePlayerForDriving()
     {
+        if (player == null) return;
+        
         // Store original player transform for cancellation
         playerOriginalPosition = player.transform.position;
         playerOriginalRotation = player.transform.rotation;
@@ -118,11 +231,20 @@ public class KartTrigger : MonoBehaviour
         player.transform.localPosition = Vector3.zero;
         player.transform.localRotation = Quaternion.identity;
 
+        // Reset player movement and disable controllers
+        ResetPlayerMovement();
+        
         // Disable player controllers
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-        if (cc) cc.enabled = false;
-        if (tpc) tpc.enabled = false;
+        if (characterController != null) characterController.enabled = false;
+        if (thirdPersonController != null) thirdPersonController.enabled = false;
+        if (starterAssetsInputs != null) starterAssetsInputs.enabled = false;
+        
+        // Enable animator and set IsDriving parameter
+        if (playerAnimator != null)
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.SetBool("IsDriving", true);
+        }
     }
 
     public void StartCountdown()
@@ -217,27 +339,137 @@ public class KartTrigger : MonoBehaviour
 
     public void StartDriving()
     {
-        if (!playerInside || player == null) return;
+        if (!playerInside || player == null || hasBeenUsed) return;
 
         isDriving = true;
+        hasBeenUsed = true; // Mark kart as used - cannot be used again
+        
+        // Remove wagon blocker when kart starts driving
+        RemoveWagonBlocker();
 
-        // KartDrivingUI is already active from StartDriveSequence
-        // Just enable the kart controller
+        // Start horse running sound
+        StartHorseRunningSound();
+
+        // Enable the kart controller
         if (kartController != null)
         {
             kartController.SetControllable(true);
             UpdateDestinationUI();
         }
     }
+    
+    // NEW: Method to remove wagon blocker
+    private void RemoveWagonBlocker()
+    {
+        if (wagonBlocker != null)
+        {
+            wagonBlocker.SetActive(false);
+        }
+    }
 
-    // Modified Update method for driving state
+    // NEW: Force stop the kart movement
+    private void ForceStopKart()
+    {
+        if (kartController == null) return;
+        
+        // Disable kart control
+        kartController.SetControllable(false);
+        
+        // Try to stop the kart by setting speed to zero
+        // Check if kart has a Rigidbody and stop its movement
+        Rigidbody rb = kartController.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+        
+        Debug.Log("Kart force stopped");
+    }
+
+    // Start horse idle sound with fade in
+    private void StartHorseIdleSound()
+    {
+        if (horseIdleSource == null || horseIdleSound == null) return;
+        
+        horseIdleSource.Play();
+        
+        // Start fade in coroutine
+        if (idleFadeCoroutine != null)
+        {
+            StopCoroutine(idleFadeCoroutine);
+        }
+        idleFadeCoroutine = StartCoroutine(FadeAudioSource(horseIdleSource, 0f, idleVolume, fadeInOutDuration));
+    }
+
+    // Fade out horse idle sound
+    private void FadeOutHorseIdleSound()
+    {
+        if (horseIdleSource == null || !horseIdleSource.isPlaying) return;
+        
+        if (idleFadeCoroutine != null)
+        {
+            StopCoroutine(idleFadeCoroutine);
+        }
+        idleFadeCoroutine = StartCoroutine(FadeAudioSource(horseIdleSource, horseIdleSource.volume, 0f, fadeInOutDuration, true));
+    }
+
+    // Start horse running sound with fade in
+    private void StartHorseRunningSound()
+    {
+        if (horseRunningSource == null || horseRunningSound != null)
+        {
+            horseRunningSource.Play();
+            
+            // Start fade in coroutine
+            if (runningFadeCoroutine != null)
+            {
+                StopCoroutine(runningFadeCoroutine);
+            }
+            runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, 0f, runningVolume, fadeInOutDuration));
+        }
+    }
+
+    // Fade out horse running sound
+    private void FadeOutHorseRunningSound()
+    {
+        if (horseRunningSource == null || !horseRunningSource.isPlaying) return;
+        
+        if (runningFadeCoroutine != null)
+        {
+            StopCoroutine(runningFadeCoroutine);
+        }
+        runningFadeCoroutine = StartCoroutine(FadeAudioSource(horseRunningSource, horseRunningSource.volume, 0f, fadeInOutDuration, true));
+    }
+
+    // Generic audio fade coroutine
+    private IEnumerator FadeAudioSource(AudioSource source, float startVolume, float endVolume, float duration, bool stopAfterFade = false)
+    {
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            source.volume = Mathf.Lerp(startVolume, endVolume, t);
+            yield return null;
+        }
+        
+        source.volume = endVolume;
+        
+        if (stopAfterFade && endVolume <= 0f)
+        {
+            source.Stop();
+        }
+    }
+
     private void LateUpdate()
     {
         if (isDriving)
         {
             UpdateDestinationUI();
 
-            if (kartController.HasArrived && !hasPlayedTimeline)
+            if (kartController != null && kartController.HasArrived && !hasPlayedTimeline)
             {
                 PlayDestinationTimeline();
             }
@@ -248,12 +480,18 @@ public class KartTrigger : MonoBehaviour
     {
         hasPlayedTimeline = true;
 
-        // Disable kart control
+        // Force stop the kart when reaching destination
+        ForceStopKart();
+        
+        // Fade out running sound
+        FadeOutHorseRunningSound();
+
+        // Disable kart control (already done in ForceStopKart)
         if (kartController != null)
             kartController.SetControllable(false);
 
         // Hide driving UI
-        kartDrivingUI?.SetActive(false);
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
 
         // Play timeline
         if (destinationDirector != null)
@@ -271,35 +509,7 @@ public class KartTrigger : MonoBehaviour
     void OnTimelineFinished(PlayableDirector director)
     {
         director.stopped -= OnTimelineFinished;
-
         AutoExitKart();
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerInside = true;
-            if (!isCountingDown && !isDriving)
-            {
-                driveUI?.SetActive(true);
-            }
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            playerInside = false;
-            driveUI?.SetActive(false);
-            
-            // Cancel countdown if player leaves during countdown
-            if (isCountingDown)
-            {
-                StopCountdown();
-            }
-        }
     }
 
     public void StopCountdown()
@@ -314,60 +524,115 @@ public class KartTrigger : MonoBehaviour
         
         // Hide all UI elements
         if (countdownUI != null) countdownUI.SetActive(false);
-        kartDrivingUI?.SetActive(false);
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
         
         // Reset player to original position
         ResetPlayerAfterCancellation();
         
-        // Show drive UI again if player is still inside
+        // Restart idle sound if player is still inside
         if (playerInside)
         {
-            driveUI?.SetActive(true);
+            StartHorseIdleSound();
         }
+        
+        // Reset trigger flag since countdown was cancelled
+        hasTriggeredThisEntry = false;
     }
 
     private void ResetPlayerAfterCancellation()
     {
+        if (player == null) return;
+        
         // Reset player to original transform
         player.transform.SetParent(playerOriginalParent);
         player.transform.position = playerOriginalPosition;
         player.transform.rotation = playerOriginalRotation;
 
-        // Re-enable player controller
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-        if (tpc) tpc.enabled = true;
-        if (cc) cc.enabled = true;
+        // Re-enable player controller and animation
+        EnablePlayerMovementAndAnimation();
         
         // Show player UI again
         ShowPlayerUIElements();
+        
+        // Reset the used flag if cancelled before driving starts
+        if (!isDriving)
+        {
+            hasBeenUsed = false;
+        }
+    }
+
+    // Helper method to enable player movement and animation
+    private void EnablePlayerMovementAndAnimation()
+    {
+        if (characterController != null) characterController.enabled = true;
+        if (thirdPersonController != null) thirdPersonController.enabled = true;
+        if (starterAssetsInputs != null) starterAssetsInputs.enabled = true;
+        if (playerAnimator != null) 
+        {
+            playerAnimator.enabled = true;
+            playerAnimator.SetBool("IsDriving", false); // Reset driving animation
+        }
+    }
+    
+    // Helper method to reset player movement
+    private void ResetPlayerMovement()
+    {
+        if (thirdPersonController != null)
+        {
+            // Reset any movement state
+            thirdPersonController.enabled = false;
+        }
+        
+        if (starterAssetsInputs != null)
+        {
+            // Reset inputs to zero
+            starterAssetsInputs.move = Vector2.zero;
+            starterAssetsInputs.jump = false;
+            starterAssetsInputs.sprint = false;
+        }
+        
+        // Stop any rigidbody movement
+        Rigidbody playerRb = player.GetComponent<Rigidbody>();
+        if (playerRb != null)
+        {
+            playerRb.linearVelocity = Vector3.zero;
+            playerRb.angularVelocity = Vector3.zero;
+        }
     }
 
     public void ExitKart()
     {
         if (!isDriving) return;
 
+        // Force stop the kart when exiting
+        ForceStopKart();
+        
         isDriving = false;
         playerInside = false;
 
+        // Fade out running sound
+        FadeOutHorseRunningSound();
+
         ShowPlayerUIElements();
 
-        driveUI?.SetActive(false);
-        kartDrivingUI?.SetActive(false);
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
 
         // Reset player parent and position
         player.transform.SetParent(null);
-        // You might want to position player near the kart instead of original position
-        player.transform.position = kartController.transform.position + Vector3.right * 2f;
+        // Position player near the kart
+        if (kartController != null)
+        {
+            player.transform.position = kartController.transform.position + Vector3.right * 2f;
+        }
 
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-
-        if (tpc) tpc.enabled = true;
-        if (cc) cc.enabled = true;
+        // Re-enable player movement and animation
+        EnablePlayerMovementAndAnimation();
 
         if (kartController != null)
             kartController.SetControllable(false);
+            
+        hasPlayedTimeline = false;
+        // Don't reset hasBeenUsed - kart can only be used once!
     }
 
     public void AutoExitKart()
@@ -375,31 +640,31 @@ public class KartTrigger : MonoBehaviour
         if (!isDriving) return;
 
         isDriving = false;
-        kartDrivingUI?.SetActive(false);
+        if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
 
-        Invoke("CompleteAutoExit", 1.5f);
+        // Immediately exit kart and enable movement after timeline
+        CompleteAutoExit();
     }
 
     void CompleteAutoExit()
     {
         playerInside = false;
         hasPlayedTimeline = false;
+        // Don't reset hasTriggeredThisEntry or hasBeenUsed - kart is done after one ride
 
         ShowPlayerUIElements();
-        driveUI?.SetActive(false);
 
+        // Reset player parent
         player.transform.SetParent(null);
+        
         // Position player near the kart at destination
         if (kartController != null && kartController.CurrentDestination != null)
         {
             player.transform.position = kartController.CurrentDestination.position + Vector3.right * 2f;
         }
 
-        CharacterController cc = player.GetComponent<CharacterController>();
-        ThirdPersonController tpc = player.GetComponent<ThirdPersonController>();
-
-        if (tpc) tpc.enabled = true;
-        if (cc) cc.enabled = true;
+        // RE-ENABLE player movement and animation after timeline finishes
+        EnablePlayerMovementAndAnimation();
 
         GoToNextDestination();
     }
@@ -441,41 +706,6 @@ public class KartTrigger : MonoBehaviour
         }
     }
 
-    public void SetNextDestination()
-    {
-        if (destinations == null || destinations.Length == 0) return;
-
-        currentDestinationIndex = (currentDestinationIndex + 1) % destinations.Length;
-
-        if (kartController != null)
-        {
-            kartController.SetDestination(destinations[currentDestinationIndex]);
-            UpdateDestinationUI();
-        }
-    }
-
-    public void ClearDestination()
-    {
-        if (kartController != null)
-        {
-            kartController.ClearDestination();
-            UpdateDestinationUI();
-        }
-    }
-
-    public void SetDestinationByIndex(int index)
-    {
-        if (destinations == null || index < 0 || index >= destinations.Length) return;
-
-        currentDestinationIndex = index;
-
-        if (kartController != null)
-        {
-            kartController.SetDestination(destinations[currentDestinationIndex]);
-            UpdateDestinationUI();
-        }
-    }
-
     private void HidePlayerUIElements()
     {
         if (playerUIElementsToHide != null)
@@ -507,19 +737,16 @@ public class KartTrigger : MonoBehaviour
             }
         }
     }
-
-    public void SetPlayerUIElementActive(GameObject uiElement, bool active)
+    
+    private void OnDestroy()
     {
-        if (uiElement != null &&
-            playerUIElementsToHide != null &&
-            System.Array.Exists(playerUIElementsToHide, element => element == uiElement))
+        if (idleFadeCoroutine != null)
         {
-            uiElement.SetActive(active);
-
-            if (playerUIElementStates.ContainsKey(uiElement))
-            {
-                playerUIElementStates[uiElement] = active;
-            }
+            StopCoroutine(idleFadeCoroutine);
+        }
+        if (runningFadeCoroutine != null)
+        {
+            StopCoroutine(runningFadeCoroutine);
         }
     }
 }
