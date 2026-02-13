@@ -1,4 +1,4 @@
-// WardenInteraction.cs (UPDATED)
+// WardenInteraction.cs (COMPLETE - Works with AllerthriaGameManager)
 using UnityEngine;
 using UnityEngine.Playables;
 using System.Collections;
@@ -7,22 +7,21 @@ using UnityEngine.UI;
 public class WardenInteraction : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private GameObject talkButtonUI; // The actual GameObject
-    [SerializeField] private CanvasGroup talkButtonCanvas;
-    [SerializeField] private RectTransform talkButtonRect;
     [SerializeField] private Button talkButton;
+    [SerializeField] private GameObject talkButtonObject; // Drag the actual button GameObject here
+    
+    [Header("Game UI References")]
+    [SerializeField] private GameObject gamePanel; // Main game panel that contains timer, hearts, points
+    [SerializeField] private GameObject heartsContainer;
+    [SerializeField] private GameObject pointsPanel;
+    [SerializeField] private GameObject timerPanel;
     
     [Header("Timelines")]
     [SerializeField] private PlayableDirector firstArrivalTimeline;  // First time meeting
     [SerializeField] private PlayableDirector keyReturnTimeline;     // Returning with key
     
-    [Header("Animation Settings")]
-    [SerializeField] private float animationDuration = 0.3f;
-    [SerializeField] private float slideDistance = 50f;
-    
     [Header("Quest Settings")]
     [SerializeField] private bool isKeyGiverNPC = true; // Is this the NPC that gives the key?
-    [SerializeField] private bool showButtonOnlyOnce = false; // Only show button once per visit
     
     [Header("Game Start Settings")]
     [SerializeField] private bool startsGameTimer = true; // Should this NPC start the game timer?
@@ -31,15 +30,15 @@ public class WardenInteraction : MonoBehaviour
     // Timer reference
     private GameTimer gameTimer;
     
+    // Quest acceptance flag
+    private bool questAccepted = false;
     private bool isTimelinePlaying = false;
     private bool isPlayerInRange = false;
-    private bool isUIVisible = false;
-    private bool hasInteractedThisVisit = false;
-    private Vector2 originalPosition;
-    private Coroutine animationCoroutine;
     
     private void Start()
     {
+        Debug.Log($"[WardenInteraction] Start called on {gameObject.name}");
+        
         // Make sure collider is trigger
         Collider col = GetComponent<Collider>();
         if (col != null)
@@ -47,22 +46,17 @@ public class WardenInteraction : MonoBehaviour
             col.isTrigger = true;
         }
         
-        // Deactivate UI completely at start
-        if (talkButtonUI != null)
-        {
-            talkButtonUI.SetActive(false);
-        }
+        // Hide talk button at start
+        HideTalkButton();
         
-        // Store original position for animation
-        if (talkButtonRect != null)
-        {
-            originalPosition = talkButtonRect.anchoredPosition;
-        }
+        // Deactivate all game UI at start
+        DeactivateAllGameUI();
         
         // Setup button click
         if (talkButton != null)
         {
-            talkButton.onClick.AddListener(StartAppropriateTimeline);
+            talkButton.onClick.RemoveAllListeners();
+            talkButton.onClick.AddListener(StartIntroTimeline);
         }
         
         // Find the game timer
@@ -72,37 +66,34 @@ public class WardenInteraction : MonoBehaviour
         CheckIfKeyAlreadyCollected();
     }
     
+    private void DeactivateAllGameUI()
+    {
+        if (gamePanel != null) gamePanel.SetActive(false);
+        if (heartsContainer != null) heartsContainer.SetActive(false);
+        if (pointsPanel != null) pointsPanel.SetActive(false);
+        if (timerPanel != null) timerPanel.SetActive(false);
+        
+        Debug.Log("All game UI deactivated");
+    }
+    
     private void FindGameTimer()
     {
-        // Find the GameTimer in the scene
         gameTimer = GameTimer.Instance;
         if (gameTimer == null)
         {
-            Debug.LogWarning("GameTimer not found in scene! Timer won't start automatically.");
-            
-            // Try to find it manually
             gameTimer = FindObjectOfType<GameTimer>();
-            if (gameTimer != null)
-            {
-                Debug.Log($"Found GameTimer: {gameTimer.gameObject.name}");
-            }
         }
-        else
+        
+        if (isFirstWardenInteraction && startsGameTimer && gameTimer != null)
         {
-            Debug.Log($"Found GameTimer Instance: {gameTimer.gameObject.name}");
-            
-            // If this is the first warden and timer should start, ensure timer is reset
-            if (isFirstWardenInteraction && startsGameTimer)
-            {
-                gameTimer.ResetTimer(false);
-            }
+            gameTimer.ResetTimer(false);
         }
     }
     
     private void OnEnable()
     {
         // Reset interaction state when NPC is enabled
-        hasInteractedThisVisit = false;
+        questAccepted = false;
     }
     
     private void OnTriggerEnter(Collider other)
@@ -111,8 +102,8 @@ public class WardenInteraction : MonoBehaviour
         {
             isPlayerInRange = true;
             
-            // Check if we should show the button
-            if (!showButtonOnlyOnce || !hasInteractedThisVisit)
+            // Only show if quest hasn't been accepted yet
+            if (!questAccepted)
             {
                 ShowTalkButton();
             }
@@ -128,317 +119,191 @@ public class WardenInteraction : MonoBehaviour
         }
     }
     
+    // Check if player already has key (uses AllerthriaGameManager)
     private void CheckIfKeyAlreadyCollected()
     {
-        // This method can be used to adjust NPC behavior based on key status
-        // For example, change dialogue or appearance
         bool hasKey = CheckPlayerHasKey();
         
         if (hasKey && isKeyGiverNPC)
         {
-            Debug.Log("Player already has key. NPC behavior may change.");
-            // You could change NPC animation, dialogue options, etc. here
+            Debug.Log("Player already has key. Will play return cutscene.");
         }
     }
     
+    // Check player has key from AllerthriaGameManager
     private bool CheckPlayerHasKey()
     {
-        // Check multiple sources for key status
+        // Check AllerthriaGameManager first
         if (AllerthriaGameManager.Instance != null)
         {
             return AllerthriaGameManager.Instance.hasKey;
         }
         
-        // If you have a GameDataManager1, check there too
-        /*
-        if (GameDataManager1.Instance != null)
-        {
-            return GameDataManager1.Instance.currentGameData.hasKey;
-        }
-        */
-        
         // Check PlayerPrefs as fallback
-        string keyId = "castle_key"; // You might want to make this configurable
+        string keyId = "castle_key";
         return PlayerPrefs.HasKey($"KeyCollected_{keyId}");
-    }
-    
-    private PlayableDirector GetAppropriateTimeline()
-    {
-        bool hasKey = CheckPlayerHasKey();
-        
-        if (hasKey && keyReturnTimeline != null)
-        {
-            Debug.Log("Playing key return timeline - player already has key");
-            return keyReturnTimeline;
-        }
-        else if (firstArrivalTimeline != null)
-        {
-            Debug.Log("Playing first arrival timeline");
-            return firstArrivalTimeline;
-        }
-        
-        Debug.LogWarning("No appropriate timeline found!");
-        return null;
     }
     
     private void ShowTalkButton()
     {
-        if (isUIVisible) return;
+        if (questAccepted) return;
         
-        // Check if we should even show the button
-        if (isKeyGiverNPC)
+        Debug.Log("Showing talk button");
+        
+        if (talkButtonObject != null)
         {
-            bool hasKey = CheckPlayerHasKey();
-            
-            // If this is the key-giving NPC and player already has key,
-            // you might want to hide the button or show different text
-            // For now, we'll still show it but with different behavior
-            if (hasKey)
-            {
-                Debug.Log("Player already has key, but showing button for return cutscene");
-            }
+            talkButtonObject.SetActive(true);
         }
-        
-        // Activate the UI GameObject first
-        if (talkButtonUI != null)
+        else if (talkButton != null)
         {
-            talkButtonUI.SetActive(true);
+            talkButton.gameObject.SetActive(true);
         }
-        
-        // Set initial state (invisible and moved down)
-        if (talkButtonCanvas != null)
-        {
-            talkButtonCanvas.alpha = 0f;
-            talkButtonCanvas.blocksRaycasts = false;
-            talkButtonCanvas.interactable = false;
-        }
-        
-        if (talkButtonRect != null)
-        {
-            talkButtonRect.anchoredPosition = originalPosition + Vector2.down * slideDistance;
-        }
-        
-        if (animationCoroutine != null)
-            StopCoroutine(animationCoroutine);
-        
-        animationCoroutine = StartCoroutine(AnimateButton(true));
     }
     
     private void HideTalkButton()
     {
-        if (!isUIVisible) return;
+        Debug.Log("Hiding talk button");
         
-        if (animationCoroutine != null)
-            StopCoroutine(animationCoroutine);
-        
-        animationCoroutine = StartCoroutine(AnimateButton(false));
+        if (talkButtonObject != null)
+        {
+            talkButtonObject.SetActive(false);
+        }
+        else if (talkButton != null)
+        {
+            talkButton.gameObject.SetActive(false);
+        }
     }
     
-    private IEnumerator AnimateButton(bool show)
+    private void StartIntroTimeline()
     {
-        isUIVisible = show;
-        
-        // Enable/disable button interaction
-        if (talkButtonCanvas != null)
+        if (questAccepted)
         {
-            talkButtonCanvas.blocksRaycasts = show;
-            talkButtonCanvas.interactable = show;
+            Debug.Log("Quest already accepted, cannot start intro again");
+            return;
         }
         
-        float startAlpha = talkButtonCanvas != null ? talkButtonCanvas.alpha : 0f;
-        float targetAlpha = show ? 1f : 0f;
-        
-        Vector2 startPos = talkButtonRect != null ? talkButtonRect.anchoredPosition : Vector2.zero;
-        Vector2 targetPos = show ? originalPosition : 
-            originalPosition + Vector2.down * slideDistance;
-        
-        float time = 0f;
-        
-        while (time < animationDuration)
+        // Check if we should play return cutscene instead
+        if (CheckPlayerHasKey() && keyReturnTimeline != null)
         {
-            time += Time.deltaTime;
-            float t = time / animationDuration;
-            
-            // Fade
-            if (talkButtonCanvas != null)
-                talkButtonCanvas.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            
-            // Slide
-            if (talkButtonRect != null)
-                talkButtonRect.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
-            
-            yield return null;
+            Debug.Log("Player has key, playing return cutscene");
+            isTimelinePlaying = true;
+            HideTalkButton();
+            keyReturnTimeline.Play();
+            StartCoroutine(WaitForTimelineEnd(keyReturnTimeline));
+            return;
         }
         
-        // Set final values
-        if (talkButtonCanvas != null)
-            talkButtonCanvas.alpha = targetAlpha;
-        
-        if (talkButtonRect != null)
-            talkButtonRect.anchoredPosition = targetPos;
-        
-        // Deactivate GameObject when hidden
-        if (!show && talkButtonUI != null)
-        {
-            talkButtonUI.SetActive(false);
-        }
-        
-        animationCoroutine = null;
-    }
-    
-    private void StartAppropriateTimeline()
-    {
-        PlayableDirector timelineToPlay = GetAppropriateTimeline();
-        
-        if (timelineToPlay != null)
+        // Play intro timeline
+        if (firstArrivalTimeline != null)
         {
             isTimelinePlaying = true;
-            hasInteractedThisVisit = true;
-
-            // Force-hide UI immediately
+            
+            // Hide talk button immediately
             HideTalkButton();
 
-            // NEW: Start the game timer if this is the first warden interaction
-            StartGameTimerIfNeeded();
-
-            timelineToPlay.Play();
-            StartCoroutine(WaitForTimelineEnd(timelineToPlay));
+            // Play the intro timeline
+            firstArrivalTimeline.Play();
             
-            // Handle quest progression if this is key-giving NPC
-            if (isKeyGiverNPC && !CheckPlayerHasKey())
-            {
-                // This is the first time getting the key
-                // The key collection will be handled by CollectibleKey script
-                Debug.Log("First time interacting with key-giving NPC");
-            }
+            StartCoroutine(WaitForTimelineEnd(firstArrivalTimeline));
+            
+            Debug.Log("Intro timeline started - waiting for quest acceptance");
         }
         else
         {
-            Debug.LogError("No Timeline Director assigned!");
+            Debug.LogError("No First Arrival Timeline assigned!");
         }
     }
     
-    // Method to start the game timer
-    private void StartGameTimerIfNeeded()
+    // Method to be called when player accepts the quest
+    public void OnQuestAccepted()
+    {
+        if (questAccepted) return;
+        
+        questAccepted = true;
+        Debug.Log("QUEST ACCEPTED! Starting game timer and activating UI...");
+        
+        // Stop the intro timeline if it's still playing
+        if (firstArrivalTimeline != null && firstArrivalTimeline.state == PlayState.Playing)
+        {
+            firstArrivalTimeline.Stop();
+        }
+        
+        // Play the accept timeline if available
+        if (TimelineChoiceManager.Instance != null && TimelineChoiceManager.Instance.acceptTimeline != null)
+        {
+            TimelineChoiceManager.Instance.AcceptQuest();
+        }
+        
+        // Start the timer - This will call AllerthriaGameManager.OnGameTimerStarted()
+        StartGameTimerNow();
+        
+        // Activate all game UI
+        ActivateAllGameUI();
+        
+        // Hide talk button permanently
+        HideTalkButton();
+    }
+    
+    // Method to be called when player rejects the quest
+    public void OnQuestRejected()
+{
+    Debug.Log("QUEST REJECTED");
+
+    if (firstArrivalTimeline != null)
+    {
+        firstArrivalTimeline.Stop();
+        firstArrivalTimeline.time = 0;
+        firstArrivalTimeline.Evaluate();
+    }
+
+    // 🔥 FORCE RESET
+    isTimelinePlaying = false;
+
+    if (isPlayerInRange)
+        ShowTalkButton();
+}
+
+    
+    // Start the game timer
+    private void StartGameTimerNow()
     {
         if (startsGameTimer && isFirstWardenInteraction && gameTimer != null)
         {
             if (gameTimer.CanStartTimer())
             {
                 gameTimer.StartTimerFromInteraction();
+                Debug.Log("GAME TIMER STARTED!");
                 
-                // Also trigger game start in other systems if needed
-                TriggerGameStartEvents();
+                // This will trigger AllerthriaGameManager.OnGameTimerStarted()
+                // through the GameTimer's events
             }
-            else
-            {
-                Debug.LogWarning("Timer cannot start (already running or not ready)");
-            }
-        }
-        else if (startsGameTimer && gameTimer == null)
-        {
-            Debug.LogWarning("Game timer not found, but this NPC should start it!");
         }
     }
     
-    // Trigger other game start events
-    private void TriggerGameStartEvents()
+    // Activate all game UI elements
+    private void ActivateAllGameUI()
     {
-        // Notify AllerthriaGameManager that game has started
-        if (AllerthriaGameManager.Instance != null)
-        {
-            // You might need to check the actual method name in your AllerthriaGameManager
-            AllerthriaGameManager.Instance.OnGameTimerStarted();
-            Debug.Log("Notified AllerthriaGameManager that game timer has started");
-        }
-        else
-        {
-            Debug.LogWarning("AllerthriaGameManager.Instance is null!");
-        }
+        if (gamePanel != null) gamePanel.SetActive(true);
+        if (heartsContainer != null) heartsContainer.SetActive(true);
+        if (pointsPanel != null) pointsPanel.SetActive(true);
+        if (timerPanel != null) timerPanel.SetActive(true);
         
-        // Notify Kingdom4ScoreManager that game has started
-        if (Kingdom4ScoreManager.Instance != null)
-        {
-            // You might want to add a game start method to your score manager
-            Kingdom4ScoreManager.Instance.OnGameStarted();
-            Debug.Log("Notified Kingdom4ScoreManager that game timer has started");
-        }
-        else
-        {
-            Debug.LogWarning("Kingdom4ScoreManager.Instance is null!");
-        }
-        
-        // Notify Kingdom4GameEndManager that game has started
-        if (Kingdom4GameEndManager.Instance != null)
-        {
-            // You might want to add a game start method to your game end manager
-            Kingdom4GameEndManager.Instance.OnGameStarted();
-            Debug.Log("Notified Kingdom4GameEndManager that game timer has started");
-        }
-        else
-        {
-            Debug.LogWarning("Kingdom4GameEndManager.Instance is null!");
-        }
-        
-        // You could also trigger UI elements, audio, etc.
-        Debug.Log("GAME STARTED! Timer is now running.");
+        Debug.Log("Game UI activated - Hearts, Points, and Timer panels should now be visible");
     }
     
     private IEnumerator WaitForTimelineEnd(PlayableDirector director)
-    {
+{
+    while (director != null && director.state == PlayState.Playing)
         yield return null;
 
-        while (director != null)
-        {
-            // If timeline stopped → exit
-            if (director.state == PlayState.Paused)
-            {
-                // Wait until resumed
-                yield return new WaitUntil(() =>
-                    director.state != PlayState.Paused);
-            }
+    isTimelinePlaying = false;
 
-            if (director.state != PlayState.Playing)
-                break;
+    Debug.Log("Timeline ended → flag reset");
 
-            yield return null;
-        }
+    if (isPlayerInRange && !questAccepted)
+        ShowTalkButton();
+}
 
-        isTimelinePlaying = false;
-
-        // Only show button again if player is still in range AND we allow multiple interactions
-        if (isPlayerInRange && (!showButtonOnlyOnce || !hasInteractedThisVisit))
-        {
-            ShowTalkButton();
-        }
-    }
-    
-    // Public method to manually trigger the appropriate timeline
-    public void TriggerNPCInteraction()
-    {
-        if (!isTimelinePlaying)
-        {
-            StartAppropriateTimeline();
-        }
-    }
-    
-    // Method to reset interaction state
-    public void ResetInteraction()
-    {
-        hasInteractedThisVisit = false;
-        isTimelinePlaying = false;
-        
-        if (isPlayerInRange)
-        {
-            ShowTalkButton();
-        }
-    }
-    
-    // Method to check which timeline would play
-    public bool WouldPlayReturnCutscene()
-    {
-        return CheckPlayerHasKey() && keyReturnTimeline != null;
-    }
     
     // Public method to check if this NPC starts the timer
     public bool DoesStartTimer()
@@ -446,71 +311,61 @@ public class WardenInteraction : MonoBehaviour
         return startsGameTimer;
     }
     
-    // Public method to manually start timer (for debugging or other triggers)
-    public void ManuallyStartGameTimer()
+    // For debugging
+    [ContextMenu("Test Show Talk Button")]
+    public void TestShowButton()
     {
-        if (gameTimer != null && !gameTimer.IsActive)
-        {
-            gameTimer.StartTimerFromInteraction();
-            Debug.Log("Game timer manually started by NPC");
-        }
+        ShowTalkButton();
     }
     
-    // For debugging in the Inspector
-    [ContextMenu("Test Check Key Status")]
-    public void TestCheckKeyStatus()
+    [ContextMenu("Test Hide Talk Button")]
+    public void TestHideButton()
+    {
+        HideTalkButton();
+    }
+    
+    [ContextMenu("Test Quest Acceptance")]
+    public void TestQuestAcceptance()
+    {
+        OnQuestAccepted();
+    }
+    
+    [ContextMenu("Test Quest Rejection")]
+    public void TestQuestRejection()
+    {
+        OnQuestRejected();
+    }
+    
+    [ContextMenu("Check Player Has Key")]
+    public void TestCheckKey()
     {
         bool hasKey = CheckPlayerHasKey();
         Debug.Log($"Player has key: {hasKey}");
-        Debug.Log($"Would play: {(hasKey ? "Return Cutscene" : "First Arrival Cutscene")}");
-    }
-    
-    [ContextMenu("Force Play First Arrival")]
-    public void ForcePlayFirstArrival()
-    {
-        if (firstArrivalTimeline != null)
+        
+        if (AllerthriaGameManager.Instance != null)
         {
-            isTimelinePlaying = true;
-            firstArrivalTimeline.Play();
-            
-            // Also start timer if this is the first warden
-            StartGameTimerIfNeeded();
-            
-            StartCoroutine(WaitForTimelineEnd(firstArrivalTimeline));
-        }
-    }
-    
-    [ContextMenu("Force Play Return Cutscene")]
-    public void ForcePlayReturnCutscene()
-    {
-        if (keyReturnTimeline != null)
-        {
-            isTimelinePlaying = true;
-            keyReturnTimeline.Play();
-            StartCoroutine(WaitForTimelineEnd(keyReturnTimeline));
-        }
-    }
-    
-    [ContextMenu("Test Timer Start")]
-    public void TestTimerStart()
-    {
-        if (gameTimer != null)
-        {
-            Debug.Log($"Timer state: Active={gameTimer.IsActive}, CanStart={gameTimer.CanStartTimer()}");
-            
-            if (gameTimer.CanStartTimer())
-            {
-                gameTimer.StartTimerFromInteraction();
-                Debug.Log("Timer started via test");
-            }
-            else
-            {
-                Debug.Log("Timer cannot start (already running or not ready)");
-            }
+            Debug.Log($"AllerthriaGameManager.Instance.hasKey = {AllerthriaGameManager.Instance.hasKey}");
         }
         else
         {
-            Debug.LogWarning("Game timer not found!");
+            Debug.Log("AllerthriaGameManager.Instance is null!");
         }
+    }
+    
+    [ContextMenu("Show Current State")]
+    public void ShowCurrentState()
+    {
+        Debug.Log("=== CURRENT STATE ===");
+        Debug.Log($"isPlayerInRange: {isPlayerInRange}");
+        Debug.Log($"questAccepted: {questAccepted}");
+        Debug.Log($"isTimelinePlaying: {isTimelinePlaying}");
+        
+        bool buttonActive = false;
+        if (talkButtonObject != null) buttonActive = talkButtonObject.activeSelf;
+        else if (talkButton != null) buttonActive = talkButton.gameObject.activeSelf;
+        
+        Debug.Log($"Talk Button Active: {buttonActive}");
+        Debug.Log($"Has Key: {CheckPlayerHasKey()}");
+        Debug.Log("====================");
     }
 }
