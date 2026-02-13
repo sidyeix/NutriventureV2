@@ -24,7 +24,11 @@ public class StartingSequenceManager : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera normalFollowCamera;
     [SerializeField] private CinemachineVirtualCamera sequenceFollowCamera;
     [SerializeField] private int sequenceCameraPriority = 30;
-    [SerializeField] private int normalCameraPriority = 20; // CHANGED: Set this to 20 instead of 10
+    [SerializeField] private int normalCameraPriority = 20;
+
+    [Header("Camera Transition Settings")]
+    [SerializeField] private float cameraBlendTime = 1.5f;
+    [SerializeField] private AnimationCurve cameraBlendCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     [Header("UI Management")]
     [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>();
@@ -34,7 +38,9 @@ public class StartingSequenceManager : MonoBehaviour
     private bool isInStartingSequence = false;
     private bool hasReachedStartPoint = false;
     private Coroutine currentSequenceCoroutine;
+    private Coroutine cameraTransitionCoroutine;
     private Vector3 originalPlayerPosition;
+    private CinemachineBrain cinemachineBrain;
 
     // Animation IDs (cache for performance)
     private int animIDSpeed;
@@ -50,12 +56,36 @@ public class StartingSequenceManager : MonoBehaviour
         // Validate references
         ValidateReferences();
 
+        // Find Cinemachine Brain
+        cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+        if (cinemachineBrain == null)
+        {
+            Debug.LogWarning("No CinemachineBrain found in scene! Camera transitions won't be smooth.");
+        }
+
         // Store original camera priority
         if (normalFollowCamera != null)
         {
             originalNormalCameraPriority = normalFollowCamera.Priority;
-            // Set the desired normal camera priority to 20
-            normalCameraPriority = 20; // CHANGED: Set this to 20 instead of 10
+            normalCameraPriority = 20;
+        }
+
+        // Configure Cinemachine Brain for smooth blends
+        ConfigureCinemachineBrain();
+    }
+
+    private void ConfigureCinemachineBrain()
+    {
+        if (cinemachineBrain == null)
+            cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+
+        if (cinemachineBrain != null)
+        {
+            // Set default blend style for all camera transitions
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
+            cinemachineBrain.m_DefaultBlend.m_Time = cameraBlendTime;
+
+            Debug.Log("Cinemachine Brain configured for smooth blends");
         }
     }
 
@@ -103,7 +133,7 @@ public class StartingSequenceManager : MonoBehaviour
     {
         isInStartingSequence = true;
 
-        // Step 1: Immediately switch camera
+        // Step 1: Smoothly switch to sequence camera
         SwitchToSequenceCamera();
 
         // Step 2: Disable player input (but NOT the controller or animator)
@@ -137,13 +167,19 @@ public class StartingSequenceManager : MonoBehaviour
     }
 
     // Method to enable all controls when game ends (called by end trigger)
-    public void EnableAllControlsAndUI()
+    public void EnableAllControlsAndUI(float blendTime = -1f)
     {
-        if (!hasReachedStartPoint) return; // Only enable if we actually started the sequence
+        if (!hasReachedStartPoint) return;
 
         Debug.Log("Enabling all controls and UI (game end)");
 
-        // Step 1: Switch back to normal camera with priority 20
+        // Use specified blend time or default
+        if (blendTime >= 0)
+        {
+            cameraBlendTime = blendTime;
+        }
+
+        // Step 1: Smoothly switch back to normal camera
         SwitchToNormalCamera();
 
         // Step 2: Re-enable player input
@@ -155,17 +191,23 @@ public class StartingSequenceManager : MonoBehaviour
         // Step 4: Reset sequence state
         hasReachedStartPoint = false;
 
-        Debug.Log("Game ended - All controls and UI restored, camera priority set to 20"); // CHANGED: Updated log message
+        Debug.Log($"Game ended - All controls and UI restored, smooth camera transition ({cameraBlendTime}s)");
     }
 
-    // NEW: Separate method for ending just the assessment (without resetting everything)
-    public void EndAssessmentOnly()
+    // Separate method for ending just the assessment (without resetting everything)
+    public void EndAssessmentOnly(float blendTime = -1f)
     {
         if (!hasReachedStartPoint) return;
 
         Debug.Log("Ending assessment only");
 
-        // Switch back to normal camera with priority 20
+        // Use specified blend time or default
+        if (blendTime >= 0)
+        {
+            cameraBlendTime = blendTime;
+        }
+
+        // Smoothly switch back to normal camera
         SwitchToNormalCamera();
 
         // Re-enable player input
@@ -173,33 +215,105 @@ public class StartingSequenceManager : MonoBehaviour
 
         // Re-enable all UI elements that were disabled
         ReEnableAllUI();
-
-        // Don't reset hasReachedStartPoint if you want to keep the sequence state
-        // hasReachedStartPoint = false;
     }
 
+    // MODIFIED: Smooth transition to sequence camera
     private void SwitchToSequenceCamera()
     {
         if (sequenceFollowCamera != null && normalFollowCamera != null)
         {
-            // Immediate switch - sequence camera takes priority
-            normalFollowCamera.Priority = 0;
-            sequenceFollowCamera.Priority = sequenceCameraPriority;
+            // Stop any ongoing camera transition
+            if (cameraTransitionCoroutine != null)
+                StopCoroutine(cameraTransitionCoroutine);
 
-            Debug.Log($"Switched to sequence camera (Priority: {sequenceCameraPriority})");
+            // Start smooth transition
+            cameraTransitionCoroutine = StartCoroutine(SmoothCameraTransition(
+                normalFollowCamera,
+                sequenceFollowCamera,
+                0,                    // Normal camera target priority
+                sequenceCameraPriority, // Sequence camera target priority
+                cameraBlendTime
+            ));
+
+            Debug.Log($"Smooth transition to sequence camera (Priority: {sequenceCameraPriority}) over {cameraBlendTime}s");
         }
     }
 
+    // MODIFIED: Smooth transition to normal camera
     private void SwitchToNormalCamera()
     {
         if (sequenceFollowCamera != null && normalFollowCamera != null)
         {
-            // Switch back to normal camera with priority 20
-            sequenceFollowCamera.Priority = 0;
-            normalFollowCamera.Priority = normalCameraPriority;
+            // Stop any ongoing camera transition
+            if (cameraTransitionCoroutine != null)
+                StopCoroutine(cameraTransitionCoroutine);
 
-            Debug.Log($"Switched back to normal camera (Priority: {normalCameraPriority})");
+            // Start smooth transition
+            cameraTransitionCoroutine = StartCoroutine(SmoothCameraTransition(
+                sequenceFollowCamera,
+                normalFollowCamera,
+                0,                    // Sequence camera target priority
+                normalCameraPriority, // Normal camera target priority
+                cameraBlendTime
+            ));
+
+            Debug.Log($"Smooth transition to normal camera (Priority: {normalCameraPriority}) over {cameraBlendTime}s");
         }
+    }
+
+    // NEW: Smooth camera transition coroutine
+    private IEnumerator SmoothCameraTransition(
+        CinemachineVirtualCamera cameraToLower,
+        CinemachineVirtualCamera cameraToRaise,
+        int targetPriorityLow,
+        int targetPriorityHigh,
+        float duration)
+    {
+        if (cinemachineBrain != null)
+        {
+            // Store original blend settings
+            var originalBlendStyle = cinemachineBrain.m_DefaultBlend.m_Style;
+            var originalBlendTime = cinemachineBrain.m_DefaultBlend.m_Time;
+
+            // Set to smooth blend for this transition
+            cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
+            cinemachineBrain.m_DefaultBlend.m_Time = duration;
+        }
+
+        // Get starting priorities
+        int startPriorityLow = cameraToLower.Priority;
+        int startPriorityHigh = cameraToRaise.Priority;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+
+            // Apply the blend curve
+            float smoothT = cameraBlendCurve.Evaluate(t);
+
+            // Smoothly lerp the priorities
+            cameraToLower.Priority = (int)Mathf.Lerp(startPriorityLow, targetPriorityLow, smoothT);
+            cameraToRaise.Priority = (int)Mathf.Lerp(startPriorityHigh, targetPriorityHigh, smoothT);
+
+            yield return null;
+        }
+
+        // Ensure final priorities are exactly set
+        cameraToLower.Priority = targetPriorityLow;
+        cameraToRaise.Priority = targetPriorityHigh;
+
+        // Restore original blend settings
+        if (cinemachineBrain != null)
+        {
+            // Keep the smooth blend as default
+            // You can uncomment these lines if you want to restore original settings
+            // cinemachineBrain.m_DefaultBlend.m_Style = originalBlendStyle;
+            // cinemachineBrain.m_DefaultBlend.m_Time = originalBlendTime;
+        }
+
+        cameraTransitionCoroutine = null;
     }
 
     private void DisablePlayerInput()
@@ -286,7 +400,6 @@ public class StartingSequenceManager : MonoBehaviour
         }
     }
 
-    // The rest of your methods remain the same...
     private IEnumerator MoveToStartingPointSmooth()
     {
         Debug.Log("Moving to starting point with smooth stop...");
@@ -407,6 +520,21 @@ public class StartingSequenceManager : MonoBehaviour
         return "Waiting for Trigger";
     }
 
+    // Force camera reset with optional blend
+    public void ForceCameraReset(float blendTime = 1f)
+    {
+        cameraBlendTime = blendTime;
+        SwitchToNormalCamera();
+        Debug.Log($"Forced camera reset to normal priority with {blendTime}s blend");
+    }
+
+    // Set custom blend time
+    public void SetCameraBlendTime(float blendTime)
+    {
+        cameraBlendTime = Mathf.Max(0.1f, blendTime);
+        Debug.Log($"Camera blend time set to {cameraBlendTime}s");
+    }
+
     // For debugging in the inspector
     void OnDrawGizmosSelected()
     {
@@ -431,9 +559,8 @@ public class StartingSequenceManager : MonoBehaviour
         arrivalDistance = Mathf.Max(0.1f, arrivalDistance);
         slowDownDistance = Mathf.Max(arrivalDistance + 0.1f, slowDownDistance);
         sequenceCameraPriority = Mathf.Max(1, sequenceCameraPriority);
-
-        // Ensure normal camera priority is 20
-        normalCameraPriority = 20; // CHANGED: Set to 20 instead of 10
+        normalCameraPriority = 20;
+        cameraBlendTime = Mathf.Max(0.1f, cameraBlendTime);
     }
 
     public Vector3 GetPlayerPosition()
@@ -465,12 +592,5 @@ public class StartingSequenceManager : MonoBehaviour
         );
 
         return distance < 0.5f;
-    }
-
-    // NEW: Force camera reset (call this if needed)
-    public void ForceCameraReset()
-    {
-        SwitchToNormalCamera();
-        Debug.Log("Forced camera reset to normal priority");
     }
 }
