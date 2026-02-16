@@ -47855,10 +47855,12 @@ MonoBehaviour:
   mainMenuScene: Scenes/3_Kingdom1
   sceneTransitionDelay: 1
   fadeDuration: 0.5
-  useMockScan: 1
+  useMockScan: 0
   captureCooldownDuration: 1
   audioSource: {fileID: 917810639}
   scanSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
+  productStatusText: {fileID: 1015260245}
+  viewScannedProductsButton: {fileID: 0}
 --- !u!1 &806951734
 GameObject:
   m_ObjectHideFlags: 0
