@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 5645111153454557186}
   - component: {fileID: 7435691408948546226}
   - component: {fileID: 417096695600821513}
+  - component: {fileID: 4569553958173344614}
   m_Layer: 0
   m_Name: VitaminC
   m_TagString: Untagged
@@ -120,6 +121,40 @@ MonoBehaviour:
   special1: {fileID: 0}
   special2: {fileID: 0}
   weaponDraw: {fileID: 0}
+--- !u!114 &4569553958173344614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2427407394295479639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 4640420690813063434}
+  - {fileID: 2564358054878659665}
+  - {fileID: 1024650125960588617}
+  - {fileID: 1485757312954800733}
+  - {fileID: 7896892657546184922}
+  - {fileID: 2537688132575276342}
+  - {fileID: 6089168513111287720}
+  - {fileID: 5467322282345285504}
+  - {fileID: 1433618618821139050}
+  - {fileID: 3280858906448774768}
+  - {fileID: 8118783880169678875}
+  - {fileID: 2844598718612429087}
+  - {fileID: 7020984968258361769}
+  - {fileID: 5441983482125315108}
+  - {fileID: 8791084741895813595}
 --- !u!1 &5952833327251526608
 GameObject:
   m_ObjectHideFlags: 0
@@ -568,6 +603,16 @@ PrefabInstance:
 --- !u!4 &2154817342308521804 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 1904402009849327783}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5441983482125315108 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 1904402009849327783}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8791084741895813595 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6948490688373033340, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
   m_PrefabInstance: {fileID: 1904402009849327783}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3463527615390685099

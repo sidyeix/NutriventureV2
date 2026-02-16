@@ -9543,8 +9543,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74788066}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.008563576, y: -0.8987883, z: 0.017863682, w: 0.43793523}
-  m_LocalPosition: {x: -5.609024, y: 1.0757875, z: -39.166306}
+  m_LocalRotation: {x: 0, y: 0.85514253, z: 0, w: 0.51839304}
+  m_LocalPosition: {x: 8.163578, y: 3.2980597, z: -194.22987}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -54371,7 +54371,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &417580290
 Transform:
   m_ObjectHideFlags: 0
@@ -141799,7 +141799,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1059555715
 Transform:
   m_ObjectHideFlags: 0
@@ -206173,7 +206173,7 @@ PlayableDirector:
   m_GameObject: {fileID: 1555225637}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: 538abb553e8d76747a242e461e5bdce7, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -206537,6 +206537,18 @@ PlayableDirector:
     value: {fileID: 769292481}
   - key: {fileID: 7901670893845418696, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
     value: {fileID: 1809235316}
+  - key: {fileID: -2526002316083954573, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -2979969863416202536, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 4963842661255721771, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -5803318351762007759, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -3790573542302364368, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -7016359551324690367, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 131110b7f94060d46ae550b5d887f313: {fileID: 1772524246}
@@ -242504,7 +242516,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1691138705
 Transform:
   m_ObjectHideFlags: 0
@@ -242541,7 +242553,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1691558577
 Transform:
   m_ObjectHideFlags: 0

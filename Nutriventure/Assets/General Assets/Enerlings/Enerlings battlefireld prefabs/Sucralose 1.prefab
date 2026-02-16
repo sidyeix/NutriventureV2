@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 639972133043145580}
   - component: {fileID: 7595103463159417010}
   - component: {fileID: 8328083393762591185}
+  - component: {fileID: 2950118683715183425}
   m_Layer: 0
   m_Name: Sucralose 1
   m_TagString: Untagged
@@ -119,6 +120,36 @@ MonoBehaviour:
   special1: {fileID: 0}
   special2: {fileID: 0}
   weaponDraw: {fileID: 0}
+--- !u!114 &2950118683715183425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2699505879788354491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 8442054625722489896}
+  - {fileID: 1905438688766423902}
+  - {fileID: 2044279943262480777}
+  - {fileID: 8703509058273480100}
+  - {fileID: 4673964143857560088}
+  - {fileID: 5127157412665336270}
+  - {fileID: 1239891067357007947}
+  - {fileID: 5075060073868851704}
+  - {fileID: 1356234109667727436}
+  - {fileID: 7407877562472502735}
+  - {fileID: 6290379409544413232}
 --- !u!1 &5079873393459289438
 GameObject:
   m_ObjectHideFlags: 0
@@ -244,6 +275,16 @@ PrefabInstance:
 --- !u!4 &3507368102591164071 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 3973887677014870348}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6290379409544413232 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6948490688373033340, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 3973887677014870348}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7407877562472502735 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
   m_PrefabInstance: {fileID: 3973887677014870348}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5953868295707344861

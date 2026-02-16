@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 8031216110157728968}
   - component: {fileID: 8475536580253754206}
   - component: {fileID: 833159751741730182}
+  - component: {fileID: 8160417460141944749}
   m_Layer: 0
   m_Name: Sugar Sucrose
   m_TagString: Untagged
@@ -119,6 +120,44 @@ MonoBehaviour:
   special1: {fileID: 0}
   special2: {fileID: 0}
   weaponDraw: {fileID: 0}
+--- !u!114 &8160417460141944749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2931095760934502716}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 5842083789606212530}
+  - {fileID: 4670584613407208835}
+  - {fileID: 672827832892795327}
+  - {fileID: 1194576320534012945}
+  - {fileID: 6341483472572447212}
+  - {fileID: 4970996411922894152}
+  - {fileID: 4074015600232653349}
+  - {fileID: 8496732602719162468}
+  - {fileID: 8609503624109831043}
+  - {fileID: 544757858086758147}
+  - {fileID: 864804631236743069}
+  - {fileID: 8182168282052550481}
+  - {fileID: 9106176845998026927}
+  - {fileID: 2443378595316709528}
+  - {fileID: 1773403563146041957}
+  - {fileID: 7821985575971036330}
+  - {fileID: 3927954264768634178}
+  - {fileID: 2460657210086183821}
+  - {fileID: 1415248933862622834}
 --- !u!1 &4005459430510508095
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,6 +271,46 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0016507749
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.0051056794
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.00019227344
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.6087233
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.76305574
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.13612898
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.16932458
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 102.81799
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 24.692001
+      objectReference: {fileID: 0}
+    - target: {fileID: -2264496215965653117, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -0.41400146
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 95847c1543232014e92e19d72adbb7aa, type: 3}
       propertyPath: m_Name
@@ -699,6 +778,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+--- !u!4 &1415248933862622834 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6948490688373033340, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 8344613891224129294}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2460657210086183821 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 8344613891224129294}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8378031635123742949 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
