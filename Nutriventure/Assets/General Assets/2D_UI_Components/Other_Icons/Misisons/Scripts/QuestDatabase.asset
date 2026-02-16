@@ -552,25 +552,19 @@ MonoBehaviour:
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
     - questID: 1101
-      questName: Finish the assessment
-      description: Go to the guard and ask
-      longDescription: jakoooooooooooooooll
+      questName: "Warden\u2019s Call"
+      description: Talk to the Warden to begin your journey in Allerthria.
+      longDescription: The Warden guards the path to Allerthria and holds vital knowledge
+        about the dangers ahead. Approach him and listen carefully to unlock your
+        mission.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
-      - taskID: 110101
-        description: Finish the Story with 3 Stars
+      - taskID: Speak to the Warden
+        description: Talk to the Warden to begin your journey in Allerthria.
         type: 4
-        targetID: 
-        requiredAmount: 0
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      - taskID: 110102
-        description: Get the Key
-        type: 5
         targetID: 
         requiredAmount: 0
         currentAmount: 0
@@ -578,12 +572,164 @@ MonoBehaviour:
         isCompleted: 0
       rewards:
       - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 100
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 50
         type: 1
-      - rewardName: NutriCoins
+      - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 100
+        type: 2
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1102
+      questName: Scroll of Allergia
+      description: Obtain the Scroll of Allergia from the sacred grounds.
+      longDescription: The ancient scroll contains the records of harmful allergens
+        across the land. Secure it to gain the wisdom needed for the trials ahead.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: Obtain the Scroll of Allergia from the sacred grounds.
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 75
+        type: 1
+      - rewardName: Experience
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 2
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1103
+      questName: Knowledge of the Nine
+      description: Gather and identify the nine major allergens.
+      longDescription: "Travel across Allerthria to collect the known allergens and
+        study their nature. Understanding them is key to surviving the kingdom\u2019s
+        challenges."
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Collect 9 Allergens
+        description: Gather and identify the nine major allergens.
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 120
+        type: 1
+      - rewardName: Experience
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 250
+        type: 2
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1104
+      questName: Wagon Run
+      description: Ride the wagon and avoid incoming allergens.
+      longDescription: Navigate through the wagon route while steering clear of dangerous
+        allergens. Collect helpful power-ups like shields and hearts to stay alive.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Drive the Wagon
+        description: Ride the wagon and avoid incoming allergens.
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 150
+        type: 1
+      - rewardName: Experience
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 300
+        type: 2
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1105
+      questName: Rocky Ascent
+      description: Leap across moving rocks and land on healthy foods.
+      longDescription: Time your jumps carefully by landing only on safe, healthy
+        foods. Avoid allergens, or you may fall into the milk zone and respawn at
+        the last checkpoint.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Jump Across Moving Rocks
+        description: Leap across moving rocks and land on healthy foods.
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 1
+      - rewardName: Experience
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 400
+        type: 2
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1106
+      questName: Castle Arrival
+      description: Reach the castle and claim the key.
+      longDescription: After surviving the trials, enter Allerthria Castle safely.
+        Retrieve the key to unlock the next destiny that awaits.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Secure the Castle Key
+        description: Reach the castle and claim the key.
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 300
+        type: 1
+      - rewardName: Experience
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 600
         type: 2
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
