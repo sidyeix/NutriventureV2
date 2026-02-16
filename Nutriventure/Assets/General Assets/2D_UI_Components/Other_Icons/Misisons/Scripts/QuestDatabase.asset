@@ -43,17 +43,17 @@ MonoBehaviour:
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0001
-      questName: Go to Nutri Kingdom
-      description: Since the energling began to
-      longDescription: You need to follow the instruction to get the
+    - questID: 0002
+      questName: Enerling Interaction
+      description: 
+      longDescription: 
       category: 1
       questIcon: {fileID: 0}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
-      - taskID: 0001_task_0
-        description: TASK DESCRIPTION!!!
+      - taskID: 0001
+        description: Approach the enerling you unlocked in the kingdom.
         type: 0
         targetID: 
         requiredAmount: 20
@@ -61,10 +61,123 @@ MonoBehaviour:
         isOptional: 0
         isCompleted: 0
       rewards:
-      - rewardName: Coins
-        rewardIcon: {fileID: 21300000, guid: 4df020cb1cb11214692af213c11d2aa0, type: 3}
-        amount: 203
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
         type: 1
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0003
+      questName: What's in the Shop?
+      description: 
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: 'Interact with the merchant and view the shop items. '
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0004
+      questName: Switch me up!
+      description: 
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Proceed to the platform for character changing, and change your
+          default character.
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 2
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0005
+      questName: First Chest Collection!
+      description: 
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Collect your first chest and unlock awesome rewards!
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 2
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0006
+      questName: Daily Kingdom Visit
+      description: 
+      longDescription: 
+      category: 3
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete 1 Kingdom gameplay to refresh your game knowledge!
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 30
+        type: 2
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
