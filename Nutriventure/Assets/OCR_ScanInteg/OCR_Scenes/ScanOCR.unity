@@ -47844,7 +47844,7 @@ MonoBehaviour:
   warningText: {fileID: 1015260245}
   fadePanel: {fileID: 2072489980}
   blurPanel: {fileID: 1735357784}
-  noIngredientText: {fileID: 558713637}
+  noIngredientText: {fileID: 1355242951}
   captureButton: {fileID: 1103833099}
   galleryButton: {fileID: 1680505945}
   instructionsButton: {fileID: 0}
