@@ -42,6 +42,10 @@ public class OCRManager_Simplified : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip scanSound;
 
+    [Header("Product Manager UI")]
+    public TMP_Text productStatusText; // Optional: Display product scan status
+    public Button viewScannedProductsButton; // Optional: Button to view scanned products
+
     // State
     private bool isProcessing = false;
     private bool isCaptureOnCooldown = false;
@@ -50,6 +54,7 @@ public class OCRManager_Simplified : MonoBehaviour
     private Texture2D currentImage;
     private bool waitingForPluginResponse = false;
     private float maxProcessingTime = 10f;
+    private string currentProductFingerprint = ""; // Track current product being scanned
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private WebCamTexture liveCameraTexture;
@@ -79,8 +84,14 @@ public class OCRManager_Simplified : MonoBehaviour
         if (exitButton != null)
             exitButton.onClick.AddListener(OnExitButtonClicked);
 
+        if (viewScannedProductsButton != null)
+            viewScannedProductsButton.onClick.AddListener(OnViewScannedProductsClicked);
+
         UpdateStatus("Ready to scan ingredient list");
         UpdateButtonStates();
+        
+        // Clean up any expired products on start
+        ProductManager.CleanupExpiredProducts();
     }
 
     void SetupUI()
@@ -99,6 +110,9 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (noIngredientText != null)
             noIngredientText.gameObject.SetActive(false);
+            
+        if (productStatusText != null)
+            productStatusText.gameObject.SetActive(false);
     }
 
     void UpdateButtonStates()
@@ -116,6 +130,9 @@ public class OCRManager_Simplified : MonoBehaviour
         
         if (exitButton != null)
             exitButton.interactable = !isProcessing && !waitingForPluginResponse;
+            
+        if (viewScannedProductsButton != null)
+            viewScannedProductsButton.interactable = !isProcessing && !waitingForPluginResponse;
     }
 
     void UpdateStatus(string message)
@@ -442,6 +459,14 @@ public class OCRManager_Simplified : MonoBehaviour
     {
         if (isProcessing || isCaptureOnCooldown || waitingForPluginResponse) return;
 
+        // Check global cooldown first
+        if (!CooldownSystem.CanScanAnyIngredient())
+        {
+            TimeSpan remaining = CooldownSystem.GetGlobalCooldown();
+            ShowError($"Please wait {remaining.Seconds} seconds before scanning again.");
+            return;
+        }
+
         isProcessing = true;
         UpdateButtonStates();
         StartCaptureCooldown();
@@ -469,6 +494,14 @@ public class OCRManager_Simplified : MonoBehaviour
     public void OnGalleryButtonClicked()
     {
         if (isProcessing || waitingForPluginResponse) return;
+
+        // Check global cooldown first
+        if (!CooldownSystem.CanScanAnyIngredient())
+        {
+            TimeSpan remaining = CooldownSystem.GetGlobalCooldown();
+            ShowError($"Please wait {remaining.Seconds} seconds before scanning again.");
+            return;
+        }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!useMockScan)
@@ -514,6 +547,57 @@ public class OCRManager_Simplified : MonoBehaviour
         {
             SceneManager.LoadScene(mainMenuScene);
         }
+    }
+    
+    public void OnViewScannedProductsClicked()
+    {
+        // Show product scan status
+        DisplayProductStatus();
+    }
+
+    // ==================== PRODUCT MANAGER INTEGRATION ====================
+
+    void DisplayProductStatus()
+    {
+        if (productStatusText == null) return;
+        
+        int totalProducts = ProductManager.GetTotalScannedProducts();
+        
+        if (totalProducts == 0)
+        {
+            productStatusText.text = "No products scanned yet.";
+        }
+        else
+        {
+            string status = $"Scanned Products: {totalProducts}\n";
+            
+            if (ProductManager.AnyProductsOnCooldown())
+            {
+                status += "\nProducts on cooldown:";
+                var cooldownProducts = ProductManager.GetAllProductsOnCooldown();
+                foreach (var product in cooldownProducts)
+                {
+                    status += $"\n• Product ID: {product.Key.Substring(0, 8)}...";
+                    status += $" (reset in {FormatTimeSpan(product.Value)})";
+                }
+            }
+            else
+            {
+                status += "\nNo products on cooldown.";
+            }
+            
+            productStatusText.text = status;
+        }
+        
+        productStatusText.gameObject.SetActive(true);
+        StartCoroutine(HideProductStatusAfterDelay(5f));
+    }
+    
+    IEnumerator HideProductStatusAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (productStatusText != null)
+            productStatusText.gameObject.SetActive(false);
     }
 
     // ==================== CAPTURE COOLDOWN ====================
@@ -584,13 +668,13 @@ public class OCRManager_Simplified : MonoBehaviour
     // ==================== REAL OCR PROCESSING ====================
 
     IEnumerator ProcessRealScan()
-{
-    if (currentImage == null)
     {
-        UpdateStatus("No image to process");
-        ResetProcessingState();
-        yield break;
-    }
+        if (currentImage == null)
+        {
+            UpdateStatus("No image to process");
+            ResetProcessingState();
+            yield break;
+        }
 
     #if UNITY_ANDROID && !UNITY_EDITOR
         UpdateStatus("Processing with ML Kit...");
@@ -686,16 +770,41 @@ public class OCRManager_Simplified : MonoBehaviour
             yield break;
         }
 
-        // Check for duplicate product
-        if (ingredientData.IsDuplicateProduct())
+        // Store current product fingerprint for later use
+        currentProductFingerprint = ingredientData.fingerprint;
+
+        // ===== PRODUCT MANAGER INTEGRATION =====
+        // Check if this product has been scanned too many times
+        if (!ProductManager.CanScanProduct(ingredientData.fingerprint))
         {
             TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
+            int remainingScans = ProductManager.GetRemainingScans(ingredientData.fingerprint);
             string timeString = FormatTimeSpan(cooldown);
-            ShowError($"Product already scanned 3 times today.\nTry again in {timeString}.");
+            
+            string errorMessage;
+            if (remainingScans == 0)
+            {
+                errorMessage = $"This product has reached its maximum scans (3/3).\nTry again in {timeString}.";
+            }
+            else
+            {
+                errorMessage = $"Product limit reached. {remainingScans} scans remaining after cooldown.\nTry again in {timeString}.";
+            }
+            
+            ShowError(errorMessage);
+            
+            // Update product status if available
+            if (productStatusText != null)
+            {
+                productStatusText.text = $"Product Status:\n{ProductManager.GetProductStatus(ingredientData.fingerprint)}";
+                productStatusText.gameObject.SetActive(true);
+                StartCoroutine(HideProductStatusAfterDelay(5f));
+            }
+            
             yield break;
         }
 
-        // Check global cooldown
+        // Check global cooldown (already checked in button handlers, but double-check)
         if (!CooldownSystem.CanScanAnyIngredient())
         {
             TimeSpan remaining = CooldownSystem.GetGlobalCooldown();
@@ -724,7 +833,16 @@ public class OCRManager_Simplified : MonoBehaviour
         
         // Update status
         string category = IngredientCategory.GetCategory(selectedEnerlingName);
-        UpdateStatus($"Found: {selectedEnerlingName} ({category})");
+        string scanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint).ToString();
+        UpdateStatus($"Found: {selectedEnerlingName} ({category}) - Scan {scanCount}/3");
+        
+        // Show product status
+        if (productStatusText != null)
+        {
+            productStatusText.text = $"Product scan {scanCount}/3 completed!\n{ProductManager.GetProductStatus(ingredientData.fingerprint)}";
+            productStatusText.gameObject.SetActive(true);
+            StartCoroutine(HideProductStatusAfterDelay(3f));
+        }
         
         // Transition to next scene
         StartCoroutine(TransitionToNextScene());
@@ -753,12 +871,35 @@ public class OCRManager_Simplified : MonoBehaviour
 
             Debug.Log($"Mock scan selected: {selectedEnerlingName} from {selectedEnerling.kingdom}");
 
-            // Create mock ingredient data
+            // Create mock ingredient data with consistent fingerprint for testing
+            string mockFingerprint = "MOCK_" + selectedEnerlingName.GetHashCode().ToString();
+            currentProductFingerprint = mockFingerprint;
+
+            // ===== PRODUCT MANAGER INTEGRATION FOR MOCK =====
+            // Check if this mock product has been scanned too many times
+            if (!ProductManager.CanScanProduct(mockFingerprint))
+            {
+                TimeSpan cooldown = ProductManager.GetProductCooldown(mockFingerprint);
+                string timeString = FormatTimeSpan(cooldown);
+                ShowError($"Mock product limit reached.\nTry again in {timeString}.");
+                ResetProcessingState();
+                yield break;
+            }
+
+            // Check global cooldown
+            if (!CooldownSystem.CanScanAnyIngredient())
+            {
+                TimeSpan remaining = CooldownSystem.GetGlobalCooldown();
+                ShowError($"Please wait {remaining.Seconds} seconds before scanning again.");
+                ResetProcessingState();
+                yield break;
+            }
+
             IngredientData mockData = new IngredientData
             {
                 ingredient = selectedEnerlingName,
                 status = "success",
-                fingerprint = System.Guid.NewGuid().ToString().Substring(0, 8),
+                fingerprint = mockFingerprint,
                 total_detected = UnityEngine.Random.Range(1, 4),
                 mode = "mock",
                 all_ingredients = new string[] { selectedEnerlingName }
@@ -856,6 +997,15 @@ public class OCRManager_Simplified : MonoBehaviour
             noIngredientText.text = message;
             noIngredientText.gameObject.SetActive(true);
         }
+        
+        // Also show in product status if available
+        if (productStatusText != null && !string.IsNullOrEmpty(currentProductFingerprint))
+        {
+            productStatusText.text = $"Error: {message}\n{ProductManager.GetProductStatus(currentProductFingerprint)}";
+            productStatusText.gameObject.SetActive(true);
+        }
+        
+        ResetProcessingState();
     }
 
     void ClearError()
@@ -885,6 +1035,7 @@ public class OCRManager_Simplified : MonoBehaviour
         isProcessing = false;
         waitingForPluginResponse = false;
         selectedEnerlingName = "";
+        currentProductFingerprint = "";
         ClearError();
         UpdateButtonStates();
         
@@ -893,6 +1044,9 @@ public class OCRManager_Simplified : MonoBehaviour
             cameraPreview.texture = null;
             cameraPreview.color = new Color(0.2f, 0.2f, 0.2f);
         }
+        
+        // Clean up expired products
+        ProductManager.CleanupExpiredProducts();
     }
 
     // ==================== UI UTILITIES ====================

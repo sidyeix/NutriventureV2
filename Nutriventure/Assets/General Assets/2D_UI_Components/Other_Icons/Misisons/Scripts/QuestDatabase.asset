@@ -43,17 +43,18 @@ MonoBehaviour:
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0001
-      questName: Go to Nutri Kingdom
-      description: Since the energling began to
-      longDescription: You need to follow the instruction to get the
+    - questID: 0002
+      questName: Enerling Interaction
+      description: Meet your unlocked Enerling.
+      longDescription: Approach the Enerling you unlocked within the kingdom. Interact
+        to learn its role and abilities.
       category: 1
       questIcon: {fileID: 0}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
-      - taskID: 0001_task_0
-        description: TASK DESCRIPTION!!!
+      - taskID: 0001
+        description: Approach the enerling you unlocked in the kingdom.
         type: 0
         targetID: 
         requiredAmount: 20
@@ -61,10 +62,125 @@ MonoBehaviour:
         isOptional: 0
         isCompleted: 0
       rewards:
-      - rewardName: Coins
-        rewardIcon: {fileID: 21300000, guid: 4df020cb1cb11214692af213c11d2aa0, type: 3}
-        amount: 203
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
         type: 1
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0003
+      questName: What's in the Shop?
+      description: Visit the merchant.
+      longDescription: Interact with the merchant and browse available shop items.
+        Discover tools and goods that can aid your journey.
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: 'Interact with the merchant and view the shop items. '
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0004
+      questName: Switch me up!
+      description: Switch your character.
+      longDescription: Proceed to the character platform. Change from your default
+        character to a new one.
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Proceed to the platform for character changing, and change your
+          default character.
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 2
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0005
+      questName: First Chest Collection!
+      description: 
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Collect your first chest and unlock awesome rewards!
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 20
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 2
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0006
+      questName: Daily Kingdom Visit
+      description: 
+      longDescription: 
+      category: 3
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete 1 Kingdom gameplay to refresh your game knowledge!
+        type: 4
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 5
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 25
+        type: 1
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 30
+        type: 2
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -123,8 +239,9 @@ MonoBehaviour:
     quests:
     - questID: 1101
       questName: 'Discover Foods and Products Across the Land '
-      description: 
-      longDescription: 
+      description: Explore Sugaria and gather key sugar sources.
+      longDescription: Travel across the land to collect 3 Natural Sugars and 5 Added
+        Sugar Products. Learn to distinguish where sugars come from in everyday foods.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -134,7 +251,7 @@ MonoBehaviour:
         description: Collect the 3 Natural Sugars and 5 Added Sugar Products
         type: 0
         targetID: 
-        requiredAmount: 0
+        requiredAmount: 8
         currentAmount: 0
         isOptional: 0
         isCompleted: 0
@@ -152,8 +269,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1102
       questName: 'Seek the Queen for Assessment! '
-      description: 
-      longDescription: 
+      description: Report your findings to the Queen.
+      longDescription: Proceed to the Kingdom and speak with the Queen for evaluation.
+        She will review your collected items and prepare you for the next challenge.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -181,8 +299,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1103
       questName: 'Accomplish the First Queen''s Challenge! '
-      description: 
-      longDescription: 
+      description: Identify harmful sugar sources.
+      longDescription: From the products you collected, determine which contain Added
+        Sugars. Prove your knowledge by correctly identifying all five.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -210,8 +329,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1104
       questName: 'Accomplish the Second Queen''s Challenge!  '
-      description: 
-      longDescription: 
+      description: Analyze sugar amounts in products.
+      longDescription: Scan the Nutrition List of each product carefully. Identify
+        and understand the amount of sugar present in each item.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -240,8 +360,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1105
       questName: Sugardino's Guidance!
-      description: 
-      longDescription: 
+      description: Seek wisdom from Sugardino.
+      longDescription: "Approach Sugardino and learn about the Kingdom\u2019s current
+        condition. His guidance will prepare you for future health battles."
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -274,8 +395,9 @@ MonoBehaviour:
     quests:
     - questID: 1101
       questName: Felipe's Guidance!
-      description: 
-      longDescription: 
+      description: Meet Felipe for insight.
+      longDescription: "Approach Felipe and listen to his explanation of Preservia\u2019s
+        situation. He will introduce you to the dangers threatening the kingdom."
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -303,8 +425,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1102
       questName: 'Awaken the Anti-Stones! '
-      description: 
-      longDescription: 
+      description: Restore the power of the Anti-Stones.
+      longDescription: Travel to each checkpoint and awaken the stagnating Anti-Stones.
+        Their revived energy will help protect the land.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -333,8 +456,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1103
       questName: 'What''s the challenge, King? '
-      description: 
-      longDescription: 
+      description: "Receive the King\u2019s assessment."
+      longDescription: Proceed to the castle and speak with the King. He will deliver
+        your final preservation trial.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -363,8 +487,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1104
       questName: 'Potion positions? '
-      description: 
-      longDescription: 
+      description: Find the preservative potions.
+      longDescription: Search the kingdom and locate the 3 Preservative Potions.
+        Collect them to aid in food protection.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []
@@ -392,8 +517,9 @@ MonoBehaviour:
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 1105
       questName: Food Preservation
-      description: 
-      longDescription: 
+      description: Preserve scattered foods.
+      longDescription: Find and preserve the 8 foods spread across the land. Follow
+        their glow to restore their freshness and safety.
       category: 0
       questIcon: {fileID: 0}
       requiredQuestIDs: []

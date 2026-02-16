@@ -22,8 +22,12 @@ public class IngredientData
     // Check if this is a duplicate product scan
     public bool IsDuplicateProduct()
     {
-        return !string.IsNullOrEmpty(fingerprint) && 
-               ProductManager.IsProductAlreadyScanned(fingerprint);
+        if (string.IsNullOrEmpty(fingerprint))
+            return false;
+            
+        // A product is a "duplicate" (already maxed out) if it CANNOT be scanned again
+        // CanScanProduct returns false when product has been scanned 3 times
+        return !ProductManager.CanScanProduct(fingerprint);
     }
     
     // Get all detected ingredients as list
@@ -43,4 +47,28 @@ public class IngredientData
     
     // Convenience property for cleaner code access
     public int totalDetected { get { return GetTotalDetected(); } }
+    
+    // Helper method to get remaining scans for this product
+    public int GetRemainingScans()
+    {
+        if (string.IsNullOrEmpty(fingerprint))
+            return 3; // New product has 3 scans available
+        return ProductManager.GetRemainingScans(fingerprint);
+    }
+    
+    // Helper method to get cooldown time if product is maxed out
+    public System.TimeSpan GetCooldownTime()
+    {
+        if (string.IsNullOrEmpty(fingerprint))
+            return System.TimeSpan.Zero;
+        return ProductManager.GetProductCooldown(fingerprint);
+    }
+    
+    // Helper method to get formatted status for UI
+    public string GetProductStatus()
+    {
+        if (string.IsNullOrEmpty(fingerprint))
+            return "New product - 3 scans available";
+        return ProductManager.GetProductStatus(fingerprint);
+    }
 }
