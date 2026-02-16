@@ -6380,7 +6380,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: b42e441955f8b6f47ae75dd0354ef907, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 35ce2e5f0557a114bab2f0733983ed31, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &157827295
 Transform:
@@ -33957,6 +33957,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!222 &735274542
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38466,6 +38470,8 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 1
+  playerTag: Player
+  useBothTagAndLayer: 1
   slideCurve:
     serializedVersion: 2
     m_Curve:
@@ -60941,6 +60947,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &1262801645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65135,6 +65145,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &1342306351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82120,6 +82134,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &1659923649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -83039,6 +83057,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &1680381505
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -5601,6 +5601,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &116936350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11322,6 +11326,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!114 &259410435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14424,6 +14432,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4399fa3cd518ae84588e15251578a727, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
+  disableAfterUse: 0
+  logDebugMessages: 1
+  audioSource: {fileID: 0}
+  clickSound: {fileID: 0}
 --- !u!222 &324664867
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -63535,11 +63547,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnhancedCanvasTrigger
   targetCanvas: {fileID: 657907584}
-  player: {fileID: 0}
+  player: {fileID: 1938089354}
   activationRadius: 2.5
   playerLayer:
     serializedVersion: 2
     m_Bits: 1
+  playerTag: Player
+  useBothTagAndLayer: 1
   slideCurve:
     serializedVersion: 2
     m_Curve:
