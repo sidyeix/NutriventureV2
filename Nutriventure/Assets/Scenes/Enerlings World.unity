@@ -1447,6 +1447,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sorbitol 1
       objectReference: {fileID: 0}
+    - target: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2434415942222693236, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
       propertyPath: m_LocalPosition.x
       value: 42.008453
@@ -1498,6 +1502,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6905464169351778599, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
       insertIndex: -1
       addedObject: {fileID: 38248680}
+    - targetCorrespondingSourceObject: {fileID: 887857860659444741, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1958680801}
   m_SourcePrefab: {fileID: 100100000, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
 --- !u!4 &38248676 stripped
 Transform:
@@ -9595,7 +9602,7 @@ PrefabInstance:
     - target: {fileID: 8514102953730814935, guid: aaeec4b6b30ccca47b946d2df3db01c9, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
+      objectReference: {fileID: 9100000, guid: fa54f501130bb794fbb46e29f05f6e08, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -36687,7 +36694,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1440148696383731439, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -40169,7 +40176,7 @@ PrefabInstance:
     - target: {fileID: 2407356775293884296, guid: b47ee876fdee7f04aac83106c980b371, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
+      objectReference: {fileID: 9100000, guid: 87145e9cf25700144b03f9702f78b2f7, type: 2}
     - target: {fileID: 3866621418084735682, guid: b47ee876fdee7f04aac83106c980b371, type: 3}
       propertyPath: dodge
       value: 
@@ -62172,6 +62179,32 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!1 &1958680800 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 887857860659444741, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
+  m_PrefabInstance: {fileID: 38248675}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1958680801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1958680800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 38248677}
+  - {fileID: 38248676}
 --- !u!1 &1959297397
 GameObject:
   m_ObjectHideFlags: 0
@@ -67638,7 +67671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3881547966220109740, guid: 09083adc02025524995646d2487c36c5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -67682,11 +67715,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8380318624588959096, guid: 09083adc02025524995646d2487c36c5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.0036414124
+      value: 0.003641412
       objectReference: {fileID: 0}
     - target: {fileID: 8380318624588959096, guid: 09083adc02025524995646d2487c36c5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0047097337
+      value: 0.004709734
       objectReference: {fileID: 0}
     - target: {fileID: 8380318624588959096, guid: 09083adc02025524995646d2487c36c5, type: 3}
       propertyPath: m_LocalPosition.z

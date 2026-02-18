@@ -486,6 +486,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3406010532451915880}
+    - targetCorrespondingSourceObject: {fileID: 4091291219279700248, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5143258641407102174}
   m_SourcePrefab: {fileID: 100100000, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}
 --- !u!4 &694294798374270397 stripped
 Transform:
@@ -601,6 +604,47 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 475916870374683762, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}
   m_PrefabInstance: {fileID: 6727902850074918634}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7320988570072309746 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4091291219279700248, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}
+  m_PrefabInstance: {fileID: 6727902850074918634}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5143258641407102174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7320988570072309746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 8442054625722489896}
+  - {fileID: 1905438688766423902}
+  - {fileID: 9090499276447467618}
+  - {fileID: 2044279943262480777}
+  - {fileID: 6564250578313305162}
+  - {fileID: 8703509058273480100}
+  - {fileID: 4301572112180032257}
+  - {fileID: 4673964143857560088}
+  - {fileID: 6309250981929134722}
+  - {fileID: 5127157412665336270}
+  - {fileID: 694294798374270397}
+  - {fileID: 1239891067357007947}
+  - {fileID: 9050532042139645216}
+  - {fileID: 5075060073868851704}
+  - {fileID: 8006487748186910384}
+  - {fileID: 1356234109667727436}
+  - {fileID: 1399322352056531087}
 --- !u!4 &7654714334878127252 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3991682263120996990, guid: 598ec538536f1ad4ea513e2b687762f2, type: 3}

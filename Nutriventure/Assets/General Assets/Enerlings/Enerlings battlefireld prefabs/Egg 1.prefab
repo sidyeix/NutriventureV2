@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 6645994954647569695}
   - component: {fileID: 4558782302536119390}
   - component: {fileID: 6301157351510230585}
+  - component: {fileID: 815517971497395165}
   m_Layer: 0
   m_Name: Egg 1
   m_TagString: Untagged
@@ -120,6 +121,33 @@ MonoBehaviour:
   special1: {fileID: 0}
   special2: {fileID: 0}
   weaponDraw: {fileID: 0}
+--- !u!114 &815517971497395165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4723278788635299402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 1005557640173839912}
+  - {fileID: 5186588396851585209}
+  - {fileID: 1317626181915047528}
+  - {fileID: 2078405488925460666}
+  - {fileID: 2106553074711512324}
+  - {fileID: 7693851406334408269}
+  - {fileID: 8740500144336939056}
+  - {fileID: 5244869786623884751}
 --- !u!1 &5378539398014089248
 GameObject:
   m_ObjectHideFlags: 0
@@ -312,6 +340,16 @@ PrefabInstance:
 --- !u!4 &3399869458419667800 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 2928600069394445491}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5244869786623884751 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6948490688373033340, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 2928600069394445491}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8740500144336939056 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
   m_PrefabInstance: {fileID: 2928600069394445491}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3004062406075073984
@@ -595,6 +633,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4888870035196940122}
+    - targetCorrespondingSourceObject: {fileID: 2006340832421374588, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2552325899220242543}
+    - targetCorrespondingSourceObject: {fileID: -5198060500071530073, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8395009702147166791}
   m_SourcePrefab: {fileID: 100100000, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
 --- !u!4 &1005557640173839912 stripped
 Transform:
@@ -631,6 +675,38 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -7387466160403638589, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
   m_PrefabInstance: {fileID: 6185969548212938391}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5624730801662577899 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2006340832421374588, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
+  m_PrefabInstance: {fileID: 6185969548212938391}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2552325899220242543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5624730801662577899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 1005557640173839912}
+  - {fileID: 5186588396851585209}
+  - {fileID: 2106553074711512324}
+  - {fileID: 7693851406334408269}
+  - {fileID: 1317626181915047528}
+  - {fileID: 5519675117087576177}
+  - {fileID: 2078405488925460666}
+  - {fileID: 5522125821817499732}
 --- !u!4 &5858974080796437954 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 330939144036027221, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
@@ -676,6 +752,33 @@ MonoBehaviour:
   - {fileID: 2078405488925460666}
   - {fileID: 5522125821817499732}
   - {fileID: 5858974080796437954}
+--- !u!1 &7062837201077462832 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5198060500071530073, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
+  m_PrefabInstance: {fileID: 6185969548212938391}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8395009702147166791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7062837201077462832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 5186588396851585209}
+  - {fileID: 2106553074711512324}
+  - {fileID: 7693851406334408269}
 --- !u!4 &7232284760194666860 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3568757648180541435, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}

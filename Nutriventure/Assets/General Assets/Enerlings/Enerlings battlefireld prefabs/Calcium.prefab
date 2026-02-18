@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 212858735570210138}
   - component: {fileID: 1397984337604658676}
   - component: {fileID: 9096977697161541728}
+  - component: {fileID: 7142247051831398458}
   m_Layer: 0
   m_Name: Calcium
   m_TagString: Untagged
@@ -120,6 +121,35 @@ MonoBehaviour:
   special1: {fileID: 0}
   special2: {fileID: 0}
   weaponDraw: {fileID: 0}
+--- !u!114 &7142247051831398458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790790307989994943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 1422802648513127743}
+  - {fileID: 2466623092522037440}
+  - {fileID: 1919596172586108844}
+  - {fileID: 2142537074582787568}
+  - {fileID: 7415192031326667371}
+  - {fileID: 1685986672364508487}
+  - {fileID: 3040022769783518563}
+  - {fileID: 8910650798503103607}
+  - {fileID: 3146414364414228391}
+  - {fileID: 1048358636986057836}
 --- !u!1 &2471666492878358067
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,6 +462,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+--- !u!4 &1422802648513127743 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 4780232170945427900}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2466623092522037440 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6948490688373033340, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+  m_PrefabInstance: {fileID: 4780232170945427900}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5034024550776823383 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
