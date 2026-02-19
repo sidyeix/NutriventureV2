@@ -11,29 +11,30 @@ public class GameData
     public float currentXP;
     public float xpToNextLevel;
 
-    // Resources - ADDED NUTRIGEMS
+    // Resources
     public int nutriCoins;
-    public int nutriGems; // NEW: Added NutriGems
+    public int nutriGems;
     public int currentEnergy;
     public DateTime lastEnergyUpdateTime;
-    
+
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
-    public bool preserviaKeyCollected = false; // NEW: Added PreserviaKey
+    public bool preserviaKeyCollected = false;
+    public bool nutriKingdomKeyCollected = false; // ADD THIS LINE
 
     // Character System
     public int selectedCharacterID = 0;
     public List<int> unlockedCharacterIDs = new List<int>();
 
-    // SKIN SYSTEM - Using SerializableDictionary for proper Unity serialization
+    // SKIN SYSTEM
     [System.Serializable]
     public class SkinDictionary : SerializableDictionary<int, int> { }
 
     [System.Serializable]
     public class UnlockedSkinsDictionary : SerializableDictionary<int, List<int>> { }
 
-    public SkinDictionary selectedSkinForCharacter = new SkinDictionary(); // characterID -> skinID
-    public UnlockedSkinsDictionary unlockedSkinsForCharacter = new UnlockedSkinsDictionary(); // characterID -> List<skinID>
+    public SkinDictionary selectedSkinForCharacter = new SkinDictionary();
+    public UnlockedSkinsDictionary unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
 
     // Chest System
     public DateTime lastChestClaimTime;
@@ -60,6 +61,18 @@ public class GameData
     public float soundVolume = 1f;
     public string language = "English";
 
+    // Profile Icon System
+    public string equippedIconId = "icon1";
+    public List<string> unlockedIconIds = new List<string>();
+
+    // Frame System
+    public string equippedFrameId = "frame_default";
+    public List<string> unlockedFrameIds = new List<string>();
+
+    // Achievement System
+    public List<string> completedAchievementIds = new List<string>();
+    public List<string> claimedAchievementIds = new List<string>();
+
     public GameData()
     {
         // Initialize default values
@@ -68,7 +81,7 @@ public class GameData
         currentXP = 0;
         xpToNextLevel = 100;
         nutriCoins = 0;
-        nutriGems = 0; // NEW: Initialize NutriGems
+        nutriGems = 0;
         currentEnergy = 10;
         lastEnergyUpdateTime = DateTime.Now;
         lastChestClaimTime = DateTime.MinValue;
@@ -77,7 +90,8 @@ public class GameData
 
         // Kingdom Keys
         sugariaKeyCollected = false;
-        preserviaKeyCollected = false; // NEW: Initialize PreserviaKey
+        preserviaKeyCollected = false;
+        nutriKingdomKeyCollected = false; // ADD THIS LINE
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -85,6 +99,19 @@ public class GameData
         else
             unlockedCharacterIDs.Clear();
         unlockedCharacterIDs.Add(0);
+
+        // Initialize icon and frame lists
+        if (unlockedIconIds == null)
+            unlockedIconIds = new List<string>();
+
+        if (unlockedFrameIds == null)
+            unlockedFrameIds = new List<string>();
+
+        if (completedAchievementIds == null)
+            completedAchievementIds = new List<string>();
+
+        if (claimedAchievementIds == null)
+            claimedAchievementIds = new List<string>();
 
         // Initialize skin dictionaries
         if (selectedSkinForCharacter == null)
@@ -120,34 +147,49 @@ public class GameData
     {
         return sugariaKeyCollected;
     }
-    
+
     public void CollectSugariaKey()
     {
         sugariaKeyCollected = true;
     }
-    
+
     public void ResetSugariaKey()
     {
         sugariaKeyCollected = false;
     }
 
-    // NEW: Preservia Key Methods (same pattern as SugariaKey)
+    // Preservia Key Methods
     public bool HasPreserviaKey()
     {
         return preserviaKeyCollected;
     }
-    
+
     public void CollectPreserviaKey()
     {
         preserviaKeyCollected = true;
     }
-    
+
     public void ResetPreserviaKey()
     {
         preserviaKeyCollected = false;
     }
 
-    // NEW: Combined method to check if player has a specific kingdom key
+    // NUTRI KINGDOM KEY METHODS - ADD THESE
+    public bool HasNutriKingdomKey()
+    {
+        return nutriKingdomKeyCollected;
+    }
+
+    public void CollectNutriKingdomKey()
+    {
+        nutriKingdomKeyCollected = true;
+    }
+
+    public void ResetNutriKingdomKey()
+    {
+        nutriKingdomKeyCollected = false;
+    }
+
     public bool HasKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
@@ -156,13 +198,15 @@ public class GameData
                 return HasSugariaKey();
             case "preservia":
                 return HasPreserviaKey();
+            case "nutri":
+            case "nutrikingdom":
+                return HasNutriKingdomKey();
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 return false;
         }
     }
 
-    // NEW: Combined method to collect a specific kingdom key
     public void CollectKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
@@ -173,13 +217,16 @@ public class GameData
             case "preservia":
                 CollectPreserviaKey();
                 break;
+            case "nutri":
+            case "nutrikingdom":
+                CollectNutriKingdomKey();
+                break;
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 break;
         }
     }
 
-    // NEW: Add NutriGems methods
     public void AddNutriGems(int amount)
     {
         nutriGems += amount;
@@ -208,7 +255,7 @@ public class GameData
 
         if (!selectedSkinForCharacter.ContainsKey(characterID))
         {
-            selectedSkinForCharacter[characterID] = -1; // -1 means default skin
+            selectedSkinForCharacter[characterID] = -1;
         }
 
         if (unlockedSkinsForCharacter == null)
@@ -217,11 +264,9 @@ public class GameData
         if (!unlockedSkinsForCharacter.ContainsKey(characterID))
         {
             unlockedSkinsForCharacter[characterID] = new List<int>();
-            // Default skin (-1) is always considered unlocked
         }
     }
 
-    // Get the selected skin for a character
     public int GetSelectedSkinForCharacter(int characterID)
     {
         if (selectedSkinForCharacter == null)
@@ -232,15 +277,13 @@ public class GameData
             return selectedSkinForCharacter[characterID];
         }
 
-        // Initialize if not exists
         InitializeDefaultSkinForCharacter(characterID);
         return selectedSkinForCharacter[characterID];
     }
 
-    // Set the selected skin for a character
     public void SetSelectedSkinForCharacter(int characterID, int skinID)
     {
-        if (skinID < -1) return; // Invalid skin ID
+        if (skinID < -1) return;
 
         if (selectedSkinForCharacter == null)
             selectedSkinForCharacter = new SkinDictionary();
@@ -254,7 +297,6 @@ public class GameData
             selectedSkinForCharacter[characterID] = skinID;
         }
 
-        // Ensure the skin is marked as unlocked
         if (skinID != -1)
         {
             UnlockSkinForCharacter(characterID, skinID);
@@ -263,16 +305,13 @@ public class GameData
         Debug.Log($"Set skin {skinID} for character {characterID}");
     }
 
-    // Check if a skin is unlocked for a character
     public bool IsSkinUnlocked(int characterID, int skinID)
     {
-        // Default skin (character's original) is always unlocked
         if (skinID == -1) return true;
 
         if (unlockedSkinsForCharacter == null)
             unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
 
-        // Check if character has unlocked skins list
         if (unlockedSkinsForCharacter.ContainsKey(characterID))
         {
             var skinsList = unlockedSkinsForCharacter[characterID];
@@ -285,10 +324,9 @@ public class GameData
         return false;
     }
 
-    // Unlock a skin for a character
     public void UnlockSkinForCharacter(int characterID, int skinID)
     {
-        if (skinID == -1) return; // Don't add default skin to unlocked list
+        if (skinID == -1) return;
 
         if (unlockedSkinsForCharacter == null)
             unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
@@ -312,7 +350,6 @@ public class GameData
         }
     }
 
-    // Get all unlocked skins for a character
     public List<int> GetUnlockedSkinsForCharacter(int characterID)
     {
         if (unlockedSkinsForCharacter == null)
@@ -330,7 +367,6 @@ public class GameData
         return new List<int>();
     }
 
-    // Check if character has any unlocked skins
     public bool HasUnlockedSkins(int characterID)
     {
         if (unlockedSkinsForCharacter == null)
@@ -341,7 +377,6 @@ public class GameData
                unlockedSkinsForCharacter[characterID].Count > 0;
     }
 
-    // Initialize all characters with their default skins
     public void InitializeAllCharactersSkins(CharacterDatabase characterDatabase)
     {
         if (characterDatabase == null) return;
@@ -356,19 +391,88 @@ public class GameData
         {
             int characterID = character.characterID;
 
-            // Initialize selected skin
             if (!selectedSkinForCharacter.ContainsKey(characterID))
             {
-                selectedSkinForCharacter[characterID] = -1; // Default skin
+                selectedSkinForCharacter[characterID] = -1;
             }
 
-            // Initialize unlocked skins list
             if (!unlockedSkinsForCharacter.ContainsKey(characterID))
             {
                 unlockedSkinsForCharacter[characterID] = new List<int>();
             }
         }
     }
+
+    public void InitializeDefaultIcons(ProfileIconDatabase database)
+    {
+        if (database == null) return;
+
+        foreach (var icon in database.icons)
+        {
+            if (icon.unlockedByDefault && !unlockedIconIds.Contains(icon.id))
+            {
+                unlockedIconIds.Add(icon.id);
+            }
+        }
+
+        if (string.IsNullOrEmpty(equippedIconId) && unlockedIconIds.Count > 0)
+        {
+            equippedIconId = unlockedIconIds[0];
+        }
+    }
+
+    #region Achievement Methods
+
+    public AchievementStatus GetAchievementStatus(string achievementId)
+    {
+        if (claimedAchievementIds != null && claimedAchievementIds.Contains(achievementId))
+            return AchievementStatus.Claimed;
+
+        if (completedAchievementIds != null && completedAchievementIds.Contains(achievementId))
+            return AchievementStatus.Completed;
+
+        return AchievementStatus.NotComplete;
+    }
+
+    public void CompleteAchievement(string achievementId)
+    {
+        if (completedAchievementIds == null)
+            completedAchievementIds = new List<string>();
+
+        if (!completedAchievementIds.Contains(achievementId) &&
+            (claimedAchievementIds == null || !claimedAchievementIds.Contains(achievementId)))
+        {
+            completedAchievementIds.Add(achievementId);
+        }
+    }
+
+    public void ClaimAchievement(string achievementId)
+    {
+        if (claimedAchievementIds == null)
+            claimedAchievementIds = new List<string>();
+
+        if (completedAchievementIds != null && completedAchievementIds.Contains(achievementId))
+        {
+            completedAchievementIds.Remove(achievementId);
+        }
+
+        if (!claimedAchievementIds.Contains(achievementId))
+        {
+            claimedAchievementIds.Add(achievementId);
+        }
+    }
+
+    public bool IsAchievementCompleted(string achievementId)
+    {
+        return completedAchievementIds != null && completedAchievementIds.Contains(achievementId);
+    }
+
+    public bool IsAchievementClaimed(string achievementId)
+    {
+        return claimedAchievementIds != null && claimedAchievementIds.Contains(achievementId);
+    }
+
+    #endregion
 }
 
 [System.Serializable]
@@ -380,13 +484,11 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
     [SerializeField]
     private List<TValue> values = new List<TValue>();
 
-    // Save the dictionary to lists
     public void OnBeforeSerialize()
     {
         keys.Clear();
         values.Clear();
 
-        // IMPORTANT: Use ToArray() to avoid modification issues
         var items = new KeyValuePair<TKey, TValue>[this.Count];
         CopyTo(items, 0);
 
@@ -397,12 +499,10 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
         }
     }
 
-    // Load the dictionary from lists
     public void OnAfterDeserialize()
     {
         this.Clear();
 
-        // FIX: Handle null lists gracefully
         if (keys == null || values == null)
         {
             Debug.LogWarning("SerializableDictionary: Keys or values list is null. Creating empty dictionary.");
@@ -411,7 +511,6 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
             return;
         }
 
-        // FIX: Handle mismatch by using minimum count
         int count = Math.Min(keys.Count, values.Count);
 
         if (keys.Count != values.Count)
@@ -423,10 +522,7 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
         {
             try
             {
-                // Skip if key is null
                 if (keys[i] == null) continue;
-
-                // Add to dictionary
                 this[keys[i]] = values[i];
             }
             catch (Exception e)
@@ -436,7 +532,6 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
         }
     }
 
-    // Helper method to safely copy dictionary items
     private void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
         int i = arrayIndex;

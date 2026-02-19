@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea4ed6a42cfd7c44b8ce84dd460c5607, type: 3}
+  m_Name: AchievementDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::AchievementDatabase
+  achievements:
+  - id: a01
+    achievementName: Nutri Kingdom Master
+    achievementIcon: {fileID: 21300000, guid: ab96d423907c85141bf23d738beb74fc, type: 3}
+    prizeGems: 10
+    description: Finish Nutri Kingdom 2 times.
+  - id: a02
+    achievementName: Sugaria Kingdom Master
+    achievementIcon: {fileID: 21300000, guid: 4de0a7cace2f6fe439539d0b359d011d, type: 3}
+    prizeGems: 15
+    description: Finish Sugaria Kingdom 2 times.
+  - id: a03
+    achievementName: Preservia Kingdom Master
+    achievementIcon: {fileID: 21300000, guid: 648522b9ee9468d4ea6844c020d14423, type: 3}
+    prizeGems: 20
+    description: Finish Preservia Kingdom 3 times.
+  - id: a04
+    achievementName: Alerthia Explorer Master
+    achievementIcon: {fileID: 21300000, guid: f6b4aab27f51b8c4392a9551c0b70823, type: 3}
+    prizeGems: 20
+    description: Finish Alerthia Kingdom 2 times with 3 Stars.
+  - id: al01
+    achievementName: Achieve Level 10
+    achievementIcon: {fileID: 21300000, guid: 371e789c176466d458d74b96a919e6f8, type: 3}
+    prizeGems: 10
+    description: Achieve Level 10
+  - id: al02
+    achievementName: Achieve Level 20
+    achievementIcon: {fileID: 21300000, guid: a9e04a0b9b5616b46a71334a110a296c, type: 3}
+    prizeGems: 20
+    description: Achieve Level 20
+  - id: al03
+    achievementName: Achieve Level 30
+    achievementIcon: {fileID: 21300000, guid: 371248faa4a277e43a19f475787ba4b2, type: 3}
+    prizeGems: 30
+    description: Achieve Level 30
+  - id: al04
+    achievementName: Achieve Level 40
+    achievementIcon: {fileID: 21300000, guid: b1df2c2a5cfd5a4428bf966c2607d655, type: 3}
+    prizeGems: 40
+    description: Achieve Level 40
+  - id: al05
+    achievementName: Achieve Level 50
+    achievementIcon: {fileID: 21300000, guid: 4c61e005ef8d1cb40828f3fc1d800350, type: 3}
+    prizeGems: 50
+    description: Achieve Level 50
+  - id: o1
+    achievementName: GoGrowGlow Master
+    achievementIcon: {fileID: 21300000, guid: 703f94cddc0c60b40ba1ea68cdcc9e23, type: 3}
+    prizeGems: 30
+    description: Play Go Grow Glow Game in the Nutri Kingdom for 10 times.
+  - id: o2
+    achievementName: Enerling Catcher
+    achievementIcon: {fileID: 21300000, guid: 5f807da1cd80d1a4581acfb4b48c33bc, type: 3}
+    prizeGems: 80
+    description: Fight and Catch 20 Enerlings found in the Book.
