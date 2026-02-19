@@ -108262,8 +108262,8 @@ MonoBehaviour:
   xpText: {fileID: 1485317868}
   nameText: {fileID: 1281261393}
   xpSlider: {fileID: 221148718}
-  profileIconImage: {fileID: 2021359033}
-  frameImage: {fileID: 414031786}
+  profileIconImage: {fileID: 723071032}
+  frameImage: {fileID: 851443713}
   levelPrefix: 'Lv. '
   xpPrefix: 'XP: '
   xpSeparator: ' / '

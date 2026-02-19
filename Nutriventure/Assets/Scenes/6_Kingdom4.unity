@@ -125407,8 +125407,8 @@ MonoBehaviour:
   xpText: {fileID: 1309204753}
   nameText: {fileID: 1800869766}
   xpSlider: {fileID: 1224154140}
-  profileIconImage: {fileID: 69880531}
-  frameImage: {fileID: 1770757393}
+  profileIconImage: {fileID: 1739554137}
+  frameImage: {fileID: 1856434464}
   levelPrefix: 'Lv. '
   xpPrefix: 'XP: '
   xpSeparator: ' / '

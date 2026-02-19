@@ -74155,8 +74155,8 @@ MonoBehaviour:
   xpText: {fileID: 205109996}
   nameText: {fileID: 606105631}
   xpSlider: {fileID: 1541436019}
-  profileIconImage: {fileID: 2072891682}
-  frameImage: {fileID: 763156360}
+  profileIconImage: {fileID: 1034217094}
+  frameImage: {fileID: 2089544981}
   levelPrefix: 'Lv. '
   xpPrefix: 'XP: '
   xpSeparator: ' / '
