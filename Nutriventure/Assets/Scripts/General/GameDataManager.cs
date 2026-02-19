@@ -1,15 +1,22 @@
 using UnityEngine;
 using System.IO;
 using System;
+using System.Collections.Generic;
 
 public class GameDataManager : MonoBehaviour
 {
     public static GameDataManager Instance;
-    public CharacterDatabase characterDatabase; // Keep only character database for skin system
+
+    [Header("Databases")]
+    public CharacterDatabase characterDatabase;
+    public ProfileIconDatabase iconDatabase;
+    public FrameDatabase frameDatabase;
+    public AchievementDatabase achievementDatabase;
 
     public GameData CurrentGameData { get; private set; }
 
     private string saveFilePath;
+    private bool hasInitializedDefaults = false;
 
     void Awake()
     {
@@ -55,7 +62,7 @@ public class GameDataManager : MonoBehaviour
                 CurrentGameData = JsonUtility.FromJson<GameData>(jsonData);
 
                 Debug.Log($"=== GAME DATA LOADED ===");
-                Debug.Log($"Selected Character ID from save file: {CurrentGameData.selectedCharacterID}");
+                Debug.Log($"Selected Character ID: {CurrentGameData.selectedCharacterID}");
                 Debug.Log($"Equipped Icon ID: {CurrentGameData.equippedIconId}");
                 Debug.Log($"Unlocked Icons count: {CurrentGameData.unlockedIconIds?.Count ?? 0}");
                 Debug.Log($"Equipped Frame ID: {CurrentGameData.equippedFrameId}");
@@ -75,6 +82,9 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
+        // Initialize default icons and frames from databases
+        InitializeDefaultIconsAndFrames();
+
         // Initialize all systems
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
@@ -82,15 +92,152 @@ public class GameDataManager : MonoBehaviour
         UpdateChestAvailability();
     }
 
+    /// <summary>
+    /// Initializes default icons and frames based on the databases
+    /// This runs whenever game data is loaded or created
+    /// </summary>
+    private void InitializeDefaultIconsAndFrames()
+    {
+        if (CurrentGameData == null) return;
+
+        // Prevent multiple initializations if already done
+        if (hasInitializedDefaults && CurrentGameData.unlockedIconIds?.Count > 0 && CurrentGameData.unlockedFrameIds?.Count > 0)
+        {
+            Debug.Log("Default icons and frames already initialized, skipping...");
+            return;
+        }
+
+        Debug.Log("=== INITIALIZING DEFAULT ICONS AND FRAMES FROM DATABASES ===");
+
+        bool changesMade = false;
+
+        // ===== INITIALIZE ICONS =====
+        if (iconDatabase != null)
+        {
+            Debug.Log($"Icon database found with {iconDatabase.icons.Count} icons");
+
+            // Ensure the list exists
+            if (CurrentGameData.unlockedIconIds == null)
+            {
+                CurrentGameData.unlockedIconIds = new List<string>();
+            }
+
+            // Loop through all icons in the database
+            foreach (var icon in iconDatabase.icons)
+            {
+                // Check if this icon should be unlocked by default
+                if (icon.unlockedByDefault)
+                {
+                    // If not already in unlocked list, add it
+                    if (!CurrentGameData.unlockedIconIds.Contains(icon.id))
+                    {
+                        CurrentGameData.unlockedIconIds.Add(icon.id);
+                        Debug.Log($"? Added default icon: {icon.id} - {icon.iconName}");
+                        changesMade = true;
+                    }
+                }
+                else
+                {
+                    Debug.Log($"?? Icon not unlocked by default: {icon.id} - {icon.iconName}");
+                }
+            }
+
+            // Log all unlocked icons after initialization
+            Debug.Log($"Unlocked icons after initialization: {string.Join(", ", CurrentGameData.unlockedIconIds)}");
+        }
+        else
+        {
+            Debug.LogError("? iconDatabase is not assigned! Default icons will not be initialized.");
+        }
+
+        // ===== INITIALIZE FRAMES =====
+        if (frameDatabase != null)
+        {
+            Debug.Log($"Frame database found with {frameDatabase.frames.Count} frames");
+
+            // Ensure the list exists
+            if (CurrentGameData.unlockedFrameIds == null)
+            {
+                CurrentGameData.unlockedFrameIds = new List<string>();
+            }
+
+            // Loop through all frames in the database
+            foreach (var frame in frameDatabase.frames)
+            {
+                // Check if this frame should be unlocked by default
+                if (frame.unlockedByDefault)
+                {
+                    // If not already in unlocked list, add it
+                    if (!CurrentGameData.unlockedFrameIds.Contains(frame.id))
+                    {
+                        CurrentGameData.unlockedFrameIds.Add(frame.id);
+                        Debug.Log($"? Added default frame: {frame.id} - {frame.frameName}");
+                        changesMade = true;
+                    }
+                }
+                else
+                {
+                    Debug.Log($"?? Frame not unlocked by default: {frame.id} - {frame.frameName}");
+                }
+            }
+
+            // Log all unlocked frames after initialization
+            Debug.Log($"Unlocked frames after initialization: {string.Join(", ", CurrentGameData.unlockedFrameIds)}");
+        }
+        else
+        {
+            Debug.LogError("? frameDatabase is not assigned! Default frames will not be initialized.");
+        }
+
+        // ===== SET DEFAULT EQUIPPED ITEMS =====
+
+        // Set default equipped icon if none is set
+        if (string.IsNullOrEmpty(CurrentGameData.equippedIconId) && CurrentGameData.unlockedIconIds?.Count > 0)
+        {
+            CurrentGameData.equippedIconId = CurrentGameData.unlockedIconIds[0];
+            Debug.Log($"?? Set default equipped icon to: {CurrentGameData.equippedIconId}");
+            changesMade = true;
+        }
+
+        // Set default equipped frame if none is set
+        if (string.IsNullOrEmpty(CurrentGameData.equippedFrameId) && CurrentGameData.unlockedFrameIds?.Count > 0)
+        {
+            CurrentGameData.equippedFrameId = CurrentGameData.unlockedFrameIds[0];
+            Debug.Log($"?? Set default equipped frame to: {CurrentGameData.equippedFrameId}");
+            changesMade = true;
+        }
+
+        // Save changes if any were made
+        if (changesMade)
+        {
+            SaveGameData();
+            Debug.Log("?? Saved default icons and frames to GameData");
+        }
+
+        hasInitializedDefaults = true;
+        Debug.Log("=== DEFAULT ICONS AND FRAMES INITIALIZATION COMPLETE ===");
+    }
+
     private void CreateNewGameData()
     {
         CurrentGameData = new GameData();
+
+        // Initialize default icons and frames for new game
+        // Reset the flag so initialization runs
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
+
         SaveGameData();
     }
 
     public void ResetGameData()
     {
         CurrentGameData = new GameData();
+
+        // Reset flag and initialize defaults
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
+        InitializeDefaultSkins();
 
         if (AudioHandler.Instance != null)
         {
@@ -101,56 +248,17 @@ public class GameDataManager : MonoBehaviour
         Debug.Log("Game data reset to default!");
     }
 
-    // Call this from ProfileSettings to initialize default icons
-    public void InitializeDefaultIcons(string[] defaultIconIds)
+    // Public method to force re-initialization (useful for debugging)
+    public void ForceReinitializeDefaults()
     {
-        if (CurrentGameData == null) return;
-
-        foreach (string iconId in defaultIconIds)
-        {
-            if (!CurrentGameData.unlockedIconIds.Contains(iconId))
-            {
-                CurrentGameData.unlockedIconIds.Add(iconId);
-                Debug.Log($"Added default icon: {iconId}");
-            }
-        }
-
-        // Set default equipped icon if none
-        if (string.IsNullOrEmpty(CurrentGameData.equippedIconId) && CurrentGameData.unlockedIconIds.Count > 0)
-        {
-            CurrentGameData.equippedIconId = CurrentGameData.unlockedIconIds[0];
-            Debug.Log($"Set default equipped icon to: {CurrentGameData.equippedIconId}");
-        }
-
-        SaveGameData();
-    }
-
-    // Call this from ProfileSettings to initialize default frames
-    public void InitializeDefaultFrames(string[] defaultFrameIds)
-    {
-        if (CurrentGameData == null) return;
-
-        foreach (string frameId in defaultFrameIds)
-        {
-            if (!CurrentGameData.unlockedFrameIds.Contains(frameId))
-            {
-                CurrentGameData.unlockedFrameIds.Add(frameId);
-                Debug.Log($"Added default frame: {frameId}");
-            }
-        }
-
-        // Set default equipped frame if none
-        if (string.IsNullOrEmpty(CurrentGameData.equippedFrameId) && CurrentGameData.unlockedFrameIds.Count > 0)
-        {
-            CurrentGameData.equippedFrameId = CurrentGameData.unlockedFrameIds[0];
-            Debug.Log($"Set default equipped frame to: {CurrentGameData.equippedFrameId}");
-        }
-
-        SaveGameData();
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
     }
 
     private void UpdateEnergyBasedOnTime()
     {
+        if (CurrentGameData == null) return;
+
         TimeSpan timeSinceLastUpdate = DateTime.Now - CurrentGameData.lastEnergyUpdateTime;
         int energyToAdd = (int)(timeSinceLastUpdate.TotalMinutes / 30);
 
@@ -164,6 +272,8 @@ public class GameDataManager : MonoBehaviour
 
     private void UpdateChestAvailability()
     {
+        if (CurrentGameData == null) return;
+
         if (CurrentGameData.isChestAvailable) return;
 
         TimeSpan timeSinceLastClaim = DateTime.Now - CurrentGameData.lastChestClaimTime;
@@ -177,11 +287,13 @@ public class GameDataManager : MonoBehaviour
 
     public bool CanClaimChest()
     {
-        return CurrentGameData.isChestAvailable;
+        return CurrentGameData != null && CurrentGameData.isChestAvailable;
     }
 
     public TimeSpan GetTimeUntilNextChest()
     {
+        if (CurrentGameData == null) return TimeSpan.Zero;
+
         if (CurrentGameData.isChestAvailable)
         {
             return TimeSpan.Zero;
@@ -195,7 +307,7 @@ public class GameDataManager : MonoBehaviour
 
     public void ClaimChestReward()
     {
-        if (!CurrentGameData.isChestAvailable) return;
+        if (CurrentGameData == null || !CurrentGameData.isChestAvailable) return;
 
         CurrentGameData.nutriCoins += 50;
         CurrentGameData.isChestAvailable = false;
@@ -207,6 +319,8 @@ public class GameDataManager : MonoBehaviour
 
     private void InitializeDefaultCharacters()
     {
+        if (CurrentGameData == null) return;
+
         if (characterDatabase == null)
         {
             Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
@@ -234,6 +348,8 @@ public class GameDataManager : MonoBehaviour
 
     private void InitializeDefaultSkins()
     {
+        if (CurrentGameData == null) return;
+
         if (characterDatabase == null)
         {
             Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
@@ -262,7 +378,22 @@ public class GameDataManager : MonoBehaviour
     public bool IsIconUnlocked(string iconId)
     {
         if (CurrentGameData == null) return false;
-        return CurrentGameData.unlockedIconIds != null && CurrentGameData.unlockedIconIds.Contains(iconId);
+
+        // First check if it's in the unlocked list
+        bool inUnlockedList = CurrentGameData.unlockedIconIds != null && CurrentGameData.unlockedIconIds.Contains(iconId);
+
+        // Then check database for unlockedByDefault (for safety)
+        bool isDefault = false;
+        if (iconDatabase != null)
+        {
+            var icon = iconDatabase.GetIcon(iconId);
+            if (icon != null)
+            {
+                isDefault = icon.unlockedByDefault;
+            }
+        }
+
+        return inUnlockedList || isDefault;
     }
 
     public void EquipIcon(string iconId)
@@ -296,7 +427,22 @@ public class GameDataManager : MonoBehaviour
     public bool IsFrameUnlocked(string frameId)
     {
         if (CurrentGameData == null) return false;
-        return CurrentGameData.unlockedFrameIds != null && CurrentGameData.unlockedFrameIds.Contains(frameId);
+
+        // First check if it's in the unlocked list
+        bool inUnlockedList = CurrentGameData.unlockedFrameIds != null && CurrentGameData.unlockedFrameIds.Contains(frameId);
+
+        // Then check database for unlockedByDefault (for safety)
+        bool isDefault = false;
+        if (frameDatabase != null)
+        {
+            var frame = frameDatabase.GetFrame(frameId);
+            if (frame != null)
+            {
+                isDefault = frame.unlockedByDefault;
+            }
+        }
+
+        return inUnlockedList || isDefault;
     }
 
     public void EquipFrame(string frameId)
@@ -324,24 +470,6 @@ public class GameDataManager : MonoBehaviour
         Debug.Log($"Achievement {achievementId} completed!");
     }
 
-    public void ClaimAchievement(string achievementId)
-    {
-        if (CurrentGameData == null) return;
-
-        if (CurrentGameData.IsAchievementCompleted(achievementId))
-        {
-            // We need the prize gems - this should come from the achievement database in ProfileSettings
-            // For now, we'll use a default value or pass it as a parameter
-            int prizeGems = 10; // This should be passed from ProfileSettings
-            CurrentGameData.AddNutriGems(prizeGems);
-            CurrentGameData.ClaimAchievement(achievementId);
-
-            SaveGameData();
-            Debug.Log($"Achievement {achievementId} claimed! +{prizeGems} gems");
-        }
-    }
-
-    // Overloaded method that accepts prize gems
     public void ClaimAchievement(string achievementId, int prizeGems)
     {
         if (CurrentGameData == null) return;
