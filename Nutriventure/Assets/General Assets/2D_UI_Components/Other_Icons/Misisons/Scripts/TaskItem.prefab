@@ -377,6 +377,7 @@ GameObject:
   - component: {fileID: 6984834909383099337}
   - component: {fileID: 317700774621480825}
   - component: {fileID: 4623973667469946122}
+  - component: {fileID: 7074522406267284428}
   m_Layer: 5
   m_Name: TaskItem
   m_TagString: Untagged
@@ -439,6 +440,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7337682610235749985}
   m_CullTransparentMesh: 1
+--- !u!114 &7074522406267284428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7337682610235749985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64e349c19c7cbe34f9e47c98b62d013a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TaskItemUI
+  checkBox: {fileID: 707875832713182292}
+  taskDescriptionText: {fileID: 6331722723789222483}
+  progressText: {fileID: 0}
 --- !u!1 &7808255006863503662
 GameObject:
   m_ObjectHideFlags: 0
@@ -637,7 +653,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -651,7 +667,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 5223000565127900863}
   toggleTransition: 1
   graphic: {fileID: 7339660409894230176}
