@@ -38,8 +38,8 @@ public class K3_GameSummary : MonoBehaviour
     public GameObject failGameObject3;
     
     [Header("Buttons")]
-    public Button confirmButton;
     public Button restartButton;
+    public Button homeButton;
 
     [Header("Panel Animation")]
     public float fadeInDuration = 1.0f;
@@ -200,11 +200,11 @@ public class K3_GameSummary : MonoBehaviour
 
         ResetStarAnimator();
 
-        if (confirmButton != null)
-            confirmButton.onClick.AddListener(OnConfirmButtonClicked);
-
         if (restartButton != null)
-            restartButton.onClick.AddListener(OnConfirmButtonClicked);
+            restartButton.onClick.AddListener(OnRetryButtonClicked);
+
+        if (homeButton != null)
+            homeButton.onClick.AddListener(OnRetryButtonClicked);
 
         if (backgroundMusicSource != null)
             originalBackgroundMusicVolume = backgroundMusicSource.volume;
@@ -971,7 +971,7 @@ public class K3_GameSummary : MonoBehaviour
         Debug.Log($"Added {calculatedCoinsEarned} coins to database");
     }
 
-    public void OnConfirmButtonClicked()
+    public void OnRetryButtonClicked()
     {
         if (!isSummaryActive || !isGameOver || isProcessingConfirm || !isCountingAnimationComplete) 
         {
@@ -984,8 +984,8 @@ public class K3_GameSummary : MonoBehaviour
         PlayButtonClickSound();
         AddCoinsToDatabase();
 
-        if (confirmButton != null)
-            confirmButton.interactable = false;
+        if (restartButton != null)
+            restartButton.interactable = false;
 
         if (completeRestartOnConfirm)
         {
@@ -1014,8 +1014,8 @@ public class K3_GameSummary : MonoBehaviour
         
         isProcessingConfirm = false;
 
-        if (confirmButton != null)
-            confirmButton.interactable = true;
+        if (restartButton != null)
+            restartButton.interactable = true;
     }
 
     private IEnumerator CompleteRestartGame()
@@ -1396,11 +1396,11 @@ public class K3_GameSummary : MonoBehaviour
         if (backgroundMusicSource != null)
             backgroundMusicSource.volume = originalBackgroundMusicVolume;
 
-        if (confirmButton != null)
-            confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
-        
         if (restartButton != null)
-            restartButton.onClick.RemoveListener(OnConfirmButtonClicked);
+            restartButton.onClick.RemoveListener(OnRetryButtonClicked);
+        
+        if (homeButton != null)
+            homeButton.onClick.RemoveListener(OnRetryButtonClicked);
         
         if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
         {

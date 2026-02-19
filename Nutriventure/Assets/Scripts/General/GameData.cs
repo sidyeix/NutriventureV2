@@ -20,7 +20,9 @@ public class GameData
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
     public bool preserviaKeyCollected = false;
-    public bool nutriKingdomKeyCollected = false; // ADD THIS LINE
+    public bool nutriKingdomKeyCollected = true; // Changed to true for default unlock
+    public bool allerthiaKeyCollected = false;
+    public bool ocrScannerKeyCollected = false; // ADD THIS LINE - OCR Scanner Key
 
     // Character System
     public int selectedCharacterID = 0;
@@ -41,7 +43,7 @@ public class GameData
     public bool isChestAvailable = true;
 
     // Progress Tracking
-    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false };
+    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false }; // Nutri, Sugaria, Preservia, Allerthia
     [System.Serializable]
     public class StringBoolDictionary : SerializableDictionary<string, bool> { }
     public StringBoolDictionary completedMinigames = new StringBoolDictionary();
@@ -91,7 +93,9 @@ public class GameData
         // Kingdom Keys
         sugariaKeyCollected = false;
         preserviaKeyCollected = false;
-        nutriKingdomKeyCollected = false; // ADD THIS LINE
+        nutriKingdomKeyCollected = true; // CHANGED TO true (unlocked by default)
+        allerthiaKeyCollected = false;
+        ocrScannerKeyCollected = false; // ADD THIS LINE
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -174,7 +178,7 @@ public class GameData
         preserviaKeyCollected = false;
     }
 
-    // NUTRI KINGDOM KEY METHODS - ADD THESE
+    // Nutri Kingdom Key Methods
     public bool HasNutriKingdomKey()
     {
         return nutriKingdomKeyCollected;
@@ -190,6 +194,38 @@ public class GameData
         nutriKingdomKeyCollected = false;
     }
 
+    // Allerthia Key Methods
+    public bool HasAllerthiaKey()
+    {
+        return allerthiaKeyCollected;
+    }
+
+    public void CollectAllerthiaKey()
+    {
+        allerthiaKeyCollected = true;
+    }
+
+    public void ResetAllerthiaKey()
+    {
+        allerthiaKeyCollected = false;
+    }
+
+    // OCR SCANNER KEY METHODS - ADD THESE
+    public bool HasOCRScannerKey()
+    {
+        return ocrScannerKeyCollected;
+    }
+
+    public void CollectOCRScannerKey()
+    {
+        ocrScannerKeyCollected = true;
+    }
+
+    public void ResetOCRScannerKey()
+    {
+        ocrScannerKeyCollected = false;
+    }
+
     public bool HasKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
@@ -201,6 +237,13 @@ public class GameData
             case "nutri":
             case "nutrikingdom":
                 return HasNutriKingdomKey();
+            case "allerthia":
+            case "allerthiakingdom":
+                return HasAllerthiaKey();
+            case "ocr":
+            case "ocrscanner":
+            case "ocrscannerkey":
+                return HasOCRScannerKey();
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 return false;
@@ -220,6 +263,15 @@ public class GameData
             case "nutri":
             case "nutrikingdom":
                 CollectNutriKingdomKey();
+                break;
+            case "allerthia":
+            case "allerthiakingdom":
+                CollectAllerthiaKey();
+                break;
+            case "ocr":
+            case "ocrscanner":
+            case "ocrscannerkey":
+                CollectOCRScannerKey();
                 break;
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
