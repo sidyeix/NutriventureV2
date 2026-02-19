@@ -31,7 +31,7 @@ MonoBehaviour:
     enerlingSprite: {fileID: 21300000, guid: 38b806056b196a4489d40cc5ac171274, type: 3}
     modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 2
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
     currentLife: 0
@@ -103,7 +103,7 @@ MonoBehaviour:
     enerlingSprite: {fileID: 21300000, guid: 98cfdc2f2f1441b48ac307d43f68265e, type: 3}
     modelPrefab: {fileID: 57221022565497146, guid: 7c809fe56dd518a4c897bfe374f529b4, type: 3}
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 1
     animatorController: {fileID: 9100000, guid: 577aa91963a22364fb2bca5608c03f9f, type: 2}
     baseLife: 120
     currentLife: 120
@@ -326,7 +326,7 @@ MonoBehaviour:
     enerlingSprite: {fileID: 21300000, guid: 0752cf7d150e0184c8ec9d724cbaf960, type: 3}
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 4
     animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
     currentLife: 15
@@ -543,7 +543,7 @@ MonoBehaviour:
     enerlingSprite: {fileID: 21300000, guid: 5ede0c78e43ca574890e1fd95a9b0354, type: 3}
     modelPrefab: {fileID: 2931095760934502716, guid: f7f927a7861dde347b58ca1add59efd4, type: 3}
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 20
     animatorController: {fileID: 9100000, guid: 462826e67baf7fe40b34fd0239a13fce, type: 2}
     baseLife: 160
     currentLife: 160
