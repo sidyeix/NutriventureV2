@@ -11,15 +11,18 @@ public class IngredientDetailsUI : MonoBehaviour
         public IngredientDatabase.KingdomOrigin kingdom;
         public Sprite backgroundSprite;
     }
-[Header("Frame Library")]
-public KingdomFrameLibrary frameLibrary;
+
+    [Header("Frame Library")]
+    public KingdomFrameLibrary frameLibrary;
+
+    [Header("3D Viewer")]
+    public Enerling3DViewer viewer;
 
     [Header("Kingdom Backgrounds")]
     public KingdomBackground[] kingdomBackgrounds;
 
     [Header("Main Visuals")]
     public Image kingdomBackground;
-    public Image enerlingDisplay;
     public Image iconDisplay;
     public Image rarityIcon;
 
@@ -27,189 +30,443 @@ public KingdomFrameLibrary frameLibrary;
     public TMP_Text nameText;
     public TMP_Text descriptionText;
 
-    [Header("Life / Stats")]
+    [Header("Stats")]
     public TMP_Text damageText;
     public TMP_Text armorText;
-private void Start()
-{
-    gameObject.SetActive(false);
-}
 
-    private void Awake()
+    [Header("Organ Info")]
+    public TMP_Text organTypeText;           // Shows "Beneficial Organs" or "Target Organs"
+    public Transform organIconsContainer;     // Parent container for organ icons
+    public Image organIconPrefab;              // Prefab for individual organ icons
+
+    [Header("Skill Icons")]
+    public Image skill1Icon;
+    public Image skill2Icon;
+    public Image skill3Icon;
+    public Image skill4Icon;
+    [Tooltip("If true, uses skillCircleIcon. If false, uses skillSprite")]
+    public bool useCircleIcons = true;
+
+    [Header("Navigation Buttons")]
+    public Button nextButton;
+    public Button prevButton;
+    public Button closeButton;
+
+    [Header("Page Indicator")]
+    public TMP_Text pageIndicatorText;
+
+    private IngredientDatabase.IngredientInfo currentInfo;
+    private IngredientDatabase database;
+    private List<IngredientDatabase.IngredientInfo> currentFilteredList;
+    private int currentIndex = -1;
+    private List<GameObject> organIconObjects = new List<GameObject>(); // Track created icons
+
+    private void Start()
     {
-        // Validate critical references
-        ValidateReferences();
+        gameObject.SetActive(false);
+
+        // Add navigation listeners
+        if (nextButton != null)
+            nextButton.onClick.AddListener(ShowNext);
+
+        if (prevButton != null)
+            prevButton.onClick.AddListener(ShowPrevious);
+
+        if (closeButton != null)
+            closeButton.onClick.AddListener(ClosePanel);
     }
 
-    private void ValidateReferences()
-    {
-        if (kingdomBackground == null)
-            Debug.LogWarning("Kingdom Background Image is not assigned in IngredientDetailsUI");
-        
-        if (enerlingDisplay == null)
-            Debug.LogWarning("Enerling Display Image is not assigned in IngredientDetailsUI");
-        
-        if (iconDisplay == null)
-            Debug.LogWarning("Icon Display Image is not assigned in IngredientDetailsUI");
-        
-        if (rarityIcon == null)
-            Debug.LogWarning("Rarity Icon Image is not assigned in IngredientDetailsUI");
-        
-        if (nameText == null)
-            Debug.LogWarning("Name Text is not assigned in IngredientDetailsUI");
-        
-        if (descriptionText == null)
-            Debug.LogWarning("Description Text is not assigned in IngredientDetailsUI");
-        
-        if (damageText == null)
-            Debug.LogWarning("Damage Text is not assigned in IngredientDetailsUI");
-        
-        if (armorText == null)
-            Debug.LogWarning("Armor Text is not assigned in IngredientDetailsUI");
-    }
-
+    // =========================
+    // GET KINGDOM BG
+    // =========================
     Sprite GetKingdomBG(IngredientDatabase.KingdomOrigin kingdom)
     {
-        if (kingdomBackgrounds == null || kingdomBackgrounds.Length == 0) 
-        {
-            Debug.LogWarning("Kingdom Backgrounds array is not set up in IngredientDetailsUI");
-            return null;
-        }
-        
         foreach (var bg in kingdomBackgrounds)
         {
-            if (bg != null && bg.kingdom == kingdom)
+            if (bg.kingdom == kingdom)
                 return bg.backgroundSprite;
         }
-        
-        Debug.LogWarning($"No background sprite found for kingdom: {kingdom}");
         return null;
     }
 
-    public void ShowDetails(IngredientDatabase.IngredientInfo info, IngredientDatabase db) 
+    // =========================
+    // CLEAR ORGAN ICONS
+    // =========================
+    private void ClearOrganIcons()
     {
-        if (info == null)
+        foreach (var icon in organIconObjects)
         {
-            Debug.LogError("Cannot show details: IngredientInfo is null");
-            return;
+            if (icon != null)
+                Destroy(icon);
+        }
+        organIconObjects.Clear();
+    }
+
+    // =========================
+    // SETUP ORGAN ICONS
+    // =========================
+    private void SetupOrganIcons(IngredientDatabase.IngredientInfo info)
+    {
+        if (organIconsContainer == null || organIconPrefab == null) return;
+
+        // Clear existing icons
+        ClearOrganIcons();
+
+        // Determine which organ list to use
+        List<string> organsToShow = info.beneficialOrgans.Count > 0 
+            ? info.beneficialOrgans 
+            : info.targetOrgans;
+
+        // Update organ type text
+        if (organTypeText != null)
+        {
+            if (info.beneficialOrgans.Count > 0)
+                organTypeText.text = "Beneficial Organs:";
+            else if (info.targetOrgans.Count > 0)
+                organTypeText.text = "Target Organs:";
+            else
+                organTypeText.text = "No Special Organs";
         }
 
-        if (db == null)
+        // If no organs to show, hide the container or return
+        if (organsToShow.Count == 0)
         {
-            Debug.LogError("Cannot show details: IngredientDatabase is null");
+            if (organIconsContainer.gameObject != null)
+                organIconsContainer.gameObject.SetActive(false);
             return;
+        }
+        else
+        {
+            if (organIconsContainer.gameObject != null)
+                organIconsContainer.gameObject.SetActive(true);
+        }
+
+        // Create icon for each organ
+        foreach (string organName in organsToShow)
+        {
+            // Create new icon from prefab
+            Image icon = Instantiate(organIconPrefab, organIconsContainer);
+            
+            // Try to get organ sprite from frame library FIRST
+            Sprite organSprite = null;
+            
+            if (frameLibrary != null)
+            {
+                organSprite = frameLibrary.GetOrganSprite(organName);
+            }
+            
+            // Fallback to database if not found in frame library
+            if (organSprite == null && database != null)
+            {
+                organSprite = database.GetOrganSprite(organName);
+            }
+            
+            if (organSprite != null)
+            {
+                icon.sprite = organSprite;
+            }
+            else
+            {
+                Debug.LogWarning($"No sprite found for organ: {organName}");
+                // Optionally set a default color or hide the icon
+                icon.gameObject.SetActive(false);
+            }
+            
+            // Make sure the icon is visible and properly sized
+            icon.color = Color.white;
+            
+            organIconObjects.Add(icon.gameObject);
+        }
+    }
+
+    // =========================
+    // SETUP SKILL ICONS - NEW METHOD
+    // =========================
+    private void SetupSkillIcons(IngredientDatabase.IngredientInfo info)
+    {
+        if (info == null) return;
+
+        // Create arrays for skills and their corresponding UI images
+        IngredientDatabase.SkillInfo[] skills = new IngredientDatabase.SkillInfo[] 
+        { 
+            info.skill1, 
+            info.skill2, 
+            info.skill3, 
+            info.skill4 
+        };
+        
+        Image[] skillImages = new Image[] 
+        { 
+            skill1Icon, 
+            skill2Icon, 
+            skill3Icon, 
+            skill4Icon 
+        };
+
+        // Loop through all 4 skills
+        for (int i = 0; i < 4; i++)
+        {
+            if (skillImages[i] != null)
+            {
+                if (skills[i] != null)
+                {
+                    // Get the appropriate icon based on shape preference
+                    Sprite iconSprite = GetSkillIcon(skills[i]);
+                    
+                    if (iconSprite != null)
+                    {
+                        skillImages[i].sprite = iconSprite;
+                        skillImages[i].gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No icon found for skill {i+1}: {skills[i].skillName}");
+                        skillImages[i].gameObject.SetActive(false);
+                    }
+                }
+                else
+                {
+                    // Hide if skill doesn't exist
+                    skillImages[i].gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
+    // =========================
+    // GET SKILL ICON FROM DATABASE - NEW HELPER METHOD
+    // =========================
+    private Sprite GetSkillIcon(IngredientDatabase.SkillInfo skill)
+    {
+        if (skill == null) return null;
+        
+        // Return circle icon if available and useCircleIcons is true
+        if (useCircleIcons && skill.skillCircleIcon != null)
+            return skill.skillCircleIcon;
+        
+        // Fallback to rectangle icon
+        return skill.skillSprite;
+    }
+
+    // =========================
+    // SHOW DETAILS
+    // =========================
+    public void ShowDetails(
+        IngredientDatabase.IngredientInfo info,
+        IngredientDatabase db,
+        List<IngredientDatabase.IngredientInfo> filteredList = null,
+        int index = -1)
+    {
+        if (info == null) return;
+
+        currentInfo = info;
+        database = db;
+
+        // Store the filtered list and current index for navigation
+        if (filteredList != null)
+        {
+            currentFilteredList = filteredList;
+            currentIndex = index;
         }
 
         gameObject.SetActive(true);
 
-        try
+        // =========================
+        // TEXT
+        // =========================
+        if (nameText != null)
+            nameText.text = info.ingredientName;
+        
+        if (descriptionText != null)
+            descriptionText.text = info.enerlingDescription;
+
+        // =========================
+        // ICON
+        // =========================
+        if (iconDisplay != null)
         {
-            // =========================
-            // BASIC INFO
-            // =========================
-            if (nameText != null)
-                nameText.text = info.ingredientName ?? "Unknown";
-            
-            if (descriptionText != null)
-                descriptionText.text = info.enerlingDescription ?? "No description available";
-
-            // =========================
-            // VISUALS
-            // =========================
-            if (enerlingDisplay != null && info.enerlingSprite != null)
-                enerlingDisplay.sprite = info.enerlingSprite;
-            
-            if (iconDisplay != null && info.enerlingSprite != null)
-                iconDisplay.sprite = info.enerlingSprite;
-            
-            if (rarityIcon != null)
-            {
-                Sprite raritySprite = db.GetRarityIcon(info.rarity);
-                if (raritySprite != null)
-                    rarityIcon.sprite = raritySprite;
-            }
-
-            // KINGDOM BACKGROUND
-            if (kingdomBackground != null)
-            {
-                Sprite bg = GetKingdomBG(info.kingdom);
-                if (bg != null)
-                    kingdomBackground.sprite = bg;
-                else
-                    kingdomBackground.sprite = null; // Clear if no background found
-            }
-            // =========================
-// ENERLING ICON OVERRIDE
-// =========================
-Sprite customIcon = null;
-
-if (frameLibrary != null)
-{
-    customIcon =
-        frameLibrary.GetEnerlingIcon(
-            info.ingredientName);
-}
-
-Sprite finalIcon =
-    customIcon != null
-    ? customIcon
-    : info.enerlingSprite;
-
-if (enerlingDisplay != null)
-    enerlingDisplay.sprite = finalIcon;
-
-if (iconDisplay != null)
-    iconDisplay.sprite = finalIcon;
-
-// =========================
-// RARITY ICON OVERRIDE
-// =========================
-Sprite customRarity = null;
-
-if (frameLibrary != null)
-{
-    customRarity =
-        frameLibrary.GetRarityIcon(
-            info.rarity);
-}
-
-if (rarityIcon != null)
-{
-    rarityIcon.sprite =
-        customRarity != null
-        ? customRarity
-        : db.GetRarityIcon(info.rarity);
-}
-
-            // =========================
-            // STATS
-            // =========================
-            if (damageText != null)
-                damageText.text = info.baseDamage.ToString();
-            
-            if (armorText != null)
-                armorText.text = info.armorPercent + "%";
-
-            // =========================
-            // SKILLS
-            // =========================
-            IngredientDatabase.SkillInfo[] skills = new IngredientDatabase.SkillInfo[]
-            {
-                info.skill1,
-                info.skill2,
-                info.skill3,
-                info.skill4
-            };
+            // Try to get custom icon from frame library first
+            Sprite customIcon = frameLibrary != null ? frameLibrary.GetEnerlingIcon(info.ingredientName) : null;
+            iconDisplay.sprite = customIcon != null ? customIcon : info.enerlingSprite;
         }
-        catch (System.Exception e)
+
+        // =========================
+        // RARITY
+        // =========================
+        if (rarityIcon != null)
         {
-            Debug.LogError($"Error showing ingredient details: {e.Message}");
-            ClosePanel();
+            // Try to get rarity icon from frame library first
+            Sprite raritySprite = frameLibrary != null ? frameLibrary.GetRarityIcon(info.rarity) : null;
+            rarityIcon.sprite = raritySprite != null ? raritySprite : db.GetRarityIcon(info.rarity);
+        }
+
+        // =========================
+        // KINGDOM BG
+        // =========================
+        if (kingdomBackground != null)
+            kingdomBackground.sprite = GetKingdomBG(info.kingdom);
+
+        // =========================
+        // STATS
+        // =========================
+        if (damageText != null)
+            damageText.text = info.baseDamage.ToString();
+        
+        if (armorText != null)
+            armorText.text = info.armorPercent + "%";
+
+        // =========================
+        // ORGAN INFO
+        // =========================
+        SetupOrganIcons(info);
+
+        // =========================
+        // SKILL ICONS - NEW!
+        // =========================
+        SetupSkillIcons(info);
+
+        // =========================
+        // UPDATE NAVIGATION
+        // =========================
+        UpdateNavigationButtons();
+        UpdatePageIndicator();
+
+        // =========================
+        // SPAWN 3D MODEL
+        // =========================
+        if (viewer != null)
+        {
+            viewer.ShowEnerling(info);
+        }
+        else
+        {
+            Debug.LogWarning("3D Viewer not assigned in Details UI");
         }
     }
 
+    // =========================
+    // NAVIGATION METHODS
+    // =========================
+    public void ShowNext()
+    {
+        if (currentFilteredList == null || currentFilteredList.Count <= 1)
+            return;
+
+        // Move to next index, wrap around
+        currentIndex = (currentIndex + 1) % currentFilteredList.Count;
+        currentInfo = currentFilteredList[currentIndex];
+
+        // Refresh display with new info
+        RefreshDisplay();
+
+        // Update 3D viewer
+        if (viewer != null)
+            viewer.ShowEnerling(currentInfo);
+    }
+
+    public void ShowPrevious()
+    {
+        if (currentFilteredList == null || currentFilteredList.Count <= 1)
+            return;
+
+        // Move to previous index, wrap around
+        currentIndex--;
+        if (currentIndex < 0)
+            currentIndex = currentFilteredList.Count - 1;
+
+        currentInfo = currentFilteredList[currentIndex];
+
+        // Refresh display with new info
+        RefreshDisplay();
+
+        // Update 3D viewer
+        if (viewer != null)
+            viewer.ShowEnerling(currentInfo);
+    }
+
+    private void RefreshDisplay()
+    {
+        if (currentInfo == null || database == null) return;
+
+        // Update text
+        if (nameText != null)
+            nameText.text = currentInfo.ingredientName;
+        
+        if (descriptionText != null)
+            descriptionText.text = currentInfo.enerlingDescription;
+
+        // Update icon
+        if (iconDisplay != null)
+        {
+            Sprite customIcon = frameLibrary != null ? frameLibrary.GetEnerlingIcon(currentInfo.ingredientName) : null;
+            iconDisplay.sprite = customIcon != null ? customIcon : currentInfo.enerlingSprite;
+        }
+
+        // Update rarity
+        if (rarityIcon != null)
+        {
+            Sprite raritySprite = frameLibrary != null ? frameLibrary.GetRarityIcon(currentInfo.rarity) : null;
+            rarityIcon.sprite = raritySprite != null ? raritySprite : database.GetRarityIcon(currentInfo.rarity);
+        }
+
+        // Update kingdom background
+        if (kingdomBackground != null)
+            kingdomBackground.sprite = GetKingdomBG(currentInfo.kingdom);
+
+        // Update stats
+        if (damageText != null)
+            damageText.text = currentInfo.baseDamage.ToString();
+        
+        if (armorText != null)
+            armorText.text = currentInfo.armorPercent + "%";
+
+        // Update organ icons
+        SetupOrganIcons(currentInfo);
+
+        // Update skill icons
+        SetupSkillIcons(currentInfo);
+
+        // Update navigation UI
+        UpdateNavigationButtons();
+        UpdatePageIndicator();
+    }
+
+    private void UpdateNavigationButtons()
+    {
+        if (currentFilteredList == null || currentFilteredList.Count <= 1)
+        {
+            // Disable both buttons if there's only one item or no list
+            if (nextButton != null) nextButton.interactable = false;
+            if (prevButton != null) prevButton.interactable = false;
+            return;
+        }
+
+        // Enable both buttons (they'll wrap around)
+        if (nextButton != null) nextButton.interactable = true;
+        if (prevButton != null) prevButton.interactable = true;
+    }
+
+    private void UpdatePageIndicator()
+    {
+        if (pageIndicatorText != null && currentFilteredList != null)
+        {
+            pageIndicatorText.text = $"{currentIndex + 1} / {currentFilteredList.Count}";
+        }
+    }
+
+    // =========================
+    // CLOSE
+    // =========================
     public void ClosePanel()
     {
         gameObject.SetActive(false);
+        
+        // Clear organ icons
+        ClearOrganIcons();
+        
+        // Clear references
+        currentInfo = null;
+        currentFilteredList = null;
+        currentIndex = -1;
     }
 }

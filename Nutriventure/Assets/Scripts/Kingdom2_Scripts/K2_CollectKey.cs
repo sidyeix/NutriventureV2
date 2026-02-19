@@ -272,13 +272,8 @@ public class K2_CollectKey : MonoBehaviour
             currentNearbyKey = null;
         }
         
-        // Save key to GameData
-        if (GameDataManager.Instance != null)
-        {
-            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
-            GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey saved to GameData");
-        }
+        // NOTE: We DON'T save the key to GameData here anymore
+        // It will be saved when the Continue button is clicked in the KeyUnlockCanvas
         
         // Disable timeline after key collection
         DisableTimelineAfterKeyCollection();

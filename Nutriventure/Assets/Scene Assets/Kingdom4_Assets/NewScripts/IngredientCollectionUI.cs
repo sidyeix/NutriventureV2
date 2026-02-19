@@ -18,8 +18,9 @@ public class IngredientCollectionUI : MonoBehaviour
     [Header("UI References")]
     public Transform contentParent;
     public IngredientCardUI cardPrefab;
-    public GameObject lockedCardPrefab;
     public KingdomFrameLibrary frameLibrary;
+    [Header("3D Viewer")]
+    public Enerling3DViewer viewer;
 
     // =========================
     // KINGDOM FILTER BUTTONS
@@ -52,6 +53,10 @@ public class IngredientCollectionUI : MonoBehaviour
     // =========================
     private List<IngredientDatabase.IngredientInfo> allIngredients;
     private List<GameObject> currentCards = new();
+    
+    // Separate lists for display and navigation
+    private List<IngredientDatabase.IngredientInfo> currentDisplayList; // All items (including locked)
+    private List<IngredientDatabase.IngredientInfo> currentNavigationList; // Only unlocked items
 
     private IngredientDatabase.KingdomOrigin? currentKingdomFilter = null;
     private IngredientDatabase.Rarity? currentRarityFilter = null;
@@ -108,10 +113,9 @@ public class IngredientCollectionUI : MonoBehaviour
             new List<TMP_Dropdown.OptionData>();
 
         options.Add(new TMP_Dropdown.OptionData("", allRarityIcon, Color.white));
-options.Add(new TMP_Dropdown.OptionData("", commonRarityIcon, Color.white));
-options.Add(new TMP_Dropdown.OptionData("", rareRarityIcon, Color.white));
-options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
-
+        options.Add(new TMP_Dropdown.OptionData("", commonRarityIcon, Color.white));
+        options.Add(new TMP_Dropdown.OptionData("", rareRarityIcon, Color.white));
+        options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
 
         rarityDropdown.AddOptions(options);
 
@@ -200,13 +204,14 @@ options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
     }
 
     // =========================
-    // COMBINED FILTER
+    // COMBINED FILTER (FIXED)
     // =========================
     void ApplyCombinedFilter()
     {
         List<IngredientDatabase.IngredientInfo> filtered =
             new(allIngredients);
 
+        // Apply kingdom filter
         if (currentKingdomFilter.HasValue)
         {
             filtered = filtered
@@ -216,6 +221,7 @@ options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
                 .ToList();
         }
 
+        // Apply rarity filter
         if (currentRarityFilter.HasValue)
         {
             filtered = filtered
@@ -225,7 +231,18 @@ options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
                 .ToList();
         }
 
-        Populate(filtered);
+        // Store ALL filtered items for display (including locked)
+        currentDisplayList = filtered;
+        
+        // Store ONLY unlocked items for navigation
+        currentNavigationList = filtered
+            .Where(i => i.isUnlocked)
+            .ToList();
+
+        Debug.Log($"Display: {currentDisplayList.Count} items (including locked), Navigation: {currentNavigationList.Count} unlocked items");
+        
+        // Populate the grid with ALL items (locked and unlocked)
+        Populate(currentDisplayList);
     }
 
     // =========================
@@ -238,29 +255,9 @@ options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
 
         foreach (var ingredient in list)
         {
-            if (ingredient.isUnlocked)
-            {
-                var card =
-                    Instantiate(
-                        cardPrefab,
-                        contentParent);
-
-                card.Setup(
-                    ingredient,
-                    database,
-                    frameLibrary);
-
-                currentCards.Add(card.gameObject);
-            }
-            else if (lockedCardPrefab != null)
-            {
-                var locked =
-                    Instantiate(
-                        lockedCardPrefab,
-                        contentParent);
-
-                currentCards.Add(locked);
-            }
+            var card = Instantiate(cardPrefab, contentParent);
+            card.Setup(ingredient, database, frameLibrary, viewer, this);
+            currentCards.Add(card.gameObject);
         }
     }
 
@@ -322,5 +319,21 @@ options.Add(new TMP_Dropdown.OptionData("", ultraRareRarityIcon, Color.white));
         cb.highlightedColor = color;
         cb.selectedColor = color;
         btn.colors = cb;
+    }
+
+    // =========================
+    // NAVIGATION HELPERS (UPDATED)
+    // =========================
+    public List<IngredientDatabase.IngredientInfo> GetCurrentFilteredList()
+    {
+        // Return ONLY unlocked items for navigation
+        return currentNavigationList;
+    }
+
+    public int GetCurrentIndex(IngredientDatabase.IngredientInfo info)
+    {
+        // Find index in the navigation list (unlocked items only)
+        if (currentNavigationList == null) return -1;
+        return currentNavigationList.FindIndex(i => i.ingredientName == info.ingredientName);
     }
 }
