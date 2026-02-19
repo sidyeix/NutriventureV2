@@ -10,191 +10,271 @@ public class IngredientCardUI : MonoBehaviour
     public Image rarityIcon;
     public Image smallIconImage;
     public GameObject lockIcon;
+    
+    [Header("Catch Progress")] // NEW
+    public Slider catchProgressSlider; // Add this in Inspector
+    public TextMeshProUGUI catchCountText; // Replace or keep progressText
+    public Image sliderFillImage; // Optional: for color changes
+    
+    // Keep original progressText for backward compatibility
     public TextMeshProUGUI progressText;
 
     private IngredientDatabase database;
     private IngredientDatabase.IngredientInfo currentInfo;
     private KingdomFrameLibrary frameLibrary;
+    private Enerling3DViewer viewer;
+    private IngredientCollectionUI collection;
+
     private Button button;
-    private bool isInitialized = false; // Add initialization flag
+    private bool isInitialized = false;
+
+    // Colors for slider (optional)
+    [Header("Slider Colors")]
+    public Color lowProgressColor = new Color(1f, 0.2f, 0.2f); // Red
+    public Color mediumProgressColor = new Color(1f, 0.8f, 0.2f); // Yellow
+    public Color highProgressColor = new Color(0.2f, 1f, 0.2f); // Green
+    public Color completedColor = new Color(0.2f, 0.5f, 1f); // Blue
 
     private void Awake()
     {
-        // Get or add button component
         button = GetComponent<Button>();
+
         if (button == null)
-        {
             button = gameObject.AddComponent<Button>();
-        }
-        
-        // Don't add listener here - we'll add it after Setup
     }
 
-    private void OnEnable()
-    {
-        // Only add listener if we're initialized
-        if (button != null && isInitialized)
-        {
-            button.onClick.RemoveListener(OnClickCard); // Remove first to avoid duplicates
-            button.onClick.AddListener(OnClickCard);
-        }
-    }
-
-    private void OnDisable()
-    {
-        // Remove listener when disabled
-        if (button != null)
-        {
-            button.onClick.RemoveListener(OnClickCard);
-        }
-    }
-
+    // =========================
+    // SETUP (UPDATED)
+    // =========================
     public void Setup(
         IngredientDatabase.IngredientInfo info,
         IngredientDatabase db,
-        KingdomFrameLibrary library)
+        KingdomFrameLibrary library,
+        Enerling3DViewer v,
+        IngredientCollectionUI col)
     {
-        if (info == null)
-        {
-            Debug.LogError("IngredientInfo is null in Setup");
-            return;
-        }
-        
-        if (db == null)
-        {
-            Debug.LogError("Database is null in Setup");
-            return;
-        }
-        
-        if (library == null)
-        {
-            Debug.LogError("FrameLibrary is null in Setup");
-            return;
-        }
-
-        // Store references
         currentInfo = info;
         database = db;
         frameLibrary = library;
+        viewer = v;
+        collection = col;
         isInitialized = true;
 
-        // Add button listener now that we're initialized
-        if (button != null)
-        {
-            button.onClick.RemoveListener(OnClickCard); // Remove any existing listeners
-            button.onClick.AddListener(OnClickCard);
-        }
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnClickCard);
 
-        // Log to confirm setup
-        Debug.Log($"Card setup for: {info.ingredientName}, Unlocked: {info.isUnlocked}");
-
-        // =========================
-        // FRAME BY KINGDOM
-        // =========================
+        // FRAME
         if (frameImage != null)
-            frameImage.sprite = library.GetFrame(info.kingdom);
+            frameImage.sprite =
+                library.GetFrame(info.kingdom);
 
-        // =========================
         // BIG ICON
-        // =========================
         if (enerlingImage != null)
         {
-            Sprite customIcon = library.GetEnerlingIcon(info.ingredientName);
-            enerlingImage.sprite = customIcon != null ? customIcon : info.enerlingSprite;
-            
-            if (enerlingImage.sprite == null)
-                Debug.LogWarning($"No sprite found for {info.ingredientName}");
+            Sprite customIcon =
+                library.GetEnerlingIcon(
+                    info.ingredientName);
+
+            enerlingImage.sprite =
+                customIcon != null
+                ? customIcon
+                : info.enerlingSprite;
         }
 
-        // =========================
         // SMALL ICON
-        // =========================
-        if (smallIconImage != null && enerlingImage != null)
+        if (smallIconImage != null)
         {
-            smallIconImage.sprite = enerlingImage.sprite;
-            smallIconImage.gameObject.SetActive(smallIconImage.sprite != null);
+            smallIconImage.sprite =
+                enerlingImage.sprite;
         }
 
-        // =========================
-        // RARITY ICON
-        // =========================
+        // RARITY
         if (rarityIcon != null)
         {
-            Sprite customRarity = library.GetRarityIcon(info.rarity);
-            rarityIcon.sprite = customRarity != null ? customRarity : db.GetRarityIcon(info.rarity);
+            Sprite customRarity =
+                library.GetRarityIcon(
+                    info.rarity);
+
+            rarityIcon.sprite =
+                customRarity != null
+                ? customRarity
+                : db.GetRarityIcon(info.rarity);
         }
 
-        // =========================
-        // LOCK STATE
-        // =========================
+        // ==========================================
+        // Update visual states based on unlock status
+        // ==========================================
         bool unlocked = info.isUnlocked;
-        
+
+        // Set lock icon visibility
         if (lockIcon != null)
             lockIcon.SetActive(!unlocked);
+
+        // Set button interactability
+        if (button != null)
+            button.interactable = unlocked;
+
+        // Set image colors based on unlock status
+        Color targetColor = unlocked ? Color.white : Color.black;
         
         if (enerlingImage != null)
-            enerlingImage.color = unlocked ? Color.white : Color.black;
-
-        if (smallIconImage != null)
-            smallIconImage.color = unlocked ? Color.white : Color.black;
-
-        if (progressText != null)
-            progressText.text = unlocked ? "1/20" : "0/20";
-    }
-
-    // =========================
-    // CLICK → OPEN DETAILS
-    // =========================
-    public void OnClickCard()
-    {
-        Debug.Log("CLICK WORKING");
-
-        // Double-check initialization
-        if (!isInitialized)
-        {
-            Debug.LogError("Card not initialized! Setup() must be called before clicking.");
-            return;
-        }
-
-        if (currentInfo == null) 
-        {
-            Debug.LogError("CurrentInfo is null in IngredientCardUI even though isInitialized is true");
-            return;
-        }
-
-        if (!currentInfo.isUnlocked)
-        {
-            Debug.Log(currentInfo.ingredientName + " is locked.");
-            return;
-        }
-
-        if (database == null)
-        {
-            Debug.LogError("Database is null in IngredientCardUI");
-            return;
-        }
-
-        Debug.Log($"Clicking on {currentInfo.ingredientName} - Opening details...");
-
-        // Find the details panel in the scene
-        IngredientDetailsUI detailsPanel = FindObjectOfType<IngredientDetailsUI>(true);
+            enerlingImage.color = targetColor;
         
-        if (detailsPanel != null)
+        if (smallIconImage != null)
+            smallIconImage.color = targetColor;
+
+        // ==========================================
+        // CATCH PROGRESS SETUP (NEW)
+        // ==========================================
+        if (unlocked)
         {
-            detailsPanel.ShowDetails(currentInfo, database);
+            SetupCatchProgress();
         }
         else
         {
-            Debug.LogError("IngredientDetailsUI not found in the scene! Make sure it exists in the hierarchy.");
+            // For locked ingredients, show 0/max
+            if (catchProgressSlider != null)
+            {
+                catchProgressSlider.value = 0;
+                catchProgressSlider.maxValue = info.maxCatch;
+                catchProgressSlider.interactable = false;
+            }
+            
+            if (catchCountText != null)
+            {
+                catchCountText.text = $"0/{info.maxCatch}";
+            }
+            
+            // Keep original progress text for backward compatibility
+            if (progressText != null)
+                progressText.text = "0/20";
         }
     }
 
-    private void OnDestroy()
+    // =========================
+    // CATCH PROGRESS SETUP (NEW)
+    // =========================
+    private void SetupCatchProgress()
     {
-        // Clean up listener
-        if (button != null)
+        // Setup slider
+        if (catchProgressSlider != null)
         {
-            button.onClick.RemoveListener(OnClickCard);
+            catchProgressSlider.minValue = 0;
+            catchProgressSlider.maxValue = currentInfo.maxCatch;
+            catchProgressSlider.value = currentInfo.currentCatchCount;
+            catchProgressSlider.interactable = false; // Read-only
+            
+            // Update slider fill color based on progress
+            UpdateSliderColor();
+        }
+        
+        // Update catch count text
+        if (catchCountText != null)
+        {
+            catchCountText.text = $"{currentInfo.currentCatchCount}/{currentInfo.maxCatch}";
+        }
+        
+        // Keep original progress text for backward compatibility
+        if (progressText != null)
+        {
+            progressText.text = $"{currentInfo.currentCatchCount}/{currentInfo.maxCatch}";
+        }
+    }
+
+    // =========================
+    // UPDATE SLIDER COLOR (NEW)
+    // =========================
+    private void UpdateSliderColor()
+    {
+        if (sliderFillImage == null || catchProgressSlider == null)
+            return;
+            
+        float progress = (float)currentInfo.currentCatchCount / currentInfo.maxCatch;
+        
+        if (currentInfo.currentCatchCount >= currentInfo.maxCatch)
+        {
+            sliderFillImage.color = completedColor;
+        }
+        else if (progress >= 0.66f)
+        {
+            sliderFillImage.color = highProgressColor;
+        }
+        else if (progress >= 0.33f)
+        {
+            sliderFillImage.color = mediumProgressColor;
+        }
+        else
+        {
+            sliderFillImage.color = lowProgressColor;
+        }
+    }
+
+    // =========================
+    // REFRESH CARD (NEW)
+    // Call this when catch count changes
+    // =========================
+    public void RefreshCard()
+    {
+        if (currentInfo == null) return;
+        
+        // Update slider
+        if (catchProgressSlider != null)
+        {
+            catchProgressSlider.value = currentInfo.currentCatchCount;
+            UpdateSliderColor();
+        }
+        
+        // Update texts
+        if (catchCountText != null)
+        {
+            catchCountText.text = $"{currentInfo.currentCatchCount}/{currentInfo.maxCatch}";
+        }
+        
+        if (progressText != null)
+        {
+            progressText.text = $"{currentInfo.currentCatchCount}/{currentInfo.maxCatch}";
+        }
+        
+        // Update lock state (in case it was unlocked)
+        if (lockIcon != null)
+            lockIcon.SetActive(!currentInfo.isUnlocked);
+        
+        if (button != null)
+            button.interactable = currentInfo.isUnlocked;
+    }
+
+    // =========================
+    // CLICK
+    // =========================
+    public void OnClickCard()
+    {
+        if (!isInitialized) return;
+
+        if (!currentInfo.isUnlocked)
+            return;
+
+        // OPEN DETAILS
+        IngredientDetailsUI details =
+            FindObjectOfType<IngredientDetailsUI>(true);
+
+        if (details != null)
+        {
+            // Pass the current filtered list and index for navigation
+            details.ShowDetails(
+                currentInfo,
+                database,
+                collection != null ? collection.GetCurrentFilteredList() : null,
+                collection != null ? collection.GetCurrentIndex(currentInfo) : -1);
+        }
+
+        // SHOW 3D MODEL
+        if (viewer != null)
+        {
+            viewer.ShowEnerling(currentInfo);
+        }
+        else
+        {
+            Debug.LogWarning("Viewer not assigned!");
         }
     }
 }

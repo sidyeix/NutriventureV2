@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5731392847906399657}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Visuals
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -43,7 +43,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1632908980638018761}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Enemy Position
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -75,7 +75,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5449294919325630357}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Skills
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,7 +110,7 @@ GameObject:
   - component: {fileID: 239826403923897790}
   - component: {fileID: 2407356775293884296}
   - component: {fileID: 3866621418084735682}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Aspartame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -194,6 +194,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5449294919325630357}
     m_Modifications:
+    - target: {fileID: 1013519736820673030, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 1251272410337526195, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
@@ -206,6 +210,14 @@ PrefabInstance:
       propertyPath: m_Materials.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7226888050891314116, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7226888051353360784, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 7226888051353360814, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
@@ -214,9 +226,17 @@ PrefabInstance:
       propertyPath: m_Intensity
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7226888052447524525, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 7226888052524955019, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7226888052524955021, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 7226888052703040406, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -267,12 +287,24 @@ PrefabInstance:
       value: CFXR2 WW Enemy Explosion
       objectReference: {fileID: 0}
     - target: {fileID: 7226888052703040409, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7226888052703040409, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7226888052859246533, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7226888052859246535, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7251351415208071827, guid: 7ec363c8df426644ea85f8d6d570561c, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -332,13 +364,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7228792205112391560, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -6587428050332093807, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2100787417720159581, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_Name
       value: Aspartame clone3
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1540255758573454295, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 5565484302796211834, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_LocalPosition.x
@@ -458,13 +510,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7228792205112391560, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -6587428050332093807, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2100787417720159581, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_Name
       value: Aspartame clone2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1540255758573454295, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -576,13 +648,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2081698408336584660, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
       propertyPath: m_Name
       value: Holy hit
       objectReference: {fileID: 0}
     - target: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2944396702758532163, guid: e190bf97c041e58448af6b043116cba0, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3646487531195122515, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 8740791384859665614, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 8846329442708547555, guid: e190bf97c041e58448af6b043116cba0, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -642,13 +734,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7228792205112391560, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: -6587428050332093807, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: -3321399582515749757, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2100787417720159581, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
       propertyPath: m_Name
       value: Aspartame clone1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1540255758573454295, guid: cb74aba04ea7ded4f84ab51ec67356fe, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -720,9 +832,29 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5449294919325630357}
     m_Modifications:
+    - target: {fileID: 3301859001294354502, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 3989901854192163758, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4217862762997978641, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 7834758006639453087, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 7986504087968017091, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
       propertyPath: m_Name
       value: Healing circle
+      objectReference: {fileID: 0}
+    - target: {fileID: 7986504087968017091, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 7986504087968017091, guid: 12a56ee4630040c4eb17ae9707ed4cef, type: 3}
       propertyPath: m_IsActive

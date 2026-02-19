@@ -58,6 +58,7 @@ public class IngredientDatabase : ScriptableObject
 
         [Header("Visual")]
         public Sprite skillSprite;
+        public Sprite skillCircleIcon;
 
         [Header("Description")]
         [TextArea(2, 4)]
@@ -97,6 +98,13 @@ public class IngredientDatabase : ScriptableObject
         [Header("Visuals")]
         public Sprite enerlingSprite;
         public GameObject modelPrefab;
+
+       [Header("Catch Mechanics")]
+       [Tooltip("Maximum times this enerling can be caught")]
+       public int maxCatch = 20;
+       
+       [Tooltip("Current number of times caught")]
+       public int currentCatchCount = 0;
 
         [Header("Animation")]
         public RuntimeAnimatorController animatorController;
