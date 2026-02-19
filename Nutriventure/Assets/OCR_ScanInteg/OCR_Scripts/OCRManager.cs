@@ -239,7 +239,7 @@ public class OCRManager : MonoBehaviour
     {
         while (true)
         {
-            ProductManager.UpdateCooldowns();
+            //ProductManager.UpdateCooldowns();
            
             if (!string.IsNullOrEmpty(currentProductFingerprint))
                 UpdateProductCooldownUI(currentProductFingerprint);
