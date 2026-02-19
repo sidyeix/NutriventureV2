@@ -38,6 +38,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
     [SerializeField] private GameObject audioHandler; // "Audio_Handler" GameObject
     [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
     
+    [Header("UI Elements to Control After Cutscene")]
+    [SerializeField] private GameObject healthContainer; // Health Container (initially disabled)
+    [SerializeField] private GameObject pointsPanel; // Points Panel (initially disabled)
+    [SerializeField] private GameObject timerPanel; // Timer Panel (initially disabled)
+    [SerializeField] private GameObject profileGameObject; // Profile GameObject (initially enabled)
+    
     [Header("Cutscene Settings")]
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private bool requirePlayerFacingNPC = false;
@@ -80,6 +86,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
     // Subtitle tracking
     private bool subtitleCanvasWasActive = false;
     private bool subtitleTextWasActive = false;
+    
+    // NEW: Track original UI element states
+    private bool healthContainerOriginalState = false;
+    private bool pointsPanelOriginalState = false;
+    private bool timerPanelOriginalState = false;
+    private bool profileGameObjectOriginalState = false;
     
     void Start()
     {
@@ -168,6 +180,40 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.LogWarning("ThirdPersonController not found on player object!");
             }
         }
+        
+        // NEW: Store original UI element states
+        StoreOriginalUIStates();
+        
+        // NEW: Log UI element assignment status
+        LogUIElementStatus();
+    }
+    
+    // NEW: Store original UI element states
+    private void StoreOriginalUIStates()
+    {
+        if (healthContainer != null)
+            healthContainerOriginalState = healthContainer.activeSelf;
+        
+        if (pointsPanel != null)
+            pointsPanelOriginalState = pointsPanel.activeSelf;
+        
+        if (timerPanel != null)
+            timerPanelOriginalState = timerPanel.activeSelf;
+        
+        if (profileGameObject != null)
+            profileGameObjectOriginalState = profileGameObject.activeSelf;
+        
+        Debug.Log($"UI Original states: Health={healthContainerOriginalState}, Points={pointsPanelOriginalState}, Timer={timerPanelOriginalState}, Profile={profileGameObjectOriginalState}");
+    }
+    
+    // NEW: Log UI element assignment status
+    private void LogUIElementStatus()
+    {
+        Debug.Log("=== UI ELEMENTS STATUS ===");
+        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.name : "NOT ASSIGNED")} - Current: {(healthContainer != null ? healthContainer.activeSelf.ToString() : "N/A")}");
+        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.name : "NOT ASSIGNED")} - Current: {(pointsPanel != null ? pointsPanel.activeSelf.ToString() : "N/A")}");
+        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.name : "NOT ASSIGNED")} - Current: {(timerPanel != null ? timerPanel.activeSelf.ToString() : "N/A")}");
+        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.name : "NOT ASSIGNED")} - Current: {(profileGameObject != null ? profileGameObject.activeSelf.ToString() : "N/A")}");
     }
     
     void InitializeSubtitleSystem()
@@ -803,6 +849,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
             audioHandler.SetActive(true);
         }
         
+        // NEW: Handle UI elements after cutscene
+        HandlePostCutsceneUI();
+        
         // Unfreeze the player
         UnfreezePlayer();
         
@@ -825,6 +874,61 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.Log("NPC Cutscene finished - Player unfrozen, NPC name text disabled, subtitles cleared");
         }
+    }
+    
+    // NEW: Handle UI elements after cutscene
+    private void HandlePostCutsceneUI()
+    {
+        Debug.Log("=== HANDLING POST-CUTSCENE UI ===");
+        
+        // Enable initially disabled UI elements
+        if (healthContainer != null)
+        {
+            healthContainer.SetActive(true);
+            Debug.Log($"Health Container enabled: {healthContainer.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Health Container not assigned in inspector!");
+        }
+        
+        if (pointsPanel != null)
+        {
+            pointsPanel.SetActive(true);
+            Debug.Log($"Points Panel enabled: {pointsPanel.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Points Panel not assigned in inspector!");
+        }
+        
+        if (timerPanel != null)
+        {
+            timerPanel.SetActive(true);
+            Debug.Log($"Timer Panel enabled: {timerPanel.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Timer Panel not assigned in inspector!");
+        }
+        
+        // Disable Profile GameObject
+        if (profileGameObject != null)
+        {
+            profileGameObject.SetActive(false);
+            Debug.Log($"Profile GameObject disabled: {profileGameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning("Profile GameObject not assigned in inspector!");
+        }
+        
+        // Verify changes
+        Debug.Log("=== POST-CUTSCENE UI STATE ===");
+        if (healthContainer != null) Debug.Log($"Health Container: {(healthContainer.activeSelf ? "ENABLED" : "DISABLED")}");
+        if (pointsPanel != null) Debug.Log($"Points Panel: {(pointsPanel.activeSelf ? "ENABLED" : "DISABLED")}");
+        if (timerPanel != null) Debug.Log($"Timer Panel: {(timerPanel.activeSelf ? "ENABLED" : "DISABLED")}");
+        if (profileGameObject != null) Debug.Log($"Profile GameObject: {(profileGameObject.activeSelf ? "ENABLED" : "DISABLED")}");
     }
     
     // Disable subtitle display
@@ -1041,10 +1145,23 @@ public class K3_NPCinstructions1 : MonoBehaviour
         // Disable subtitle display on reset
         DisableSubtitleDisplay();
         
+        // NEW: Reset UI elements to original states on reset
+        if (healthContainer != null)
+            healthContainer.SetActive(healthContainerOriginalState);
+        
+        if (pointsPanel != null)
+            pointsPanel.SetActive(pointsPanelOriginalState);
+        
+        if (timerPanel != null)
+            timerPanel.SetActive(timerPanelOriginalState);
+        
+        if (profileGameObject != null)
+            profileGameObject.SetActive(profileGameObjectOriginalState);
+        
         // Ensure player is unfrozen on reset
         UnfreezePlayer();
         
-        Debug.Log("NPC interaction reset");
+        Debug.Log("NPC interaction reset - UI restored to original states");
     }
     
     // Optional: Gizmos for visualization
@@ -1146,6 +1263,53 @@ public class K3_NPCinstructions1 : MonoBehaviour
         }
     }
     
+    // NEW: Individual methods to control UI elements after cutscene
+    public void EnableHealthContainer()
+    {
+        if (healthContainer != null)
+        {
+            healthContainer.SetActive(true);
+            Debug.Log("Health Container manually enabled");
+        }
+    }
+    
+    public void EnablePointsPanel()
+    {
+        if (pointsPanel != null)
+        {
+            pointsPanel.SetActive(true);
+            Debug.Log("Points Panel manually enabled");
+        }
+    }
+    
+    public void EnableTimerPanel()
+    {
+        if (timerPanel != null)
+        {
+            timerPanel.SetActive(true);
+            Debug.Log("Timer Panel manually enabled");
+        }
+    }
+    
+    public void DisableProfileGameObject()
+    {
+        if (profileGameObject != null)
+        {
+            profileGameObject.SetActive(false);
+            Debug.Log("Profile GameObject manually disabled");
+        }
+    }
+    
+    // NEW: Method to check current UI state
+    public void LogCurrentUIState()
+    {
+        Debug.Log("=== CURRENT UI STATE ===");
+        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.activeSelf.ToString() : "NOT ASSIGNED")}");
+        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
+        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
+        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.activeSelf.ToString() : "NOT ASSIGNED")}");
+    }
+    
     // Test method to show subtitle manually
     [ContextMenu("Test Show Subtitle")]
     public void TestShowSubtitle()
@@ -1209,6 +1373,34 @@ public class K3_NPCinstructions1 : MonoBehaviour
         SetNPCNameActive(!IsNPCNameActive());
     }
     
+    // NEW: Test method for post-cutscene UI
+    [ContextMenu("Test Post-Cutscene UI")]
+    public void TestPostCutsceneUI()
+    {
+        Debug.Log("=== TESTING POST-CUTSCENE UI ===");
+        HandlePostCutsceneUI();
+    }
+    
+    // NEW: Test method to reset UI to original states
+    [ContextMenu("Reset UI to Original States")]
+    public void ResetUIToOriginalStates()
+    {
+        if (healthContainer != null)
+            healthContainer.SetActive(healthContainerOriginalState);
+        
+        if (pointsPanel != null)
+            pointsPanel.SetActive(pointsPanelOriginalState);
+        
+        if (timerPanel != null)
+            timerPanel.SetActive(timerPanelOriginalState);
+        
+        if (profileGameObject != null)
+            profileGameObject.SetActive(profileGameObjectOriginalState);
+        
+        Debug.Log("UI reset to original states");
+        LogCurrentUIState();
+    }
+    
     [ContextMenu("Debug Current State")]
     public void DebugCurrentState()
     {
@@ -1227,6 +1419,50 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log($"Timeline Director State: {(npcCutsceneDirector != null ? npcCutsceneDirector.state.ToString() : "NULL")}");
         Debug.Log($"Timeline Time: {(npcCutsceneDirector != null ? $"{npcCutsceneDirector.time:F2}s/{npcCutsceneDirector.duration:F2}s" : "NULL")}");
         Debug.Log($"Cutscene Parent Active: {(cutsceneParentObject != null ? cutsceneParentObject.activeSelf : "NULL")}");
+        
+        // NEW: UI State Debug
+        Debug.Log($"=== UI STATE ===");
+        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.name + " - " + (healthContainer.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
+        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.name + " - " + (pointsPanel.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
+        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.name + " - " + (timerPanel.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
+        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.name + " - " + (profileGameObject.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
         Debug.Log($"=== END DEBUG ===");
     }
+    
+    // NEW: Auto-find UI elements in editor
+    #if UNITY_EDITOR
+    [ContextMenu("Auto-Find UI Elements")]
+    public void AutoFindUIElements()
+    {
+        // Try to find Health Container
+        if (healthContainer == null)
+        {
+            healthContainer = GameObject.Find("Health Container");
+            if (healthContainer != null) Debug.Log("Auto-found Health Container");
+        }
+        
+        // Try to find Points Panel
+        if (pointsPanel == null)
+        {
+            pointsPanel = GameObject.Find("Points Panel");
+            if (pointsPanel != null) Debug.Log("Auto-found Points Panel");
+        }
+        
+        // Try to find Timer Panel
+        if (timerPanel == null)
+        {
+            timerPanel = GameObject.Find("Timer Panel");
+            if (timerPanel != null) Debug.Log("Auto-found Timer Panel");
+        }
+        
+        // Try to find Profile GameObject
+        if (profileGameObject == null)
+        {
+            profileGameObject = GameObject.Find("Profile");
+            if (profileGameObject != null) Debug.Log("Auto-found Profile GameObject");
+        }
+        
+        UnityEditor.EditorUtility.SetDirty(this);
+    }
+    #endif
 }
