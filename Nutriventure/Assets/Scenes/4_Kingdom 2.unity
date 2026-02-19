@@ -90861,6 +90861,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
   characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
+  iconDatabase: {fileID: 11400000, guid: c898052628d1cd942af77c0897e18ead, type: 2}
+  frameDatabase: {fileID: 11400000, guid: 1a54455482b95d242b73521dbb5e24e2, type: 2}
+  achievementDatabase: {fileID: 11400000, guid: 8cdb5b4c0496eac45865ebf5ee526122, type: 2}
 --- !u!1 &1725111666
 GameObject:
   m_ObjectHideFlags: 3
