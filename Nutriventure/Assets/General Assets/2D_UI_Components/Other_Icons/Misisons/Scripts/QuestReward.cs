@@ -10,6 +10,7 @@ public class QuestReward
     public Sprite rewardIcon;
     public int amount = 1;
     public RewardType type = RewardType.Item;
+    public string rewardID; // For Enerlings, Character, Frame, Icon
 
     public enum RewardType
     {
@@ -17,12 +18,20 @@ public class QuestReward
         Currency,
         Experience,
         Unlockable,
-        Custom
+        Custom,
+        // NEW: Specific reward types for your game
+        NutriCoins,
+        Exp,
+        NutriGems,
+        Enerlings,
+        Character,
+        Frame,
+        Icon
     }
 
     public void GrantReward()
     {
-        // Implement reward granting logic
+        // The actual granting logic is handled in NPCQuestInteraction
         Debug.Log($"Granted {amount} {rewardName}");
     }
 }
@@ -93,7 +102,7 @@ public class Quest
     public string longDescription;
 
     public QuestCategory category;
-    public Sprite questIcon; // NEW: Added quest icon field
+    public Sprite questIcon;
 
     [Header("Requirements")]
     public List<string> requiredQuestIDs = new List<string>();
@@ -149,24 +158,14 @@ public class Quest
         {
             status = QuestStatus.Completed;
             completionTime = DateTime.Now;
-
-            // Don't grant rewards here - they'll be granted when claimed
         }
     }
 
-    // NEW: Method to claim quest rewards
     public bool ClaimQuest()
     {
         if (status == QuestStatus.Completed)
         {
             status = QuestStatus.Claimed;
-
-            // Grant rewards
-            foreach (var reward in rewards)
-            {
-                reward.GrantReward();
-            }
-
             return true;
         }
         return false;
@@ -246,7 +245,6 @@ public class Kingdom
     }
 }
 
-// UPDATED: Added Claimed status
 public enum QuestStatus
 {
     NotStarted,
@@ -257,7 +255,6 @@ public enum QuestStatus
     Abandoned
 }
 
-// UPDATED: Added GeneralQuest category
 public enum QuestCategory
 {
     MainStory,

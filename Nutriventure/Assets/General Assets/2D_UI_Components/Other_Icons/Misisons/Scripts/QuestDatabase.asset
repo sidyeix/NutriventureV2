@@ -19,63 +19,12 @@ MonoBehaviour:
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
     - questID: 0001
-      questName: Go to Nutri Kingdom
-      description: Since the energling began to
-      longDescription: You need to follow the instruction to get the
-      category: 1
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 0001_task_0
-        description: TASK DESCRIPTION!!!
-        type: 0
-        targetID: 
-        requiredAmount: 20
-        currentAmount: 5
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: Coins
-        rewardIcon: {fileID: 21300000, guid: 4df020cb1cb11214692af213c11d2aa0, type: 3}
-        amount: 203
-        type: 1
-      timelineAsset: {fileID: 0}
-      status: 0
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0002
-      questName: Enerling Interaction
-      description: Meet your unlocked Enerling.
-      longDescription: Approach the Enerling you unlocked within the kingdom. Interact
-        to learn its role and abilities.
-      category: 1
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 0001
-        description: Approach the enerling you unlocked in the kingdom.
-        type: 0
-        targetID: 
-        requiredAmount: 20
-        currentAmount: 5
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 20
-        type: 1
-      timelineAsset: {fileID: 0}
-      status: 0
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0003
       questName: What's in the Shop?
       description: Visit the merchant.
       longDescription: Interact with the merchant and browse available shop items.
         Discover tools and goods that can aid your journey.
       category: 1
-      questIcon: {fileID: 0}
+      questIcon: {fileID: 21300000, guid: 676998ffec72bb14a944d70b8ba57fbd, type: 3}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
@@ -83,25 +32,26 @@ MonoBehaviour:
         description: 'Interact with the merchant and view the shop items. '
         type: 4
         targetID: 
-        requiredAmount: 20
-        currentAmount: 5
+        requiredAmount: 1
+        currentAmount: 0
         isOptional: 0
         isCompleted: 0
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 20
-        type: 1
+        amount: 100
+        type: 5
+        rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0004
+    - questID: 0002
       questName: Switch me up!
       description: Switch your character.
       longDescription: Proceed to the character platform. Change from your default
         character to a new one.
       category: 1
-      questIcon: {fileID: 0}
+      questIcon: {fileID: 21300000, guid: 8afef6ffa447e4f4a8817ab631f18c02, type: 3}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
@@ -119,19 +69,21 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 20
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0005
+    - questID: 0003
       questName: First Chest Collection!
       description: 
       longDescription: 
       category: 1
-      questIcon: {fileID: 0}
+      questIcon: {fileID: 21300000, guid: 14667301a2ee4e0419d17fd3ef7c4bbc, type: 3}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
@@ -148,25 +100,28 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 20
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 0006
-      questName: Daily Kingdom Visit
-      description: 
-      longDescription: 
-      category: 3
-      questIcon: {fileID: 0}
+    - questID: 0004
+      questName: Enerling Interaction
+      description: Meet your unlocked Enerling.
+      longDescription: Approach the Enerling you unlocked within the kingdom. Interact
+        to learn its role and abilities.
+      category: 1
+      questIcon: {fileID: 21300000, guid: 943ccfaf5de7cae448c078684e8316dc, type: 3}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
       - taskID: 0001
-        description: Complete 1 Kingdom gameplay to refresh your game knowledge!
-        type: 4
+        description: Approach the enerling you unlocked in the kingdom.
+        type: 2
         targetID: 
         requiredAmount: 20
         currentAmount: 5
@@ -174,13 +129,230 @@ MonoBehaviour:
         isCompleted: 0
       rewards:
       - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 25
+        rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
+        amount: 20
         type: 1
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0005
+      questName: Finish the journey to Nutri Kingdom
+      description: Complete the Nutri Kingdom journey for the first time.
+      longDescription: Your first step into a balanced diet! Complete the Nutri Kingdom
+        course.
+      category: 1
+      questIcon: {fileID: 21300000, guid: bcd846937d6f25a45bd1530574fbf3cd, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete the Nutri Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 1
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 30
+        amount: 200
         type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0006
+      questName: Finish the journey to Sugaria Kingdom
+      description: ' Complete the Sugaria Kingdom journey for the first time.'
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 21300000, guid: 25e512a41d9681740b41f0bdd6224428, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete the Nutri Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0007
+      questName: Finish the journey to Preservia Kingdom
+      description: 'Complete the Preservia Kingdom journey for the first time.  '
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 21300000, guid: 144cc1a0e0ea187428721d3df9266501, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete the Preservia Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0008
+      questName: Finish the journey to Alerthia Kingdom
+      description: Complete the Alerthia Kingdom journey for the first time.
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 21300000, guid: 1d2295e8da4e4504280ac7c070bf516f, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Complete the Alerthia Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0009
+      questName: Catch your first enerling
+      description: Capture your very first Enerling creature.
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 21300000, guid: 943ccfaf5de7cae448c078684e8316dc, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Catch an Enerling.
+        description: Complete the Alerthia Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0010
+      questName: Talk to an Enerling
+      description: Talk to one of your enerling that roams around the kingdoms.
+      longDescription: You need to approach one enerling in any of the kingdom and
+        talk to them by clicking the talk button that appears. Each enerling has
+        its own story to tell!
+      category: 1
+      questIcon: {fileID: 21300000, guid: 943ccfaf5de7cae448c078684e8316dc, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 0001
+        description: Talk to one enerling in any kingdom
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 0011
+      questName: Catch 10 enerlings
+      description: Catch a total of 10 Enerlings.
+      longDescription: 
+      category: 1
+      questIcon: {fileID: 21300000, guid: 943ccfaf5de7cae448c078684e8316dc, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: Catch Enerlings.
+        description: Complete the Alerthia Kingdom journey.
+        type: 4
+        targetID: 
+        requiredAmount: 10
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -190,46 +362,404 @@ MonoBehaviour:
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
     - questID: 1101
-      questName: Buy it, Change it
-      description: Buy one character and equip it using the "Curtains"
+      questName: Collect 15 Go Foods
+      description: 'Gather Go Foods (Grains and Carbohydrates) to fuel your journey.  '
       longDescription: You need to follow the instruction to buy a character from
         Sir Fuego and Equip it in the Curtains to receive a handful rewards.
-      category: 5
-      questIcon: {fileID: 0}
+      category: 2
+      questIcon: {fileID: 21300000, guid: d60489e00bdf55c41b0404e45038b778, type: 3}
       requiredQuestIDs: []
       requiredLevel: 0
       tasks:
       - taskID: 110101
-        description: Buy one character available in Sir Fuego's Wagon.
-        type: 4
+        description: Approach 15 go foods throughout your journey.
+        type: 0
         targetID: 
-        requiredAmount: 0
-        currentAmount: 0
+        requiredAmount: 15
+        currentAmount: 15
         isOptional: 0
         isCompleted: 1
-      - taskID: 110102
-        description: Equip the character you bought in Sir Fuego's Wagon using the
-          "Curtains".
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 100
         type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 2
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 20
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 2
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1102
+      questName: Collect 15 Grow Foods
+      description: Gather Grow Foods (Proteins) to build your strength.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: 5e2d799479913b748add6450187d8c15, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110102
+        description: 'Gather Grow Foods (Proteins) to build your strength. '
+        type: 0
         targetID: 
-        requiredAmount: 0
+        requiredAmount: 15
         currentAmount: 0
         isOptional: 0
         isCompleted: 0
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 250
-        type: 1
+        amount: 100
+        type: 5
+        rewardID: 
       - rewardName: NutriGems
         rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
-        amount: 10
-        type: 1
+        amount: 2
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 100
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1103
+      questName: Collect 15 Glow Foods
+      description: 'Gather Glow Foods (Fruits and Vegetables) for vitality.  '
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: e0ff3b8f5dacfc642b35c6319c3b1f08, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110103
+        description: 'Gather Glow Foods (Fruits and Vegetables) for vitality.  '
+        type: 0
+        targetID: 
+        requiredAmount: 15
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 100
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 2
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 100
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1104
+      questName: Unlock the Key to Sugaria
+      description: Prove your mastery of Go, Grow, and Glow foods to unlock the path
+        to Sugaria.
+      longDescription: To journey to the next kingdom, you must first master the
+        basics of Nutri Kingdom. Collect specific foods to forge the key.
+      category: 0
+      questIcon: {fileID: 21300000, guid: 1050f715b61b3e649a1f966580b51c7f, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110104
+        description: 'Gather Glow Foods (Fruits and Vegetables) for vitality.  '
+        type: 0
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 20
+        type: 7
+        rewardID: 
       - rewardName: EXP
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 200
-        type: 1
-      timelineAsset: {fileID: 11400000, guid: 0d49505ae1be69840bd7a2eaf5f2283f, type: 2}
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1105
+      questName: Collect 50 Go Foods
+      description: Gather a large amount of Go Foods.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: cecb6d0b19abd4e4ba5839e596c46fd9, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110104
+        description: Gather a large amount of Go Foods.
+        type: 0
+        targetID: 
+        requiredAmount: 50
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 4
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1106
+      questName: Collect 50 Grow Foods
+      description: Gather a large amount of Grow Foods.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: e19a6bc014203de4dbedd9ee97adec3b, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110105
+        description: Gather a large amount of Grow Foods.
+        type: 0
+        targetID: 
+        requiredAmount: 50
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 4
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1107
+      questName: Collect 50 Glow Foods
+      description: Consume a large amount of Glow Foods.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: 8ed89028347c46240a0e0e93ec96cc89, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110107
+        description: Gather a large amount of Grow Foods total of 50.
+        type: 0
+        targetID: 
+        requiredAmount: 50
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 4
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1108
+      questName: Journey Specialist
+      description: Replay and complete the Nutri Kingdom journey 5 times.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: 890cbd2cdddc1524dbf121875e846af1, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110108
+        description: Complete the 5 times Nutri Kingdom journey.
+        type: 0
+        targetID: 
+        requiredAmount: 5
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 20
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 250
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1109
+      questName: Perfect Runner
+      description: Finish the journey to Nutri Kingdom 3 times with 3 stars.
+      longDescription: 
+      category: 0
+      questIcon: {fileID: 21300000, guid: e0bbd512c39176441a71e9b852b7ac78, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110109
+        description: Achieve a 3-star rating on the Nutri Kingdom journey 3 times.
+        type: 3
+        targetID: 
+        requiredAmount: 3
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 500
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 25
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 200
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1110
+      questName: Friendly Face
+      description: Greet the local Enerlings. Talk to any Enerling in Nutri Kingdom
+        20 times.
+      longDescription: 
+      category: 2
+      questIcon: {fileID: 21300000, guid: cfa1fcdfe1b1c5f439428abbabbe29b0, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110110
+        description: 'Talk to any enerlings found in the kingdom 20x  '
+        type: 2
+        targetID: 
+        requiredAmount: 20
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 150
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 5
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 50
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
+      status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 1111
+      questName: Master of Nutri Kingdom
+      description: Fully complete the Nutri Kingdom journey 10 times.
+      longDescription: Your dedication to nutrition is unmatched. Complete the journey
+        10 times to prove your mastery.
+      category: 0
+      questIcon: {fileID: 21300000, guid: af9c455aaa1707446a114f593d1d8ab6, type: 3}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110111
+        description: Become the Master of Nutri Kingdom by completing it 10x
+        type: 3
+        targetID: 
+        requiredAmount: 10
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 1000
+        type: 5
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 50
+        type: 7
+        rewardID: 
+      - rewardName: EXP
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 500
+        type: 6
+        rewardID: 
+      timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Sugaria
@@ -260,10 +790,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -290,10 +822,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -320,10 +854,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -351,10 +887,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -381,10 +919,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -416,10 +956,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -447,10 +989,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -478,10 +1022,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -508,10 +1054,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -539,10 +1087,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 15
         type: 1
+        rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 25
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -575,10 +1125,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 50
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 100
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -605,10 +1157,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 75
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 150
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -636,10 +1190,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 120
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 250
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -666,10 +1222,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 150
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 300
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -697,10 +1255,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 200
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 400
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -727,10 +1287,12 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
         amount: 300
         type: 1
+        rewardID: 
       - rewardName: Experience
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 600
         type: 2
+        rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
