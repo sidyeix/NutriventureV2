@@ -5602,9 +5602,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
   disableAfterUse: 0
-  logDebugMessages: 1
-  audioSource: {fileID: 0}
-  clickSound: {fileID: 0}
 --- !u!114 &116936350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11327,9 +11324,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
   disableAfterUse: 0
-  logDebugMessages: 1
-  audioSource: {fileID: 0}
-  clickSound: {fileID: 0}
 --- !u!114 &259410435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14433,9 +14427,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ContinueButton
   disableAfterUse: 0
-  logDebugMessages: 1
-  audioSource: {fileID: 0}
-  clickSound: {fileID: 0}
 --- !u!222 &324664867
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35213,6 +35204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapController
   mapCanvas: {fileID: 2114352548}
+  playerUI: {fileID: 0}
   openMapButton: {fileID: 494335206}
   closeMapButton: {fileID: 1875967287}
   startWithMapOpen: 0
@@ -109245,11 +109237,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9078993845375825671, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_DefaultBlend.m_Time
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9078993845375825671, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_DefaultBlend.m_Style
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
