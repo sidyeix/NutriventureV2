@@ -5,7 +5,7 @@ using System;
 public class GameDataManager : MonoBehaviour
 {
     public static GameDataManager Instance;
-    public CharacterDatabase characterDatabase;
+    public CharacterDatabase characterDatabase; // Keep only character database for skin system
 
     public GameData CurrentGameData { get; private set; }
 
@@ -54,9 +54,14 @@ public class GameDataManager : MonoBehaviour
                 string jsonData = File.ReadAllText(saveFilePath);
                 CurrentGameData = JsonUtility.FromJson<GameData>(jsonData);
 
-                // ADD THIS DEBUG LOG
                 Debug.Log($"=== GAME DATA LOADED ===");
                 Debug.Log($"Selected Character ID from save file: {CurrentGameData.selectedCharacterID}");
+                Debug.Log($"Equipped Icon ID: {CurrentGameData.equippedIconId}");
+                Debug.Log($"Unlocked Icons count: {CurrentGameData.unlockedIconIds?.Count ?? 0}");
+                Debug.Log($"Equipped Frame ID: {CurrentGameData.equippedFrameId}");
+                Debug.Log($"Unlocked Frames count: {CurrentGameData.unlockedFrameIds?.Count ?? 0}");
+                Debug.Log($"Completed Achievements count: {CurrentGameData.completedAchievementIds?.Count ?? 0}");
+                Debug.Log($"Claimed Achievements count: {CurrentGameData.claimedAchievementIds?.Count ?? 0}");
                 Debug.Log($"=== END LOAD ===");
             }
             catch (Exception e)
@@ -70,7 +75,7 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
-        // DON'T CHANGE THESE - keep your existing methods
+        // Initialize all systems
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
         UpdateEnergyBasedOnTime();
@@ -83,28 +88,9 @@ public class GameDataManager : MonoBehaviour
         SaveGameData();
     }
 
-    private void InitializeDefaultSkins()
-    {
-        if (characterDatabase == null)
-        {
-            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
-            return;
-        }
-
-        // Initialize all characters with their skin dictionaries
-        CurrentGameData.InitializeAllCharactersSkins(characterDatabase);
-
-        // DO NOT auto-unlock skins based on unlockedByDefault anymore
-        // Only unlock skins that are already marked as unlocked in GameData
-
-        SaveGameData();
-        Debug.Log("Skin system initialized!");
-    }
-
     public void ResetGameData()
     {
         CurrentGameData = new GameData();
-        InitializeDefaultSkins();
 
         if (AudioHandler.Instance != null)
         {
@@ -113,6 +99,54 @@ public class GameDataManager : MonoBehaviour
         }
 
         Debug.Log("Game data reset to default!");
+    }
+
+    // Call this from ProfileSettings to initialize default icons
+    public void InitializeDefaultIcons(string[] defaultIconIds)
+    {
+        if (CurrentGameData == null) return;
+
+        foreach (string iconId in defaultIconIds)
+        {
+            if (!CurrentGameData.unlockedIconIds.Contains(iconId))
+            {
+                CurrentGameData.unlockedIconIds.Add(iconId);
+                Debug.Log($"Added default icon: {iconId}");
+            }
+        }
+
+        // Set default equipped icon if none
+        if (string.IsNullOrEmpty(CurrentGameData.equippedIconId) && CurrentGameData.unlockedIconIds.Count > 0)
+        {
+            CurrentGameData.equippedIconId = CurrentGameData.unlockedIconIds[0];
+            Debug.Log($"Set default equipped icon to: {CurrentGameData.equippedIconId}");
+        }
+
+        SaveGameData();
+    }
+
+    // Call this from ProfileSettings to initialize default frames
+    public void InitializeDefaultFrames(string[] defaultFrameIds)
+    {
+        if (CurrentGameData == null) return;
+
+        foreach (string frameId in defaultFrameIds)
+        {
+            if (!CurrentGameData.unlockedFrameIds.Contains(frameId))
+            {
+                CurrentGameData.unlockedFrameIds.Add(frameId);
+                Debug.Log($"Added default frame: {frameId}");
+            }
+        }
+
+        // Set default equipped frame if none
+        if (string.IsNullOrEmpty(CurrentGameData.equippedFrameId) && CurrentGameData.unlockedFrameIds.Count > 0)
+        {
+            CurrentGameData.equippedFrameId = CurrentGameData.unlockedFrameIds[0];
+            Debug.Log($"Set default equipped frame to: {CurrentGameData.equippedFrameId}");
+        }
+
+        SaveGameData();
     }
 
     private void UpdateEnergyBasedOnTime()
@@ -179,7 +213,6 @@ public class GameDataManager : MonoBehaviour
             return;
         }
 
-        // ADD THIS DEBUG LOG
         Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
 
         foreach (var character in characterDatabase.characters)
@@ -194,11 +227,156 @@ public class GameDataManager : MonoBehaviour
             }
         }
 
-        // ADD THIS DEBUG LOG
         Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
 
         SaveGameData();
     }
+
+    private void InitializeDefaultSkins()
+    {
+        if (characterDatabase == null)
+        {
+            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
+            return;
+        }
+
+        CurrentGameData.InitializeAllCharactersSkins(characterDatabase);
+        SaveGameData();
+        Debug.Log("Skin system initialized!");
+    }
+
+    #region Profile Icon Methods
+
+    public void UnlockIcon(string iconId)
+    {
+        if (CurrentGameData == null) return;
+
+        if (!CurrentGameData.unlockedIconIds.Contains(iconId))
+        {
+            CurrentGameData.unlockedIconIds.Add(iconId);
+            SaveGameData();
+            Debug.Log($"Icon {iconId} unlocked!");
+        }
+    }
+
+    public bool IsIconUnlocked(string iconId)
+    {
+        if (CurrentGameData == null) return false;
+        return CurrentGameData.unlockedIconIds != null && CurrentGameData.unlockedIconIds.Contains(iconId);
+    }
+
+    public void EquipIcon(string iconId)
+    {
+        if (CurrentGameData == null) return;
+
+        if (IsIconUnlocked(iconId))
+        {
+            CurrentGameData.equippedIconId = iconId;
+            SaveGameData();
+            Debug.Log($"Icon {iconId} equipped!");
+        }
+    }
+
+    #endregion
+
+    #region Frame Methods
+
+    public void UnlockFrame(string frameId)
+    {
+        if (CurrentGameData == null) return;
+
+        if (!CurrentGameData.unlockedFrameIds.Contains(frameId))
+        {
+            CurrentGameData.unlockedFrameIds.Add(frameId);
+            SaveGameData();
+            Debug.Log($"Frame {frameId} unlocked!");
+        }
+    }
+
+    public bool IsFrameUnlocked(string frameId)
+    {
+        if (CurrentGameData == null) return false;
+        return CurrentGameData.unlockedFrameIds != null && CurrentGameData.unlockedFrameIds.Contains(frameId);
+    }
+
+    public void EquipFrame(string frameId)
+    {
+        if (CurrentGameData == null) return;
+
+        if (IsFrameUnlocked(frameId))
+        {
+            CurrentGameData.equippedFrameId = frameId;
+            SaveGameData();
+            Debug.Log($"Frame {frameId} equipped!");
+        }
+    }
+
+    #endregion
+
+    #region Achievement Methods
+
+    public void CompleteAchievement(string achievementId)
+    {
+        if (CurrentGameData == null) return;
+
+        CurrentGameData.CompleteAchievement(achievementId);
+        SaveGameData();
+        Debug.Log($"Achievement {achievementId} completed!");
+    }
+
+    public void ClaimAchievement(string achievementId)
+    {
+        if (CurrentGameData == null) return;
+
+        if (CurrentGameData.IsAchievementCompleted(achievementId))
+        {
+            // We need the prize gems - this should come from the achievement database in ProfileSettings
+            // For now, we'll use a default value or pass it as a parameter
+            int prizeGems = 10; // This should be passed from ProfileSettings
+            CurrentGameData.AddNutriGems(prizeGems);
+            CurrentGameData.ClaimAchievement(achievementId);
+
+            SaveGameData();
+            Debug.Log($"Achievement {achievementId} claimed! +{prizeGems} gems");
+        }
+    }
+
+    // Overloaded method that accepts prize gems
+    public void ClaimAchievement(string achievementId, int prizeGems)
+    {
+        if (CurrentGameData == null) return;
+
+        if (CurrentGameData.IsAchievementCompleted(achievementId))
+        {
+            CurrentGameData.AddNutriGems(prizeGems);
+            CurrentGameData.ClaimAchievement(achievementId);
+
+            SaveGameData();
+            Debug.Log($"Achievement {achievementId} claimed! +{prizeGems} gems");
+        }
+    }
+
+    public AchievementStatus GetAchievementStatus(string achievementId)
+    {
+        if (CurrentGameData == null)
+            return AchievementStatus.NotComplete;
+
+        return CurrentGameData.GetAchievementStatus(achievementId);
+    }
+
+    public bool IsAchievementCompleted(string achievementId)
+    {
+        if (CurrentGameData == null) return false;
+        return CurrentGameData.IsAchievementCompleted(achievementId);
+    }
+
+    public bool IsAchievementClaimed(string achievementId)
+    {
+        if (CurrentGameData == null) return false;
+        return CurrentGameData.IsAchievementClaimed(achievementId);
+    }
+
+    #endregion
 
     void OnApplicationPause(bool pauseStatus)
     {

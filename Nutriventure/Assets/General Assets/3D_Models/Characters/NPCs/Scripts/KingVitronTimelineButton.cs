@@ -4,277 +4,146 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 using UnityEngine.UI;
 
 public class KingVitronTimelineButton : MonoBehaviour
 {
-    [Header("Quest Settings")]
-    [SerializeField] private string kingdomID = "general_quests";
-    [SerializeField] private string questID = "0001";
-
     [Header("Timeline Settings")]
-    [Tooltip("Playable for first-time completion (quest InProgress/NotStarted)")]
+    [Tooltip("Playable for first-time completion (key not collected yet)")]
     public PlayableAsset firstTimePlayable;
-    [Tooltip("Playable for subsequent playthroughs (quest Completed/Claimed)")]
+    [Tooltip("Playable for subsequent playthroughs (key already collected OR 0-1 stars)")]
     public PlayableAsset subsequentPlayable;
 
     [Header("Playable Director Reference")]
-    [Tooltip("Drag the Playable Director component that will play the timeline")]
     public PlayableDirector playableDirector;
 
     [Header("Button Settings")]
-    [Tooltip("Optional: If not assigned, will try to get Button component on this GameObject")]
     public Button kingButton;
-
-    [Tooltip("Delay before playing timeline (seconds)")]
     public float playDelay = 0.1f;
 
-    [Header("King Specific Settings")]
-    [Tooltip("King name for debugging")]
-    public string kingName = "King Vitron";
+    [Header("Key Unlocked Canvas")]
+    public KeyUnlockedCanvasController keyUnlockedCanvas;
+
+    [Header("Star Rating Requirements")]
+    [Tooltip("Minimum stars required to unlock the key on first completion")]
+    public int minStarsToUnlockKey = 2; // Player needs at least 2 stars to unlock key
 
     [Header("Playable Director Objects")]
-    [Tooltip("The GameObject containing the PlayableDirector")]
     public GameObject directorObject;
-
-    [Tooltip("List of other PlayableDirector GameObjects to disable")]
     public List<GameObject> otherDirectorObjects = new List<GameObject>();
 
     [Header("Game End Reference")]
-    [Tooltip("Reference to GameEndManager to trigger end screen after timeline")]
     public GameEndManager gameEndManager;
 
     [Header("Camera Settings")]
-    [Tooltip("Should we switch to game end camera after timeline?")]
     public bool switchToGameEndCamera = true;
-
-    [Tooltip("Player follow camera to disable")]
     public CinemachineVirtualCamera playerFollowCamera;
 
     [Header("Timeline Management")]
-    [Tooltip("Should we immediately reset the current timeline to 0 before switching?")]
     public bool resetBeforeSwitch = true;
-
-    [Tooltip("Should the timeline loop?")]
     public bool loopTimeline = false;
-
-    [Tooltip("Parent object to run coroutines if button is inactive")]
     public GameObject coroutineRunner;
 
     private bool wasEnergyPaused = false;
     private bool wasTimerPaused = false;
     private bool isGameStatePaused = false;
     private bool isPlayingTimeline = false;
-    private bool shouldShowGameEndAfterTimeline = false;
-    private PlayableAsset currentPlayableToPlay;
+    private int starsEarned = 0;
+    private bool isFirstTimeKeyUnlock = false; // Track if this is a first-time key unlock scenario
 
     void Start()
     {
-        // Get button component if not assigned
         if (kingButton == null)
-        {
             kingButton = GetComponent<Button>();
-        }
 
-        // Get PlayableDirector if not assigned
         if (playableDirector == null)
         {
             playableDirector = GetComponent<PlayableDirector>();
-
             if (playableDirector == null)
-            {
                 playableDirector = GetComponentInChildren<PlayableDirector>();
-            }
         }
 
-        // Get GameEndManager if not assigned
         if (gameEndManager == null)
-        {
             gameEndManager = FindObjectOfType<GameEndManager>();
-        }
 
-        // Set coroutine runner to this gameobject by default
         if (coroutineRunner == null)
-        {
             coroutineRunner = gameObject;
-        }
 
-        // If directorObject is not assigned but we have playableDirector, use its GameObject
         if (directorObject == null && playableDirector != null)
-        {
             directorObject = playableDirector.gameObject;
-        }
 
-        // Add click listener
         if (kingButton != null)
-        {
             kingButton.onClick.AddListener(OnKingButtonClick);
-        }
         else
-        {
             Debug.LogError("No Button component found on King button: " + gameObject.name);
-        }
 
-        // Validate setup
-        ValidateSetup();
-    }
-
-    private void ValidateSetup()
-    {
-        if (playableDirector == null)
-        {
-            Debug.LogError($"King '{kingName}': No PlayableDirector assigned or found!");
-        }
-
-        if (firstTimePlayable == null)
-        {
-            Debug.LogWarning($"King '{kingName}': No first-time PlayableAsset assigned!");
-        }
-
-        if (subsequentPlayable == null)
-        {
-            Debug.LogWarning($"King '{kingName}': No subsequent PlayableAsset assigned!");
-        }
-
-        if (gameEndManager == null)
-        {
-            Debug.LogWarning($"King '{kingName}': GameEndManager not assigned or found!");
-        }
-
-        // Check quest status to determine which playable to use
-        DeterminePlayableBasedOnQuestStatus();
-    }
-
-    private void DeterminePlayableBasedOnQuestStatus()
-    {
-        QuestStatus questStatus = GetQuestStatus();
-        Debug.Log($"King '{kingName}': Quest {questID} status is {questStatus}");
-
-        // Determine which playable to use
-        switch (questStatus)
-        {
-            case QuestStatus.NotStarted:
-            case QuestStatus.InProgress:
-                currentPlayableToPlay = firstTimePlayable;
-                shouldShowGameEndAfterTimeline = false; // Don't show game end for first time
-                Debug.Log($"King '{kingName}': Using FIRST-TIME playable ({firstTimePlayable?.name})");
-                break;
-
-            case QuestStatus.Completed:
-            case QuestStatus.Claimed:
-            case QuestStatus.Failed:
-            case QuestStatus.Abandoned:
-                currentPlayableToPlay = subsequentPlayable;
-                shouldShowGameEndAfterTimeline = true; // Show game end for subsequent playthroughs
-                Debug.Log($"King '{kingName}': Using SUBSEQUENT playable ({subsequentPlayable?.name})");
-                break;
-
-            default:
-                currentPlayableToPlay = subsequentPlayable; // Default to subsequent
-                shouldShowGameEndAfterTimeline = true;
-                Debug.Log($"King '{kingName}': Using DEFAULT subsequent playable");
-                break;
-        }
-    }
-
-    private QuestStatus GetQuestStatus()
-    {
-        if (QuestManager.Instance != null)
-        {
-            Quest quest = QuestManager.Instance.GetQuest(questID);
-            if (quest != null)
-            {
-                return quest.status;
-            }
-        }
-        return QuestStatus.NotStarted; // Default if quest manager not found
+        // Find key unlocked canvas if not assigned
+        if (keyUnlockedCanvas == null)
+            keyUnlockedCanvas = FindObjectOfType<KeyUnlockedCanvasController>(true);
     }
 
     private void OnKingButtonClick()
     {
-        // Check if game is active from Game Manager
+        // Get stars earned from game end manager
+        if (gameEndManager != null)
+        {
+            starsEarned = gameEndManager.GetStarsEarned();
+            Debug.Log($"King Vitron: Stars earned this run: {starsEarned}");
+        }
+
+        // Check game state
         bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
 
         if (isGameActive)
         {
-            // Save current state before pausing
             wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
             wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
 
-            // Pause both energy decrease and game timer
             GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
             GoGrowGlowGameManager.Instance.PauseGameTimer();
 
             isGameStatePaused = true;
-
-            Debug.Log($"King '{kingName}': Game state paused. Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+            Debug.Log($"King Vitron: Game state paused. Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
         }
 
-        // Play button click sound
         PlayKingButtonSound();
-
-        // Handle timeline control IMMEDIATELY
         ControlKingTimelinesImmediate();
     }
 
     private void PlayKingButtonSound()
     {
         if (AudioHandler.Instance != null)
-        {
             AudioHandler.Instance.PlayButtonClick();
-            Debug.Log($"King '{kingName}' button click sound played");
-        }
-        else
-        {
-            Debug.LogWarning("AudioHandler.Instance is null. Cannot play King button click sound.");
-        }
     }
 
     private void ControlKingTimelinesImmediate()
     {
-        // Stop any existing coroutine
         if (coroutineRunner != null && coroutineRunner.activeInHierarchy)
-        {
             StopAllCoroutines();
-        }
 
-        // Update quest status and determine which playable to use
-        DeterminePlayableBasedOnQuestStatus();
+        // Determine which timeline to play based on key status and stars
+        DetermineTimelineToPlay();
 
         if (currentPlayableToPlay == null)
         {
-            Debug.LogError($"King '{kingName}': No playable asset to play!");
-            ResumeGameState(); // Resume game if no timeline to play
+            Debug.LogError("King Vitron: No playable asset to play!");
+            ResumeGameState();
             return;
         }
 
-        // Step 1: Disable other director objects
         DisableOtherDirectorObjects();
-
-        // Step 2: Enable our director object
         EnableDirectorObject();
 
-        // Step 3: Stop any currently playing timeline and reset it IMMEDIATELY
         if (resetBeforeSwitch)
-        {
             ResetCurrentTimelineImmediate();
-        }
         else
-        {
             StopCurrentTimelineIfPlaying();
-        }
 
-        // Step 4: Play the king playable using the playable director
         if (playableDirector != null)
         {
-            // Ensure timeline is properly reset before playing
             ResetKingTimelineImmediate();
-
-            // Configure the playable director WITH NONE WRAP MODE
             ConfigurePlayableDirector();
 
-            // Subscribe to timeline stopped event
             playableDirector.stopped += OnTimelineStopped;
 
             isPlayingTimeline = true;
@@ -282,13 +151,9 @@ public class KingVitronTimelineButton : MonoBehaviour
             if (playDelay > 0)
             {
                 if (coroutineRunner != null && coroutineRunner.activeInHierarchy)
-                {
                     StartCoroutine(PlayKingTimelineWithDelay());
-                }
                 else
-                {
                     Invoke("PlayKingTimelineImmediate", playDelay);
-                }
             }
             else
             {
@@ -297,92 +162,122 @@ public class KingVitronTimelineButton : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"King '{kingName}': Cannot play timeline. PlayableDirector is null");
-            ResumeGameState(); // Resume game if no director
+            Debug.LogWarning("King Vitron: Cannot play timeline. PlayableDirector is null");
+            ResumeGameState();
+        }
+    }
+
+    private PlayableAsset currentPlayableToPlay;
+
+    private void DetermineTimelineToPlay()
+    {
+        bool hasKey = false;
+
+        // Check if player already has the Nutri Kingdom key from GameData
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            hasKey = GameDataManager.Instance.CurrentGameData.HasNutriKingdomKey();
+        }
+
+        Debug.Log($"King Vitron: Has Nutri Kingdom Key (from GameData): {hasKey}, Stars Earned: {starsEarned}");
+
+        // Determine which timeline to play based SOLELY on GameData and stars
+        if (!hasKey && starsEarned >= minStarsToUnlockKey)
+        {
+            // First time: Key not collected AND player earned enough stars
+            currentPlayableToPlay = firstTimePlayable;
+            isFirstTimeKeyUnlock = true;
+            Debug.Log($"King Vitron: FIRST TIME playable (key unlock eligible) - Stars: {starsEarned} ? {minStarsToUnlockKey}");
+        }
+        else
+        {
+            // Subsequent: Key already collected OR stars too low (0-1 stars)
+            currentPlayableToPlay = subsequentPlayable;
+            isFirstTimeKeyUnlock = false;
+            Debug.Log($"King Vitron: SUBSEQUENT playable - HasKey: {hasKey}, Stars: {starsEarned} < {minStarsToUnlockKey}");
         }
     }
 
     private void OnTimelineStopped(PlayableDirector director)
     {
-        // Only handle our own director
         if (director != playableDirector) return;
 
-        Debug.Log($"King '{kingName}': Timeline stopped. Director: {director.name}");
+        Debug.Log("King Vitron: Timeline stopped");
 
-        // Unsubscribe from the event
         playableDirector.stopped -= OnTimelineStopped;
-
         isPlayingTimeline = false;
 
         // Handle post-timeline actions
         HandlePostTimelineActions();
 
-        // Resume game state if we paused it
         if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
-        {
             ResumeGameState();
-        }
     }
 
     private void HandlePostTimelineActions()
     {
-        Debug.Log($"King '{kingName}': Handling post-timeline actions...");
+        Debug.Log("King Vitron: Handling post-timeline actions...");
 
-        // Check quest status again to determine what to do
-        QuestStatus currentStatus = GetQuestStatus();
-
-        // If this was a first-time playthrough and the timeline shows the key
-        if ((currentStatus == QuestStatus.NotStarted || currentStatus == QuestStatus.InProgress) &&
-            currentPlayableToPlay == firstTimePlayable)
+        // If this was a first-time key unlock timeline
+        if (isFirstTimeKeyUnlock)
         {
-            // For first-time playthrough, we need to:
-            // 1. Complete the quest task
-            // 2. Show the key unlocked object
-            // 3. Complete the quest
-
-            Debug.Log($"King '{kingName}': First-time timeline completed. Completing quest tasks...");
-
-            // Complete the quest task
-            if (QuestManager.Instance != null)
-            {
-                string taskID = $"{questID}_task_1";
-                QuestManager.Instance.CompleteTask(questID, taskID);
-                Debug.Log($"Completed task: {taskID}");
-
-                // Claim the quest
-                QuestManager.Instance.ClaimQuest(questID);
-                Debug.Log($"Claimed quest: {questID}");
-            }
-
-            // Update quest status after completion
-            QuestStatus updatedStatus = GetQuestStatus();
-            Debug.Log($"Quest status after completion: {updatedStatus}");
-
-            // Don't show game end screen for first-time completion
-            // The key unlocked object will be shown by GameEndManager
-            return;
+            Debug.Log("King Vitron: First-time timeline completed. Will show key unlocked canvas after home button.");
+            // The key is NOT collected yet - it will be collected after the canvas
         }
 
-        // For subsequent playthroughs (or if quest is already completed/claimed)
-        if (shouldShowGameEndAfterTimeline && gameEndManager != null)
+        // Show game end screen
+        if (gameEndManager != null)
         {
-            Debug.Log($"King '{kingName}': Showing game end screen after timeline...");
-
-            // Switch to game end camera if requested
             if (switchToGameEndCamera)
-            {
                 SwitchToGameEndCamera();
+
+            TeleportPlayerToResultPoint();
+            ShowGameEndScreen();
+        }
+    }
+
+    // This method should be called from GameEndManager when home button is clicked
+    public void CheckAndShowKeyUnlockedCanvas()
+    {
+        // Only show if this was a first-time key unlock AND player hasn't collected key yet
+        if (isFirstTimeKeyUnlock && keyUnlockedCanvas != null)
+        {
+            bool hasKey = false;
+            if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+            {
+                hasKey = GameDataManager.Instance.CurrentGameData.HasNutriKingdomKey();
             }
 
-            // Teleport player to result spawn point
-            TeleportPlayerToResultPoint();
-
-            // Show game end screen
-            ShowGameEndScreen();
+            // Don't show if key already collected (safety check)
+            if (!hasKey)
+            {
+                Debug.Log("King Vitron: Showing key unlocked canvas");
+                keyUnlockedCanvas.ShowKeyUnlockedCanvas(OnKeyUnlockedContinue);
+            }
+            else
+            {
+                Debug.Log("King Vitron: Key already collected, not showing canvas");
+            }
         }
         else
         {
-            Debug.Log($"King '{kingName}': Not showing game end screen (shouldShowGameEndAfterTimeline={shouldShowGameEndAfterTimeline})");
+            Debug.Log($"King Vitron: Not showing key unlocked canvas - isFirstTimeKeyUnlock: {isFirstTimeKeyUnlock}");
+        }
+    }
+
+    private void OnKeyUnlockedContinue()
+    {
+        Debug.Log("King Vitron: Key unlocked canvas continue clicked - collecting key now");
+
+        // Collect the Nutri Kingdom key in GameData
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            GameDataManager.Instance.CurrentGameData.CollectNutriKingdomKey();
+            GameDataManager.Instance.SaveGameData();
+            Debug.Log("King Vitron: Nutri Kingdom Key collected and saved to GameData!");
+
+            // Reset the flag so we don't show canvas again
+            isFirstTimeKeyUnlock = false;
         }
     }
 
@@ -390,35 +285,25 @@ public class KingVitronTimelineButton : MonoBehaviour
     {
         if (playerFollowCamera != null)
         {
-            // Disable player camera
             playerFollowCamera.Priority = 0;
             playerFollowCamera.gameObject.SetActive(false);
-            Debug.Log($"King '{kingName}': Disabled player follow camera");
+            Debug.Log("King Vitron: Disabled player follow camera");
         }
     }
 
     private void TeleportPlayerToResultPoint()
     {
-        // Get the player controller
         ThirdPersonController playerController = FindObjectOfType<ThirdPersonController>();
 
-        // Get result spawn point from GameEndManager
         if (playerController != null && gameEndManager != null)
         {
-            // Use reflection to access the resultCharacterSpawnPoint
-            System.Type gameEndManagerType = typeof(GameEndManager);
-            var resultSpawnField = gameEndManagerType.GetField("resultCharacterSpawnPoint",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            if (resultSpawnField != null)
+            // Use the public property or method instead of reflection if available
+            Transform resultSpawnPoint = gameEndManager.GetResultSpawnPoint();
+            if (resultSpawnPoint != null)
             {
-                Transform resultSpawnPoint = resultSpawnField.GetValue(gameEndManager) as Transform;
-                if (resultSpawnPoint != null)
-                {
-                    playerController.transform.position = resultSpawnPoint.position;
-                    playerController.transform.rotation = resultSpawnPoint.rotation;
-                    Debug.Log($"King '{kingName}': Player teleported to result spawn point");
-                }
+                playerController.transform.position = resultSpawnPoint.position;
+                playerController.transform.rotation = resultSpawnPoint.rotation;
+                Debug.Log("King Vitron: Player teleported to result spawn point");
             }
         }
     }
@@ -427,21 +312,18 @@ public class KingVitronTimelineButton : MonoBehaviour
     {
         if (gameEndManager != null)
         {
-            // Get current game state
             if (GoGrowGlowGameManager.Instance != null)
             {
                 float completionTime = GoGrowGlowGameManager.Instance.GetGameTimer();
                 int playerPoints = GoGrowGlowGameManager.Instance.GetCurrentScore();
                 int remainingHearts = Mathf.CeilToInt(GoGrowGlowGameManager.Instance.GetCurrentLifeAmount());
 
-                Debug.Log($"King '{kingName}': Game end data - Time: {completionTime}, Points: {playerPoints}, Hearts: {remainingHearts}");
+                Debug.Log($"King Vitron: Game end data - Time: {completionTime}, Points: {playerPoints}, Hearts: {remainingHearts}");
 
-                // Always show win screen when talking to king after timeline
                 gameEndManager.HandleLevelComplete();
             }
             else
             {
-                // Fallback: trigger level complete directly
                 gameEndManager.TriggerLevelComplete();
             }
         }
@@ -451,19 +333,13 @@ public class KingVitronTimelineButton : MonoBehaviour
     {
         if (GoGrowGlowGameManager.Instance != null)
         {
-            // Resume timer if it wasn't paused before
             if (!wasTimerPaused)
-            {
                 GoGrowGlowGameManager.Instance.ResumeGameTimer();
-            }
 
-            // Resume energy if it wasn't paused before
             if (!wasEnergyPaused)
-            {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
-            }
 
-            Debug.Log($"King '{kingName}': Game state resumed. Timer resumed: {!wasTimerPaused}, Energy resumed: {!wasEnergyPaused}");
+            Debug.Log($"King Vitron: Game state resumed. Timer resumed: {!wasTimerPaused}, Energy resumed: {!wasEnergyPaused}");
         }
 
         isGameStatePaused = false;
@@ -478,7 +354,7 @@ public class KingVitronTimelineButton : MonoBehaviour
             if (obj != null && obj != directorObject)
             {
                 obj.SetActive(false);
-                Debug.Log($"King '{kingName}': Disabled other director object: {obj.name}");
+                Debug.Log($"King Vitron: Disabled other director object: {obj.name}");
             }
         }
     }
@@ -488,33 +364,29 @@ public class KingVitronTimelineButton : MonoBehaviour
         if (directorObject != null)
         {
             directorObject.SetActive(true);
-            Debug.Log($"King '{kingName}': Enabled director object: {directorObject.name}");
+            Debug.Log($"King Vitron: Enabled director object: {directorObject.name}");
         }
     }
 
     private void ResetCurrentTimelineImmediate()
     {
-        // Reset all playable directors in the scene
         PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>();
         int resetCount = 0;
 
         foreach (var director in allDirectors)
         {
-            // Don't reset our own director yet (we'll start it fresh)
             if (director != playableDirector && (director.state == PlayState.Playing || director.state == PlayState.Paused))
             {
                 director.Stop();
                 director.time = 0;
                 director.Evaluate();
                 resetCount++;
-                Debug.Log($"King '{kingName}': Immediately reset timeline to 0: {director.name}");
+                Debug.Log($"King Vitron: Immediately reset timeline to 0: {director.name}");
             }
         }
 
         if (resetCount > 0)
-        {
-            Debug.Log($"King '{kingName}': Immediately reset {resetCount} timeline(s) to beginning");
-        }
+            Debug.Log($"King Vitron: Immediately reset {resetCount} timeline(s) to beginning");
     }
 
     private void StopCurrentTimelineIfPlaying()
@@ -524,41 +396,32 @@ public class KingVitronTimelineButton : MonoBehaviour
 
         foreach (var director in allDirectors)
         {
-            // Don't stop our own director yet (we'll start it fresh)
             if (director != playableDirector && (director.state == PlayState.Playing || director.state == PlayState.Paused))
             {
                 director.Stop();
                 director.time = 0;
                 director.Evaluate();
                 stoppedCount++;
-                Debug.Log($"King '{kingName}': Stopped and reset timeline: {director.name}");
+                Debug.Log($"King Vitron: Stopped and reset timeline: {director.name}");
             }
         }
 
         if (stoppedCount > 0)
-        {
-            Debug.Log($"King '{kingName}': Stopped and reset {stoppedCount} timeline(s)");
-        }
+            Debug.Log($"King Vitron: Stopped and reset {stoppedCount} timeline(s)");
     }
 
     private void ConfigurePlayableDirector()
     {
         if (playableDirector != null && currentPlayableToPlay != null)
         {
-            // Set the playable asset
             playableDirector.playableAsset = currentPlayableToPlay;
 
-            // Use NONE wrap mode - timeline will stop completely at the end
             if (loopTimeline)
-            {
                 playableDirector.extrapolationMode = DirectorWrapMode.Loop;
-            }
             else
-            {
                 playableDirector.extrapolationMode = DirectorWrapMode.None;
-            }
 
-            Debug.Log($"King '{kingName}': Configured PlayableDirector with asset: {currentPlayableToPlay.name}, Wrap Mode: {playableDirector.extrapolationMode}");
+            Debug.Log($"King Vitron: Configured PlayableDirector with asset: {currentPlayableToPlay.name}, Wrap Mode: {playableDirector.extrapolationMode}");
         }
     }
 
@@ -572,19 +435,13 @@ public class KingVitronTimelineButton : MonoBehaviour
     {
         if (playableDirector != null && currentPlayableToPlay != null)
         {
-            // Make sure we're starting from the beginning
             playableDirector.time = 0;
             playableDirector.Evaluate();
-
-            // Play the timeline
             playableDirector.Play();
 
-            Debug.Log($"King '{kingName}': Playing timeline from beginning: {currentPlayableToPlay.name} using director: {playableDirector.name}");
-            Debug.Log($"King '{kingName}': Timeline duration: {currentPlayableToPlay.duration:F2} seconds");
-
-            // Log which playable is being played
-            QuestStatus questStatus = GetQuestStatus();
-            Debug.Log($"King '{kingName}': Quest status: {questStatus}, Playing: {(currentPlayableToPlay == firstTimePlayable ? "First-time" : "Subsequent")} timeline");
+            Debug.Log($"King Vitron: Playing timeline from beginning: {currentPlayableToPlay.name}");
+            Debug.Log($"King Vitron: Timeline duration: {currentPlayableToPlay.duration:F2} seconds");
+            Debug.Log($"King Vitron: Playing {(currentPlayableToPlay == firstTimePlayable ? "FIRST-TIME" : "SUBSEQUENT")} timeline");
         }
     }
 
@@ -598,159 +455,15 @@ public class KingVitronTimelineButton : MonoBehaviour
         }
     }
 
-    // Public methods for manual control
-    public void SetFirstTimePlayable(PlayableAsset playable)
+    // Public method to manually trigger key unlock check (to be called from GameEndManager)
+    public void CheckKeyUnlockAfterHomeButton()
     {
-        firstTimePlayable = playable;
-        DeterminePlayableBasedOnQuestStatus();
+        CheckAndShowKeyUnlockedCanvas();
     }
 
-    public void SetSubsequentPlayable(PlayableAsset playable)
+    // Method to get stars from GameEndManager
+    public void SetStarsEarned(int stars)
     {
-        subsequentPlayable = playable;
-        DeterminePlayableBasedOnQuestStatus();
-    }
-
-    public void SetQuestID(string id)
-    {
-        questID = id;
-        DeterminePlayableBasedOnQuestStatus();
-    }
-
-    public void SetKingdomID(string id)
-    {
-        kingdomID = id;
-    }
-
-    public void PlayKingTimelineImmediate(bool forceFirstTime = false, bool forceSubsequent = false)
-    {
-        // Check if game is active
-        bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
-
-        if (isGameActive)
-        {
-            // Save and pause game state
-            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
-            wasTimerPaused = GoGrowGlowGameManager.Instance.IsGameTimerPaused();
-            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
-            GoGrowGlowGameManager.Instance.PauseGameTimer();
-            isGameStatePaused = true;
-        }
-
-        // Force specific playable if requested
-        if (forceFirstTime)
-        {
-            currentPlayableToPlay = firstTimePlayable;
-            shouldShowGameEndAfterTimeline = false;
-        }
-        else if (forceSubsequent)
-        {
-            currentPlayableToPlay = subsequentPlayable;
-            shouldShowGameEndAfterTimeline = true;
-        }
-        else
-        {
-            DeterminePlayableBasedOnQuestStatus();
-        }
-
-        // Use immediate methods
-        DisableOtherDirectorObjects();
-        EnableDirectorObject();
-
-        if (resetBeforeSwitch)
-        {
-            ResetCurrentTimelineImmediate();
-        }
-        else
-        {
-            StopCurrentTimelineIfPlaying();
-        }
-
-        if (playableDirector != null && currentPlayableToPlay != null)
-        {
-            ResetKingTimelineImmediate();
-            ConfigurePlayableDirector();
-
-            // Subscribe to stopped event
-            playableDirector.stopped += OnTimelineStopped;
-
-            PlayKingTimelineImmediate();
-        }
-    }
-
-    // Method to manually trigger king button click
-    public void SimulateKingButtonClick()
-    {
-        OnKingButtonClick();
-    }
-
-    // Method to check if king timeline is currently playing
-    public bool IsKingTimelinePlaying()
-    {
-        return isPlayingTimeline &&
-               playableDirector != null &&
-               playableDirector.state == PlayState.Playing;
-    }
-
-    // Method to stop king timeline
-    public void StopKingTimeline()
-    {
-        if (playableDirector != null && (playableDirector.state == PlayState.Playing || playableDirector.state == PlayState.Paused))
-        {
-            playableDirector.Stop();
-            playableDirector.time = 0;
-            playableDirector.Evaluate();
-
-            // Resume game state if it was paused
-            if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
-            {
-                ResumeGameState();
-            }
-
-            isPlayingTimeline = false;
-        }
-    }
-
-    // Method to update quest status and re-determine playable
-    public void UpdateQuestStatus()
-    {
-        DeterminePlayableBasedOnQuestStatus();
-    }
-
-    // Method to get current quest status
-    public QuestStatus GetCurrentQuestStatus()
-    {
-        return GetQuestStatus();
-    }
-
-    // Method to check if this is first-time completion
-    public bool IsFirstTimeCompletion()
-    {
-        QuestStatus status = GetQuestStatus();
-        return (status == QuestStatus.NotStarted || status == QuestStatus.InProgress) && currentPlayableToPlay == firstTimePlayable;
-    }
-
-    private void OnDestroy()
-    {
-        // Clean up listeners
-        if (kingButton != null)
-        {
-            kingButton.onClick.RemoveListener(OnKingButtonClick);
-        }
-
-        // Unsubscribe from timeline events
-        if (playableDirector != null)
-        {
-            playableDirector.stopped -= OnTimelineStopped;
-        }
-
-        // Make sure we resume if we're destroyed while timeline is playing
-        if (isGameStatePaused && GoGrowGlowGameManager.Instance != null)
-        {
-            ResumeGameState();
-        }
-
-        // Clean up any pending invokes
-        CancelInvoke();
+        starsEarned = stars;
     }
 }

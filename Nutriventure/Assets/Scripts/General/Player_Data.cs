@@ -7,11 +7,17 @@ public class Player_Data : MonoBehaviour
 {
     [Header("UI References")]
     public TextMeshProUGUI coinsText;
-    public TextMeshProUGUI gemsText; // NEW: Added for NutriGems
+    public TextMeshProUGUI gemsText;
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI xpText;
     public TextMeshProUGUI nameText;
     public Slider xpSlider;
+
+    [Header("Profile Icon")]
+    public Image profileIconImage; // Reference to the profile icon Image component
+
+    [Header("Frame Display")]
+    public Image frameImage; // Reference to the frame Image component in player data
 
     [Header("Display Settings")]
     public string levelPrefix = "Lv. ";
@@ -20,15 +26,15 @@ public class Player_Data : MonoBehaviour
 
     [Header("Update Settings")]
     public bool autoUpdate = true;
-    public float updateInterval = 0.1f; // Fast updates for smooth experience
+    public float updateInterval = 0.1f;
     public bool updateOnCoinCollect = true;
 
     [Header("Animation Settings")]
     public bool animateCoinCounter = true;
-    public bool animateGemCounter = true; // NEW: Added for NutriGems
-    public float coinCountSpeed = 10f; // Coins per second
-    public float gemCountSpeed = 10f; // NEW: Added for NutriGems
-    public float xpFillSpeed = 1f; // Speed of XP bar fill animation
+    public bool animateGemCounter = true;
+    public float coinCountSpeed = 10f;
+    public float gemCountSpeed = 10f;
+    public float xpFillSpeed = 1f;
 
     [Header("Color Settings")]
     public Color normalTextColor = Color.white;
@@ -37,21 +43,25 @@ public class Player_Data : MonoBehaviour
 
     // Private variables
     private int displayedCoins = 0;
-    private int displayedGems = 0; // NEW: Added for NutriGems
+    private int displayedGems = 0;
     private int targetCoins = 0;
-    private int targetGems = 0; // NEW: Added for NutriGems
+    private int targetGems = 0;
     private float displayedXP = 0f;
     private float targetXP = 0f;
     private int displayedLevel = 1;
     private int targetLevel = 1;
 
     private bool isAnimatingCoins = false;
-    private bool isAnimatingGems = false; // NEW: Added for NutriGems
+    private bool isAnimatingGems = false;
     private bool isAnimatingXP = false;
 
     // Cached references
     private GameDataManager gameDataManager;
     private CoinCollectionSystem coinSystem;
+
+    // Events for profile changes
+    public System.Action OnProfileIconChanged;
+    public System.Action OnFrameChanged;
 
     private void Start()
     {
@@ -88,7 +98,7 @@ public class Player_Data : MonoBehaviour
         targetCoins = gameDataManager.CurrentGameData.nutriCoins;
         displayedCoins = targetCoins;
 
-        targetGems = gameDataManager.CurrentGameData.nutriGems; // NEW: Initialize gems
+        targetGems = gameDataManager.CurrentGameData.nutriGems;
         displayedGems = targetGems;
 
         targetLevel = gameDataManager.CurrentGameData.playerLevel;
@@ -99,10 +109,12 @@ public class Player_Data : MonoBehaviour
 
         // Update all displays immediately
         UpdateCoinDisplayImmediate();
-        UpdateGemDisplayImmediate(); // NEW: Added
+        UpdateGemDisplayImmediate();
         UpdateLevelDisplayImmediate();
         UpdateXPDisplayImmediate();
         UpdateNameDisplay();
+        LoadProfileIcon(); // Load the profile icon
+        LoadFrame(); // Load the frame
 
         // Initialize XP slider
         if (xpSlider != null)
@@ -115,11 +127,9 @@ public class Player_Data : MonoBehaviour
 
     private void SetupEventListeners()
     {
-        // Listen for coin collection events
         if (coinSystem != null && updateOnCoinCollect)
         {
             // You might need to modify CoinCollectionSystem to expose events
-            // For now, we'll use the GameplayProgression reference pattern
         }
     }
 
@@ -144,7 +154,7 @@ public class Player_Data : MonoBehaviour
             UpdateCoinDisplay();
         }
 
-        // NEW: Smooth animations for gems
+        // Smooth animations for gems
         if (isAnimatingGems && displayedGems != targetGems)
         {
             int difference = targetGems - displayedGems;
@@ -207,7 +217,7 @@ public class Player_Data : MonoBehaviour
             }
         }
 
-        // NEW: Update gems
+        // Update gems
         int newGems = gameDataManager.CurrentGameData.nutriGems;
         if (newGems != targetGems)
         {
@@ -231,7 +241,6 @@ public class Player_Data : MonoBehaviour
             displayedLevel = targetLevel;
             UpdateLevelDisplayImmediate();
 
-            // Play level up effect if needed
             if (newLevel > displayedLevel)
             {
                 OnLevelUp();
@@ -246,7 +255,6 @@ public class Player_Data : MonoBehaviour
         {
             targetXP = newXP;
 
-            // Update XP slider max value if needed
             if (xpSlider != null && Mathf.Abs(newXPToNextLevel - xpSlider.maxValue) > 0.01f)
             {
                 xpSlider.maxValue = newXPToNextLevel;
@@ -263,9 +271,87 @@ public class Player_Data : MonoBehaviour
             }
         }
 
-        // Update name (less frequent check)
+        // Update name
         UpdateNameDisplay();
+
+        // Update profile icon and frame (in case they changed elsewhere)
+        LoadProfileIcon();
+        LoadFrame();
     }
+
+    #region Profile Icon Methods
+
+    public void LoadProfileIcon()
+    {
+        if (profileIconImage == null || gameDataManager?.CurrentGameData == null)
+            return;
+
+        // Try to find the icon database through ProfileSettings
+        ProfileSettings profileSettings = FindFirstObjectByType<ProfileSettings>();
+        if (profileSettings != null && profileSettings.iconDatabase != null)
+        {
+            string equippedIconId = gameDataManager.CurrentGameData.equippedIconId;
+            Sprite iconSprite = profileSettings.iconDatabase.GetIconSprite(equippedIconId);
+
+            if (iconSprite != null)
+            {
+                profileIconImage.sprite = iconSprite;
+            }
+        }
+    }
+
+    public void UpdateProfileIcon(Sprite newIconSprite)
+    {
+        if (profileIconImage != null && newIconSprite != null)
+        {
+            profileIconImage.sprite = newIconSprite;
+            OnProfileIconChanged?.Invoke();
+        }
+    }
+
+    public void RefreshProfileIcon()
+    {
+        LoadProfileIcon();
+    }
+
+    #endregion
+
+    #region Frame Methods
+
+    public void LoadFrame()
+    {
+        if (frameImage == null || gameDataManager?.CurrentGameData == null)
+            return;
+
+        // Try to find the frame database through ProfileSettings
+        ProfileSettings profileSettings = FindFirstObjectByType<ProfileSettings>();
+        if (profileSettings != null && profileSettings.frameDatabase != null)
+        {
+            string equippedFrameId = gameDataManager.CurrentGameData.equippedFrameId;
+            Sprite frameSprite = profileSettings.frameDatabase.GetFrameSprite(equippedFrameId);
+
+            if (frameSprite != null)
+            {
+                frameImage.sprite = frameSprite;
+            }
+        }
+    }
+
+    public void UpdateFrame(Sprite newFrameSprite)
+    {
+        if (frameImage != null && newFrameSprite != null)
+        {
+            frameImage.sprite = newFrameSprite;
+            OnFrameChanged?.Invoke();
+        }
+    }
+
+    public void RefreshFrame()
+    {
+        LoadFrame();
+    }
+
+    #endregion
 
     #region Coin Methods
 
@@ -289,10 +375,8 @@ public class Player_Data : MonoBehaviour
 
     public void OnCoinCollected(int amount = 1)
     {
-        // This method can be called from CoinCollectionSystem when a coin is collected
         UpdateCoinDisplayImmediate();
 
-        // Optional: Play coin collection effect
         if (coinsText != null)
         {
             StartCoroutine(HighlightText(coinsText));
@@ -301,7 +385,7 @@ public class Player_Data : MonoBehaviour
 
     #endregion
 
-    #region NEW: Gem Methods
+    #region Gem Methods
 
     public void UpdateGemDisplay()
     {
@@ -323,10 +407,8 @@ public class Player_Data : MonoBehaviour
 
     public void OnGemCollected(int amount = 1)
     {
-        // This method can be called when a gem is collected
         UpdateGemDisplayImmediate();
 
-        // Optional: Play gem collection effect
         if (gemsText != null)
         {
             StartCoroutine(HighlightText(gemsText));
@@ -357,13 +439,11 @@ public class Player_Data : MonoBehaviour
 
     private void OnLevelUp()
     {
-        // Play level up effects
         if (levelText != null)
         {
             StartCoroutine(HighlightText(levelText));
         }
 
-        // Reset XP display for new level
         displayedXP = 0;
         UpdateXPDisplayImmediate();
 
@@ -405,10 +485,8 @@ public class Player_Data : MonoBehaviour
 
     public void AddXP(float amount)
     {
-        // This method can be called when player gains XP
         UpdateXPDisplayImmediate();
 
-        // Optional: Play XP gain effect
         if (xpText != null)
         {
             StartCoroutine(HighlightText(xpText));
@@ -464,43 +542,40 @@ public class Player_Data : MonoBehaviour
     public void ForceUpdateAllUI()
     {
         UpdateCoinDisplayImmediate();
-        UpdateGemDisplayImmediate(); // NEW: Added
+        UpdateGemDisplayImmediate();
         UpdateLevelDisplayImmediate();
         UpdateXPDisplayImmediate();
         UpdateNameDisplay();
+        RefreshProfileIcon();
+        RefreshFrame();
     }
 
     #endregion
 
     #region Public API for Other Scripts
 
-    // Call this when a coin is collected
     public void NotifyCoinCollected(int amount = 1)
     {
         OnCoinCollected(amount);
     }
 
-    // NEW: Call this when a gem is collected
     public void NotifyGemCollected(int amount = 1)
     {
         OnGemCollected(amount);
     }
 
-    // Call this when XP is gained
     public void NotifyXPGained(float amount)
     {
         AddXP(amount);
     }
 
-    // Call this when level changes
     public void NotifyLevelChanged()
     {
         UpdateLevelDisplayImmediate();
     }
 
-    // Get current displayed values (for other scripts)
     public int GetDisplayedCoins() => displayedCoins;
-    public int GetDisplayedGems() => displayedGems; // NEW: Added
+    public int GetDisplayedGems() => displayedGems;
     public int GetDisplayedLevel() => displayedLevel;
     public float GetDisplayedXP() => displayedXP;
     public string GetPlayerName() => nameText != null ? nameText.text : string.Empty;
@@ -511,13 +586,11 @@ public class Player_Data : MonoBehaviour
 
     private void OnEnable()
     {
-        // Refresh UI when component is enabled
         ForceUpdateAllUI();
     }
 
     private void OnDestroy()
     {
-        // Clean up coroutines if needed
         StopAllCoroutines();
     }
 
@@ -554,12 +627,11 @@ public class Player_Data : MonoBehaviour
         {
             gameDataManager.CurrentGameData.currentXP += 50;
 
-            // Check for level up
             if (gameDataManager.CurrentGameData.currentXP >= gameDataManager.CurrentGameData.xpToNextLevel)
             {
                 gameDataManager.CurrentGameData.playerLevel++;
                 gameDataManager.CurrentGameData.currentXP = 0;
-                gameDataManager.CurrentGameData.xpToNextLevel *= 1.5f; // Example: Increase XP needed by 50%
+                gameDataManager.CurrentGameData.xpToNextLevel *= 1.5f;
             }
 
             gameDataManager.SaveGameData();
