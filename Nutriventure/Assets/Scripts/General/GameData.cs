@@ -20,7 +20,8 @@ public class GameData
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
     public bool preserviaKeyCollected = false;
-    public bool nutriKingdomKeyCollected = false; // ADD THIS LINE
+    public bool nutriKingdomKeyCollected = false;
+    public bool allerthiaKeyCollected = false; // ADDED: Allerthia Key
 
     // Character System
     public int selectedCharacterID = 0;
@@ -41,7 +42,7 @@ public class GameData
     public bool isChestAvailable = true;
 
     // Progress Tracking
-    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false };
+    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false, false }; // UPDATED: Added 5th kingdom slot
     [System.Serializable]
     public class StringBoolDictionary : SerializableDictionary<string, bool> { }
     public StringBoolDictionary completedMinigames = new StringBoolDictionary();
@@ -91,7 +92,8 @@ public class GameData
         // Kingdom Keys
         sugariaKeyCollected = false;
         preserviaKeyCollected = false;
-        nutriKingdomKeyCollected = false; // ADD THIS LINE
+        nutriKingdomKeyCollected = false;
+        allerthiaKeyCollected = false; // ADDED: Initialize Allerthia Key
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -123,10 +125,10 @@ public class GameData
         // Initialize default skin for character 0
         InitializeDefaultSkinForCharacter(0);
 
-        // Initialize progress tracking
+        // Initialize progress tracking - UPDATED for 5 kingdoms
         if (unlockedKingdoms == null)
         {
-            unlockedKingdoms = new List<bool>() { true, false, false, false };
+            unlockedKingdoms = new List<bool>() { true, false, false, false, false };
         }
 
         if (completedMinigames == null)
@@ -174,7 +176,7 @@ public class GameData
         preserviaKeyCollected = false;
     }
 
-    // NUTRI KINGDOM KEY METHODS - ADD THESE
+    // Nutri Kingdom Key Methods
     public bool HasNutriKingdomKey()
     {
         return nutriKingdomKeyCollected;
@@ -190,6 +192,22 @@ public class GameData
         nutriKingdomKeyCollected = false;
     }
 
+    // ALLERTHIA KEY METHODS - ADDED
+    public bool HasAllerthiaKey()
+    {
+        return allerthiaKeyCollected;
+    }
+
+    public void CollectAllerthiaKey()
+    {
+        allerthiaKeyCollected = true;
+    }
+
+    public void ResetAllerthiaKey()
+    {
+        allerthiaKeyCollected = false;
+    }
+
     public bool HasKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
@@ -201,6 +219,8 @@ public class GameData
             case "nutri":
             case "nutrikingdom":
                 return HasNutriKingdomKey();
+            case "allerthia": // ADDED: Allerthia case
+                return HasAllerthiaKey();
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 return false;
@@ -220,6 +240,9 @@ public class GameData
             case "nutri":
             case "nutrikingdom":
                 CollectNutriKingdomKey();
+                break;
+            case "allerthia": // ADDED: Allerthia case
+                CollectAllerthiaKey();
                 break;
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
