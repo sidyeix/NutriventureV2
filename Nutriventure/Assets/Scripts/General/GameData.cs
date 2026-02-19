@@ -20,8 +20,9 @@ public class GameData
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
     public bool preserviaKeyCollected = false;
-    public bool nutriKingdomKeyCollected = false;
-    public bool allerthiaKeyCollected = false; // ADDED: Allerthia Key
+    public bool nutriKingdomKeyCollected = true; // Changed to true for default unlock
+    public bool allerthiaKeyCollected = false;
+    public bool ocrScannerKeyCollected = false; // ADD THIS LINE - OCR Scanner Key
 
     // Character System
     public int selectedCharacterID = 0;
@@ -42,7 +43,7 @@ public class GameData
     public bool isChestAvailable = true;
 
     // Progress Tracking
-    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false, false }; // UPDATED: Added 5th kingdom slot
+    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false }; // Nutri, Sugaria, Preservia, Allerthia
     [System.Serializable]
     public class StringBoolDictionary : SerializableDictionary<string, bool> { }
     public StringBoolDictionary completedMinigames = new StringBoolDictionary();
@@ -92,8 +93,9 @@ public class GameData
         // Kingdom Keys
         sugariaKeyCollected = false;
         preserviaKeyCollected = false;
-        nutriKingdomKeyCollected = false;
-        allerthiaKeyCollected = false; // ADDED: Initialize Allerthia Key
+        nutriKingdomKeyCollected = true; // CHANGED TO true (unlocked by default)
+        allerthiaKeyCollected = false;
+        ocrScannerKeyCollected = false; // ADD THIS LINE
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -125,10 +127,10 @@ public class GameData
         // Initialize default skin for character 0
         InitializeDefaultSkinForCharacter(0);
 
-        // Initialize progress tracking - UPDATED for 5 kingdoms
+        // Initialize progress tracking
         if (unlockedKingdoms == null)
         {
-            unlockedKingdoms = new List<bool>() { true, false, false, false, false };
+            unlockedKingdoms = new List<bool>() { true, false, false, false };
         }
 
         if (completedMinigames == null)
@@ -192,7 +194,7 @@ public class GameData
         nutriKingdomKeyCollected = false;
     }
 
-    // ALLERTHIA KEY METHODS - ADDED
+    // Allerthia Key Methods
     public bool HasAllerthiaKey()
     {
         return allerthiaKeyCollected;
@@ -208,6 +210,22 @@ public class GameData
         allerthiaKeyCollected = false;
     }
 
+    // OCR SCANNER KEY METHODS - ADD THESE
+    public bool HasOCRScannerKey()
+    {
+        return ocrScannerKeyCollected;
+    }
+
+    public void CollectOCRScannerKey()
+    {
+        ocrScannerKeyCollected = true;
+    }
+
+    public void ResetOCRScannerKey()
+    {
+        ocrScannerKeyCollected = false;
+    }
+
     public bool HasKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
@@ -219,8 +237,13 @@ public class GameData
             case "nutri":
             case "nutrikingdom":
                 return HasNutriKingdomKey();
-            case "allerthia": // ADDED: Allerthia case
+            case "allerthia":
+            case "allerthiakingdom":
                 return HasAllerthiaKey();
+            case "ocr":
+            case "ocrscanner":
+            case "ocrscannerkey":
+                return HasOCRScannerKey();
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 return false;
@@ -241,8 +264,14 @@ public class GameData
             case "nutrikingdom":
                 CollectNutriKingdomKey();
                 break;
-            case "allerthia": // ADDED: Allerthia case
+            case "allerthia":
+            case "allerthiakingdom":
                 CollectAllerthiaKey();
+                break;
+            case "ocr":
+            case "ocrscanner":
+            case "ocrscannerkey":
+                CollectOCRScannerKey();
                 break;
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
