@@ -58,4 +58,16 @@ public class FrameDatabase : ScriptableObject
 
         return frame.unlockedByDefault || (playerUnlockedIds != null && playerUnlockedIds.Contains(id));
     }
+
+    public FrameData GetFrameByName(string frameName)
+    {
+        return frames.Find(f => f.frameName.Equals(frameName, System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Get frame sprite by name
+    public Sprite GetFrameSpriteByName(string frameName)
+    {
+        var frame = GetFrameByName(frameName);
+        return frame != null ? frame.frameSprite : null;
+    }
 }

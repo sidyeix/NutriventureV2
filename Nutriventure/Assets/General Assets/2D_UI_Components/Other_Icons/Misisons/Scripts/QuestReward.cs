@@ -19,12 +19,12 @@ public class QuestReward
         Experience,
         Unlockable,
         Custom,
-        // NEW: Specific reward types for your game
         NutriCoins,
         Exp,
         NutriGems,
         Enerlings,
         Character,
+        Skin,
         Frame,
         Icon
     }
