@@ -34,6 +34,8 @@ public class FrameButton : MonoBehaviour
         isLocked = locked;
         isSelected = selected;
 
+        Debug.Log($"FrameButton Initialize: {data.frameName}, Locked: {isLocked}, Selected: {isSelected}");
+
         // Set visuals
         if (frameImage != null && frameData.frameSprite != null)
             frameImage.sprite = frameData.frameSprite;
@@ -42,12 +44,14 @@ public class FrameButton : MonoBehaviour
         if (lockedOverlay != null)
         {
             lockedOverlay.SetActive(isLocked);
+            Debug.Log($"Frame {data.frameName} - LockedOverlay active: {isLocked}");
         }
 
         // Show/hide selected indicator based on selected state
         if (selectedIndicator != null)
         {
             selectedIndicator.SetActive(isSelected && !isLocked);
+            Debug.Log($"Frame {data.frameName} - SelectedIndicator active: {isSelected && !isLocked}");
         }
 
         // Update appearance based on state
@@ -55,11 +59,13 @@ public class FrameButton : MonoBehaviour
 
         // Disable button if locked
         button.interactable = !isLocked;
+        Debug.Log($"Frame {data.frameName} - Button interactable: {!isLocked}");
     }
 
     public void SetSelected(bool selected)
     {
         isSelected = selected;
+        Debug.Log($"Frame {frameData?.frameName} - SetSelected: {selected}");
 
         // Update selected indicator
         if (selectedIndicator != null)
@@ -77,14 +83,17 @@ public class FrameButton : MonoBehaviour
             // When locked, make the frame image gray
             frameImage.color = lockedColor;
             // Locked overlay remains its original color
+            Debug.Log($"Frame {frameData?.frameName} - Appearance: Locked (gray)");
         }
         else if (isSelected)
         {
             frameImage.color = selectedColor;
+            Debug.Log($"Frame {frameData?.frameName} - Appearance: Selected (yellow)");
         }
         else
         {
             frameImage.color = normalColor;
+            Debug.Log($"Frame {frameData?.frameName} - Appearance: Normal (white)");
         }
     }
 
@@ -92,6 +101,7 @@ public class FrameButton : MonoBehaviour
     {
         if (!isLocked)
         {
+            Debug.Log($"FrameButton Clicked: {frameData?.frameName} (Unlocked)");
             onClickCallback?.Invoke(frameData);
 
             // Play click sound
@@ -99,6 +109,10 @@ public class FrameButton : MonoBehaviour
             {
                 AudioHandler.Instance.PlayButtonClick();
             }
+        }
+        else
+        {
+            Debug.Log($"FrameButton Clicked: {frameData?.frameName} (Locked - ignoring)");
         }
     }
 

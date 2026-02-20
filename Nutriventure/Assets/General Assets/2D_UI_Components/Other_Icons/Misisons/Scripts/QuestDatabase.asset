@@ -380,10 +380,10 @@ MonoBehaviour:
         isOptional: 0
         isCompleted: 1
       rewards:
-      - rewardName: Michelle
-        rewardIcon: {fileID: 21300000, guid: 5cd243fd481aa634ca4106498b27a51c, type: 3}
+      - rewardName: Orange Sweets
+        rewardIcon: {fileID: 21300000, guid: 6cdca757c1e48904e9136af1c8f7b423, type: 3}
         amount: 1
-        type: 9
+        type: 12
         rewardID: 
       timelineAsset: {fileID: 0}
       status: 3

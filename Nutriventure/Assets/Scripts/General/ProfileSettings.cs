@@ -152,7 +152,7 @@ public class ProfileSettings : MonoBehaviour
             achievementInfoCanvasGroup.alpha = 0f;
         }
 
-        // Setup save button for fade transitions - FIXED: Added OnSaveClicked listener
+        // Setup save button for fade transitions
         if (saveButton != null)
         {
             saveButton.gameObject.SetActive(false);
@@ -526,13 +526,32 @@ public class ProfileSettings : MonoBehaviour
         var gameData = gameDataManager.CurrentGameData;
         List<ProfileIconDatabase.ProfileIcon> allIcons = iconDatabase.icons;
 
+        Debug.Log("=== REFRESHING ICON GRID ===");
+        Debug.Log($"Player unlocked icons: {string.Join(", ", gameData.unlockedIconIds)}");
+
         foreach (var icon in allIcons)
         {
+            // Check if icon is unlocked in GameData by ID OR by name
+            bool isUnlockedById = gameData.unlockedIconIds.Contains(icon.id);
+            bool isUnlockedByName = gameData.unlockedIconIds.Contains(icon.iconName);
+            bool isUnlockedInGameData = isUnlockedById || isUnlockedByName;
+
+            // Check if icon is unlocked by default in database
+            bool isDefaultUnlock = icon.unlockedByDefault;
+
+            // Combined unlock state
+            bool isLocked = !(isUnlockedInGameData || isDefaultUnlock);
+            bool isSelected = (!isLocked && icon.id == gameData.equippedIconId);
+
+            Debug.Log($"Icon: {icon.iconName} (ID: {icon.id})");
+            Debug.Log($"  - Default Unlock: {isDefaultUnlock}");
+            Debug.Log($"  - In GameData by ID: {isUnlockedById}");
+            Debug.Log($"  - In GameData by Name: {isUnlockedByName}");
+            Debug.Log($"  - Final Locked State: {isLocked}");
+            Debug.Log($"  - Selected: {isSelected}");
+
             GameObject buttonObj = Instantiate(iconButtonPrefab, iconGridParent);
             ProfileIconButton iconButton = buttonObj.GetComponent<ProfileIconButton>();
-
-            bool isLocked = !gameDataManager.IsIconUnlocked(icon.id);
-            bool isSelected = (!isLocked && icon.id == gameData.equippedIconId);
 
             iconButton.Initialize(icon, OnIconSelected, isLocked, isSelected);
 
@@ -543,6 +562,7 @@ public class ProfileSettings : MonoBehaviour
 
             iconButtons.Add(iconButton);
         }
+        Debug.Log("=== ICON GRID REFRESH COMPLETE ===");
     }
 
     private void RefreshFrameGrid()
@@ -550,13 +570,33 @@ public class ProfileSettings : MonoBehaviour
         var gameData = gameDataManager.CurrentGameData;
         List<FrameDatabase.FrameData> allFrames = frameDatabase.frames;
 
+        Debug.Log("=== REFRESHING FRAME GRID ===");
+        Debug.Log($"Player unlocked frames (IDs): {string.Join(", ", gameData.unlockedFrameIds)}");
+
         foreach (var frame in allFrames)
         {
+            // Check if frame is unlocked in GameData by ID OR by name
+            bool isUnlockedById = gameData.unlockedFrameIds.Contains(frame.id);
+            bool isUnlockedByName = gameData.unlockedFrameIds.Contains(frame.frameName);
+            bool isUnlockedInGameData = isUnlockedById || isUnlockedByName;
+
+            // Check if frame is unlocked by default in database
+            bool isDefaultUnlock = frame.unlockedByDefault;
+
+            // Combined unlock state
+            bool isLocked = !(isUnlockedInGameData || isDefaultUnlock);
+
+            bool isSelected = (!isLocked && frame.id == gameData.equippedFrameId);
+
+            Debug.Log($"Frame: {frame.frameName} (ID: {frame.id})");
+            Debug.Log($"  - Default Unlock: {isDefaultUnlock}");
+            Debug.Log($"  - In GameData by ID: {isUnlockedById}");
+            Debug.Log($"  - In GameData by Name: {isUnlockedByName}");
+            Debug.Log($"  - Final Locked State: {isLocked}");
+            Debug.Log($"  - Selected: {isSelected}");
+
             GameObject buttonObj = Instantiate(frameButtonPrefab, iconGridParent);
             FrameButton frameButton = buttonObj.GetComponent<FrameButton>();
-
-            bool isLocked = !gameDataManager.IsFrameUnlocked(frame.id);
-            bool isSelected = (!isLocked && frame.id == gameData.equippedFrameId);
 
             frameButton.Initialize(frame, OnFrameSelected, isLocked, isSelected);
 
@@ -567,6 +607,7 @@ public class ProfileSettings : MonoBehaviour
 
             frameButtons.Add(frameButton);
         }
+        Debug.Log("=== FRAME GRID REFRESH COMPLETE ===");
     }
 
     private void RefreshAchievementGrid()
