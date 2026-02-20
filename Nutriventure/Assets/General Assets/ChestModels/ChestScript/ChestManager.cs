@@ -8,7 +8,7 @@ using UnityEngine.Video;
 public class ChestManager : MonoBehaviour
 {
     [Header("Chest Database")]
-    public ChestDatabase chestDatabase; // Single ScriptableObject with list
+    public ChestDatabase chestDatabase;
 
     [Header("Fallback Settings (Use if no Database)")]
     public GameObject[] chestPrefabs;
@@ -19,30 +19,71 @@ public class ChestManager : MonoBehaviour
     [Header("Spawn Point")]
     public Transform chestSpawnPoint;
 
+    [Header("Trigger Area")]
+    public Collider triggerArea;
+
     [Header("Camera Settings")]
     public Cinemachine.CinemachineVirtualCamera chestCamera;
 
     [Header("Canvas References")]
     public GameObject menuCanvas;
     public GameObject chestCanvas;
+    public GameObject claimButtonCanvas; // The canvas with the claim button
+
+    [Header("Objects to Toggle")]
+    [Tooltip("These objects will be disabled when claim button is clicked and re-enabled when chest is claimed")]
+    public List<GameObject> objectsToToggle = new List<GameObject>();
 
     [Header("Video Settings")]
     public VideoPlayer videoPlayer;
     public RenderTexture videoRenderTexture;
 
+    [Header("Audio Settings")]
+    public AudioSource chestMusicAudioSource; // Dedicated AudioSource for chest music
+
     [Header("Fade Settings")]
-    public float fadeDuration = 1f;
+    public float fadeDuration = 0.5f; // For chest canvas
+    public float claimButtonFadeDuration = 0.15f; // Faster fade for claim button (changed from 0.5f to 0.15f)
 
     [Header("Player Settings")]
     public GameObject playerObject;
+
+    [Header("Reward Feedback UI - COINS")]
+    public GameObject coinRewardFeedbackPrefab;
+    public RectTransform coinRewardSpawnPoint;
+
+    [Header("Reward Feedback UI - GEMS")]
+    public GameObject gemRewardFeedbackPrefab;
+    public RectTransform gemRewardSpawnPoint;
+
+    [Header("Animation Settings")]
+    public Canvas parentCanvas;
+    public float feedbackSlideDuration = 0.5f;
+    public float feedbackFadeOutDuration = 0.3f;
+    public float feedbackSlideUpAmount = 50f;
+    public string feedbackPrefix = "+";
+    public string coinSuffix = "";
+    public string gemSuffix = "";
+
+    [Header("Audio")]
+    public AudioClip coinSound;
+    public AudioClip gemSound;
 
     private Queue<int> chestQueue = new Queue<int>();
     private Chest currentChest;
     private ChestUIHandler chestUIHandler;
     private CanvasGroup chestCanvasGroup;
+    private CanvasGroup claimButtonCanvasGroup;
     private int currentChestIndex = 0;
     private bool isPlayingChestMusic = false;
     private Coroutine waitForDelayCoroutine;
+    private bool isPlayerInTrigger = false;
+    private Button claimButton;
+    private Player_Data playerData;
+    private AudioClip currentChestMusic;
+
+    // Track toggled objects
+    private List<GameObject> toggledObjects = new List<GameObject>();
 
     public static ChestManager Instance { get; private set; }
 
@@ -60,6 +101,8 @@ public class ChestManager : MonoBehaviour
 
     void Start()
     {
+        playerData = FindObjectOfType<Player_Data>();
+
         if (chestCanvas != null)
         {
             chestUIHandler = chestCanvas.GetComponent<ChestUIHandler>();
@@ -73,6 +116,48 @@ public class ChestManager : MonoBehaviour
             chestCanvasGroup.alpha = 0f;
             chestCanvasGroup.interactable = false;
             chestCanvasGroup.blocksRaycasts = false;
+            chestCanvas.SetActive(false);
+        }
+
+        // Setup claim button canvas
+        if (claimButtonCanvas != null)
+        {
+            claimButtonCanvasGroup = claimButtonCanvas.GetComponent<CanvasGroup>();
+            if (claimButtonCanvasGroup == null)
+            {
+                claimButtonCanvasGroup = claimButtonCanvas.AddComponent<CanvasGroup>();
+            }
+            claimButtonCanvas.SetActive(false);
+            claimButtonCanvasGroup.alpha = 0f;
+            claimButtonCanvasGroup.interactable = false;
+            claimButtonCanvasGroup.blocksRaycasts = false;
+
+            // Find and setup the claim button
+            claimButton = claimButtonCanvas.GetComponentInChildren<Button>();
+            if (claimButton != null)
+            {
+                claimButton.onClick.RemoveAllListeners();
+                claimButton.onClick.AddListener(OnClaimButtonClicked);
+                Debug.Log("Claim button listener assigned in ChestManager");
+            }
+            else
+            {
+                Debug.LogError("No Button component found in claimButtonCanvas!");
+            }
+        }
+
+        // Setup chest music AudioSource
+        if (chestMusicAudioSource == null)
+        {
+            chestMusicAudioSource = gameObject.AddComponent<AudioSource>();
+            chestMusicAudioSource.loop = false;
+            chestMusicAudioSource.playOnAwake = false;
+        }
+
+        // Find parent canvas if not assigned
+        if (parentCanvas == null)
+        {
+            parentCanvas = FindObjectOfType<Canvas>();
         }
 
         InitializeVideoPlayer();
@@ -107,7 +192,6 @@ public class ChestManager : MonoBehaviour
 
     void InitializeChestQueue()
     {
-        // Queue up all chest indices
         int chestCount = GetChestCount();
         for (int i = 0; i < chestCount; i++)
         {
@@ -117,7 +201,6 @@ public class ChestManager : MonoBehaviour
 
     int GetChestCount()
     {
-        // Use database if available, otherwise use fallback arrays
         if (chestDatabase != null && chestDatabase.chestConfigs != null && chestDatabase.chestConfigs.Count > 0)
         {
             return chestDatabase.chestConfigs.Count;
@@ -148,6 +231,23 @@ public class ChestManager : MonoBehaviour
             currentChest.Initialize();
             currentChest.SetChestIndex(chestIndex);
             currentChestIndex = chestIndex;
+
+            // Start monitoring for claimable state
+            StartCoroutine(MonitorChestClaimable());
+        }
+    }
+
+    IEnumerator MonitorChestClaimable()
+    {
+        while (currentChest != null && !currentChest.isClaimable)
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        // Chest is now claimable
+        if (currentChest != null && currentChest.isClaimable && isPlayerInTrigger)
+        {
+            ShowClaimButton();
         }
     }
 
@@ -165,51 +265,186 @@ public class ChestManager : MonoBehaviour
         return null;
     }
 
+    // Called when player enters the trigger area
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            isPlayerInTrigger = true;
+
+            // Only show claim button if there's a chest and it's claimable
+            if (currentChest != null && currentChest.isClaimable && !currentChest.isOpened)
+            {
+                ShowClaimButton();
+            }
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            isPlayerInTrigger = false;
+            HideClaimButton();
+        }
+    }
+
+    void ShowClaimButton()
+    {
+        if (claimButtonCanvas != null && claimButtonCanvasGroup != null)
+        {
+            claimButtonCanvas.SetActive(true);
+            StartCoroutine(FadeCanvasGroup(claimButtonCanvasGroup, 0f, 1f, claimButtonFadeDuration));
+            claimButtonCanvasGroup.interactable = true;
+            claimButtonCanvasGroup.blocksRaycasts = true;
+            Debug.Log($"Claim button shown with {claimButtonFadeDuration}s fade");
+        }
+    }
+
+    void HideClaimButton()
+    {
+        if (claimButtonCanvas != null && claimButtonCanvasGroup != null)
+        {
+            StartCoroutine(FadeCanvasGroup(claimButtonCanvasGroup, 1f, 0f, claimButtonFadeDuration));
+            claimButtonCanvasGroup.interactable = false;
+            claimButtonCanvasGroup.blocksRaycasts = false;
+            StartCoroutine(DeactivateAfterDelay(claimButtonCanvas, claimButtonFadeDuration));
+            Debug.Log($"Claim button hidden with {claimButtonFadeDuration}s fade");
+        }
+    }
+
+    IEnumerator DeactivateAfterDelay(GameObject obj, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (obj != null) obj.SetActive(false);
+    }
+
+    // Toggle objects on/off
+    private void ToggleObjects(bool setActive)
+    {
+        foreach (GameObject obj in objectsToToggle)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(setActive);
+                if (!setActive && !toggledObjects.Contains(obj))
+                {
+                    toggledObjects.Add(obj);
+                }
+            }
+        }
+        Debug.Log($"Objects toggled {(setActive ? "ON" : "OFF")}");
+    }
+
+    // Called when player clicks the claim button (the first button)
+    public void OnClaimButtonClicked()
+    {
+        if (currentChest == null || !currentChest.isClaimable || currentChest.isOpened)
+        {
+            Debug.Log("Cannot claim chest: " +
+                (currentChest == null ? "No chest" :
+                (!currentChest.isClaimable ? "Not claimable" : "Already opened")));
+            return;
+        }
+
+        // Play click sound
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
+        // Hide claim button immediately with faster fade
+        HideClaimButton();
+
+        // Toggle OFF the specified objects
+        ToggleObjects(false);
+
+        // Call the chest's HandleChestClick method
+        if (currentChest != null)
+        {
+            currentChest.HandleChestClick();
+        }
+    }
+
     public void FocusOnChest(Chest chest)
     {
         if (chest != currentChest || chestCamera == null) return;
 
-        // REMOVED: Hide the player/character - Character will remain visible
-
-        // Get the chest index
         int chestIndex = chest.chestOrder;
-
-        // Get the custom delay for this chest type
         float customDelay = GetRewardDelayForChest(chestIndex);
 
-        // Play chest background music
+        // ========== GUARANTEED CANVAS ACTIVATION ==========
+        // Method 1: Direct activation with CanvasGroup
+        if (chestCanvas != null)
+        {
+            // Force the canvas to be active
+            chestCanvas.SetActive(true);
+
+            // Reset the canvas group to ensure it's visible
+            if (chestCanvasGroup != null)
+            {
+                chestCanvasGroup.alpha = 1f;
+                chestCanvasGroup.interactable = true;
+                chestCanvasGroup.blocksRaycasts = true;
+            }
+
+            Debug.Log("CHEST CANVAS ACTIVATED - Method 1 (Direct)");
+        }
+
+        // Method 2: Fade in as backup
+        if (chestCanvas != null && chestCanvasGroup != null)
+        {
+            StartCoroutine(FadeCanvas(chestCanvasGroup, 0f, 1f, fadeDuration));
+            Debug.Log("CHEST CANVAS FADE STARTED - Method 2 (Fade)");
+        }
+
+        // Method 3: Double-check after a tiny delay
+        StartCoroutine(VerifyCanvasActivated());
+
+        // Now that canvas is active, set up video and music
+        ChangeBackgroundVideo(chestIndex);
         PlayChestBackgroundMusic(chestIndex);
 
-        // Change background video
-        ChangeBackgroundVideo(chestIndex);
-
-        // Set up camera
         chestCamera.Priority = 20;
         chestCamera.LookAt = chest.transform;
         chestCamera.Follow = chest.transform;
 
-        // Hide menu, show chest UI
         if (menuCanvas != null) menuCanvas.SetActive(false);
-        if (chestCanvas != null)
-        {
-            chestCanvas.SetActive(true);
-            StartCoroutine(FadeCanvas(chestCanvasGroup, 0f, 1f, fadeDuration));
-        }
 
-        // Open the chest
         chest.OpenChest();
 
-        // Set the chest in UI handler (shows "Opening...")
         if (chestUIHandler != null)
         {
             chestUIHandler.SetCurrentChest(chest);
         }
 
-        // Wait for custom delay before showing rewards
         if (waitForDelayCoroutine != null)
             StopCoroutine(waitForDelayCoroutine);
 
         waitForDelayCoroutine = StartCoroutine(WaitForCustomDelay(chest, customDelay));
+    }
+
+    // Coroutine to verify canvas is active
+    IEnumerator VerifyCanvasActivated()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        if (chestCanvas != null && !chestCanvas.activeInHierarchy)
+        {
+            Debug.LogWarning("CHEST CANVAS WAS NOT ACTIVE! Forcing activation...");
+            chestCanvas.SetActive(true);
+
+            if (chestCanvasGroup != null)
+            {
+                chestCanvasGroup.alpha = 1f;
+                chestCanvasGroup.interactable = true;
+                chestCanvasGroup.blocksRaycasts = true;
+            }
+        }
+        else if (chestCanvas != null)
+        {
+            Debug.Log("CHEST CANVAS VERIFIED: Active and visible");
+        }
     }
 
     float GetRewardDelayForChest(int chestIndex)
@@ -223,7 +458,7 @@ public class ChestManager : MonoBehaviour
         {
             return chestRewardDelays[chestIndex];
         }
-        return 2f; // Default
+        return 2f;
     }
 
     VideoClip GetVideoClipForChest(int chestIndex)
@@ -257,12 +492,9 @@ public class ChestManager : MonoBehaviour
     IEnumerator WaitForCustomDelay(Chest chest, float delay)
     {
         Debug.Log($"Waiting {delay} seconds before showing rewards for {chest.ChestName}");
-
         yield return new WaitForSeconds(delay);
-
         Debug.Log($"Delay finished, showing rewards for {chest.ChestName}");
 
-        // Now start revealing rewards
         if (chestUIHandler != null)
         {
             chestUIHandler.StartRevealingRewards(chest);
@@ -271,22 +503,24 @@ public class ChestManager : MonoBehaviour
 
     void PlayChestBackgroundMusic(int chestIndex)
     {
-        if (AudioHandler.Instance != null)
+        // Stop any currently playing music
+        if (chestMusicAudioSource != null && chestMusicAudioSource.isPlaying)
         {
-            // Stop main menu music
-            AudioHandler.Instance.musicSource.Stop();
+            chestMusicAudioSource.Stop();
+        }
 
-            AudioClip chestMusic = GetAudioClipForChest(chestIndex);
-            if (chestMusic != null)
-            {
-                AudioHandler.Instance.musicSource.clip = chestMusic;
-                AudioHandler.Instance.musicSource.loop = false;
-                AudioHandler.Instance.musicSource.Play();
-                isPlayingChestMusic = true;
+        AudioClip chestMusic = GetAudioClipForChest(chestIndex);
+        currentChestMusic = chestMusic;
 
-                StartCoroutine(StopMusicWhenEnds(chestMusic.length));
-                Debug.Log($"Playing chest music: {chestMusic.name}");
-            }
+        if (chestMusic != null && chestMusicAudioSource != null)
+        {
+            chestMusicAudioSource.clip = chestMusic;
+            chestMusicAudioSource.loop = false;
+            chestMusicAudioSource.Play();
+            isPlayingChestMusic = true;
+
+            StartCoroutine(StopMusicWhenEnds(chestMusic.length));
+            Debug.Log($"Playing chest music: {chestMusic.name}");
         }
     }
 
@@ -329,10 +563,6 @@ public class ChestManager : MonoBehaviour
         videoPlayer.Play();
     }
 
-    // REMOVED: HidePlayer() method - Character will remain visible
-
-    // REMOVED: ShowPlayer() method - Character will remain visible
-
     IEnumerator StopMusicWhenEnds(float musicLength)
     {
         yield return new WaitForSeconds(musicLength);
@@ -345,19 +575,10 @@ public class ChestManager : MonoBehaviour
 
     void StopChestMusic()
     {
-        if (AudioHandler.Instance != null && AudioHandler.Instance.musicSource != null)
+        if (chestMusicAudioSource != null)
         {
-            AudioHandler.Instance.musicSource.Stop();
+            chestMusicAudioSource.Stop();
             isPlayingChestMusic = false;
-        }
-    }
-
-    void ResumeMainMenuMusic()
-    {
-        if (AudioHandler.Instance != null)
-        {
-            StopChestMusic();
-            AudioHandler.Instance.PlayMainMenuMusic();
         }
     }
 
@@ -369,17 +590,130 @@ public class ChestManager : MonoBehaviour
         }
     }
 
+    // Process rewards and add to player data
+    private void ProcessAndAddRewards(List<ChestDatabase.ChestReward> chestRewards)
+    {
+        if (playerData == null) return;
+
+        int totalCoins = 0;
+        int totalGems = 0;
+        int totalXP = 0;
+
+        foreach (var reward in chestRewards)
+        {
+            switch (reward.rewardType.ToLower())
+            {
+                case "coin":
+                case "coins":
+                case "nutricoins":
+                    totalCoins += reward.amount;
+                    break;
+
+                case "gem":
+                case "gems":
+                case "nutrigems":
+                    totalGems += reward.amount;
+                    break;
+
+                case "exp":
+                case "xp":
+                case "experience":
+                    totalXP += reward.amount;
+                    break;
+
+                case "key":
+                    if (GameDataManager.Instance != null)
+                    {
+                        GameDataManager.Instance.CurrentGameData.CollectKingdomKey(reward.rewardName);
+                    }
+                    break;
+            }
+        }
+
+        // Add to GameData
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            if (totalCoins > 0)
+            {
+                GameDataManager.Instance.CurrentGameData.nutriCoins += totalCoins;
+            }
+
+            if (totalGems > 0)
+            {
+                GameDataManager.Instance.CurrentGameData.nutriGems += totalGems;
+            }
+
+            if (totalXP > 0)
+            {
+                GameDataManager.Instance.CurrentGameData.currentXP += totalXP;
+
+                // Check for level up
+                while (GameDataManager.Instance.CurrentGameData.currentXP >=
+                       GameDataManager.Instance.CurrentGameData.xpToNextLevel)
+                {
+                    GameDataManager.Instance.CurrentGameData.currentXP -=
+                        GameDataManager.Instance.CurrentGameData.xpToNextLevel;
+                    GameDataManager.Instance.CurrentGameData.playerLevel++;
+                    GameDataManager.Instance.CurrentGameData.xpToNextLevel =
+                        CalculateNextLevelXP(GameDataManager.Instance.CurrentGameData.playerLevel);
+                }
+            }
+
+            GameDataManager.Instance.SaveGameData();
+        }
+
+        // Notify Player_Data for UI updates
+        if (totalCoins > 0)
+        {
+            playerData.NotifyCoinCollected(totalCoins);
+            ShowCoinFeedback(totalCoins);
+        }
+
+        if (totalGems > 0)
+        {
+            playerData.NotifyGemCollected(totalGems);
+            ShowGemFeedback(totalGems);
+        }
+
+        if (totalXP > 0)
+        {
+            playerData.NotifyXPGained(totalXP);
+        }
+
+        playerData.ForceUpdateAllUI();
+    }
+
+    private float CalculateNextLevelXP(int level)
+    {
+        return 100 * level;
+    }
+
     public void OnChestClaimed()
     {
-        // REMOVED: Show player again - Character remains visible
-
         if (chestUIHandler != null)
         {
+            // Get rewards before closing
+            var chestConfig = GetChestConfig(currentChestIndex);
+            if (chestConfig != null && chestConfig.chestRewards != null)
+            {
+                ProcessAndAddRewards(chestConfig.chestRewards);
+            }
+
             chestUIHandler.OnChestUIClosed();
         }
 
         StopVideo();
-        ResumeMainMenuMusic();
+        StopChestMusic();
+
+        if (chestCamera != null)
+        {
+            chestCamera.Priority = 0;
+            chestCamera.LookAt = null;
+            chestCamera.Follow = null;
+        }
+
+        // Toggle ON the specified objects (re-enable them)
+        ToggleObjects(true);
 
         if (currentChest != null)
         {
@@ -453,13 +787,30 @@ public class ChestManager : MonoBehaviour
         canvasGroup.alpha = endAlpha;
     }
 
+    IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
+    {
+        if (canvasGroup == null) yield break;
+
+        float elapsedTime = 0f;
+        canvasGroup.alpha = startAlpha;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsedTime / duration);
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
+            yield return null;
+        }
+
+        canvasGroup.alpha = endAlpha;
+    }
+
     IEnumerator SpawnNextChestAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
         SpawnNextChest();
     }
 
-    // Helper method to get chest config from database
     public ChestDatabase.ChestConfig GetChestConfig(int index)
     {
         if (chestDatabase != null)
@@ -469,7 +820,6 @@ public class ChestManager : MonoBehaviour
         return null;
     }
 
-    // Helper method to get chest config by name
     public ChestDatabase.ChestConfig GetChestConfigByName(string name)
     {
         if (chestDatabase != null)
@@ -477,5 +827,87 @@ public class ChestManager : MonoBehaviour
             return chestDatabase.GetChestConfigByName(name);
         }
         return null;
+    }
+
+    // ========== REWARD FEEDBACK METHODS ==========
+
+    public void ShowCoinFeedback(int amount)
+    {
+        if (coinRewardFeedbackPrefab == null || coinRewardSpawnPoint == null || parentCanvas == null || amount <= 0)
+            return;
+
+        GameObject feedbackObject = Instantiate(coinRewardFeedbackPrefab, parentCanvas.transform);
+        RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
+
+        rectTransform.position = coinRewardSpawnPoint.position;
+        rectTransform.anchorMin = coinRewardSpawnPoint.anchorMin;
+        rectTransform.anchorMax = coinRewardSpawnPoint.anchorMax;
+        rectTransform.pivot = coinRewardSpawnPoint.pivot;
+
+        TMPro.TMP_Text feedbackText = feedbackObject.GetComponentInChildren<TMPro.TMP_Text>();
+        if (feedbackText != null)
+        {
+            feedbackText.text = $"{feedbackPrefix}{amount}{coinSuffix}";
+        }
+
+        StartCoroutine(AnimateRewardFeedback(feedbackObject));
+    }
+
+    public void ShowGemFeedback(int amount)
+    {
+        if (gemRewardFeedbackPrefab == null || gemRewardSpawnPoint == null || parentCanvas == null || amount <= 0)
+            return;
+
+        GameObject feedbackObject = Instantiate(gemRewardFeedbackPrefab, parentCanvas.transform);
+        RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
+
+        rectTransform.position = gemRewardSpawnPoint.position;
+        rectTransform.anchorMin = gemRewardSpawnPoint.anchorMin;
+        rectTransform.anchorMax = gemRewardSpawnPoint.anchorMax;
+        rectTransform.pivot = gemRewardSpawnPoint.pivot;
+
+        TMPro.TMP_Text feedbackText = feedbackObject.GetComponentInChildren<TMPro.TMP_Text>();
+        if (feedbackText != null)
+        {
+            feedbackText.text = $"{feedbackPrefix}{amount}{gemSuffix}";
+        }
+
+        StartCoroutine(AnimateRewardFeedback(feedbackObject));
+    }
+
+    private IEnumerator AnimateRewardFeedback(GameObject feedbackObject)
+    {
+        if (feedbackObject == null) yield break;
+
+        RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
+        CanvasGroup canvasGroup = feedbackObject.GetComponent<CanvasGroup>();
+
+        if (canvasGroup == null)
+        {
+            canvasGroup = feedbackObject.AddComponent<CanvasGroup>();
+        }
+
+        Vector2 startPos = rectTransform.anchoredPosition;
+        Vector2 endPos = startPos + new Vector2(0, feedbackSlideUpAmount);
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < feedbackSlideDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.SmoothStep(0, 1, elapsedTime / feedbackSlideDuration);
+            rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+            yield return null;
+        }
+
+        elapsedTime = 0f;
+        while (elapsedTime < feedbackFadeOutDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(1, 0, elapsedTime / feedbackFadeOutDuration);
+            yield return null;
+        }
+
+        Destroy(feedbackObject);
     }
 }

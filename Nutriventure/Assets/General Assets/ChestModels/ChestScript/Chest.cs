@@ -5,8 +5,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-// Add IPointerClickHandler interface
-public class Chest : MonoBehaviour, IPointerClickHandler
+public class Chest : MonoBehaviour
 {
     [Header("Chest Settings")]
     public float timeToBecomeClaimable = 10f;
@@ -123,7 +122,7 @@ public class Chest : MonoBehaviour, IPointerClickHandler
         if (animator != null)
             animator.SetBool("isClaimable", true);
 
-        Debug.Log(ChestName + " is now claimable and clickable!");
+        Debug.Log(ChestName + " is now claimable!");
     }
 
     // Add this method to get remaining time
@@ -136,113 +135,13 @@ public class Chest : MonoBehaviour, IPointerClickHandler
         return Mathf.Max(0f, remaining);
     }
 
-    // NEW METHOD: Set chest index from ChestManager
+    // Set chest index from ChestManager
     public void SetChestIndex(int index)
     {
         chestOrder = index;
     }
 
-    void Update()
-    {
-        // Handle mouse clicks only on desktop
-#if UNITY_STANDALONE || UNITY_WEBGL || UNITY_EDITOR
-        if (isClaimable && !isOpened && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            CheckForChestClick();
-        }
-#endif
-    }
-
-    // NEW METHOD: IPointerClickHandler implementation for mobile touch
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        // Only respond to touch if chest is claimable and not opened
-        if (isClaimable && !isOpened)
-        {
-            Debug.Log("CHEST TOUCHED (Mobile): " + ChestName);
-            HandleChestClick();
-        }
-        else if (!isClaimable)
-        {
-            Debug.Log("Chest not claimable yet! Time remaining: " + GetRemainingTime());
-        }
-        else if (isOpened)
-        {
-            Debug.Log("Chest already opened!");
-        }
-    }
-
-    void CheckForChestClick()
-    {
-        if (Camera.main == null)
-        {
-            Debug.LogError("Main camera not found!");
-            return;
-        }
-
-        // First check if we clicked on a UI button
-        if (IsClickOnInteractiveUI())
-        {
-            Debug.Log("Clicked on interactive UI element - ignoring chest click");
-            return;
-        }
-
-        // Then check for chest click
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, clickDistance))
-        {
-            if (hit.collider.gameObject == gameObject || hit.collider.transform.IsChildOf(transform))
-            {
-                Debug.Log("CHEST CLICKED: " + ChestName + " from " + hit.distance + " units away!");
-                HandleChestClick();
-            }
-        }
-    }
-
-    // Smart UI detection - only blocks if clicking on interactive UI elements
-    private bool IsClickOnInteractiveUI()
-    {
-        if (EventSystem.current == null)
-            return false;
-
-        // Get what we're clicking on
-        var pointerData = new PointerEventData(EventSystem.current)
-        {
-            position = Mouse.current.position.ReadValue()
-        };
-
-        var results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(pointerData, results);
-
-        // Check if we hit any interactive UI elements
-        foreach (var result in results)
-        {
-            // If it's a button, toggle, or other interactive element
-            if (result.gameObject.GetComponent<Button>() != null ||
-                result.gameObject.GetComponent<Toggle>() != null ||
-                result.gameObject.GetComponent<Slider>() != null ||
-                result.gameObject.GetComponent<InputField>() != null ||
-                result.gameObject.GetComponent<IPointerClickHandler>() != null)
-            {
-                return true;
-            }
-
-            // Or check if it's a specific named button you want to protect
-            string[] protectedButtons = { "Play", "Credits", "Settings", "ResetGameData", "Claim" };
-            foreach (string buttonName in protectedButtons)
-            {
-                if (result.gameObject.name.Contains(buttonName))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
+    // This method will now be called ONLY by the button via ChestManager
     public void HandleChestClick()
     {
         if (!isClaimable)

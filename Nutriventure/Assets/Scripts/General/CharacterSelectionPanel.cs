@@ -12,8 +12,6 @@ public class CharacterButtonData : MonoBehaviour
     public Image selectedHighlight;
     public Image characterIcon;
     public GameObject lockedOverlay;
-
-    // New property to track equipped status
     public bool isEquipped = false;
 }
 
@@ -56,18 +54,21 @@ public class CharacterSelectionPanel : MonoBehaviour
     private Coroutine lockedFeedbackCoroutine;
     private bool isShowingLockedFeedback = false;
     private int equippedCharacterID = -1;
+    private GameDataManager gameDataManager;
 
     void Start()
     {
+        gameDataManager = GameDataManager.Instance;
+
         if (characterSelectionController == null)
         {
             characterSelectionController = FindObjectOfType<CharacterSelectionController>();
         }
 
         // Get equipped character from GameData
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            equippedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+            equippedCharacterID = gameDataManager.CurrentGameData.selectedCharacterID;
             currentSelectedCharacterID = equippedCharacterID;
         }
 
@@ -181,7 +182,6 @@ public class CharacterSelectionPanel : MonoBehaviour
             if (selectedHighlight != null)
             {
                 buttonData.selectedHighlight = selectedHighlight;
-                // Initially hide highlight
                 selectedHighlight.enabled = false;
             }
         }
@@ -222,19 +222,20 @@ public class CharacterSelectionPanel : MonoBehaviour
         Debug.Log($"=== Character Button Clicked ===");
         Debug.Log($"Character: {selectedCharacter.characterName} (ID: {characterID})");
 
-        GameData gameData = GameDataManager.Instance?.CurrentGameData;
-        if (gameData == null)
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null)
         {
-            Debug.LogError("GameData is null!");
+            Debug.LogError("GameDataManager or GameData is null!");
             return;
         }
 
-        // Check unlock status
+        GameData gameData = gameDataManager.CurrentGameData;
+
+        // Check unlock status using GameData
         bool isUnlockedByDefault = selectedCharacter.unlockedByDefault;
         bool isUnlockedInGameData = gameData.unlockedCharacterIDs.Contains(characterID);
         bool isUnlocked = isUnlockedByDefault || isUnlockedInGameData;
 
-        Debug.Log($"Character unlocked: {isUnlocked}");
+        Debug.Log($"Character unlocked: {isUnlocked} (Default: {isUnlockedByDefault}, InGameData: {isUnlockedInGameData})");
 
         if (!isUnlocked)
         {
@@ -317,8 +318,6 @@ public class CharacterSelectionPanel : MonoBehaviour
         }
     }
 
-    // ============ HIGHLIGHT MANAGEMENT ============
-
     public void UpdateAllButtonHighlights()
     {
         foreach (GameObject buttonGO in characterButtons)
@@ -350,10 +349,9 @@ public class CharacterSelectionPanel : MonoBehaviour
         // Update icon color based on selection state
         if (buttonData.characterIcon != null)
         {
-            // Changed to use color instead of enabling/disabling highlight
             buttonData.characterIcon.color = shouldHighlight ?
-                new Color(1f, 1f, 1f, 1f) : // FFFFFF when selected
-                new Color(0.588f, 0.588f, 0.588f, 1f); // 969696 when not selected
+                new Color(1f, 1f, 1f, 1f) : // White when selected
+                new Color(0.588f, 0.588f, 0.588f, 1f); // Gray when not selected
         }
     }
 
@@ -362,8 +360,6 @@ public class CharacterSelectionPanel : MonoBehaviour
         equippedCharacterID = equipped ? characterID : -1;
         UpdateAllButtonHighlights();
     }
-
-    // ============ LOCKED FEEDBACK ============
 
     public void ShowLockedCharacterFeedback(CharacterDatabase.CharacterData lockedCharacter)
     {
@@ -420,8 +416,6 @@ public class CharacterSelectionPanel : MonoBehaviour
         canvasGroup.alpha = endAlpha;
     }
 
-    // ============ UTILITY METHODS ============
-
     private void SetupGridLayout()
     {
         GridLayoutGroup gridLayout = characterButtonContainer.GetComponent<GridLayoutGroup>();
@@ -456,6 +450,8 @@ public class CharacterSelectionPanel : MonoBehaviour
 
     private void UpdateAllButtonAppearances()
     {
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null) return;
+
         foreach (GameObject buttonGO in characterButtons)
         {
             if (buttonGO != null)
@@ -471,13 +467,10 @@ public class CharacterSelectionPanel : MonoBehaviour
         if (buttonData == null) return;
 
         CharacterDatabase.CharacterData characterData = characterDatabase.characters[buttonData.characterIndex];
-        GameData gameData = GameDataManager.Instance?.CurrentGameData;
 
-        if (gameData == null)
-        {
-            Debug.LogError("GameData is null!");
-            return;
-        }
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null) return;
+
+        GameData gameData = gameDataManager.CurrentGameData;
 
         bool isUnlockedByDefault = characterData.unlockedByDefault;
         bool isUnlockedInGameData = gameData.unlockedCharacterIDs.Contains(characterData.characterID);
@@ -503,8 +496,6 @@ public class CharacterSelectionPanel : MonoBehaviour
             }
         }
     }
-
-    // ============ PUBLIC METHODS ============
 
     public GameObject GetCharacterButton(int characterID)
     {
