@@ -43,7 +43,7 @@ MonoBehaviour:
         type: 5
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 3
+      status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 0002
       questName: Switch me up!
@@ -361,7 +361,7 @@ MonoBehaviour:
     kingdomIcon: {fileID: 21300000, guid: 169eebb39ddfde64eba067fde5553727, type: 3}
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
-    - questID: 1101
+    - questID: 11011
       questName: Collect 15 Go Foods
       description: 'Gather Go Foods (Grains and Carbohydrates) to fuel your journey.  '
       longDescription: You need to follow the instruction to buy a character from
@@ -376,7 +376,7 @@ MonoBehaviour:
         type: 0
         targetID: 
         requiredAmount: 15
-        currentAmount: 15
+        currentAmount: 0
         isOptional: 0
         isCompleted: 1
       rewards:
@@ -396,9 +396,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 2
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1102
+    - questID: 11022
       questName: Collect 15 Grow Foods
       description: Gather Grow Foods (Proteins) to build your strength.
       longDescription: 
@@ -432,9 +432,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1103
+    - questID: 11033
       questName: Collect 15 Glow Foods
       description: 'Gather Glow Foods (Fruits and Vegetables) for vitality.  '
       longDescription: 
@@ -468,9 +468,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1104
+    - questID: 11044
       questName: Unlock the Key to Sugaria
       description: Prove your mastery of Go, Grow, and Glow foods to unlock the path
         to Sugaria.
@@ -506,9 +506,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1105
+    - questID: 11055
       questName: Collect 50 Go Foods
       description: Gather a large amount of Go Foods.
       longDescription: 
@@ -542,9 +542,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1106
+    - questID: 11066
       questName: Collect 50 Grow Foods
       description: Gather a large amount of Grow Foods.
       longDescription: 
@@ -578,9 +578,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1107
+    - questID: 11077
       questName: Collect 50 Glow Foods
       description: Consume a large amount of Glow Foods.
       longDescription: 
@@ -614,9 +614,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1108
+    - questID: 11088
       questName: Journey Specialist
       description: Replay and complete the Nutri Kingdom journey 5 times.
       longDescription: 
@@ -650,9 +650,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1109
+    - questID: 11099
       questName: Perfect Runner
       description: Finish the journey to Nutri Kingdom 3 times with 3 stars.
       longDescription: 
@@ -686,9 +686,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1110
+    - questID: 11101
       questName: Friendly Face
       description: Greet the local Enerlings. Talk to any Enerling in Nutri Kingdom
         20 times.
@@ -723,9 +723,9 @@ MonoBehaviour:
         type: 6
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1111
+    - questID: 11111
       questName: Master of Nutri Kingdom
       description: Fully complete the Nutri Kingdom journey 10 times.
       longDescription: Your dedication to nutrition is unmatched. Complete the journey
@@ -929,7 +929,7 @@ MonoBehaviour:
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Preservia
-    kingdomName: Nutri Kingdom
+    kingdomName: PreserviaKingdom
     kingdomIcon: {fileID: 21300000, guid: b4875b9b9639ab74db316a3b1109fbf5, type: 3}
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:

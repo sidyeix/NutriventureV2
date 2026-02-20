@@ -15,6 +15,14 @@ public class QuestTaskUpdater : MonoBehaviour
     [Header("Task Update Settings")]
     [SerializeField] private int progressAmount = 1;
     [SerializeField] private bool updateOnClick = true;
+    [SerializeField] private bool updateOnTrigger = true;
+    [SerializeField] private bool destroyOnTrigger = false;
+    [SerializeField] private string playerTag = "Player";
+
+    [Header("Trigger Cooldown")]
+    [SerializeField] private bool useCooldown = false;
+    [SerializeField] private float cooldownDuration = 2f;
+    private bool isOnCooldown = false;
 
     [Header("Optional UI Feedback")]
     [SerializeField] private TextMeshProUGUI feedbackText;
@@ -24,15 +32,39 @@ public class QuestTaskUpdater : MonoBehaviour
     [SerializeField] private string clickSound = "ButtonClick";
 
     private Button button;
+    private Collider triggerCollider;
     private bool hasInitialized = false;
 
     private void Start()
     {
+        // Check for Button component
         button = GetComponent<Button>();
-
         if (button != null && updateOnClick)
         {
             button.onClick.AddListener(OnButtonClick);
+            Debug.Log($"QuestTaskUpdater: Button mode enabled on {gameObject.name}");
+        }
+
+        // Check for trigger collider
+        Collider[] colliders = GetComponents<Collider>();
+        foreach (Collider col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                triggerCollider = col;
+                Debug.Log($"QuestTaskUpdater: Trigger mode enabled on {gameObject.name}");
+                break;
+            }
+        }
+
+        // If no trigger found on this object, check children
+        if (triggerCollider == null)
+        {
+            triggerCollider = GetComponentInChildren<Collider>();
+            if (triggerCollider != null && !triggerCollider.isTrigger)
+            {
+                triggerCollider = null;
+            }
         }
 
         // Validate quest reference
@@ -76,14 +108,65 @@ public class QuestTaskUpdater : MonoBehaviour
         hasInitialized = true;
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        // Check if trigger mode is enabled
+        if (!updateOnTrigger) return;
+
+        // Check if the entering object has the correct tag
+        if (!other.CompareTag(playerTag)) return;
+
+        // Check cooldown
+        if (useCooldown && isOnCooldown) return;
+
+        Debug.Log($"QuestTaskUpdater: Player entered trigger on {gameObject.name}");
+
+        // Update quest progress
+        UpdateQuestProgress();
+
+        // Start cooldown if enabled
+        if (useCooldown)
+        {
+            StartCoroutine(CooldownCoroutine());
+        }
+
+        // Destroy object if enabled
+        if (destroyOnTrigger)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        // Optional: Implement stay logic if needed
+        // For now, we'll leave this empty
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Optional: Implement exit logic if needed
+    }
+
+    private IEnumerator CooldownCoroutine()
+    {
+        isOnCooldown = true;
+        yield return new WaitForSeconds(cooldownDuration);
+        isOnCooldown = false;
+    }
+
     public void OnButtonClick()
     {
+        // Check if button mode is enabled
+        if (!updateOnClick) return;
+
         // Play click sound
         if (AudioHandler.Instance != null)
         {
             AudioHandler.Instance.PlayButtonClick();
         }
 
+        Debug.Log($"QuestTaskUpdater: Button clicked on {gameObject.name}");
         UpdateQuestProgress();
     }
 
@@ -109,6 +192,8 @@ public class QuestTaskUpdater : MonoBehaviour
             ShowFeedback("Quest not found", false);
             return;
         }
+
+        Debug.Log($"QuestTaskUpdater: Updating quest - {quest.questName}, Current Status: {quest.status}");
 
         // Check if quest is in progress
         if (quest.status != QuestStatus.InProgress)
@@ -136,6 +221,8 @@ public class QuestTaskUpdater : MonoBehaviour
         {
             QuestTask task = quest.tasks[0];
 
+            Debug.Log($"QuestTaskUpdater: Current task progress - {task.currentAmount}/{task.requiredAmount}");
+
             // Check if task is already completed
             if (task.isCompleted)
             {
@@ -154,6 +241,12 @@ public class QuestTaskUpdater : MonoBehaviour
             }
 
             task.currentAmount = newAmount;
+            Debug.Log($"QuestTaskUpdater: Task progress updated to {task.currentAmount}/{task.requiredAmount}");
+
+            // Mark the database as dirty in editor
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(questDatabase);
+#endif
 
             // Check if task is now completed
             if (task.currentAmount >= task.requiredAmount)
@@ -168,6 +261,10 @@ public class QuestTaskUpdater : MonoBehaviour
                     quest.CompleteQuest();
                     Debug.Log($"Quest {quest.questName} completed!");
                     ShowFeedback("Quest completed! Talk to NPC to claim rewards.", true);
+
+#if UNITY_EDITOR
+                    UnityEditor.EditorUtility.SetDirty(questDatabase);
+#endif
                 }
             }
             else
@@ -201,6 +298,12 @@ public class QuestTaskUpdater : MonoBehaviour
         yield return new WaitForSeconds(feedbackDuration);
 
         feedbackText.gameObject.SetActive(false);
+    }
+
+    // Public method to manually trigger progress update from other scripts
+    public void ManualTriggerUpdate()
+    {
+        UpdateQuestProgress();
     }
 
     // Editor helper to populate dropdowns
@@ -241,6 +344,38 @@ public class QuestTaskUpdater : MonoBehaviour
             }
         }
     }
+
+    [ContextMenu("Detect Interaction Type")]
+    private void DetectInteractionType()
+    {
+        Button btn = GetComponent<Button>();
+        Collider[] colliders = GetComponents<Collider>();
+        bool hasTrigger = false;
+
+        foreach (Collider col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                hasTrigger = true;
+                break;
+            }
+        }
+
+        if (btn != null)
+        {
+            Debug.Log($"GameObject {gameObject.name} has a Button component - will use click interaction");
+        }
+
+        if (hasTrigger)
+        {
+            Debug.Log($"GameObject {gameObject.name} has a Trigger Collider - will use trigger interaction");
+        }
+
+        if (btn == null && !hasTrigger)
+        {
+            Debug.LogWarning($"GameObject {gameObject.name} has neither Button nor Trigger Collider! No interaction will work.");
+        }
+    }
 #endif
 
     private void OnDestroy()
@@ -248,6 +383,37 @@ public class QuestTaskUpdater : MonoBehaviour
         if (button != null)
         {
             button.onClick.RemoveListener(OnButtonClick);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        // Visualize trigger area in editor
+        Collider[] colliders = GetComponents<Collider>();
+        foreach (Collider col in colliders)
+        {
+            if (col != null && col.isTrigger)
+            {
+                Gizmos.color = new Color(0, 1, 0, 0.3f);
+
+                if (col is BoxCollider box)
+                {
+                    Gizmos.matrix = transform.localToWorldMatrix;
+                    Gizmos.DrawCube(box.center, box.size);
+                }
+                else if (col is SphereCollider sphere)
+                {
+                    Gizmos.matrix = transform.localToWorldMatrix;
+                    Gizmos.DrawSphere(sphere.center, sphere.radius);
+                }
+                else if (col is CapsuleCollider capsule)
+                {
+                    // Simple visualization for capsule
+                    Gizmos.matrix = transform.localToWorldMatrix;
+                    Gizmos.DrawWireSphere(capsule.center, capsule.radius);
+                }
+                break; // Only draw the first trigger
+            }
         }
     }
 }
