@@ -670,83 +670,43 @@ public class NPCQuestInteraction : MonoBehaviour
         Debug.Log("STEP 1: Immediately resetting camera and UI...");
         ImmediateReset();
 
-        // STEP 2: Process rewards (add to GameData)
-        Debug.Log("STEP 2: Processing rewards...");
-
-        // Track totals for different reward types
-        int totalCoins = 0;
-        int totalGems = 0;
-
-        // Process each reward and track totals
-        foreach (var reward in currentQuest.rewards)
-        {
-            ProcessReward(reward);
-
-            // Track totals for feedback
-            switch (reward.type)
-            {
-                case QuestReward.RewardType.NutriCoins:
-                    totalCoins += reward.amount;
-                    break;
-                case QuestReward.RewardType.NutriGems:
-                    totalGems += reward.amount;
-                    break;
-            }
-        }
-
         // Mark quest as claimed
         currentQuest.ClaimQuest();
 
         // Save game data
         GameDataManager.Instance.SaveGameData();
 
-        // STEP 3: Wait for 1 second delay
-        Debug.Log($"STEP 3: Waiting {rewardDelay}s before showing rewards...");
-        yield return new WaitForSeconds(rewardDelay);
-
-        // STEP 4: Show visual feedback and play sounds
-        Debug.Log("STEP 4: Showing reward feedback now...");
-
-        // Play coin sound effect
-        if (coinSound != null && AudioHandler.Instance != null)
+        // Use the RewardProcessor to handle all rewards
+        RewardProcessor rewardProcessor = FindObjectOfType<RewardProcessor>();
+        if (rewardProcessor == null)
         {
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(coinSound);
-        }
-        else if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.PlayClaimSound();
-        }
+            // Create one if it doesn't exist
+            GameObject processorObj = new GameObject("RewardProcessor");
+            rewardProcessor = processorObj.AddComponent<RewardProcessor>();
 
-        // Show feedback for coin and gem rewards
-        if (totalCoins > 0)
-        {
-            ShowCoinRewardFeedback(totalCoins);
-        }
-
-        if (totalGems > 0)
-        {
-            ShowGemRewardFeedback(totalGems);
+            // Copy settings from this component using properties
+            rewardProcessor.CoinRewardFeedbackPrefab = coinRewardFeedbackPrefab;
+            rewardProcessor.GemRewardFeedbackPrefab = gemRewardFeedbackPrefab;
+            rewardProcessor.CoinRewardSpawnPoint = coinRewardSpawnPoint;
+            rewardProcessor.GemRewardSpawnPoint = gemRewardSpawnPoint;
+            rewardProcessor.ParentCanvas = parentCanvas;
+            rewardProcessor.FeedbackSlideDuration = feedbackSlideDuration;
+            rewardProcessor.FeedbackFadeOutDuration = feedbackFadeOutDuration;
+            rewardProcessor.FeedbackSlideUpAmount = feedbackSlideUpAmount;
+            rewardProcessor.FeedbackPrefix = feedbackPrefix;
+            rewardProcessor.CoinSuffix = coinSuffix;
+            rewardProcessor.GemSuffix = gemSuffix;
+            rewardProcessor.CoinSound = coinSound;
+            rewardProcessor.RewardDelay = rewardDelay;
         }
 
-        // STEP 5: Update Player_Data UI with animations
-        Debug.Log("STEP 5: Updating Player_Data UI with animations...");
+        // Process all rewards through the unified system
+        yield return StartCoroutine(rewardProcessor.ProcessRewards(currentQuest.rewards, () => {
+            Debug.Log("All rewards processed");
+        }));
 
-        if (playerData != null)
-        {
-            if (totalCoins > 0)
-            {
-                playerData.NotifyCoinCollected(totalCoins);
-            }
-            if (totalGems > 0)
-            {
-                playerData.NotifyGemCollected(totalGems);
-            }
-            // Force a full UI update to ensure everything is synchronized
-            playerData.ForceUpdateAllUI();
-        }
-
-        // STEP 6: Check for next available quest
-        yield return new WaitForSeconds(0.2f); // Small pause before checking
+        // Check for next available quest
+        yield return new WaitForSeconds(0.2f);
         CheckForAvailableQuest();
     }
 

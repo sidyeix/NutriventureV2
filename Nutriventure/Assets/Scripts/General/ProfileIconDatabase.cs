@@ -58,4 +58,16 @@ public class ProfileIconDatabase : ScriptableObject
 
         return icon.unlockedByDefault || (playerUnlockedIds != null && playerUnlockedIds.Contains(id));
     }
+
+    public ProfileIcon GetIconByName(string iconName)
+    {
+        return icons.Find(i => i.iconName.Equals(iconName, System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Get icon sprite by name
+    public Sprite GetIconSpriteByName(string iconName)
+    {
+        var icon = GetIconByName(iconName);
+        return icon != null ? icon.iconSprite : null;
+    }
 }

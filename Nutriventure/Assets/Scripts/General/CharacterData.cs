@@ -156,4 +156,25 @@ public class CharacterDatabase : ScriptableObject
         // Check if skin is unlocked in game data
         return gameData.IsSkinUnlocked(characterID, skinID);
     }
+
+    public CharacterData GetCharacterByName(string characterName)
+    {
+        return characters.Find(c => c.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Add this method to CharacterDatabase.cs
+    public (int characterId, int skinId)? GetSkinByName(string skinName)
+    {
+        foreach (var character in characters)
+        {
+            foreach (var skin in character.skins)
+            {
+                if (skin.skinName.Equals(skinName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return (character.characterID, skin.skinID);
+                }
+            }
+        }
+        return null;
+    }
 }

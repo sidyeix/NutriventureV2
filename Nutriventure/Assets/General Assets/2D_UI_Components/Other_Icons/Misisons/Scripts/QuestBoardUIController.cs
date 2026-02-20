@@ -497,42 +497,19 @@ public class QuestBoardUIController : MonoBehaviour
     // Method to handle reward claiming from QuestUIItem - NOW USING DIRECT DATABASE REFERENCE
     public IEnumerator ProcessQuestRewards(Quest quest, System.Action onRewardsProcessed)
     {
-        // Track totals
-        int totalCoins = 0;
-        int totalGems = 0;
-
         // Store the quest ID for later reference
         string questID = quest.questID;
 
-        // Process each reward
-        foreach (var reward in quest.rewards)
-        {
-            ProcessReward(reward);
-
-            switch (reward.type)
-            {
-                case QuestReward.RewardType.NutriCoins:
-                    totalCoins += reward.amount;
-                    break;
-                case QuestReward.RewardType.NutriGems:
-                    totalGems += reward.amount;
-                    break;
-            }
-        }
-
-        // DIRECTLY update the quest status in the database (like NPCQuestInteraction does)
+        // DIRECTLY update the quest status in the database
         if (questDatabase != null)
         {
-            // Get the quest directly from database
             Quest databaseQuest = questDatabase.GetQuest(questID);
             if (databaseQuest != null)
             {
-                // Mark as claimed
                 databaseQuest.ClaimQuest();
                 Debug.Log($"Quest {questID} status updated to {databaseQuest.status} in database");
 
 #if UNITY_EDITOR
-                // Mark as dirty so it saves in the editor
                 UnityEditor.EditorUtility.SetDirty(questDatabase);
 #endif
             }
@@ -544,48 +521,36 @@ public class QuestBoardUIController : MonoBehaviour
             questManager.ClaimQuest(questID);
         }
 
-        // Save game data
-        if (GameDataManager.Instance != null)
+        // Use the RewardProcessor to handle all rewards
+        RewardProcessor rewardProcessor = FindObjectOfType<RewardProcessor>();
+        if (rewardProcessor == null)
         {
-            GameDataManager.Instance.SaveGameData();
+            // Create one if it doesn't exist
+            GameObject processorObj = new GameObject("RewardProcessor");
+            rewardProcessor = processorObj.AddComponent<RewardProcessor>();
+
+            // Copy settings from this component using properties
+            rewardProcessor.CoinRewardFeedbackPrefab = coinRewardFeedbackPrefab;
+            rewardProcessor.GemRewardFeedbackPrefab = gemRewardFeedbackPrefab;
+            rewardProcessor.CoinRewardSpawnPoint = coinRewardSpawnPoint;
+            rewardProcessor.GemRewardSpawnPoint = gemRewardSpawnPoint;
+            rewardProcessor.ParentCanvas = parentCanvas;
+            rewardProcessor.FeedbackSlideDuration = feedbackSlideDuration;
+            rewardProcessor.FeedbackFadeOutDuration = feedbackFadeOutDuration;
+            rewardProcessor.FeedbackSlideUpAmount = feedbackSlideUpAmount;
+            rewardProcessor.FeedbackPrefix = feedbackPrefix;
+            rewardProcessor.CoinSuffix = coinSuffix;
+            rewardProcessor.GemSuffix = gemSuffix;
+            rewardProcessor.CoinSound = coinSound;
+            rewardProcessor.RewardDelay = rewardDelay;
         }
 
-        // Wait for delay
-        yield return new WaitForSeconds(rewardDelay);
+        // Process all rewards through the unified system
+        yield return StartCoroutine(rewardProcessor.ProcessRewards(quest.rewards, () => {
+            Debug.Log("All rewards processed");
+        }));
 
-        // Play coin sound
-        if (coinSound != null && AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.soundEffectsSource.PlayOneShot(coinSound);
-        }
-        else if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.PlayClaimSound();
-        }
-
-        // Show feedback
-        if (totalCoins > 0)
-        {
-            ShowRewardFeedback(coinRewardFeedbackPrefab, coinRewardSpawnPoint, totalCoins, coinSuffix);
-        }
-
-        if (totalGems > 0)
-        {
-            ShowRewardFeedback(gemRewardFeedbackPrefab, gemRewardSpawnPoint, totalGems, gemSuffix);
-        }
-
-        // Update Player_Data
-        if (playerData != null)
-        {
-            if (totalCoins > 0) playerData.NotifyCoinCollected(totalCoins);
-            if (totalGems > 0) playerData.NotifyGemCollected(totalGems);
-            playerData.ForceUpdateAllUI();
-        }
-
-        // Small delay to ensure all data is saved before refreshing
-        yield return new WaitForSeconds(0.2f);
-
-        // Refresh the quest list to show updated status
+        // Refresh the quest list
         RefreshQuestList();
 
         onRewardsProcessed?.Invoke();

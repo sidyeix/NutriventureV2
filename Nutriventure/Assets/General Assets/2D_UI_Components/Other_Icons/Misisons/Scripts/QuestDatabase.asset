@@ -380,23 +380,13 @@ MonoBehaviour:
         isOptional: 0
         isCompleted: 1
       rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 100
-        type: 5
-        rewardID: 
-      - rewardName: NutriGems
-        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
-        amount: 2
-        type: 7
-        rewardID: 
-      - rewardName: EXP
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 20
-        type: 6
+      - rewardName: Orange Sweets
+        rewardIcon: {fileID: 21300000, guid: 6cdca757c1e48904e9136af1c8f7b423, type: 3}
+        amount: 1
+        type: 12
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 1
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 11022
       questName: Collect 15 Grow Foods
