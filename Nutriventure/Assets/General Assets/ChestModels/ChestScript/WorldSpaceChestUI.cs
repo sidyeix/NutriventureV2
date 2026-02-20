@@ -11,30 +11,63 @@ public class WorldSpaceChestUI : MonoBehaviour
     // Text content settings
     private string timerFormat = "{0:00}:{1:00}";
     private string claimText = "CLAIM ME!";
-    private Color timerColor = Color.white;
+    private Color timerColor = Color.black;
     private Color claimColor = Color.yellow;
 
     void Start()
     {
+        Debug.Log($"WorldSpaceChestUI Start on {gameObject.name}");
+
         // Get reference to parent chest
         parentChest = GetComponentInParent<Chest>();
         if (parentChest == null)
         {
-            Debug.LogError("WorldSpaceChestUI: No parent Chest component found!");
+            Debug.LogError($"WorldSpaceChestUI on {gameObject.name}: No parent Chest component found!");
             return;
         }
 
         // Check if timerText is assigned
         if (timerText == null)
         {
-            Debug.LogError("WorldSpaceChestUI: Timer Text is not assigned!");
-            return;
+            Debug.LogError($"WorldSpaceChestUI on {gameObject.name}: Timer Text is not assigned! Please assign it in the Inspector.");
+
+            // Try to find it manually as fallback
+            Transform timerPanel = transform.Find("TimerPanel");
+            if (timerPanel != null)
+            {
+                timerText = timerPanel.GetComponentInChildren<TextMeshProUGUI>();
+                if (timerText != null)
+                {
+                    Debug.Log($"WorldSpaceChestUI on {gameObject.name}: Found TimerText via fallback search!");
+                }
+            }
+
+            // If still null, try searching all children
+            if (timerText == null)
+            {
+                timerText = GetComponentInChildren<TextMeshProUGUI>();
+                if (timerText != null)
+                {
+                    Debug.Log($"WorldSpaceChestUI on {gameObject.name}: Found any TextMeshProUGUI as fallback!");
+                }
+            }
+
+            // If still null, return
+            if (timerText == null)
+            {
+                Debug.LogError($"WorldSpaceChestUI on {gameObject.name}: Could not find TimerText automatically. Please assign it manually.");
+                return;
+            }
+        }
+        else
+        {
+            Debug.Log($"WorldSpaceChestUI on {gameObject.name}: TimerText is assigned: {timerText.gameObject.name}");
         }
 
         // Initialize UI state
         UpdateUIState(false);
 
-        Debug.Log("WorldSpaceChestUI initialized for " + parentChest.ChestName);
+        Debug.Log($"WorldSpaceChestUI initialized for {parentChest.ChestName} on {gameObject.name}");
     }
 
     void Update()
@@ -77,7 +110,7 @@ public class WorldSpaceChestUI : MonoBehaviour
             timerText.text = claimText;
             timerText.color = claimColor;
             timerText.fontStyle = FontStyles.Bold;
-            Debug.Log("WorldSpaceUI switched to CLAIM ME for " + parentChest.ChestName);
+            Debug.Log($"WorldSpaceUI switched to CLAIM ME for {parentChest?.ChestName}");
         }
         else
         {
@@ -93,7 +126,7 @@ public class WorldSpaceChestUI : MonoBehaviour
         if (gameObject != null)
         {
             gameObject.SetActive(false);
-            Debug.Log("WorldSpaceUI hidden for " + (parentChest != null ? parentChest.ChestName : "unknown chest"));
+            Debug.Log($"WorldSpaceUI hidden for {(parentChest != null ? parentChest.ChestName : "unknown chest")}");
         }
     }
 
@@ -103,7 +136,7 @@ public class WorldSpaceChestUI : MonoBehaviour
         if (gameObject != null)
         {
             gameObject.SetActive(true);
-            Debug.Log("WorldSpaceUI shown for " + (parentChest != null ? parentChest.ChestName : "unknown chest"));
+            Debug.Log($"WorldSpaceUI shown for {(parentChest != null ? parentChest.ChestName : "unknown chest")}");
         }
     }
 
@@ -119,7 +152,7 @@ public class WorldSpaceChestUI : MonoBehaviour
         HideUI();
         if (parentChest != null)
         {
-            Debug.Log("WorldSpaceUI hidden due to chest click for " + parentChest.ChestName);
+            Debug.Log($"WorldSpaceUI hidden due to chest click for {parentChest.ChestName}");
         }
     }
 }

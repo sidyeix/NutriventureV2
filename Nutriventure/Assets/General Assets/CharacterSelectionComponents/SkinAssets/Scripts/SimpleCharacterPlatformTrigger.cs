@@ -8,7 +8,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     [Header("UI References")]
     public GameObject enterSelectionButton;
     public Canvas playerInputCanvas;
-    public CanvasGroup characterSelectionCanvasGroup; // CHANGED: Now a CanvasGroup reference
+    public CanvasGroup characterSelectionCanvasGroup;
     public GameObject clothingIcon;
 
     [Header("Camera Control")]
@@ -62,7 +62,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             Debug.LogError("Player Input Canvas is NOT assigned!");
         }
 
-        // Setup character selection canvas - CRITICAL CHANGE
+        // Setup character selection canvas
         if (characterSelectionCanvasGroup != null)
         {
             Debug.Log("Character Selection CanvasGroup found: " + characterSelectionCanvasGroup.name);
@@ -89,7 +89,11 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
 
         // Check camera
         if (characterChangeCamera != null)
+        {
             Debug.Log("Character Change Camera found: " + characterChangeCamera.name);
+            // Ensure camera priority is 0 initially
+            characterChangeCamera.Priority = 0;
+        }
         else
             Debug.LogError("Character Change Camera is NOT assigned!");
 
@@ -181,7 +185,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             clothingIcon.SetActive(false);
         }
 
-        // Switch camera FIRST
+        // Switch camera FIRST - set to 30 instead of 20
         SetCharacterChangeCameraActive();
         yield return null;
 
@@ -198,7 +202,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             playerInputCanvas.gameObject.SetActive(false);
         }
 
-        // SHOW CHARACTER SELECTION CANVAS - ONLY HERE!
+        // SHOW CHARACTER SELECTION CANVAS
         if (characterSelectionCanvasGroup != null)
         {
             characterSelectionCanvasGroup.gameObject.SetActive(true);
@@ -208,7 +212,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             Debug.Log("Character selection canvas shown and interactive");
         }
 
-        // Tell CharacterSelectionController to start (but DON'T let it show/hide canvas)
+        // Refresh the character panel data before showing
         TriggerCharacterSelection();
 
         Debug.Log("=== ACTIVATION COMPLETE ===");
@@ -243,12 +247,11 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     {
         if (characterSelectionController != null)
         {
-            // IMPORTANT: Don't let the controller show/hide canvas
+            // This will refresh the character panel data
             characterSelectionController.ActivateCharacterSelection();
         }
     }
 
-    // Call this to exit character selection
     public IEnumerator ExitCharacterSelection()
     {
         Debug.Log("=== EXIT CHARACTER SELECTION ===");
@@ -258,7 +261,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             yield break;
         }
 
-        // HIDE CHARACTER SELECTION CANVAS - ONLY HERE!
+        // HIDE CHARACTER SELECTION CANVAS
         if (characterSelectionCanvasGroup != null)
         {
             characterSelectionCanvasGroup.interactable = false;
@@ -267,6 +270,9 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             characterSelectionCanvasGroup.gameObject.SetActive(false);
             Debug.Log("Character selection canvas hidden");
         }
+
+        // Reset camera priority to 0
+        ResetCameraPriority();
 
         // Show player input canvas
         if (playerInputCanvas != null)
@@ -323,8 +329,17 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     {
         if (characterChangeCamera != null)
         {
-            characterChangeCamera.Priority = 20;
-            Debug.Log("Character Change Camera priority set to 20");
+            characterChangeCamera.Priority = 30;
+            Debug.Log("Character Change Camera priority set to 30");
+        }
+    }
+
+    private void ResetCameraPriority()
+    {
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.Priority = 0;
+            Debug.Log("Character Change Camera priority reset to 0");
         }
     }
 }

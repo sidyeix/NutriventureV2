@@ -12,8 +12,8 @@ public class CharacterSelectionController : MonoBehaviour
     public CinemachineVirtualCamera skinSelectionCamera;
 
     [Header("UI References")]
-    public CanvasGroup characterSelectionCanvas; // Main character selection UI
-    public CanvasGroup skinSelectionCanvas; // Skin selection UI (RENAMED from characterPreviewCanvas)
+    public CanvasGroup characterSelectionCanvas;
+    public CanvasGroup skinSelectionCanvas;
     public CanvasGroup characterControlsCanvas;
 
     [Header("Buttons")]
@@ -54,10 +54,24 @@ public class CharacterSelectionController : MonoBehaviour
 
     private int lastSavedCharacterID = 0;
     private int lastSavedSkinID = -1;
+    private GameDataManager gameDataManager;
+    private int previousCharacterID = -1; // Track previous character for reverting
 
     void Start()
     {
-        // Initialize references
+        gameDataManager = GameDataManager.Instance;
+
+        // Initialize camera priorities to 0
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.Priority = 0;
+        }
+
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 0;
+        }
+
         if (characterSelectionCanvas != null)
         {
             characterSelectionCanvas.alpha = 0f;
@@ -93,8 +107,6 @@ public class CharacterSelectionController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
-        // Check if we're in the main menu - if yes, skip loading character
-        // because MainMenuController already loaded it
         MainMenuController mainMenuController = FindObjectOfType<MainMenuController>();
         if (mainMenuController != null)
         {
@@ -102,11 +114,10 @@ public class CharacterSelectionController : MonoBehaviour
             yield break;
         }
 
-        // Only load character if MainMenuController is not present (e.g., in game scene)
-        if (GameDataManager.Instance != null && characterVisualSwapper != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null && characterVisualSwapper != null)
         {
-            int equippedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
-            int equippedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(equippedCharacterID);
+            int equippedCharacterID = gameDataManager.CurrentGameData.selectedCharacterID;
+            int equippedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(equippedCharacterID);
 
             characterVisualSwapper.LoadCharacterWithSavedSkinNoAnimation(equippedCharacterID);
         }
@@ -114,10 +125,10 @@ public class CharacterSelectionController : MonoBehaviour
 
     void LoadSavedData()
     {
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            lastSavedCharacterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
-            lastSavedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(lastSavedCharacterID);
+            lastSavedCharacterID = gameDataManager.CurrentGameData.selectedCharacterID;
+            lastSavedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(lastSavedCharacterID);
             pendingCharacterSelection = lastSavedCharacterID;
             selectedSkinID = lastSavedSkinID;
         }
@@ -156,14 +167,18 @@ public class CharacterSelectionController : MonoBehaviour
         }
     }
 
-    // ============ PUBLIC METHODS ============
-
     public void ActivateCharacterSelection()
     {
         if (isInCharacterSelection) return;
 
         isInCharacterSelection = true;
         Debug.Log("CharacterSelectionController: Entering character selection mode");
+
+        // Refresh the character panel data
+        if (characterSelectionPanel != null)
+        {
+            characterSelectionPanel.RefreshPanel();
+        }
 
         if (characterRotationController != null)
         {
@@ -175,7 +190,6 @@ public class CharacterSelectionController : MonoBehaviour
             pendingCharacterSelection = lastSavedCharacterID;
         }
 
-        // Load character with saved skin
         if (characterVisualSwapper != null)
         {
             characterVisualSwapper.LoadCharacterWithSavedSkin(lastSavedCharacterID);
@@ -183,15 +197,12 @@ public class CharacterSelectionController : MonoBehaviour
 
         UpdateCharacterHighlight(lastSavedCharacterID, true);
 
-        // Make sure buttons are enabled
         if (selectCharacterButton != null) selectCharacterButton.interactable = true;
         if (previewSelectButton != null) previewSelectButton.interactable = true;
         if (skinButton != null) skinButton.interactable = true;
 
         Debug.Log("CharacterSelectionController: Ready for selection");
     }
-
-    // ============ BUTTON HANDLERS ============
 
     public void OnFirstSelectButtonClicked()
     {
@@ -210,6 +221,13 @@ public class CharacterSelectionController : MonoBehaviour
     public void OnCharacterButtonClicked()
     {
         Debug.Log("Character button clicked");
+
+        // NOTIFY ENVIRONMENT CONTROLLER - EXITING SKIN SELECTION
+        if (skinSelectionController != null && skinSelectionController.skinEnvironmentController != null)
+        {
+            skinSelectionController.skinEnvironmentController.OnExitSkinSelection();
+        }
+
         ResetToCharacterSelection();
     }
 
@@ -220,12 +238,14 @@ public class CharacterSelectionController : MonoBehaviour
             int characterID = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
             Debug.Log($"Entering skin selection for character {characterID}");
 
-            if (GameDataManager.Instance != null)
+            // Store the current character ID to revert if needed
+            previousCharacterID = characterID;
+
+            if (gameDataManager != null && gameDataManager.CurrentGameData != null)
             {
-                selectedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+                selectedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(characterID);
             }
 
-            // CRITICAL FIX: Show the skin selection UI
             ShowSkinSelectionUI();
 
             if (skinSelectionController != null)
@@ -246,7 +266,15 @@ public class CharacterSelectionController : MonoBehaviour
         {
             Debug.Log("Character Controller: Exiting skin selection via back button");
 
-            // Simply hide the skin selection UI and exit the state
+            // NOTIFY ENVIRONMENT CONTROLLER - EXITING SKIN SELECTION
+            if (skinSelectionController != null && skinSelectionController.skinEnvironmentController != null)
+            {
+                skinSelectionController.skinEnvironmentController.OnExitSkinSelection();
+            }
+
+            // REVERT to saved character/skin before exiting
+            RevertToSavedCharacter();
+
             HideSkinSelectionUI();
             ExitSkinSelection();
         }
@@ -256,10 +284,18 @@ public class CharacterSelectionController : MonoBehaviour
         }
     }
 
-    // Add this method to handle skin selection closure
     public void OnSkinSelectionClosed()
     {
         Debug.Log("Skin selection closed notification received");
+
+        // NOTIFY ENVIRONMENT CONTROLLER - EXITING SKIN SELECTION
+        if (skinSelectionController != null && skinSelectionController.skinEnvironmentController != null)
+        {
+            skinSelectionController.skinEnvironmentController.OnExitSkinSelection();
+        }
+
+        // REVERT to saved character/skin before exiting
+        RevertToSavedCharacter();
 
         if (skinSelectionController != null)
         {
@@ -269,13 +305,49 @@ public class CharacterSelectionController : MonoBehaviour
         ExitSkinSelection();
     }
 
-    // ============ SKIN SELECTION UI CONTROL ============
+    // New method to revert to saved character/skin
+    private void RevertToSavedCharacter()
+    {
+        Debug.Log($"Reverting to saved character: {lastSavedCharacterID} with skin: {lastSavedSkinID}");
+
+        if (characterVisualSwapper != null)
+        {
+            if (lastSavedSkinID == -1)
+            {
+                var characterData = characterDatabase.GetCharacterByID(lastSavedCharacterID);
+                if (characterData != null)
+                {
+                    characterVisualSwapper.ApplyCharacterVisuals(characterData);
+                }
+            }
+            else
+            {
+                characterVisualSwapper.ApplySkinToCurrentCharacter(lastSavedSkinID);
+            }
+        }
+
+        // Reset pending selection to saved character
+        pendingCharacterSelection = lastSavedCharacterID;
+        selectedSkinID = lastSavedSkinID;
+    }
 
     private void ShowSkinSelectionUI()
     {
         Debug.Log("Showing Skin Selection UI");
 
-        // Hide character selection UI
+        // Set skin camera priority to 30
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 30;
+            Debug.Log("Skin camera priority set to 30");
+        }
+
+        // Lower character camera priority
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.Priority = 10;
+        }
+
         if (characterSelectionCanvas != null)
         {
             StartCoroutine(FadeCanvasGroup(characterSelectionCanvas, characterSelectionCanvas.alpha, 0f, fadeDuration));
@@ -283,7 +355,6 @@ public class CharacterSelectionController : MonoBehaviour
             characterSelectionCanvas.blocksRaycasts = false;
         }
 
-        // Show skin selection UI
         if (skinSelectionCanvas != null)
         {
             skinSelectionCanvas.gameObject.SetActive(true);
@@ -291,20 +362,24 @@ public class CharacterSelectionController : MonoBehaviour
             skinSelectionCanvas.interactable = true;
             skinSelectionCanvas.blocksRaycasts = true;
         }
-
-        // Set skin camera priority higher
-        if (skinSelectionCamera != null)
-        {
-            skinSelectionCamera.Priority = 30;
-            Debug.Log("Skin camera priority set to 30");
-        }
     }
 
     private void HideSkinSelectionUI()
     {
         Debug.Log("Hiding Skin Selection UI");
 
-        // Hide skin selection UI
+        // Reset camera priorities to 0
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 0;
+            Debug.Log("Skin camera priority set to 0");
+        }
+
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.Priority = 30;
+        }
+
         if (skinSelectionCanvas != null)
         {
             StartCoroutine(FadeCanvasGroup(skinSelectionCanvas, skinSelectionCanvas.alpha, 0f, fadeDuration));
@@ -313,18 +388,11 @@ public class CharacterSelectionController : MonoBehaviour
             StartCoroutine(DeactivateAfterDelay(skinSelectionCanvas.gameObject, fadeDuration));
         }
 
-        // Show character selection UI
         if (characterSelectionCanvas != null)
         {
             StartCoroutine(FadeCanvasGroup(characterSelectionCanvas, 0f, 1f, fadeDuration));
             characterSelectionCanvas.interactable = true;
             characterSelectionCanvas.blocksRaycasts = true;
-        }
-
-        if (skinSelectionCamera != null)
-        {
-            skinSelectionCamera.Priority = 10;
-            Debug.Log("Skin camera priority set to 10");
         }
     }
 
@@ -333,8 +401,6 @@ public class CharacterSelectionController : MonoBehaviour
         yield return new WaitForSeconds(delay);
         if (obj != null) obj.SetActive(false);
     }
-
-    // ============ SKIN SELECTION STATE ============
 
     private void EnterSkinSelection()
     {
@@ -346,16 +412,7 @@ public class CharacterSelectionController : MonoBehaviour
     {
         isInSkinSelection = false;
         Debug.Log("Exiting Skin Selection State from Character Controller");
-
-        // Make sure camera priority is reset
-        if (skinSelectionCamera != null)
-        {
-            skinSelectionCamera.Priority = 10;
-            Debug.Log("Character Controller: Skin camera priority set to 10");
-        }
     }
-
-    // ============ CHARACTER SELECTION CONFIRMATION ============
 
     public void OnSelectCharacterConfirmed(int characterID = -1)
     {
@@ -365,6 +422,7 @@ public class CharacterSelectionController : MonoBehaviour
                             (pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID);
 
         lastSavedCharacterID = characterToSave;
+        lastSavedSkinID = selectedSkinID;
 
         SaveCharacterSelection(characterToSave);
         UpdateCharacterHighlight(characterToSave, true);
@@ -385,15 +443,15 @@ public class CharacterSelectionController : MonoBehaviour
             characterRotationController.ResetRotation();
         }
 
-        // Reset camera priorities
+        // Reset camera priorities to 0
         if (characterChangeCamera != null)
         {
-            characterChangeCamera.Priority = 10;
+            characterChangeCamera.Priority = 0;
         }
 
         if (skinSelectionCamera != null)
         {
-            skinSelectionCamera.Priority = 10;
+            skinSelectionCamera.Priority = 0;
         }
 
         if (playerArmatureAnimator != null)
@@ -401,13 +459,11 @@ public class CharacterSelectionController : MonoBehaviour
             playerArmatureAnimator.SetBool("LookAround", false);
         }
 
-        // Hide skin selection UI if it's active
         if (isInSkinSelection && skinSelectionCanvas != null && skinSelectionCanvas.gameObject.activeSelf)
         {
             HideSkinSelectionUI();
         }
 
-        // Notify platform trigger to exit
         if (platformTrigger != null)
         {
             yield return platformTrigger.ExitCharacterSelection();
@@ -424,13 +480,11 @@ public class CharacterSelectionController : MonoBehaviour
 
     private IEnumerator ExitCharacterSelectionRoutine()
     {
-        // Hide skin selection UI if it's active
         if (isInSkinSelection && skinSelectionCanvas != null && skinSelectionCanvas.gameObject.activeSelf)
         {
             HideSkinSelectionUI();
         }
 
-        // Notify platform trigger to exit
         if (platformTrigger != null)
         {
             yield return platformTrigger.ExitCharacterSelection();
@@ -444,10 +498,14 @@ public class CharacterSelectionController : MonoBehaviour
         isInCharacterSelection = false;
         isInSkinSelection = false;
 
+        // Ensure all cameras are set to 0
+        if (characterChangeCamera != null)
+            characterChangeCamera.Priority = 0;
+        if (skinSelectionCamera != null)
+            skinSelectionCamera.Priority = 0;
+
         Debug.Log("Character selection complete");
     }
-
-    // ============ CHARACTER PREVIEW ============
 
     public void OnCharacterPreviewSelected(int characterID)
     {
@@ -466,8 +524,6 @@ public class CharacterSelectionController : MonoBehaviour
             characterVisualSwapper.LoadCharacterWithSavedSkin(characterID);
         }
     }
-
-    // ============ CHARACTER HIGHLIGHT MANAGEMENT ============
 
     private void UpdateCharacterHighlight(int characterID, bool isEquipped)
     {
@@ -492,20 +548,18 @@ public class CharacterSelectionController : MonoBehaviour
         }
     }
 
-    // ============ DATA MANAGEMENT ============
-
     private void SaveCharacterSelection(int characterID)
     {
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            GameDataManager.Instance.CurrentGameData.selectedCharacterID = characterID;
+            gameDataManager.CurrentGameData.selectedCharacterID = characterID;
 
             if (selectedSkinID != -1)
             {
-                GameDataManager.Instance.CurrentGameData.SetSelectedSkinForCharacter(characterID, selectedSkinID);
+                gameDataManager.CurrentGameData.SetSelectedSkinForCharacter(characterID, selectedSkinID);
             }
 
-            GameDataManager.Instance.SaveGameData();
+            gameDataManager.SaveGameData();
             Debug.Log($"Saved to GameData: Character={characterID}, Skin={selectedSkinID}");
         }
     }
@@ -515,9 +569,9 @@ public class CharacterSelectionController : MonoBehaviour
         selectedSkinID = skinID;
         Debug.Log($"Skin selection updated: {skinID}");
 
-        if (pendingCharacterSelection != -1 && GameDataManager.Instance != null)
+        if (pendingCharacterSelection != -1 && gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            GameDataManager.Instance.CurrentGameData.SetSelectedSkinForCharacter(pendingCharacterSelection, skinID);
+            gameDataManager.CurrentGameData.SetSelectedSkinForCharacter(pendingCharacterSelection, skinID);
 
             if (characterVisualSwapper != null)
             {
@@ -526,13 +580,10 @@ public class CharacterSelectionController : MonoBehaviour
         }
     }
 
-    // ============ RESET TO CHARACTER SELECTION ============
-
     private void ResetToCharacterSelection()
     {
         Debug.Log("Resetting to character selection");
 
-        // Hide skin selection UI
         if (isInSkinSelection && skinSelectionCanvas != null)
         {
             HideSkinSelectionUI();
@@ -549,8 +600,6 @@ public class CharacterSelectionController : MonoBehaviour
 
         Debug.Log("Reset to character selection completed");
     }
-
-    // ============ UTILITY METHODS ============
 
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
     {
@@ -570,16 +619,12 @@ public class CharacterSelectionController : MonoBehaviour
         canvasGroup.alpha = endAlpha;
     }
 
-    // ============ PUBLIC GETTERS ============
-
     public bool IsInCharacterSelection() => isInCharacterSelection;
     public bool IsInSkinSelection() => isInSkinSelection;
     public int GetPendingCharacterSelection() => pendingCharacterSelection;
     public int GetSelectedSkinID() => selectedSkinID;
     public int GetLastSavedCharacterID() => lastSavedCharacterID;
     public int GetLastSavedSkinID() => lastSavedSkinID;
-
-    // ============ CLEANUP ============
 
     void OnDestroy()
     {
