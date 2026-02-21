@@ -4059,7 +4059,7 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 1.1333333
-    functionName: PlayFootstep
+    functionName: PlayJump
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
