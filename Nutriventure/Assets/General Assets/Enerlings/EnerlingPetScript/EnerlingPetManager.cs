@@ -206,8 +206,8 @@ public class EnerlingPetManager : MonoBehaviour
 
         // Configure Rigidbody
         petRigidbodies[petIndex].mass = 1f;
-        petRigidbodies[petIndex].drag = 2f;
-        petRigidbodies[petIndex].angularDrag = 2f;
+        petRigidbodies[petIndex].linearDamping = 2f;
+        petRigidbodies[petIndex].angularDamping = 2f;
         petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         petRigidbodies[petIndex].collisionDetectionMode = CollisionDetectionMode.Continuous;
     }
