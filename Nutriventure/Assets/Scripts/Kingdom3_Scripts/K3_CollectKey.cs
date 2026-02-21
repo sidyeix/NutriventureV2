@@ -44,7 +44,7 @@ public class K3_CollectKey : MonoBehaviour
     // Static flag for global reset
     private static bool globalResetFlag = false;
     
-    // FIX: Add a flag to prevent double triggering
+    // Flag to prevent double triggering
     private bool isCompletingPickup = false;
     
     void Start()
@@ -107,7 +107,7 @@ public class K3_CollectKey : MonoBehaviour
             }
         }
         
-        Debug.Log("K2_CollectKey initialized. Has key: " + hasKey + ", Has triggered summary: " + hasTriggeredSummary);
+        Debug.Log("K3_CollectKey initialized. Has key: " + hasKey + ", Has triggered summary: " + hasTriggeredSummary);
     }
     
     void Update()
@@ -117,7 +117,7 @@ public class K3_CollectKey : MonoBehaviour
         {
             pickupTimer += Time.deltaTime;
             
-            // End animation after duration - FIXED: Don't call CompleteKeyPickup here
+            // End animation after duration
             if (pickupTimer >= pickupAnimationDuration && !isCompletingPickup)
             {
                 EndPickupAnimation();
@@ -221,7 +221,7 @@ public class K3_CollectKey : MonoBehaviour
     
     private void CompleteKeyPickup()
     {
-        // FIX: Check if already completed to prevent double execution
+        // Check if already completed to prevent double execution
         if (hasKey) return;
         
         Debug.Log("CompleteKeyPickup called");
@@ -235,7 +235,7 @@ public class K3_CollectKey : MonoBehaviour
         isPickingUp = false;
         pickupTimer = 0f;
         
-        // Mark key as collected
+        // Mark key as collected (in session only - NOT saved to database yet)
         hasKey = true;
         
         // Record health at moment of key collection
@@ -263,46 +263,14 @@ public class K3_CollectKey : MonoBehaviour
             currentNearbyKey = null;
         }
         
-        // Save key to GameData
-        if (GameDataManager.Instance != null)
-        {
-            GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
-            GameDataManager.Instance.SaveGameData();
-            Debug.Log("PreserviaKey saved to GameData");
-        }
-        
-        // Disable timeline after key collection
-        DisableTimelineAfterKeyCollection();
-        
         // Trigger Game Summary when key is collected
         TriggerGameSummaryIfNeeded();
     }
     
-    private void DisableTimelineAfterKeyCollection()
-    {
-        // Find and disable timeline
-        string timelineObjectName = "K2_QueenACS2"; // Adjust if different
-        GameObject timelineObj = GameObject.Find(timelineObjectName);
-        
-        if (timelineObj != null)
-        {
-            // Disable the GameObject
-            timelineObj.SetActive(false);
-            Debug.Log($"Disabled timeline GameObject: {timelineObjectName}");
-            
-            // Also disable the K2_QueenACS2 component
-            K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
-            if (queenCutscene != null)
-            {
-                queenCutscene.enabled = false;
-                Debug.Log("Disabled K2_QueenACS2 component");
-            }
-        }
-    }
     
     private void EndPickupAnimation()
     {
-        // FIX: Simply end the animation state without triggering completion again
+        // Simply end the animation state without triggering completion again
         if (playerAnimator != null)
         {
             playerAnimator.SetBool(pickupHash, false);
@@ -348,8 +316,7 @@ public class K3_CollectKey : MonoBehaviour
             // Mark that we've triggered the summary
             hasTriggeredSummary = true;
             
-            // IMPORTANT: Instead of calling TestWin(), directly trigger the summary
-            // This prevents double triggers
+            // Directly trigger the summary
             StartCoroutine(TriggerSummaryDirectly());
         }
         else if (hasTriggeredSummary)
@@ -484,7 +451,7 @@ public class K3_CollectKey : MonoBehaviour
     public void ForceFullReset()
     {
         ResetKey();
-        Debug.Log("ForceFullReset called on K2_CollectKey");
+        Debug.Log("ForceFullReset called on K3_CollectKey");
     }
     
     // Static method for global reset

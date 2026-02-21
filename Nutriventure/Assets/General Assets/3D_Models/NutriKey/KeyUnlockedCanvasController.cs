@@ -17,6 +17,9 @@ public class KeyUnlockedCanvasController : MonoBehaviour
     [Header("Optional Audio")]
     public AudioClip keyUnlockedSound;
     public AudioClip buttonClickSound;
+    
+    [Header("Audio Settings")]
+    public AudioSource audioSource; // Add this for direct audio playback
 
     private System.Action onContinueCallback;
     private bool isShowing = false;
@@ -35,6 +38,18 @@ public class KeyUnlockedCanvasController : MonoBehaviour
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueClicked);
 
+        // Create or get AudioSource
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+                audioSource.spatialBlend = 0f; // 2D sound
+            }
+        }
+
         // Ensure canvas starts hidden
         if (keyUnlockedCanvas != null)
             keyUnlockedCanvas.SetActive(false);
@@ -49,9 +64,16 @@ public class KeyUnlockedCanvasController : MonoBehaviour
 
         onContinueCallback = onContinue;
 
-        // Play key unlocked sound
-        if (AudioHandler.Instance != null && keyUnlockedSound != null)
-            AudioHandler.Instance.PlayCharacterSelectionSound(keyUnlockedSound);
+        // Play key unlocked sound directly through AudioSource
+        if (keyUnlockedSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(keyUnlockedSound);
+            Debug.Log("Playing key unlocked sound: " + keyUnlockedSound.name);
+        }
+        else
+        {
+            Debug.LogWarning("Key unlocked sound or audio source is missing!");
+        }
 
         // Show and animate canvas
         keyUnlockedCanvas.SetActive(true);
@@ -119,10 +141,14 @@ public class KeyUnlockedCanvasController : MonoBehaviour
     private void OnContinueClicked()
     {
         // Play button click sound
-        if (AudioHandler.Instance != null)
+        if (buttonClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+        else if (AudioHandler.Instance != null)
+        {
             AudioHandler.Instance.PlayButtonClick();
-        else if (buttonClickSound != null && AudioHandler.Instance != null)
-            AudioHandler.Instance.PlayCharacterSelectionSound(buttonClickSound);
+        }
 
         // Hide canvas
         StartCoroutine(AnimateCanvasOut());
