@@ -31766,6 +31766,9 @@ MonoBehaviour:
   danceParameter: isDance
   thinkParameter: isThinking
   KeyImageunlocking: {fileID: 1779641468}
+  keyUnlockedAnimation: {fileID: 1827682306}
+  continueKeyButton: {fileID: 1982690425}
+  keyUnlockedController: {fileID: 762941882}
   failGameObject1: {fileID: 528345827}
   failGameObject2: {fileID: 2013962994}
   failGameObject3: {fileID: 239831739}
@@ -37485,6 +37488,7 @@ MonoBehaviour:
   scaleDuration: 0.3
   keyUnlockedSound: {fileID: 8300000, guid: f8c0cb11ca73e73478709dcd5e2b219b, type: 3}
   buttonClickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
+  audioSource: {fileID: 278235833}
 --- !u!4 &762941883
 Transform:
   m_ObjectHideFlags: 0
@@ -41297,6 +41301,7 @@ MonoBehaviour:
   rewardsContainer: {fileID: 202674958}
   acceptButton: {fileID: 1911642051}
   okayButton: {fileID: 1054562914}
+  claimButton: {fileID: 0}
   replayButton: {fileID: 1721463103}
   backButton: {fileID: 735274539}
   taskItemPrefab: {fileID: 7337682610235749985, guid: 59866e9a983f4ba45b07127d9adae101, type: 3}
@@ -41304,6 +41309,19 @@ MonoBehaviour:
   playableDirector: {fileID: 0}
   fadeDelay: 1
   missionCanvasGroup: {fileID: 733495966}
+  coinSound: {fileID: 0}
+  coinRewardFeedbackPrefab: {fileID: 0}
+  coinRewardSpawnPoint: {fileID: 0}
+  gemRewardFeedbackPrefab: {fileID: 0}
+  gemRewardSpawnPoint: {fileID: 0}
+  parentCanvas: {fileID: 0}
+  feedbackSlideDuration: 0.5
+  feedbackFadeOutDuration: 0.3
+  feedbackSlideUpAmount: 50
+  feedbackPrefix: +
+  coinSuffix: 
+  gemSuffix: 
+  rewardDelay: 1
 --- !u!114 &828360535
 MonoBehaviour:
   m_ObjectHideFlags: 0
