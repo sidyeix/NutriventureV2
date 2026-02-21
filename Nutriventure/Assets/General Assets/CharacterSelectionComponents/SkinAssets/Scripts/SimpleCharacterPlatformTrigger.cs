@@ -25,6 +25,9 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     [Header("Character Selection Controller")]
     public CharacterSelectionController characterSelectionController;
 
+    [Header("Pet Manager")]
+    public EnerlingPetManager petManager; // Reference to pet manager
+
     private CanvasGroup buttonCanvasGroup;
     private CanvasGroup inputCanvasGroup;
     private bool playerInRange = false;
@@ -91,11 +94,20 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         if (characterChangeCamera != null)
         {
             Debug.Log("Character Change Camera found: " + characterChangeCamera.name);
-            // Ensure camera priority is 0 initially
             characterChangeCamera.Priority = 0;
         }
         else
             Debug.LogError("Character Change Camera is NOT assigned!");
+
+        // Find pet manager if not assigned
+        if (petManager == null)
+        {
+            petManager = FindObjectOfType<EnerlingPetManager>();
+            if (petManager != null)
+                Debug.Log("Found EnerlingPetManager: " + petManager.name);
+            else
+                Debug.LogWarning("No EnerlingPetManager found in scene!");
+        }
 
         // Try to find character selection controller if not assigned
         if (characterSelectionController == null)
@@ -173,6 +185,12 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         Debug.Log("=== ACTIVATE CHARACTER SELECTION ===");
         isActive = true;
 
+        // Set pets to platform mode
+        if (petManager != null)
+        {
+            petManager.SetPlatformMode(true);
+        }
+
         // Hide button
         if (enterSelectionButton != null)
         {
@@ -247,7 +265,6 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     {
         if (characterSelectionController != null)
         {
-            // This will refresh the character panel data
             characterSelectionController.ActivateCharacterSelection();
         }
     }
@@ -259,6 +276,12 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         if (!isActive)
         {
             yield break;
+        }
+
+        // Resume pets from platform mode
+        if (petManager != null)
+        {
+            petManager.SetPlatformMode(false);
         }
 
         // HIDE CHARACTER SELECTION CANVAS
