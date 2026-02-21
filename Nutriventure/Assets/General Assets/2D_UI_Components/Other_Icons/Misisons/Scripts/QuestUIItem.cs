@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
+using System.Collections;
 
 public class QuestUIItem : MonoBehaviour
 {
@@ -18,22 +18,96 @@ public class QuestUIItem : MonoBehaviour
     [SerializeField] private GameObject claimedText;
 
     private Quest currentQuest;
+    private string currentQuestID;
     private QuestManager questManager;
+    private QuestBoardUIController questBoardController;
+    private QuestDatabase questDatabase; // Add database reference
+
+    // Reward feedback references
+    private GameObject coinRewardPrefab;
+    private GameObject gemRewardPrefab;
+    private RectTransform coinSpawnPoint;
+    private RectTransform gemSpawnPoint;
+    private Canvas parentCanvas;
+    private float slideDuration;
+    private float fadeDuration;
+    private float slideUpAmount;
+    private string prefix;
+    private string coinSuffix;
+    private string gemSuffix;
+    private AudioClip coinSound;
+    private float rewardDelay;
 
     private void Awake()
     {
         questManager = QuestManager.Instance;
-        claimButton.onClick.AddListener(OnClaimButtonClicked);
+
+        if (claimButton != null)
+        {
+            claimButton.onClick.AddListener(OnClaimButtonClicked);
+        }
+    }
+
+    public void Initialize(QuestBoardUIController controller,
+        QuestDatabase database, // Add database parameter
+        GameObject coinPrefab, GameObject gemPrefab,
+        RectTransform coinSpawn, RectTransform gemSpawn,
+        Canvas canvas, float slideDur, float fadeDur, float slideAmount,
+        string pre, string cSuffix, string gSuffix,
+        AudioClip coinClip, float delay)
+    {
+        questBoardController = controller;
+        questDatabase = database; // Store database reference
+        coinRewardPrefab = coinPrefab;
+        gemRewardPrefab = gemPrefab;
+        coinSpawnPoint = coinSpawn;
+        gemSpawnPoint = gemSpawn;
+        parentCanvas = canvas;
+        slideDuration = slideDur;
+        fadeDuration = fadeDur;
+        slideUpAmount = slideAmount;
+        prefix = pre;
+        coinSuffix = cSuffix;
+        gemSuffix = gSuffix;
+        coinSound = coinClip;
+        rewardDelay = delay;
     }
 
     public void SetupQuest(Quest quest)
     {
         currentQuest = quest;
+        currentQuestID = quest.questID;
         UpdateUI();
+    }
+
+    private void RefreshQuestData()
+    {
+        if (questDatabase != null && !string.IsNullOrEmpty(currentQuestID))
+        {
+            // Get fresh quest directly from database (like NPCQuestInteraction)
+            Quest freshQuest = questDatabase.GetQuest(currentQuestID);
+            if (freshQuest != null)
+            {
+                currentQuest = freshQuest;
+                Debug.Log($"Refreshed quest data from database: {currentQuestID} = {currentQuest.status}");
+            }
+        }
+        else if (questManager != null && !string.IsNullOrEmpty(currentQuestID))
+        {
+            // Fallback to QuestManager
+            Quest freshQuest = questManager.GetQuest(currentQuestID);
+            if (freshQuest != null)
+            {
+                currentQuest = freshQuest;
+            }
+        }
     }
 
     private void UpdateUI()
     {
+        // Always get fresh data from database before updating UI
+        RefreshQuestData();
+
         if (currentQuest == null) return;
 
         // Quest Icon
@@ -72,7 +146,6 @@ public class QuestUIItem : MonoBehaviour
         bool hasProgress = false;
         string progressText = "";
 
-        // Check if any task has required amount > 0
         foreach (var task in currentQuest.tasks)
         {
             if (task.requiredAmount > 0)
@@ -126,21 +199,24 @@ public class QuestUIItem : MonoBehaviour
         bool showClaimButton = false;
         bool showClaimedText = false;
 
-        switch (currentQuest.status)
+        if (currentQuest != null)
         {
-            case QuestStatus.Completed:
-                showActions = true;
-                showClaimButton = true;
-                break;
+            switch (currentQuest.status)
+            {
+                case QuestStatus.Completed:
+                    showActions = true;
+                    showClaimButton = true;
+                    break;
 
-            case QuestStatus.Claimed:
-                showActions = true;
-                showClaimedText = true;
-                break;
+                case QuestStatus.Claimed:
+                    showActions = true;
+                    showClaimedText = true;
+                    break;
 
-            default:
-                showActions = false;
-                break;
+                default:
+                    showActions = false;
+                    break;
+            }
         }
 
         actionsContainer.SetActive(showActions);
@@ -159,36 +235,44 @@ public class QuestUIItem : MonoBehaviour
 
     private void OnClaimButtonClicked()
     {
-        if (currentQuest == null) return;
+        if (currentQuest == null || questBoardController == null) return;
 
-        Debug.Log($"Claiming quest: {currentQuest.questName}");
+        Debug.Log($"Claiming quest: {currentQuest.questName} (Current Status: {currentQuest.status})");
 
-        // Call QuestManager to claim the quest
-        if (questManager != null)
+        // Play click sound
+        if (AudioHandler.Instance != null)
         {
-            // You'll need to add a ClaimQuest method to QuestManager
-            // For now, we'll just update the UI
-            currentQuest.status = QuestStatus.Claimed;
-            UpdateActionsUI();
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
-            // Also update rewards UI to show they've been claimed
-            foreach (var reward in currentQuest.rewards)
-            {
-                reward.GrantReward();
-            }
+        // Disable the claim button to prevent double-clicking
+        if (claimButton != null)
+        {
+            claimButton.interactable = false;
+        }
 
-            // Refresh the quest board
-            QuestBoardUIController questBoard = FindObjectOfType<QuestBoardUIController>();
-            if (questBoard != null)
-            {
-                questBoard.RefreshUI();
-            }
+        // Start the reward process through the board controller
+        StartCoroutine(questBoardController.ProcessQuestRewards(currentQuest, OnRewardsProcessed));
+    }
+
+    private void OnRewardsProcessed()
+    {
+        Debug.Log($"Rewards processed for quest: {currentQuest?.questName}");
+
+        // Refresh data from database and update UI
+        RefreshQuestData();
+        UpdateUI();
+
+        // Re-enable the button if needed (though it should be hidden now)
+        if (claimButton != null)
+        {
+            claimButton.interactable = true;
         }
     }
 
-    // Public method to refresh this item
     public void RefreshItem()
     {
+        RefreshQuestData();
         UpdateUI();
     }
 }

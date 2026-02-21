@@ -4,7 +4,7 @@ using TMPro;
 using System.Collections;
 using StarterAssets;
 using Cinemachine;
-using UnityEngine.SceneManagement; // Add this for scene reloading
+using UnityEngine.SceneManagement;
 
 public class K2_GameSummary : MonoBehaviour
 {
@@ -29,17 +29,37 @@ public class K2_GameSummary : MonoBehaviour
     public string starParameterName = "star";
     private int currentStars = 0;
 
+    [Header("Counting Animation System")]
+    [SerializeField] private float countAnimationDuration = 2f;
+    [SerializeField] private AudioClip countTickSound;
+    [SerializeField] private AudioClip countCompleteSound;
+    [SerializeField] private AudioSource countAudioSource;
+    private Coroutine countAnimationCoroutine;
+    private bool isCountingAnimationComplete = false;
+
+    [Header("Character Win/Lose Animation")]
+    public Animator characterAnimator;
+    public string danceParameter = "isDance";
+    public string thinkParameter = "isThinking";
+    private bool isCharacterVisualSwapperEnabledBeforeSummary = true;
+
     [Header("Key Image Display")]
-    public GameObject KeyImageunlocking; // Game object that shows key image (initially disabled)
+    public GameObject KeyImageunlocking;
+    
+    [Header("Key Unlocked Animation")]
+    public GameObject keyUnlockedAnimation; // The KeyUnlockedAnimation GameObject
+    public Button continueKeyButton; // The ContinueKeyBTN inside the animation
+    public KeyUnlockedCanvasController keyUnlockedController; // Reference to the controller
+
     [Header("Fail Game Objects (Disabled on Lose)")]
     public GameObject failGameObject1;
     public GameObject failGameObject2;
     public GameObject failGameObject3;
     
     [Header("Buttons")]
-    public Button confirmButton;
-    public Button restartButton; // Add a dedicated restart button if needed
-
+    public Button restartButton;
+    public Button homeButton;
+    
     [Header("Panel Animation")]
     public float fadeInDuration = 1.0f;
     public float fadeOutDuration = 0.5f;
@@ -76,7 +96,7 @@ public class K2_GameSummary : MonoBehaviour
     public string lookAroundParameter = "LookAround";
 
     [Header("UI References")]
-    public GameObject joystickCanvas; // Assign UI_Canvas_StarterAssetsInputs_Joysticks here
+    public GameObject joystickCanvas;
     public GameObject qa1Panel;
     public GameObject qa2Panel;
 
@@ -85,12 +105,12 @@ public class K2_GameSummary : MonoBehaviour
     [Range(1, 5)] public int requiredQA2CorrectAnswers = 5;
 
     [Header("Timeline Settings")]
-    public GameObject timelineController; // Reference to timeline controller GameObject
-    public string timelineObjectName = "K2_QueenACS2"; // Name of the timeline GameObject
+    public GameObject timelineController;
+    public string timelineObjectName = "K2_QueenACS2";
 
     [Header("Complete Restart Settings")]
-    public bool completeRestartOnConfirm = true; // NEW: Toggle for complete restart
-    public string sceneToReload = ""; // Leave empty to reload current scene
+    public bool completeRestartOnConfirm = true;
+    public string sceneToReload = "";
 
     // Star animation states
     private string[] starStateNames = new string[] { "Empty", "Star1", "Star2", "Star3" };
@@ -123,6 +143,20 @@ public class K2_GameSummary : MonoBehaviour
 
     // Key tracking
     private bool summaryTriggeredByKeyCollection = false;
+    
+    // Key Collection State
+    private bool keyWasCollected = false; // Whether the key was collected in this session
+    private bool keySavedToDatabase = false; // Whether we've already saved the key to GameData
+    
+    // Counting animation values
+    private float currentTimePlayed = 0f;
+    private int currentGameScore = 0;
+    private int targetCoinsEarned = 0;
+    private float elapsedAnimationTime = 0f;
+
+    // Store original positions for reset
+    private Vector3 originalPlayerPosition;
+    private Quaternion originalPlayerRotation;
 
     void Awake()
     {
@@ -144,6 +178,14 @@ public class K2_GameSummary : MonoBehaviour
     void Update()
     {
         CheckGameConditions();
+        
+        // Debug input for testing counting animation
+        #if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.F8))
+        {
+            TestCountingAnimation();
+        }
+        #endif
     }
 
     #region Initialization
@@ -167,16 +209,30 @@ public class K2_GameSummary : MonoBehaviour
         if (playerAnimator == null && playerObject != null)
             playerAnimator = playerObject.GetComponentInChildren<Animator>();
 
+        // Set character animator if not assigned
+        if (characterAnimator == null && playerAnimator != null)
+        {
+            characterAnimator = playerAnimator;
+        }
+
         if (backgroundMusicSource == null)
             backgroundMusicSource = FindBackgroundMusicSource();
 
         if (audioSource == null)
             CreateAudioSource();
+            
+        // Setup counting audio source if not assigned
+        if (countAudioSource == null)
+        {
+            countAudioSource = gameObject.AddComponent<AudioSource>();
+            countAudioSource.playOnAwake = false;
+            countAudioSource.spatialBlend = 0f;
+            Debug.Log("Created counting audio source");
+        }
 
         if (playerObject == null)
             playerObject = GameObject.Find("PlayerArmature");
 
-        // IMPORTANT: Try multiple ways to find ProductSpawner
         if (productSpawner == null)
         {
             productSpawner = FindObjectOfType<ProductSpawner>();
@@ -192,6 +248,19 @@ public class K2_GameSummary : MonoBehaviour
 
         if (cinemachineBrain == null)
             cinemachineBrain = Camera.main?.GetComponent<CinemachineBrain>();
+            
+        // Store original player position
+        if (playerObject != null)
+        {
+            originalPlayerPosition = playerObject.transform.position;
+            originalPlayerRotation = playerObject.transform.rotation;
+        }
+        
+        // Find KeyUnlockedController if not assigned
+        if (keyUnlockedController == null && keyUnlockedAnimation != null)
+        {
+            keyUnlockedController = keyUnlockedAnimation.GetComponent<KeyUnlockedCanvasController>();
+        }
     }
 
     private AudioSource FindBackgroundMusicSource()
@@ -216,26 +285,37 @@ public class K2_GameSummary : MonoBehaviour
         if (gameSummaryPanel != null)
             gameSummaryPanel.SetActive(false);
 
+        // Initialize KeyUnlockedAnimation
+        if (keyUnlockedAnimation != null)
+            keyUnlockedAnimation.SetActive(false);
+            
+        if (continueKeyButton != null)
+        {
+            continueKeyButton.onClick.AddListener(OnContinueKeyButtonClicked);
+            Debug.Log("ContinueKeyButton listener added");
+        }
+
         ResetStarAnimator();
 
-        if (confirmButton != null)
-            confirmButton.onClick.AddListener(OnConfirmButtonClicked);
-
-        // Add restart button listener if exists
         if (restartButton != null)
-            restartButton.onClick.AddListener(OnConfirmButtonClicked);
+            restartButton.onClick.AddListener(OnRestartButtonClicked);
+
+        if (homeButton != null)
+            homeButton.onClick.AddListener(OnHomeButtonClicked);
 
         if (backgroundMusicSource != null)
             originalBackgroundMusicVolume = backgroundMusicSource.volume;
 
-        // Initialize KeyImageunlocking - disable by default
         if (KeyImageunlocking != null)
         {
             KeyImageunlocking.SetActive(false);
             Debug.Log("KeyImageunlocking initialized as DISABLED");
         }
 
-        // NEW: Check and disable timeline if key is already collected
+        isCountingAnimationComplete = false;
+        keyWasCollected = false;
+        keySavedToDatabase = false;
+
         CheckAndDisableTimelineOnStart();
 
         Debug.Log($"GameSummary initialized - Complete Restart: {completeRestartOnConfirm}");
@@ -243,13 +323,13 @@ public class K2_GameSummary : MonoBehaviour
 
     private void CheckAndDisableTimelineOnStart()
     {
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
         
-        if (keyAlreadyCollected && !string.IsNullOrEmpty(timelineObjectName))
+        if (keyAlreadyInDatabase && !string.IsNullOrEmpty(timelineObjectName))
         {
             DisableTimelineIfExists();
-            Debug.Log("Timeline disabled on start (key already collected)");
+            Debug.Log("Timeline disabled on start (key already in database)");
         }
     }
 
@@ -261,65 +341,58 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (summaryLocked) return;
         
-        // Check for lose condition (health reaches 0) - 0 STARS
         if (!isGameOver && !isSummaryActive && playerHealth != null && playerHealth.currentHealth <= 0)
         {
             healthBeforeDeath = playerHealth.currentHealth;
-            isVictory = false; // This is a LOSE
+            isVictory = false;
             StartCoroutine(ShowSummaryPanel());
-            return; // Exit early after triggering lose
+            return;
         }
 
-        // Check for win condition (QA2 completed)
         if (showSummaryOnQA2Completion && !isGameOver && !isSummaryActive && !waitingForLastQA2Panel && qa2System != null && IsQA2Completed())
         {
             int currentHealth = playerHealth != null ? playerHealth.currentHealth : 0;
             
-            // Check if key is already collected
-            bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            // Check if key was collected in this session OR already in database
+            bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             
-            // NEW: Also check if key was just collected in this session
-            if (!keyAlreadyCollected && collectKeyScript != null)
-            {
-                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
-            }
+            bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
             
-            Debug.Log($"QA2 Completed - Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
+            Debug.Log($"QA2 Completed - Health: {currentHealth}, Key Collected This Session: {keyCollectedThisSession}, Key In Database: {keyAlreadyInDatabase}");
             
-            // Health determines what kind of victory
             if (currentHealth <= 0)
             {
-                // Should have been caught above, but just in case
                 Debug.Log("QA2 completed but health is 0. This should be a lose.");
                 isVictory = false;
                 StartCoroutine(ShowSummaryPanel());
             }
             else if (currentHealth <= 2)
             {
-                // Health 1-2: Victory but NO KEY
                 Debug.Log("QA2 completed with 1-2 hearts. Victory but NO KEY.");
-                isVictory = true; // VICTORY
+                isVictory = true;
                 StartCoroutine(ShowSummaryPanel());
             }
             else if (currentHealth >= 3)
             {
-                // Health 3+: Can get key
-                if (keyAlreadyCollected)
+                if (keyCollectedThisSession || keyAlreadyInDatabase)
                 {
-                    Debug.Log("QA2 completed AND key already collected. Triggering victory summary.");
+                    Debug.Log("QA2 completed AND key collected. Triggering victory summary.");
                     isVictory = true;
+                    if (keyCollectedThisSession)
+                    {
+                        summaryTriggeredByKeyCollection = true;
+                        keyWasCollected = true;
+                    }
                     StartCoroutine(ShowSummaryPanel());
                 }
                 else
                 {
                     Debug.Log("QA2 completed, key not collected yet. Timeline should trigger.");
-                    // Timeline will trigger, then key collection, then summary
                 }
             }
         }
 
-        // Check for timeline conditions
         CheckTimelineConditions();
     }
 
@@ -328,60 +401,49 @@ public class K2_GameSummary : MonoBehaviour
         if (playerHealth == null || isSummaryActive || isGameOver) return;
 
         int currentHealth = playerHealth.currentHealth;
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
         
-        // NEW: Also check if key was just collected in this session
-        if (!keyAlreadyCollected && collectKeyScript != null)
-        {
-            keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
-        }
+        // Check if key was collected in this session OR already in database
+        bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
         
-        Debug.Log($"Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
+        bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
         
-        // Heart = 0: Lose Summary (only at 0 hearts) - 0 STARS
+        Debug.Log($"Health: {currentHealth}, Key Collected This Session: {keyCollectedThisSession}, Key In Database: {keyAlreadyInDatabase}");
+        
         if (currentHealth <= 0)
         {
             Debug.Log($"Health ({currentHealth}) = 0. Triggering LOSE summary with 0 stars...");
             healthBeforeDeath = currentHealth;
-            isVictory = false; // This is a LOSE
+            isVictory = false;
             StartCoroutine(ShowSummaryPanel());
             return;
         }
         
-        // Heart 1-2: Player can still complete but NO KEY
-        // Timeline will not play, but it's NOT a lose - it's a limited victory
         if (currentHealth <= 2 && currentHealth > 0)
         {
             Debug.Log($"Health ({currentHealth}) = 1-2. Checking QA2 completion...");
             
-            // Check if QA2 is completed
             bool qa2Completed = qa2System != null && qa2System.GetCorrectlyAnsweredCount() >= requiredQA2CorrectAnswers;
             
             if (qa2Completed && !isGameOver && !isSummaryActive)
             {
-                // Player completed QA2 with 1-2 hearts - VICTORY but NO KEY
                 Debug.Log($"QA2 completed with {currentHealth} hearts. Victory but NO KEY.");
-                isVictory = true; // This is a VICTORY (not lose!)
+                isVictory = true;
                 StartCoroutine(ShowSummaryPanel());
             }
             else if (!qa2Completed)
             {
                 Debug.Log($"Health 1-2 but QA2 not completed ({qa2System?.GetCorrectlyAnsweredCount() ?? 0}/{requiredQA2CorrectAnswers}). Player can continue playing.");
-                // Player can still play to complete QA2
             }
         }
-        // Heart ≥ 3: Timeline conditions - can get KEY
         else if (currentHealth >= 3)
         {
             Debug.Log($"Health ({currentHealth}) ≥ 3, checking timeline conditions...");
             
-            // NEW: Check if QA2 is completed
             bool qa2Completed = qa2System != null && qa2System.GetCorrectlyAnsweredCount() >= requiredQA2CorrectAnswers;
             
-            if (!keyAlreadyCollected)
+            if (!keyCollectedThisSession && !keyAlreadyInDatabase)
             {
-                // Check if collectKeyScript has triggered summary
                 if (collectKeyScript != null && collectKeyScript.HasTriggeredSummary())
                 {
                     Debug.Log("Key collection already triggered summary. Skipping timeline.");
@@ -389,7 +451,6 @@ public class K2_GameSummary : MonoBehaviour
                 else if (qa2Completed)
                 {
                     Debug.Log("QA2 completed and key not collected. Timeline should play for key.");
-                    // Timeline should play - player gets key after timeline
                     TryActivateTimeline();
                 }
                 else
@@ -399,22 +460,24 @@ public class K2_GameSummary : MonoBehaviour
             }
             else
             {
-                Debug.Log("Key already collected in GameData. Timeline will not play.");
-                // Ensure timeline is disabled if it exists
+                Debug.Log("Key already collected (session or database). Timeline will not play.");
                 DisableTimelineIfExists();
                 
-                // NEW: If QA2 is also completed, trigger VICTORY summary
                 if (qa2Completed && !isGameOver && !isSummaryActive)
                 {
                     Debug.Log("Key already collected AND QA2 completed. Triggering VICTORY summary.");
                     isVictory = true;
+                    if (keyCollectedThisSession)
+                    {
+                        summaryTriggeredByKeyCollection = true;
+                        keyWasCollected = true;
+                    }
                     StartCoroutine(ShowSummaryPanel());
                 }
             }
         }
     }
 
-    // Add this new method to disable timeline:
     private void DisableTimelineIfExists()
     {
         if (string.IsNullOrEmpty(timelineObjectName)) return;
@@ -425,7 +488,6 @@ public class K2_GameSummary : MonoBehaviour
             timelineObj.SetActive(false);
             Debug.Log($"Disabled timeline (key already collected): {timelineObjectName}");
             
-            // Also disable K2_QueenACS2 component
             K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
             if (queenCutscene != null)
             {
@@ -439,11 +501,12 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (string.IsNullOrEmpty(timelineObjectName)) return;
         
-        // Check if key is already collected
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
         
-        if (keyAlreadyCollected)
+        bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
+        
+        if (keyAlreadyInDatabase || keyCollectedThisSession)
         {
             Debug.Log("Key already collected. Timeline will not play.");
             DisableTimelineIfExists();
@@ -453,13 +516,11 @@ public class K2_GameSummary : MonoBehaviour
         GameObject timelineObj = GameObject.Find(timelineObjectName);
         if (timelineObj != null)
         {
-            // Check if timeline has already been played or is active
             if (!timelineObj.activeInHierarchy)
             {
                 Debug.Log($"Activating timeline: {timelineObjectName}");
                 timelineObj.SetActive(true);
                 
-                // Make sure K2_QueenACS2 is enabled
                 K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
                 if (queenCutscene != null && !queenCutscene.enabled)
                 {
@@ -467,10 +528,8 @@ public class K2_GameSummary : MonoBehaviour
                     Debug.Log("Enabled K2_QueenACS2 component for timeline");
                 }
                 
-                // Get timeline controller component if exists
                 if (timelineController != null)
                 {
-                    // Try to play timeline
                     System.Reflection.MethodInfo playMethod = timelineController.GetType().GetMethod("PlayTimeline");
                     if (playMethod != null)
                     {
@@ -517,26 +576,25 @@ public class K2_GameSummary : MonoBehaviour
             int correctlyAnswered = qa2System.GetCorrectlyAnsweredCount();
             if (correctlyAnswered >= requiredQA2CorrectAnswers)
             {
-                // Check if key is already collected
-                bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                        GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+                bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                        GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
                 
-                // NEW: Also check if key was just collected in this session
-                if (!keyAlreadyCollected && collectKeyScript != null)
-                {
-                    keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
-                }
+                bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
                 
-                if (keyAlreadyCollected)
+                if (keyCollectedThisSession || keyAlreadyInDatabase)
                 {
-                    Debug.Log("After QA2 panel closed: Key already collected, triggering victory summary.");
+                    Debug.Log("After QA2 panel closed: Key collected, triggering victory summary.");
                     isVictory = true;
+                    if (keyCollectedThisSession)
+                    {
+                        summaryTriggeredByKeyCollection = true;
+                        keyWasCollected = true;
+                    }
                     StartCoroutine(ShowSummaryPanel());
                 }
                 else
                 {
                     Debug.Log("After QA2 panel closed: Key not collected yet. Waiting for timeline.");
-                    // Don't trigger summary - timeline will handle it
                 }
             }
         }
@@ -544,7 +602,7 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
-    #region Summary Panel
+    #region Summary Panel with Counting Animation
 
     private IEnumerator ShowSummaryPanel()
     {
@@ -557,8 +615,9 @@ public class K2_GameSummary : MonoBehaviour
         isGameOver = true;
         isSummaryActive = true;
         summaryLocked = true;
+        isCountingAnimationComplete = false;
 
-        Debug.Log($"Starting ShowSummaryPanel() - Victory: {isVictory}");
+        Debug.Log($"Starting ShowSummaryPanel() - Victory: {isVictory}, Key Collected: {keyWasCollected}");
 
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -566,7 +625,7 @@ public class K2_GameSummary : MonoBehaviour
         PrepareGameForSummary();
         yield return null;
 
-        yield return TriggerLookAroundAnimationDuringPause();
+        yield return TriggerCharacterAnimationDuringPause();
         PlayResultSound();
 
         CalculateCoinReward();
@@ -576,13 +635,20 @@ public class K2_GameSummary : MonoBehaviour
 
         Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown");
         
-        // Wait a moment then play star animation
-        yield return new WaitForSecondsRealtime(0.5f);
-        PlayStarAnimationDirect();
+        // Start the counting animation sequence
+        yield return StartCoroutine(GameEndSequence());
     }
 
     private void PrepareGameForSummary()
     {
+        // Store current position before moving to spawn point
+        if (playerObject != null)
+        {
+            originalPlayerPosition = playerObject.transform.position;
+            originalPlayerRotation = playerObject.transform.rotation;
+            Debug.Log($"Stored original player position: {originalPlayerPosition}");
+        }
+        
         DisableCinemachineBlending();
         MovePlayerToSpawnPoint();
         DisablePlayerInput();
@@ -590,6 +656,18 @@ public class K2_GameSummary : MonoBehaviour
         LowerBackgroundMusicVolume();
         SwitchToSummaryCameraImmediate();
         HideJoystickCanvas();
+        
+        // Reset UI text to 0 for counting animation
+        ResetUITextForCounting();
+    }
+
+    private void ResetUITextForCounting()
+    {
+        // Set all text fields to 0 for counting animation
+        if (timePlayedText != null) timePlayedText.text = "00:00";
+        if (gameScoreText != null) gameScoreText.text = "0";
+        if (coinsEarnedText != null) coinsEarnedText.text = "0";
+        if (starsEarnedText != null) starsEarnedText.text = "0/3";
     }
 
     private void ShowPanelWithAnimation()
@@ -605,6 +683,13 @@ public class K2_GameSummary : MonoBehaviour
 
         if (panelCanvasGroup != null)
             StartCoroutine(FadePanel(0f, 1f, fadeInDuration));
+            
+        // NEW: Disable home button on lose
+        if (!isVictory && homeButton != null)
+        {
+            homeButton.interactable = false;
+            Debug.Log("Home button disabled on lose");
+        }
     }
 
     private IEnumerator FadePanel(float startAlpha, float endAlpha, float duration)
@@ -632,6 +717,294 @@ public class K2_GameSummary : MonoBehaviour
             panelBackgroundImage.sprite = losePanelSprite;
         else
             Debug.LogWarning("Missing panel sprite assignment!");
+    }
+
+    #endregion
+
+    #region Character Animation System
+
+    private IEnumerator TriggerCharacterAnimationDuringPause()
+    {
+        if (characterAnimator != null)
+        {
+            characterAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            
+            Debug.Log($"=== Setting character animation ===");
+            Debug.Log($"isVictory: {isVictory}");
+            Debug.Log($"Dance parameter: {danceParameter}");
+            Debug.Log($"LookAround parameter: {lookAroundParameter}");
+            
+            // Store CharacterVisualSwapper state before modifying
+            if (characterVisualSwapper != null)
+            {
+                isCharacterVisualSwapperEnabledBeforeSummary = characterVisualSwapper.enabled;
+                Debug.Log($"Stored CharacterVisualSwapper enabled state: {isCharacterVisualSwapperEnabledBeforeSummary}");
+            }
+            
+            // WIN: Set dance animation
+            if (isVictory)
+            {
+                Debug.Log("WIN - Setting dance animation");
+                
+                // Disable CharacterVisualSwapper for win to prevent interference
+                if (characterVisualSwapper != null)
+                {
+                    characterVisualSwapper.enabled = false;
+                    Debug.Log("Disabled CharacterVisualSwapper for win animation");
+                }
+                
+                // Reset other animations first
+                if (!string.IsNullOrEmpty(lookAroundParameter))
+                {
+                    characterAnimator.SetBool(lookAroundParameter, false);
+                    Debug.Log($"Set {lookAroundParameter} = false");
+                }
+                
+                if (!string.IsNullOrEmpty(thinkParameter))
+                {
+                    characterAnimator.SetBool(thinkParameter, false);
+                    Debug.Log($"Set {thinkParameter} = false");
+                }
+                
+                // Turn Dance ON
+                if (!string.IsNullOrEmpty(danceParameter))
+                {
+                    characterAnimator.SetBool(danceParameter, true);
+                    Debug.Log($"Set {danceParameter} = true");
+                }
+            }
+            // LOSE: Set look around animation
+            else
+            {
+                Debug.Log("LOSE - Setting look around animation");
+                
+                // Enable CharacterVisualSwapper for lose
+                if (characterVisualSwapper != null && !characterVisualSwapper.enabled)
+                {
+                    characterVisualSwapper.enabled = true;
+                    Debug.Log("Enabled CharacterVisualSwapper for lose animation");
+                }
+                
+                // Reset other animations first
+                if (!string.IsNullOrEmpty(danceParameter))
+                {
+                    characterAnimator.SetBool(danceParameter, false);
+                    Debug.Log($"Set {danceParameter} = false");
+                }
+                
+                if (!string.IsNullOrEmpty(thinkParameter))
+                {
+                    characterAnimator.SetBool(thinkParameter, false);
+                    Debug.Log($"Set {thinkParameter} = false");
+                }
+                
+                // Turn LookAround ON
+                if (!string.IsNullOrEmpty(lookAroundParameter))
+                {
+                    characterAnimator.SetBool(lookAroundParameter, true);
+                    Debug.Log($"Set {lookAroundParameter} = true");
+                }
+                
+                // Trigger CharacterVisualSwapper for lose
+                if (characterVisualSwapper != null)
+                {
+                    characterVisualSwapper.TriggerLookAroundAnimation();
+                    Debug.Log("Triggered CharacterVisualSwapper LookAround animation");
+                }
+            }
+            
+            // Force update immediately
+            characterAnimator.Update(0f);
+            
+            // DEBUG: Check the actual values
+            bool danceValue = !string.IsNullOrEmpty(danceParameter) ? characterAnimator.GetBool(danceParameter) : false;
+            bool lookAroundValue = !string.IsNullOrEmpty(lookAroundParameter) ? characterAnimator.GetBool(lookAroundParameter) : false;
+            Debug.Log($"After setting - Dance: {danceValue}, LookAround: {lookAroundValue}");
+        }
+
+        yield return new WaitForSecondsRealtime(0.1f);
+    }
+
+    private void StopCharacterAnimationDuringPause()
+    {
+        if (characterAnimator != null)
+        {
+            // Reset all animation parameters
+            if (!string.IsNullOrEmpty(danceParameter))
+                characterAnimator.SetBool(danceParameter, false);
+            
+            if (!string.IsNullOrEmpty(lookAroundParameter))
+                characterAnimator.SetBool(lookAroundParameter, false);
+            
+            if (!string.IsNullOrEmpty(thinkParameter))
+                characterAnimator.SetBool(thinkParameter, false);
+            
+            characterAnimator.Update(0f);
+            characterAnimator.updateMode = AnimatorUpdateMode.Normal;
+        }
+
+        // Restore CharacterVisualSwapper to its original state
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.enabled = isCharacterVisualSwapperEnabledBeforeSummary;
+            Debug.Log($"Restored CharacterVisualSwapper enabled to: {isCharacterVisualSwapperEnabledBeforeSummary}");
+            
+            if (characterVisualSwapper.enabled)
+            {
+                characterVisualSwapper.StopLookAroundAnimation();
+            }
+        }
+    }
+
+    #endregion
+
+    #region Counting Animation System
+
+    private IEnumerator GameEndSequence()
+    {
+        // Wait for panel to fade in
+        yield return new WaitForSecondsRealtime(0.5f);
+        
+        // Play star animation first
+        yield return StartCoroutine(PlayStarAnimationWithDelay());
+        
+        // Then start counting animation
+        yield return StartCoroutine(AnimateCountingNumbers());
+        
+        // Mark counting as complete
+        isCountingAnimationComplete = true;
+        
+        Debug.Log("Counting animation complete - buttons enabled");
+    }
+
+    private IEnumerator PlayStarAnimationWithDelay()
+    {
+        yield return new WaitForSecondsRealtime(0.3f);
+        PlayStarAnimationDirect();
+        yield return new WaitForSecondsRealtime(1f); // Wait for star animation to complete
+    }
+
+    private IEnumerator AnimateCountingNumbers()
+    {
+        Debug.Log("Starting counting animation...");
+        
+        if (timePlayedText == null || gameScoreText == null || coinsEarnedText == null || starsEarnedText == null)
+        {
+            Debug.LogError("Text components not assigned!");
+            Debug.Log($"timePlayedText: {timePlayedText != null}");
+            Debug.Log($"gameScoreText: {gameScoreText != null}");
+            Debug.Log($"coinsEarnedText: {coinsEarnedText != null}");
+            Debug.Log($"starsEarnedText: {starsEarnedText != null}");
+            yield break;
+        }
+
+        // Get target values
+        float targetTimePlayed = gameplayProgression != null ? gameplayProgression.GetCurrentTime() : 0f;
+        int targetGameScore = scoringSystem != null ? scoringSystem.GetCurrentScore() : 0;
+        
+        // Store these for the animation
+        currentTimePlayed = targetTimePlayed;
+        currentGameScore = targetGameScore;
+        targetCoinsEarned = calculatedCoinsEarned;
+
+        // Reset animation
+        elapsedAnimationTime = 0f;
+        int lastIntegerValue = 0;
+
+        // Start with all zeros
+        timePlayedText.text = "00:00";
+        gameScoreText.text = "0";
+        coinsEarnedText.text = "0";
+        starsEarnedText.text = "0/3";
+
+        yield return new WaitForSecondsRealtime(0.3f);
+
+        // Calculate how many ticks we want
+        int numberOfTicks = Mathf.Clamp(targetGameScore / 50, 10, 30);
+        float tickInterval = countAnimationDuration / numberOfTicks;
+        float nextTickTime = 0f;
+        
+        Debug.Log($"Audio: Will play {numberOfTicks} ticks every {tickInterval:F2} seconds");
+
+        // Animate all values simultaneously
+        while (elapsedAnimationTime < countAnimationDuration)
+        {
+            elapsedAnimationTime += Time.unscaledDeltaTime;
+            float progress = elapsedAnimationTime / countAnimationDuration;
+            float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
+
+            // Animate time
+            float currentTime = Mathf.Lerp(0, targetTimePlayed, smoothProgress);
+            timePlayedText.text = FormatTime(currentTime);
+
+            // Animate score
+            float currentScore = Mathf.Lerp(0, targetGameScore, smoothProgress);
+            int currentInteger = Mathf.FloorToInt(currentScore);
+            
+            // Play tick sound at regular intervals
+            if (elapsedAnimationTime >= nextTickTime)
+            {
+                if (countTickSound != null && countAudioSource != null)
+                {
+                    countAudioSource.Stop(); // Stop any previous sound
+                    countAudioSource.PlayOneShot(countTickSound, 0.5f);
+                    Debug.Log($"✓ Tick sound played at {elapsedAnimationTime:F2}s - Score: {currentInteger}");
+                }
+                else
+                {
+                    Debug.LogWarning("Count tick sound or audio source is null!");
+                }
+                
+                nextTickTime += tickInterval;
+            }
+            
+            gameScoreText.text = Mathf.FloorToInt(currentScore).ToString("N0");
+
+            // Animate coins
+            float currentCoins = Mathf.Lerp(0, targetCoinsEarned, smoothProgress);
+            coinsEarnedText.text = Mathf.FloorToInt(currentCoins).ToString("N0");
+
+            // Animate stars (as text)
+            int currentStarsText = Mathf.FloorToInt(Mathf.Lerp(0, currentStars, smoothProgress));
+            starsEarnedText.text = $"{currentStarsText}/3";
+
+            yield return null;
+        }
+
+        // Set final values
+        timePlayedText.text = FormatTime(targetTimePlayed);
+        gameScoreText.text = targetGameScore.ToString("N0");
+        coinsEarnedText.text = targetCoinsEarned.ToString("N0");
+        starsEarnedText.text = $"{currentStars}/3";
+
+        // Wait a moment for last tick to finish
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        // Play completion sound
+        if (countCompleteSound != null && countAudioSource != null)
+        {
+            // Stop any ongoing tick sounds
+            if (countAudioSource.isPlaying)
+            {
+                countAudioSource.Stop();
+            }
+            
+            countAudioSource.PlayOneShot(countCompleteSound, 0.7f);
+            Debug.Log("✓ Completion sound played");
+        }
+        else
+        {
+            Debug.LogWarning("Count complete sound or audio source is null!");
+        }
+
+        Debug.Log("Counting animation complete!");
+    }
+
+    private string FormatTime(float timeInSeconds)
+    {
+        int minutes = Mathf.FloorToInt(timeInSeconds / 60f);
+        int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
+        return $"{minutes:00}:{seconds:00}";
     }
 
     #endregion
@@ -670,7 +1043,6 @@ public class K2_GameSummary : MonoBehaviour
             InvokeMethodIfExists(qa2System, "OnCloseButtonClicked");
         }
 
-        // Close any other interfering UI
         CloseInterferingUI();
     }
 
@@ -690,7 +1062,6 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
-    // Method to invoke a method by name on an object
     private void InvokeMethodIfExists(object target, string methodName)
     {
         if (target == null) return;
@@ -712,8 +1083,26 @@ public class K2_GameSummary : MonoBehaviour
         {
             playerObject.transform.position = playerSpawnPoint.position;
             playerObject.transform.rotation = playerSpawnPoint.rotation;
+            Debug.Log($"Moved player to spawn point: {playerSpawnPoint.position}");
         }
 
+        CharacterController charController = playerObject.GetComponent<CharacterController>();
+        if (charController != null)
+        {
+            charController.enabled = false;
+            charController.enabled = true;
+        }
+    }
+
+    private void MovePlayerBackToOriginalPosition()
+    {
+        if (playerObject == null) return;
+        
+        Debug.Log($"Moving player back to original position: {originalPlayerPosition}");
+        
+        playerObject.transform.position = originalPlayerPosition;
+        playerObject.transform.rotation = originalPlayerRotation;
+        
         CharacterController charController = playerObject.GetComponent<CharacterController>();
         if (charController != null)
         {
@@ -809,43 +1198,6 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
-    #region Animation
-
-    private IEnumerator TriggerLookAroundAnimationDuringPause()
-    {
-        if (playerAnimator != null)
-        {
-            playerAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-
-            if (!string.IsNullOrEmpty(lookAroundParameter))
-                playerAnimator.SetBool(lookAroundParameter, true);
-
-            if (characterVisualSwapper != null)
-                characterVisualSwapper.TriggerLookAroundAnimation();
-
-            playerAnimator.Update(0f);
-        }
-
-        yield return new WaitForSecondsRealtime(0.1f);
-    }
-
-    private void StopLookAroundAnimationDuringPause()
-    {
-        if (playerAnimator != null)
-        {
-            if (!string.IsNullOrEmpty(lookAroundParameter))
-                playerAnimator.SetBool(lookAroundParameter, false);
-
-            playerAnimator.Update(0f);
-            playerAnimator.updateMode = AnimatorUpdateMode.Normal;
-        }
-
-        if (characterVisualSwapper != null)
-            characterVisualSwapper.StopLookAroundAnimation();
-    }
-
-    #endregion
-
     #region Audio
 
     private void LowerBackgroundMusicVolume()
@@ -877,16 +1229,10 @@ public class K2_GameSummary : MonoBehaviour
     {
         currentStars = CalculateStars();
         UpdateKeyStatus(currentStars);
-        UpdateTimePlayed();
-        UpdateScore();
-        UpdateCoinsEarned();
-        UpdateStarsEarnedText();
         UpdateKeyImageDisplay();
         
-        // NEW: Disable fail game objects only when losing
         if (!isVictory)
         {
-            // This is a lose summary, disable the fail game objects
             if (failGameObject1 != null && failGameObject1.activeSelf)
                 failGameObject1.SetActive(false);
             
@@ -901,18 +1247,13 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log($"Current stars calculated: {currentStars}");
         Debug.Log($"Stars earned text will show: {currentStars}/3");
         Debug.Log($"Summary triggered by key collection: {summaryTriggeredByKeyCollection}");
+        Debug.Log($"Key was collected this session: {keyWasCollected}");
     }
 
-    // NEW METHOD: Update the KeyImageunlocking display
     private void UpdateKeyImageDisplay()
     {
         if (KeyImageunlocking != null)
         {
-            // Key image should ONLY be shown when:
-            // 1. Summary is active
-            // 2. Summary was triggered by key collection (not by other means like QA2 completion or losing)
-            // 3. AND player has at least 2 stars (3+ hearts)
-            
             bool shouldShowKeyImage = isSummaryActive && 
                                      summaryTriggeredByKeyCollection && 
                                      currentStars >= 2;
@@ -926,62 +1267,17 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
-    private void UpdateStarsEarnedText()
-    {
-        if (starsEarnedText != null)
-        {
-            starsEarnedText.text = $"{currentStars}/3";
-            Debug.Log($"Stars earned text updated: {currentStars}/3");
-        }
-    }
-
-    private void UpdateTimePlayed()
-    {
-        if (timePlayedText != null && gameplayProgression != null)
-        {
-            float timePlayed = gameplayProgression.GetCurrentTime();
-            int minutes = Mathf.FloorToInt(timePlayed / 60f);
-            int seconds = Mathf.FloorToInt(timePlayed % 60f);
-            timePlayedText.text = $"{minutes:00}:{seconds:00}";
-        }
-        else if (timePlayedText != null)
-        {
-            timePlayedText.text = "Time: --:--";
-        }
-    }
-
-    private void UpdateScore()
-    {
-        if (gameScoreText != null && scoringSystem != null)
-        {
-            int score = scoringSystem.GetCurrentScore();
-            gameScoreText.text = $"{score}";
-        }
-        else if (gameScoreText != null)
-        {
-            gameScoreText.text = "Score: 0";
-        }
-    }
-
-    private void UpdateCoinsEarned()
-    {
-        if (coinsEarnedText != null)
-            coinsEarnedText.text = $"{calculatedCoinsEarned}";
-    }
-
     private int CalculateStars()
     {
         int health = 0;
         
         if (isVictory)
         {
-            // For victory, use current health
             health = playerHealth?.currentHealth ?? 0;
             Debug.Log($"Using current health for victory stars: {health}");
         }
         else
         {
-            // For lose condition (only at 0 hearts)
             health = Mathf.Max(0, healthBeforeDeath);
             Debug.Log($"Using health before death for lose: {health}");
         }
@@ -991,7 +1287,6 @@ public class K2_GameSummary : MonoBehaviour
         if (health >= 5) stars = 3;
         else if (health >= 3) stars = 2;
         else if (health >= 1) stars = 1;
-        // 0 hearts = 0 stars (already 0)
         
         Debug.Log($"=== CALCULATE STARS ===");
         Debug.Log($"Health: {health}");
@@ -1007,28 +1302,23 @@ public class K2_GameSummary : MonoBehaviour
         {
             Debug.Log($"=== PLAYING STAR ANIMATION DIRECT: {currentStars} stars ===");
             
-            // Ensure GameObject is active
             if (!starAnimator.gameObject.activeSelf)
             {
                 Debug.Log("Activating star animator GameObject");
                 starAnimator.gameObject.SetActive(true);
             }
             
-            // Ensure Animator is enabled
             if (!starAnimator.enabled)
             {
                 Debug.Log("Enabling star animator component");
                 starAnimator.enabled = true;
             }
             
-            // Set to UnscaledTime since game is paused
             starAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
             
-            // FIRST: Reset to 0 to ensure clean transition
             starAnimator.SetInteger(starParameterName, 0);
             starAnimator.Update(0f);
             
-            // Wait a tiny moment for the reset to take effect
             StartCoroutine(PlayStarAnimationAfterReset());
         }
         else
@@ -1041,28 +1331,23 @@ public class K2_GameSummary : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Now set to the final value
         starAnimator.SetInteger(starParameterName, currentStars);
         starAnimator.Update(0f);
         
-        // Double-check the value was set
         int currentValue = starAnimator.GetInteger(starParameterName);
         Debug.Log($"Star parameter set to: {currentValue} (requested: {currentStars})");
         
-        // Get current state info
         AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
         Debug.Log($"Current animation state: {stateInfo.fullPathHash}");
         Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
         Debug.Log($"Is in transition: {starAnimator.IsInTransition(0)}");
         
-        // If still in default state, try to play the animation directly
         if (stateInfo.normalizedTime == 0 && currentStars > 0)
         {
             Debug.Log("Attempting to play animation directly...");
             ForcePlayStarAnimation(currentStars);
         }
         
-        // Verify the animation is playing
         yield return new WaitForSecondsRealtime(0.1f);
         stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
         Debug.Log($"After 0.1s - State normalized time: {stateInfo.normalizedTime}");
@@ -1075,10 +1360,7 @@ public class K2_GameSummary : MonoBehaviour
             string stateName = starStateNames[stars];
             Debug.Log($"Force playing animation state: {stateName}");
             
-            // Play the state directly at the beginning
             starAnimator.Play(stateName, 0, 0f);
-            
-            // Force update
             starAnimator.Update(0f);
         }
     }
@@ -1089,13 +1371,8 @@ public class K2_GameSummary : MonoBehaviour
         {
             Debug.Log("Resetting star animator...");
             
-            // Reset to default state
             starAnimator.SetInteger(starParameterName, 0);
-            
-            // Set to normal update mode
             starAnimator.updateMode = AnimatorUpdateMode.Normal;
-            
-            // Force update
             starAnimator.Update(0f);
             
             Debug.Log("Star animator reset to default state");
@@ -1106,7 +1383,6 @@ public class K2_GameSummary : MonoBehaviour
     {
         if (keyStatusText != null)
         {
-            // Key is unlocked only if player has 2+ stars (3+ hearts)
             bool isUnlocked = (stars >= 2);
             keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
             keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
@@ -1128,6 +1404,20 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, Total={calculatedCoinsEarned}");
     }
 
+    // Save key to database when Continue button is clicked
+    private void SaveKeyToDatabase()
+    {
+        if (keySavedToDatabase || GameDataManager.Instance == null) return;
+        
+        if (keyWasCollected)
+        {
+            GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
+            GameDataManager.Instance.SaveGameData();
+            keySavedToDatabase = true;
+            Debug.Log("PreserviaKey saved to GameData from Continue button");
+        }
+    }
+
     private void AddCoinsToDatabase()
     {
         if (coinsAddedToDatabase || GameDataManager.Instance == null) return;
@@ -1143,19 +1433,31 @@ public class K2_GameSummary : MonoBehaviour
 
     #region Button Handlers
 
-    public void OnConfirmButtonClicked()
+    public void OnRestartButtonClicked()
     {
         if (!isSummaryActive || !isGameOver || isProcessingConfirm) return;
+        
+        // Check if counting animation is complete
+        if (!isCountingAnimationComplete)
+        {
+            Debug.Log("Cannot confirm - counting animation still in progress!");
+            return;
+        }
         
         isProcessingConfirm = true;
 
         PlayButtonClickSound();
         AddCoinsToDatabase();
 
-        if (confirmButton != null)
-            confirmButton.interactable = false;
+        // Save key if it was collected (only if we're doing a restart that saves)
+        if (keyWasCollected && !keySavedToDatabase)
+        {
+            SaveKeyToDatabase();
+        }
 
-        // NEW: Option to completely restart the game
+        if (restartButton != null)
+            restartButton.interactable = false;
+
         if (completeRestartOnConfirm)
         {
             Debug.Log("Complete restart requested - reloading scene");
@@ -1163,9 +1465,272 @@ public class K2_GameSummary : MonoBehaviour
         }
         else
         {
-            // Original behavior - soft reset
             StartCoroutine(HidePanelAndRestartGame());
         }
+    }
+
+    public void OnHomeButtonClicked()
+    {
+        if (!isSummaryActive || !isGameOver || isProcessingConfirm) return;
+        
+        // Check if counting animation is complete
+        if (!isCountingAnimationComplete)
+        {
+            Debug.Log("Cannot confirm - counting animation still in progress!");
+            return;
+        }
+        
+        // NEW: Don't proceed if on lose screen (home button disabled)
+        if (!isVictory)
+        {
+            Debug.Log("Home button is disabled on lose screen");
+            return;
+        }
+        
+        isProcessingConfirm = true;
+
+        PlayButtonClickSound();
+        AddCoinsToDatabase();
+
+        if (homeButton != null)
+            homeButton.interactable = false;
+
+        // BOTH key collected this session AND key already in database go to pre-summary state
+        if (keyWasCollected || keySavedToDatabase)
+        {
+            // Key was collected this session OR already in database
+            // Both go to pre-summary state
+            Debug.Log($"Key state - Collected this session: {keyWasCollected}, Saved to database: {keySavedToDatabase}");
+            
+            if (keyWasCollected && !keySavedToDatabase)
+            {
+                // Key collected this session AND not saved yet - show animation
+                Debug.Log("Key collected this session - showing KeyUnlockedAnimation");
+                StartCoroutine(ReturnToPreSummaryStateAndShowAnimation());
+            }
+            else
+            {
+                // Key already in database - just return to pre-summary state without animation
+                Debug.Log("Key already in database - returning to pre-summary state without animation");
+                StartCoroutine(ReturnToPreSummaryStateOnly());
+            }
+        }
+        else
+        {
+            // No key at all - return to original game state
+            Debug.Log("No key - returning to game fully");
+            StartCoroutine(ReturnToGameFully());
+        }
+    }
+
+    // Return to pre-summary state AND show key animation
+    private IEnumerator ReturnToPreSummaryStateAndShowAnimation()
+    {
+        Debug.Log("Returning to pre-summary state and showing key animation");
+        
+        // Fade out summary panel
+        if (panelCanvasGroup != null)
+            yield return FadePanel(1f, 0f, fadeOutDuration);
+        
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+        
+        // Stop character animation
+        StopCharacterAnimationDuringPause();
+        
+        // Restore background music
+        RestoreBackgroundMusicVolume();
+        
+        // Restore time scale
+        Time.timeScale = originalTimeScale;
+        
+        // Switch back to player camera
+        SwitchToPlayerCameraWithBlend();
+        
+        // Enable player input
+        EnablePlayerInput();
+        
+        // Reset game state
+        ResetGameState();
+        
+        // Respawn products
+        RespawnAllProducts();
+        
+        // Reset game over flags
+        isGameOver = false;
+        isSummaryActive = false;
+        summaryLocked = false;
+        
+        Debug.Log($"Player at spawn position, input enabled: {playerObject.transform.position}");
+        
+        // Small delay before showing animation
+        yield return new WaitForSecondsRealtime(0.5f);
+        
+        // Now show KeyUnlockedAnimation
+        if (keyUnlockedController != null)
+        {
+            Debug.Log("Showing KeyUnlockedAnimation via controller");
+            keyUnlockedController.ShowKeyUnlockedCanvas(OnKeyAnimationContinue);
+        }
+        else if (keyUnlockedAnimation != null)
+        {
+            Debug.LogWarning("KeyUnlockedController not found, activating GameObject directly");
+            keyUnlockedAnimation.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("KeyUnlockedAnimation GameObject is not assigned!");
+            FinishHomeButtonSequence();
+        }
+    }
+
+    // Return to pre-summary state ONLY (no animation)
+    private IEnumerator ReturnToPreSummaryStateOnly()
+    {
+        Debug.Log("Returning to pre-summary state only (no animation)");
+        
+        // Fade out summary panel
+        if (panelCanvasGroup != null)
+            yield return FadePanel(1f, 0f, fadeOutDuration);
+        
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+        
+        // Stop character animation
+        StopCharacterAnimationDuringPause();
+        
+        // Restore background music
+        RestoreBackgroundMusicVolume();
+        
+        // Restore time scale
+        Time.timeScale = originalTimeScale;
+        
+        // Switch back to player camera
+        SwitchToPlayerCameraWithBlend();
+        
+        // Enable player input
+        EnablePlayerInput();
+        
+        // Reset game state
+        ResetGameState();
+        
+        // Respawn products
+        RespawnAllProducts();
+        
+        // Reset game over flags
+        isGameOver = false;
+        isSummaryActive = false;
+        summaryLocked = false;
+        
+        Debug.Log($"Player at spawn position, input enabled: {playerObject.transform.position}");
+        
+        // Finish the sequence without showing animation
+        FinishHomeButtonSequence();
+        
+        yield return null;
+    }
+
+    // Fully return to game (for no key)
+    private IEnumerator ReturnToGameFully()
+    {
+        Debug.Log("Returning to game fully");
+        
+        // Fade out summary panel
+        if (panelCanvasGroup != null)
+            yield return FadePanel(1f, 0f, fadeOutDuration);
+        
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+        
+        // Stop character animation
+        StopCharacterAnimationDuringPause();
+        
+        // Restore background music
+        RestoreBackgroundMusicVolume();
+        
+        // Restore time scale
+        Time.timeScale = originalTimeScale;
+        
+        // REMOVE THIS LINE - player stays at spawn point
+        // MovePlayerBackToOriginalPosition();
+        
+        // Switch back to player camera
+        SwitchToPlayerCameraWithBlend();
+        
+        // Enable player input
+        EnablePlayerInput();
+        
+        // Reset game state
+        ResetGameState();
+        
+        // Respawn products
+        RespawnAllProducts();
+        
+        // Reset game over flags
+        isGameOver = false;
+        isSummaryActive = false;
+        summaryLocked = false;
+        
+        // Finish up
+        FinishHomeButtonSequence();
+        
+        yield return null;
+    }
+
+    // Callback for when Continue button in key animation is clicked
+    private void OnKeyAnimationContinue()
+    {
+        Debug.Log("Key animation continue callback received");
+        
+        // Save the key to database
+        SaveKeyToDatabase();
+        
+        // Finish the home button sequence
+        FinishHomeButtonSequence();
+    }
+
+    // Common cleanup for home button sequence
+    private void FinishHomeButtonSequence()
+    {
+        // Reset flags
+        isProcessingConfirm = false;
+        isGameOver = false;
+        isSummaryActive = false;
+        summaryLocked = false;
+        
+        if (homeButton != null)
+            homeButton.interactable = true;
+            
+        if (restartButton != null)
+            restartButton.interactable = true;
+        
+        // If key was collected and saved, we keep keyWasCollected true but keySavedToDatabase will be true
+        // They'll be fully reset when the game restarts properly
+        
+        Debug.Log("Home button sequence complete");
+    }
+
+    // Handle ContinueKeyButton click (direct button reference, separate from controller callback)
+    public void OnContinueKeyButtonClicked()
+    {
+        Debug.Log("ContinueKeyButton clicked directly");
+        
+        // Save the key to database
+        SaveKeyToDatabase();
+        
+        // Hide KeyUnlockedAnimation
+        if (keyUnlockedController != null && keyUnlockedController.IsShowing())
+        {
+            // Controller will handle hiding through its own method
+            // We just need to wait for it
+        }
+        else if (keyUnlockedAnimation != null)
+        {
+            keyUnlockedAnimation.SetActive(false);
+        }
+        
+        // Finish the sequence
+        FinishHomeButtonSequence();
     }
 
     private IEnumerator HidePanelAndRestartGame()
@@ -1176,39 +1741,32 @@ public class K2_GameSummary : MonoBehaviour
         if (gameSummaryPanel != null)
             gameSummaryPanel.SetActive(false);
 
-        StopLookAroundAnimationDuringPause();
+        StopCharacterAnimationDuringPause();
         RestoreBackgroundMusicVolume();
         Time.timeScale = originalTimeScale;
 
         RestartGame();
         
-        // Reset the processing flag
         isProcessingConfirm = false;
 
-        if (confirmButton != null)
-            confirmButton.interactable = true;
+        if (restartButton != null)
+            restartButton.interactable = true;
     }
 
-    // NEW: Complete restart method
     private IEnumerator CompleteRestartGame()
     {
         Debug.Log("Starting complete game restart...");
         
-        // Fade out panel if available
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
-        // Hide the summary panel
         if (gameSummaryPanel != null)
             gameSummaryPanel.SetActive(false);
         
-        // Reset time scale
         Time.timeScale = originalTimeScale;
         
-        // Add a small delay to ensure UI is hidden
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Reload the scene
         ReloadCurrentScene();
     }
 
@@ -1240,20 +1798,15 @@ public class K2_GameSummary : MonoBehaviour
 
     private void ResetGameState()
     {
-        // Reset player systems
         if (playerHealth != null) playerHealth.ResetHealth();
         if (scoringSystem != null) scoringSystem.ResetSessionStats();
         if (productManager != null) productManager.ResetForNewSession();
         if (gameplayProgression != null) InvokeMethodIfExists(gameplayProgression, "ResetTimer");
         if (qa2System != null) InvokeMethodIfExists(qa2System, "ClearScannedProducts");
 
-        // Reset monsters
         ResetAllMonsters();
-
-        // Reset key system (BUT NOT THE PERSISTENT SUGARIAKEY)
         ResetKeySystem();
 
-        // Reset collectibles
         if (collectProductsScript != null && collectProductsScript.HasCollectedDummyProduct())
             collectProductsScript.ResetDummyProductCollection();
 
@@ -1275,7 +1828,6 @@ public class K2_GameSummary : MonoBehaviour
 
     private void ResetKeySystem()
     {
-        // Reset all key scripts (session-specific only)
         K2_CollectKey[] allKeyScripts = FindObjectsOfType<K2_CollectKey>();
         foreach (K2_CollectKey keyScript in allKeyScripts)
         {
@@ -1286,7 +1838,6 @@ public class K2_GameSummary : MonoBehaviour
             }
         }
 
-        // Destroy remaining key objects
         GameObject[] remainingKeys = GameObject.FindGameObjectsWithTag("NutriKey");
         foreach (GameObject key in remainingKeys)
             Destroy(key);
@@ -1294,12 +1845,10 @@ public class K2_GameSummary : MonoBehaviour
 
     private void RespawnAllProducts()
     {
-        // Use the ProductSpawner script to respawn products
         if (productSpawner != null)
         {
             Debug.Log("Calling ProductSpawner to respawn products...");
 
-            // Try to call RespawnProducts first
             System.Reflection.MethodInfo respawnMethod = productSpawner.GetType().GetMethod("RespawnProducts");
             if (respawnMethod != null)
             {
@@ -1308,7 +1857,6 @@ public class K2_GameSummary : MonoBehaviour
             }
             else
             {
-                // Fall back to SpawnProducts
                 System.Reflection.MethodInfo spawnMethod = productSpawner.GetType().GetMethod("SpawnProducts");
                 if (spawnMethod != null)
                 {
@@ -1317,7 +1865,6 @@ public class K2_GameSummary : MonoBehaviour
                 }
                 else
                 {
-                    // Direct call as last resort
                     productSpawner.SpawnProducts();
                     Debug.Log("Directly called SpawnProducts()");
                 }
@@ -1345,60 +1892,68 @@ public class K2_GameSummary : MonoBehaviour
         isVictory = false;
         waitingForLastQA2Panel = false;
         isSummaryActive = false;
+        isCountingAnimationComplete = false;
         coinsAddedToDatabase = false;
         calculatedCoinsEarned = 0;
         healthBeforeDeath = 0;
         currentStars = 0;
-        summaryTriggeredByKeyCollection = false; // Reset this flag
+        summaryTriggeredByKeyCollection = false;
+        
+        // Reset key collection flags
+        keyWasCollected = false;
+        keySavedToDatabase = false;
+        
         ResetStarAnimator();
+        
+        // Reset counting animation coroutine
+        if (countAnimationCoroutine != null)
+        {
+            StopCoroutine(countAnimationCoroutine);
+            countAnimationCoroutine = null;
+        }
 
-        // Ensure KeyImageunlocking is hidden when resetting
+        // Reset character animation
+        StopCharacterAnimationDuringPause();
+
         if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
         {
             KeyImageunlocking.SetActive(false);
             Debug.Log("KeyImageunlocking hidden during manager reset");
         }
 
+        if (keyUnlockedAnimation != null && keyUnlockedAnimation.activeSelf)
+        {
+            keyUnlockedAnimation.SetActive(false);
+            Debug.Log("KeyUnlockedAnimation hidden during manager reset");
+        }
+
         if (starsEarnedText != null)
             starsEarnedText.text = "0/3";
 
-        Debug.Log("GameSummaryManager reset for new game");
+        Debug.Log($"GameSummaryManager reset - keyWasCollected: {keyWasCollected}, keySavedToDatabase: {keySavedToDatabase}");
     }
 
     #endregion
 
     #region Complete Scene Reload
 
-    // NEW: Method to reload the current scene
     private void ReloadCurrentScene()
     {
         Debug.Log("Reloading scene for complete restart...");
         
-        // Get the current scene name
         string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
             SceneManager.GetActiveScene().name : sceneToReload;
         
-        // Reset all static flags and persistent data if needed
         ResetPersistentData();
         
-        // Load the scene
         SceneManager.LoadScene(sceneName);
     }
 
-    // NEW: Reset any persistent data that should be cleared on restart
     private void ResetPersistentData()
     {
         Debug.Log("Resetting persistent data...");
         
-        // Reset global key flags
         K2_CollectKey.GlobalResetAllKeys();
-        
-        // Optionally reset SugariaKey if you want fresh start
-        // Uncomment the next line if you want to reset the key on complete restart
-        // if (GameDataManager.Instance != null) ResetSugariaKey();
-        
-        // Clear any static variables or flags
-        // Add any other static resets here
         
         Debug.Log("Persistent data reset complete");
     }
@@ -1407,24 +1962,24 @@ public class K2_GameSummary : MonoBehaviour
 
     #region Public Methods
 
-    // Add this method to manually trigger QA2 completion summary
     public void TriggerQA2CompletionSummary()
     {
         if (!isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
         {
-            bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             
-            // NEW: Also check if key was just collected in this session
-            if (!keyAlreadyCollected && collectKeyScript != null)
-            {
-                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
-            }
+            bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
             
-            if (keyAlreadyCollected)
+            if (keyCollectedThisSession || keyAlreadyInDatabase)
             {
-                Debug.Log("Manual QA2 completion summary trigger - Key already collected.");
+                Debug.Log("Manual QA2 completion summary trigger - Key collected.");
                 isVictory = true;
+                if (keyCollectedThisSession)
+                {
+                    summaryTriggeredByKeyCollection = true;
+                    keyWasCollected = true;
+                }
                 StartCoroutine(ShowSummaryPanel());
             }
             else
@@ -1434,24 +1989,24 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
-    // Update the existing TriggerSummaryFromQA2 method:
     public void TriggerSummaryFromQA2()
     {
         if (!isGameOver && !isSummaryActive && showSummaryOnQA2Completion)
         {
-            bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+            bool keyAlreadyInDatabase = GameDataManager.Instance != null && 
+                                    GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             
-            // NEW: Also check if key was just collected in this session
-            if (!keyAlreadyCollected && collectKeyScript != null)
-            {
-                keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
-            }
+            bool keyCollectedThisSession = collectKeyScript != null && collectKeyScript.HasKey();
             
-            if (keyAlreadyCollected)
+            if (keyCollectedThisSession || keyAlreadyInDatabase)
             {
-                Debug.Log("TriggerSummaryFromQA2 - Key already collected, triggering victory.");
+                Debug.Log("TriggerSummaryFromQA2 - Key collected, triggering victory.");
                 isVictory = true;
+                if (keyCollectedThisSession)
+                {
+                    summaryTriggeredByKeyCollection = true;
+                    keyWasCollected = true;
+                }
                 StartCoroutine(ShowSummaryPanel());
             }
             else
@@ -1465,16 +2020,14 @@ public class K2_GameSummary : MonoBehaviour
     public void SetQA2SummaryEnabled(bool enabled) => showSummaryOnQA2Completion = enabled;
     public void SetRequiredQA2Answers(int requiredAnswers) => requiredQA2CorrectAnswers = Mathf.Clamp(requiredAnswers, 1, 5);
 
-    #region Public Methods for External Triggers
-
-    // Add this method to make it easier for key collection to trigger summary
     public void TriggerSummaryFromKey()
     {
         if (!isGameOver && !isSummaryActive)
         {
             Debug.Log("TriggerSummaryFromKey called - marking summary as triggered by key collection");
             isVictory = true;
-            summaryTriggeredByKeyCollection = true; // Set the flag
+            summaryTriggeredByKeyCollection = true;
+            keyWasCollected = true; // Mark that key was collected this session
             StartCoroutine(ShowSummaryPanel());
         }
         else
@@ -1483,7 +2036,6 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
-    // Method to show summary panel directly
     public IEnumerator ShowSummaryPanelDirectly(bool isWin)
     {
         if (isGameOver || isSummaryActive) 
@@ -1496,11 +2048,10 @@ public class K2_GameSummary : MonoBehaviour
         isGameOver = true;
         isSummaryActive = true;
         isVictory = isWin;
-        
-        // If calling directly, assume not triggered by key collection unless specified
         summaryTriggeredByKeyCollection = false;
+        keyWasCollected = false; // Reset this for direct shows
         
-        Debug.Log($"Starting ShowSummaryPanelDirectly() - Victory: {isVictory}, TriggeredByKey: {summaryTriggeredByKeyCollection}");
+        Debug.Log($"Starting ShowSummaryPanelDirectly() - Victory: {isVictory}");
         
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -1508,7 +2059,7 @@ public class K2_GameSummary : MonoBehaviour
         PrepareGameForSummary();
         yield return null;
         
-        yield return TriggerLookAroundAnimationDuringPause();
+        yield return TriggerCharacterAnimationDuringPause();
         PlayResultSound();
         
         CalculateCoinReward();
@@ -1518,53 +2069,184 @@ public class K2_GameSummary : MonoBehaviour
         
         Debug.Log($"Summary panel shown directly");
         
-        // Wait a moment then play star animation
         yield return new WaitForSecondsRealtime(0.5f);
         PlayStarAnimationDirect();
+        
+        yield return StartCoroutine(AnimateCountingNumbers());
+        isCountingAnimationComplete = true;
     }
 
-    #endregion
-
-    // Method to check if summary is already active
     public bool IsSummaryActive()
     {
         return isSummaryActive;
     }
 
-    // Method to check if SugariaKey is collected (persistent)
-    public bool HasSugariaKey()
+    public bool HasPreserviaKey()
     {
-        return GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+        return GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
     }
 
-    // Method to reset SugariaKey (for testing or new game)
-    public void ResetSugariaKey()
+    public void ResetPreserviaKey()
     {
         if (GameDataManager.Instance != null)
         {
-            GameDataManager.Instance.CurrentGameData.ResetSugariaKey();
+            GameDataManager.Instance.CurrentGameData.ResetPreserviaKey();
             GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey reset in GameData");
+            Debug.Log("PreserviaKey reset in GameData");
         }
     }
 
-    // NEW: Toggle complete restart
     public void SetCompleteRestart(bool enabled)
     {
         completeRestartOnConfirm = enabled;
         Debug.Log($"Complete restart on confirm: {enabled}");
     }
 
-    // NEW: Set scene to reload
     public void SetSceneToReload(string sceneName)
     {
         sceneToReload = sceneName;
         Debug.Log($"Scene to reload set to: {sceneName}");
     }
 
+    // Check if key was collected this session
+    public bool WasKeyCollectedThisSession()
+    {
+        return keyWasCollected;
+    }
+
+    // Check if key is saved to database
+    public bool IsKeySavedToDatabase()
+    {
+        return keySavedToDatabase;
+    }
+
     #endregion
 
     #region Debug & Testing
+
+    [ContextMenu("Test Counting Animation")]
+    public void TestCountingAnimation()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            Debug.Log("Testing counting animation...");
+            StartCoroutine(TestCountingAnimationCoroutine());
+        }
+    }
+
+    private IEnumerator TestCountingAnimationCoroutine()
+    {
+        isGameOver = true;
+        isSummaryActive = true;
+        isVictory = true;
+        
+        originalTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        
+        // Set some test values
+        currentStars = 3;
+        calculatedCoinsEarned = 1500;
+        
+        // Show panel
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(true);
+        
+        // Reset text to 0
+        ResetUITextForCounting();
+        
+        yield return new WaitForSecondsRealtime(0.5f);
+        
+        // Play star animation
+        PlayStarAnimationDirect();
+        yield return new WaitForSecondsRealtime(1f);
+        
+        // Start counting animation
+        yield return StartCoroutine(AnimateCountingNumbers());
+        
+        isCountingAnimationComplete = true;
+        
+        Debug.Log("Counting animation test complete!");
+        
+        // Clean up
+        yield return new WaitForSecondsRealtime(2f);
+        
+        Time.timeScale = originalTimeScale;
+        isGameOver = false;
+        isSummaryActive = false;
+        
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(false);
+    }
+
+    [ContextMenu("Test Key Collection Flow")]
+    public void TestKeyCollectionFlow()
+    {
+        Debug.Log("=== TESTING KEY COLLECTION FLOW ===");
+        keyWasCollected = true;
+        keySavedToDatabase = false;
+        Debug.Log($"Set keyWasCollected=true, keySavedToDatabase={keySavedToDatabase}");
+    }
+
+    [ContextMenu("Test Key Animation")]
+    public void TestKeyAnimation()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            StartCoroutine(TestKeyAnimationCoroutine());
+        }
+    }
+
+    private IEnumerator TestKeyAnimationCoroutine()
+    {
+        // Setup
+        isGameOver = true;
+        isSummaryActive = true;
+        keyWasCollected = true;
+        keySavedToDatabase = false;
+        
+        originalTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        
+        // Show summary panel
+        if (gameSummaryPanel != null)
+            gameSummaryPanel.SetActive(true);
+        
+        // Fade in
+        if (panelCanvasGroup != null)
+            StartCoroutine(FadePanel(0f, 1f, fadeInDuration));
+        
+        yield return new WaitForSecondsRealtime(2f);
+        
+        // Simulate home button click
+        OnHomeButtonClicked();
+    }
+
+    [ContextMenu("Debug Animator Parameters")]
+    public void DebugAnimatorParameters()
+    {
+        if (characterAnimator == null)
+        {
+            Debug.LogError("CharacterAnimator is null!");
+            return;
+        }
+        
+        Debug.Log("=== CURRENT ANIMATOR PARAMETERS ===");
+        Debug.Log($"isVictory: {isVictory}");
+        Debug.Log($"isSummaryActive: {isSummaryActive}");
+        
+        foreach (AnimatorControllerParameter param in characterAnimator.parameters)
+        {
+            if (param.type == AnimatorControllerParameterType.Bool)
+            {
+                Debug.Log($"{param.name}: {characterAnimator.GetBool(param.name)}");
+            }
+        }
+        
+        if (characterVisualSwapper != null)
+        {
+            Debug.Log($"CharacterVisualSwapper enabled: {characterVisualSwapper.enabled}");
+        }
+    }
 
     [ContextMenu("Test Win with Key")]
     public void TestWinWithKey()
@@ -1572,7 +2254,8 @@ public class K2_GameSummary : MonoBehaviour
         if (!isGameOver && !isSummaryActive)
         {
             isVictory = true;
-            summaryTriggeredByKeyCollection = true; // Simulate key collection trigger
+            summaryTriggeredByKeyCollection = true;
+            keyWasCollected = true;
             if (playerHealth != null) playerHealth.currentHealth = 6;
             StartCoroutine(ShowSummaryPanel());
         }
@@ -1584,7 +2267,8 @@ public class K2_GameSummary : MonoBehaviour
         if (!isGameOver && !isSummaryActive)
         {
             isVictory = true;
-            summaryTriggeredByKeyCollection = false; // Not triggered by key
+            summaryTriggeredByKeyCollection = false;
+            keyWasCollected = false;
             if (playerHealth != null) playerHealth.currentHealth = 6;
             StartCoroutine(ShowSummaryPanel());
         }
@@ -1596,7 +2280,8 @@ public class K2_GameSummary : MonoBehaviour
         if (!isGameOver && !isSummaryActive)
         {
             isVictory = false;
-            summaryTriggeredByKeyCollection = false; // Lose is never triggered by key
+            summaryTriggeredByKeyCollection = false;
+            keyWasCollected = false;
             healthBeforeDeath = 0;
             StartCoroutine(ShowSummaryPanel());
         }
@@ -1610,7 +2295,6 @@ public class K2_GameSummary : MonoBehaviour
             isVictory = true;
             if (playerHealth != null) playerHealth.currentHealth = 6;
             
-            // Start the summary
             StartCoroutine(TestStarsDirectCoroutine());
         }
     }
@@ -1626,13 +2310,10 @@ public class K2_GameSummary : MonoBehaviour
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         
-        // Calculate stars
         currentStars = CalculateStars();
-        UpdateStarsEarnedText();
         
         Debug.Log($"Stars calculated: {currentStars}");
         
-        // Play animation directly
         PlayStarAnimationDirect();
         
         yield return new WaitForSecondsRealtime(2f);
@@ -1650,7 +2331,6 @@ public class K2_GameSummary : MonoBehaviour
         {
             Debug.Log("Testing star animations...");
             
-            // Make sure everything is set up
             if (!starAnimator.gameObject.activeSelf)
                 starAnimator.gameObject.SetActive(true);
             
@@ -1663,30 +2343,25 @@ public class K2_GameSummary : MonoBehaviour
             {
                 Debug.Log($"\n=== Testing star value: {i} ===");
                 
-                // Reset first
                 starAnimator.SetInteger(starParameterName, 0);
                 starAnimator.Update(0f);
                 
                 System.Threading.Thread.Sleep(100);
                 
-                // Set to value
                 starAnimator.SetInteger(starParameterName, i);
                 starAnimator.Update(0f);
                 
-                // Check current state
                 AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
                 Debug.Log($"Current state: {stateInfo.fullPathHash}");
                 Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
                 Debug.Log($"Is in transition: {starAnimator.IsInTransition(0)}");
                 
-                // If not playing, try direct play
                 if (stateInfo.normalizedTime == 0 && i > 0)
                 {
                     Debug.Log("Animation not playing, trying direct play...");
                     ForcePlayStarAnimation(i);
                 }
                 
-                // Wait to see animation
                 System.Threading.Thread.Sleep(500);
             }
         }
@@ -1707,19 +2382,15 @@ public class K2_GameSummary : MonoBehaviour
         
         Debug.Log("=== STAR ANIMATOR DEBUG ===");
         
-        // Basic info
         Debug.Log($"GameObject: {starAnimator.gameObject.name}");
         Debug.Log($"GameObject active: {starAnimator.gameObject.activeSelf}");
         Debug.Log($"Animator enabled: {starAnimator.enabled}");
         Debug.Log($"Update mode: {starAnimator.updateMode}");
         
-        // Controller info
         Debug.Log($"Controller: {starAnimator.runtimeAnimatorController?.name}");
         
-        // Parameter info
         Debug.Log($"Current '{starParameterName}' value: {starAnimator.GetInteger(starParameterName)}");
         
-        // List all parameters
         Debug.Log("All parameters:");
         foreach (var param in starAnimator.parameters)
         {
@@ -1742,7 +2413,6 @@ public class K2_GameSummary : MonoBehaviour
             Debug.Log($"- {param.name} (Type: {param.type}, Value: {value})");
         }
         
-        // Current state info
         AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
         Debug.Log($"Current state hash: {stateInfo.fullPathHash}");
         Debug.Log($"State name hash: {stateInfo.shortNameHash}");
@@ -1758,28 +2428,33 @@ public class K2_GameSummary : MonoBehaviour
         }
     }
 
-    [ContextMenu("Check SugariaKey Status")]
-    public void CheckSugariaKeyStatus()
+    [ContextMenu("Check PreserviaKey Status")]
+    public void CheckPreserviaKeyStatus()
     {
-        bool hasKey = HasSugariaKey();
-        Debug.Log($"SugariaKey status: {(hasKey ? "COLLECTED" : "NOT COLLECTED")}");
+        bool hasKey = HasPreserviaKey();
+        Debug.Log($"PreserviaKey status: {(hasKey ? "COLLECTED" : "NOT COLLECTED")}");
+        Debug.Log($"Key collected this session: {keyWasCollected}");
+        Debug.Log($"Key saved to database: {keySavedToDatabase}");
     }
 
-    [ContextMenu("Collect SugariaKey (Test)")]
-    public void TestCollectSugariaKey()
+    [ContextMenu("Collect PreserviaKey (Test)")]
+    public void TestCollectPreserviaKey()
     {
         if (GameDataManager.Instance != null)
         {
-            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+            GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
             GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey collected and saved to GameData");
+            keySavedToDatabase = true;
+            Debug.Log("PreserviaKey collected and saved to GameData");
         }
     }
 
-    [ContextMenu("Reset SugariaKey (Test)")]
-    public void TestResetSugariaKey()
+    [ContextMenu("Reset PreserviaKey (Test)")]
+    public void TestResetPreserviaKey()
     {
-        ResetSugariaKey();
+        ResetPreserviaKey();
+        keySavedToDatabase = false;
+        keyWasCollected = false;
     }
 
     [ContextMenu("Test Complete Restart")]
@@ -1789,10 +2464,10 @@ public class K2_GameSummary : MonoBehaviour
         {
             isVictory = true;
             summaryTriggeredByKeyCollection = true;
+            keyWasCollected = true;
             if (playerHealth != null) playerHealth.currentHealth = 6;
             StartCoroutine(ShowSummaryPanel());
             
-            // After showing summary, trigger complete restart
             StartCoroutine(TestCompleteRestartCoroutine());
         }
     }
@@ -1800,7 +2475,7 @@ public class K2_GameSummary : MonoBehaviour
     private IEnumerator TestCompleteRestartCoroutine()
     {
         yield return new WaitForSecondsRealtime(3f);
-        OnConfirmButtonClicked();
+        OnRestartButtonClicked();
     }
 
     #endregion
@@ -1813,30 +2488,23 @@ public class K2_GameSummary : MonoBehaviour
         if (backgroundMusicSource != null)
             backgroundMusicSource.volume = originalBackgroundMusicVolume;
 
-        if (confirmButton != null)
-            confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
-        
         if (restartButton != null)
-            restartButton.onClick.RemoveListener(OnConfirmButtonClicked);
+            restartButton.onClick.RemoveListener(OnRestartButtonClicked);
         
-        // Ensure KeyImageunlocking is not left active
+        if (homeButton != null)
+            homeButton.onClick.RemoveListener(OnHomeButtonClicked);
+        
+        if (continueKeyButton != null)
+            continueKeyButton.onClick.RemoveListener(OnContinueKeyButtonClicked);
+        
         if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
         {
             KeyImageunlocking.SetActive(false);
         }
-    }
-}
-
-// Add this extension class in the same file or a separate one
-public static class AnimatorExtensions
-{
-    public static bool HasParameterOfType(this Animator animator, string paramName, AnimatorControllerParameterType paramType)
-    {
-        foreach (AnimatorControllerParameter param in animator.parameters)
+        
+        if (keyUnlockedAnimation != null && keyUnlockedAnimation.activeSelf)
         {
-            if (param.name == paramName && param.type == paramType)
-                return true;
+            keyUnlockedAnimation.SetActive(false);
         }
-        return false;
     }
 }

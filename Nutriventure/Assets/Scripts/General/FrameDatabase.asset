@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 364396ae60b2c674e8bb82b3b7b74b13, type: 3}
+  m_Name: FrameDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::FrameDatabase
+  frames:
+  - id: farme1
+    frameName: Wooden
+    frameSprite: {fileID: 21300000, guid: 003316abeac941249ad8ca97ae5e2be9, type: 3}
+    unlockedByDefault: 1
+  - id: frame2
+    frameName: Silver
+    frameSprite: {fileID: 21300000, guid: 7851ef54ae82ec94ea58964308ce3438, type: 3}
+    unlockedByDefault: 1
+  - id: frame3
+    frameName: Gold
+    frameSprite: {fileID: 21300000, guid: 933eccad87fa4b14e9d6ac692eba48ca, type: 3}
+    unlockedByDefault: 1
+  - id: frame4
+    frameName: Diamond
+    frameSprite: {fileID: 21300000, guid: 2450b1e209685574dab9bd039e49a9af, type: 3}
+    unlockedByDefault: 1
+  - id: frame5
+    frameName: Bronze
+    frameSprite: {fileID: 21300000, guid: 1d1f9c0e0d7ce6540997d3f4e5dd442f, type: 3}
+    unlockedByDefault: 1
+  - id: frame6
+    frameName: GoldenEmerald
+    frameSprite: {fileID: 21300000, guid: ea5ceb643272e6f43a806c3d7ac4fd24, type: 3}
+    unlockedByDefault: 1
+  - id: frame7
+    frameName: Emerald
+    frameSprite: {fileID: 21300000, guid: f8ed77de75dc1a64f99837274dd46c14, type: 3}
+    unlockedByDefault: 0
+  - id: frame8
+    frameName: BlueDiamod
+    frameSprite: {fileID: 21300000, guid: 37ec92ae844ee5c4996318911cbe5328, type: 3}
+    unlockedByDefault: 0
+  - id: frame10
+    frameName: Legendary
+    frameSprite: {fileID: 21300000, guid: ee09368609d099d48a3b640fca1922d4, type: 3}
+    unlockedByDefault: 0

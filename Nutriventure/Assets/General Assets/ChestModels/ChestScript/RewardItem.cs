@@ -138,6 +138,7 @@ public class RewardItem : MonoBehaviour
         }
     }
 
+    // ADD THIS METHOD - It was missing!
     public Vector3 GetWorldPosition()
     {
         RectTransform rectTransform = GetComponent<RectTransform>();

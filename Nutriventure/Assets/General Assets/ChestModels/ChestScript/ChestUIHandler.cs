@@ -26,12 +26,18 @@ public class ChestUIHandler : MonoBehaviour
     void Start()
     {
         claimButton.onClick.AddListener(OnClaimButtonClicked);
-        gameObject.SetActive(false);
+        // Don't set inactive here - let the manager control activation
         claimButton.gameObject.SetActive(false);
     }
 
     void OnClaimButtonClicked()
     {
+        // Play button click sound
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
         if (currentChest != null)
         {
             // Play claim sound using AudioHandler
@@ -102,6 +108,13 @@ public class ChestUIHandler : MonoBehaviour
 
         if (rewardRevealCoroutine != null)
             StopCoroutine(rewardRevealCoroutine);
+
+        // ENSURE CANVAS IS ACTIVE BEFORE STARTING COROUTINE
+        if (!gameObject.activeInHierarchy)
+        {
+            Debug.LogWarning("ChestUIHandler: Canvas was inactive, activating now...");
+            gameObject.SetActive(true);
+        }
 
         rewardRevealCoroutine = StartCoroutine(RevealRewardsOneByOne());
     }

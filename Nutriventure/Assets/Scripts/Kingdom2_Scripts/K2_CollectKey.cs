@@ -47,7 +47,7 @@ public class K2_CollectKey : MonoBehaviour
     // Static flag for global reset
     private static bool globalResetFlag = false;
     
-    // FIX: Add a flag to prevent double triggering
+    // Flag to prevent double triggering
     private bool isCompletingPickup = false;
     
     void Start()
@@ -126,7 +126,7 @@ public class K2_CollectKey : MonoBehaviour
         {
             pickupTimer += Time.deltaTime;
             
-            // End animation after duration - FIXED: Don't call CompleteKeyPickup here
+            // End animation after duration
             if (pickupTimer >= pickupAnimationDuration && !isCompletingPickup)
             {
                 EndPickupAnimation();
@@ -230,7 +230,7 @@ public class K2_CollectKey : MonoBehaviour
     
     private void CompleteKeyPickup()
     {
-        // FIX: Check if already completed to prevent double execution
+        // Check if already completed to prevent double execution
         if (hasKey) return;
         
         Debug.Log("CompleteKeyPickup called");
@@ -244,7 +244,7 @@ public class K2_CollectKey : MonoBehaviour
         isPickingUp = false;
         pickupTimer = 0f;
         
-        // Mark key as collected
+        // Mark key as collected (in session only - NOT saved to database yet)
         hasKey = true;
         
         // Record health at moment of key collection
@@ -272,13 +272,8 @@ public class K2_CollectKey : MonoBehaviour
             currentNearbyKey = null;
         }
         
-        // Save key to GameData
-        if (GameDataManager.Instance != null)
-        {
-            GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
-            GameDataManager.Instance.SaveGameData();
-            Debug.Log("SugariaKey saved to GameData");
-        }
+        // NOTE: Key is NOT saved to GameData here anymore!
+        // It will be saved when ContinueKeyButton is clicked in GameSummary
         
         // Disable timeline after key collection
         DisableTimelineAfterKeyCollection();
@@ -311,7 +306,7 @@ public class K2_CollectKey : MonoBehaviour
     
     private void EndPickupAnimation()
     {
-        // FIX: Simply end the animation state without triggering completion again
+        // Simply end the animation state without triggering completion again
         if (playerAnimator != null)
         {
             playerAnimator.SetBool(pickupHash, false);
@@ -357,8 +352,7 @@ public class K2_CollectKey : MonoBehaviour
             // Mark that we've triggered the summary
             hasTriggeredSummary = true;
             
-            // IMPORTANT: Instead of calling TestWin(), directly trigger the summary
-            // This prevents double triggers
+            // Directly trigger the summary
             StartCoroutine(TriggerSummaryDirectly());
         }
         else if (hasTriggeredSummary)

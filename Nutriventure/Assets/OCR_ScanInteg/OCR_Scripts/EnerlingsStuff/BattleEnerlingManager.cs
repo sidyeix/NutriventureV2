@@ -32,6 +32,10 @@ public class BattleEnerlingManager : MonoBehaviour
     public GameObject organImagePrefab;
     public Image nameStatsBG;
 
+    [Header("Ending Manager Reference")]
+    public EndingManager endingManager;
+
+
     [Header("NameStats BG Sprites by Rarity")]
     public Sprite commonNameStatsBG;
     public Sprite rareNameStatsBG;
@@ -50,13 +54,14 @@ public class BattleEnerlingManager : MonoBehaviour
     private int currentArmor = 0;
     private int activeDefend = 0;
     private bool hasDefend = false;
+    private bool defendUsedThisTurn = false; // Track if defend was used this turn
 
     // Skill tracking
     private bool isAnimating = false;
 
     // Organ cooldown tracking
     private int organCooldownTimer = 0;
-    private int maxOrganCooldown = 4; // Updated: Common=4, Rare=3, UltraRare=2
+    private int maxOrganCooldown = 4;
     private bool organCooldownReady = false;
 
     // Reference to selection manager
@@ -105,6 +110,21 @@ public class BattleEnerlingManager : MonoBehaviour
         StartBattle();
 
         Debug.Log($"=== BATTLE STARTED WITH EXISTING ENERLINGS ===");
+    }
+
+    // Add this method to check for defeat
+    public bool IsPlayerDefeated()
+    {
+        if (battleEnerling == null) return false;
+        return battleEnerling.currentLife <= 0;
+    }
+
+    // Add this method to get player animator
+    public Animator GetPlayerAnimator()
+    {
+        if (spawnedEnerling != null)
+            return spawnedEnerling.GetComponent<Animator>();
+        return null;
     }
 
     // ==================== NEW METHOD: Switch to battlefield with existing enerling ====================
@@ -472,9 +492,9 @@ public class BattleEnerlingManager : MonoBehaviour
             // MAKE SURE references are set
             turnSystem.InitializeBattle(this, aiEnerlingManager);
 
-            // Start the battle
-            turnSystem.StartBattle();
-            Debug.Log("Turn system started");
+            // Start the battle WITH AUDIO
+            turnSystem.StartBattleWithAudio(); // Changed from StartBattle() to StartBattleWithAudio()
+            Debug.Log("Turn system started with audio");
         }
         else
         {
@@ -491,7 +511,6 @@ public class BattleEnerlingManager : MonoBehaviour
 
         Debug.Log("Battle started successfully!");
     }
-
 
     public void SwitchToBattlefield(string selectedEnerlingName)
     {
@@ -597,6 +616,7 @@ public class BattleEnerlingManager : MonoBehaviour
         currentArmor = CalculateArmorValue(battleEnerling);
         activeDefend = 0;
         hasDefend = false;
+        defendUsedThisTurn = false;
 
         // Initialize skill cooldowns based on database values
         InitializeSkillCooldowns();
@@ -885,7 +905,6 @@ public class BattleEnerlingManager : MonoBehaviour
         StartCoroutine(PlaySkillAnimationAndEffect(skillNumber));
     }
 
-
     string GetAnimationBoolName(int skillNumber)
     {
         switch (skillNumber)
@@ -1171,6 +1190,12 @@ public class BattleEnerlingManager : MonoBehaviour
 
             yield return new WaitForSeconds(0.3f);
         }
+        else if (hasDefend && activeDefend <= 0)
+        {
+            // Defend was already used up
+            hasDefend = false;
+            Debug.Log("Player defend already used up");
+        }
 
         // Calculate armor damage (if defend didn't block all damage)
         int armorDamage = 0;
@@ -1268,6 +1293,7 @@ public class BattleEnerlingManager : MonoBehaviour
     {
         activeDefend = defendAmount;
         hasDefend = true;
+        defendUsedThisTurn = true; // Mark that defend was used this turn
 
         // Show defend activation feedback
         if (FeedbackManager.Instance != null)
@@ -1275,22 +1301,38 @@ public class BattleEnerlingManager : MonoBehaviour
             FeedbackManager.Instance.ShowDefend(
                 FeedbackManager.Instance.playerFeedbackSpawnPoint,
                 defendAmount,
-                true,
-                "Player Defend"
+                true, // This is activation
+                "Player Defend Activated"
             );
         }
 
-        Debug.Log($"Defend set to {defendAmount} for next opponent's attack");
+        Debug.Log($"Player Defend set to {defendAmount}. Will block next enemy attack.");
     }
 
     public void ClearDefend()
     {
-        if (hasDefend)
+        // Only clear defend if it wasn't used this turn (it lasts until next enemy attack)
+        if (hasDefend && !defendUsedThisTurn)
         {
             Debug.Log($"Defend cleared (was {activeDefend})");
             hasDefend = false;
             activeDefend = 0;
         }
+        else if (defendUsedThisTurn)
+        {
+            Debug.Log($"Defend was used this turn, keeping it active for next enemy attack: {activeDefend}");
+        }
+    }
+
+    public void ProcessEndTurn()
+    {
+        UpdateOrganCooldown();
+
+        // Reset defend tracking for next turn
+        defendUsedThisTurn = false;
+
+        // Don't clear defend here - it should persist until used against enemy attack
+        // ClearDefend(); // Removed - defend should persist
     }
 
     void UpdateOrganCooldown()
@@ -1308,12 +1350,6 @@ public class BattleEnerlingManager : MonoBehaviour
                 Debug.Log("Player Organ cooldown ready!");
             }
         }
-    }
-
-    public void ProcessEndTurn()
-    {
-        UpdateOrganCooldown();
-        ClearDefend();
     }
 
     IEnumerator SmoothHealthChange(float startValue, float endValue, float duration)
@@ -1501,6 +1537,7 @@ public class BattleEnerlingManager : MonoBehaviour
         currentArmor = 0;
         activeDefend = 0;
         hasDefend = false;
+        defendUsedThisTurn = false;
         isAnimating = false;
     }
 

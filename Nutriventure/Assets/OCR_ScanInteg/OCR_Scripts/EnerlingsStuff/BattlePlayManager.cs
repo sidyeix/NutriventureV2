@@ -126,7 +126,6 @@ public class BattlePlayManager : MonoBehaviour
         StartCoroutine(InitializeBattleScene());
     }
 
-    // SIMPLE SOLUTION: Stop ALL other PlayableDirectors in the scene
     void StopAllOtherPlayableDirectors()
     {
         Debug.Log("=== STOPPING ALL OTHER PLAYABLE DIRECTORS ===");
@@ -205,8 +204,6 @@ public class BattlePlayManager : MonoBehaviour
         yield return StartCoroutine(PlayIntroductionSequence());
     }
 
-    // ==================== GROCERY CAMERA POSITION CONTROL ====================
-
     void SetInitialGroceryCameraPosition(IngredientDatabase.KingdomOrigin kingdom)
     {
         if (groceryCameraDolly == null)
@@ -256,26 +253,6 @@ public class BattlePlayManager : MonoBehaviour
         Debug.Log($"INITIAL grocery camera path position set to: {cameraPosition}");
     }
 
-    void SetBattleGroceryCameraPosition()
-    {
-        if (groceryCameraDolly == null)
-        {
-            groceryCameraDolly = groceryCamera?.GetCinemachineComponent<CinemachineTrackedDolly>();
-
-            if (groceryCameraDolly == null)
-            {
-                Debug.LogError("CinemachineTrackedDolly component not found on grocery camera!");
-                return;
-            }
-        }
-
-        // Set to battle position (0 for all kingdoms)
-        groceryCameraDolly.m_PathPosition = battleCameraPosition;
-        Debug.Log($"BATTLE grocery camera path position set to: {battleCameraPosition} (after catch/fight click)");
-    }
-
-    // ==================== INTRODUCTION SEQUENCE ====================
-
     IEnumerator PlayIntroductionSequence()
     {
         Debug.Log("=== STARTING INTRODUCTION SEQUENCE ===");
@@ -324,7 +301,6 @@ public class BattlePlayManager : MonoBehaviour
         Debug.Log("=== INTRODUCTION SEQUENCE COMPLETE ===");
     }
 
-    // SIMPLE TIMELINE PLAY METHOD
     IEnumerator PlayKingdomTimeline()
     {
         Debug.Log($"=== PLAYING KINGDOM TIMELINE ===");
@@ -335,7 +311,6 @@ public class BattlePlayManager : MonoBehaviour
             yield break;
         }
 
-        // Get the correct timeline
         currentTimeline = GetKingdomTimelineAsset(opponentEnerling.kingdom);
 
         if (currentTimeline == null)
@@ -346,7 +321,6 @@ public class BattlePlayManager : MonoBehaviour
 
         Debug.Log($"Playing timeline: {currentTimeline.name}");
 
-        // SIMPLE: Just assign and play
         playableDirector.playableAsset = currentTimeline;
         playableDirector.time = 0;
         playableDirector.Play();
@@ -357,8 +331,6 @@ public class BattlePlayManager : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
         Debug.Log($"Timeline playing: {playableDirector.state}");
     }
-
-    // ==================== HELPER METHODS ====================
 
     void SpawnOpponentModel()
     {
@@ -422,7 +394,16 @@ public class BattlePlayManager : MonoBehaviour
 
     void SetAllCamerasPriority(int priority)
     {
-        if (groceryCamera != null) groceryCamera.Priority = priority;
+        if (groceryCamera != null)
+        {
+            groceryCamera.Priority = priority;
+            // INSTANT CAMERA SWITCH: Disable camera transition
+            CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
+            if (brain != null)
+            {
+                brain.m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
+            }
+        }
         if (battleFocusCamera != null) battleFocusCamera.Priority = priority;
         if (nutriKingdomCam != null) nutriKingdomCam.Priority = priority;
         if (alerthiaCam != null) alerthiaCam.Priority = priority;
@@ -432,6 +413,14 @@ public class BattlePlayManager : MonoBehaviour
 
     void SetKingdomCameraPriorityByOrigin(IngredientDatabase.KingdomOrigin kingdom, int priority)
     {
+        // INSTANT CAMERA SWITCH: Set blend to cut (instant) before changing priorities
+        CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
+        if (brain != null)
+        {
+            brain.m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
+        }
+
+        // Set all cameras to low priority first
         if (nutriKingdomCam != null) nutriKingdomCam.Priority = 0;
         if (alerthiaCam != null) alerthiaCam.Priority = 0;
         if (sugariaCam != null) sugariaCam.Priority = 0;
@@ -439,6 +428,7 @@ public class BattlePlayManager : MonoBehaviour
         if (groceryCamera != null) groceryCamera.Priority = 0;
         if (battleFocusCamera != null) battleFocusCamera.Priority = 0;
 
+        // Set the target camera to high priority
         switch (kingdom)
         {
             case IngredientDatabase.KingdomOrigin.NutriKingdom:
@@ -456,6 +446,12 @@ public class BattlePlayManager : MonoBehaviour
             default:
                 if (nutriKingdomCam != null) nutriKingdomCam.Priority = priority;
                 break;
+        }
+
+        // Force immediate camera update
+        if (brain != null)
+        {
+            brain.ManualUpdate();
         }
     }
 
@@ -591,6 +587,24 @@ public class BattlePlayManager : MonoBehaviour
         StartCoroutine(ShowPlayerSelectionScreen());
     }
 
+    void SetBattleGroceryCameraPosition()
+    {
+        if (groceryCameraDolly == null)
+        {
+            groceryCameraDolly = groceryCamera?.GetCinemachineComponent<CinemachineTrackedDolly>();
+
+            if (groceryCameraDolly == null)
+            {
+                Debug.LogError("CinemachineTrackedDolly component not found on grocery camera!");
+                return;
+            }
+        }
+
+        // Set to battle position (0 for all kingdoms)
+        groceryCameraDolly.m_PathPosition = battleCameraPosition;
+        Debug.Log($"BATTLE grocery camera path position set to: {battleCameraPosition} (after catch/fight click)");
+    }
+
     IEnumerator ShowPlayerSelectionScreen()
     {
         Debug.Log("Fight/Catch button clicked - showing player selection screen");
@@ -616,13 +630,28 @@ public class BattlePlayManager : MonoBehaviour
         if (catchEnerlingCanvas != null)
             catchEnerlingCanvas.SetActive(false);
 
+        // INSTANT CAMERA SWITCH: No transition, just cut to battle focus camera
         SetAllCamerasPriority(0);
+
+        // Set CinemachineBrain to instant cut
+        CinemachineBrain brain = Camera.main?.GetComponent<CinemachineBrain>();
+        if (brain != null)
+        {
+            brain.m_DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Style.Cut, 0f);
+        }
+
         if (battleFocusCamera != null)
         {
             battleFocusCamera.Priority = 20;
         }
 
-        yield return new WaitForSeconds(0.5f);
+        // Force immediate camera update
+        if (brain != null)
+        {
+            brain.ManualUpdate();
+        }
+
+        yield return new WaitForSeconds(0.1f); // Small delay for instant switch
 
         if (enerlingPickingCanvas != null)
         {
@@ -717,7 +746,9 @@ public class BattlePlayManager : MonoBehaviour
         if (turnSystem != null)
         {
             turnSystem.InitializeBattle(battleManager, aiManager);
-            turnSystem.StartBattle();
+
+            // This will automatically start the battle audio
+            turnSystem.StartBattleWithAudio();
         }
 
         Debug.Log("Battle systems initialized successfully!");

@@ -19,7 +19,8 @@ public class NPCQuestInteraction : MonoBehaviour
     private List<QuestCategory> allowedCategories = new List<QuestCategory>
     {
         QuestCategory.Tutorial,
-        QuestCategory.MainStory
+        QuestCategory.MainStory,
+        QuestCategory.GeneralQuest
     };
 
     [SerializeField] private GameObject questButton;
@@ -39,7 +40,8 @@ public class NPCQuestInteraction : MonoBehaviour
 
     [Header("UI Buttons")]
     [SerializeField] private Button acceptButton;
-    [SerializeField] private Button okayButton; // NEW: For InProgress quests
+    [SerializeField] private Button okayButton;
+    [SerializeField] private Button claimButton;
     [SerializeField] private Button replayButton;
     [SerializeField] private Button backButton;
 
@@ -54,26 +56,48 @@ public class NPCQuestInteraction : MonoBehaviour
     [SerializeField] private float fadeDelay = 1f;
     [SerializeField] private CanvasGroup missionCanvasGroup;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip coinSound;
+
+    [Header("Reward Feedback UI - COINS")]
+    [SerializeField] private GameObject coinRewardFeedbackPrefab;
+    [SerializeField] private RectTransform coinRewardSpawnPoint;
+
+    [Header("Reward Feedback UI - GEMS")]
+    [SerializeField] private GameObject gemRewardFeedbackPrefab;
+    [SerializeField] private RectTransform gemRewardSpawnPoint;
+
+    [Header("Animation Settings")]
+    [SerializeField] private Canvas parentCanvas;
+    [SerializeField] private float feedbackSlideDuration = 0.5f;
+    [SerializeField] private float feedbackFadeOutDuration = 0.3f;
+    [SerializeField] private float feedbackSlideUpAmount = 50f;
+    [SerializeField] private string feedbackPrefix = "+";
+    [SerializeField] private string coinSuffix = "";
+    [SerializeField] private string gemSuffix = "";
+
+    [Header("Reward Delay Settings")]
+    [SerializeField] private float rewardDelay = 1f; // 1 second delay before showing rewards
+
     private Quest currentQuest;
     private bool playerInRange = false;
     private bool isPlayingTimeline = false;
     private bool isExiting = false;
     private bool hasPlayedTimelineForCurrentQuest = false;
+    private List<TaskItemUI> activeTaskItems = new List<TaskItemUI>();
+    private Player_Data playerData;
 
     private void Start()
     {
-        // Ensure UI elements are properly initialized
         if (questButton != null)
             questButton.SetActive(false);
 
         if (missionCanvas != null)
             missionCanvas.SetActive(false);
 
-        // Store original camera priority
         if (npcVirtualCamera != null)
             originalCameraPriority = npcVirtualCamera.Priority;
 
-        // Initialize database if needed
         if (questDatabase != null)
         {
             questDatabase.InitializeDatabase();
@@ -84,43 +108,72 @@ public class NPCQuestInteraction : MonoBehaviour
             Debug.LogError("QuestDatabase is not assigned in the inspector!");
         }
 
-        // Setup button listeners
         SetupButtonListeners();
 
-        // Initialize canvas group if exists
         if (missionCanvasGroup == null && missionCanvas != null)
         {
             missionCanvasGroup = missionCanvas.GetComponent<CanvasGroup>();
+        }
+
+        // Find the main canvas if not assigned
+        if (parentCanvas == null)
+        {
+            parentCanvas = FindObjectOfType<Canvas>();
+            if (parentCanvas == null)
+            {
+                Debug.LogWarning("No Canvas found in scene! Reward feedback will not display correctly.");
+            }
+        }
+
+        // Find Player_Data
+        playerData = FindObjectOfType<Player_Data>();
+        if (playerData == null)
+        {
+            Debug.LogWarning("Player_Data not found in scene! UI will not update automatically.");
+        }
+
+        // Validate task item prefab
+        if (taskItemPrefab != null)
+        {
+            // Ensure the prefab has TaskItemUI component
+            if (taskItemPrefab.GetComponent<TaskItemUI>() == null)
+            {
+                Debug.LogWarning("TaskItemPrefab is missing TaskItemUI component. Adding one...");
+                taskItemPrefab.AddComponent<TaskItemUI>();
+            }
         }
     }
 
     private void SetupButtonListeners()
     {
-        // Accept Button - for NotStarted quests
         if (acceptButton != null)
         {
             acceptButton.onClick.RemoveAllListeners();
             acceptButton.onClick.AddListener(OnAcceptButtonClicked);
-            acceptButton.gameObject.SetActive(false); // Hide initially
+            acceptButton.gameObject.SetActive(false);
         }
 
-        // Okay Button - for InProgress quests
         if (okayButton != null)
         {
             okayButton.onClick.RemoveAllListeners();
             okayButton.onClick.AddListener(OnOkayButtonClicked);
-            okayButton.gameObject.SetActive(false); // Hide initially
+            okayButton.gameObject.SetActive(false);
         }
 
-        // Replay Button
+        if (claimButton != null)
+        {
+            claimButton.onClick.RemoveAllListeners();
+            claimButton.onClick.AddListener(OnClaimButtonClicked);
+            claimButton.gameObject.SetActive(false);
+        }
+
         if (replayButton != null)
         {
             replayButton.onClick.RemoveAllListeners();
             replayButton.onClick.AddListener(OnReplayButtonClicked);
-            replayButton.gameObject.SetActive(false); // Hide initially
+            replayButton.gameObject.SetActive(false);
         }
 
-        // Back Button
         if (backButton != null)
         {
             backButton.onClick.RemoveAllListeners();
@@ -143,6 +196,13 @@ public class NPCQuestInteraction : MonoBehaviour
         {
             playerInRange = false;
             HideQuestButton();
+
+            // Ensure camera priority is set to 0 when player leaves
+            if (npcVirtualCamera != null)
+            {
+                npcVirtualCamera.Priority = 0;
+                Debug.Log($"NPC virtual camera priority set to 0 on trigger exit");
+            }
         }
     }
 
@@ -158,7 +218,6 @@ public class NPCQuestInteraction : MonoBehaviour
         Debug.Log($"Checking for quests in kingdom: {kingdomID}");
         Debug.Log($"Allowed categories: {string.Join(", ", allowedCategories)}");
 
-        // Get all quests in the specified kingdom
         var kingdomQuests = questDatabase.GetQuestsByKingdom(kingdomID);
 
         if (kingdomQuests == null || kingdomQuests.Count == 0)
@@ -170,21 +229,20 @@ public class NPCQuestInteraction : MonoBehaviour
 
         Debug.Log($"Found {kingdomQuests.Count} quests in kingdom");
 
-        // Find the first quest that matches our criteria
+        // Find the first quest that matches criteria (NotStarted, InProgress, or Completed)
         foreach (var quest in kingdomQuests)
         {
             Debug.Log($"Checking quest: {quest.questName}, Status: {quest.status}, Category: {quest.category}");
 
-            // Check if quest status is either NotStarted or InProgress
-            bool hasValidStatus = quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress;
+            bool hasValidStatus = quest.status == QuestStatus.NotStarted ||
+                                  quest.status == QuestStatus.InProgress ||
+                                  quest.status == QuestStatus.Completed;
 
-            // Check if quest category is allowed
             bool hasAllowedCategory = allowedCategories.Contains(quest.category);
 
             if (hasValidStatus && hasAllowedCategory)
             {
                 currentQuest = quest;
-                // Reset timeline flag when switching to a new quest
                 if (hasPlayedTimelineForCurrentQuest && quest.questID != currentQuest?.questID)
                 {
                     hasPlayedTimelineForCurrentQuest = false;
@@ -195,7 +253,6 @@ public class NPCQuestInteraction : MonoBehaviour
             }
         }
 
-        // No quest found that matches criteria
         Debug.Log($"No available quests matching criteria in kingdom: {kingdomID}");
         HideQuestButton();
     }
@@ -218,10 +275,14 @@ public class NPCQuestInteraction : MonoBehaviour
         }
     }
 
-    // Call this when the quest button is clicked
     public void OnQuestButtonClicked()
     {
         Debug.Log("===== QUEST BUTTON CLICKED =====");
+
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
         if (currentQuest == null)
         {
@@ -233,24 +294,21 @@ public class NPCQuestInteraction : MonoBehaviour
         Debug.Log($"Quest status: {currentQuest.status}");
         Debug.Log($"Has timeline asset: {currentQuest.timelineAsset != null}");
 
-        // Hide quest button immediately
         HideQuestButton();
 
-        // Set camera priority to 30 immediately
+        // Set camera priority to 30 when opening quest
         if (npcVirtualCamera != null)
         {
             npcVirtualCamera.Priority = 30;
             Debug.Log($"Camera priority set to: {npcVirtualCamera.Priority}");
         }
 
-        // Disable main UI controller canvas
         if (uiControllerCanvas != null)
         {
             uiControllerCanvas.SetActive(false);
             Debug.Log("UIControllerCanvas disabled");
         }
 
-        // Determine if we should play timeline automatically
         bool shouldPlayTimelineAutomatically =
             currentQuest.timelineAsset != null &&
             playableDirector != null &&
@@ -281,30 +339,19 @@ public class NPCQuestInteraction : MonoBehaviour
 
         Debug.Log($"Setting timeline asset: {currentQuest.timelineAsset.name}");
 
-        // Set the timeline asset
         playableDirector.playableAsset = currentQuest.timelineAsset;
-
-        // Set up stopped event
         playableDirector.stopped += OnTimelineStopped;
-
-        // Play the timeline
         playableDirector.Play();
 
         isPlayingTimeline = true;
-
         Debug.Log("Timeline started playing");
     }
 
     private void OnTimelineStopped(PlayableDirector director)
     {
         Debug.Log("Timeline stopped!");
-
-        // Unsubscribe from the event
         director.stopped -= OnTimelineStopped;
-
-        // Show mission canvas after timeline
         ShowMissionCanvas();
-
         isPlayingTimeline = false;
     }
 
@@ -312,49 +359,46 @@ public class NPCQuestInteraction : MonoBehaviour
     {
         Debug.Log("Showing mission canvas...");
 
-        // Update UI before showing
         UpdateQuestUI();
-
-        // Update button visibility based on quest status
         UpdateButtonVisibility();
-
-        // Start fade in sequence
         StartCoroutine(FadeInMissionCanvas());
     }
 
     private void UpdateButtonVisibility()
     {
-        // Show/hide replay button based on timeline availability
         UpdateReplayButtonVisibility();
 
-        // Show/hide accept/okay buttons based on quest status
         if (currentQuest != null)
         {
-            if (currentQuest.status == QuestStatus.NotStarted)
+            if (acceptButton != null) acceptButton.gameObject.SetActive(false);
+            if (okayButton != null) okayButton.gameObject.SetActive(false);
+            if (claimButton != null) claimButton.gameObject.SetActive(false);
+
+            switch (currentQuest.status)
             {
-                // Show Accept button, hide Okay button
-                if (acceptButton != null)
-                {
-                    acceptButton.gameObject.SetActive(true);
-                    Debug.Log("Accept button shown (quest is NotStarted)");
-                }
-                if (okayButton != null)
-                {
-                    okayButton.gameObject.SetActive(false);
-                }
-            }
-            else if (currentQuest.status == QuestStatus.InProgress)
-            {
-                // Show Okay button, hide Accept button
-                if (okayButton != null)
-                {
-                    okayButton.gameObject.SetActive(true);
-                    Debug.Log("Okay button shown (quest is InProgress)");
-                }
-                if (acceptButton != null)
-                {
-                    acceptButton.gameObject.SetActive(false);
-                }
+                case QuestStatus.NotStarted:
+                    if (acceptButton != null)
+                    {
+                        acceptButton.gameObject.SetActive(true);
+                        Debug.Log("Accept button shown (quest is NotStarted)");
+                    }
+                    break;
+
+                case QuestStatus.InProgress:
+                    if (okayButton != null)
+                    {
+                        okayButton.gameObject.SetActive(true);
+                        Debug.Log("Okay button shown (quest is InProgress)");
+                    }
+                    break;
+
+                case QuestStatus.Completed:
+                    if (claimButton != null)
+                    {
+                        claimButton.gameObject.SetActive(true);
+                        Debug.Log("Claim button shown (quest is Completed)");
+                    }
+                    break;
             }
         }
     }
@@ -363,7 +407,6 @@ public class NPCQuestInteraction : MonoBehaviour
     {
         if (replayButton != null)
         {
-            // Show replay button if quest has a timeline AND playable director is available
             bool hasTimelineAndDirector = currentQuest.timelineAsset != null && playableDirector != null;
             replayButton.gameObject.SetActive(hasTimelineAndDirector);
 
@@ -380,24 +423,18 @@ public class NPCQuestInteraction : MonoBehaviour
 
     private IEnumerator FadeInMissionCanvas()
     {
-        // Set isExit to true
-        isExiting = false; // Reset first
         isExiting = true;
         Debug.Log("isExit set to TRUE - Starting fade sequence");
 
-        // Wait for 1 second
         yield return new WaitForSeconds(fadeDelay);
 
-        // Set isExit back to false
         isExiting = false;
         Debug.Log("isExit set to FALSE - Showing canvas");
 
-        // Show mission canvas
         if (missionCanvas != null)
         {
             missionCanvas.SetActive(true);
 
-            // Optional fade in effect
             if (missionCanvasGroup != null)
             {
                 missionCanvasGroup.alpha = 0f;
@@ -431,36 +468,48 @@ public class NPCQuestInteraction : MonoBehaviour
 
         Debug.Log($"Updating UI for quest: {currentQuest.questName}");
 
-        // Set basic quest info
         if (questNameText != null)
         {
             questNameText.text = currentQuest.questName;
-            Debug.Log($"Set quest name to: {currentQuest.questName}");
         }
 
         if (questDescriptionText != null)
         {
             questDescriptionText.text = currentQuest.description;
-            Debug.Log($"Set quest description");
         }
 
         if (questStatusText != null)
         {
             questStatusText.text = currentQuest.status.ToString();
-            Debug.Log($"Set quest status to: {currentQuest.status}");
         }
 
-        // Clear existing tasks and rewards
         ClearContainers();
 
-        // Display tasks
+        // Display tasks using TaskItemUI
         if (tasksContainer != null && taskItemPrefab != null)
         {
             Debug.Log($"Displaying {currentQuest.tasks.Count} tasks");
+            activeTaskItems.Clear();
+
             foreach (var task in currentQuest.tasks)
             {
                 GameObject taskObj = Instantiate(taskItemPrefab, tasksContainer);
-                SetupTaskItem(taskObj, task);
+                TaskItemUI taskItem = taskObj.GetComponent<TaskItemUI>();
+
+                if (taskItem != null)
+                {
+                    taskItem.Setup(task);
+                    activeTaskItems.Add(taskItem);
+                    Debug.Log($"Task item created and setup for: {task.description}");
+                }
+                else
+                {
+                    Debug.LogError("TaskItemPrefab is missing TaskItemUI component!");
+                    // Try to add it dynamically
+                    taskItem = taskObj.AddComponent<TaskItemUI>();
+                    taskItem.Setup(task);
+                    activeTaskItems.Add(taskItem);
+                }
             }
         }
 
@@ -471,119 +520,17 @@ public class NPCQuestInteraction : MonoBehaviour
             foreach (var reward in currentQuest.rewards)
             {
                 GameObject rewardObj = Instantiate(rewardItemPrefab, rewardsContainer);
-                SetupRewardItem(rewardObj, reward);
+                RewardItemUI rewardItem = rewardObj.GetComponent<RewardItemUI>();
+                if (rewardItem != null)
+                {
+                    rewardItem.Setup(reward);
+                }
             }
-        }
-    }
-
-    private void SetupTaskItem(GameObject taskItem, QuestTask task)
-    {
-        // Based on your hierarchy: TaskItem -> TaskTextContainer -> TaskDescriptionText
-        Transform taskTextContainer = taskItem.transform.Find("TaskTextContainer");
-        if (taskTextContainer == null)
-        {
-            Debug.LogError("TaskTextContainer not found in TaskItem prefab!");
-            return;
-        }
-
-        // Find TaskDescriptionText inside TaskTextContainer
-        TMP_Text taskDescription = taskTextContainer.Find("TaskDescriptionText")?.GetComponent<TMP_Text>();
-        TMP_Text progressText = taskItem.transform.Find("ProgressText")?.GetComponent<TMP_Text>();
-        Toggle checkbox = taskItem.transform.Find("CheckBox")?.GetComponent<Toggle>();
-
-        if (checkbox != null)
-        {
-            checkbox.isOn = task.isCompleted;
-            checkbox.interactable = false;
-            Debug.Log($"Task checkbox set to: {task.isCompleted}");
-        }
-        else
-        {
-            Debug.LogError("CheckBox not found in TaskItem prefab!");
-        }
-
-        if (taskDescription != null)
-        {
-            taskDescription.text = task.description;
-            Debug.Log($"Task description set: {task.description}");
-        }
-        else
-        {
-            Debug.LogError("TaskDescriptionText not found in TaskItem prefab!");
-        }
-
-        if (progressText != null)
-        {
-            if (task.requiredAmount > 0)
-            {
-                progressText.gameObject.SetActive(true);
-                progressText.text = $"({task.currentAmount} / {task.requiredAmount})";
-                Debug.Log($"Progress text: {progressText.text}");
-            }
-            else
-            {
-                progressText.gameObject.SetActive(false);
-                Debug.Log("Progress text hidden (required amount = 0)");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("ProgressText not found in TaskItem prefab (this might be intentional)");
-        }
-    }
-
-    private void SetupRewardItem(GameObject rewardItem, QuestReward reward)
-    {
-        if (rewardItem == null)
-        {
-            Debug.LogError("rewardItem is null!");
-            return;
-        }
-
-        // Get references to the reward item components
-        Image rewardImage = rewardItem.transform.Find("RewardItemImage")?.GetComponent<Image>();
-        TMP_Text amountText = rewardItem.transform.Find("Amount")?.GetComponent<TMP_Text>();
-        TMP_Text nameText = rewardItem.transform.Find("RewardName")?.GetComponent<TMP_Text>();
-
-        if (rewardImage != null)
-        {
-            if (reward.rewardIcon != null)
-            {
-                rewardImage.sprite = reward.rewardIcon;
-                Debug.Log($"Set reward icon: {reward.rewardIcon.name}");
-            }
-            else
-            {
-                Debug.LogWarning("Reward icon is null");
-                rewardImage.gameObject.SetActive(false); // Hide image if no icon
-            }
-        }
-
-        if (amountText != null)
-        {
-            if (reward.amount > 0)
-            {
-                amountText.gameObject.SetActive(true);
-                amountText.text = $"+{reward.amount}"; // Add + symbol before amount
-                Debug.Log($"Reward amount: {amountText.text}");
-            }
-            else
-            {
-                amountText.gameObject.SetActive(false); // Deactivate if amount is 0
-                Debug.Log("Amount text hidden (amount = 0)");
-            }
-        }
-
-        if (nameText != null)
-        {
-            nameText.text = reward.rewardName;
-            Debug.Log($"Reward name: {reward.rewardName}");
         }
     }
 
     private void ClearContainers()
     {
-        // Clear tasks container
         if (tasksContainer != null)
         {
             int childCount = tasksContainer.childCount;
@@ -591,10 +538,9 @@ public class NPCQuestInteraction : MonoBehaviour
             {
                 Destroy(tasksContainer.GetChild(i).gameObject);
             }
-            Debug.Log($"Cleared {childCount} tasks from container");
+            activeTaskItems.Clear();
         }
 
-        // Clear rewards container
         if (rewardsContainer != null)
         {
             int childCount = rewardsContainer.childCount;
@@ -602,18 +548,20 @@ public class NPCQuestInteraction : MonoBehaviour
             {
                 Destroy(rewardsContainer.GetChild(i).gameObject);
             }
-            Debug.Log($"Cleared {childCount} rewards from container");
         }
     }
 
-    // Replay button clicked
     private void OnReplayButtonClicked()
     {
         Debug.Log("Replay button clicked!");
 
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
         if (currentQuest != null && currentQuest.timelineAsset != null && playableDirector != null)
         {
-            // Hide mission canvas with fade
             StartCoroutine(FadeOutAndReplay());
         }
         else
@@ -624,7 +572,6 @@ public class NPCQuestInteraction : MonoBehaviour
 
     private IEnumerator FadeOutAndReplay()
     {
-        // Fade out mission canvas
         if (missionCanvasGroup != null && missionCanvas != null && missionCanvas.activeSelf)
         {
             float timer = 0f;
@@ -639,47 +586,37 @@ public class NPCQuestInteraction : MonoBehaviour
             }
         }
 
-        // Hide mission canvas
         if (missionCanvas != null)
             missionCanvas.SetActive(false);
 
-        // Hide all buttons temporarily
         if (replayButton != null) replayButton.gameObject.SetActive(false);
         if (acceptButton != null) acceptButton.gameObject.SetActive(false);
         if (okayButton != null) okayButton.gameObject.SetActive(false);
+        if (claimButton != null) claimButton.gameObject.SetActive(false);
 
-        // Play timeline again
         PlayTimeline();
-
-        // Mark that timeline has been played for this quest
         hasPlayedTimelineForCurrentQuest = true;
     }
 
-    // Accept button clicked - for NotStarted quests
     private void OnAcceptButtonClicked()
     {
         Debug.Log("Accept button clicked!");
 
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
         if (currentQuest != null && questDatabase != null)
         {
-            // Only update status if quest is NotStarted
             if (currentQuest.status == QuestStatus.NotStarted)
             {
                 currentQuest.StartQuest();
-
-                // If using QuestManager, also update through it
-                if (QuestManager.Instance != null)
-                {
-                    QuestManager.Instance.StartQuest(currentQuest.questID);
-                }
-
                 Debug.Log($"Quest accepted and status updated to: {currentQuest.status}");
             }
 
-            // Close mission canvas
-            ResetToGameplay();
-
-            // Update quest availability
+            // IMMEDIATE reset for accept button
+            ImmediateReset();
             CheckForAvailableQuest();
         }
         else
@@ -688,15 +625,18 @@ public class NPCQuestInteraction : MonoBehaviour
         }
     }
 
-    // Okay button clicked - for InProgress quests
     private void OnOkayButtonClicked()
     {
         Debug.Log("Okay button clicked! (Quest is already InProgress)");
 
-        // Just close the mission canvas without changing status
-        ResetToGameplay();
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
-        // Show quest button again if player is still in range
+        // IMMEDIATE reset for okay button
+        ImmediateReset();
+
         if (playerInRange)
         {
             Debug.Log("Player still in range - checking for available quests");
@@ -704,80 +644,101 @@ public class NPCQuestInteraction : MonoBehaviour
         }
     }
 
-    // Back button clicked
-    private void OnBackButtonClicked()
+    private void OnClaimButtonClicked()
     {
-        Debug.Log("Back button clicked!");
-        ResetToGameplay();
+        Debug.Log("Claim button clicked!");
 
-        // Show quest button again if player is still in range
-        if (playerInRange)
+        if (AudioHandler.Instance != null)
         {
-            Debug.Log("Player still in range - checking for available quests");
-            CheckForAvailableQuest();
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
+        if (currentQuest != null && GameDataManager.Instance != null)
+        {
+            // Start the immediate reset and delayed rewards process
+            StartCoroutine(ImmediateResetAndDelayedRewards());
+        }
+        else
+        {
+            Debug.LogError("Cannot claim rewards - currentQuest or GameDataManager is null!");
         }
     }
 
-    private void ResetToGameplay()
+    private IEnumerator ImmediateResetAndDelayedRewards()
     {
-        Debug.Log("Resetting to gameplay...");
+        // STEP 1: IMMEDIATELY reset camera and show UI controller
+        Debug.Log("STEP 1: Immediately resetting camera and UI...");
+        ImmediateReset();
 
-        // Start fade out sequence
-        StartCoroutine(FadeOutAndReset());
-    }
+        // Mark quest as claimed
+        currentQuest.ClaimQuest();
 
-    private IEnumerator FadeOutAndReset()
-    {
-        // Set isExit to true
-        isExiting = true;
-        Debug.Log("isExit set to TRUE - Starting reset sequence");
+        // Save game data
+        GameDataManager.Instance.SaveGameData();
 
-        // Optional fade out effect
-        if (missionCanvasGroup != null && missionCanvas != null && missionCanvas.activeSelf)
+        // Use the RewardProcessor to handle all rewards
+        RewardProcessor rewardProcessor = FindObjectOfType<RewardProcessor>();
+        if (rewardProcessor == null)
         {
-            float timer = 0f;
-            float fadeDuration = 0.3f;
-            float startAlpha = missionCanvasGroup.alpha;
+            // Create one if it doesn't exist
+            GameObject processorObj = new GameObject("RewardProcessor");
+            rewardProcessor = processorObj.AddComponent<RewardProcessor>();
 
-            while (timer < fadeDuration)
-            {
-                timer += Time.deltaTime;
-                missionCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, timer / fadeDuration);
-                yield return null;
-            }
+            // Copy settings from this component using properties
+            rewardProcessor.CoinRewardFeedbackPrefab = coinRewardFeedbackPrefab;
+            rewardProcessor.GemRewardFeedbackPrefab = gemRewardFeedbackPrefab;
+            rewardProcessor.CoinRewardSpawnPoint = coinRewardSpawnPoint;
+            rewardProcessor.GemRewardSpawnPoint = gemRewardSpawnPoint;
+            rewardProcessor.ParentCanvas = parentCanvas;
+            rewardProcessor.FeedbackSlideDuration = feedbackSlideDuration;
+            rewardProcessor.FeedbackFadeOutDuration = feedbackFadeOutDuration;
+            rewardProcessor.FeedbackSlideUpAmount = feedbackSlideUpAmount;
+            rewardProcessor.FeedbackPrefix = feedbackPrefix;
+            rewardProcessor.CoinSuffix = coinSuffix;
+            rewardProcessor.GemSuffix = gemSuffix;
+            rewardProcessor.CoinSound = coinSound;
+            rewardProcessor.RewardDelay = rewardDelay;
         }
 
-        // Wait for 1 second
-        yield return new WaitForSeconds(fadeDelay);
+        // Process all rewards through the unified system
+        yield return StartCoroutine(rewardProcessor.ProcessRewards(currentQuest.rewards, () => {
+            Debug.Log("All rewards processed");
+        }));
 
-        // Set isExit back to false
-        isExiting = false;
-        Debug.Log("isExit set to FALSE - Completing reset");
+        // Check for next available quest
+        yield return new WaitForSeconds(0.2f);
+        CheckForAvailableQuest();
+    }
 
-        // Reset camera priority back to 10
+    private void ImmediateReset()
+    {
+        Debug.Log("Immediate reset - camera to 0, UI controller enabled");
+
+        // Set camera priority to 0 immediately
         if (npcVirtualCamera != null)
         {
-            npcVirtualCamera.Priority = originalCameraPriority;
-            Debug.Log($"Reset virtual camera priority to: {npcVirtualCamera.Priority}");
+            npcVirtualCamera.Priority = 0;
+            Debug.Log($"NPC virtual camera priority set to 0 immediately");
         }
 
-        // Hide mission canvas
+        // Hide mission canvas immediately
         if (missionCanvas != null)
         {
             missionCanvas.SetActive(false);
-            Debug.Log("Mission canvas hidden");
+            Debug.Log("Mission canvas hidden immediately");
         }
 
-        // Hide all buttons
+        // Hide all buttons immediately
         if (replayButton != null) replayButton.gameObject.SetActive(false);
         if (acceptButton != null) acceptButton.gameObject.SetActive(false);
         if (okayButton != null) okayButton.gameObject.SetActive(false);
+        if (claimButton != null) claimButton.gameObject.SetActive(false);
 
-        // Re-enable main UI controller canvas
+        // Re-enable main UI controller canvas immediately
         if (uiControllerCanvas != null)
         {
             uiControllerCanvas.SetActive(true);
-            Debug.Log("UIControllerCanvas enabled");
+            Debug.Log("UIControllerCanvas enabled immediately");
         }
 
         // Stop any playing timeline
@@ -788,21 +749,247 @@ public class NPCQuestInteraction : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void ProcessReward(QuestReward reward)
     {
-        if (playerInRange && currentQuest != null &&
-            (currentQuest.status == QuestStatus.Completed || currentQuest.status == QuestStatus.Abandoned))
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
         {
-            // Quest has been completed or abandoned, re-check
-            Debug.Log($"Quest status changed to {currentQuest.status} - re-checking availability");
+            Debug.LogError("GameDataManager or CurrentGameData is null!");
+            return;
+        }
+
+        GameData gameData = GameDataManager.Instance.CurrentGameData;
+
+        switch (reward.type)
+        {
+            case QuestReward.RewardType.NutriCoins:
+                gameData.nutriCoins += reward.amount;
+                Debug.Log($"Added {reward.amount} NutriCoins. Total: {gameData.nutriCoins}");
+                break;
+
+            case QuestReward.RewardType.Exp:
+                gameData.currentXP += reward.amount;
+                // Check for level up
+                while (gameData.currentXP >= gameData.xpToNextLevel)
+                {
+                    gameData.currentXP -= gameData.xpToNextLevel;
+                    gameData.playerLevel++;
+                    gameData.xpToNextLevel = CalculateNextLevelXP(gameData.playerLevel);
+                    Debug.Log($"Level up! New level: {gameData.playerLevel}");
+                }
+                Debug.Log($"Added {reward.amount} XP. Current XP: {gameData.currentXP}/{gameData.xpToNextLevel}");
+                break;
+
+            case QuestReward.RewardType.NutriGems:
+                gameData.nutriGems += reward.amount;
+                Debug.Log($"Added {reward.amount} NutriGems. Total: {gameData.nutriGems}");
+                break;
+
+            case QuestReward.RewardType.Enerlings:
+                if (!string.IsNullOrEmpty(reward.rewardID) && !gameData.unlockedEnerlings.Contains(reward.rewardID))
+                {
+                    gameData.unlockedEnerlings.Add(reward.rewardID);
+                    Debug.Log($"Unlocked Enerling: {reward.rewardName} (ID: {reward.rewardID})");
+                }
+                break;
+
+            case QuestReward.RewardType.Character:
+                if (!string.IsNullOrEmpty(reward.rewardID))
+                {
+                    if (int.TryParse(reward.rewardID, out int characterID))
+                    {
+                        if (!gameData.unlockedCharacterIDs.Contains(characterID))
+                        {
+                            gameData.unlockedCharacterIDs.Add(characterID);
+                            Debug.Log($"Unlocked Character: {reward.rewardName} (ID: {characterID})");
+                        }
+                    }
+                }
+                break;
+
+            case QuestReward.RewardType.Frame:
+                if (!string.IsNullOrEmpty(reward.rewardID) && !gameData.unlockedFrameIds.Contains(reward.rewardID))
+                {
+                    gameData.unlockedFrameIds.Add(reward.rewardID);
+                    Debug.Log($"Unlocked Frame: {reward.rewardName} (ID: {reward.rewardID})");
+                }
+                break;
+
+            case QuestReward.RewardType.Icon:
+                if (!string.IsNullOrEmpty(reward.rewardID) && !gameData.unlockedIconIds.Contains(reward.rewardID))
+                {
+                    gameData.unlockedIconIds.Add(reward.rewardID);
+                    Debug.Log($"Unlocked Icon: {reward.rewardName} (ID: {reward.rewardID})");
+                }
+                break;
+
+            default:
+                Debug.LogWarning($"Unknown reward type: {reward.type}");
+                break;
+        }
+    }
+
+    private float CalculateNextLevelXP(int level)
+    {
+        return 100 * level;
+    }
+
+    // ========== REWARD FEEDBACK METHODS ==========
+
+    private void ShowCoinRewardFeedback(int amount)
+    {
+        if (coinRewardFeedbackPrefab == null)
+        {
+            Debug.LogWarning("Coin Reward Feedback Prefab is not assigned!");
+            return;
+        }
+
+        if (coinRewardSpawnPoint == null)
+        {
+            Debug.LogWarning("Coin Reward Spawn Point is not assigned!");
+            return;
+        }
+
+        ShowRewardFeedback(coinRewardFeedbackPrefab, coinRewardSpawnPoint, amount, coinSuffix);
+    }
+
+    private void ShowGemRewardFeedback(int amount)
+    {
+        if (gemRewardFeedbackPrefab == null)
+        {
+            Debug.LogWarning("Gem Reward Feedback Prefab is not assigned!");
+            return;
+        }
+
+        if (gemRewardSpawnPoint == null)
+        {
+            Debug.LogWarning("Gem Reward Spawn Point is not assigned!");
+            return;
+        }
+
+        ShowRewardFeedback(gemRewardFeedbackPrefab, gemRewardSpawnPoint, amount, gemSuffix);
+    }
+
+    private void ShowRewardFeedback(GameObject prefab, RectTransform spawnPoint, int amount, string suffix)
+    {
+        if (parentCanvas == null)
+        {
+            Debug.LogWarning("Parent Canvas is not assigned! Cannot show reward feedback.");
+            return;
+        }
+
+        if (amount <= 0) return; // Don't show feedback for zero amount
+
+        // Spawn the feedback object as a child of the canvas
+        GameObject feedbackObject = Instantiate(prefab, parentCanvas.transform);
+
+        // Get the RectTransform component
+        RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
+
+        // Position it at the spawn point
+        if (spawnPoint != null)
+        {
+            // Copy the position from the spawn point
+            rectTransform.position = spawnPoint.position;
+
+            // Optional: Copy anchor settings from spawn point
+            rectTransform.anchorMin = spawnPoint.anchorMin;
+            rectTransform.anchorMax = spawnPoint.anchorMax;
+            rectTransform.pivot = spawnPoint.pivot;
+        }
+
+        // Get the text component
+        TMP_Text feedbackText = feedbackObject.GetComponentInChildren<TMP_Text>();
+        if (feedbackText != null)
+        {
+            feedbackText.text = $"{feedbackPrefix}{amount}{suffix}";
+        }
+
+        // Start the animation coroutine
+        StartCoroutine(AnimateRewardFeedback(feedbackObject));
+    }
+
+    private IEnumerator AnimateRewardFeedback(GameObject feedbackObject)
+    {
+        if (feedbackObject == null) yield break;
+
+        RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
+        CanvasGroup canvasGroup = feedbackObject.GetComponent<CanvasGroup>();
+
+        // Add CanvasGroup if it doesn't exist
+        if (canvasGroup == null)
+        {
+            canvasGroup = feedbackObject.AddComponent<CanvasGroup>();
+        }
+
+        // Store the starting anchored position (for UI elements)
+        Vector2 startAnchoredPosition = rectTransform.anchoredPosition;
+        Vector2 endAnchoredPosition = startAnchoredPosition + new Vector2(0, feedbackSlideUpAmount);
+
+        float elapsedTime = 0f;
+
+        // Slide up animation
+        while (elapsedTime < feedbackSlideDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / feedbackSlideDuration;
+
+            // Smooth step for easing
+            float smoothT = Mathf.SmoothStep(0, 1, t);
+
+            // Move upward using anchoredPosition (better for UI)
+            rectTransform.anchoredPosition = Vector2.Lerp(startAnchoredPosition, endAnchoredPosition, smoothT);
+
+            yield return null;
+        }
+
+        // Fade out animation
+        elapsedTime = 0f;
+        while (elapsedTime < feedbackFadeOutDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / feedbackFadeOutDuration;
+
+            canvasGroup.alpha = Mathf.Lerp(1, 0, t);
+
+            yield return null;
+        }
+
+        // Destroy the feedback object
+        Destroy(feedbackObject);
+    }
+
+    private void OnBackButtonClicked()
+    {
+        Debug.Log("Back button clicked!");
+
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+
+        // IMMEDIATE reset for back button
+        ImmediateReset();
+
+        if (playerInRange)
+        {
+            Debug.Log("Player still in range - checking for available quests");
             CheckForAvailableQuest();
         }
     }
 
-    // Public property to check if exiting (for other scripts)
+    private void Update()
+    {
+        if (playerInRange && currentQuest != null)
+        {
+            if (currentQuest.status == QuestStatus.Completed)
+            {
+                CheckForAvailableQuest();
+            }
+        }
+    }
+
     public bool IsExiting => isExiting;
 
-    // Public method to manually check for quests
     public void ForceCheckForQuests()
     {
         CheckForAvailableQuest();

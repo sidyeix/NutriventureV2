@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class EndGameTrigger : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class EndGameTrigger : MonoBehaviour
     [Header("End Sequence Settings")]
     [SerializeField] private bool useSmoothCameraTransition = true;
     [SerializeField] private float cameraTransitionDelay = 0.5f;
+    [SerializeField] private float cameraBlendTime = 1.5f;
     [SerializeField] private bool disableAfterTrigger = true;
 
     [Header("Audio")]
@@ -116,7 +118,6 @@ public class EndGameTrigger : MonoBehaviour
             Debug.LogError("Assessment Manager is null! Cannot end assessment.");
         }
 
-        // NEW: ADD THIS CRITICAL RESET FOR SECOND PLAYTHROUGH
         // Completely reset the assessment manager for the next playthrough
         if (assessmentManager != null)
         {
@@ -155,14 +156,14 @@ public class EndGameTrigger : MonoBehaviour
         {
             if (useSmoothCameraTransition)
             {
-                // Use the smooth transition method
-                sequenceManager.EnableAllControlsAndUI();
-                Debug.Log("All controls and UI restored - Smooth camera transition started");
+                // Use the smooth transition method with specified blend time
+                sequenceManager.EnableAllControlsAndUI(cameraBlendTime);
+                Debug.Log($"All controls and UI restored - SMOOTH camera transition started ({cameraBlendTime}s blend)");
             }
             else
             {
                 // Force instant camera reset
-                sequenceManager.ForceCameraReset();
+                sequenceManager.ForceCameraReset(0f); // 0 second = instant
                 sequenceManager.EnablePlayerInput();
                 Debug.Log("All controls and UI restored - Instant camera reset");
             }
@@ -210,8 +211,7 @@ public class EndGameTrigger : MonoBehaviour
             }
         }
 
-        // NEW: Enable the EndGameTrigger collider for the next playthrough
-        // This ensures it can be triggered again
+        // Enable the EndGameTrigger collider for the next playthrough
         if (disableAfterTrigger)
         {
             // Wait a moment, then re-enable the collider for next playthrough
@@ -270,6 +270,13 @@ public class EndGameTrigger : MonoBehaviour
             collider.enabled = true;
             Debug.Log("End game trigger collider re-enabled");
         }
+    }
+
+    // Set custom camera blend time
+    public void SetCameraBlendTime(float blendTime)
+    {
+        cameraBlendTime = Mathf.Max(0.1f, blendTime);
+        Debug.Log($"EndGameTrigger camera blend time set to {cameraBlendTime}s");
     }
 
     void OnDrawGizmos()

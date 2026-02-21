@@ -12,6 +12,8 @@ public class EnhancedCanvasTrigger : MonoBehaviour
     [Header("Trigger Settings")]
     [SerializeField] private float activationRadius = 3f;
     [SerializeField] private LayerMask playerLayer = 1; // Default layer
+    [SerializeField] private string playerTag = "Player"; // ADDED: Explicit player tag
+    [SerializeField] private bool useBothTagAndLayer = true; // ADDED: Require both tag AND layer
 
     [Header("Animation Settings")]
     [SerializeField] private AnimationCurve slideCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -27,7 +29,7 @@ public class EnhancedCanvasTrigger : MonoBehaviour
     private Button[] buttons;
     private Vector3[] originalPositions;
     private bool canvasVisible = false;
-    private bool playerInTrigger = false; // Track if player is in trigger
+    private bool playerInTrigger = false;
 
     void Start()
     {
@@ -53,7 +55,7 @@ public class EnhancedCanvasTrigger : MonoBehaviour
                 buttons[i].interactable = false;
 
                 // Add click listener to each button
-                int index = i; // Capture index for closure
+                int index = i;
                 buttons[i].onClick.AddListener(() => OnButtonClicked(index));
             }
         }
@@ -61,10 +63,28 @@ public class EnhancedCanvasTrigger : MonoBehaviour
 
     void Update()
     {
+        // FIXED: Only proceed if we have a valid player reference
         if (player == null)
         {
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
-            if (player == null) return;
+            // Try to find player by tag
+            GameObject playerObj = GameObject.FindGameObjectWithTag(playerTag);
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+            }
+            else
+            {
+                return; // No player found yet
+            }
+        }
+
+        // FIXED: Check if the object we're tracking is STILL the player
+        // This prevents other objects with "Player" tag from being triggered
+        if (!player.CompareTag(playerTag))
+        {
+            Debug.LogWarning($"EnhancedCanvasTrigger: Tracked object no longer has tag '{playerTag}'. Reacquiring...");
+            player = null;
+            return;
         }
 
         float distance = Vector3.Distance(transform.position, player.position);
@@ -108,7 +128,6 @@ public class EnhancedCanvasTrigger : MonoBehaviour
         animationCoroutine = StartCoroutine(AnimateButtons(false));
     }
 
-    // This is called when any button is clicked
     void OnButtonClicked(int buttonIndex)
     {
         if (!hideOnButtonClick || !canvasVisible) return;
@@ -193,29 +212,68 @@ public class EnhancedCanvasTrigger : MonoBehaviour
         }
     }
 
+    // FIXED: Enhanced trigger enter - checks BOTH tag AND layer
     void OnTriggerEnter(Collider other)
     {
-        // Alternative trigger method using collider
-        if (((1 << other.gameObject.layer) & playerLayer) != 0)
+        // Check 1: Is it on the correct layer?
+        bool isCorrectLayer = ((1 << other.gameObject.layer) & playerLayer) != 0;
+
+        // Check 2: Does it have the correct tag?
+        bool isCorrectTag = other.CompareTag(playerTag);
+
+        // Decide whether to trigger based on settings
+        bool shouldTrigger = useBothTagAndLayer ? (isCorrectLayer && isCorrectTag) : (isCorrectLayer || isCorrectTag);
+
+        if (shouldTrigger)
         {
+            // Update player reference if this is the actual player
+            if (other.CompareTag(playerTag))
+            {
+                player = other.transform;
+            }
+
             playerInTrigger = true;
             if (!canvasVisible)
             {
                 ShowCanvas();
             }
+
+            Debug.Log($"EnhancedCanvasTrigger: Player entered trigger - Layer OK: {isCorrectLayer}, Tag OK: {isCorrectTag}, Triggered: {shouldTrigger}");
         }
     }
 
+    // FIXED: Enhanced trigger exit - checks BOTH tag AND layer
     void OnTriggerExit(Collider other)
     {
-        if (((1 << other.gameObject.layer) & playerLayer) != 0)
+        // Check 1: Is it on the correct layer?
+        bool isCorrectLayer = ((1 << other.gameObject.layer) & playerLayer) != 0;
+
+        // Check 2: Does it have the correct tag?
+        bool isCorrectTag = other.CompareTag(playerTag);
+
+        // Decide whether to trigger based on settings
+        bool shouldTrigger = useBothTagAndLayer ? (isCorrectLayer && isCorrectTag) : (isCorrectLayer || isCorrectTag);
+
+        if (shouldTrigger)
         {
             playerInTrigger = false;
             if (canvasVisible)
             {
                 HideCanvas();
             }
+
+            Debug.Log($"EnhancedCanvasTrigger: Player exited trigger - Layer OK: {isCorrectLayer}, Tag OK: {isCorrectTag}, Triggered: {shouldTrigger}");
         }
+    }
+
+    // ADDED: Clean up player reference when disabled
+    void OnDisable()
+    {
+        if (canvasVisible)
+        {
+            HideCanvas();
+        }
+        playerInTrigger = false;
     }
 
     // Clean up event listeners when destroyed
@@ -229,6 +287,36 @@ public class EnhancedCanvasTrigger : MonoBehaviour
                 {
                     button.onClick.RemoveAllListeners();
                 }
+            }
+        }
+    }
+
+    // ADDED: Visualize trigger area in editor
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, activationRadius);
+
+        // Draw trigger collider if it exists
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            Gizmos.color = new Color(0, 1, 1, 0.3f);
+
+            if (col is BoxCollider box)
+            {
+                Gizmos.DrawCube(transform.position + box.center, box.size);
+            }
+            else if (col is SphereCollider sphere)
+            {
+                Gizmos.DrawSphere(transform.position + sphere.center, sphere.radius);
+            }
+            else if (col is CapsuleCollider capsule)
+            {
+                Vector3 top = transform.position + capsule.center + Vector3.up * (capsule.height * 0.5f - capsule.radius);
+                Vector3 bottom = transform.position + capsule.center - Vector3.up * (capsule.height * 0.5f - capsule.radius);
+                Gizmos.DrawWireSphere(top, capsule.radius);
+                Gizmos.DrawWireSphere(bottom, capsule.radius);
             }
         }
     }

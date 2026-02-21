@@ -11,7 +11,10 @@ public class SkinSelectionController : MonoBehaviour
     public CharacterSelectionController characterSelectionController;
     public CharacterVisualSwapper characterVisualSwapper;
     public CharacterDatabase characterDatabase;
-    public Player_Data playerData; // Reference to update UI displays
+    public Player_Data playerData;
+
+    [Header("Environment Control")]
+    public SkinEnvironmentController skinEnvironmentController;
 
     [Header("UI References")]
     public HorizontalLayoutGroup skinHorizontalLayout;
@@ -30,8 +33,8 @@ public class SkinSelectionController : MonoBehaviour
     public GameObject buyButton;
     public GameObject lockedButton;
     public TMP_Text buyButtonText;
-    public TMP_Text lockedButtonText; // Remove this if you have icon embedded
-    public Button previewSelectButton; // Keep for compatibility
+    public TMP_Text lockedButtonText;
+    public Button previewSelectButton;
 
     [Header("Confirmation Dialog")]
     public GameObject confirmationPanel;
@@ -40,16 +43,16 @@ public class SkinSelectionController : MonoBehaviour
     public Button confirmNoButton;
 
     [Header("Currency Displays")]
-    public TMP_Text coinsText; // For NutriCoins
-    public TMP_Text gemsText; // NEW: For NutriGems
+    public TMP_Text coinsText;
+    public TMP_Text gemsText;
 
     [Header("Skin Card Colors")]
-    public Color selectedColor = Color.white; // FFFFFF - For selected/previewed skin
-    public Color deselectedColor = new Color(0.588f, 0.588f, 0.588f, 1f); // 969696
+    public Color selectedColor = Color.white;
+    public Color deselectedColor = new Color(0.588f, 0.588f, 0.588f, 1f);
     public Color lockedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
-    [Header("Default Skin Card (Character)")]
-    public Sprite defaultSkinIcon; // If you want a special icon for the default skin
+    [Header("Default Skin Card")]
+    public Sprite defaultSkinIcon;
 
     [Header("Error Handling")]
     public CanvasGroup skinErrorCanvasGroup;
@@ -69,12 +72,21 @@ public class SkinSelectionController : MonoBehaviour
 
     private List<GameObject> skinButtons = new List<GameObject>();
     private CharacterDatabase.CharacterData currentCharacterData;
-    private int selectedSkinID = -1; // The skin that is currently SELECTED in UI
+    private int selectedSkinID = -1;
+    private int lastSavedSkinID = -1;
     private bool isInSkinPreview = false;
     private Coroutine errorCoroutine;
+    private GameDataManager gameDataManager;
 
     void Start()
     {
+        gameDataManager = GameDataManager.Instance;
+
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 0;
+        }
+
         if (skinSelectionPanel != null)
         {
             skinSelectionPanel.SetActive(false);
@@ -85,7 +97,6 @@ public class SkinSelectionController : MonoBehaviour
             noSkinsText.SetActive(false);
         }
 
-        // Keep existing button for compatibility
         if (previewSelectButton != null)
         {
             previewSelectButton.onClick.RemoveAllListeners();
@@ -154,7 +165,6 @@ public class SkinSelectionController : MonoBehaviour
             skinErrorCanvasGroup.gameObject.SetActive(false);
         }
 
-        // Hide all action buttons initially
         HideAllActionButtons();
     }
 
@@ -168,17 +178,16 @@ public class SkinSelectionController : MonoBehaviour
         }
 
         // Load saved skin for this character
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            int savedSkinID = GameDataManager.Instance.CurrentGameData.GetSelectedSkinForCharacter(characterID);
-
-            // Always start with default skin (-1) selected
-            selectedSkinID = -1;
-            Debug.Log($"EnterSkinSelection: CharID={characterID}, SavedSkinID={savedSkinID}, InitiallySelected=-1 (Default)");
+            lastSavedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(characterID);
+            selectedSkinID = lastSavedSkinID;
+            Debug.Log($"EnterSkinSelection: CharID={characterID}, SavedSkinID={lastSavedSkinID}");
         }
         else
         {
-            selectedSkinID = -1; // Default to default skin
+            lastSavedSkinID = -1;
+            selectedSkinID = -1;
         }
 
         UpdateCharacterInfoDisplay(currentCharacterData);
@@ -186,20 +195,49 @@ public class SkinSelectionController : MonoBehaviour
 
         isInSkinPreview = true;
 
-        // Apply the default character visuals (since default skin is initially selected)
+        // Apply the character visuals with saved skin
         if (characterVisualSwapper != null)
         {
-            characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
+            if (selectedSkinID == -1)
+            {
+                characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
+
+                // NOTIFY ENVIRONMENT CONTROLLER - DEFAULT SKIN SELECTED
+                if (skinEnvironmentController != null)
+                {
+                    skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
+                }
+            }
+            else
+            {
+                characterVisualSwapper.ApplySkinToCurrentCharacter(selectedSkinID);
+
+                // Get skin data for environment notification
+                var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
+                if (skinData != null && skinEnvironmentController != null)
+                {
+                    skinEnvironmentController.OnSkinSelected(
+                        currentCharacterData.characterID,
+                        selectedSkinID,
+                        skinData.skinName
+                    );
+                }
+            }
         }
 
         UpdateSkinNameDisplay();
         UpdateActionButtons();
-        UpdateCurrencyDisplays(); // NEW: Update both currency displays
+        UpdateCurrencyDisplays();
 
-        // Make sure the panel is active
         if (skinSelectionPanel != null)
         {
             skinSelectionPanel.SetActive(true);
+        }
+
+        // Set skin camera priority to 30
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 30;
         }
     }
 
@@ -208,35 +246,31 @@ public class SkinSelectionController : MonoBehaviour
         ClearSkinButtons();
         isInSkinPreview = false;
 
+        // Reset camera priority to 0
         if (skinSelectionCamera != null)
         {
-            skinSelectionCamera.Priority = 10;
-            Debug.Log("Skin camera priority set to 10 on exit");
+            skinSelectionCamera.Priority = 0;
+            Debug.Log("Skin camera priority set to 0 on exit");
         }
 
-        // Clear references to prevent memory leaks
         currentCharacterData = null;
         HideAllActionButtons();
     }
 
-    // NEW: Update both currency displays
     private void UpdateCurrencyDisplays()
     {
-        if (GameDataManager.Instance == null) return;
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null) return;
 
-        // Update coins display
         if (coinsText != null)
         {
-            coinsText.text = GameDataManager.Instance.CurrentGameData.nutriCoins.ToString();
+            coinsText.text = gameDataManager.CurrentGameData.nutriCoins.ToString();
         }
 
-        // Update gems display
         if (gemsText != null)
         {
-            gemsText.text = GameDataManager.Instance.CurrentGameData.nutriGems.ToString();
+            gemsText.text = gameDataManager.CurrentGameData.nutriGems.ToString();
         }
 
-        // Also update Player_Data if available
         if (playerData != null)
         {
             playerData.UpdateCoinDisplayImmediate();
@@ -257,7 +291,7 @@ public class SkinSelectionController : MonoBehaviour
 
         if (skinSelectionCamera != null)
         {
-            skinSelectionCamera.Priority = 10;
+            skinSelectionCamera.Priority = 0;
         }
 
         if (characterSelectionCanvas != null)
@@ -305,7 +339,7 @@ public class SkinSelectionController : MonoBehaviour
     {
         if (skinNameText != null)
         {
-            if (selectedSkinID == -1) // Show selected skin name
+            if (selectedSkinID == -1)
             {
                 skinNameText.text = currentCharacterData?.characterName ?? "Default";
             }
@@ -333,7 +367,7 @@ public class SkinSelectionController : MonoBehaviour
         {
             skinHorizontalLayout.gameObject.SetActive(true);
 
-            // CREATE DEFAULT SKIN CARD (Character itself) - Always first
+            // CREATE DEFAULT SKIN CARD
             CreateDefaultSkinButton(characterData);
 
             // CREATE ACTUAL SKIN CARDS
@@ -354,14 +388,12 @@ public class SkinSelectionController : MonoBehaviour
         GameObject buttonObj = Instantiate(skinButtonPrefab, skinHorizontalLayout.transform);
         skinButtons.Add(buttonObj);
 
-        // Default skin (character itself) is always unlocked
         bool isUnlocked = true;
 
         Button button = buttonObj.GetComponent<Button>();
         if (button != null)
         {
             button.interactable = true;
-
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
@@ -370,21 +402,13 @@ public class SkinSelectionController : MonoBehaviour
             });
         }
 
-        // Find the SkinIcon in the prefab hierarchy
         Image skinIcon = FindSkinIcon(buttonObj.transform);
         if (skinIcon != null)
         {
-            // Use character icon for default skin
-            if (characterData.characterIcon != null)
-            {
-                skinIcon.sprite = characterData.characterIcon;
-            }
-
-            // Apply initial color
+            skinIcon.sprite = characterData.characterIcon ?? defaultSkinIcon;
             UpdateButtonIconColor(buttonObj, -1, isUnlocked);
         }
 
-        // Find the SkinName text
         TMP_Text skinNameText = FindSkinNameText(buttonObj.transform);
         if (skinNameText != null)
         {
@@ -392,18 +416,15 @@ public class SkinSelectionController : MonoBehaviour
             skinNameText.color = Color.white;
         }
 
-        // Store skin data for reference
         SkinButtonData buttonData = buttonObj.GetComponent<SkinButtonData>();
         if (buttonData == null)
             buttonData = buttonObj.AddComponent<SkinButtonData>();
 
         buttonData.characterID = characterData.characterID;
-        buttonData.skinID = -1; // -1 indicates default skin (character itself)
-        buttonData.isUnlocked = true; // Always unlocked
-        buttonData.isDefaultSkin = true; // Mark as default skin
+        buttonData.skinID = -1;
+        buttonData.isUnlocked = true;
+        buttonData.isDefaultSkin = true;
         buttonData.skinIcon = skinIcon;
-
-        // The first card (default skin) will automatically show as selected because selectedSkinID = -1
     }
 
     private void CreateSkinButton(CharacterDatabase.CharacterData characterData, CharacterDatabase.SkinData skinData)
@@ -413,14 +434,12 @@ public class SkinSelectionController : MonoBehaviour
         GameObject buttonObj = Instantiate(skinButtonPrefab, skinHorizontalLayout.transform);
         skinButtons.Add(buttonObj);
 
-        // Check if skin is unlocked in database OR in game data
         bool isUnlocked = IsSkinUnlocked(characterData.characterID, skinData.skinID);
 
         Button button = buttonObj.GetComponent<Button>();
         if (button != null)
         {
-            button.interactable = true; // Always interactable for preview
-
+            button.interactable = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
@@ -429,20 +448,13 @@ public class SkinSelectionController : MonoBehaviour
             });
         }
 
-        // Find the SkinIcon in the prefab hierarchy
         Image skinIcon = FindSkinIcon(buttonObj.transform);
         if (skinIcon != null)
         {
-            if (skinData.skinIcon != null)
-            {
-                skinIcon.sprite = skinData.skinIcon;
-            }
-
-            // Apply initial color
+            skinIcon.sprite = skinData.skinIcon ?? defaultSkinIcon;
             UpdateButtonIconColor(buttonObj, skinData.skinID, isUnlocked);
         }
 
-        // Find the SkinName text
         TMP_Text skinNameText = FindSkinNameText(buttonObj.transform);
         if (skinNameText != null)
         {
@@ -450,7 +462,6 @@ public class SkinSelectionController : MonoBehaviour
             skinNameText.color = isUnlocked ? Color.white : new Color(0.7f, 0.7f, 0.7f);
         }
 
-        // Store skin data for reference
         SkinButtonData buttonData = buttonObj.GetComponent<SkinButtonData>();
         if (buttonData == null)
             buttonData = buttonObj.AddComponent<SkinButtonData>();
@@ -458,7 +469,7 @@ public class SkinSelectionController : MonoBehaviour
         buttonData.characterID = characterData.characterID;
         buttonData.skinID = skinData.skinID;
         buttonData.isUnlocked = isUnlocked;
-        buttonData.isDefaultSkin = false; // Not default skin
+        buttonData.isDefaultSkin = false;
         buttonData.skinIcon = skinIcon;
     }
 
@@ -469,27 +480,22 @@ public class SkinSelectionController : MonoBehaviour
 
         bool isSelected = (selectedSkinID == skinID);
 
-        // SIMPLE LOGIC: Only ONE skin can be selected at a time
         if (isSelected)
         {
-            // SELECTED skin shows as white
             buttonData.skinIcon.color = selectedColor;
         }
         else if (!isUnlocked)
         {
-            // LOCKED skin shows as dimmed
             buttonData.skinIcon.color = lockedColor;
         }
         else
         {
-            // DESELECTED skin shows as gray
             buttonData.skinIcon.color = deselectedColor;
         }
     }
 
     private Image FindSkinIcon(Transform parent)
     {
-        // Look for SkinIcon in the hierarchy based on your image
         foreach (Transform child in parent)
         {
             if (child.name == "SkinIcon")
@@ -520,16 +526,14 @@ public class SkinSelectionController : MonoBehaviour
 
     private bool IsSkinUnlocked(int characterID, int skinID)
     {
-        if (skinID == -1) return true; // Default skin is always unlocked
+        if (skinID == -1) return true;
 
-        // First check if skin is marked as unlock=true in database
         var skinData = characterDatabase.GetSkinByID(characterID, skinID);
         if (skinData != null && skinData.unlock) return true;
 
-        // Then check if unlocked in game data
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            return GameDataManager.Instance.CurrentGameData.IsSkinUnlocked(characterID, skinID);
+            return gameDataManager.CurrentGameData.IsSkinUnlocked(characterID, skinID);
         }
 
         return false;
@@ -537,24 +541,23 @@ public class SkinSelectionController : MonoBehaviour
 
     private void OnDefaultSkinButtonClicked(CharacterDatabase.CharacterData characterData)
     {
-        selectedSkinID = -1; // -1 indicates default skin
+        selectedSkinID = -1;
 
-        // Preview the default character (no skin)
         if (characterVisualSwapper != null)
         {
             characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
         }
 
-        // Update ALL button colors
+        // NOTIFY ENVIRONMENT CONTROLLER - DEFAULT SKIN SELECTED
+        if (skinEnvironmentController != null)
+        {
+            skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
+        }
+
         UpdateAllButtonColors();
-
-        // Update skin name display
         UpdateSkinNameDisplay();
-
-        // Update action buttons
         UpdateActionButtons();
 
-        // Play sound if character has one
         if (characterData.selectionSound != null)
         {
             AudioSource.PlayClipAtPoint(characterData.selectionSound, Camera.main.transform.position);
@@ -565,33 +568,24 @@ public class SkinSelectionController : MonoBehaviour
     {
         selectedSkinID = skinData.skinID;
 
-        // Check if skin is unlocked before applying preview
-        bool isUnlocked = IsSkinUnlocked(currentCharacterData.characterID, skinData.skinID);
-
-        if (isUnlocked)
+        // Preview the skin (even if locked)
+        if (characterVisualSwapper != null)
         {
-            // Preview the skin
-            if (characterVisualSwapper != null)
-            {
-                characterVisualSwapper.ApplySkinToCurrentCharacter(skinData.skinID);
-            }
-        }
-        else
-        {
-            // Show locked skin preview (visual only, don't save)
-            if (characterVisualSwapper != null)
-            {
-                characterVisualSwapper.ApplySkinToCurrentCharacter(skinData.skinID);
-            }
+            characterVisualSwapper.ApplySkinToCurrentCharacter(skinData.skinID);
         }
 
-        // Update ALL button colors (this is key - update everything)
+        // NOTIFY ENVIRONMENT CONTROLLER - SKIN SELECTED
+        if (skinEnvironmentController != null)
+        {
+            skinEnvironmentController.OnSkinSelected(
+                currentCharacterData.characterID,
+                skinData.skinID,
+                skinData.skinName
+            );
+        }
+
         UpdateAllButtonColors();
-
-        // Update skin name display
         UpdateSkinNameDisplay();
-
-        // Update action buttons
         UpdateActionButtons();
 
         if (skinData.selectionSound != null)
@@ -606,7 +600,6 @@ public class SkinSelectionController : MonoBehaviour
 
         if (selectedSkinID == -1)
         {
-            // Default skin - always unlocked, show select button
             if (selectButton != null) selectButton.SetActive(true);
             return;
         }
@@ -618,23 +611,21 @@ public class SkinSelectionController : MonoBehaviour
 
         if (isUnlocked)
         {
-            // Already unlocked - show select button
             if (selectButton != null) selectButton.SetActive(true);
         }
         else
         {
-            // Not unlocked yet
             if (skinData.isSkinReward)
             {
-                // Skin reward - show locked button (icon is embedded in UI)
                 if (lockedButton != null)
                 {
                     lockedButton.SetActive(true);
+                    if (lockedButtonText != null)
+                        lockedButtonText.text = skinData.taskToUnlock;
                 }
             }
             else
             {
-                // Purchasable skin - show buy button with gem price
                 if (buyButton != null)
                 {
                     buyButton.SetActive(true);
@@ -651,8 +642,6 @@ public class SkinSelectionController : MonoBehaviour
         if (buyButton != null) buyButton.SetActive(false);
         if (lockedButton != null) lockedButton.SetActive(false);
         if (confirmationPanel != null) confirmationPanel.SetActive(false);
-
-        // Keep old button hidden too
         if (previewSelectButton != null && previewSelectButton.gameObject != selectButton)
             previewSelectButton.gameObject.SetActive(false);
     }
@@ -663,29 +652,31 @@ public class SkinSelectionController : MonoBehaviour
 
         Debug.Log($"Select button clicked. Selected Skin: {selectedSkinID}");
 
-        // Check if the selected skin is unlocked (skip for default skin which is always unlocked)
-        if (selectedSkinID != -1) // Only check for actual skins, not default skin
+        if (selectedSkinID != -1)
         {
             bool isUnlocked = IsSkinUnlocked(currentCharacterData.characterID, selectedSkinID);
-
             if (!isUnlocked)
             {
-                // Show error message - skin is locked
-                Debug.Log($"Skin {selectedSkinID} is locked!");
                 ShowLockedSkinMessage();
                 return;
             }
         }
 
+        // NOTIFY ENVIRONMENT CONTROLLER - EXITING (before saving)
+        if (skinEnvironmentController != null)
+        {
+            skinEnvironmentController.OnExitSkinSelection();
+        }
+
         // Save the skin selection
         SaveSkinSelection(currentCharacterData.characterID, selectedSkinID);
+        lastSavedSkinID = selectedSkinID;
 
         // Update character visual with the selected skin
         if (characterVisualSwapper != null)
         {
             if (selectedSkinID == -1)
             {
-                // Apply default character
                 characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
             }
             else
@@ -694,11 +685,11 @@ public class SkinSelectionController : MonoBehaviour
             }
         }
 
-        // Exit skin selection
+        // Reset camera priority to 0
         if (skinSelectionCamera != null)
         {
-            skinSelectionCamera.Priority = 10;
-            Debug.Log("Skin camera priority set to 10 on select");
+            skinSelectionCamera.Priority = 0;
+            Debug.Log("Skin camera priority set to 0 on select");
         }
 
         if (characterControlsCanvas != null)
@@ -722,19 +713,16 @@ public class SkinSelectionController : MonoBehaviour
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
         if (skinData == null) return;
 
-        // Check if player has enough NutriGems
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            int playerNutriGems = GameDataManager.Instance.CurrentGameData.nutriGems; // CHANGED: Use nutriGems not nutriCoins
+            int playerNutriGems = gameDataManager.CurrentGameData.nutriGems;
 
             if (playerNutriGems >= skinData.nutrigemsToUnlock)
             {
-                // Show confirmation dialog
                 ShowConfirmationDialog(skinData);
             }
             else
             {
-                // Not enough gems - show error message
                 ShowCustomErrorMessage("Not enough NutriGems!\nCannot proceed with purchase.");
             }
         }
@@ -747,7 +735,6 @@ public class SkinSelectionController : MonoBehaviour
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
         if (skinData != null)
         {
-            // Show task to unlock message
             ShowCustomErrorMessage(skinData.taskToUnlock);
         }
     }
@@ -766,33 +753,23 @@ public class SkinSelectionController : MonoBehaviour
         PlayButtonClickSound();
 
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
-        if (skinData == null || GameDataManager.Instance == null) return;
+        if (skinData == null || gameDataManager == null || gameDataManager.CurrentGameData == null) return;
 
-        // Check again if player still has enough NutriGems (in case something changed)
-        if (GameDataManager.Instance.CurrentGameData.nutriGems < skinData.nutrigemsToUnlock) // CHANGED: Use nutriGems
+        if (gameDataManager.CurrentGameData.nutriGems < skinData.nutrigemsToUnlock)
         {
             ShowCustomErrorMessage("Not enough NutriGems!\nCannot proceed with purchase.");
             return;
         }
 
-        // Deduct NutriGems (not NutriCoins)
-        GameDataManager.Instance.CurrentGameData.nutriGems -= skinData.nutrigemsToUnlock; // CHANGED: Use nutriGems
-
-        // Unlock the skin in game data - THIS SAVES IT TO PLAYER'S UNLOCKED SKINS
+        gameDataManager.CurrentGameData.nutriGems -= skinData.nutrigemsToUnlock;
         UnlockSkin(currentCharacterData.characterID, selectedSkinID);
+        gameDataManager.SaveGameData();
 
-        // Save game data
-        GameDataManager.Instance.SaveGameData();
-
-        // Update UI
         UpdateAllButtonColors();
         UpdateActionButtons();
-        UpdateCurrencyDisplays(); // NEW: Update currency displays after purchase
+        UpdateCurrencyDisplays();
 
-        // Hide confirmation dialog
         if (confirmationPanel != null) confirmationPanel.SetActive(false);
-
-        // Show success message
         ShowCustomErrorMessage($"{skinData.skinName} unlocked!");
     }
 
@@ -807,13 +784,21 @@ public class SkinSelectionController : MonoBehaviour
         PlayButtonClickSound();
         Debug.Log("Skin Selection Back button clicked");
 
-        // Exit skin selection
-        ExitSkinSelection();
+        // NOTIFY ENVIRONMENT CONTROLLER - EXITING
+        if (skinEnvironmentController != null)
+        {
+            skinEnvironmentController.OnExitSkinSelection();
+        }
 
-        // Hide the UI
+        // Reset camera priority to 0
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 0;
+        }
+
+        ExitSkinSelection();
         HideSkinSelectionUI();
 
-        // Notify character controller
         if (characterSelectionController != null)
         {
             characterSelectionController.OnSkinSelectionClosed();
@@ -822,10 +807,10 @@ public class SkinSelectionController : MonoBehaviour
 
     private void SaveSkinSelection(int characterID, int skinID)
     {
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            GameDataManager.Instance.CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
-            GameDataManager.Instance.SaveGameData();
+            gameDataManager.CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
+            gameDataManager.SaveGameData();
             Debug.Log($"Saved skin {skinID} for character {characterID}");
         }
     }
@@ -843,31 +828,13 @@ public class SkinSelectionController : MonoBehaviour
 
     private void ShowLockedSkinMessage()
     {
-        if (skinErrorCanvasGroup == null || skinErrorMessageText == null) return;
-
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
         if (skinData != null)
         {
             string message = $"{skinData.skinName} is locked!\n";
-
-            if (skinData.isSkinReward)
-            {
-                message += $"Task: {skinData.taskToUnlock}";
-            }
-            else
-            {
-                message += $"Cost: {skinData.nutrigemsToUnlock} NutriGems"; // UPDATED: Say NutriGems
-            }
-
-            skinErrorMessageText.text = message;
+            message += skinData.isSkinReward ? $"Task: {skinData.taskToUnlock}" : $"Cost: {skinData.nutrigemsToUnlock} NutriGems";
+            ShowCustomErrorMessage(message);
         }
-
-        if (errorCoroutine != null)
-        {
-            StopCoroutine(errorCoroutine);
-        }
-
-        errorCoroutine = StartCoroutine(ShowSkinErrorCoroutine());
     }
 
     private void ShowCustomErrorMessage(string message)
@@ -928,8 +895,6 @@ public class SkinSelectionController : MonoBehaviour
             if (button != null) Destroy(button);
         }
         skinButtons.Clear();
-
-        // Force garbage collection to prevent memory leaks
         System.GC.Collect();
     }
 
@@ -953,13 +918,11 @@ public class SkinSelectionController : MonoBehaviour
 
     public void UnlockSkin(int characterID, int skinID)
     {
-        if (GameDataManager.Instance != null)
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            // This calls GameData.UnlockSkinForCharacter which saves to unlockedSkinsForCharacter
-            GameDataManager.Instance.CurrentGameData.UnlockSkinForCharacter(characterID, skinID);
-            GameDataManager.Instance.SaveGameData();
+            gameDataManager.CurrentGameData.UnlockSkinForCharacter(characterID, skinID);
+            gameDataManager.SaveGameData();
 
-            // Refresh the skin buttons to show the newly unlocked skin
             if (currentCharacterData != null && currentCharacterData.characterID == characterID)
             {
                 PopulateSkinButtons(currentCharacterData);
@@ -974,6 +937,6 @@ public class SkinButtonData : MonoBehaviour
     public int characterID;
     public int skinID;
     public bool isUnlocked;
-    public bool isDefaultSkin; // Added to distinguish default skin card
-    public Image skinIcon; // Added to store reference to the icon for color updates
+    public bool isDefaultSkin;
+    public Image skinIcon;
 }
