@@ -752,178 +752,12 @@ MonoBehaviour:
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-  - kingdomID: Sugaria
-    kingdomName: Sugaria Kingdom
-    kingdomIcon: {fileID: 21300000, guid: fc5233e14abc7024eb06de9e4d5d842e, type: 3}
-    kingdomColor: {r: 0, g: 0, b: 0, a: 0}
-    quests:
-    - questID: 1101
-      questName: 'Discover Foods and Products Across the Land '
-      description: Explore Sugaria and gather key sugar sources.
-      longDescription: Travel across the land to collect 3 Natural Sugars and 5 Added
-        Sugar Products. Learn to distinguish where sugars come from in everyday foods.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: Collect the 3 Natural Sugars and 5 Added Sugar Products
-        type: 0
-        targetID: 
-        requiredAmount: 8
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1102
-      questName: 'Seek the Queen for Assessment! '
-      description: Report your findings to the Queen.
-      longDescription: Proceed to the Kingdom and speak with the Queen for evaluation.
-        She will review your collected items and prepare you for the next challenge.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Proceed to the Kingdom and Talk to the Queen. '
-        type: 4
-        targetID: 
-        requiredAmount: 0
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1103
-      questName: 'Accomplish the First Queen''s Challenge! '
-      description: Identify harmful sugar sources.
-      longDescription: From the products you collected, determine which contain Added
-        Sugars. Prove your knowledge by correctly identifying all five.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: Identify the 5 Added Sugars from the collected Products
-        type: 4
-        targetID: 
-        requiredAmount: 0
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1104
-      questName: 'Accomplish the Second Queen''s Challenge!  '
-      description: Analyze sugar amounts in products.
-      longDescription: Scan the Nutrition List of each product carefully. Identify
-        and understand the amount of sugar present in each item.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Scan the Nutrition List and Identify the Amount of sugar existing
-          in the product. '
-        type: 4
-        targetID: 
-        requiredAmount: 0
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1105
-      questName: Sugardino's Guidance!
-      description: Seek wisdom from Sugardino.
-      longDescription: "Approach Sugardino and learn about the Kingdom\u2019s current
-        condition. His guidance will prepare you for future health battles."
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Approach and Talk to Sugardino for the Kingdom''s situation. '
-        type: 4
-        targetID: 
-        requiredAmount: 0
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Preservia
     kingdomName: PreserviaKingdom
     kingdomIcon: {fileID: 21300000, guid: b4875b9b9639ab74db316a3b1109fbf5, type: 3}
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
-    - questID: 1101
+    - questID: 3101
       questName: Felipe's Guidance!
       description: Meet Felipe for insight.
       longDescription: "Approach Felipe and listen to his explanation of Preservia\u2019s
@@ -944,18 +778,23 @@ MonoBehaviour:
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
+        amount: 150
         type: 1
         rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
+        amount: 150
         type: 2
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 5
+        type: 7
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1102
+    - questID: 3102
       questName: 'Awaken the Anti-Stones! '
       description: Restore the power of the Anti-Stones.
       longDescription: Travel to each checkpoint and awaken the stagnating Anti-Stones.
@@ -977,18 +816,18 @@ MonoBehaviour:
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
+        amount: 100
         type: 1
         rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
+        amount: 150
         type: 2
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1103
+    - questID: 3103
       questName: 'What''s the challenge, King? '
       description: "Receive the King\u2019s assessment."
       longDescription: Proceed to the castle and speak with the King. He will deliver
@@ -1010,18 +849,18 @@ MonoBehaviour:
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
+        amount: 180
         type: 1
         rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
+        amount: 150
         type: 2
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1104
+    - questID: 3104
       questName: 'Potion positions? '
       description: Find the preservative potions.
       longDescription: Search the kingdom and locate the 3 Preservative Potions.
@@ -1042,18 +881,18 @@ MonoBehaviour:
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
+        amount: 200
         type: 1
         rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
+        amount: 150
         type: 2
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1105
+    - questID: 3105
       questName: Food Preservation
       description: Preserve scattered foods.
       longDescription: Find and preserve the 8 foods spread across the land. Follow
@@ -1075,12 +914,12 @@ MonoBehaviour:
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 15
+        amount: 200
         type: 1
         rewardID: 
       - rewardName: NutriExp
         rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
+        amount: 200
         type: 2
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
@@ -1091,7 +930,7 @@ MonoBehaviour:
     kingdomIcon: {fileID: 21300000, guid: 039ca2c8d40a4c84198b528e83c10b50, type: 3}
     kingdomColor: {r: 0, g: 0, b: 0, a: 0}
     quests:
-    - questID: 1101
+    - questID: 4101
       questName: "Warden\u2019s Call"
       description: Talk to the Warden to begin your journey in Allerthria.
       longDescription: The Warden guards the path to Allerthria and holds vital knowledge
@@ -1124,7 +963,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1102
+    - questID: 4102
       questName: Scroll of Allergia
       description: Obtain the Scroll of Allergia from the sacred grounds.
       longDescription: The ancient scroll contains the records of harmful allergens
@@ -1156,7 +995,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1103
+    - questID: 4103
       questName: Knowledge of the Nine
       description: Gather and identify the nine major allergens.
       longDescription: "Travel across Allerthria to collect the known allergens and
@@ -1189,7 +1028,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1104
+    - questID: 4104
       questName: Wagon Run
       description: Ride the wagon and avoid incoming allergens.
       longDescription: Navigate through the wagon route while steering clear of dangerous
@@ -1221,7 +1060,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1105
+    - questID: 4105
       questName: Rocky Ascent
       description: Leap across moving rocks and land on healthy foods.
       longDescription: Time your jumps carefully by landing only on safe, healthy
@@ -1254,7 +1093,7 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 1106
+    - questID: 4106
       questName: Castle Arrival
       description: Reach the castle and claim the key.
       longDescription: After surviving the trials, enter Allerthria Castle safely.
@@ -1285,4 +1124,175 @@ MonoBehaviour:
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+  - kingdomID: Sugaria
+    kingdomName: Sugaria Kingdom
+    kingdomIcon: {fileID: 21300000, guid: fc5233e14abc7024eb06de9e4d5d842e, type: 3}
+    kingdomColor: {r: 0, g: 0, b: 0, a: 0}
+    quests:
+    - questID: 2101
+      questName: 'Discover Foods and Products Across the Land '
+      description: Explore Sugaria and gather key sugar sources.
+      longDescription: Travel across the land to collect 3 Natural Sugars and 5 Added
+        Sugar Products. Learn to distinguish where sugars come from in everyday foods.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: Collect the 3 Natural Sugars and 5 Added Sugar Products
+        type: 0
+        targetID: 
+        requiredAmount: 8
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 150
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 100
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 2102
+      questName: 'Seek the Queen for Assessment! '
+      description: Report your findings to the Queen.
+      longDescription: Proceed to the Kingdom and speak with the Queen for evaluation.
+        She will review your collected items and prepare you for the next challenge.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Proceed to the Kingdom and Talk to the Queen. '
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 210
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 100
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 2103
+      questName: 'Accomplish the First Queen''s Challenge! '
+      description: Identify harmful sugar sources.
+      longDescription: From the products you collected, determine which contain Added
+        Sugars. Prove your knowledge by correctly identifying all five.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: Identify the 5 Added Sugars from the collected Products
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 170
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 120
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 2104
+      questName: 'Accomplish the Second Queen''s Challenge!  '
+      description: Analyze sugar amounts in products.
+      longDescription: Scan the Nutrition List of each product carefully. Identify
+        and understand the amount of sugar present in each item.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Scan the Nutrition List and Identify the Amount of sugar existing
+          in the product. '
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 140
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 2105
+      questName: Sugardino's Guidance!
+      description: Seek wisdom from Sugardino.
+      longDescription: "Approach Sugardino and learn about the Kingdom\u2019s current
+        condition. His guidance will prepare you for future health battles."
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Approach and Talk to Sugardino for the Kingdom''s situation. '
+        type: 4
+        targetID: 
+        requiredAmount: 0
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 180
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 120
+        type: 2
+        rewardID: 
+      - rewardName: Skin
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 25
+        type: 10
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}

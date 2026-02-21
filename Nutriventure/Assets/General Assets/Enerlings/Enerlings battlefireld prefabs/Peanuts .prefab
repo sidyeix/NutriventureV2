@@ -302,6 +302,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5221110398048538739}
+    - targetCorrespondingSourceObject: {fileID: 4091291219279700248, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7994356295359208087}
   m_SourcePrefab: {fileID: 100100000, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
 --- !u!4 &350730422744795618 stripped
 Transform:
@@ -372,6 +375,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3991682263120996990, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
   m_PrefabInstance: {fileID: 240012442302492169}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4292948200077807377 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4091291219279700248, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
+  m_PrefabInstance: {fileID: 240012442302492169}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7994356295359208087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4292948200077807377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d8418b0b9634b1892b0268dd9c2743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Animation.Rigging::UnityEngine.Animations.Rigging.BoneRenderer
+  boneShape: 1
+  drawBones: 1
+  drawTripods: 0
+  boneSize: 1
+  tripodSize: 1
+  boneColor: {r: 0, g: 0, b: 1, a: 0.5}
+  m_Transforms:
+  - {fileID: 3108273193034534091}
+  - {fileID: 4934686870100894653}
+  - {fileID: 2318523787421177985}
+  - {fileID: 4779515690531764586}
+  - {fileID: 365384117096074409}
+  - {fileID: 6531062170932321154}
+  - {fileID: 3081562362702109026}
 --- !u!4 &4779515690531764586 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4684009943279343459, guid: 6532cbc1c79494e43b7b3636dba46568, type: 3}
