@@ -101,6 +101,9 @@ public class EnerlingSelectionController : MonoBehaviour
 
     void SetRarityFilter(bool useFilter, IngredientDatabase.Rarity rarity)
     {
+        // Play button click sound
+        PlayButtonClickSound();
+
         useRarityFilter = useFilter;
         currentRarityFilter = rarity;
         UpdateFilterButtonColors();
@@ -109,6 +112,9 @@ public class EnerlingSelectionController : MonoBehaviour
 
     void SetKingdomFilter(bool useFilter, IngredientDatabase.KingdomOrigin kingdom)
     {
+        // Play button click sound
+        PlayButtonClickSound();
+
         useKingdomFilter = useFilter;
         currentKingdomFilter = kingdom;
         UpdateKingdomButtonColors();
@@ -177,6 +183,9 @@ public class EnerlingSelectionController : MonoBehaviour
 
     public void OpenSelectionForSlot(int slotIndex, EnerlingSlotButton slotButton)
     {
+        // Play button click sound
+        PlayButtonClickSound();
+
         currentSlotIndex = slotIndex;
         currentSlotButton = slotButton;
         selectionCanvas.SetActive(true);
@@ -218,12 +227,13 @@ public class EnerlingSelectionController : MonoBehaviour
 
         while (enerlingIndex < enerlings.Count)
         {
-            // First row (index 0) should be odd (3 buttons), then even (4 buttons), alternating
-            GameObject rowPrefab = (rowIndex % 2 == 0) ? oddRowPrefab : evenRowPrefab;
+            // Row 0: even (4 buttons), Row 1: odd (3 buttons), alternating
+            GameObject rowPrefab = (rowIndex % 2 == 0) ? evenRowPrefab : oddRowPrefab;
             GameObject row = Instantiate(rowPrefab, contentParent);
             currentRows.Add(row);
 
-            int maxButtons = (rowIndex % 2 == 0) ? 3 : 4;
+            // 4 buttons for even rows, 3 buttons for odd rows
+            int maxButtons = (rowIndex % 2 == 0) ? 4 : 3;
 
             for (int i = 0; i < maxButtons && enerlingIndex < enerlings.Count; i++)
             {
@@ -281,6 +291,9 @@ public class EnerlingSelectionController : MonoBehaviour
 
     public void OnEnerlingButtonClicked(string enerlingName)
     {
+        // Play button click sound
+        PlayButtonClickSound();
+
         selectedEnerling = ingredientDatabase.GetIngredientInfo(enerlingName);
         if (selectedEnerling == null) return;
 
@@ -395,8 +408,8 @@ public class EnerlingSelectionController : MonoBehaviour
     {
         if (selectedEnerling == null || currentSlotButton == null) return;
 
-        if (AudioHandler.Instance != null)
-            AudioHandler.Instance.PlayButtonClick();
+        // Play button click sound
+        PlayButtonClickSound();
 
         currentSlotButton.EquipPet(selectedEnerling.ingredientName, selectedEnerling.enerlingSprite);
         CloseSelection();
@@ -404,8 +417,8 @@ public class EnerlingSelectionController : MonoBehaviour
 
     public void CloseSelection()
     {
-        if (AudioHandler.Instance != null)
-            AudioHandler.Instance.PlayButtonClick();
+        // Play button click sound
+        PlayButtonClickSound();
 
         selectionCanvas.SetActive(false);
         infoPanel.SetActive(false);
@@ -422,5 +435,14 @@ public class EnerlingSelectionController : MonoBehaviour
             Destroy(row);
         currentRows.Clear();
         enerlingButtons.Clear();
+    }
+
+    // Helper method to play button click sound
+    private void PlayButtonClickSound()
+    {
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
     }
 }

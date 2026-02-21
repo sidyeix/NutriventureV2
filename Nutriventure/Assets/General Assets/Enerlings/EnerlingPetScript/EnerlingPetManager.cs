@@ -30,10 +30,11 @@ public class EnerlingPetManager : MonoBehaviour
     [SerializeField] private float minDistance = 0f;
     [SerializeField] private float idealDistance = 0.92f;
     [SerializeField] private float maxDistance = 10.65f;
-    [SerializeField] private float moveForce = 34.7f;
-    [SerializeField] private float stoppingForce = 68.6f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float stoppingSpeed = 3f;
     [SerializeField] private float rotationSpeed = 11.43f;
     [SerializeField] private float delayFactor = 0.3f;
+    [SerializeField] private float arrivalThreshold = 0.5f;
 
     [Header("Jump Settings")]
     [SerializeField] private bool syncJumpWithPlayer = true;
@@ -45,19 +46,18 @@ public class EnerlingPetManager : MonoBehaviour
     [SerializeField] private float idleSpeed = 0.56f;
 
     [Header("Flying Settings")]
-    [SerializeField] private float flyingHeightOffset = 1.5f; // How high flying pets stay above ground
-    [SerializeField] private float flyingBobAmount = 0.2f; // Bobbing motion for flying pets
-    [SerializeField] private float flyingBobSpeed = 1.5f; // Speed of bobbing motion
+    [SerializeField] private float flyingHeightOffset = 1.5f;
+    [SerializeField] private float flyingBobAmount = 0.2f;
+    [SerializeField] private float flyingBobSpeed = 1.5f;
+    [SerializeField] private float flyingSmoothTime = 0.3f;
 
     [Header("Collider Settings")]
     [SerializeField] private float colliderRadius = 0.56f;
     [SerializeField] private float colliderHeight = 0f;
     [SerializeField] private Vector3 colliderCenter = Vector3.zero;
 
-    [Header("References")]
-    [SerializeField] private string walkAnimationParameter = "Speed";
-    [SerializeField] private string jumpAnimationParameter = "Jump";
-    [SerializeField] private string groundedAnimationParameter = "Grounded";
+    [Header("Animation")]
+    [SerializeField] private string walkAnimationParameter = "isWalking";
 
     [Header("Platform Mode")]
     [SerializeField] private bool isInPlatformMode = false;
@@ -78,7 +78,14 @@ public class EnerlingPetManager : MonoBehaviour
     private List<float> playerSpeeds;
     private List<Vector3> petVelocities;
     private List<Vector3> lastPetPositions;
-    private List<float> flyingBobTimers; // For flying bobbing motion
+    private List<float> flyingBobTimers;
+
+    // Smoothing for flying pets - using separate arrays for ref parameters
+    private List<Vector3> flyingCurrentVelocities;
+
+    // Movement state
+    private List<bool> wasMoving;
+    private List<float> distanceToTargets;
 
     // References to player components
     private ThirdPersonController playerController;
@@ -122,6 +129,9 @@ public class EnerlingPetManager : MonoBehaviour
         petVelocities = new List<Vector3>();
         lastPetPositions = new List<Vector3>();
         flyingBobTimers = new List<float>();
+        flyingCurrentVelocities = new List<Vector3>();
+        wasMoving = new List<bool>();
+        distanceToTargets = new List<float>();
     }
 
     void Start()
@@ -262,6 +272,9 @@ public class EnerlingPetManager : MonoBehaviour
             petVelocities.Add(Vector3.zero);
             lastPetPositions.Add(petObj.transform.position);
             flyingBobTimers.Add(Random.Range(0f, Mathf.PI * 2f));
+            flyingCurrentVelocities.Add(Vector3.zero);
+            wasMoving.Add(false);
+            distanceToTargets.Add(0f);
 
             SetupPetComponents(pets.Count - 1);
         }
@@ -294,6 +307,9 @@ public class EnerlingPetManager : MonoBehaviour
         petVelocities.Add(Vector3.zero);
         lastPetPositions.Add(Vector3.zero);
         flyingBobTimers.Add(0);
+        flyingCurrentVelocities.Add(Vector3.zero);
+        wasMoving.Add(false);
+        distanceToTargets.Add(0f);
     }
 
     private void RemovePetComponents(int index)
@@ -314,6 +330,9 @@ public class EnerlingPetManager : MonoBehaviour
             petVelocities.RemoveAt(index);
             lastPetPositions.RemoveAt(index);
             flyingBobTimers.RemoveAt(index);
+            flyingCurrentVelocities.RemoveAt(index);
+            wasMoving.RemoveAt(index);
+            distanceToTargets.RemoveAt(index);
         }
     }
 
@@ -324,6 +343,12 @@ public class EnerlingPetManager : MonoBehaviour
         SetupPetCollider(petIndex);
         SetupPetRigidbody(petIndex);
         petAnimators[petIndex] = pet.petTransform.GetComponent<Animator>();
+
+        // Initialize animation state
+        if (petAnimators[petIndex] != null)
+        {
+            petAnimators[petIndex].SetBool(walkAnimationParameter, false);
+        }
     }
 
     private void UpdatePetComponents(int petIndex)
@@ -378,20 +403,20 @@ public class EnerlingPetManager : MonoBehaviour
         // Configure Rigidbody based on pet type
         if (pet.isFlying)
         {
-            // Flying pets: no gravity, less drag
+            // Flying pets: no gravity, minimal drag
             petRigidbodies[petIndex].useGravity = false;
             petRigidbodies[petIndex].mass = 0.5f;
-            petRigidbodies[petIndex].linearDamping = 1f;
-            petRigidbodies[petIndex].angularDamping = 1f;
+            petRigidbodies[petIndex].linearDamping = 5f;
+            petRigidbodies[petIndex].angularDamping = 5f;
             petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
         else
         {
-            // Walking pets: normal physics
+            // Walking pets: normal physics but with damping to prevent bouncing
             petRigidbodies[petIndex].useGravity = true;
             petRigidbodies[petIndex].mass = 1f;
-            petRigidbodies[petIndex].linearDamping = 2f;
-            petRigidbodies[petIndex].angularDamping = 2f;
+            petRigidbodies[petIndex].linearDamping = 3f;
+            petRigidbodies[petIndex].angularDamping = 3f;
             petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
@@ -421,6 +446,9 @@ public class EnerlingPetManager : MonoBehaviour
         petVelocities.Clear();
         lastPetPositions.Clear();
         flyingBobTimers.Clear();
+        flyingCurrentVelocities.Clear();
+        wasMoving.Clear();
+        distanceToTargets.Clear();
     }
 
     public void SetPlatformMode(bool inPlatform)
@@ -446,9 +474,10 @@ public class EnerlingPetManager : MonoBehaviour
                     petRigidbodies[i].linearVelocity = Vector3.zero;
                 }
 
+                // Stop walking animation
                 if (petAnimators[i] != null)
                 {
-                    petAnimators[i].SetFloat(walkAnimationParameter, 0);
+                    petAnimators[i].SetBool(walkAnimationParameter, false);
                 }
             }
             else
@@ -523,77 +552,99 @@ public class EnerlingPetManager : MonoBehaviour
         PetData pet = pets[petIndex];
         Rigidbody rb = petRigidbodies[petIndex];
 
-        petVelocities[petIndex] = (pet.petTransform.position - lastPetPositions[petIndex]) / Time.fixedDeltaTime;
-        lastPetPositions[petIndex] = pet.petTransform.position;
-
+        // Calculate target position
         CalculatePetTargetPosition(petIndex);
 
-        Vector3 directionToTarget = targetPositions[petIndex] - pet.petTransform.position;
-        float distanceToTarget = directionToTarget.magnitude;
+        // Calculate desired position (with height offset for flying)
+        Vector3 desiredPosition = targetPositions[petIndex];
 
-        float currentMoveForce = moveForce;
-        float targetDistance = followDistance;
-
-        if (playerSpeed < 0.1f)
-        {
-            targetDistance = idealDistance;
-            currentMoveForce = stoppingForce;
-        }
-
-        Vector3 directionFromPlayer = (targetPositions[petIndex] - playerTransform.position).normalized;
-        Vector3 adjustedTarget = playerTransform.position + directionFromPlayer * targetDistance;
-
-        // Add height offset for flying pets
         if (pet.isFlying)
         {
-            adjustedTarget.y += flyingHeightOffset;
+            desiredPosition.y = playerTransform.position.y + flyingHeightOffset;
 
             // Add bobbing motion
             flyingBobTimers[petIndex] += Time.fixedDeltaTime * flyingBobSpeed;
             float bobOffset = Mathf.Sin(flyingBobTimers[petIndex]) * flyingBobAmount;
-            adjustedTarget.y += bobOffset;
+            desiredPosition.y += bobOffset;
         }
 
-        directionToTarget = adjustedTarget - pet.petTransform.position;
-        distanceToTarget = directionToTarget.magnitude;
+        // Calculate direction and distance
+        Vector3 directionToTarget = desiredPosition - pet.petTransform.position;
+        float distanceToTarget = directionToTarget.magnitude;
+        distanceToTargets[petIndex] = distanceToTarget;
 
-        if (distanceToTarget > 0.3f)
+        // Determine if moving
+        bool isMoving = distanceToTarget > arrivalThreshold;
+
+        // Update animation
+        if (petAnimators[petIndex] != null)
+        {
+            petAnimators[petIndex].SetBool(walkAnimationParameter, isMoving);
+        }
+
+        if (isMoving)
         {
             Vector3 moveDirection = directionToTarget.normalized;
-            float forceMultiplier = Mathf.Clamp01(distanceToTarget / followDistance);
 
-            // Different movement for flying pets
+            // Calculate target velocity
+            float currentSpeed = playerSpeed > 0.1f ? moveSpeed : stoppingSpeed;
+            Vector3 targetVelocity = moveDirection * currentSpeed;
+
             if (pet.isFlying)
             {
-                // Flying pets move more smoothly
-                Vector3 targetVelocity = moveDirection * currentMoveForce * 0.3f;
-                rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, targetVelocity, Time.fixedDeltaTime * 5f);
+                // Smooth movement for flying pets - get current velocity from list
+                Vector3 currentVelocity = flyingCurrentVelocities[petIndex];
+
+                // SmoothDamp
+                rb.linearVelocity = Vector3.SmoothDamp(rb.linearVelocity, targetVelocity,
+                    ref currentVelocity, flyingSmoothTime);
+
+                // Store the updated velocity back in the list
+                flyingCurrentVelocities[petIndex] = currentVelocity;
             }
             else
             {
-                Vector3 force = moveDirection * currentMoveForce * forceMultiplier;
+                // Walking pets - use forces but with damping
+                Vector3 force = moveDirection * currentSpeed * rb.mass * 5f;
+
+                // Scale force based on distance (less force when close)
+                float forceScale = Mathf.Clamp01(distanceToTarget / followDistance);
+                force *= forceScale;
+
                 rb.AddForce(force, ForceMode.Force);
 
-                float maxSpeed = playerSpeed > 0.1f ? moveForce * 0.5f : stoppingForce * 0.3f;
+                // Strong damping to prevent overshooting
+                rb.linearVelocity *= 0.95f;
+
+                // Limit maximum speed
+                float maxSpeed = currentSpeed;
                 if (rb.linearVelocity.magnitude > maxSpeed)
                 {
                     rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
                 }
             }
         }
-        else if (playerSpeed < 0.1f && distanceToTarget < 0.5f && !pet.isFlying)
+        else
         {
-            rb.linearVelocity *= 0.95f;
+            // Not moving - strong damping to stop quickly
+            rb.linearVelocity *= 0.9f;
+
+            if (rb.linearVelocity.magnitude < 0.1f)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+
+            // Add idle movement if enabled and player is still
+            if (enableIdleMovement && playerSpeed < 0.1f && !pet.isFlying)
+            {
+                ApplyPetIdleMovement(petIndex);
+            }
         }
 
-        if (enableIdleMovement && distanceToTarget < followDistance * 0.8f && playerSpeed < 0.1f)
-        {
-            ApplyPetIdleMovement(petIndex);
-        }
-
+        // Update rotation
         UpdatePetRotation(petIndex);
-        UpdatePetAnimator(petIndex);
 
+        // Check distance limit
         float distanceToPlayer = Vector3.Distance(pet.petTransform.position, playerTransform.position);
         if (distanceToPlayer > maxDistance)
         {
@@ -615,7 +666,7 @@ public class EnerlingPetManager : MonoBehaviour
 
         Vector3 desiredPosition = playerTransform.position + offset;
 
-        float smoothFactor = Time.fixedDeltaTime * (1f - delayFactor) * 10f;
+        float smoothFactor = Time.fixedDeltaTime * (1f - delayFactor) * 5f;
         targetPositions[petIndex] = Vector3.Lerp(targetPositions[petIndex], desiredPosition, smoothFactor);
     }
 
@@ -632,7 +683,7 @@ public class EnerlingPetManager : MonoBehaviour
 
         if (!pet.isFlying)
         {
-            petRigidbodies[petIndex].AddForce(idleOffsets[petIndex] * moveForce * 0.1f, ForceMode.Force);
+            petRigidbodies[petIndex].AddForce(idleOffsets[petIndex] * moveSpeed * 0.1f, ForceMode.Force);
         }
     }
 
@@ -664,33 +715,6 @@ public class EnerlingPetManager : MonoBehaviour
             {
                 pet.petTransform.rotation = Quaternion.Slerp(pet.petTransform.rotation, targetPlayerRotation, Time.fixedDeltaTime * rotationSpeed * 0.5f);
             }
-        }
-    }
-
-    private void UpdatePetAnimator(int petIndex)
-    {
-        if (petAnimators[petIndex] == null) return;
-
-        float speed = petRigidbodies[petIndex].linearVelocity.magnitude;
-        petAnimators[petIndex].SetFloat(walkAnimationParameter, speed);
-
-        if (isJumping[petIndex])
-        {
-            petAnimators[petIndex].SetTrigger(jumpAnimationParameter);
-            isJumping[petIndex] = false;
-        }
-
-        // For flying pets, always set grounded to false
-        if (pets[petIndex].isFlying)
-        {
-            petAnimators[petIndex].SetBool(groundedAnimationParameter, false);
-        }
-        else
-        {
-            RaycastHit hit;
-            Vector3 rayStart = pets[petIndex].petTransform.position + Vector3.up * 0.1f;
-            bool isGrounded = Physics.Raycast(rayStart, Vector3.down, out hit, 0.3f);
-            petAnimators[petIndex].SetBool(groundedAnimationParameter, isGrounded);
         }
     }
 
