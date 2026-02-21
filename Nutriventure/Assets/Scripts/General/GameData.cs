@@ -75,6 +75,10 @@ public class GameData
     public List<string> completedAchievementIds = new List<string>();
     public List<string> claimedAchievementIds = new List<string>();
 
+    // ENERLING PET SYSTEM - NEW FIELDS
+    public string equippedPetSlot1 = "";
+    public string equippedPetSlot2 = "";
+
     public GameData()
     {
         // Initialize default values
@@ -144,6 +148,10 @@ public class GameData
 
         if (scannedIngredients == null)
             scannedIngredients = new StringBoolDictionary2();
+
+        // Initialize pet slots
+        equippedPetSlot1 = "";
+        equippedPetSlot2 = "";
     }
 
     // Sugaria Key Methods

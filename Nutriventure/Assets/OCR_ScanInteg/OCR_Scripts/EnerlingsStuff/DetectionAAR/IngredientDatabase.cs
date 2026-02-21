@@ -87,6 +87,29 @@ public class IngredientDatabase : ScriptableObject
     }
 
     [System.Serializable]
+    public class PowerUpInfo
+    {
+        public enum PowerUpType
+        {
+            Time,
+            Heart,
+            Speed,
+            Coins,
+            Exp,
+            Gems
+        }
+
+        [Header("PowerUp Info")]
+        public PowerUpType powerUpType;
+        public int amount;
+        public Sprite powerUpIcon;
+
+        [Header("Description")]
+        [TextArea(1, 2)]
+        public string description;
+    }
+
+    [System.Serializable]
     public class IngredientInfo
     {
         [Header("Basic Info")]
@@ -95,16 +118,19 @@ public class IngredientDatabase : ScriptableObject
         public KingdomOrigin kingdom = KingdomOrigin.NutriKingdom;
         public bool isUnlocked = false; // This will be set by PersistentDataManager at runtime
 
+        [Header("PowerUps")]
+        public List<PowerUpInfo> powerUps = new List<PowerUpInfo>();
+
         [Header("Visuals")]
         public Sprite enerlingSprite;
         public GameObject modelPrefab;
 
-       [Header("Catch Mechanics")]
-       [Tooltip("Maximum times this enerling can be caught")]
-       public int maxCatch = 20;
-       
-       [Tooltip("Current number of times caught")]
-       public int currentCatchCount = 0;
+        [Header("Catch Mechanics")]
+        [Tooltip("Maximum times this enerling can be caught")]
+        public int maxCatch = 20;
+
+        [Tooltip("Current number of times caught")]
+        public int currentCatchCount = 0;
 
         [Header("Animation")]
         public RuntimeAnimatorController animatorController;
@@ -166,6 +192,14 @@ public class IngredientDatabase : ScriptableObject
         public int skill3Cooldown = 0;
         [System.NonSerialized]
         public int skill4Cooldown = 0;
+
+        // Flying pet names list
+        private static readonly HashSet<string> FlyingPetNames = new HashSet<string>
+        {
+            "Aspartame", "Sodium Benzoate", "Sorbitol", "Folic Acid"
+        };
+
+        public bool IsFlyingPet => FlyingPetNames.Contains(ingredientName);
 
         // Properties for UI
         public string LifeText
@@ -531,7 +565,8 @@ public class IngredientDatabase : ScriptableObject
             enerlingDescription = original.enerlingDescription,
             enerlingStory = original.enerlingStory,
             audioClip = original.audioClip,
-            endingCutscene = original.endingCutscene // Copy the video reference
+            endingCutscene = original.endingCutscene,
+            powerUps = new List<PowerUpInfo>(original.powerUps) // NEW: Copy powerups too
         };
 
         return copy;
