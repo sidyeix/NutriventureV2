@@ -729,14 +729,14 @@ public class Test_EnerlingUIManager : MonoBehaviour
     {
         if (skillImage != null)
         {
-            if (skillInfo != null && skillInfo.skillSprite != null)
+            if (skillInfo != null && skillInfo.skillCircleIcon != null)
             {
-                skillImage.sprite = skillInfo.skillSprite;
+                skillImage.sprite = skillInfo.skillCircleIcon;
                 skillImage.preserveAspect = false; // Set to false to use the Image GameObject's size
                 skillImage.gameObject.SetActive(true);
                 
                 // Log for debugging
-                Debug.Log($"Set skill sprite to {skillInfo.skillSprite.name} with preserveAspect: {skillImage.preserveAspect}");
+                Debug.Log($"Set skill sprite to {skillInfo.skillCircleIcon.name} with preserveAspect: {skillImage.preserveAspect}");
             }
             else
             {
