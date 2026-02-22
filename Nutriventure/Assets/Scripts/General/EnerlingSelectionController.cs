@@ -45,9 +45,11 @@ public class EnerlingSelectionController : MonoBehaviour
     public Button sugariaButton;
     public Button preserviaButton;
 
-    [Header("Equip Button")]
+    [Header("Action Buttons")]
     public Button equipButton;
     public TextMeshProUGUI equipButtonText;
+    public Button removeButton; // New remove button
+    public TextMeshProUGUI removeButtonText;
 
     [Header("Button Colors")]
     public Color normalButtonColor = Color.white;
@@ -74,7 +76,15 @@ public class EnerlingSelectionController : MonoBehaviour
         infoPanel.SetActive(false);
         SetupFilterButtons();
         SetupKingdomButtons();
+
         equipButton.onClick.AddListener(OnEquipButtonClicked);
+
+        // Setup remove button
+        if (removeButton != null)
+        {
+            removeButton.onClick.AddListener(OnRemoveButtonClicked);
+            removeButton.gameObject.SetActive(false); // Start hidden
+        }
 
         if (closeButton != null)
         {
@@ -190,6 +200,10 @@ public class EnerlingSelectionController : MonoBehaviour
         currentSlotButton = slotButton;
         selectionCanvas.SetActive(true);
         RefreshDisplay();
+
+        // Hide remove button initially (will show when an enerling is selected)
+        if (removeButton != null)
+            removeButton.gameObject.SetActive(false);
     }
 
     void RefreshDisplay()
@@ -299,6 +313,10 @@ public class EnerlingSelectionController : MonoBehaviour
 
         UpdateInfoPanel(selectedEnerling);
         SpawnPreviewModel(selectedEnerling);
+
+        // Show remove button when an enerling is selected
+        if (removeButton != null)
+            removeButton.gameObject.SetActive(true);
     }
 
     void UpdateInfoPanel(IngredientDatabase.IngredientInfo enerling)
@@ -415,6 +433,26 @@ public class EnerlingSelectionController : MonoBehaviour
         CloseSelection();
     }
 
+    void OnRemoveButtonClicked()
+    {
+        if (currentSlotButton == null) return;
+
+        // Play button click sound
+        PlayButtonClickSound();
+
+        // Clear the slot
+        currentSlotButton.ClearSlot();
+
+        // Also remove from pet manager
+        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+        if (petManager != null)
+        {
+            petManager.RemovePet(currentSlotIndex);
+        }
+
+        CloseSelection();
+    }
+
     public void CloseSelection()
     {
         // Play button click sound
@@ -427,6 +465,10 @@ public class EnerlingSelectionController : MonoBehaviour
         currentSlotIndex = -1;
         currentSlotButton = null;
         selectedEnerling = null;
+
+        // Hide remove button
+        if (removeButton != null)
+            removeButton.gameObject.SetActive(false);
     }
 
     void ClearCurrentDisplay()

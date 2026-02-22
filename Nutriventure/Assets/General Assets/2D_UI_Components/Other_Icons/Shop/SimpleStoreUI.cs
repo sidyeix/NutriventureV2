@@ -35,8 +35,15 @@ public class SimpleStoreUI : MonoBehaviour
     [Header("Database")]
     public CharacterDatabase characterDatabase;
 
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    public AudioClip buttonClickSound;
+    public AudioClip purchaseSuccessSound;
+    public AudioClip errorSound;
+
     private SimpleStoreItem currentItem;
     private int currentCharacterID = -1;
+    private Coroutine errorCoroutine;
 
     void Awake()
     {
@@ -69,6 +76,7 @@ public class SimpleStoreUI : MonoBehaviour
 
         if (exitButton != null)
         {
+            exitButton.onClick.AddListener(OnExitClicked);
             SetupButtonSound(exitButton);
         }
 
@@ -109,9 +117,33 @@ public class SimpleStoreUI : MonoBehaviour
 
     void PlayButtonClickSound()
     {
-        if (AudioHandler.Instance != null)
+        if (sfxAudioSource != null && buttonClickSound != null)
+        {
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
+        else if (AudioHandler.Instance != null)
         {
             AudioHandler.Instance.PlayButtonClick();
+        }
+    }
+
+    void PlayPurchaseSuccessSound()
+    {
+        if (sfxAudioSource != null && purchaseSuccessSound != null)
+        {
+            sfxAudioSource.PlayOneShot(purchaseSuccessSound);
+        }
+        else if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayClaimSound();
+        }
+    }
+
+    void PlayErrorSound()
+    {
+        if (sfxAudioSource != null && errorSound != null)
+        {
+            sfxAudioSource.PlayOneShot(errorSound);
         }
     }
 
@@ -259,11 +291,8 @@ public class SimpleStoreUI : MonoBehaviour
             // Also update Player_Data if available
             UpdatePlayerDataDisplay();
 
-            // Play purchase sound
-            if (AudioHandler.Instance != null)
-            {
-                AudioHandler.Instance.PlayClaimSound();
-            }
+            // Play purchase success sound
+            PlayPurchaseSuccessSound();
 
             // Hide the 3D object
             if (currentItem != null)
@@ -296,11 +325,19 @@ public class SimpleStoreUI : MonoBehaviour
     {
         Debug.LogError($"Store Error: {message}");
 
+        // Play error sound
+        PlayErrorSound();
+
         if (errorPanel != null && errorText != null)
         {
             errorText.text = message;
             errorPanel.SetActive(true);
-            StartCoroutine(HideError());
+
+            if (errorCoroutine != null)
+            {
+                StopCoroutine(errorCoroutine);
+            }
+            errorCoroutine = StartCoroutine(HideError());
         }
     }
 
@@ -308,9 +345,15 @@ public class SimpleStoreUI : MonoBehaviour
     {
         yield return new WaitForSeconds(errorShowTime);
         errorPanel.SetActive(false);
+        errorCoroutine = null;
     }
 
     void OnBackClicked()
+    {
+        HideStore();
+    }
+
+    void OnExitClicked()
     {
         HideStore();
     }
@@ -320,6 +363,17 @@ public class SimpleStoreUI : MonoBehaviour
         // Hide store panel
         storePanel.SetActive(false);
         confirmPanel.SetActive(false);
+
+        // Hide error panel if showing
+        if (errorPanel != null && errorPanel.activeSelf)
+        {
+            errorPanel.SetActive(false);
+            if (errorCoroutine != null)
+            {
+                StopCoroutine(errorCoroutine);
+                errorCoroutine = null;
+            }
+        }
 
         // Reset current item
         currentItem = null;

@@ -36,6 +36,10 @@ public class EnerlingPetManager : MonoBehaviour
     [SerializeField] private float delayFactor = 0.3f;
     [SerializeField] private float arrivalThreshold = 0.5f;
 
+    [Header("Idle Positioning")]
+    [SerializeField] private float idleSideOffset = 1.2f; // How far to the side pets stay when idle
+    [SerializeField] private float idleForwardOffset = -0.7f; // How far behind the player (negative = behind)
+
     [Header("Jump Settings")]
     [SerializeField] private bool syncJumpWithPlayer = true;
     [SerializeField] private float jumpForce = 8f;
@@ -661,8 +665,12 @@ public class EnerlingPetManager : MonoBehaviour
 
         float sideMultiplier = pet.spawnPointIndex == 0 ? -1f : 1f;
 
-        Vector3 offset = -playerForward * followDistance * 0.7f
-                        + playerRight * 1.2f * sideMultiplier;
+        // Use idle offsets when player is stopped, otherwise use follow distance
+        float currentForwardOffset = playerSpeed > 0.1f ? -followDistance * 0.7f : idleForwardOffset;
+        float currentSideOffset = playerSpeed > 0.1f ? 1.2f : idleSideOffset;
+
+        Vector3 offset = playerForward * currentForwardOffset
+                        + playerRight * currentSideOffset * sideMultiplier;
 
         Vector3 desiredPosition = playerTransform.position + offset;
 
@@ -803,6 +811,13 @@ public class EnerlingPetManager : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(playerTransform.position, maxDistance);
+
+        // Draw idle positions
+        Gizmos.color = Color.magenta;
+        Vector3 leftIdlePos = playerTransform.position + playerTransform.forward * idleForwardOffset + playerTransform.right * -idleSideOffset;
+        Vector3 rightIdlePos = playerTransform.position + playerTransform.forward * idleForwardOffset + playerTransform.right * idleSideOffset;
+        Gizmos.DrawWireSphere(leftIdlePos, 0.3f);
+        Gizmos.DrawWireSphere(rightIdlePos, 0.3f);
 
         for (int i = 0; i < pets.Count; i++)
         {

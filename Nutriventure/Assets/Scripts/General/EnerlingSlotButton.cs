@@ -8,7 +8,7 @@ public class EnerlingSlotButton : MonoBehaviour
     [SerializeField] private int slotIndex = 0; // 0 for first pet, 1 for second pet
     [SerializeField] private Image petIconImage;
     [SerializeField] private Button slotButton;
-    [SerializeField] private Button removeButton; // New remove button
+    [SerializeField] private Button changeButton; // Change button that appears when slot is clicked
     [SerializeField] private GameObject emptySlotIndicator;
 
     [Header("Spawn Points")]
@@ -18,6 +18,7 @@ public class EnerlingSlotButton : MonoBehaviour
     private EnerlingSelectionController selectionController;
     private string equippedPetName = "";
     private IngredientDatabase ingredientDatabase;
+    private bool isChangeButtonVisible = false;
 
     void Start()
     {
@@ -26,10 +27,11 @@ public class EnerlingSlotButton : MonoBehaviour
 
         slotButton.onClick.AddListener(OnSlotButtonClicked);
 
-        // Setup remove button
-        if (removeButton != null)
+        // Setup change button
+        if (changeButton != null)
         {
-            removeButton.onClick.AddListener(OnRemoveButtonClicked);
+            changeButton.onClick.AddListener(OnChangeButtonClicked);
+            changeButton.gameObject.SetActive(false); // Start hidden
         }
 
         selectionController = FindObjectOfType<EnerlingSelectionController>();
@@ -67,37 +69,38 @@ public class EnerlingSlotButton : MonoBehaviour
         if (AudioHandler.Instance != null)
             AudioHandler.Instance.PlayButtonClick();
 
+        // Show the change button
+        if (changeButton != null)
+        {
+            isChangeButtonVisible = !isChangeButtonVisible;
+            changeButton.gameObject.SetActive(isChangeButtonVisible);
+        }
+    }
+
+    void OnChangeButtonClicked()
+    {
+        // Play button sound
+        if (AudioHandler.Instance != null)
+            AudioHandler.Instance.PlayButtonClick();
+
+        // Hide the change button
+        if (changeButton != null)
+        {
+            changeButton.gameObject.SetActive(false);
+            isChangeButtonVisible = false;
+        }
+
+        // Open selection canvas
         if (selectionController != null)
         {
             selectionController.OpenSelectionForSlot(slotIndex, this);
         }
     }
 
-    void OnRemoveButtonClicked()
-    {
-        // Play button sound
-        if (AudioHandler.Instance != null)
-            AudioHandler.Instance.PlayButtonClick();
-
-        // Remove the pet
-        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
-        if (petManager != null)
-        {
-            petManager.RemovePet(slotIndex);
-        }
-
-        // Clear the slot
-        ClearSlot();
-    }
-
     public void EquipPet(string petName, Sprite petIcon)
     {
         equippedPetName = petName;
         UpdateButtonIcon(petName);
-
-        // Show remove button
-        if (removeButton != null)
-            removeButton.gameObject.SetActive(true);
 
         // Save to GameData
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
@@ -138,9 +141,6 @@ public class EnerlingSlotButton : MonoBehaviour
         if (emptySlotIndicator != null)
             emptySlotIndicator.SetActive(true);
 
-        if (removeButton != null)
-            removeButton.gameObject.SetActive(false);
-
         equippedPetName = "";
     }
 
@@ -167,6 +167,13 @@ public class EnerlingSlotButton : MonoBehaviour
                 GameDataManager.Instance.CurrentGameData.equippedPetSlot2 = "";
 
             GameDataManager.Instance.SaveGameData();
+        }
+
+        // Hide change button if visible
+        if (changeButton != null)
+        {
+            changeButton.gameObject.SetActive(false);
+            isChangeButtonVisible = false;
         }
     }
 
