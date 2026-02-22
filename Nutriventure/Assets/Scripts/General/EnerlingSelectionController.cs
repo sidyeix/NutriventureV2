@@ -25,8 +25,11 @@ public class EnerlingSelectionController : MonoBehaviour
     public RawImage enerlingPreviewImage;
     public Transform organsContainer;
     public GameObject organIconPrefab;
-    public Transform powerUpsContainer;
-    public GameObject powerUpIconPrefab;
+
+    [Header("Power-Up Display")]
+    public Image powerUpIconImage;           // Direct reference for power-up icon
+    public TextMeshProUGUI powerUpAmountText; // Direct reference for amount text
+    public TextMeshProUGUI powerUpDescriptionText; // Direct reference for description text
 
     [Header("Preview Spawn")]
     public Transform previewSpawnPoint;
@@ -54,6 +57,10 @@ public class EnerlingSelectionController : MonoBehaviour
     [Header("Button Colors")]
     public Color normalButtonColor = Color.white;
     public Color selectedButtonColor = new Color(0.52f, 0.52f, 0.52f);
+
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    public AudioClip buttonClickSound;
 
     // Current selection
     private int currentSlotIndex = -1;
@@ -90,6 +97,9 @@ public class EnerlingSelectionController : MonoBehaviour
         {
             closeButton.onClick.AddListener(CloseSelection);
         }
+
+        // Initialize power-up display to hidden/empty state
+        ClearPowerUpDisplay();
     }
 
     void SetupFilterButtons()
@@ -354,37 +364,81 @@ public class EnerlingSelectionController : MonoBehaviour
                 organText.text = organ;
         }
 
-        // Clear powerups
-        foreach (Transform child in powerUpsContainer)
-            Destroy(child.gameObject);
+        // Update power-up display using direct references
+        UpdatePowerUpDisplay(enerling);
+    }
 
-        // Show powerups
-        if (enerling.powerUps != null)
+    // New method to update power-up display using direct references
+    void UpdatePowerUpDisplay(IngredientDatabase.IngredientInfo enerling)
+    {
+        if (enerling.powerUps != null && enerling.powerUps.Count > 0)
         {
-            foreach (var powerUp in enerling.powerUps)
+            var powerUp = enerling.powerUps[0]; // First power-up only
+
+            // Set icon
+            if (powerUpIconImage != null && powerUp.powerUpIcon != null)
+                powerUpIconImage.sprite = powerUp.powerUpIcon;
+
+            // Set amount text with appropriate prefix
+            if (powerUpAmountText != null)
             {
-                GameObject powerUpIcon = Instantiate(powerUpIconPrefab, powerUpsContainer);
-                Image iconImage = powerUpIcon.GetComponent<Image>();
-                if (iconImage != null && powerUp.powerUpIcon != null)
-                    iconImage.sprite = powerUp.powerUpIcon;
-
-                TextMeshProUGUI amountText = powerUpIcon.GetComponentInChildren<TextMeshProUGUI>();
-                if (amountText != null)
-                    amountText.text = $"+{powerUp.amount}";
-
-                Button btn = powerUpIcon.GetComponent<Button>();
-                if (btn != null)
-                {
-                    string description = powerUp.description;
-                    btn.onClick.AddListener(() => ShowTooltip(description));
-                }
+                string prefix = GetPowerUpPrefix(powerUp.powerUpType);
+                powerUpAmountText.text = $"{prefix}{powerUp.amount}";
             }
+
+            // Set description text
+            if (powerUpDescriptionText != null)
+                powerUpDescriptionText.text = powerUp.description;
+
+            // Make sure power-up display is visible
+            if (powerUpIconImage != null) powerUpIconImage.gameObject.SetActive(true);
+            if (powerUpAmountText != null) powerUpAmountText.gameObject.SetActive(true);
+            if (powerUpDescriptionText != null) powerUpDescriptionText.gameObject.SetActive(true);
+        }
+        else
+        {
+            // No power-up available - hide or show empty state
+            ClearPowerUpDisplay();
         }
     }
 
-    void ShowTooltip(string message)
+    // Helper method to get the correct prefix based on power-up type
+    private string GetPowerUpPrefix(IngredientDatabase.PowerUpInfo.PowerUpType type)
     {
-        Debug.Log(message);
+        switch (type)
+        {
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Time:
+                return "-"; // Time is deducted/reduced
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Heart:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Speed:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Coins:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Exp:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Gems:
+            default:
+                return "+"; // All others are added/increased
+        }
+    }
+
+    // Clear power-up display when no power-up exists
+    void ClearPowerUpDisplay()
+    {
+        if (powerUpIconImage != null)
+        {
+            powerUpIconImage.sprite = null;
+            powerUpIconImage.gameObject.SetActive(false);
+        }
+
+        if (powerUpAmountText != null)
+        {
+            powerUpAmountText.text = "";
+            powerUpAmountText.gameObject.SetActive(false);
+        }
+
+        if (powerUpDescriptionText != null)
+        {
+            powerUpDescriptionText.text = "No power-up available";
+            powerUpDescriptionText.gameObject.SetActive(true);
+        }
     }
 
     void SpawnPreviewModel(IngredientDatabase.IngredientInfo enerling)
@@ -469,6 +523,9 @@ public class EnerlingSelectionController : MonoBehaviour
         // Hide remove button
         if (removeButton != null)
             removeButton.gameObject.SetActive(false);
+
+        // Clear power-up display when closing
+        ClearPowerUpDisplay();
     }
 
     void ClearCurrentDisplay()
@@ -482,7 +539,11 @@ public class EnerlingSelectionController : MonoBehaviour
     // Helper method to play button click sound
     private void PlayButtonClickSound()
     {
-        if (AudioHandler.Instance != null)
+        if (sfxAudioSource != null && buttonClickSound != null)
+        {
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
+        else if (AudioHandler.Instance != null)
         {
             AudioHandler.Instance.PlayButtonClick();
         }

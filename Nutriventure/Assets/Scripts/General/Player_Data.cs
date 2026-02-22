@@ -383,6 +383,17 @@ public class Player_Data : MonoBehaviour
         }
     }
 
+    // NEW: Add coins directly and update UI
+    public void AddCoins(int amount)
+    {
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
+        {
+            gameDataManager.CurrentGameData.nutriCoins += amount;
+            gameDataManager.SaveGameData();
+            UpdateCoinDisplayImmediate();
+        }
+    }
+
     #endregion
 
     #region Gem Methods
@@ -412,6 +423,17 @@ public class Player_Data : MonoBehaviour
         if (gemsText != null)
         {
             StartCoroutine(HighlightText(gemsText));
+        }
+    }
+
+    // NEW: Add gems directly and update UI
+    public void AddGems(int amount)
+    {
+        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
+        {
+            gameDataManager.CurrentGameData.nutriGems += amount;
+            gameDataManager.SaveGameData();
+            UpdateGemDisplayImmediate();
         }
     }
 

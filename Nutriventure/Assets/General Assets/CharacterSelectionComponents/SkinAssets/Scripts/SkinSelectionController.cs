@@ -63,6 +63,14 @@ public class SkinSelectionController : MonoBehaviour
     public float feedbackDisplayDuration = 2f;
     public float feedbackFadeOutDuration = 0.5f;
 
+    [Header("Power-Up Panels")]
+    public GameObject powerUpPanel1;  // First power-up panel
+    public GameObject powerUpPanel2;  // Second power-up panel
+    public Image powerUpIcon1;
+    public Image powerUpIcon2;
+    public TMP_Text powerUpAmount1;
+    public TMP_Text powerUpAmount2;
+
     [Header("Audio")]
     public AudioSource sfxAudioSource;
     public AudioClip successSound;
@@ -77,6 +85,9 @@ public class SkinSelectionController : MonoBehaviour
     public CanvasGroup characterSelectionCanvas;
     public CanvasGroup skinSelectionCanvas;
     public CanvasGroup characterControlsCanvas;
+
+    [Header("Database References")]
+    public IngredientDatabase ingredientDatabase; // Added for power-ups
 
     private List<GameObject> skinButtons = new List<GameObject>();
     private CharacterDatabase.CharacterData currentCharacterData;
@@ -177,6 +188,10 @@ public class SkinSelectionController : MonoBehaviour
             successFeedbackCanvasGroup.gameObject.SetActive(false);
         }
 
+        // Hide power-up panels initially
+        if (powerUpPanel1 != null) powerUpPanel1.SetActive(false);
+        if (powerUpPanel2 != null) powerUpPanel2.SetActive(false);
+
         HideAllActionButtons();
     }
 
@@ -230,6 +245,7 @@ public class SkinSelectionController : MonoBehaviour
         UpdateSkinNameDisplay();
         UpdateActionButtons();
         UpdateCurrencyDisplays();
+        UpdatePowerUpPanels(); // Update power-up panels
 
         if (skinSelectionPanel != null)
         {
@@ -239,6 +255,82 @@ public class SkinSelectionController : MonoBehaviour
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 30;
+        }
+    }
+
+    // Update power-up panels based on equipped pets
+    private void UpdatePowerUpPanels()
+    {
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null || ingredientDatabase == null)
+            return;
+
+        // Get equipped pets
+        string pet1 = gameDataManager.GetEquippedPet(1);
+        string pet2 = gameDataManager.GetEquippedPet(2);
+
+        int activePanels = 0;
+
+        // Update first panel
+        if (!string.IsNullOrEmpty(pet1))
+        {
+            UpdatePowerUpPanel(1, pet1);
+            activePanels++;
+        }
+
+        // Update second panel
+        if (!string.IsNullOrEmpty(pet2))
+        {
+            UpdatePowerUpPanel(2, pet2);
+            activePanels++;
+        }
+
+        // Show/hide panels based on how many pets are equipped
+        if (powerUpPanel1 != null)
+            powerUpPanel1.SetActive(activePanels >= 1);
+
+        if (powerUpPanel2 != null)
+            powerUpPanel2.SetActive(activePanels >= 2);
+    }
+
+    // Update a specific power-up panel
+    private void UpdatePowerUpPanel(int panelIndex, string petName)
+    {
+        if (string.IsNullOrEmpty(petName) || ingredientDatabase == null)
+            return;
+
+        var ingredient = ingredientDatabase.GetIngredientInfo(petName);
+        if (ingredient == null || ingredient.powerUps == null || ingredient.powerUps.Count == 0)
+            return;
+
+        var powerUp = ingredient.powerUps[0]; // First power-up only
+
+        Image iconImage = panelIndex == 1 ? powerUpIcon1 : powerUpIcon2;
+        TMP_Text amountText = panelIndex == 1 ? powerUpAmount1 : powerUpAmount2;
+
+        if (iconImage != null && powerUp.powerUpIcon != null)
+            iconImage.sprite = powerUp.powerUpIcon;
+
+        if (amountText != null)
+        {
+            string prefix = GetPowerUpPrefix(powerUp.powerUpType);
+            amountText.text = $"{prefix}{powerUp.amount}";
+        }
+    }
+
+    // Helper method to get the correct prefix based on power-up type
+    private string GetPowerUpPrefix(IngredientDatabase.PowerUpInfo.PowerUpType type)
+    {
+        switch (type)
+        {
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Time:
+                return "-"; // Time is deducted/reduced
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Heart:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Speed:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Coins:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Exp:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Gems:
+            default:
+                return "+"; // All others are added/increased
         }
     }
 
@@ -294,6 +386,7 @@ public class SkinSelectionController : MonoBehaviour
         if (playerData != null)
         {
             playerData.UpdateCoinDisplayImmediate();
+            playerData.UpdateGemDisplayImmediate();
         }
     }
 

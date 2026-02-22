@@ -28,7 +28,7 @@ public class GameData
     public int selectedCharacterID = 0;
     public List<int> unlockedCharacterIDs = new List<int>();
 
-    // SKIN SYSTEM - CHANGED TO NON-DICTIONARY APPROACH FOR RELIABLE SAVING
+    // SKIN SYSTEM
     [System.Serializable]
     public class SkinSaveData
     {
@@ -38,6 +38,35 @@ public class GameData
     }
 
     public List<SkinSaveData> skinData = new List<SkinSaveData>();
+
+    // ENERLING PET SYSTEM
+    public string equippedPetSlot1 = "";
+    public string equippedPetSlot2 = "";
+
+    // POWER-UP TRACKING SYSTEM
+    [System.Serializable]
+    public class PowerUpSaveData
+    {
+        public string petName;              // Name of the pet this power-up belongs to
+        public int powerUpIndex;             // Index in the pet's power-ups list
+        public IngredientDatabase.PowerUpInfo.PowerUpType powerUpType; // Type of power-up
+        public DateTime lastTriggerTime;     // When the power-up was last triggered
+        public float cooldownMinutes;         // Cooldown in minutes
+        public int amount;                    // Amount to add when triggered
+    }
+
+    public List<PowerUpSaveData> activePowerUps = new List<PowerUpSaveData>();
+
+    // HEART AND TIME POWER-UP TRACKING
+    [System.Serializable]
+    public class PassivePowerUpData
+    {
+        public string petName;                // Name of the pet
+        public IngredientDatabase.PowerUpInfo.PowerUpType powerUpType; // Heart or Time
+        public int amount;                     // Amount of hearts to add or time to deduct (in seconds/minutes)
+    }
+
+    public List<PassivePowerUpData> passivePowerUps = new List<PassivePowerUpData>();
 
     // Chest System
     public DateTime lastChestClaimTime;
@@ -75,10 +104,6 @@ public class GameData
     // Achievement System
     public List<string> completedAchievementIds = new List<string>();
     public List<string> claimedAchievementIds = new List<string>();
-
-    // ENERLING PET SYSTEM
-    public string equippedPetSlot1 = "";
-    public string equippedPetSlot2 = "";
 
     public GameData()
     {
@@ -124,7 +149,15 @@ public class GameData
 
         // Initialize skin data
         if (skinData == null)
-            skinData = new List<SkinSaveData>();
+            skinData = new List<GameData.SkinSaveData>();
+
+        // Initialize power-up tracking
+        if (activePowerUps == null)
+            activePowerUps = new List<PowerUpSaveData>();
+
+        // Initialize passive power-ups (Heart & Time)
+        if (passivePowerUps == null)
+            passivePowerUps = new List<PassivePowerUpData>();
 
         // Initialize progress tracking
         if (unlockedKingdoms == null)
@@ -259,6 +292,191 @@ public class GameData
             Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs ?? new List<int>())}");
         }
         Debug.Log("=== END SKIN DATA ===");
+    }
+
+    // POWER-UP TRACKING METHODS
+
+    public void AddPowerUp(string petName, int powerUpIndex, IngredientDatabase.PowerUpInfo.PowerUpType type, float cooldownMinutes, int amount)
+    {
+        if (activePowerUps == null)
+            activePowerUps = new List<PowerUpSaveData>();
+
+        // Check if this power-up already exists
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                // Update existing
+                powerUp.lastTriggerTime = DateTime.Now;
+                powerUp.cooldownMinutes = cooldownMinutes;
+                powerUp.amount = amount;
+                return;
+            }
+        }
+
+        // Create new
+        PowerUpSaveData newPowerUp = new PowerUpSaveData
+        {
+            petName = petName,
+            powerUpIndex = powerUpIndex,
+            powerUpType = type,
+            lastTriggerTime = DateTime.Now,
+            cooldownMinutes = cooldownMinutes,
+            amount = amount
+        };
+
+        activePowerUps.Add(newPowerUp);
+        Debug.Log($"Added power-up tracking for {petName} - Type: {type}, Cooldown: {cooldownMinutes}min");
+    }
+
+    public void RemovePowerUpsForPet(string petName)
+    {
+        if (activePowerUps == null) return;
+
+        activePowerUps.RemoveAll(p => p.petName == petName);
+        Debug.Log($"Removed all power-up tracking for {petName}");
+    }
+
+    public void UpdatePowerUpLastTriggerTime(string petName, int powerUpIndex)
+    {
+        if (activePowerUps == null) return;
+
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                powerUp.lastTriggerTime = DateTime.Now;
+                break;
+            }
+        }
+    }
+
+    public TimeSpan GetTimeUntilNextPowerUp(string petName, int powerUpIndex)
+    {
+        if (activePowerUps == null)
+            return TimeSpan.Zero;
+
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                TimeSpan timeSinceLast = DateTime.Now - powerUp.lastTriggerTime;
+                TimeSpan cooldown = TimeSpan.FromMinutes(powerUp.cooldownMinutes);
+                TimeSpan timeRemaining = cooldown - timeSinceLast;
+
+                return timeRemaining > TimeSpan.Zero ? timeRemaining : TimeSpan.Zero;
+            }
+        }
+
+        // No record found - power-up is ready
+        return TimeSpan.Zero;
+    }
+
+    public List<PowerUpSaveData> GetAllActivePowerUps()
+    {
+        if (activePowerUps == null)
+            return new List<PowerUpSaveData>();
+
+        return activePowerUps;
+    }
+
+    // PASSIVE POWER-UP METHODS (HEART & TIME)
+
+    public void AddPassivePowerUp(string petName, IngredientDatabase.PowerUpInfo.PowerUpType type, int amount)
+    {
+        if (passivePowerUps == null)
+            passivePowerUps = new List<PassivePowerUpData>();
+
+        // Check if this passive power-up already exists
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpType == type)
+            {
+                // Update existing
+                powerUp.amount = amount;
+                return;
+            }
+        }
+
+        // Create new
+        PassivePowerUpData newPowerUp = new PassivePowerUpData
+        {
+            petName = petName,
+            powerUpType = type,
+            amount = amount
+        };
+
+        passivePowerUps.Add(newPowerUp);
+        Debug.Log($"Added passive power-up for {petName} - Type: {type}, Amount: {amount}");
+    }
+
+    public void RemovePassivePowerUpsForPet(string petName)
+    {
+        if (passivePowerUps == null) return;
+
+        passivePowerUps.RemoveAll(p => p.petName == petName);
+        Debug.Log($"Removed all passive power-ups for {petName}");
+    }
+
+    // Get total hearts from all equipped pets
+    public int GetTotalHeartBonus()
+    {
+        if (passivePowerUps == null) return 0;
+
+        int totalHearts = 0;
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.powerUpType == IngredientDatabase.PowerUpInfo.PowerUpType.Heart)
+            {
+                totalHearts += powerUp.amount;
+            }
+        }
+        return totalHearts;
+    }
+
+    // Get total time reduction from all equipped pets (in seconds)
+    public int GetTotalTimeReductionSeconds()
+    {
+        if (passivePowerUps == null) return 0;
+
+        int totalSeconds = 0;
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.powerUpType == IngredientDatabase.PowerUpInfo.PowerUpType.Time)
+            {
+                totalSeconds += powerUp.amount;
+            }
+        }
+        return totalSeconds;
+    }
+
+    // Get total time reduction formatted as minutes:seconds
+    public string GetTotalTimeReductionFormatted()
+    {
+        int totalSeconds = GetTotalTimeReductionSeconds();
+
+        if (totalSeconds <= 0)
+            return "0s";
+
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+
+        if (minutes > 0)
+            return $"{minutes}m {seconds}s";
+        else
+            return $"{seconds}s";
+    }
+
+    // Clear all power-ups
+    public void ClearAllPowerUps()
+    {
+        if (activePowerUps != null)
+            activePowerUps.Clear();
+
+        if (passivePowerUps != null)
+            passivePowerUps.Clear();
+
+        Debug.Log("All power-up tracking cleared");
     }
 
     // Sugaria Key Methods
