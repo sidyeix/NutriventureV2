@@ -16,6 +16,7 @@ public class GameDataManager : MonoBehaviour
     public ProfileIconDatabase iconDatabase;
     public FrameDatabase frameDatabase;
     public AchievementDatabase achievementDatabase;
+    public IngredientDatabase ingredientDatabase; // Added reference
 
     public GameData CurrentGameData { get; private set; }
 
@@ -51,18 +52,32 @@ public class GameDataManager : MonoBehaviour
             Debug.Log("=== GAME DATA SAVED ===");
             Debug.Log($"Selected Character: {CurrentGameData.selectedCharacterID}");
 
-            // Print skin data using the new List approach
+            // Print skin data
             if (CurrentGameData.skinData != null)
             {
                 Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
-                foreach (var data in CurrentGameData.skinData)
+            }
+
+            // Print power-up data
+            if (CurrentGameData.activePowerUps != null && CurrentGameData.activePowerUps.Count > 0)
+            {
+                Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
+                foreach (var powerUp in CurrentGameData.activePowerUps)
                 {
-                    Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs)}");
+                    Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Last Trigger: {powerUp.lastTriggerTime}, Cooldown: {powerUp.cooldownMinutes}min");
                 }
             }
-            else
+
+            // Print passive power-ups (Heart & Time)
+            if (CurrentGameData.passivePowerUps != null && CurrentGameData.passivePowerUps.Count > 0)
             {
-                Debug.LogError("skinData is NULL during save!");
+                Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
+                foreach (var powerUp in CurrentGameData.passivePowerUps)
+                {
+                    Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Amount: {powerUp.amount}");
+                }
+                Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
+                Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
             }
 
             Debug.Log("=== END SAVED DATA ===");
@@ -86,26 +101,29 @@ public class GameDataManager : MonoBehaviour
                 Debug.Log($"Selected Character ID: {CurrentGameData.selectedCharacterID}");
 
                 // Check if skin data was loaded
-                if (CurrentGameData.skinData != null)
+                if (CurrentGameData.skinData == null)
                 {
-                    Debug.Log($"SkinData loaded with {CurrentGameData.skinData.Count} entries");
-                    foreach (var data in CurrentGameData.skinData)
-                    {
-                        Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs)}");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("skinData is NULL after loading! Creating new one.");
                     CurrentGameData.skinData = new List<GameData.SkinSaveData>();
                 }
 
-                Debug.Log($"Equipped Icon ID: {CurrentGameData.equippedIconId}");
-                Debug.Log($"Unlocked Icons count: {CurrentGameData.unlockedIconIds?.Count ?? 0}");
-                Debug.Log($"Unlocked Icons: {string.Join(", ", CurrentGameData.unlockedIconIds ?? new List<string>())}");
-                Debug.Log($"Equipped Frame ID: {CurrentGameData.equippedFrameId}");
-                Debug.Log($"Unlocked Frames count: {CurrentGameData.unlockedFrameIds?.Count ?? 0}");
-                Debug.Log($"Unlocked Frames: {string.Join(", ", CurrentGameData.unlockedFrameIds ?? new List<string>())}");
+                // Check if power-up data was loaded
+                if (CurrentGameData.activePowerUps == null)
+                {
+                    CurrentGameData.activePowerUps = new List<GameData.PowerUpSaveData>();
+                }
+
+                // Check if passive power-ups were loaded
+                if (CurrentGameData.passivePowerUps == null)
+                {
+                    CurrentGameData.passivePowerUps = new List<GameData.PassivePowerUpData>();
+                }
+
+                Debug.Log($"Equipped Pet Slot 1: {CurrentGameData.equippedPetSlot1}");
+                Debug.Log($"Equipped Pet Slot 2: {CurrentGameData.equippedPetSlot2}");
+                Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
+                Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
+                Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
+                Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
                 Debug.Log($"=== END LOAD ===");
             }
             catch (Exception e)
@@ -492,7 +510,7 @@ public class GameDataManager : MonoBehaviour
 
     #endregion
 
-    #region Skin System Methods - UPDATED FOR List APPROACH
+    #region Skin System Methods
 
     public void UnlockSkin(int characterID, int skinID)
     {
@@ -535,7 +553,6 @@ public class GameDataManager : MonoBehaviour
         }
 
         bool isUnlocked = CurrentGameData.IsSkinUnlocked(characterID, skinID);
-        Debug.Log($"IsSkinUnlocked - Character {characterID}, Skin {skinID}: {isUnlocked}");
         return isUnlocked;
     }
 
@@ -548,7 +565,6 @@ public class GameDataManager : MonoBehaviour
         }
 
         var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
-        Debug.Log($"GetUnlockedSkins - Character {characterID}: {string.Join(", ", unlockedSkins)}");
         return unlockedSkins;
     }
 
@@ -574,6 +590,173 @@ public class GameDataManager : MonoBehaviour
         }
 
         return CurrentGameData.GetSelectedSkinForCharacter(characterID);
+    }
+
+    #endregion
+
+    #region Enerling Pet System Methods
+
+    public void EquipPetToSlot(int slotIndex, string petName)
+    {
+        if (CurrentGameData == null) return;
+
+        // Get the previous pet in this slot
+        string previousPet = "";
+        if (slotIndex == 1)
+        {
+            previousPet = CurrentGameData.equippedPetSlot1;
+            CurrentGameData.equippedPetSlot1 = petName;
+        }
+        else if (slotIndex == 2)
+        {
+            previousPet = CurrentGameData.equippedPetSlot2;
+            CurrentGameData.equippedPetSlot2 = petName;
+        }
+
+        // Remove power-ups for previous pet if it's no longer equipped in any slot
+        if (!string.IsNullOrEmpty(previousPet) && previousPet != petName)
+        {
+            bool stillEquipped = (slotIndex == 1 && CurrentGameData.equippedPetSlot2 == previousPet) ||
+                                 (slotIndex == 2 && CurrentGameData.equippedPetSlot1 == previousPet);
+
+            if (!stillEquipped)
+            {
+                CurrentGameData.RemovePowerUpsForPet(previousPet);
+                CurrentGameData.RemovePassivePowerUpsForPet(previousPet);
+                Debug.Log($"Pet {previousPet} no longer equipped - power-ups removed");
+            }
+        }
+
+        SaveGameData();
+        Debug.Log($"Equipped {petName} to slot {slotIndex}");
+    }
+
+    public void RemovePetFromSlot(int slotIndex)
+    {
+        if (CurrentGameData == null) return;
+
+        string removedPet = "";
+        if (slotIndex == 1)
+        {
+            removedPet = CurrentGameData.equippedPetSlot1;
+            CurrentGameData.equippedPetSlot1 = "";
+        }
+        else if (slotIndex == 2)
+        {
+            removedPet = CurrentGameData.equippedPetSlot2;
+            CurrentGameData.equippedPetSlot2 = "";
+        }
+
+        // If pet is no longer equipped in any slot, remove its power-ups
+        if (!string.IsNullOrEmpty(removedPet))
+        {
+            bool stillEquipped = (slotIndex == 1 && CurrentGameData.equippedPetSlot2 == removedPet) ||
+                                 (slotIndex == 2 && CurrentGameData.equippedPetSlot1 == removedPet);
+
+            if (!stillEquipped)
+            {
+                CurrentGameData.RemovePowerUpsForPet(removedPet);
+                CurrentGameData.RemovePassivePowerUpsForPet(removedPet);
+                Debug.Log($"Pet {removedPet} removed - power-ups removed");
+            }
+        }
+
+        SaveGameData();
+        Debug.Log($"Removed pet from slot {slotIndex}");
+    }
+
+    public string GetEquippedPet(int slotIndex)
+    {
+        if (CurrentGameData == null) return "";
+
+        if (slotIndex == 1)
+            return CurrentGameData.equippedPetSlot1;
+        else if (slotIndex == 2)
+            return CurrentGameData.equippedPetSlot2;
+
+        return "";
+    }
+
+    public List<string> GetAllEquippedPets()
+    {
+        List<string> pets = new List<string>();
+
+        if (CurrentGameData == null) return pets;
+
+        if (!string.IsNullOrEmpty(CurrentGameData.equippedPetSlot1))
+            pets.Add(CurrentGameData.equippedPetSlot1);
+
+        if (!string.IsNullOrEmpty(CurrentGameData.equippedPetSlot2))
+            pets.Add(CurrentGameData.equippedPetSlot2);
+
+        return pets;
+    }
+
+    #endregion
+
+    #region Power-Up Tracking Methods
+
+    public void RegisterPowerUp(string petName, int powerUpIndex, IngredientDatabase.PowerUpInfo.PowerUpType type, float cooldownMinutes, int amount)
+    {
+        if (CurrentGameData == null) return;
+
+        CurrentGameData.AddPowerUp(petName, powerUpIndex, type, cooldownMinutes, amount);
+        SaveGameData();
+    }
+
+    public void UpdatePowerUpTriggerTime(string petName, int powerUpIndex)
+    {
+        if (CurrentGameData == null) return;
+
+        CurrentGameData.UpdatePowerUpLastTriggerTime(petName, powerUpIndex);
+        SaveGameData();
+    }
+
+    public TimeSpan GetPowerUpTimeRemaining(string petName, int powerUpIndex)
+    {
+        if (CurrentGameData == null) return TimeSpan.Zero;
+
+        return CurrentGameData.GetTimeUntilNextPowerUp(petName, powerUpIndex);
+    }
+
+    public List<GameData.PowerUpSaveData> GetAllActivePowerUps()
+    {
+        if (CurrentGameData == null) return new List<GameData.PowerUpSaveData>();
+
+        return CurrentGameData.GetAllActivePowerUps();
+    }
+
+    // NEW: Register passive power-ups (Heart & Time)
+    public void RegisterPassivePowerUp(string petName, IngredientDatabase.PowerUpInfo.PowerUpType type, int amount)
+    {
+        if (CurrentGameData == null) return;
+
+        CurrentGameData.AddPassivePowerUp(petName, type, amount);
+        SaveGameData();
+    }
+
+    // NEW: Get total heart bonus from all equipped pets
+    public int GetTotalHeartBonus()
+    {
+        if (CurrentGameData == null) return 0;
+
+        return CurrentGameData.GetTotalHeartBonus();
+    }
+
+    // NEW: Get total time reduction in seconds
+    public int GetTotalTimeReductionSeconds()
+    {
+        if (CurrentGameData == null) return 0;
+
+        return CurrentGameData.GetTotalTimeReductionSeconds();
+    }
+
+    // NEW: Get total time reduction as formatted string
+    public string GetTotalTimeReductionFormatted()
+    {
+        if (CurrentGameData == null) return "0s";
+
+        return CurrentGameData.GetTotalTimeReductionFormatted();
     }
 
     #endregion
@@ -660,6 +843,10 @@ public class GameDataManager : MonoBehaviour
         Debug.LogWarning("=== RESETTING ENERLINGS ===");
 
         CurrentGameData.unlockedEnerlings = new List<string>();
+        CurrentGameData.equippedPetSlot1 = "";
+        CurrentGameData.equippedPetSlot2 = "";
+        CurrentGameData.activePowerUps = new List<GameData.PowerUpSaveData>();
+        CurrentGameData.passivePowerUps = new List<GameData.PassivePowerUpData>();
 
         SaveGameData();
         Debug.LogWarning("=== ENERLINGS RESET COMPLETE ===");
@@ -700,10 +887,13 @@ public class GameDataManager : MonoBehaviour
         Debug.Log($"Unlocked Frames ({CurrentGameData.unlockedFrameIds?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedFrameIds ?? new List<string>())}");
         Debug.Log($"Unlocked Characters ({CurrentGameData.unlockedCharacterIDs?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedCharacterIDs ?? new List<int>())}");
         Debug.Log($"Unlocked Enerlings ({CurrentGameData.unlockedEnerlings?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedEnerlings ?? new List<string>())}");
-        Debug.Log($"Completed Achievements ({CurrentGameData.completedAchievementIds?.Count ?? 0})");
-        Debug.Log($"Claimed Achievements ({CurrentGameData.claimedAchievementIds?.Count ?? 0})");
+        Debug.Log($"Equipped Pets: Slot1='{CurrentGameData.equippedPetSlot1}', Slot2='{CurrentGameData.equippedPetSlot2}'");
+        Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps?.Count ?? 0}");
+        Debug.Log($"Passive Power-ups (Heart/Time): {CurrentGameData.passivePowerUps?.Count ?? 0}");
+        Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
+        Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
 
-        // Print skin data using new List approach
+        // Print skin data
         if (CurrentGameData.skinData != null)
         {
             Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");

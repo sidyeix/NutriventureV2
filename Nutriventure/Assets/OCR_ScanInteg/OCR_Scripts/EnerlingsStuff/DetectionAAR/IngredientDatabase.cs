@@ -104,9 +104,17 @@ public class IngredientDatabase : ScriptableObject
         public int amount;
         public Sprite powerUpIcon;
 
+        [Header("Cooldown")]
+        [Tooltip("Cooldown time in minutes before this power-up can be used again")]
+        public float cooldownMinutes = 0f;
+
         [Header("Description")]
         [TextArea(1, 2)]
         public string description;
+
+        // Runtime state (not saved in database)
+        [System.NonSerialized]
+        public float lastUsedTime = -999f; // Timestamp when last used
     }
 
     [System.Serializable]
@@ -347,6 +355,83 @@ public class IngredientDatabase : ScriptableObject
         {
             currentLife = Mathf.Max(0, currentLife - amount);
         }
+
+        // POWER-UP COOLDOWN METHODS
+
+        // Check if a specific power-up is ready to use
+        public bool IsPowerUpReady(int powerUpIndex)
+        {
+            if (powerUpIndex < 0 || powerUpIndex >= powerUps.Count)
+                return false;
+
+            PowerUpInfo powerUp = powerUps[powerUpIndex];
+
+            // If cooldown is 0, always ready
+            if (powerUp.cooldownMinutes <= 0)
+                return true;
+
+            // Calculate time since last use
+            float timeSinceLastUse = Time.time - powerUp.lastUsedTime;
+            float cooldownSeconds = powerUp.cooldownMinutes * 60f;
+
+            return timeSinceLastUse >= cooldownSeconds;
+        }
+
+        // Use a power-up (records the time)
+        public void UsePowerUp(int powerUpIndex)
+        {
+            if (powerUpIndex < 0 || powerUpIndex >= powerUps.Count)
+                return;
+
+            PowerUpInfo powerUp = powerUps[powerUpIndex];
+
+            // Record current time as last used
+            powerUp.lastUsedTime = Time.time;
+
+            Debug.Log($"Power-up {powerUp.powerUpType} used. Next use available in {powerUp.cooldownMinutes} minutes");
+        }
+
+        // Get remaining cooldown time in seconds for a power-up
+        public float GetPowerUpRemainingCooldown(int powerUpIndex)
+        {
+            if (powerUpIndex < 0 || powerUpIndex >= powerUps.Count)
+                return 0f;
+
+            PowerUpInfo powerUp = powerUps[powerUpIndex];
+
+            if (powerUp.cooldownMinutes <= 0)
+                return 0f;
+
+            float timeSinceLastUse = Time.time - powerUp.lastUsedTime;
+            float cooldownSeconds = powerUp.cooldownMinutes * 60f;
+            float remainingSeconds = cooldownSeconds - timeSinceLastUse;
+
+            return Mathf.Max(0f, remainingSeconds);
+        }
+
+        // Get remaining cooldown time formatted as minutes:seconds
+        public string GetPowerUpRemainingTimeString(int powerUpIndex)
+        {
+            float remainingSeconds = GetPowerUpRemainingCooldown(powerUpIndex);
+
+            if (remainingSeconds <= 0)
+                return "Ready";
+
+            int minutes = Mathf.FloorToInt(remainingSeconds / 60f);
+            int seconds = Mathf.FloorToInt(remainingSeconds % 60f);
+
+            return $"{minutes:00}:{seconds:00}";
+        }
+
+        // Reset all power-up cooldowns
+        public void ResetAllPowerUpCooldowns()
+        {
+            foreach (var powerUp in powerUps)
+            {
+                powerUp.lastUsedTime = -999f; // Set to far in the past
+            }
+            Debug.Log("All power-up cooldowns reset");
+        }
     }
 
     [Header("Organ Sprites (For UI)")]
@@ -517,6 +602,16 @@ public class IngredientDatabase : ScriptableObject
         }
     }
 
+    // Reset all power-up cooldowns for all ingredients
+    public void ResetAllPowerUpCooldowns()
+    {
+        foreach (var ingredient in ingredients)
+        {
+            ingredient.ResetAllPowerUpCooldowns();
+        }
+        Debug.Log("All power-up cooldowns reset for all ingredients");
+    }
+
     // Get total count
     public int GetTotalIngredients()
     {
@@ -566,7 +661,7 @@ public class IngredientDatabase : ScriptableObject
             enerlingStory = original.enerlingStory,
             audioClip = original.audioClip,
             endingCutscene = original.endingCutscene,
-            powerUps = new List<PowerUpInfo>(original.powerUps) // NEW: Copy powerups too
+            powerUps = new List<PowerUpInfo>(original.powerUps) // Copy powerups
         };
 
         return copy;
