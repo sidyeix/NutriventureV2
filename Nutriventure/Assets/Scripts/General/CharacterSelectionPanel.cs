@@ -33,6 +33,11 @@ public class CharacterSelectionPanel : MonoBehaviour
     public float displayDuration = 2f;
     public TMPro.TextMeshProUGUI lockedMessageText;
 
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    public AudioClip errorSound;
+    public AudioClip buttonClickSound;
+
     [Header("Layout Settings")]
     public int maxColumns = 3;
     public float buttonSpacing = 20f;
@@ -211,10 +216,7 @@ public class CharacterSelectionPanel : MonoBehaviour
     private void OnCharacterButtonClicked(int characterIndex)
     {
         // Play button click sound
-        if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.PlayButtonClick();
-        }
+        PlayButtonClickSound();
 
         CharacterDatabase.CharacterData selectedCharacter = characterDatabase.characters[characterIndex];
         int characterID = selectedCharacter.characterID;
@@ -363,6 +365,9 @@ public class CharacterSelectionPanel : MonoBehaviour
 
     public void ShowLockedCharacterFeedback(CharacterDatabase.CharacterData lockedCharacter)
     {
+        // Play error sound
+        PlayErrorSound();
+
         if (lockedFeedbackCoroutine != null)
         {
             StopCoroutine(lockedFeedbackCoroutine);
@@ -548,5 +553,32 @@ public class CharacterSelectionPanel : MonoBehaviour
         }
 
         isShowingLockedFeedback = false;
+    }
+
+    // New method to play button click sound
+    private void PlayButtonClickSound()
+    {
+        if (sfxAudioSource != null && buttonClickSound != null)
+        {
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
+        else if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
+    }
+
+    // New method to play error sound
+    private void PlayErrorSound()
+    {
+        if (sfxAudioSource != null && errorSound != null)
+        {
+            sfxAudioSource.PlayOneShot(errorSound);
+        }
+        else if (AudioHandler.Instance != null)
+        {
+            // Fallback to AudioHandler if direct AudioSource not set
+            // Assuming AudioHandler might have an error sound method
+        }
     }
 }

@@ -30,7 +30,7 @@ MonoBehaviour:
       skinDescription: 
       skinColor: {r: 1, g: 1, b: 1, a: 0}
       selectionSound: {fileID: 0}
-      unlock: 0
+      unlock: 1
       isSkinReward: 0
       nutrigemsToUnlock: 100
       taskToUnlock: 
@@ -76,7 +76,7 @@ MonoBehaviour:
       skinDescription: 
       skinColor: {r: 0, g: 0, b: 0, a: 0}
       selectionSound: {fileID: 0}
-      unlock: 0
+      unlock: 1
       isSkinReward: 0
       nutrigemsToUnlock: 100
       taskToUnlock: 

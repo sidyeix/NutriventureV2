@@ -48,7 +48,24 @@ public class GameDataManager : MonoBehaviour
         {
             string jsonData = JsonUtility.ToJson(CurrentGameData, true);
             File.WriteAllText(saveFilePath, jsonData);
-            Debug.Log("Game data saved successfully!");
+            Debug.Log("=== GAME DATA SAVED ===");
+            Debug.Log($"Selected Character: {CurrentGameData.selectedCharacterID}");
+
+            // Print skin data using the new List approach
+            if (CurrentGameData.skinData != null)
+            {
+                Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
+                foreach (var data in CurrentGameData.skinData)
+                {
+                    Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs)}");
+                }
+            }
+            else
+            {
+                Debug.LogError("skinData is NULL during save!");
+            }
+
+            Debug.Log("=== END SAVED DATA ===");
         }
         catch (Exception e)
         {
@@ -65,18 +82,30 @@ public class GameDataManager : MonoBehaviour
                 string jsonData = File.ReadAllText(saveFilePath);
                 CurrentGameData = JsonUtility.FromJson<GameData>(jsonData);
 
-                Debug.Log($"=== GAME DATA LOADED ===");
+                Debug.Log("=== GAME DATA LOADED ===");
                 Debug.Log($"Selected Character ID: {CurrentGameData.selectedCharacterID}");
+
+                // Check if skin data was loaded
+                if (CurrentGameData.skinData != null)
+                {
+                    Debug.Log($"SkinData loaded with {CurrentGameData.skinData.Count} entries");
+                    foreach (var data in CurrentGameData.skinData)
+                    {
+                        Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs)}");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("skinData is NULL after loading! Creating new one.");
+                    CurrentGameData.skinData = new List<GameData.SkinSaveData>();
+                }
+
                 Debug.Log($"Equipped Icon ID: {CurrentGameData.equippedIconId}");
                 Debug.Log($"Unlocked Icons count: {CurrentGameData.unlockedIconIds?.Count ?? 0}");
                 Debug.Log($"Unlocked Icons: {string.Join(", ", CurrentGameData.unlockedIconIds ?? new List<string>())}");
                 Debug.Log($"Equipped Frame ID: {CurrentGameData.equippedFrameId}");
                 Debug.Log($"Unlocked Frames count: {CurrentGameData.unlockedFrameIds?.Count ?? 0}");
                 Debug.Log($"Unlocked Frames: {string.Join(", ", CurrentGameData.unlockedFrameIds ?? new List<string>())}");
-                Debug.Log($"Completed Achievements count: {CurrentGameData.completedAchievementIds?.Count ?? 0}");
-                Debug.Log($"Claimed Achievements count: {CurrentGameData.claimedAchievementIds?.Count ?? 0}");
-                Debug.Log($"Unlocked Enerlings count: {CurrentGameData.unlockedEnerlings?.Count ?? 0}");
-                Debug.Log($"Unlocked Enerlings: {string.Join(", ", CurrentGameData.unlockedEnerlings ?? new List<string>())}");
                 Debug.Log($"=== END LOAD ===");
             }
             catch (Exception e)
@@ -100,15 +129,19 @@ public class GameDataManager : MonoBehaviour
         UpdateChestAvailability();
     }
 
-    /// <summary>
-    /// Initializes default icons and frames based on the databases
-    /// This runs whenever game data is loaded or created
-    /// </summary>
+    private void CreateNewGameData()
+    {
+        CurrentGameData = new GameData();
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
+        SaveGameData();
+        Debug.Log("New GameData created");
+    }
+
     private void InitializeDefaultIconsAndFrames()
     {
         if (CurrentGameData == null) return;
 
-        // Prevent multiple initializations if already done
         if (hasInitializedDefaults && CurrentGameData.unlockedIconIds?.Count > 0 && CurrentGameData.unlockedFrameIds?.Count > 0)
         {
             Debug.Log("Default icons and frames already initialized, skipping...");
@@ -119,34 +152,26 @@ public class GameDataManager : MonoBehaviour
 
         bool changesMade = false;
 
-        // ===== INITIALIZE ICONS =====
+        // Initialize Icons
         if (iconDatabase != null)
         {
             Debug.Log($"Icon database found with {iconDatabase.icons.Count} icons");
 
-            // Ensure the list exists
             if (CurrentGameData.unlockedIconIds == null)
             {
                 CurrentGameData.unlockedIconIds = new List<string>();
             }
 
-            // Loop through all icons in the database
             foreach (var icon in iconDatabase.icons)
             {
-                // Check if this icon should be unlocked by default
-                if (icon.unlockedByDefault)
+                if (icon.unlockedByDefault && !CurrentGameData.unlockedIconIds.Contains(icon.id))
                 {
-                    // If not already in unlocked list, add it
-                    if (!CurrentGameData.unlockedIconIds.Contains(icon.id))
-                    {
-                        CurrentGameData.unlockedIconIds.Add(icon.id);
-                        Debug.Log($"Added default icon: {icon.id} - {icon.iconName}");
-                        changesMade = true;
-                    }
+                    CurrentGameData.unlockedIconIds.Add(icon.id);
+                    Debug.Log($"Added default icon: {icon.id} - {icon.iconName}");
+                    changesMade = true;
                 }
             }
 
-            // Log all unlocked icons after initialization
             Debug.Log($"Unlocked icons after initialization: {string.Join(", ", CurrentGameData.unlockedIconIds)}");
         }
         else
@@ -154,34 +179,26 @@ public class GameDataManager : MonoBehaviour
             Debug.LogError("iconDatabase is not assigned! Default icons will not be initialized.");
         }
 
-        // ===== INITIALIZE FRAMES =====
+        // Initialize Frames
         if (frameDatabase != null)
         {
             Debug.Log($"Frame database found with {frameDatabase.frames.Count} frames");
 
-            // Ensure the list exists
             if (CurrentGameData.unlockedFrameIds == null)
             {
                 CurrentGameData.unlockedFrameIds = new List<string>();
             }
 
-            // Loop through all frames in the database
             foreach (var frame in frameDatabase.frames)
             {
-                // Check if this frame should be unlocked by default
-                if (frame.unlockedByDefault)
+                if (frame.unlockedByDefault && !CurrentGameData.unlockedFrameIds.Contains(frame.id))
                 {
-                    // If not already in unlocked list, add it
-                    if (!CurrentGameData.unlockedFrameIds.Contains(frame.id))
-                    {
-                        CurrentGameData.unlockedFrameIds.Add(frame.id);
-                        Debug.Log($"Added default frame: {frame.id} - {frame.frameName}");
-                        changesMade = true;
-                    }
+                    CurrentGameData.unlockedFrameIds.Add(frame.id);
+                    Debug.Log($"Added default frame: {frame.id} - {frame.frameName}");
+                    changesMade = true;
                 }
             }
 
-            // Log all unlocked frames after initialization
             Debug.Log($"Unlocked frames after initialization: {string.Join(", ", CurrentGameData.unlockedFrameIds)}");
         }
         else
@@ -189,9 +206,7 @@ public class GameDataManager : MonoBehaviour
             Debug.LogError("frameDatabase is not assigned! Default frames will not be initialized.");
         }
 
-        // ===== SET DEFAULT EQUIPPED ITEMS =====
-
-        // Set default equipped icon if none is set
+        // Set default equipped items
         if (string.IsNullOrEmpty(CurrentGameData.equippedIconId) && CurrentGameData.unlockedIconIds?.Count > 0)
         {
             CurrentGameData.equippedIconId = CurrentGameData.unlockedIconIds[0];
@@ -199,7 +214,6 @@ public class GameDataManager : MonoBehaviour
             changesMade = true;
         }
 
-        // Set default equipped frame if none is set
         if (string.IsNullOrEmpty(CurrentGameData.equippedFrameId) && CurrentGameData.unlockedFrameIds?.Count > 0)
         {
             CurrentGameData.equippedFrameId = CurrentGameData.unlockedFrameIds[0];
@@ -207,7 +221,6 @@ public class GameDataManager : MonoBehaviour
             changesMade = true;
         }
 
-        // Save changes if any were made
         if (changesMade)
         {
             SaveGameData();
@@ -218,216 +231,50 @@ public class GameDataManager : MonoBehaviour
         Debug.Log("=== DEFAULT ICONS AND FRAMES INITIALIZATION COMPLETE ===");
     }
 
-    private void CreateNewGameData()
+    private void InitializeDefaultCharacters()
     {
-        CurrentGameData = new GameData();
+        if (CurrentGameData == null) return;
 
-        // Initialize default icons and frames for new game
-        // Reset the flag so initialization runs
-        hasInitializedDefaults = false;
-        InitializeDefaultIconsAndFrames();
-
-        SaveGameData();
-    }
-
-    // ========== RESET METHODS ==========
-
-    /// <summary>
-    /// Completely resets all game data to default values
-    /// </summary>
-    public void ResetGameData()
-    {
-        Debug.LogWarning("=== RESETTING ALL GAME DATA ===");
-
-        // Delete the save file
-        if (File.Exists(saveFilePath))
+        if (characterDatabase == null)
         {
-            File.Delete(saveFilePath);
-            Debug.Log($"Deleted save file: {saveFilePath}");
-        }
-
-        // Create fresh game data
-        CurrentGameData = new GameData();
-
-        // Reset flag so defaults are re-initialized
-        hasInitializedDefaults = false;
-
-        // Re-initialize defaults
-        InitializeDefaultIconsAndFrames();
-        InitializeDefaultSkins();
-
-        // Reset audio settings
-        if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.SetMusicVolume(CurrentGameData.musicVolume);
-            AudioHandler.Instance.SetSoundVolume(CurrentGameData.soundVolume);
-        }
-
-        // Save the fresh data
-        SaveGameData();
-
-        Debug.LogWarning("=== GAME DATA RESET COMPLETE ===");
-    }
-
-    /// <summary>
-    /// Reset only icons and frames, keep other data
-    /// </summary>
-    public void ResetIconsAndFrames()
-    {
-        if (CurrentGameData == null) return;
-
-        Debug.LogWarning("=== RESETTING ICONS AND FRAMES ===");
-
-        // Clear icon and frame lists
-        CurrentGameData.unlockedIconIds = new List<string>();
-        CurrentGameData.unlockedFrameIds = new List<string>();
-
-        // Reset equipped items
-        CurrentGameData.equippedIconId = "";
-        CurrentGameData.equippedFrameId = "";
-
-        // Re-initialize defaults
-        hasInitializedDefaults = false;
-        InitializeDefaultIconsAndFrames();
-
-        SaveGameData();
-        Debug.LogWarning("=== ICONS AND FRAMES RESET COMPLETE ===");
-    }
-
-    /// <summary>
-    /// Reset only achievements
-    /// </summary>
-    public void ResetAchievements()
-    {
-        if (CurrentGameData == null) return;
-
-        Debug.LogWarning("=== RESETTING ACHIEVEMENTS ===");
-
-        CurrentGameData.completedAchievementIds = new List<string>();
-        CurrentGameData.claimedAchievementIds = new List<string>();
-
-        SaveGameData();
-        Debug.LogWarning("=== ACHIEVEMENTS RESET COMPLETE ===");
-    }
-
-    /// <summary>
-    /// Reset only characters and skins
-    /// </summary>
-    public void ResetCharactersAndSkins()
-    {
-        if (CurrentGameData == null) return;
-
-        Debug.LogWarning("=== RESETTING CHARACTERS AND SKINS ===");
-
-        CurrentGameData.unlockedCharacterIDs = new List<int>() { 0 }; // Keep default character
-        CurrentGameData.selectedCharacterID = 0;
-        CurrentGameData.selectedSkinForCharacter = new GameData.SkinDictionary();
-        CurrentGameData.unlockedSkinsForCharacter = new GameData.UnlockedSkinsDictionary();
-
-        // Re-initialize skins
-        InitializeDefaultSkins();
-
-        SaveGameData();
-        Debug.LogWarning("=== CHARACTERS AND SKINS RESET COMPLETE ===");
-    }
-
-    /// <summary>
-    /// Reset only enerlings collection
-    /// </summary>
-    public void ResetEnerlings()
-    {
-        if (CurrentGameData == null) return;
-
-        Debug.LogWarning("=== RESETTING ENERLINGS ===");
-
-        CurrentGameData.unlockedEnerlings = new List<string>();
-
-        SaveGameData();
-        Debug.LogWarning("=== ENERLINGS RESET COMPLETE ===");
-    }
-
-    /// <summary>
-    /// Reset only resources (coins, gems, energy)
-    /// </summary>
-    public void ResetResources()
-    {
-        if (CurrentGameData == null) return;
-
-        Debug.LogWarning("=== RESETTING RESOURCES ===");
-
-        CurrentGameData.nutriCoins = 0;
-        CurrentGameData.nutriGems = 0;
-        CurrentGameData.currentEnergy = 10;
-        CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
-
-        SaveGameData();
-        Debug.LogWarning("=== RESOURCES RESET COMPLETE ===");
-    }
-
-    // ========== DEBUG METHODS (Only visible in Inspector Context Menu) ==========
-
-    #region Debug Methods
-
-    [ContextMenu("Debug/Reset All Game Data")]
-    private void DebugResetAllGameData()
-    {
-        ResetGameData();
-    }
-
-    [ContextMenu("Debug/Reset Icons and Frames Only")]
-    private void DebugResetIconsAndFrames()
-    {
-        ResetIconsAndFrames();
-    }
-
-    [ContextMenu("Debug/Reset Achievements Only")]
-    private void DebugResetAchievements()
-    {
-        ResetAchievements();
-    }
-
-    [ContextMenu("Debug/Reset Characters and Skins Only")]
-    private void DebugResetCharactersAndSkins()
-    {
-        ResetCharactersAndSkins();
-    }
-
-    [ContextMenu("Debug/Reset Enerlings Only")]
-    private void DebugResetEnerlings()
-    {
-        ResetEnerlings();
-    }
-
-    [ContextMenu("Debug/Reset Resources Only")]
-    private void DebugResetResources()
-    {
-        ResetResources();
-    }
-
-    [ContextMenu("Debug/Print Current Game Data")]
-    private void DebugPrintGameData()
-    {
-        if (CurrentGameData == null)
-        {
-            Debug.LogError("No game data loaded!");
+            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
             return;
         }
 
-        Debug.Log("=== CURRENT GAME DATA ===");
-        Debug.Log($"Player: {CurrentGameData.playerName} (Level {CurrentGameData.playerLevel})");
-        Debug.Log($"Resources: {CurrentGameData.nutriCoins} Coins, {CurrentGameData.nutriGems} Gems, {CurrentGameData.currentEnergy} Energy");
-        Debug.Log($"Unlocked Icons ({CurrentGameData.unlockedIconIds?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedIconIds ?? new List<string>())}");
-        Debug.Log($"Unlocked Frames ({CurrentGameData.unlockedFrameIds?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedFrameIds ?? new List<string>())}");
-        Debug.Log($"Unlocked Characters ({CurrentGameData.unlockedCharacterIDs?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedCharacterIDs ?? new List<int>())}");
-        Debug.Log($"Unlocked Enerlings ({CurrentGameData.unlockedEnerlings?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedEnerlings ?? new List<string>())}");
-        Debug.Log($"Completed Achievements ({CurrentGameData.completedAchievementIds?.Count ?? 0})");
-        Debug.Log($"Claimed Achievements ({CurrentGameData.claimedAchievementIds?.Count ?? 0})");
-        Debug.Log("=== END GAME DATA ===");
+        Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
+
+        foreach (var character in characterDatabase.characters)
+        {
+            if (character.unlockedByDefault)
+            {
+                if (!CurrentGameData.unlockedCharacterIDs.Contains(character.characterID))
+                {
+                    CurrentGameData.unlockedCharacterIDs.Add(character.characterID);
+                    Debug.Log($"Added default character {character.characterID} ({character.characterName}) to unlocked list");
+                }
+            }
+        }
+
+        Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
+
+        SaveGameData();
     }
 
-    #endregion
+    private void InitializeDefaultSkins()
+    {
+        if (CurrentGameData == null) return;
 
-    // ... (rest of your existing methods remain the same)
+        if (characterDatabase == null)
+        {
+            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
+            return;
+        }
+
+        CurrentGameData.InitializeAllCharactersSkins(characterDatabase);
+        SaveGameData();
+        Debug.Log("Skin system initialized with List approach!");
+    }
+
     private void UpdateEnergyBasedOnTime()
     {
         if (CurrentGameData == null) return;
@@ -490,50 +337,6 @@ public class GameDataManager : MonoBehaviour
         Debug.Log($"Chest claimed! Received 50 coins. Total coins: {CurrentGameData.nutriCoins}");
     }
 
-    private void InitializeDefaultCharacters()
-    {
-        if (CurrentGameData == null) return;
-
-        if (characterDatabase == null)
-        {
-            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
-            return;
-        }
-
-        Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
-
-        foreach (var character in characterDatabase.characters)
-        {
-            if (character.unlockedByDefault)
-            {
-                if (!CurrentGameData.unlockedCharacterIDs.Contains(character.characterID))
-                {
-                    CurrentGameData.unlockedCharacterIDs.Add(character.characterID);
-                    Debug.Log($"Added default character {character.characterID} ({character.characterName}) to unlocked list");
-                }
-            }
-        }
-
-        Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
-
-        SaveGameData();
-    }
-
-    private void InitializeDefaultSkins()
-    {
-        if (CurrentGameData == null) return;
-
-        if (characterDatabase == null)
-        {
-            Debug.LogWarning("CharacterDatabase not assigned in GameDataManager!");
-            return;
-        }
-
-        CurrentGameData.InitializeAllCharactersSkins(characterDatabase);
-        SaveGameData();
-        Debug.Log("Skin system initialized!");
-    }
-
     #region Profile Icon Methods
 
     public void UnlockIcon(string iconId)
@@ -552,11 +355,9 @@ public class GameDataManager : MonoBehaviour
     {
         if (CurrentGameData == null) return false;
 
-        // First check if it's in the unlocked list by ID
         bool inUnlockedList = CurrentGameData.unlockedIconIds != null &&
                               CurrentGameData.unlockedIconIds.Contains(iconId);
 
-        // Then check database for unlockedByDefault (for safety)
         bool isDefault = false;
         if (iconDatabase != null)
         {
@@ -565,7 +366,6 @@ public class GameDataManager : MonoBehaviour
             {
                 isDefault = icon.unlockedByDefault;
 
-                // Also check if the icon name is in the unlocked list
                 if (!inUnlockedList && CurrentGameData.unlockedIconIds != null)
                 {
                     inUnlockedList = CurrentGameData.unlockedIconIds.Contains(icon.iconName);
@@ -608,11 +408,9 @@ public class GameDataManager : MonoBehaviour
     {
         if (CurrentGameData == null) return false;
 
-        // First check if it's in the unlocked list by ID
         bool inUnlockedList = CurrentGameData.unlockedFrameIds != null &&
                               CurrentGameData.unlockedFrameIds.Contains(frameId);
 
-        // Then check database for unlockedByDefault (for safety)
         bool isDefault = false;
         if (frameDatabase != null)
         {
@@ -621,7 +419,6 @@ public class GameDataManager : MonoBehaviour
             {
                 isDefault = frame.unlockedByDefault;
 
-                // Also check if the frame name is in the unlocked list
                 if (!inUnlockedList && CurrentGameData.unlockedFrameIds != null)
                 {
                     inUnlockedList = CurrentGameData.unlockedFrameIds.Contains(frame.frameName);
@@ -691,6 +488,232 @@ public class GameDataManager : MonoBehaviour
     {
         if (CurrentGameData == null) return false;
         return CurrentGameData.IsAchievementClaimed(achievementId);
+    }
+
+    #endregion
+
+    #region Skin System Methods - UPDATED FOR List APPROACH
+
+    public void UnlockSkin(int characterID, int skinID)
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("Cannot unlock skin: CurrentGameData is null");
+            return;
+        }
+
+        Debug.Log($"===== UNLOCK SKIN CALLED =====");
+        Debug.Log($"Character ID: {characterID}, Skin ID: {skinID}");
+
+        // Log before unlock
+        bool beforeUnlock = CurrentGameData.IsSkinUnlocked(characterID, skinID);
+        Debug.Log($"Before unlock - Is skin unlocked? {beforeUnlock}");
+
+        // Unlock the skin
+        CurrentGameData.UnlockSkinForCharacter(characterID, skinID);
+
+        // Save immediately
+        SaveGameData();
+
+        // Verify after unlock
+        bool afterUnlock = CurrentGameData.IsSkinUnlocked(characterID, skinID);
+        Debug.Log($"After unlock - Is skin unlocked? {afterUnlock}");
+
+        // Print all unlocked skins for this character
+        var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
+        Debug.Log($"All unlocked skins for character {characterID}: {string.Join(", ", unlockedSkins)}");
+
+        Debug.Log($"===== UNLOCK SKIN COMPLETE =====");
+    }
+
+    public bool IsSkinUnlocked(int characterID, int skinID)
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("Cannot check skin unlock: CurrentGameData is null");
+            return false;
+        }
+
+        bool isUnlocked = CurrentGameData.IsSkinUnlocked(characterID, skinID);
+        Debug.Log($"IsSkinUnlocked - Character {characterID}, Skin {skinID}: {isUnlocked}");
+        return isUnlocked;
+    }
+
+    public List<int> GetUnlockedSkins(int characterID)
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("Cannot get unlocked skins: CurrentGameData is null");
+            return new List<int>();
+        }
+
+        var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
+        Debug.Log($"GetUnlockedSkins - Character {characterID}: {string.Join(", ", unlockedSkins)}");
+        return unlockedSkins;
+    }
+
+    public void SetSelectedSkin(int characterID, int skinID)
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("Cannot set selected skin: CurrentGameData is null");
+            return;
+        }
+
+        Debug.Log($"Setting selected skin {skinID} for character {characterID}");
+        CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
+        SaveGameData();
+    }
+
+    public int GetSelectedSkin(int characterID)
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("Cannot get selected skin: CurrentGameData is null");
+            return -1;
+        }
+
+        return CurrentGameData.GetSelectedSkinForCharacter(characterID);
+    }
+
+    #endregion
+
+    #region Reset Methods
+
+    public void ResetGameData()
+    {
+        Debug.LogWarning("=== RESETTING ALL GAME DATA ===");
+
+        if (File.Exists(saveFilePath))
+        {
+            File.Delete(saveFilePath);
+            Debug.Log($"Deleted save file: {saveFilePath}");
+        }
+
+        CurrentGameData = new GameData();
+        hasInitializedDefaults = false;
+
+        InitializeDefaultIconsAndFrames();
+        InitializeDefaultSkins();
+
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.SetMusicVolume(CurrentGameData.musicVolume);
+            AudioHandler.Instance.SetSoundVolume(CurrentGameData.soundVolume);
+        }
+
+        SaveGameData();
+        Debug.LogWarning("=== GAME DATA RESET COMPLETE ===");
+    }
+
+    public void ResetIconsAndFrames()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING ICONS AND FRAMES ===");
+
+        CurrentGameData.unlockedIconIds = new List<string>();
+        CurrentGameData.unlockedFrameIds = new List<string>();
+        CurrentGameData.equippedIconId = "";
+        CurrentGameData.equippedFrameId = "";
+
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
+
+        SaveGameData();
+        Debug.LogWarning("=== ICONS AND FRAMES RESET COMPLETE ===");
+    }
+
+    public void ResetAchievements()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING ACHIEVEMENTS ===");
+
+        CurrentGameData.completedAchievementIds = new List<string>();
+        CurrentGameData.claimedAchievementIds = new List<string>();
+
+        SaveGameData();
+        Debug.LogWarning("=== ACHIEVEMENTS RESET COMPLETE ===");
+    }
+
+    public void ResetCharactersAndSkins()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING CHARACTERS AND SKINS ===");
+
+        CurrentGameData.unlockedCharacterIDs = new List<int>() { 0 };
+        CurrentGameData.selectedCharacterID = 0;
+        CurrentGameData.skinData = new List<GameData.SkinSaveData>();
+
+        InitializeDefaultSkins();
+
+        SaveGameData();
+        Debug.LogWarning("=== CHARACTERS AND SKINS RESET COMPLETE ===");
+    }
+
+    public void ResetEnerlings()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING ENERLINGS ===");
+
+        CurrentGameData.unlockedEnerlings = new List<string>();
+
+        SaveGameData();
+        Debug.LogWarning("=== ENERLINGS RESET COMPLETE ===");
+    }
+
+    public void ResetResources()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING RESOURCES ===");
+
+        CurrentGameData.nutriCoins = 0;
+        CurrentGameData.nutriGems = 0;
+        CurrentGameData.currentEnergy = 10;
+        CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
+
+        SaveGameData();
+        Debug.LogWarning("=== RESOURCES RESET COMPLETE ===");
+    }
+
+    #endregion
+
+    #region Debug Methods
+
+    [ContextMenu("Debug/Print Current Game Data")]
+    private void DebugPrintGameData()
+    {
+        if (CurrentGameData == null)
+        {
+            Debug.LogError("No game data loaded!");
+            return;
+        }
+
+        Debug.Log("=== CURRENT GAME DATA ===");
+        Debug.Log($"Player: {CurrentGameData.playerName} (Level {CurrentGameData.playerLevel})");
+        Debug.Log($"Resources: {CurrentGameData.nutriCoins} Coins, {CurrentGameData.nutriGems} Gems, {CurrentGameData.currentEnergy} Energy");
+        Debug.Log($"Unlocked Icons ({CurrentGameData.unlockedIconIds?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedIconIds ?? new List<string>())}");
+        Debug.Log($"Unlocked Frames ({CurrentGameData.unlockedFrameIds?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedFrameIds ?? new List<string>())}");
+        Debug.Log($"Unlocked Characters ({CurrentGameData.unlockedCharacterIDs?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedCharacterIDs ?? new List<int>())}");
+        Debug.Log($"Unlocked Enerlings ({CurrentGameData.unlockedEnerlings?.Count ?? 0}): {string.Join(", ", CurrentGameData.unlockedEnerlings ?? new List<string>())}");
+        Debug.Log($"Completed Achievements ({CurrentGameData.completedAchievementIds?.Count ?? 0})");
+        Debug.Log($"Claimed Achievements ({CurrentGameData.claimedAchievementIds?.Count ?? 0})");
+
+        // Print skin data using new List approach
+        if (CurrentGameData.skinData != null)
+        {
+            Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
+            foreach (var data in CurrentGameData.skinData)
+            {
+                Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs)}");
+            }
+        }
+
+        Debug.Log("=== END GAME DATA ===");
     }
 
     #endregion
