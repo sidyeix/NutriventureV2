@@ -291,14 +291,6 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
                 controller = enerlingGO.AddComponent<Test_EnerlingController>();
             }
             
-            // DISABLE THE SFX COMPONENT ON SPAWNED ENERLINGS
-            EnerlingsSFX sfxComponent = enerlingGO.GetComponent<EnerlingsSFX>();
-            if (sfxComponent != null)
-            {
-                sfxComponent.enabled = false;
-                Debug.Log($"Disabled EnerlingsSFX on {enerlingGO.name}");
-            }
-            
             // Pass ingredient info to controller
             controller.SetIngredientInfo(ingredient);
             

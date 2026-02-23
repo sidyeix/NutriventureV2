@@ -146,7 +146,7 @@ MonoBehaviour:
   skill1: {fileID: 8300000, guid: 2cc7257b81e8a2e4ba5dd6b009bfc45e, type: 3}
   skill2: {fileID: 8300000, guid: f452e5d1c58198c45843ad0d88d331e5, type: 3}
   skill3: {fileID: 0}
-  footstep: {fileID: 8300000, guid: 2cc7257b81e8a2e4ba5dd6b009bfc45e, type: 3}
+  footstep: {fileID: 0}
   jump: {fileID: 0}
   land: {fileID: 0}
   voiceGrunt: {fileID: 0}
