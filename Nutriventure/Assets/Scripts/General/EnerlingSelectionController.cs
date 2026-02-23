@@ -57,6 +57,7 @@ public class EnerlingSelectionController : MonoBehaviour
     [Header("Button Colors")]
     public Color normalButtonColor = Color.white;
     public Color selectedButtonColor = new Color(0.52f, 0.52f, 0.52f);
+    public Color disabledButtonColor = new Color(0.5f, 0.5f, 0.5f, 0.5f); // Color for disabled buttons
 
     [Header("Audio")]
     public AudioSource sfxAudioSource;
@@ -70,6 +71,9 @@ public class EnerlingSelectionController : MonoBehaviour
     private List<GameObject> currentRows = new List<GameObject>();
     private Dictionary<string, GameObject> enerlingButtons = new Dictionary<string, GameObject>();
     private List<IngredientDatabase.IngredientInfo> currentFilteredEnerlings = new List<IngredientDatabase.IngredientInfo>();
+
+    // Track which slot's pet is equipped in the other slot
+    private string otherSlotEquippedPet = "";
 
     // Filter states
     private IngredientDatabase.Rarity currentRarityFilter = IngredientDatabase.Rarity.Common;
@@ -209,11 +213,80 @@ public class EnerlingSelectionController : MonoBehaviour
         currentSlotIndex = slotIndex;
         currentSlotButton = slotButton;
         selectionCanvas.SetActive(true);
+
+        // Get the pet equipped in the other slot
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            if (slotIndex == 0)
+                otherSlotEquippedPet = GameDataManager.Instance.CurrentGameData.equippedPetSlot2;
+            else
+                otherSlotEquippedPet = GameDataManager.Instance.CurrentGameData.equippedPetSlot1;
+        }
+
         RefreshDisplay();
 
-        // Hide remove button initially (will show when an enerling is selected)
+        // Get the currently equipped pet in this slot
+        string equippedPetName = slotButton.GetEquippedPetName();
+
+        if (!string.IsNullOrEmpty(equippedPetName))
+        {
+            // If there's an equipped pet, find and select it in the grid
+            selectedEnerling = ingredientDatabase.GetIngredientInfo(equippedPetName);
+            if (selectedEnerling != null)
+            {
+                // Update info panel with this pet
+                UpdateInfoPanel(selectedEnerling);
+                SpawnPreviewModel(selectedEnerling);
+
+                // Show remove button (since it's equipped)
+                if (removeButton != null)
+                    removeButton.gameObject.SetActive(true);
+
+                // Hide equip button
+                if (equipButton != null)
+                    equipButton.gameObject.SetActive(false);
+
+                // Show the info panel
+                infoPanel.SetActive(true);
+            }
+        }
+        else
+        {
+            // Hide both buttons initially for empty slot
+            if (removeButton != null)
+                removeButton.gameObject.SetActive(false);
+            if (equipButton != null)
+                equipButton.gameObject.SetActive(false);
+        }
+    }
+
+    // Show information for an equipped pet without opening selection
+    public void ShowPetInfo(IngredientDatabase.IngredientInfo enerling, int slotIndex)
+    {
+        // Store the current slot info
+        currentSlotIndex = slotIndex;
+        currentSlotButton = null; // No slot button reference for viewing mode
+        selectedEnerling = enerling;
+
+        // Update the info panel
+        UpdateInfoPanel(enerling);
+
+        // Spawn preview model
+        SpawnPreviewModel(enerling);
+
+        // Hide equip button in view mode
+        if (equipButton != null)
+            equipButton.gameObject.SetActive(false);
+
+        // Show remove button if this pet is equipped
         if (removeButton != null)
-            removeButton.gameObject.SetActive(false);
+        {
+            bool isEquipped = IsEnerlingEquipped(enerling.ingredientName);
+            removeButton.gameObject.SetActive(isEquipped);
+        }
+
+        // Show the info panel
+        infoPanel.SetActive(true);
     }
 
     void RefreshDisplay()
@@ -292,12 +365,25 @@ public class EnerlingSelectionController : MonoBehaviour
 
         enerlingButtons[enerling.ingredientName] = buttonObj;
 
-        // Check if this enerling is already equipped in either slot
-        bool isEquipped = IsEnerlingEquipped(enerling.ingredientName);
-        if (isEquipped)
+        // Check if this enerling is equipped in the other slot
+        bool isEquippedInOtherSlot = enerling.ingredientName == otherSlotEquippedPet;
+
+        // Check if this enerling is equipped in the current slot
+        bool isEquippedInCurrentSlot = currentSlotButton != null && currentSlotButton.GetEquippedPetName() == enerling.ingredientName;
+
+        // Disable the button if it's equipped in the other slot (can't unequip from this slot)
+        if (isEquippedInOtherSlot)
+        {
+            button.interactable = false;
+            // Visual indication that it's disabled (equipped in other slot)
+            Image img = buttonObj.GetComponent<Image>();
+            if (img != null)
+                img.color = disabledButtonColor;
+        }
+        else if (isEquippedInCurrentSlot)
         {
             button.interactable = true;
-            // Visual indication that it's equipped
+            // Visual indication that it's equipped in this slot
             Image img = buttonObj.GetComponent<Image>();
             if (img != null)
                 img.color = new Color(0.8f, 0.8f, 0.8f, 1f);
@@ -324,9 +410,24 @@ public class EnerlingSelectionController : MonoBehaviour
         UpdateInfoPanel(selectedEnerling);
         SpawnPreviewModel(selectedEnerling);
 
-        // Show remove button when an enerling is selected
+        // Check if this enerling is already equipped in the current slot
+        bool isEquippedInCurrentSlot = currentSlotButton != null && currentSlotButton.GetEquippedPetName() == enerlingName;
+
+        // Check if this enerling is equipped in the other slot
+        bool isEquippedInOtherSlot = enerlingName == otherSlotEquippedPet;
+
+        // Update button visibility based on equipped status
         if (removeButton != null)
-            removeButton.gameObject.SetActive(true);
+            removeButton.gameObject.SetActive(isEquippedInCurrentSlot); // Only show remove for current slot's pet
+
+        if (equipButton != null)
+        {
+            // Only show equip button if:
+            // 1. The enerling is NOT equipped in current slot
+            // 2. The enerling is NOT equipped in other slot
+            // 3. We have a valid slot button (meaning we're in selection mode, not view mode)
+            equipButton.gameObject.SetActive(!isEquippedInCurrentSlot && !isEquippedInOtherSlot && currentSlotButton != null);
+        }
     }
 
     void UpdateInfoPanel(IngredientDatabase.IngredientInfo enerling)
@@ -489,22 +590,26 @@ public class EnerlingSelectionController : MonoBehaviour
 
     void OnRemoveButtonClicked()
     {
-        if (currentSlotButton == null) return;
+        if (selectedEnerling == null) return;
 
         // Play button click sound
         PlayButtonClickSound();
 
-        // Clear the slot
-        currentSlotButton.ClearSlot();
-
-        // Also remove from pet manager
-        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
-        if (petManager != null)
+        // Only remove if this pet is equipped in the current slot
+        if (currentSlotButton != null && currentSlotButton.GetEquippedPetName() == selectedEnerling.ingredientName)
         {
-            petManager.RemovePet(currentSlotIndex);
+            currentSlotButton.ClearSlot();
+
+            // Also remove from pet manager
+            EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+            if (petManager != null)
+            {
+                petManager.RemovePet(currentSlotIndex);
+            }
         }
 
-        CloseSelection();
+        // Hide the info panel
+        infoPanel.SetActive(false);
     }
 
     public void CloseSelection()
@@ -516,13 +621,23 @@ public class EnerlingSelectionController : MonoBehaviour
         infoPanel.SetActive(false);
         if (currentPreviewModel != null)
             Destroy(currentPreviewModel);
+
+        // Refresh the slot button state if we have one
+        if (currentSlotButton != null)
+        {
+            currentSlotButton.RefreshSlotState();
+        }
+
         currentSlotIndex = -1;
         currentSlotButton = null;
         selectedEnerling = null;
+        otherSlotEquippedPet = "";
 
-        // Hide remove button
+        // Hide both buttons
         if (removeButton != null)
             removeButton.gameObject.SetActive(false);
+        if (equipButton != null)
+            equipButton.gameObject.SetActive(false);
 
         // Clear power-up display when closing
         ClearPowerUpDisplay();

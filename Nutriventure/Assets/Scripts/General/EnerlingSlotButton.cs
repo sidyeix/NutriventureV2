@@ -8,8 +8,13 @@ public class EnerlingSlotButton : MonoBehaviour
     [SerializeField] private int slotIndex = 0; // 0 for first pet, 1 for second pet
     [SerializeField] private Image petIconImage;
     [SerializeField] private Button slotButton;
-    [SerializeField] private Button changeButton; // Change button that appears when slot is clicked
-    [SerializeField] private GameObject emptySlotIndicator;
+    [SerializeField] private Button changeButton; // Change button that appears when slot is empty or clicked
+    [SerializeField] private Image changeButtonImage; // Reference to the change button's image component
+    [SerializeField] private Sprite addSprite; // Sprite to show when slot is empty
+    [SerializeField] private Sprite changeSprite; // Sprite to show when slot has a pet
+
+    [Header("Name Display")]
+    [SerializeField] private TextMeshProUGUI enerlingNameText; // Text to display enerling name or "Add Enerling"
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] walkingSpawnPoints;
@@ -31,7 +36,6 @@ public class EnerlingSlotButton : MonoBehaviour
         if (changeButton != null)
         {
             changeButton.onClick.AddListener(OnChangeButtonClicked);
-            changeButton.gameObject.SetActive(false); // Start hidden
         }
 
         selectionController = FindObjectOfType<EnerlingSelectionController>();
@@ -56,11 +60,19 @@ public class EnerlingSlotButton : MonoBehaviour
         {
             equippedPetName = savedPet;
             UpdateButtonIcon(savedPet);
+            UpdateNameDisplay(savedPet);
+            UpdateChangeButtonForEquippedPet();
         }
         else
         {
             ShowEmptySlot();
         }
+    }
+
+    // NEW: Refresh the slot state (called when selection canvas closes)
+    public void RefreshSlotState()
+    {
+        LoadEquippedPet();
     }
 
     void OnSlotButtonClicked()
@@ -69,11 +81,32 @@ public class EnerlingSlotButton : MonoBehaviour
         if (AudioHandler.Instance != null)
             AudioHandler.Instance.PlayButtonClick();
 
-        // Show the change button
-        if (changeButton != null)
+        // If there's an equipped pet, show its info
+        if (!string.IsNullOrEmpty(equippedPetName))
+        {
+            ShowEquippedPetInfo();
+        }
+
+        // For empty slots, clicking the slot does nothing (change button is always visible and doesn't toggle)
+        // For equipped slots, toggle the change button visibility
+        if (!string.IsNullOrEmpty(equippedPetName))
         {
             isChangeButtonVisible = !isChangeButtonVisible;
-            changeButton.gameObject.SetActive(isChangeButtonVisible);
+            if (changeButton != null)
+                changeButton.gameObject.SetActive(isChangeButtonVisible);
+        }
+    }
+
+    // Show information of the equipped pet
+    void ShowEquippedPetInfo()
+    {
+        if (selectionController != null && ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(equippedPetName);
+            if (ingredient != null)
+            {
+                selectionController.ShowPetInfo(ingredient, slotIndex);
+            }
         }
     }
 
@@ -83,7 +116,7 @@ public class EnerlingSlotButton : MonoBehaviour
         if (AudioHandler.Instance != null)
             AudioHandler.Instance.PlayButtonClick();
 
-        // Hide the change button
+        // Hide the change button when clicked (it will be shown again when the selection closes based on slot state)
         if (changeButton != null)
         {
             changeButton.gameObject.SetActive(false);
@@ -101,6 +134,8 @@ public class EnerlingSlotButton : MonoBehaviour
     {
         equippedPetName = petName;
         UpdateButtonIcon(petName);
+        UpdateNameDisplay(petName);
+        UpdateChangeButtonForEquippedPet();
 
         // Save to GameData
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
@@ -125,23 +160,78 @@ public class EnerlingSlotButton : MonoBehaviour
             if (ingredient != null && ingredient.enerlingSprite != null)
             {
                 petIconImage.sprite = ingredient.enerlingSprite;
+                // Set color to white with full alpha (normal)
+                SetImageColor(petIconImage, Color.white, 1f);
                 petIconImage.gameObject.SetActive(true);
             }
         }
+    }
 
-        if (emptySlotIndicator != null)
-            emptySlotIndicator.SetActive(false);
+    void UpdateNameDisplay(string petName)
+    {
+        if (enerlingNameText != null && ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(petName);
+            if (ingredient != null)
+            {
+                enerlingNameText.text = ingredient.ingredientName;
+            }
+        }
+    }
+
+    void UpdateChangeButtonForEquippedPet()
+    {
+        if (changeButton != null)
+        {
+            // Update the change button sprite to changeSprite
+            if (changeButtonImage != null && changeSprite != null)
+                changeButtonImage.sprite = changeSprite;
+
+            // Initially hide the change button (only shown when slot is clicked)
+            changeButton.gameObject.SetActive(false);
+            isChangeButtonVisible = false;
+        }
     }
 
     void ShowEmptySlot()
     {
-        if (petIconImage != null)
-            petIconImage.gameObject.SetActive(false);
-
-        if (emptySlotIndicator != null)
-            emptySlotIndicator.SetActive(true);
-
         equippedPetName = "";
+
+        // Make pet icon white with 0 alpha (completely transparent)
+        if (petIconImage != null)
+        {
+            // Keep the sprite but make it completely transparent
+            SetImageColor(petIconImage, Color.white, 0f);
+            petIconImage.gameObject.SetActive(true);
+        }
+
+        // Update name display to "Add Enerling"
+        if (enerlingNameText != null)
+        {
+            enerlingNameText.text = "Add Enerling";
+        }
+
+        // Update change button for empty slot - always visible with add sprite
+        if (changeButton != null)
+        {
+            // Set the add sprite
+            if (changeButtonImage != null && addSprite != null)
+                changeButtonImage.sprite = addSprite;
+
+            // Always show the change button when slot is empty
+            changeButton.gameObject.SetActive(true);
+            isChangeButtonVisible = true;
+        }
+    }
+
+    // Helper method to set image color and alpha
+    private void SetImageColor(Image image, Color color, float alpha)
+    {
+        if (image != null)
+        {
+            color.a = alpha;
+            image.color = color;
+        }
     }
 
     void SpawnPet(string petName)
@@ -167,13 +257,6 @@ public class EnerlingSlotButton : MonoBehaviour
                 GameDataManager.Instance.CurrentGameData.equippedPetSlot2 = "";
 
             GameDataManager.Instance.SaveGameData();
-        }
-
-        // Hide change button if visible
-        if (changeButton != null)
-        {
-            changeButton.gameObject.SetActive(false);
-            isChangeButtonVisible = false;
         }
     }
 

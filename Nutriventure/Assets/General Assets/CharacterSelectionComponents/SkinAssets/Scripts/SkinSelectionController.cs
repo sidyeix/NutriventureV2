@@ -193,6 +193,57 @@ public class SkinSelectionController : MonoBehaviour
         if (powerUpPanel2 != null) powerUpPanel2.SetActive(false);
 
         HideAllActionButtons();
+
+        // Subscribe to pet change events
+        SubscribeToPetEvents();
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        UnsubscribeFromPetEvents();
+    }
+
+    private void SubscribeToPetEvents()
+    {
+        // Find the EnerlingPetManager and subscribe to its events
+        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+        if (petManager != null)
+        {
+            petManager.OnPetEquipped += OnPetChanged;
+            petManager.OnPetRemoved += OnPetChanged;
+        }
+    }
+
+    private void UnsubscribeFromPetEvents()
+    {
+        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+        if (petManager != null)
+        {
+            petManager.OnPetEquipped -= OnPetChanged;
+            petManager.OnPetRemoved -= OnPetChanged;
+        }
+    }
+
+    // Called whenever a pet is equipped or removed
+    private void OnPetChanged(int slotIndex, string petName)
+    {
+        Debug.Log($"Pet changed in slot {slotIndex}: {petName}");
+
+        // If we're currently in skin selection, update the power-up panels
+        if (isInSkinPreview && skinSelectionPanel.activeSelf)
+        {
+            UpdatePowerUpPanels();
+        }
+    }
+
+    // Public method that can be called from other scripts (like EnerlingPetManager)
+    public void RefreshPowerUpPanels()
+    {
+        if (isInSkinPreview && skinSelectionPanel.activeSelf)
+        {
+            UpdatePowerUpPanels();
+        }
     }
 
     public void EnterSkinSelection(int characterID)
@@ -263,6 +314,8 @@ public class SkinSelectionController : MonoBehaviour
     {
         if (gameDataManager == null || gameDataManager.CurrentGameData == null || ingredientDatabase == null)
             return;
+
+        Debug.Log("Updating power-up panels in SkinSelectionController");
 
         // Get equipped pets
         string pet1 = gameDataManager.GetEquippedPet(1);
