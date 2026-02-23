@@ -39169,7 +39169,7 @@ MonoBehaviour:
   iconDatabase: {fileID: 11400000, guid: c898052628d1cd942af77c0897e18ead, type: 2}
   frameDatabase: {fileID: 11400000, guid: 1a54455482b95d242b73521dbb5e24e2, type: 2}
   achievementDatabase: {fileID: 11400000, guid: 8cdb5b4c0496eac45865ebf5ee526122, type: 2}
-  ingredientDatabase: {fileID: 0}
+  ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
 --- !u!1001 &567491883
 PrefabInstance:
   m_ObjectHideFlags: 0
