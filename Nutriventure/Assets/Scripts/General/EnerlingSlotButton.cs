@@ -148,6 +148,12 @@ public class EnerlingSlotButton : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
         }
 
+        // Register power-ups for this pet
+        if (PowerUpManager.Instance != null)
+        {
+            PowerUpManager.Instance.RegisterPetPowerUps(petName);
+        }
+
         // Spawn the pet
         SpawnPet(petName);
     }
@@ -245,6 +251,8 @@ public class EnerlingSlotButton : MonoBehaviour
 
     public void ClearSlot()
     {
+        string oldPetName = equippedPetName;
+
         equippedPetName = "";
         ShowEmptySlot();
 
@@ -257,6 +265,12 @@ public class EnerlingSlotButton : MonoBehaviour
                 GameDataManager.Instance.CurrentGameData.equippedPetSlot2 = "";
 
             GameDataManager.Instance.SaveGameData();
+        }
+
+        // Unregister power-ups for this pet
+        if (!string.IsNullOrEmpty(oldPetName) && PowerUpManager.Instance != null)
+        {
+            PowerUpManager.Instance.UnregisterPetPowerUps(oldPetName);
         }
     }
 

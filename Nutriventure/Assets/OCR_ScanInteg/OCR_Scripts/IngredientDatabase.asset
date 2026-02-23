@@ -27,7 +27,7 @@ MonoBehaviour:
   - ingredientName: Calcium
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -41,7 +41,7 @@ MonoBehaviour:
     currentCatchCount: 2
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
-    currentLife: 0
+    currentLife: 95
     armorPercent: 25
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -992,7 +992,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
     baseLife: 200
-    currentLife: 200
+    currentLife: 174
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
