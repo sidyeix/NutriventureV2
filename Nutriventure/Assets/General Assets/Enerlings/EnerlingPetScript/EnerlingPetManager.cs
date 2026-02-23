@@ -5,6 +5,11 @@ using StarterAssets;
 
 public class EnerlingPetManager : MonoBehaviour
 {
+    // EVENTS - Add these at the top of the class
+    public delegate void PetChangeHandler(int slotIndex, string petName);
+    public event PetChangeHandler OnPetEquipped;
+    public event PetChangeHandler OnPetRemoved;
+
     [System.Serializable]
     public class PetData
     {
@@ -283,6 +288,9 @@ public class EnerlingPetManager : MonoBehaviour
             SetupPetComponents(pets.Count - 1);
         }
 
+        // Trigger the OnPetEquipped event
+        OnPetEquipped?.Invoke(slotIndex, petName);
+
         Debug.Log($"Spawned pet {petName} in slot {slotIndex} at {spawnPoint.name} ({(isFlying ? "Flying" : "Walking")})");
     }
 
@@ -498,6 +506,13 @@ public class EnerlingPetManager : MonoBehaviour
 
     public void RemovePet(int slotIndex)
     {
+        string petName = "";
+
+        if (slotIndex < pets.Count && pets[slotIndex] != null)
+        {
+            petName = pets[slotIndex].petName;
+        }
+
         if (slotIndex >= pets.Count || pets[slotIndex] == null) return;
 
         if (pets[slotIndex].petTransform != null)
@@ -515,6 +530,9 @@ public class EnerlingPetManager : MonoBehaviour
 
             GameDataManager.Instance.SaveGameData();
         }
+
+        // Trigger the OnPetRemoved event
+        OnPetRemoved?.Invoke(slotIndex, petName);
 
         Debug.Log($"Removed pet from slot {slotIndex}");
     }
