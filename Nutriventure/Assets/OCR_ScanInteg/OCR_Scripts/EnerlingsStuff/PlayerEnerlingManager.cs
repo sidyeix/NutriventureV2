@@ -30,10 +30,10 @@ public class PlayerEnerlingManager : MonoBehaviour
     public Color enabledButtonColor = Color.white;
 
     [Header("Cooldown Slider References")]
-    private Slider skill1CooldownSlider;
-    private Slider skill2CooldownSlider;
-    private Slider skill3CooldownSlider;
-    private Slider skill4CooldownSlider;
+    public Slider skill1CooldownSlider;
+    public Slider skill2CooldownSlider;
+    public Slider skill3CooldownSlider;
+    public Slider skill4CooldownSlider;
 
     [Header("Current Enerling")]
     public IngredientDatabase.IngredientInfo playerEnerling;
@@ -87,6 +87,12 @@ public class PlayerEnerlingManager : MonoBehaviour
         skillButtons.Clear();
         skillCooldownTexts.Clear();
         skillNameTexts.Clear();
+
+        // Reset slider references
+        skill1CooldownSlider = null;
+        skill2CooldownSlider = null;
+        skill3CooldownSlider = null;
+        skill4CooldownSlider = null;
 
         // Create 4 skill buttons
         for (int i = 1; i <= 4; i++)
@@ -163,8 +169,8 @@ public class PlayerEnerlingManager : MonoBehaviour
             if (skill.cooldownTurns > 0)
             {
                 skillCooldownSlider.maxValue = skill.cooldownTurns;
-                skillCooldownSlider.value = skill.cooldownTurns; // Start at max (ready)
-                skillCooldownSlider.gameObject.SetActive(false); // Hidden when not on cooldown
+                skillCooldownSlider.value = 0; // Start at 0 (ready)
+                skillCooldownSlider.gameObject.SetActive(false); // Hidden when ready
             }
             else
             {
@@ -192,11 +198,12 @@ public class PlayerEnerlingManager : MonoBehaviour
         GameObject cooldownObj = new GameObject("CooldownText");
         cooldownObj.transform.SetParent(buttonObj.transform);
         cooldownObj.transform.localPosition = Vector3.zero;
-        cooldownObj.transform.localScale = Vector3.one * 1.5f;
+        cooldownObj.transform.localScale = Vector3.one;
 
         TextMeshProUGUI cooldownText = cooldownObj.AddComponent<TextMeshProUGUI>();
         cooldownText.alignment = TextAlignmentOptions.Center;
-        cooldownText.fontSize = 24;
+        cooldownText.fontSize = 36;
+        cooldownText.fontStyle = FontStyles.Bold;
         cooldownText.color = cooldownTextColor;
         cooldownText.raycastTarget = false;
         cooldownText.gameObject.SetActive(false);
@@ -282,14 +289,7 @@ public class PlayerEnerlingManager : MonoBehaviour
         // Disable all buttons while processing
         SetButtonsInteractable(false);
 
-        // Set skill cooldown BEFORE using the skill
-        playerEnerling.SetSkillCooldown(skillNumber);
-        Debug.Log($"Set cooldown for skill {skillNumber} to {skill.cooldownTurns} turns");
-
-        // Immediately update the button UI to show cooldown
-        UpdateSkillButton(skillNumber);
-
-        // Notify BattleEnerlingManager
+        // Notify BattleEnerlingManager (it will handle setting cooldown after animation)
         if (battleManager != null)
         {
             battleManager.OnSkillButtonClicked(skillNumber);
@@ -298,6 +298,11 @@ public class PlayerEnerlingManager : MonoBehaviour
         {
             Debug.LogError("BattleEnerlingManager not found!");
         }
+    }
+
+    public void FlashButtonOnCooldown(int skillNumber)
+    {
+        StartCoroutine(FlashButtonCooldown(skillNumber));
     }
 
     public void UpdateAllSkillButtons()
@@ -336,9 +341,9 @@ public class PlayerEnerlingManager : MonoBehaviour
             {
                 // Skill is on cooldown
                 cooldownSlider.maxValue = skill.cooldownTurns;
-                // Slider shows progress: (maxCooldown - remainingCooldown) / maxCooldown
+                // Slider shows progress from 0 to max
                 // When cooldown = max (just used): slider value = 0
-                // When cooldown = 1 (almost ready): slider value = (max-1)/max
+                // When cooldown = 1 (almost ready): slider value = max-1
                 // When cooldown = 0 (ready): slider hidden
                 int remainingCooldown = cooldown;
                 int currentSliderValue = skill.cooldownTurns - remainingCooldown;
@@ -350,7 +355,6 @@ public class PlayerEnerlingManager : MonoBehaviour
             else
             {
                 // Skill is ready - hide slider
-                cooldownSlider.value = skill.cooldownTurns;
                 cooldownSlider.gameObject.SetActive(false);
             }
         }

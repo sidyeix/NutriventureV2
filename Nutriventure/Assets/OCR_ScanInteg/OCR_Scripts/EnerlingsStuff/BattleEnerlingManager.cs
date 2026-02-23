@@ -54,7 +54,8 @@ public class BattleEnerlingManager : MonoBehaviour
     private int currentArmor = 0;
     private int activeDefend = 0;
     private bool hasDefend = false;
-    private bool defendUsedThisTurn = false; // Track if defend was used this turn
+    private bool defendUsedThisTurn = false;
+    private bool isProcessingSkill = false; // Prevent multiple skill triggers
 
     // Skill tracking
     private bool isAnimating = false;
@@ -864,9 +865,10 @@ public class BattleEnerlingManager : MonoBehaviour
 
     public void OnSkillButtonClicked(int skillNumber)
     {
-        if (isAnimating)
+        // FIX: Prevent multiple triggers
+        if (isProcessingSkill || isAnimating)
         {
-            Debug.Log("Animation in progress, please wait...");
+            Debug.Log("Skill already in progress, please wait...");
             return;
         }
 
@@ -895,6 +897,8 @@ public class BattleEnerlingManager : MonoBehaviour
             Debug.Log($"Skill {skillNumber} is on cooldown!");
             return;
         }
+
+        isProcessingSkill = true;
 
         // Notify turn system
         if (turnSystem != null)
@@ -933,7 +937,7 @@ public class BattleEnerlingManager : MonoBehaviour
             enerlingAnimator.SetBool(animationBool, true);
             Debug.Log($"Playing animation for skill {skillNumber}: {animationBool}");
 
-            // Wait for animation to complete
+            // FIX: Wait for animation to complete properly
             yield return StartCoroutine(WaitForAnimationToComplete(animationBool));
 
             enerlingAnimator.SetBool(animationBool, false);
@@ -941,6 +945,7 @@ public class BattleEnerlingManager : MonoBehaviour
         else
         {
             Debug.LogWarning($"No animation bool found for skill {skillNumber}");
+            yield return new WaitForSeconds(1f);
         }
 
         // Apply skill effect AFTER animation completes
@@ -948,8 +953,9 @@ public class BattleEnerlingManager : MonoBehaviour
 
         if (battleEnerling != null)
         {
-            // Set the skill cooldown (this method already exists)
+            // Set the skill cooldown
             battleEnerling.SetSkillCooldown(skillNumber);
+            Debug.Log($"Skill {skillNumber} cooldown set to: {GetSkillCooldownValue(skillNumber)}");
         }
 
         // Update player skill buttons UI
@@ -965,22 +971,41 @@ public class BattleEnerlingManager : MonoBehaviour
         }
 
         isAnimating = false;
+        isProcessingSkill = false;
         Debug.Log($"Skill {skillNumber} executed");
+    }
+
+    // Helper method to get cooldown value
+    private int GetSkillCooldownValue(int skillNumber)
+    {
+        if (battleEnerling == null) return 0;
+
+        switch (skillNumber)
+        {
+            case 1: return battleEnerling.skill1Cooldown;
+            case 2: return battleEnerling.skill2Cooldown;
+            case 3: return battleEnerling.skill3Cooldown;
+            case 4: return battleEnerling.skill4Cooldown;
+            default: return 0;
+        }
     }
 
     IEnumerator WaitForAnimationToComplete(string animationBool)
     {
-        // Wait until animation starts
-        yield return new WaitForSeconds(0.1f);
+        // Wait for animation to start
+        yield return new WaitForSeconds(0.2f);
 
-        // Wait for current state to finish using FeedbackManager's utility
-        if (FeedbackManager.Instance != null && enerlingAnimator != null)
+        // Wait for current state to finish
+        if (enerlingAnimator != null)
         {
-            yield return StartCoroutine(FeedbackManager.Instance.WaitForCurrentStateToFinish(enerlingAnimator));
+            AnimatorStateInfo stateInfo = enerlingAnimator.GetCurrentAnimatorStateInfo(0);
+            float animationLength = stateInfo.length;
+
+            // Wait for the animation to complete
+            yield return new WaitForSeconds(animationLength);
         }
         else
         {
-            // Fallback: wait a fixed time
             yield return new WaitForSeconds(1f);
         }
     }
@@ -1033,9 +1058,6 @@ public class BattleEnerlingManager : MonoBehaviour
                         opponentImmune = aiEnerlingManager.GetAIEnerling().immuneToOrganDamage;
                     }
 
-                    // Check if we should apply organ damage
-                    bool canApplyOrganDamage = !opponentImmune || !playerHasTargetOrgans;
-
                     // Apply organ damage bonus if available
                     BattleStructs.DamageBreakdown damageBreakdown;
 
@@ -1082,7 +1104,7 @@ public class BattleEnerlingManager : MonoBehaviour
                         ));
 
                         // Reset organ cooldown
-                        organCooldownTimer = maxOrganCooldown;
+                        organCooldownTimer = 0;
                         organCooldownReady = false;
                         Debug.Log($"Player Organ Cooldown Reset: {organCooldownTimer} turns remaining");
                     }
@@ -1119,8 +1141,6 @@ public class BattleEnerlingManager : MonoBehaviour
 
     public IEnumerator ApplyHeal(int totalHeal, int organBonus)
     {
-        // Show heal feedback - handled in ApplySkillEffect
-
         int targetHealth = Mathf.Min(battleEnerling.currentLife + totalHeal, battleEnerling.baseLife);
 
         if (healthAnimationCoroutine != null)
@@ -1140,7 +1160,7 @@ public class BattleEnerlingManager : MonoBehaviour
         int remainingDamage = totalDamage;
         int damageBlockedByDefend = 0;
 
-        // Apply defend if active - DEFEND BLOCKS THE NEXT ATTACK ONLY
+        // Apply defend if active
         if (hasDefend && activeDefend > 0)
         {
             Debug.Log($"Player has defend: {activeDefend} against {totalDamage} damage");
@@ -1156,48 +1176,26 @@ public class BattleEnerlingManager : MonoBehaviour
             Debug.Log($"Defend blocked {damageBlockedByDefend} damage. Remaining defend: {activeDefend}, Damage that goes through: {damageThatGoesThrough}");
 
             // Show defend feedback for blocked damage
-            if (FeedbackManager.Instance != null)
+            if (FeedbackManager.Instance != null && damageBlockedByDefend > 0)
             {
-                if (damageBlockedByDefend > 0)
-                {
-                    FeedbackManager.Instance.ShowDefend(
-                        feedbackSpawnPoint,
-                        damageBlockedByDefend,
-                        false, // Not activation, this is block effect
-                        "Player Defend Block"
-                    );
-                }
-
-                // If defend blocked all damage, show special feedback
-                if (damageBlockedByDefend >= totalDamage)
-                {
-                    FeedbackManager.Instance.ShowDefend(
-                        feedbackSpawnPoint,
-                        totalDamage,
-                        false,
-                        "Player Defend Complete Block"
-                    );
-                }
+                FeedbackManager.Instance.ShowDefend(
+                    feedbackSpawnPoint, // Use the passed spawn point (should be playerFeedbackSpawnPoint)
+                    damageBlockedByDefend,
+                    false, // Not activation, this is block effect
+                    "Player Defend Block"
+                );
             }
 
-            // Check if defend is used up
-            if (activeDefend <= 0)
-            {
-                hasDefend = false;
-                activeDefend = 0;
-                Debug.Log("Player defend used up");
-            }
+            // Defend is used up completely after this attack
+            hasDefend = false;
+            activeDefend = 0;
+            Debug.Log("Player defend used up for this attack");
 
+            // Small delay for defend feedback
             yield return new WaitForSeconds(0.3f);
         }
-        else if (hasDefend && activeDefend <= 0)
-        {
-            // Defend was already used up
-            hasDefend = false;
-            Debug.Log("Player defend already used up");
-        }
 
-        // Calculate armor damage (if defend didn't block all damage)
+        // Calculate armor damage
         int armorDamage = 0;
         if (currentArmor > 0 && remainingDamage > 0)
         {
@@ -1306,21 +1304,16 @@ public class BattleEnerlingManager : MonoBehaviour
             );
         }
 
-        Debug.Log($"Player Defend set to {defendAmount}. Will block next enemy attack.");
+        Debug.Log($"Player Defend set to {defendAmount}. Will block next enemy attack this round.");
     }
 
     public void ClearDefend()
     {
-        // Only clear defend if it wasn't used this turn (it lasts until next enemy attack)
-        if (hasDefend && !defendUsedThisTurn)
+        if (hasDefend)
         {
-            Debug.Log($"Defend cleared (was {activeDefend})");
+            Debug.Log($"Defend cleared at end of round (was {activeDefend})");
             hasDefend = false;
             activeDefend = 0;
-        }
-        else if (defendUsedThisTurn)
-        {
-            Debug.Log($"Defend was used this turn, keeping it active for next enemy attack: {activeDefend}");
         }
     }
 
@@ -1331,8 +1324,10 @@ public class BattleEnerlingManager : MonoBehaviour
         // Reset defend tracking for next turn
         defendUsedThisTurn = false;
 
-        // Don't clear defend here - it should persist until used against enemy attack
-        // ClearDefend(); // Removed - defend should persist
+        // Clear defend at end of turn
+        ClearDefend();
+
+        Debug.Log("ProcessEndTurn: Defend cleared");
     }
 
     void UpdateOrganCooldown()
@@ -1539,6 +1534,7 @@ public class BattleEnerlingManager : MonoBehaviour
         hasDefend = false;
         defendUsedThisTurn = false;
         isAnimating = false;
+        isProcessingSkill = false;
     }
 
     // ==================== Updated: Initialize with existing enerling (for backward compatibility) ====================

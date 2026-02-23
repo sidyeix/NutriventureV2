@@ -60,10 +60,10 @@ MonoBehaviour:
           default character.
         type: 4
         targetID: 
-        requiredAmount: 20
-        currentAmount: 5
+        requiredAmount: 1
+        currentAmount: 1
         isOptional: 0
-        isCompleted: 0
+        isCompleted: 1
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
@@ -76,11 +76,11 @@ MonoBehaviour:
         type: 2
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 1
+      status: 2
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 0003
       questName: First Chest Collection!
-      description: 
+      description: Find the chest within the kingdom and claim it.
       longDescription: 
       category: 1
       questIcon: {fileID: 21300000, guid: 14667301a2ee4e0419d17fd3ef7c4bbc, type: 3}
@@ -91,21 +91,16 @@ MonoBehaviour:
         description: Collect your first chest and unlock awesome rewards!
         type: 4
         targetID: 
-        requiredAmount: 20
-        currentAmount: 5
+        requiredAmount: 1
+        currentAmount: 0
         isOptional: 0
         isCompleted: 0
       rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 20
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 25
-        type: 2
-        rewardID: 
+      - rewardName: Calcium
+        rewardIcon: {fileID: 21300000, guid: 38b806056b196a4489d40cc5ac171274, type: 3}
+        amount: 1
+        type: 8
+        rewardID: 0011
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -123,8 +118,8 @@ MonoBehaviour:
         description: Approach the enerling you unlocked in the kingdom.
         type: 2
         targetID: 
-        requiredAmount: 20
-        currentAmount: 5
+        requiredAmount: 1
+        currentAmount: 0
         isOptional: 0
         isCompleted: 0
       rewards:
@@ -132,6 +127,11 @@ MonoBehaviour:
         rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
         amount: 20
         type: 1
+        rewardID: 
+      - rewardName: Wooden
+        rewardIcon: {fileID: 21300000, guid: 003316abeac941249ad8ca97ae5e2be9, type: 3}
+        amount: 1
+        type: 11
         rewardID: 
       timelineAsset: {fileID: 0}
       status: 0
@@ -161,10 +161,15 @@ MonoBehaviour:
         type: 1
         rewardID: 
       - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
         amount: 200
         type: 2
         rewardID: 
+      - rewardName: Mang Albert
+        rewardIcon: {fileID: 21300000, guid: 030b6c267a0d00740b82634466cf7028, type: 3}
+        amount: 1
+        type: 10
+        rewardID: 54541615
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -196,6 +201,11 @@ MonoBehaviour:
         amount: 200
         type: 2
         rewardID: 
+      - rewardName: Sweetie Mich
+        rewardIcon: {fileID: 21300000, guid: 108f44eacee9087489184ec7561f14c6, type: 3}
+        amount: 1
+        type: 9
+        rewardID: 213123123
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -227,6 +237,11 @@ MonoBehaviour:
         amount: 200
         type: 2
         rewardID: 
+      - rewardName: Preserva Agent
+        rewardIcon: {fileID: 21300000, guid: c45737fb619d4934a8957bcb697ac58d, type: 3}
+        amount: 1
+        type: 10
+        rewardID: 5456341
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
@@ -258,6 +273,11 @@ MonoBehaviour:
         amount: 200
         type: 2
         rewardID: 
+      - rewardName: Allergy Warrior Amy
+        rewardIcon: {fileID: 21300000, guid: 7d6dcd7989a592842bcd9ad19fce7fdb, type: 3}
+        amount: 1
+        type: 10
+        rewardID: 5150215
       timelineAsset: {fileID: 0}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
