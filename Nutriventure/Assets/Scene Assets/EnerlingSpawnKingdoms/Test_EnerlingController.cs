@@ -46,6 +46,10 @@ public class Test_EnerlingController : MonoBehaviour
     private Test_EnerlingController followingTarget = null;
     private IngredientDatabase.IngredientInfo ingredientInfo;
     
+    // Animation parameters
+    private readonly int isWalkingHash = Animator.StringToHash("isWalking");
+    private bool wasMoving = false; // Track previous movement state
+    
     // Interaction states
     private bool isInteracting = false;
     private CinemachineVirtualCamera currentVirtualCamera;
@@ -86,6 +90,12 @@ public class Test_EnerlingController : MonoBehaviour
         // Start behavior coroutines
         StartBehaviorCoroutines();
         
+        // Ensure animator starts in idle state
+        if (animator != null)
+        {
+            animator.SetBool(isWalkingHash, false);
+        }
+        
         Debug.Log($"Enerling {gameObject.name} initialized and added to movement coordination");
     }
     
@@ -100,8 +110,22 @@ public class Test_EnerlingController : MonoBehaviour
         // Update animation parameters
         if (animator != null)
         {
+            // Check if the agent is moving
+            bool isMoving = navAgent.velocity.magnitude > 0.1f && navAgent.hasPath;
+            
+            // Only update if state has changed to avoid unnecessary animator calls
+            if (isMoving != wasMoving)
+            {
+                animator.SetBool(isWalkingHash, isMoving);
+                wasMoving = isMoving;
+                
+                // Optional: Debug to verify animation state changes
+                // Debug.Log($"{gameObject.name} isMoving: {isMoving}, velocity: {navAgent.velocity.magnitude}");
+            }
+            
+            // Keep the Speed parameter for blending if needed
             animator.SetFloat("Speed", navAgent.velocity.magnitude);
-            animator.SetBool("IsMoving", navAgent.velocity.magnitude > 0.1f);
+            animator.SetBool("IsMoving", isMoving);
         }
         
         // Handle idle behavior (only when not interacting)
@@ -220,6 +244,11 @@ public class Test_EnerlingController : MonoBehaviour
                         yield return new WaitForSeconds(1f);
                     }
                 }
+                else
+                {
+                    // If can't find valid position, wait and try again
+                    yield return new WaitForSeconds(1f);
+                }
             }
             else if (!isInteracting && followingTarget != null)
             {
@@ -337,7 +366,7 @@ public class Test_EnerlingController : MonoBehaviour
     
     private void TriggerIdleAnimation()
     {
-        if (animator != null)
+        if (animator != null && !isInteracting)
         {
             string[] idleTriggers = { "Idle1", "Idle2", "LookAround", "Stretch" };
             string randomTrigger = idleTriggers[Random.Range(0, idleTriggers.Length)];
@@ -375,6 +404,14 @@ public class Test_EnerlingController : MonoBehaviour
         navAgent.isStopped = true;
         navAgent.ResetPath();
         
+        // Update animation to idle
+        if (animator != null)
+        {
+            animator.SetBool(isWalkingHash, false);
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("Speed", 0f);
+        }
+        
         // Stop behavior coroutines
         StopBehaviorCoroutines();
         
@@ -382,13 +419,6 @@ public class Test_EnerlingController : MonoBehaviour
         if (virtualCamera != null)
         {
             virtualCamera.Priority = 20; // Set to high priority when interacting
-        }
-        
-        // Set idle animation
-        if (animator != null)
-        {
-            animator.SetBool("IsMoving", false);
-            animator.SetFloat("Speed", 0f);
         }
         
         // Start interaction animations
@@ -507,15 +537,16 @@ public class Test_EnerlingController : MonoBehaviour
                 enerling.navAgent.isStopped = true;
                 enerling.navAgent.ResetPath();
                 
-                // Stop all behavior coroutines
-                enerling.StopBehaviorCoroutines();
-                
-                // Stop animations
+                // Update animation to idle
                 if (enerling.animator != null)
                 {
+                    enerling.animator.SetBool(enerling.isWalkingHash, false);
                     enerling.animator.SetBool("IsMoving", false);
                     enerling.animator.SetFloat("Speed", 0f);
                 }
+                
+                // Stop all behavior coroutines
+                enerling.StopBehaviorCoroutines();
             }
         }
         Debug.Log($"Paused {allEnerlings.Count} enerlings");
@@ -533,6 +564,9 @@ public class Test_EnerlingController : MonoBehaviour
                 
                 // Restart behavior coroutines
                 enerling.StartBehaviorCoroutines();
+                
+                // Note: The walking animation will automatically be set when the agent starts moving
+                // as the Update method will detect the velocity change
             }
         }
         Debug.Log($"Resumed {allEnerlings.Count} enerlings");
