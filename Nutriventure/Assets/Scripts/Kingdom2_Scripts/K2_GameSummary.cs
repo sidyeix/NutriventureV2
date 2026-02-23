@@ -181,10 +181,10 @@ public class K2_GameSummary : MonoBehaviour
         
         // Debug input for testing counting animation
         #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.F8))
-        {
-            TestCountingAnimation();
-        }
+        //if (Input.GetKeyDown(KeyCode.F8))
+        //{
+        //    TestCountingAnimation();
+        //}
         #endif
     }
 

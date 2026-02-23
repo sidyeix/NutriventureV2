@@ -522,17 +522,17 @@ public class Kingdom_GameSettings : MonoBehaviour
     void Update()
     {
         // Handle Android back button
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (GameSettingsPanel != null && GameSettingsPanel.activeSelf)
-            {
-                ResumeGame(); // This now follows your desired flow
-            }
-            else
-            {
-                OpenSettingsPanel();
-            }
-        }
+        //if (Input.GetKeyDown(KeyCode.Escape))
+        //{
+        //    if (GameSettingsPanel != null && GameSettingsPanel.activeSelf)
+        //    {
+        //        ResumeGame(); // This now follows your desired flow
+        //    }
+        //    else
+        //    {
+        //        OpenSettingsPanel();
+        //    }
+        //}
     }
     
     // Clean up when disabled
