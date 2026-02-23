@@ -783,6 +783,31 @@ CapsuleCollider:
   m_Height: 3
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &9999163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9999158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2105
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &10135366
 GameObject:
   m_ObjectHideFlags: 0
@@ -24102,6 +24127,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7347514492988411408, guid: c9bd7c68cce45c842888c9c00c88ee0f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 472415773}
+    - targetCorrespondingSourceObject: {fileID: 7347514492988411408, guid: c9bd7c68cce45c842888c9c00c88ee0f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 472415774}
   m_SourcePrefab: {fileID: 100100000, guid: c9bd7c68cce45c842888c9c00c88ee0f, type: 3}
 --- !u!4 &472415769 stripped
 Transform:
@@ -24193,6 +24221,31 @@ MonoBehaviour:
   onCutsceneSkipped:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &472415774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 472415770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2102
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1001 &475714669
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -48377,6 +48430,7 @@ GameObject:
   - component: {fileID: 920455750}
   - component: {fileID: 920455751}
   - component: {fileID: 920455752}
+  - component: {fileID: 920455753}
   m_Layer: 0
   m_Name: SelectPTrig
   m_TagString: Untagged
@@ -48481,6 +48535,31 @@ MonoBehaviour:
   OnQA1Completed:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &920455753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920455749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2103
+  progressAmount: 5
+  updateOnClick: 1
+  updateOnTrigger: 0
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1001 &920612689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -96881,6 +96960,7 @@ MonoBehaviour:
   iconDatabase: {fileID: 11400000, guid: c898052628d1cd942af77c0897e18ead, type: 2}
   frameDatabase: {fileID: 11400000, guid: 1a54455482b95d242b73521dbb5e24e2, type: 2}
   achievementDatabase: {fileID: 11400000, guid: 8cdb5b4c0496eac45865ebf5ee526122, type: 2}
+  ingredientDatabase: {fileID: 0}
 --- !u!1 &1725111666
 GameObject:
   m_ObjectHideFlags: 3
@@ -112045,6 +112125,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2022236837}
   - component: {fileID: 2022236838}
+  - component: {fileID: 2022236839}
   m_Layer: 0
   m_Name: K2_QA2systemHandler
   m_TagString: Untagged
@@ -112132,6 +112213,31 @@ MonoBehaviour:
   debugMode: 1
   alwaysShowScanButton: 0
   skipValidationForTesting: 0
+--- !u!114 &2022236839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2022236836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: 
+  questID: 
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 0
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1001 &2025024212
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -133331,6 +133437,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5460525255207293479, guid: 176bb32252d2a664480eb9e18dd7c363, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9999161}
+    - targetCorrespondingSourceObject: {fileID: 5460525255207293479, guid: 176bb32252d2a664480eb9e18dd7c363, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9999163}
   m_SourcePrefab: {fileID: 100100000, guid: 176bb32252d2a664480eb9e18dd7c363, type: 3}
 --- !u!64 &2606211359287400362
 MeshCollider:

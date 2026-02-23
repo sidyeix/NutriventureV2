@@ -11875,7 +11875,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1172141540034117444, guid: a8459f60bc626264fa7d42be6da5f48d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1869674574}
   m_SourcePrefab: {fileID: 100100000, guid: a8459f60bc626264fa7d42be6da5f48d, type: 3}
 --- !u!1 &230625553
 GameObject:
@@ -14152,7 +14155,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1857767147202165191, guid: 98fb4701056e8d74a87e58a4a0e1d817, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1736443169}
   m_SourcePrefab: {fileID: 100100000, guid: 98fb4701056e8d74a87e58a4a0e1d817, type: 3}
 --- !u!1001 &295048478
 PrefabInstance:
@@ -14628,7 +14634,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3475555496568830019, guid: a030466112fe2a848baaa28aba608e70, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1877342847}
   m_SourcePrefab: {fileID: 100100000, guid: a030466112fe2a848baaa28aba608e70, type: 3}
 --- !u!1001 &298456011
 PrefabInstance:
@@ -18705,6 +18714,31 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1527262829022527681, guid: af092b3330b2f9242a73cfcc1fffe78a, type: 3}
   m_PrefabInstance: {fileID: 1896879464}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &383148503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374627771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &385646061
 GameObject:
   m_ObjectHideFlags: 0
@@ -40196,7 +40230,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3786703806620675351, guid: bf977de825fce8e44b0106722357bc4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 954622539}
   m_SourcePrefab: {fileID: 100100000, guid: bf977de825fce8e44b0106722357bc4b, type: 3}
 --- !u!1001 &704943948
 PrefabInstance:
@@ -52910,7 +52947,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6483927293332400089, guid: 1b50b3bade3e1844296e9555871da552, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1901878552}
   m_SourcePrefab: {fileID: 100100000, guid: 1b50b3bade3e1844296e9555871da552, type: 3}
 --- !u!1 &878308537
 GameObject:
@@ -56566,6 +56606,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3786703806620675351, guid: bf977de825fce8e44b0106722357bc4b, type: 3}
   m_PrefabInstance: {fileID: 704827456}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &954622539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 954622538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &955610894
 GameObject:
   m_ObjectHideFlags: 0
@@ -67448,6 +67513,31 @@ MonoBehaviour:
   onCutsceneSkipped:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1071760402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1071760396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3103
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &1072062171 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8339399946432816022, guid: f1c73e2a311b6424a8ba766dc5033871, type: 3}
@@ -68168,6 +68258,31 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1437221217734628435, guid: 5fd55ddded951f54daa92bf12616e679, type: 3}
   m_PrefabInstance: {fileID: 1303137242}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1091287782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832831537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &1092629372
 GameObject:
   m_ObjectHideFlags: 0
@@ -68744,6 +68859,31 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1847533982273201673, guid: 53b4abded80930549b612359945c1a8a, type: 3}
   m_PrefabInstance: {fileID: 2105577914}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1108549852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580088737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &1110403292 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1891955647862303510, guid: adfc59bd1a859614f9dff2250ff0ffdb, type: 3}
@@ -83831,7 +83971,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2436609410754772648, guid: 5fd55ddded951f54daa92bf12616e679, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1091287782}
   m_SourcePrefab: {fileID: 100100000, guid: 5fd55ddded951f54daa92bf12616e679, type: 3}
 --- !u!1 &1304789991
 GameObject:
@@ -120876,6 +121019,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1857767147202165191, guid: 98fb4701056e8d74a87e58a4a0e1d817, type: 3}
   m_PrefabInstance: {fileID: 294529118}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1736443169
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1736443168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1001 &1738332105
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -132052,6 +132220,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1172141540034117444, guid: a8459f60bc626264fa7d42be6da5f48d, type: 3}
   m_PrefabInstance: {fileID: 230436238}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1869674574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869674573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &1871016440
 GameObject:
   m_ObjectHideFlags: 0
@@ -132526,6 +132719,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3475555496568830019, guid: a030466112fe2a848baaa28aba608e70, type: 3}
   m_PrefabInstance: {fileID: 297534425}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1877342847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1877342846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &1877760691
 GameObject:
   m_ObjectHideFlags: 0
@@ -133741,7 +133959,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3459725172426311829, guid: af092b3330b2f9242a73cfcc1fffe78a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 383148503}
   m_SourcePrefab: {fileID: 100100000, guid: af092b3330b2f9242a73cfcc1fffe78a, type: 3}
 --- !u!1001 &1898607553
 PrefabInstance:
@@ -133962,6 +134183,31 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6483927293332400089, guid: 1b50b3bade3e1844296e9555871da552, type: 3}
   m_PrefabInstance: {fileID: 878186132}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1901878552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901878551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3105
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &1906450658
 GameObject:
   m_ObjectHideFlags: 0
@@ -140565,13 +140811,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 298036a68a456904aaa2fd527978cab2, type: 2}
     - target: {fileID: 5866666021909216657, guid: 692a950786ee72b4bb93954c3faf6eac, type: 3}
       propertyPath: m_WarningMessage
-      value: "\nBinding warning: Some generic clip(s) animate transforms that are
-        already bound by a Humanoid avatar. These transforms can only be changed
-        by Humanoid clips.\n\tTransform 'mixamorig:LeftFoot'\n\tTransform 'mixamorig:LeftHandThumb2'\n\tTransform
-        'mixamorig:LeftHandIndex1'\n\tTransform 'mixamorig:Spine1'\n\tTransform 'mixamorig:LeftToeBase'\n\tTransform
-        'mixamorig:LeftHandThumb3'\n\tTransform 'mixamorig:RightArm'\n\tTransform
-        'mixamorig:LeftLeg'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform 'mixamorig:RightHandIndex3'\n\tand
-        more ..."
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6000407479487422213, guid: 692a950786ee72b4bb93954c3faf6eac, type: 3}
       propertyPath: m_LocalPosition.x
@@ -140758,6 +140998,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 692a950786ee72b4bb93954c3faf6eac, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1071760401}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 692a950786ee72b4bb93954c3faf6eac, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1071760402}
   m_SourcePrefab: {fileID: 100100000, guid: 692a950786ee72b4bb93954c3faf6eac, type: 3}
 --- !u!1001 &1932583473
 PrefabInstance:
@@ -160336,7 +160579,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7056584299049032038, guid: 53b4abded80930549b612359945c1a8a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1108549852}
   m_SourcePrefab: {fileID: 100100000, guid: 53b4abded80930549b612359945c1a8a, type: 3}
 --- !u!1 &2106460043
 GameObject:
@@ -178459,6 +178705,7 @@ GameObject:
   - component: {fileID: 668245930}
   - component: {fileID: 1110771196411282303}
   - component: {fileID: 1110771196411282304}
+  - component: {fileID: 1110771196411282305}
   m_Layer: 0
   m_Name: CommonerMan
   m_TagString: Untagged
@@ -178533,6 +178780,31 @@ MonoBehaviour:
   onCutsceneSkipped:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1110771196411282305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1110771196411282302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3101
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &1132958042980385101
 GameObject:
   m_ObjectHideFlags: 0
@@ -179159,6 +179431,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4374681025272418368}
+  - component: {fileID: 4374681025272418369}
   m_Layer: 0
   m_Name: OxidantGem
   m_TagString: K3_OxidantGEM
@@ -185275,6 +185548,31 @@ Transform:
   - {fileID: 7641290091466063163}
   m_Father: {fileID: 1877760692}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4374681025272418369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026045008045626868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3102
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &4378107015630589433
 Transform:
   m_ObjectHideFlags: 0
@@ -234546,6 +234844,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 284226285184199496}
+  - component: {fileID: 7438734748379730756}
   m_Layer: 0
   m_Name: MicrobeGem
   m_TagString: K3_MicrobeGEM
@@ -234553,6 +234852,31 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &7438734748379730756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7438734748379730755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3102
+  progressAmount: 1
+  updateOnClick: 0
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &7482529964986845564
 Transform:
   m_ObjectHideFlags: 0

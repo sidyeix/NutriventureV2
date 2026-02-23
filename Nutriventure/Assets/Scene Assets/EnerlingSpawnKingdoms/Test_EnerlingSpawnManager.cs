@@ -247,7 +247,7 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         return shuffled.GetRange(0, Mathf.Min(count, shuffled.Count));
     }
     
-    public void SpawnEnerling(IngredientDatabase.IngredientInfo ingredient)
+        public void SpawnEnerling(IngredientDatabase.IngredientInfo ingredient)
     {
         Vector3 spawnPosition = FindValidSpawnPosition();
         
@@ -289,6 +289,14 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
             if (controller == null)
             {
                 controller = enerlingGO.AddComponent<Test_EnerlingController>();
+            }
+            
+            // DISABLE THE SFX COMPONENT ON SPAWNED ENERLINGS
+            EnerlingsSFX sfxComponent = enerlingGO.GetComponent<EnerlingsSFX>();
+            if (sfxComponent != null)
+            {
+                sfxComponent.enabled = false;
+                Debug.Log($"Disabled EnerlingsSFX on {enerlingGO.name}");
             }
             
             // Pass ingredient info to controller

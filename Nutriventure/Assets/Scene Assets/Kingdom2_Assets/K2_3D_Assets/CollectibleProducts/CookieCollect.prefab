@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9122829374937082397}
   - component: {fileID: -3302860955339937685}
+  - component: {fileID: -6923987255758445095}
   m_Layer: 0
   m_Name: CookieCollect
   m_TagString: AddedSugar
@@ -56,6 +57,31 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-6923987255758445095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 734968219280685595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2101
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &6679441762150871179
 GameObject:
   m_ObjectHideFlags: 0
