@@ -12172,7 +12172,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1425123920}
   m_HandleRect: {fileID: 1425123919}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -139108,7 +139108,7 @@ MonoBehaviour:
   spawnRadius: 20
   maxSpawnAttempts: 30
   spawnHeight: 0.5
-  kingdomFilterMode: 0
+  kingdomFilterMode: 2
   specificKingdom: 0
   spawnOnlyUnlocked: 1
   globalScaleMultiplier: 0.53
