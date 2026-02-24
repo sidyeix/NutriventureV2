@@ -88590,10 +88590,15 @@ MonoBehaviour:
   skipButton: {fileID: 1758829834}
   enableSkipButton: 1
   skipButtonDelay: 0.5
-  healthContainer: {fileID: 208762146}
-  pointsPanel: {fileID: 843247052}
-  timerPanel: {fileID: 114139418}
-  profileGameObject: {fileID: 1950911524}
+  uiElementsToEnable:
+  - {fileID: 208762146}
+  - {fileID: 843247052}
+  - {fileID: 114139418}
+  - {fileID: 1571105967}
+  uiElementsToDisable:
+  - {fileID: 1950911524}
+  - {fileID: 1404928592}
+  - {fileID: 1127828515}
   onSecondCutsceneStart:
     m_PersistentCalls:
       m_Calls: []
@@ -116194,7 +116199,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1571105968
 RectTransform:
   m_ObjectHideFlags: 0

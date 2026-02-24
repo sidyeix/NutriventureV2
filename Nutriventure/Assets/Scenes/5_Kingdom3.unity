@@ -8515,7 +8515,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1803.215, y: 131.28204}
+  m_AnchoredPosition: {x: 1803.215, y: 37}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &117174842
@@ -24539,7 +24539,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -409.84686, y: -387}
+  m_AnchoredPosition: {x: -244, y: -376}
   m_SizeDelta: {x: 300, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &352812560
@@ -222987,10 +222987,15 @@ MonoBehaviour:
   playerObject: {fileID: 1938089353}
   audioHandler: {fileID: 546614796}
   gameUICanvas: {fileID: 1580538452}
-  healthContainer: {fileID: 1066917611}
-  pointsPanel: {fileID: 308117034}
-  timerPanel: {fileID: 2099173352}
-  profileGameObject: {fileID: 657271162}
+  uiElementsToEnable:
+  - {fileID: 1066917611}
+  - {fileID: 308117034}
+  - {fileID: 2099173352}
+  - {fileID: 351884216}
+  uiElementsToDisable:
+  - {fileID: 657271162}
+  - {fileID: 1276901136}
+  - {fileID: 494335204}
   interactionRange: 3
   requirePlayerFacingNPC: 1
   facingAngleThreshold: 45
