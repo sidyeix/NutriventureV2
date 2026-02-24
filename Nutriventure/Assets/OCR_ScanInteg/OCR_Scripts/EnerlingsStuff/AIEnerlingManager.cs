@@ -214,7 +214,7 @@ public class AIEnerlingManager : MonoBehaviour
             skill3 = original.skill3,
             skill4 = original.skill4,
             enerlingDescription = original.enerlingDescription,
-            endingCutscene = original.endingCutscene // ? ADD THIS LINE!
+            endingCutscene = original.endingCutscene 
         };
     }
 
