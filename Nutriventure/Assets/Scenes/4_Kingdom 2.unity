@@ -105456,7 +105456,7 @@ MonoBehaviour:
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 18
-  m_fontSizeMax: 23
+  m_fontSizeMax: 26
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -239597,6 +239597,6 @@ SceneRoots:
   - {fileID: 466120878}
   - {fileID: 1022655660}
   - {fileID: 762941883}
-  - {fileID: 546314027}
   - {fileID: 504173075}
+  - {fileID: 546314027}
   - {fileID: 704159931}
