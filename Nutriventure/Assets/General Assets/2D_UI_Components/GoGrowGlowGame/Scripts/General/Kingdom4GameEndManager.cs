@@ -1,4 +1,4 @@
-// Kingdom4GameEndManager.cs (UPDATED)
+// Kingdom4GameEndManager.cs (COMPLETE FIXED VERSION)
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -88,7 +88,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private ThirdPersonController playerController;
     [SerializeField] private QuestManager questManager;
     [SerializeField] private Kingdom4ScoreManager scoreManager;
-    [SerializeField] private PlayerHealthManager healthManager; // Changed from HealthSystem
+    [SerializeField] private PlayerHealthManager healthManager;
 
     [Header("Timer Integration")]
     [SerializeField] private GameTimer gameTimer;
@@ -142,8 +142,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Don't record start time here - use timer instead
-            // gameStartTime = Time.time;
         }
         else
         {
@@ -723,17 +721,14 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (keyUnlockedObject == null) return;
 
         keyUnlockedObject.SetActive(false);
-
         bool shouldShowKey = false;
 
-        if (questManager != null)
+        if (questManager != null && playerWon && starsEarned >= 2)
         {
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
-                if ((quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress) &&
-                    starsEarned >= 2 &&
-                    playerWon)
+                if (quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress)
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
@@ -1001,6 +996,38 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
     }
 
+    // ==================== KEY SAVING FIX ====================
+    // This is the most important part - properly saving the key to GameData
+    private void SaveAllerthiaKeyToGameData()
+    {
+        if (GameDataManager.Instance == null)
+        {
+            Debug.LogError("GameDataManager.Instance is null! Cannot save key.");
+            return;
+        }
+
+        if (GameDataManager.Instance.CurrentGameData == null)
+        {
+            Debug.LogError("CurrentGameData is null! Cannot save key.");
+            return;
+        }
+
+        // Save the key using the GameData method
+        GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
+        
+        // Also save using the generic method for consistency
+        GameDataManager.Instance.CurrentGameData.CollectKingdomKey("allerthia");
+        
+        // Make sure to save the GameData
+        GameDataManager.Instance.SaveGameData();
+        
+        Debug.Log("✓ Allerthia key successfully saved to GameData!");
+        
+        // Verify the save
+        bool hasKey = GameDataManager.Instance.CurrentGameData.HasAllerthiaKey();
+        Debug.Log($"Verification - HasAllerthiaKey: {hasKey}");
+    }
+
     private void OnHomeClicked()
     {
         if (!isCountingAnimationComplete) 
@@ -1028,13 +1055,19 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         EnableObjectsOnHomeButton();
 
+        // Handle quest completion and key saving
         if (isFirstTimeCompletion && questManager != null)
         {
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
+                // Complete the quest tasks
                 questManager.CompleteTask(questID, $"{questID}_task_1");
                 questManager.ClaimQuest(questID);
+                
+                // SAVE THE KEY TO GAMEDATA (FIXED)
+                SaveAllerthiaKeyToGameData();
+                
                 Debug.Log($"Quest {questID} completed and claimed!");
             }
         }
@@ -1186,7 +1219,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     public void OnGameStarted()
     {
         Debug.Log("Game started notification received in GameEndManager");
-        // Reset any game start state if needed
+        gameStartTime = Time.time;
     }
 
     // ==================== GETTERS ====================
@@ -1201,38 +1234,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetRemainingHearts() => remainingHearts;
     public Transform GetResultSpawnPoint() => resultCharacterSpawnPoint;
-
-    public void CompleteKingdom4Quest(string questID)
-    {
-        if (QuestManager.Instance != null)
-        {
-            Quest quest = QuestManager.Instance.GetQuest(questID);
-            if (quest != null && (quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress))
-            {
-                foreach (var task in quest.tasks)
-                {
-                    if (!task.isCompleted)
-                        QuestManager.Instance.CompleteTask(questID, task.taskID);
-                }
-                QuestManager.Instance.ClaimQuest(questID);
-                HandleKeyUnlockedObject(true);
-            }
-        }
-    }
-
-    // Add this method to get detailed scoring breakdown
-    public string GetScoringBreakdown()
-    {
-        return $"Stars: {starsEarned}/3\n" +
-               $"Time: {FormatTime(completionTime)}\n" +
-               $"Allergens: {allergensCollected}/9\n" +
-               $"Wagon Hits: {wagonHits}\n" +
-               $"Max Combo: x{maxComboAchieved}\n" +
-               $"Hearts Remaining: {remainingHearts}/5\n" +
-               $"Final Score: {finalScore}\n" +
-               $"Coins Earned: {totalCoins}\n" +
-               $"Exp Earned: {totalExp}";
-    }
 
     // ==================== DEBUG METHODS ====================
     
@@ -1252,7 +1253,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         int stars = CalculateStarRating(true);
         CalculateRewards();
         Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
-        Debug.Log(GetScoringBreakdown());
         
         // Test 2-star scenario
         Debug.Log("\n=== TEST 2-STAR SCENARIO ===");
@@ -1266,7 +1266,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         stars = CalculateStarRating(true);
         CalculateRewards();
         Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
-        Debug.Log(GetScoringBreakdown());
         
         // Test 1-star scenario
         Debug.Log("\n=== TEST 1-STAR SCENARIO ===");
@@ -1280,7 +1279,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         stars = CalculateStarRating(true);
         CalculateRewards();
         Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
-        Debug.Log(GetScoringBreakdown());
     }
 
     [ContextMenu("Test Show Game Summary")]
@@ -1298,6 +1296,21 @@ public class Kingdom4GameEndManager : MonoBehaviour
         completedAllPhases = true;
         
         ShowGameEndScreen(true);
+    }
+
+    [ContextMenu("Test Key Saving")]
+    public void TestKeySaving()
+    {
+        Debug.Log("=== TESTING KEY SAVING ===");
+        isFirstTimeCompletion = true;
+        SaveAllerthiaKeyToGameData();
+        
+        // Verify the save
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            bool hasKey = GameDataManager.Instance.CurrentGameData.HasAllerthiaKey();
+            Debug.Log($"After save - HasAllerthiaKey: {hasKey}");
+        }
     }
 
     [ContextMenu("Check UI References")]

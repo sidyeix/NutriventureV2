@@ -43,7 +43,7 @@ MonoBehaviour:
         type: 5
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 0
+      status: 1
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 0002
       questName: Switch me up!
@@ -76,7 +76,7 @@ MonoBehaviour:
         type: 2
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 2
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 0003
       questName: First Chest Collection!
