@@ -16,7 +16,11 @@ public class GameDataManager : MonoBehaviour
     public ProfileIconDatabase iconDatabase;
     public FrameDatabase frameDatabase;
     public AchievementDatabase achievementDatabase;
-    public IngredientDatabase ingredientDatabase; // Added reference
+    public IngredientDatabase ingredientDatabase;
+
+    [Header("Debug Options")]
+    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private bool autoSaveOnQuit = true;
 
     public GameData CurrentGameData { get; private set; }
 
@@ -49,38 +53,39 @@ public class GameDataManager : MonoBehaviour
         {
             string jsonData = JsonUtility.ToJson(CurrentGameData, true);
             File.WriteAllText(saveFilePath, jsonData);
-            Debug.Log("=== GAME DATA SAVED ===");
-            Debug.Log($"Selected Character: {CurrentGameData.selectedCharacterID}");
-
-            // Print skin data
-            if (CurrentGameData.skinData != null)
+            
+            if (enableDebugLogs)
             {
-                Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
-            }
+                Debug.Log("=== GAME DATA SAVED ===");
+                Debug.Log($"Selected Character: {CurrentGameData.selectedCharacterID}");
 
-            // Print power-up data
-            if (CurrentGameData.activePowerUps != null && CurrentGameData.activePowerUps.Count > 0)
-            {
-                Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
-                foreach (var powerUp in CurrentGameData.activePowerUps)
+                if (CurrentGameData.skinData != null)
                 {
-                    Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Last Trigger: {powerUp.lastTriggerTime}, Cooldown: {powerUp.cooldownMinutes}min");
+                    Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
                 }
-            }
 
-            // Print passive power-ups (Heart & Time)
-            if (CurrentGameData.passivePowerUps != null && CurrentGameData.passivePowerUps.Count > 0)
-            {
-                Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
-                foreach (var powerUp in CurrentGameData.passivePowerUps)
+                if (CurrentGameData.activePowerUps != null && CurrentGameData.activePowerUps.Count > 0)
                 {
-                    Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Amount: {powerUp.amount}");
+                    Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
+                    foreach (var powerUp in CurrentGameData.activePowerUps)
+                    {
+                        Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Last Trigger: {powerUp.lastTriggerTime}, Cooldown: {powerUp.cooldownMinutes}min");
+                    }
                 }
-                Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
-                Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
-            }
 
-            Debug.Log("=== END SAVED DATA ===");
+                if (CurrentGameData.passivePowerUps != null && CurrentGameData.passivePowerUps.Count > 0)
+                {
+                    Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
+                    foreach (var powerUp in CurrentGameData.passivePowerUps)
+                    {
+                        Debug.Log($"Pet: {powerUp.petName}, Type: {powerUp.powerUpType}, Amount: {powerUp.amount}");
+                    }
+                    Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
+                    Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
+                }
+
+                Debug.Log("=== END SAVED DATA ===");
+            }
         }
         catch (Exception e)
         {
@@ -97,34 +102,31 @@ public class GameDataManager : MonoBehaviour
                 string jsonData = File.ReadAllText(saveFilePath);
                 CurrentGameData = JsonUtility.FromJson<GameData>(jsonData);
 
-                Debug.Log("=== GAME DATA LOADED ===");
-                Debug.Log($"Selected Character ID: {CurrentGameData.selectedCharacterID}");
+                if (enableDebugLogs)
+                {
+                    Debug.Log("=== GAME DATA LOADED ===");
+                    Debug.Log($"Selected Character ID: {CurrentGameData.selectedCharacterID}");
+                }
 
-                // Check if skin data was loaded
                 if (CurrentGameData.skinData == null)
-                {
                     CurrentGameData.skinData = new List<GameData.SkinSaveData>();
-                }
 
-                // Check if power-up data was loaded
                 if (CurrentGameData.activePowerUps == null)
-                {
                     CurrentGameData.activePowerUps = new List<GameData.PowerUpSaveData>();
-                }
 
-                // Check if passive power-ups were loaded
                 if (CurrentGameData.passivePowerUps == null)
-                {
                     CurrentGameData.passivePowerUps = new List<GameData.PassivePowerUpData>();
-                }
 
-                Debug.Log($"Equipped Pet Slot 1: {CurrentGameData.equippedPetSlot1}");
-                Debug.Log($"Equipped Pet Slot 2: {CurrentGameData.equippedPetSlot2}");
-                Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
-                Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
-                Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
-                Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
-                Debug.Log($"=== END LOAD ===");
+                if (enableDebugLogs)
+                {
+                    Debug.Log($"Equipped Pet Slot 1: {CurrentGameData.equippedPetSlot1}");
+                    Debug.Log($"Equipped Pet Slot 2: {CurrentGameData.equippedPetSlot2}");
+                    Debug.Log($"Active Power-ups: {CurrentGameData.activePowerUps.Count}");
+                    Debug.Log($"Passive Power-ups: {CurrentGameData.passivePowerUps.Count}");
+                    Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
+                    Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
+                    Debug.Log($"=== END LOAD ===");
+                }
             }
             catch (Exception e)
             {
@@ -137,10 +139,7 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
-        // Initialize default icons and frames from databases
         InitializeDefaultIconsAndFrames();
-
-        // Initialize all systems
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
         UpdateEnergyBasedOnTime();
@@ -162,91 +161,96 @@ public class GameDataManager : MonoBehaviour
 
         if (hasInitializedDefaults && CurrentGameData.unlockedIconIds?.Count > 0 && CurrentGameData.unlockedFrameIds?.Count > 0)
         {
-            Debug.Log("Default icons and frames already initialized, skipping...");
+            if (enableDebugLogs)
+                Debug.Log("Default icons and frames already initialized, skipping...");
             return;
         }
 
-        Debug.Log("=== INITIALIZING DEFAULT ICONS AND FRAMES FROM DATABASES ===");
+        if (enableDebugLogs)
+            Debug.Log("=== INITIALIZING DEFAULT ICONS AND FRAMES FROM DATABASES ===");
 
         bool changesMade = false;
 
-        // Initialize Icons
         if (iconDatabase != null)
         {
-            Debug.Log($"Icon database found with {iconDatabase.icons.Count} icons");
+            if (enableDebugLogs)
+                Debug.Log($"Icon database found with {iconDatabase.icons.Count} icons");
 
             if (CurrentGameData.unlockedIconIds == null)
-            {
                 CurrentGameData.unlockedIconIds = new List<string>();
-            }
 
             foreach (var icon in iconDatabase.icons)
             {
                 if (icon.unlockedByDefault && !CurrentGameData.unlockedIconIds.Contains(icon.id))
                 {
                     CurrentGameData.unlockedIconIds.Add(icon.id);
-                    Debug.Log($"Added default icon: {icon.id} - {icon.iconName}");
+                    if (enableDebugLogs)
+                        Debug.Log($"Added default icon: {icon.id} - {icon.iconName}");
                     changesMade = true;
                 }
             }
 
-            Debug.Log($"Unlocked icons after initialization: {string.Join(", ", CurrentGameData.unlockedIconIds)}");
+            if (enableDebugLogs)
+                Debug.Log($"Unlocked icons after initialization: {string.Join(", ", CurrentGameData.unlockedIconIds)}");
         }
         else
         {
             Debug.LogError("iconDatabase is not assigned! Default icons will not be initialized.");
         }
 
-        // Initialize Frames
         if (frameDatabase != null)
         {
-            Debug.Log($"Frame database found with {frameDatabase.frames.Count} frames");
+            if (enableDebugLogs)
+                Debug.Log($"Frame database found with {frameDatabase.frames.Count} frames");
 
             if (CurrentGameData.unlockedFrameIds == null)
-            {
                 CurrentGameData.unlockedFrameIds = new List<string>();
-            }
 
             foreach (var frame in frameDatabase.frames)
             {
                 if (frame.unlockedByDefault && !CurrentGameData.unlockedFrameIds.Contains(frame.id))
                 {
                     CurrentGameData.unlockedFrameIds.Add(frame.id);
-                    Debug.Log($"Added default frame: {frame.id} - {frame.frameName}");
+                    if (enableDebugLogs)
+                        Debug.Log($"Added default frame: {frame.id} - {frame.frameName}");
                     changesMade = true;
                 }
             }
 
-            Debug.Log($"Unlocked frames after initialization: {string.Join(", ", CurrentGameData.unlockedFrameIds)}");
+            if (enableDebugLogs)
+                Debug.Log($"Unlocked frames after initialization: {string.Join(", ", CurrentGameData.unlockedFrameIds)}");
         }
         else
         {
             Debug.LogError("frameDatabase is not assigned! Default frames will not be initialized.");
         }
 
-        // Set default equipped items
         if (string.IsNullOrEmpty(CurrentGameData.equippedIconId) && CurrentGameData.unlockedIconIds?.Count > 0)
         {
             CurrentGameData.equippedIconId = CurrentGameData.unlockedIconIds[0];
-            Debug.Log($"Set default equipped icon to: {CurrentGameData.equippedIconId}");
+            if (enableDebugLogs)
+                Debug.Log($"Set default equipped icon to: {CurrentGameData.equippedIconId}");
             changesMade = true;
         }
 
         if (string.IsNullOrEmpty(CurrentGameData.equippedFrameId) && CurrentGameData.unlockedFrameIds?.Count > 0)
         {
             CurrentGameData.equippedFrameId = CurrentGameData.unlockedFrameIds[0];
-            Debug.Log($"Set default equipped frame to: {CurrentGameData.equippedFrameId}");
+            if (enableDebugLogs)
+                Debug.Log($"Set default equipped frame to: {CurrentGameData.equippedFrameId}");
             changesMade = true;
         }
 
         if (changesMade)
         {
             SaveGameData();
-            Debug.Log("Saved default icons and frames to GameData");
+            if (enableDebugLogs)
+                Debug.Log("Saved default icons and frames to GameData");
         }
 
         hasInitializedDefaults = true;
-        Debug.Log("=== DEFAULT ICONS AND FRAMES INITIALIZATION COMPLETE ===");
+        if (enableDebugLogs)
+            Debug.Log("=== DEFAULT ICONS AND FRAMES INITIALIZATION COMPLETE ===");
     }
 
     private void InitializeDefaultCharacters()
@@ -259,7 +263,8 @@ public class GameDataManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
+        if (enableDebugLogs)
+            Debug.Log($"Before adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
 
         foreach (var character in characterDatabase.characters)
         {
@@ -268,12 +273,14 @@ public class GameDataManager : MonoBehaviour
                 if (!CurrentGameData.unlockedCharacterIDs.Contains(character.characterID))
                 {
                     CurrentGameData.unlockedCharacterIDs.Add(character.characterID);
-                    Debug.Log($"Added default character {character.characterID} ({character.characterName}) to unlocked list");
+                    if (enableDebugLogs)
+                        Debug.Log($"Added default character {character.characterID} ({character.characterName}) to unlocked list");
                 }
             }
         }
 
-        Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
+        if (enableDebugLogs)
+            Debug.Log($"After adding defaults - Selected Character: {CurrentGameData.selectedCharacterID}");
 
         SaveGameData();
     }
@@ -290,7 +297,8 @@ public class GameDataManager : MonoBehaviour
 
         CurrentGameData.InitializeAllCharactersSkins(characterDatabase);
         SaveGameData();
-        Debug.Log("Skin system initialized with List approach!");
+        if (enableDebugLogs)
+            Debug.Log("Skin system initialized with List approach!");
     }
 
     private void UpdateEnergyBasedOnTime()
@@ -319,7 +327,8 @@ public class GameDataManager : MonoBehaviour
         {
             CurrentGameData.isChestAvailable = true;
             SaveGameData();
-            Debug.Log("Chest is now available!");
+            if (enableDebugLogs)
+                Debug.Log("Chest is now available!");
         }
     }
 
@@ -352,7 +361,8 @@ public class GameDataManager : MonoBehaviour
         CurrentGameData.lastChestClaimTime = DateTime.Now;
 
         SaveGameData();
-        Debug.Log($"Chest claimed! Received 50 coins. Total coins: {CurrentGameData.nutriCoins}");
+        if (enableDebugLogs)
+            Debug.Log($"Chest claimed! Received 50 coins. Total coins: {CurrentGameData.nutriCoins}");
     }
 
     #region Profile Icon Methods
@@ -365,7 +375,8 @@ public class GameDataManager : MonoBehaviour
         {
             CurrentGameData.unlockedIconIds.Add(iconId);
             SaveGameData();
-            Debug.Log($"Icon {iconId} unlocked!");
+            if (enableDebugLogs)
+                Debug.Log($"Icon {iconId} unlocked!");
         }
     }
 
@@ -402,7 +413,8 @@ public class GameDataManager : MonoBehaviour
         {
             CurrentGameData.equippedIconId = iconId;
             SaveGameData();
-            Debug.Log($"Icon {iconId} equipped!");
+            if (enableDebugLogs)
+                Debug.Log($"Icon {iconId} equipped!");
         }
     }
 
@@ -418,7 +430,8 @@ public class GameDataManager : MonoBehaviour
         {
             CurrentGameData.unlockedFrameIds.Add(frameId);
             SaveGameData();
-            Debug.Log($"Frame {frameId} unlocked!");
+            if (enableDebugLogs)
+                Debug.Log($"Frame {frameId} unlocked!");
         }
     }
 
@@ -442,7 +455,8 @@ public class GameDataManager : MonoBehaviour
                     inUnlockedList = CurrentGameData.unlockedFrameIds.Contains(frame.frameName);
                 }
 
-                Debug.Log($"Frame {frameId} - Default unlock: {isDefault}, In unlocked list: {inUnlockedList}");
+                if (enableDebugLogs)
+                    Debug.Log($"Frame {frameId} - Default unlock: {isDefault}, In unlocked list: {inUnlockedList}");
             }
         }
 
@@ -457,7 +471,8 @@ public class GameDataManager : MonoBehaviour
         {
             CurrentGameData.equippedFrameId = frameId;
             SaveGameData();
-            Debug.Log($"Frame {frameId} equipped!");
+            if (enableDebugLogs)
+                Debug.Log($"Frame {frameId} equipped!");
         }
     }
 
@@ -471,7 +486,8 @@ public class GameDataManager : MonoBehaviour
 
         CurrentGameData.CompleteAchievement(achievementId);
         SaveGameData();
-        Debug.Log($"Achievement {achievementId} completed!");
+        if (enableDebugLogs)
+            Debug.Log($"Achievement {achievementId} completed!");
     }
 
     public void ClaimAchievement(string achievementId, int prizeGems)
@@ -484,7 +500,8 @@ public class GameDataManager : MonoBehaviour
             CurrentGameData.ClaimAchievement(achievementId);
 
             SaveGameData();
-            Debug.Log($"Achievement {achievementId} claimed! +{prizeGems} gems");
+            if (enableDebugLogs)
+                Debug.Log($"Achievement {achievementId} claimed! +{prizeGems} gems");
         }
     }
 
@@ -520,28 +537,29 @@ public class GameDataManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"===== UNLOCK SKIN CALLED =====");
-        Debug.Log($"Character ID: {characterID}, Skin ID: {skinID}");
+        if (enableDebugLogs)
+        {
+            Debug.Log($"===== UNLOCK SKIN CALLED =====");
+            Debug.Log($"Character ID: {characterID}, Skin ID: {skinID}");
+        }
 
-        // Log before unlock
         bool beforeUnlock = CurrentGameData.IsSkinUnlocked(characterID, skinID);
-        Debug.Log($"Before unlock - Is skin unlocked? {beforeUnlock}");
+        if (enableDebugLogs)
+            Debug.Log($"Before unlock - Is skin unlocked? {beforeUnlock}");
 
-        // Unlock the skin
         CurrentGameData.UnlockSkinForCharacter(characterID, skinID);
-
-        // Save immediately
         SaveGameData();
 
-        // Verify after unlock
         bool afterUnlock = CurrentGameData.IsSkinUnlocked(characterID, skinID);
-        Debug.Log($"After unlock - Is skin unlocked? {afterUnlock}");
+        if (enableDebugLogs)
+        {
+            Debug.Log($"After unlock - Is skin unlocked? {afterUnlock}");
 
-        // Print all unlocked skins for this character
-        var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
-        Debug.Log($"All unlocked skins for character {characterID}: {string.Join(", ", unlockedSkins)}");
+            var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
+            Debug.Log($"All unlocked skins for character {characterID}: {string.Join(", ", unlockedSkins)}");
 
-        Debug.Log($"===== UNLOCK SKIN COMPLETE =====");
+            Debug.Log($"===== UNLOCK SKIN COMPLETE =====");
+        }
     }
 
     public bool IsSkinUnlocked(int characterID, int skinID)
@@ -552,8 +570,7 @@ public class GameDataManager : MonoBehaviour
             return false;
         }
 
-        bool isUnlocked = CurrentGameData.IsSkinUnlocked(characterID, skinID);
-        return isUnlocked;
+        return CurrentGameData.IsSkinUnlocked(characterID, skinID);
     }
 
     public List<int> GetUnlockedSkins(int characterID)
@@ -564,8 +581,7 @@ public class GameDataManager : MonoBehaviour
             return new List<int>();
         }
 
-        var unlockedSkins = CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
-        return unlockedSkins;
+        return CurrentGameData.GetUnlockedSkinsForCharacter(characterID);
     }
 
     public void SetSelectedSkin(int characterID, int skinID)
@@ -576,7 +592,9 @@ public class GameDataManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Setting selected skin {skinID} for character {characterID}");
+        if (enableDebugLogs)
+            Debug.Log($"Setting selected skin {skinID} for character {characterID}");
+        
         CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
         SaveGameData();
     }
@@ -600,7 +618,6 @@ public class GameDataManager : MonoBehaviour
     {
         if (CurrentGameData == null) return;
 
-        // Get the previous pet in this slot
         string previousPet = "";
         if (slotIndex == 1)
         {
@@ -613,7 +630,6 @@ public class GameDataManager : MonoBehaviour
             CurrentGameData.equippedPetSlot2 = petName;
         }
 
-        // Remove power-ups for previous pet if it's no longer equipped in any slot
         if (!string.IsNullOrEmpty(previousPet) && previousPet != petName)
         {
             bool stillEquipped = (slotIndex == 1 && CurrentGameData.equippedPetSlot2 == previousPet) ||
@@ -623,12 +639,14 @@ public class GameDataManager : MonoBehaviour
             {
                 CurrentGameData.RemovePowerUpsForPet(previousPet);
                 CurrentGameData.RemovePassivePowerUpsForPet(previousPet);
-                Debug.Log($"Pet {previousPet} no longer equipped - power-ups removed");
+                if (enableDebugLogs)
+                    Debug.Log($"Pet {previousPet} no longer equipped - power-ups removed");
             }
         }
 
         SaveGameData();
-        Debug.Log($"Equipped {petName} to slot {slotIndex}");
+        if (enableDebugLogs)
+            Debug.Log($"Equipped {petName} to slot {slotIndex}");
     }
 
     public void RemovePetFromSlot(int slotIndex)
@@ -647,7 +665,6 @@ public class GameDataManager : MonoBehaviour
             CurrentGameData.equippedPetSlot2 = "";
         }
 
-        // If pet is no longer equipped in any slot, remove its power-ups
         if (!string.IsNullOrEmpty(removedPet))
         {
             bool stillEquipped = (slotIndex == 1 && CurrentGameData.equippedPetSlot2 == removedPet) ||
@@ -657,12 +674,14 @@ public class GameDataManager : MonoBehaviour
             {
                 CurrentGameData.RemovePowerUpsForPet(removedPet);
                 CurrentGameData.RemovePassivePowerUpsForPet(removedPet);
-                Debug.Log($"Pet {removedPet} removed - power-ups removed");
+                if (enableDebugLogs)
+                    Debug.Log($"Pet {removedPet} removed - power-ups removed");
             }
         }
 
         SaveGameData();
-        Debug.Log($"Removed pet from slot {slotIndex}");
+        if (enableDebugLogs)
+            Debug.Log($"Removed pet from slot {slotIndex}");
     }
 
     public string GetEquippedPet(int slotIndex)
@@ -726,7 +745,6 @@ public class GameDataManager : MonoBehaviour
         return CurrentGameData.GetAllActivePowerUps();
     }
 
-    // NEW: Register passive power-ups (Heart & Time)
     public void RegisterPassivePowerUp(string petName, IngredientDatabase.PowerUpInfo.PowerUpType type, int amount)
     {
         if (CurrentGameData == null) return;
@@ -735,7 +753,6 @@ public class GameDataManager : MonoBehaviour
         SaveGameData();
     }
 
-    // NEW: Get total heart bonus from all equipped pets
     public int GetTotalHeartBonus()
     {
         if (CurrentGameData == null) return 0;
@@ -743,7 +760,6 @@ public class GameDataManager : MonoBehaviour
         return CurrentGameData.GetTotalHeartBonus();
     }
 
-    // NEW: Get total time reduction in seconds
     public int GetTotalTimeReductionSeconds()
     {
         if (CurrentGameData == null) return 0;
@@ -751,13 +767,106 @@ public class GameDataManager : MonoBehaviour
         return CurrentGameData.GetTotalTimeReductionSeconds();
     }
 
-    // NEW: Get total time reduction as formatted string
     public string GetTotalTimeReductionFormatted()
     {
         if (CurrentGameData == null) return "0s";
 
         return CurrentGameData.GetTotalTimeReductionFormatted();
     }
+
+    #endregion
+
+    #region Kingdom Key Methods
+
+    public bool HasSugariaKey() => CurrentGameData?.HasSugariaKey() ?? false;
+    public bool HasPreserviaKey() => CurrentGameData?.HasPreserviaKey() ?? false;
+    public bool HasNutriKingdomKey() => CurrentGameData?.HasNutriKingdomKey() ?? false;
+    public bool HasAllerthiaKey() => CurrentGameData?.HasAllerthiaKey() ?? false;
+    public bool HasOCRScannerKey() => CurrentGameData?.HasOCRScannerKey() ?? false;
+
+    public void CollectSugariaKey() 
+    { 
+        CurrentGameData?.CollectSugariaKey(); 
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log("Sugaria Key collected!");
+    }
+    
+    public void CollectPreserviaKey() 
+    { 
+        CurrentGameData?.CollectPreserviaKey(); 
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log("Preservia Key collected!");
+    }
+    
+    public void CollectNutriKingdomKey() 
+    { 
+        CurrentGameData?.CollectNutriKingdomKey(); 
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log("Nutri Kingdom Key collected!");
+    }
+    
+    public void CollectAllerthiaKey() 
+    { 
+        CurrentGameData?.CollectAllerthiaKey(); 
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log("Allerthia Key collected!");
+    }
+
+    public void CollectOCRScannerKey() 
+    { 
+        CurrentGameData?.CollectOCRScannerKey(); 
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log("OCR Scanner Key collected!");
+    }
+
+    public void ResetOCRScannerKey()
+    {
+        if (CurrentGameData != null)
+        {
+            CurrentGameData.ResetOCRScannerKey();
+            SaveGameData();
+            if (enableDebugLogs) Debug.Log("OCR Scanner Key reset to default (false)");
+        }
+    }
+
+    public bool HasKingdomKey(string kingdomName)
+    {
+        return CurrentGameData?.HasKingdomKey(kingdomName) ?? false;
+    }
+
+    public void CollectKingdomKey(string kingdomName)
+    {
+        CurrentGameData?.CollectKingdomKey(kingdomName);
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log($"{kingdomName} Key collected!");
+    }
+
+    #endregion
+
+    #region Resource Methods
+
+    public void AddNutriGems(int amount)
+    {
+        if (CurrentGameData == null) return;
+        CurrentGameData.AddNutriGems(amount);
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log($"Added {amount} gems. Total: {CurrentGameData.nutriGems}");
+    }
+
+    public bool SpendNutriGems(int amount)
+    {
+        if (CurrentGameData == null) return false;
+        
+        bool success = CurrentGameData.SpendNutriGems(amount);
+        if (success)
+        {
+            SaveGameData();
+            if (enableDebugLogs) Debug.Log($"Spent {amount} gems. Remaining: {CurrentGameData.nutriGems}");
+        }
+        return success;
+    }
+
+    public int GetNutriGems() => CurrentGameData?.GetNutriGems() ?? 0;
 
     #endregion
 
@@ -867,9 +976,37 @@ public class GameDataManager : MonoBehaviour
         Debug.LogWarning("=== RESOURCES RESET COMPLETE ===");
     }
 
+    public void ResetKingdomKeys()
+    {
+        if (CurrentGameData == null) return;
+
+        Debug.LogWarning("=== RESETTING KINGDOM KEYS ===");
+
+        CurrentGameData.ResetSugariaKey();
+        CurrentGameData.ResetPreserviaKey();
+        CurrentGameData.ResetNutriKingdomKey();
+        CurrentGameData.ResetAllerthiaKey();
+        CurrentGameData.ResetOCRScannerKey();
+
+        SaveGameData();
+        Debug.LogWarning("=== KINGDOM KEYS RESET COMPLETE ===");
+    }
+
     #endregion
 
-    #region Debug Methods
+    #region Debug Options
+
+    public void SetDebugLogsEnabled(bool enabled)
+    {
+        enableDebugLogs = enabled;
+        Debug.Log($"Debug logs {(enabled ? "enabled" : "disabled")}");
+    }
+
+    public void SetAutoSaveOnQuit(bool enabled)
+    {
+        autoSaveOnQuit = enabled;
+        Debug.Log($"Auto save on quit {(enabled ? "enabled" : "disabled")}");
+    }
 
     [ContextMenu("Debug/Print Current Game Data")]
     private void DebugPrintGameData()
@@ -892,8 +1029,9 @@ public class GameDataManager : MonoBehaviour
         Debug.Log($"Passive Power-ups (Heart/Time): {CurrentGameData.passivePowerUps?.Count ?? 0}");
         Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
         Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
+        
+        Debug.Log($"Kingdom Keys - Sugaria: {CurrentGameData.HasSugariaKey()}, Preservia: {CurrentGameData.HasPreserviaKey()}, Nutri: {CurrentGameData.HasNutriKingdomKey()}, Allerthia: {CurrentGameData.HasAllerthiaKey()}, OCR Scanner: {CurrentGameData.HasOCRScannerKey()}");
 
-        // Print skin data
         if (CurrentGameData.skinData != null)
         {
             Debug.Log($"SkinData has {CurrentGameData.skinData.Count} entries");
@@ -906,6 +1044,247 @@ public class GameDataManager : MonoBehaviour
         Debug.Log("=== END GAME DATA ===");
     }
 
+    [ContextMenu("Debug/Add 1000 Gems")]
+    private void DebugAddGems()
+    {
+        AddNutriGems(1000);
+        Debug.Log("Added 1000 gems for debugging");
+    }
+
+    [ContextMenu("Debug/Add 1000 Coins")]
+    private void DebugAddCoins()
+    {
+        if (CurrentGameData != null)
+        {
+            CurrentGameData.nutriCoins += 1000;
+            SaveGameData();
+            Debug.Log("Added 1000 coins for debugging");
+        }
+    }
+
+    [ContextMenu("Debug/Reset Energy to Max")]
+    private void DebugResetEnergy()
+    {
+        if (CurrentGameData != null)
+        {
+            CurrentGameData.currentEnergy = 10;
+            CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
+            SaveGameData();
+            Debug.Log("Energy reset to maximum (10)");
+        }
+    }
+
+    [ContextMenu("Debug/Make Chest Available")]
+    private void DebugMakeChestAvailable()
+    {
+        if (CurrentGameData != null)
+        {
+            CurrentGameData.isChestAvailable = true;
+            SaveGameData();
+            Debug.Log("Chest is now available");
+        }
+    }
+
+    [ContextMenu("Debug/Collect All Kingdom Keys")]
+    private void DebugCollectAllKeys()
+    {
+        CollectSugariaKey();
+        CollectPreserviaKey();
+        CollectNutriKingdomKey();
+        CollectAllerthiaKey();
+        CollectOCRScannerKey();
+        Debug.Log("All Kingdom Keys collected!");
+    }
+
+    [ContextMenu("Debug/Reset OCR Scanner Key")]
+    private void DebugResetOCRScannerKey()
+    {
+        ResetOCRScannerKey();
+        Debug.Log("OCR Scanner Key reset to default (false)");
+    }
+
+    [ContextMenu("Debug/Toggle OCR Scanner Key")]
+    private void DebugToggleOCRScannerKey()
+    {
+        if (CurrentGameData != null)
+        {
+            bool currentState = CurrentGameData.HasOCRScannerKey();
+            if (currentState)
+            {
+                ResetOCRScannerKey();
+                Debug.Log("OCR Scanner Key set to false");
+            }
+            else
+            {
+                CollectOCRScannerKey();
+                Debug.Log("OCR Scanner Key set to true");
+            }
+        }
+    }
+
+    // ========== COMPREHENSIVE RESET METHODS ==========
+
+    [ContextMenu("Debug/Reset EVERYTHING to Default")]
+    private void DebugResetEverything()
+    {
+        Debug.LogWarning("========== RESETTING EVERYTHING TO DEFAULT ==========");
+        
+        ResetGameData();
+        
+        Debug.LogWarning("========== EVERYTHING RESET COMPLETE ==========");
+    }
+
+    [ContextMenu("Debug/Reset ALL Systems Individually")]
+    private void DebugResetAllSystems()
+    {
+        Debug.LogWarning("========== RESETTING ALL SYSTEMS INDIVIDUALLY ==========");
+        
+        ResetIconsAndFrames();
+        ResetAchievements();
+        ResetCharactersAndSkins();
+        ResetEnerlings();
+        ResetResources();
+        ResetKingdomKeys();
+        
+        Debug.LogWarning("========== ALL SYSTEMS RESET COMPLETE ==========");
+    }
+
+    [ContextMenu("Debug/Reset to New Game State")]
+    private void DebugResetToNewGame()
+    {
+        Debug.LogWarning("========== RESETTING TO NEW GAME STATE ==========");
+        
+        if (File.Exists(saveFilePath))
+        {
+            File.Delete(saveFilePath);
+            Debug.Log($"Deleted save file: {saveFilePath}");
+        }
+        
+        CurrentGameData = new GameData();
+        hasInitializedDefaults = false;
+        
+        InitializeDefaultIconsAndFrames();
+        InitializeDefaultCharacters();
+        InitializeDefaultSkins();
+        
+        if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.SetMusicVolume(CurrentGameData.musicVolume);
+            AudioHandler.Instance.SetSoundVolume(CurrentGameData.soundVolume);
+        }
+        
+        SaveGameData();
+        
+        Debug.LogWarning("========== NEW GAME STATE CREATED ==========");
+        Debug.Log("Player has: 0 coins, 0 gems, 10 energy, Character 0 unlocked, Default icons/frames");
+    }
+
+    [ContextMenu("Debug/Reset Progress Only (Keep Resources)")]
+    private void DebugResetProgressOnly()
+    {
+        Debug.LogWarning("========== RESETTING PROGRESS ONLY ==========");
+        
+        int currentCoins = CurrentGameData?.nutriCoins ?? 0;
+        int currentGems = CurrentGameData?.nutriGems ?? 0;
+        int currentEnergy = CurrentGameData?.currentEnergy ?? 10;
+        
+        ResetIconsAndFrames();
+        ResetAchievements();
+        ResetCharactersAndSkins();
+        ResetEnerlings();
+        ResetKingdomKeys();
+        
+        if (CurrentGameData != null)
+        {
+            CurrentGameData.nutriCoins = currentCoins;
+            CurrentGameData.nutriGems = currentGems;
+            CurrentGameData.currentEnergy = currentEnergy;
+            CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
+        }
+        
+        SaveGameData();
+        
+        Debug.LogWarning("========== PROGRESS RESET COMPLETE ==========");
+        Debug.Log($"Resources preserved: {currentCoins} coins, {currentGems} gems, {currentEnergy} energy");
+    }
+
+    [ContextMenu("Debug/Reset Collections Only")]
+    private void DebugResetCollectionsOnly()
+    {
+        Debug.LogWarning("========== RESETTING COLLECTIONS ONLY ==========");
+        
+        if (CurrentGameData == null) return;
+        
+        CurrentGameData.unlockedIconIds = new List<string>();
+        CurrentGameData.unlockedFrameIds = new List<string>();
+        CurrentGameData.equippedIconId = "";
+        CurrentGameData.equippedFrameId = "";
+        
+        CurrentGameData.completedAchievementIds = new List<string>();
+        CurrentGameData.claimedAchievementIds = new List<string>();
+        
+        CurrentGameData.unlockedCharacterIDs = new List<int>() { 0 };
+        CurrentGameData.selectedCharacterID = 0;
+        CurrentGameData.skinData = new List<GameData.SkinSaveData>();
+        
+        CurrentGameData.unlockedEnerlings = new List<string>();
+        CurrentGameData.equippedPetSlot1 = "";
+        CurrentGameData.equippedPetSlot2 = "";
+        CurrentGameData.activePowerUps = new List<GameData.PowerUpSaveData>();
+        CurrentGameData.passivePowerUps = new List<GameData.PassivePowerUpData>();
+        
+        CurrentGameData.ResetSugariaKey();
+        CurrentGameData.ResetPreserviaKey();
+        CurrentGameData.ResetAllerthiaKey();
+        CurrentGameData.ResetOCRScannerKey();
+        
+        hasInitializedDefaults = false;
+        InitializeDefaultIconsAndFrames();
+        InitializeDefaultCharacters();
+        InitializeDefaultSkins();
+        
+        SaveGameData();
+        
+        Debug.LogWarning("========== COLLECTIONS RESET COMPLETE ==========");
+        Debug.Log("All collection items reset to defaults");
+    }
+
+    [ContextMenu("Debug/Print Reset Options Help")]
+    private void DebugPrintResetHelp()
+    {
+        Debug.Log("=== RESET OPTIONS AVAILABLE ===");
+        Debug.Log("1. Debug/Reset EVERYTHING to Default - Complete wipe and restart");
+        Debug.Log("2. Debug/Reset ALL Systems Individually - Calls each system's reset method");
+        Debug.Log("3. Debug/Reset to New Game State - Creates brand new save file");
+        Debug.Log("4. Debug/Reset Progress Only (Keep Resources) - Resets unlocks but keeps coins/gems");
+        Debug.Log("5. Debug/Reset Collections Only - Resets only unlocked items, keeps progress");
+        Debug.Log("6. Debug/Reset Icons and Frames - Resets only profile customizations");
+        Debug.Log("7. Debug/Reset Achievements - Resets only achievements");
+        Debug.Log("8. Debug/Reset Characters and Skins - Resets only characters and skins");
+        Debug.Log("9. Debug/Reset Enerlings - Resets only pets and power-ups");
+        Debug.Log("10. Debug/Reset Resources - Resets only coins, gems, energy");
+        Debug.Log("11. Debug/Reset Kingdom Keys - Resets only kingdom keys");
+        Debug.Log("=== END RESET OPTIONS ===");
+    }
+
+    [ContextMenu("Debug/Reset Icons and Frames")]
+    private void DebugResetIconsAndFramesMenu() => ResetIconsAndFrames();
+
+    [ContextMenu("Debug/Reset Achievements")]
+    private void DebugResetAchievementsMenu() => ResetAchievements();
+
+    [ContextMenu("Debug/Reset Characters and Skins")]
+    private void DebugResetCharactersAndSkinsMenu() => ResetCharactersAndSkins();
+
+    [ContextMenu("Debug/Reset Enerlings")]
+    private void DebugResetEnerlingsMenu() => ResetEnerlings();
+
+    [ContextMenu("Debug/Reset Resources")]
+    private void DebugResetResourcesMenu() => ResetResources();
+
+    [ContextMenu("Debug/Reset Kingdom Keys")]
+    private void DebugResetKingdomKeysMenu() => ResetKingdomKeys();
+
     #endregion
 
     void OnApplicationPause(bool pauseStatus)
@@ -915,6 +1294,7 @@ public class GameDataManager : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        SaveGameData();
+        if (autoSaveOnQuit)
+            SaveGameData();
     }
 }
