@@ -14,6 +14,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private GameObject starsContainer;
     [SerializeField] private Animator starsAnimator;
     [SerializeField] private string starParameter = "Stars";
+    private string[] starStateNames = new string[] { "Empty", "Star1", "Star2", "Star3" };
+    private int currentStars = 0;
 
     [Header("Stars to Hide")]
     [SerializeField] private List<GameObject> starsToHide = new List<GameObject>();
@@ -23,6 +25,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private TMP_Text timeText;
     [SerializeField] private TMP_Text coinsText;
     [SerializeField] private TMP_Text expText;
+    [SerializeField] private TMP_Text starsEarnedText; // Added for text display
     [SerializeField] private GameObject buttonContainer;
     [SerializeField] private float countAnimationDuration = 2f;
 
@@ -103,8 +106,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private float buttonClickVolume = 0.7f;
     
     [Header("Key Unlocked Canvas (unlockdocrcanvas)")]
-    [SerializeField] private GameObject keyUnlockedCanvas; // This is the unlockdocrcanvas
-    [SerializeField] private Button continueKeyButton; // The continue button inside the canvas
+    [SerializeField] private GameObject keyUnlockedCanvas;
+    [SerializeField] private Button continueKeyButton;
     [SerializeField] private KeyUnlockedCanvasController keyUnlockedController;
     
     [Header("Key Image Display")]
@@ -126,17 +129,10 @@ public class Kingdom4GameEndManager : MonoBehaviour
     private bool completedAllPhases = false;
     private float gameStartTime;
 
-    // Scoring constants
-    private const int MAX_ALLERGENS = 9;
-    private const int STARTING_HEARTS = 5;
-    private const float THREE_STAR_TIME = 600f;    // 10 minutes or less
-    private const float TWO_STAR_TIME = 900f;      // 15 minutes or less
-    private const int MAX_WAGON_HITS_FOR_3_STARS = 0;
-    private const int MAX_WAGON_HITS_FOR_2_STARS = 2;
-    private const int MAX_WAGON_HITS_FOR_1_STAR = 4;
-    private const int MAX_COMBO_FOR_3_STARS = 8;
-    private const int MAX_COMBO_FOR_2_STARS = 5;
-    private const int MAX_COMBO_FOR_1_STAR = 3;
+    // Time thresholds (in seconds)
+    private const float THREE_STAR_TIME_MAX = 600f;    // Less than 10 minutes
+    private const float TWO_STAR_TIME_MAX = 900f;      // Less than 15 minutes
+    // 15 minutes or more = 1 star max
 
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
@@ -162,6 +158,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
     
     // Coin tracking
     private bool coinsAddedToDatabase = false;
+    
+    // Counting animation values
+    private float currentTimePlayed = 0f;
+    private int currentGameScore = 0;
+    private int targetCoinsEarned = 0;
+    private float elapsedAnimationTime = 0f;
 
     [System.Serializable]
     public class TransformData
@@ -362,6 +364,21 @@ public class Kingdom4GameEndManager : MonoBehaviour
         // Make sure UI controls are enabled initially
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
+        
+        // Reset star animator
+        ResetStarAnimator();
+    }
+
+    private void ResetStarAnimator()
+    {
+        if (starsAnimator != null)
+        {
+            Debug.Log("Resetting star animator...");
+            starsAnimator.SetInteger(starParameter, 0);
+            starsAnimator.updateMode = AnimatorUpdateMode.Normal;
+            starsAnimator.Update(0f);
+            Debug.Log("Star animator reset to default state");
+        }
     }
 
     private void StoreInitialTransforms()
@@ -409,7 +426,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         SwitchToGameEndCameraWithCut();
         TeleportPlayerToResultPoint();
         SetupUI(playerWon);
-        UpdateKeyImageDisplay(); // Show key image if conditions met
+        UpdateKeyImageDisplay();
         
         if (gameSummaryParent != null)
         {
@@ -529,71 +546,55 @@ public class Kingdom4GameEndManager : MonoBehaviour
     private void CalculateAllMetrics(bool playerWon)
     {
         starsEarned = CalculateStarRating(playerWon);
+        currentStars = starsEarned;
         CalculateRewards();
     }
 
     // ==================== STAR RATING CALCULATION ====================
+    // Logic:
+    // - Stars based on time AND hearts remaining
+    // - Time caps maximum possible stars
+    // - Key is awarded only for 2 or 3 stars
     
     private int CalculateStarRating(bool playerWon)
     {
-        if (!playerWon || !completedAllPhases || remainingHearts <= 0)
+        if (!playerWon || remainingHearts <= 0)
             return 0;
 
-        // Check time-based star rating
-        int timeStars = CalculateTimeBasedStars();
-        
-        // Check performance-based star rating
-        int performanceStars = CalculatePerformanceBasedStars();
-        
-        Debug.Log($"Time Stars: {timeStars}, Performance Stars: {performanceStars}");
-        
-        // Return the lower of the two (both conditions must be met)
-        return Mathf.Min(timeStars, performanceStars);
-    }
+        // First, determine the maximum possible stars based on time
+        int maxStarsByTime;
+        if (completionTime < THREE_STAR_TIME_MAX) // Less than 10 minutes
+            maxStarsByTime = 3;
+        else if (completionTime < TWO_STAR_TIME_MAX) // Less than 15 minutes
+            maxStarsByTime = 2;
+        else // 15 minutes or more
+            maxStarsByTime = 1;
 
-    private int CalculateTimeBasedStars()
-    {
-        if (completionTime <= THREE_STAR_TIME && remainingHearts >= 3)
-            return 3;
-        else if (completionTime <= TWO_STAR_TIME && remainingHearts >= 2)
-            return 2;
-        else if (remainingHearts >= 1)
-            return 1;
-        else
-            return 0;
-    }
+        Debug.Log($"Max stars by time ({FormatTime(completionTime)}): {maxStarsByTime}");
 
-    private int CalculatePerformanceBasedStars()
-    {
-        int phase1Score = 0;
-        int phase2Score = 0;
-        int phase3Score = 0;
+        // Then, determine stars based on hearts remaining
+        int starsByHearts;
+        if (remainingHearts >= 4) // 4-5 hearts
+            starsByHearts = 3;
+        else if (remainingHearts >= 3) // 3 hearts
+            starsByHearts = 2;
+        else if (remainingHearts >= 1) // 1-2 hearts
+            starsByHearts = 1;
+        else // 0 hearts
+            starsByHearts = 0;
+
+        Debug.Log($"Stars by hearts ({remainingHearts} hearts): {starsByHearts}");
+
+        // The actual stars is the LOWER of the two (both conditions must be satisfied)
+        int finalStars = Mathf.Min(maxStarsByTime, starsByHearts);
         
-        // Phase 1: Allergen Collection (9 total)
-        if (allergensCollected == MAX_ALLERGENS) phase1Score = 3;
-        else if (allergensCollected >= 7) phase1Score = 2;
-        else if (allergensCollected >= 5) phase1Score = 1;
-        
-        // Phase 2: Wagon Hits
-        if (wagonHits <= MAX_WAGON_HITS_FOR_3_STARS) phase2Score = 3;
-        else if (wagonHits <= MAX_WAGON_HITS_FOR_2_STARS) phase2Score = 2;
-        else if (wagonHits <= MAX_WAGON_HITS_FOR_1_STAR) phase2Score = 1;
-        
-        // Phase 3: Combo Multiplier
-        if (maxComboAchieved >= MAX_COMBO_FOR_3_STARS) phase3Score = 3;
-        else if (maxComboAchieved >= MAX_COMBO_FOR_2_STARS) phase3Score = 2;
-        else if (maxComboAchieved >= MAX_COMBO_FOR_1_STAR) phase3Score = 1;
-        
-        // Calculate average performance (round up)
-        int totalScore = phase1Score + phase2Score + phase3Score;
-        int averageScore = Mathf.CeilToInt(totalScore / 3f);
-        
-        Debug.Log($"Performance Scoring: Phase1={phase1Score}, Phase2={phase2Score}, Phase3={phase3Score}, Average={averageScore}");
-        
-        return Mathf.Clamp(averageScore, 0, 3);
+        Debug.Log($"Final stars: {finalStars}");
+        return finalStars;
     }
 
     // ==================== REWARD CALCULATION ====================
+    // Rewards based on stars + performance bonuses
+    // Key is awarded for 2 or 3 stars (handled separately)
     
     private void CalculateRewards()
     {
@@ -619,11 +620,23 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
 
         // Bonus for perfect allergen collection
-        if (allergensCollected == MAX_ALLERGENS)
+        if (allergensCollected == 9)
         {
             baseCoins += 500;
             baseExp += 500;
             Debug.Log("Bonus: Perfect allergen collection +500");
+        }
+        else if (allergensCollected >= 7)
+        {
+            baseCoins += 300;
+            baseExp += 300;
+            Debug.Log("Bonus: Good allergen collection +300");
+        }
+        else if (allergensCollected >= 5)
+        {
+            baseCoins += 150;
+            baseExp += 150;
+            Debug.Log("Bonus: Fair allergen collection +150");
         }
 
         // Bonus for no wagon hits
@@ -633,22 +646,34 @@ public class Kingdom4GameEndManager : MonoBehaviour
             baseExp += 300;
             Debug.Log("Bonus: No wagon hits +300");
         }
+        else if (wagonHits <= 2)
+        {
+            baseCoins += 150;
+            baseExp += 150;
+            Debug.Log("Bonus: Few wagon hits +150");
+        }
 
         // Bonus for high combo multiplier
-        if (maxComboAchieved >= MAX_COMBO_FOR_3_STARS)
+        if (maxComboAchieved >= 8)
         {
             baseCoins += 400;
             baseExp += 400;
-            Debug.Log("Bonus: Max combo +400");
+            Debug.Log("Bonus: Excellent combo +400");
         }
-        else if (maxComboAchieved >= MAX_COMBO_FOR_2_STARS)
+        else if (maxComboAchieved >= 5)
         {
             baseCoins += 200;
             baseExp += 200;
             Debug.Log("Bonus: Good combo +200");
         }
+        else if (maxComboAchieved >= 3)
+        {
+            baseCoins += 100;
+            baseExp += 100;
+            Debug.Log("Bonus: Fair combo +100");
+        }
 
-        // Bonus for remaining hearts
+        // Bonus for remaining hearts (beyond the minimum for star rating)
         int heartBonus = (remainingHearts - 1) * 100;
         baseCoins += heartBonus;
         baseExp += heartBonus;
@@ -673,7 +698,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.5f);
 
         Debug.Log("Animating stars...");
-        yield return StartCoroutine(AnimateStars());
+        yield return StartCoroutine(PlayStarAnimationWithDelay());
 
         Debug.Log("Animating counting numbers...");
         yield return StartCoroutine(AnimateCountingNumbers());
@@ -701,66 +726,197 @@ public class Kingdom4GameEndManager : MonoBehaviour
         countAnimationCoroutine = null;
     }
 
+    private IEnumerator PlayStarAnimationWithDelay()
+    {
+        yield return new WaitForSecondsRealtime(0.3f);
+        PlayStarAnimationDirect();
+        yield return new WaitForSecondsRealtime(1f); // Wait for star animation to complete
+    }
+
+    private void PlayStarAnimationDirect()
+    {
+        if (starsAnimator != null)
+        {
+            Debug.Log($"=== PLAYING STAR ANIMATION DIRECT: {currentStars} stars ===");
+            
+            if (!starsAnimator.gameObject.activeSelf)
+            {
+                Debug.Log("Activating star animator GameObject");
+                starsAnimator.gameObject.SetActive(true);
+            }
+            
+            if (!starsAnimator.enabled)
+            {
+                Debug.Log("Enabling star animator component");
+                starsAnimator.enabled = true;
+            }
+            
+            starsAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            
+            starsAnimator.SetInteger(starParameter, 0);
+            starsAnimator.Update(0f);
+            
+            StartCoroutine(PlayStarAnimationAfterReset());
+        }
+        else
+        {
+            Debug.LogError("Star animator is null! Cannot play animation.");
+        }
+    }
+
+    private IEnumerator PlayStarAnimationAfterReset()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        starsAnimator.SetInteger(starParameter, currentStars);
+        starsAnimator.Update(0f);
+        
+        int currentValue = starsAnimator.GetInteger(starParameter);
+        Debug.Log($"Star parameter set to: {currentValue} (requested: {currentStars})");
+        
+        AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+        Debug.Log($"Current animation state: {stateInfo.fullPathHash}");
+        Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
+        Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
+        
+        if (stateInfo.normalizedTime == 0 && currentStars > 0)
+        {
+            Debug.Log("Attempting to play animation directly...");
+            ForcePlayStarAnimation(currentStars);
+        }
+        
+        yield return new WaitForSecondsRealtime(0.1f);
+        stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+        Debug.Log($"After 0.1s - State normalized time: {stateInfo.normalizedTime}");
+    }
+
+    private void ForcePlayStarAnimation(int stars)
+    {
+        if (starsAnimator != null && stars > 0 && stars <= 3)
+        {
+            string stateName = starStateNames[stars];
+            Debug.Log($"Force playing animation state: {stateName}");
+            
+            starsAnimator.Play(stateName, 0, 0f);
+            starsAnimator.Update(0f);
+        }
+    }
+
     private IEnumerator AnimateCountingNumbers()
     {
-        if (pointsText == null || coinsText == null || expText == null || timeText == null)
+        Debug.Log("Starting counting animation...");
+        
+        if (pointsText == null || coinsText == null || expText == null || timeText == null || starsEarnedText == null)
         {
             Debug.LogError("One or more UI text references are null!");
             yield break;
         }
 
-        // Initialize all values to 0
+        // Get target values
+        float targetTimePlayed = completionTime;
+        int targetGameScore = finalScore;
+        
+        // Store these for the animation
+        currentTimePlayed = targetTimePlayed;
+        currentGameScore = targetGameScore;
+        targetCoinsEarned = totalCoins;
+
+        // Reset animation
+        elapsedAnimationTime = 0f;
+        int lastIntegerValue = 0;
+
+        // Start with all zeros
+        timeText.text = "00:00";
         pointsText.text = "0";
         coinsText.text = "0";
         expText.text = "0";
-        timeText.text = "00:00";
+        starsEarnedText.text = "0/3";
 
         yield return new WaitForSecondsRealtime(0.3f);
 
-        float elapsedTime = 0f;
-        int lastIntegerValue = 0;
+        // Calculate how many ticks we want
+        int numberOfTicks = Mathf.Clamp(targetGameScore / 50, 10, 30);
+        float tickInterval = countAnimationDuration / numberOfTicks;
+        float nextTickTime = 0f;
+        
+        Debug.Log($"Audio: Will play {numberOfTicks} ticks every {tickInterval:F2} seconds");
 
-        while (elapsedTime < countAnimationDuration)
+        // Animate all values simultaneously
+        while (elapsedAnimationTime < countAnimationDuration)
         {
-            elapsedTime += Time.unscaledDeltaTime;
-            float progress = elapsedTime / countAnimationDuration;
+            elapsedAnimationTime += Time.unscaledDeltaTime;
+            float progress = elapsedAnimationTime / countAnimationDuration;
             float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
 
-            // Animate all values
-            float currentScore = Mathf.Lerp(0, finalScore, smoothProgress);
-            float currentCoins = Mathf.Lerp(0, totalCoins, smoothProgress);
-            float currentExp = Mathf.Lerp(0, totalExp, smoothProgress);
-            float currentTime = Mathf.Lerp(0, completionTime, smoothProgress);
-
-            // Play tick sound on score increase
-            int currentInteger = Mathf.FloorToInt(currentScore);
-            if (currentInteger > lastIntegerValue && countTickSound != null && countAudioSource != null)
-            {
-                countAudioSource.PlayOneShot(countTickSound);
-                lastIntegerValue = currentInteger;
-            }
-
-            // Update UI
-            pointsText.text = Mathf.FloorToInt(currentScore).ToString("N0");
-            coinsText.text = Mathf.FloorToInt(currentCoins).ToString("N0");
-            expText.text = Mathf.FloorToInt(currentExp).ToString("N0");
+            // Animate time
+            float currentTime = Mathf.Lerp(0, targetTimePlayed, smoothProgress);
             timeText.text = FormatTime(currentTime);
+
+            // Animate score
+            float currentScore = Mathf.Lerp(0, targetGameScore, smoothProgress);
+            int currentInteger = Mathf.FloorToInt(currentScore);
+            
+            // Play tick sound at regular intervals
+            if (elapsedAnimationTime >= nextTickTime)
+            {
+                if (countTickSound != null && countAudioSource != null)
+                {
+                    countAudioSource.Stop(); // Stop any previous sound
+                    countAudioSource.PlayOneShot(countTickSound, 0.5f);
+                    Debug.Log($"✓ Tick sound played at {elapsedAnimationTime:F2}s - Score: {currentInteger}");
+                }
+                else
+                {
+                    Debug.LogWarning("Count tick sound or audio source is null!");
+                }
+                
+                nextTickTime += tickInterval;
+            }
+            
+            pointsText.text = Mathf.FloorToInt(currentScore).ToString("N0");
+
+            // Animate coins
+            float currentCoins = Mathf.Lerp(0, targetCoinsEarned, smoothProgress);
+            coinsText.text = Mathf.FloorToInt(currentCoins).ToString("N0");
+            
+            // Animate exp
+            float currentExp = Mathf.Lerp(0, totalExp, smoothProgress);
+            expText.text = Mathf.FloorToInt(currentExp).ToString("N0");
+
+            // Animate stars (as text)
+            int currentStarsText = Mathf.FloorToInt(Mathf.Lerp(0, currentStars, smoothProgress));
+            starsEarnedText.text = $"{currentStarsText}/3";
 
             yield return null;
         }
 
         // Set final values
-        pointsText.text = finalScore.ToString("N0");
-        coinsText.text = totalCoins.ToString("N0");
+        timeText.text = FormatTime(targetTimePlayed);
+        pointsText.text = targetGameScore.ToString("N0");
+        coinsText.text = targetCoinsEarned.ToString("N0");
         expText.text = totalExp.ToString("N0");
-        timeText.text = FormatTime(completionTime);
+        starsEarnedText.text = $"{currentStars}/3";
 
-        // Play complete sound
+        // Wait a moment for last tick to finish
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        // Play completion sound
         if (countCompleteSound != null && countAudioSource != null)
         {
-            countAudioSource.PlayOneShot(countCompleteSound);
+            // Stop any ongoing tick sounds
+            if (countAudioSource.isPlaying)
+            {
+                countAudioSource.Stop();
+            }
+            
+            countAudioSource.PlayOneShot(countCompleteSound, 0.7f);
+            Debug.Log("✓ Completion sound played");
         }
-        
+        else
+        {
+            Debug.LogWarning("Count complete sound or audio source is null!");
+        }
+
         Debug.Log("Counting animation complete!");
     }
 
@@ -769,36 +925,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(timeInSeconds / 60f);
         int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
         return $"{minutes:00}:{seconds:00}";
-    }
-
-    private IEnumerator AnimateStars()
-    {
-        if (starsContainer == null || starsAnimator == null)
-        {
-            Debug.LogError("Stars container or animator not assigned!");
-            yield break;
-        }
-
-        starsContainer.SetActive(true);
-
-        yield return new WaitForSecondsRealtime(0.3f);
-
-        starsAnimator.SetInteger(starParameter, 0);
-        starsAnimator.Play("Default", -1, 0f);
-
-        yield return null;
-
-        starsAnimator.SetInteger(starParameter, starsEarned);
-        starsAnimator.Update(0f);
-
-        if (starsEarned > 0)
-        {
-            string triggerName = $"Show{starsEarned}Star" + (starsEarned > 1 ? "s" : "");
-            starsAnimator.SetTrigger(triggerName);
-            Debug.Log($"Playing star animation trigger: {triggerName}");
-        }
-
-        yield return new WaitForSecondsRealtime(1f);
     }
 
     // ==================== PANEL FADE ANIMATION ====================
@@ -852,24 +978,22 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (KeyImageunlocking != null)
         {
-            // Only show if:
+            // Only show key image if:
             // 1. Summary is active
             // 2. Key was collected this session
-            // 3. Player earned at least 2 stars
+            // 3. Player earned at least 2 stars (2 or 3 stars)
             // 4. Player won
             bool shouldShowKeyImage = gameSummaryParent != null && 
                                      gameSummaryParent.activeSelf &&
                                      keyWasCollected && 
-                                     starsEarned >= 2 &&
+                                     starsEarned >= 2 && // Key awarded for 2 or 3 stars
                                      playerWon;
             
             KeyImageunlocking.SetActive(shouldShowKeyImage);
             
             Debug.Log($"KeyImageunlocking: {(shouldShowKeyImage ? "SHOWN" : "HIDDEN")} " +
-                     $"- SummaryActive: {(gameSummaryParent != null ? gameSummaryParent.activeSelf : false)} " +
-                     $"- KeyCollected: {keyWasCollected} " +
-                     $"- Stars: {starsEarned} " +
-                     $"- PlayerWon: {playerWon}");
+                     $"- Stars: {starsEarned} (need 2+) " +
+                     $"- KeyCollected: {keyWasCollected}");
         }
     }
 
@@ -891,6 +1015,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         keyUnlockedObject.SetActive(false);
         bool shouldShowKey = false;
 
+        // Show key unlocked object only for 2 or 3 stars AND first time completion
         if (questManager != null && playerWon && starsEarned >= 2)
         {
             Quest quest = questManager.GetQuest(questID);
@@ -900,7 +1025,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
-                    Debug.Log("Showing key unlocked object - first time completion!");
+                    Debug.Log("Showing key unlocked object - first time completion with 2+ stars!");
                 }
             }
         }
@@ -1056,8 +1181,22 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (playerController != null && resultCharacterSpawnPoint != null)
         {
+            // Disable character controller temporarily to allow position change
+            CharacterController charController = playerController.GetComponent<CharacterController>();
+            if (charController != null)
+            {
+                charController.enabled = false;
+            }
+            
             playerController.transform.position = resultCharacterSpawnPoint.position;
             playerController.transform.rotation = resultCharacterSpawnPoint.rotation;
+            
+            // Re-enable character controller
+            if (charController != null)
+            {
+                charController.enabled = true;
+            }
+            
             Debug.Log($"Player teleported to result point: {resultCharacterSpawnPoint.position}");
         }
         else
@@ -1070,8 +1209,22 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (playerController != null && startingPoint != null)
         {
+            // Disable character controller temporarily to allow position change
+            CharacterController charController = playerController.GetComponent<CharacterController>();
+            if (charController != null)
+            {
+                charController.enabled = false;
+            }
+            
             playerController.transform.position = startingPoint.position;
             playerController.transform.rotation = startingPoint.rotation;
+            
+            // Re-enable character controller
+            if (charController != null)
+            {
+                charController.enabled = true;
+            }
+            
             Debug.Log($"Player teleported to starting point: {startingPoint.position}");
         }
     }
@@ -1121,7 +1274,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         SwitchToPlayerCameraWithBlend();
         DisableWinLoseObjects();
 
-        if (starsAnimator != null) starsAnimator.SetInteger(starParameter, 0);
+        ResetStarAnimator();
         if (starsContainer != null) starsContainer.SetActive(false);
 
         if (keyUnlockedObject != null && keyUnlockedObject.activeSelf)
@@ -1137,6 +1290,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (coinsText != null) coinsText.text = "0";
         if (expText != null) expText.text = "0";
         if (timeText != null) timeText.text = "00:00";
+        if (starsEarnedText != null) starsEarnedText.text = "0/3";
 
         if (buttonContainer != null) buttonContainer.SetActive(false);
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
@@ -1236,6 +1390,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     }
 
     // ==================== OCR SCANNER KEY METHODS ====================
+    // Key is awarded only for 2 or 3 stars
     
     /// <summary>
     /// Checks if the player already has the OCR Scanner Key in GameData
@@ -1329,18 +1484,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
         bool hasOCRScannerKey = CheckIfPlayerHasOCRScannerKey();
         Debug.Log($"OCR Scanner Key status from GameData: {(hasOCRScannerKey ? "TRUE" : "FALSE")}");
 
-        // Check if key was collected THIS SESSION (but not saved yet)
-        bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase;
+        // Check if key was collected THIS SESSION AND player earned 2+ stars (but not saved yet)
+        bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase && starsEarned >= 2;
         
         // DECISION FLOW:
-        // 1. If key was collected this session AND player doesn't have it in GameData -> Show unlock canvas
+        // 1. If key was collected this session, player earned 2+ stars, and doesn't have it in GameData -> Show unlock canvas
         // 2. If player already has key in GameData -> Return to game (no canvas)
-        // 3. If no key at all -> Return to game (no canvas)
+        // 3. If no key or less than 2 stars -> Return to game (no canvas)
         
         if (keyCollectedThisSession && !hasOCRScannerKey)
         {
-            // KEY WAS COLLECTED THIS SESSION AND NOT IN GAMEDATA YET - SHOW UNLOCK CANVAS
-            Debug.Log("Key collected this session and not in GameData - showing KeyUnlockedCanvas");
+            // KEY WAS COLLECTED THIS SESSION WITH 2+ STARS AND NOT IN GAMEDATA YET - SHOW UNLOCK CANVAS
+            Debug.Log("Key collected this session with 2+ stars and not in GameData - showing KeyUnlockedCanvas");
             StartCoroutine(ReturnToPreSummaryStateAndShowKeyUnlockCanvas());
         }
         else if (hasOCRScannerKey)
@@ -1351,8 +1506,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
-            // NO KEY AT ALL - NO CANVAS
-            Debug.Log("No key collected - returning to game fully");
+            // NO KEY OR LESS THAN 2 STARS - NO CANVAS
+            Debug.Log("No key or less than 2 stars - returning to game fully");
             StartCoroutine(ReturnToGameFully());
         }
     }
@@ -1388,7 +1543,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
         
         // Reset game state
         ResetKingdom4Game();
+        
+        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
+        
+        // Small delay to ensure transform applies
+        yield return new WaitForSecondsRealtime(0.1f);
         
         // Reset flags
         isGameOver = false;
@@ -1500,7 +1660,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
         
         // Reset game state
         ResetKingdom4Game();
+        
+        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
+        
+        // Small delay to ensure transform applies
+        yield return new WaitForSecondsRealtime(0.1f);
         
         // Reset flags
         isGameOver = false;
@@ -1546,7 +1711,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
         
         // Reset game state
         ResetKingdom4Game();
+        
+        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
+        
+        // Small delay to ensure transform applies
+        yield return new WaitForSecondsRealtime(0.1f);
         
         // Reset flags
         isGameOver = false;
@@ -1587,8 +1757,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
         PlayButtonClickSound();
         AddCoinsToDatabase();
 
-        // Save key if it was collected (only if we're doing a restart that saves)
-        if (keyWasCollected && !keySavedToDatabase)
+        // Save key if it was collected AND player earned 2+ stars
+        if (keyWasCollected && !keySavedToDatabase && starsEarned >= 2)
         {
             SaveOCRScannerKeyToGameData();
         }
@@ -1850,48 +2020,51 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     // ==================== DEBUG METHODS ====================
     
-    [ContextMenu("Test Scoring System")]
-    public void TestScoringSystem()
+    [ContextMenu("Test Star Logic")]
+    public void TestStarLogic()
     {
-        // Test 3-star scenario
-        Debug.Log("=== TEST 3-STAR SCENARIO ===");
-        completionTime = 550f; // 9:10
-        remainingHearts = 4;
-        allergensCollected = 9;
-        wagonHits = 0;
-        maxComboAchieved = 8;
-        finalScore = 2500;
-        completedAllPhases = true;
+        Debug.Log("=== TESTING STAR LOGIC ===");
         
+        // Test Case 1: 5 hearts, 9 minutes → should be 3 stars
+        Debug.Log("\nTest 1: 5 hearts, 9 minutes");
+        completionTime = 540f;
+        remainingHearts = 5;
         int stars = CalculateStarRating(true);
-        CalculateRewards();
-        Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
+        Debug.Log($"Result: {stars} stars (Expected: 3)");
         
-        // Test 2-star scenario
-        Debug.Log("\n=== TEST 2-STAR SCENARIO ===");
-        completionTime = 800f; // 13:20
+        // Test Case 2: 5 hearts, 11 minutes → should be 2 stars (time capped)
+        Debug.Log("\nTest 2: 5 hearts, 11 minutes");
+        completionTime = 660f;
+        remainingHearts = 5;
+        stars = CalculateStarRating(true);
+        Debug.Log($"Result: {stars} stars (Expected: 2)");
+        
+        // Test Case 3: 3 hearts, 9 minutes → should be 2 stars (hearts limit)
+        Debug.Log("\nTest 3: 3 hearts, 9 minutes");
+        completionTime = 540f;
+        remainingHearts = 3;
+        stars = CalculateStarRating(true);
+        Debug.Log($"Result: {stars} stars (Expected: 2)");
+        
+        // Test Case 4: 2 hearts, 9 minutes → should be 1 star (hearts limit)
+        Debug.Log("\nTest 4: 2 hearts, 9 minutes");
+        completionTime = 540f;
         remainingHearts = 2;
-        allergensCollected = 7;
-        wagonHits = 1;
-        maxComboAchieved = 5;
-        finalScore = 1800;
-        
         stars = CalculateStarRating(true);
-        CalculateRewards();
-        Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
+        Debug.Log($"Result: {stars} stars (Expected: 1)");
         
-        // Test 1-star scenario
-        Debug.Log("\n=== TEST 1-STAR SCENARIO ===");
-        completionTime = 1000f; // 16:40
-        remainingHearts = 1;
-        allergensCollected = 5;
-        wagonHits = 3;
-        maxComboAchieved = 3;
-        finalScore = 1200;
-        
+        // Test Case 5: 5 hearts, 16 minutes → should be 1 star (time capped)
+        Debug.Log("\nTest 5: 5 hearts, 16 minutes");
+        completionTime = 960f;
+        remainingHearts = 5;
         stars = CalculateStarRating(true);
-        CalculateRewards();
-        Debug.Log($"Stars: {stars}, Coins: {totalCoins}, Exp: {totalExp}");
+        Debug.Log($"Result: {stars} stars (Expected: 1)");
+        
+        // Test Case 6: 0 hearts → should be 0 stars
+        Debug.Log("\nTest 6: 0 hearts");
+        remainingHearts = 0;
+        stars = CalculateStarRating(true);
+        Debug.Log($"Result: {stars} stars (Expected: 0)");
     }
 
     [ContextMenu("Test Show Game Summary")]
@@ -1900,15 +2073,93 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log("=== TESTING GAME SUMMARY ===");
         
         // Set test data for 3 stars
-        completionTime = 550f;
-        remainingHearts = 4;
+        completionTime = 540f; // 9 minutes
+        remainingHearts = 5;
         allergensCollected = 9;
         wagonHits = 0;
         maxComboAchieved = 8;
         finalScore = 2500;
         completedAllPhases = true;
+        keyWasCollected = true;
         
         ShowGameEndScreen(true);
+    }
+
+    [ContextMenu("Test Star Animation")]
+    public void TestStarAnimation()
+    {
+        if (starsAnimator != null)
+        {
+            Debug.Log("Testing star animations...");
+            
+            if (!starsAnimator.gameObject.activeSelf)
+                starsAnimator.gameObject.SetActive(true);
+            
+            if (!starsAnimator.enabled)
+                starsAnimator.enabled = true;
+            
+            starsAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
+            
+            for (int i = 0; i <= 3; i++)
+            {
+                Debug.Log($"\n=== Testing star value: {i} ===");
+                
+                starsAnimator.SetInteger(starParameter, 0);
+                starsAnimator.Update(0f);
+                
+                System.Threading.Thread.Sleep(100);
+                
+                starsAnimator.SetInteger(starParameter, i);
+                starsAnimator.Update(0f);
+                
+                AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+                Debug.Log($"Current state: {stateInfo.fullPathHash}");
+                Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
+                Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
+                
+                if (stateInfo.normalizedTime == 0 && i > 0)
+                {
+                    Debug.Log("Animation not playing, trying direct play...");
+                    ForcePlayStarAnimation(i);
+                }
+                
+                System.Threading.Thread.Sleep(500);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Star animator is null!");
+        }
+    }
+
+    [ContextMenu("Test Key Award Logic")]
+    public void TestKeyAwardLogic()
+    {
+        Debug.Log("=== TESTING KEY AWARD LOGIC ===");
+        
+        // Test 3 stars with key → should award key
+        Debug.Log("\nTest: 3 stars, key collected");
+        starsEarned = 3;
+        keyWasCollected = true;
+        Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
+        
+        // Test 2 stars with key → should award key
+        Debug.Log("\nTest: 2 stars, key collected");
+        starsEarned = 2;
+        keyWasCollected = true;
+        Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
+        
+        // Test 1 star with key → should NOT award key
+        Debug.Log("\nTest: 1 star, key collected");
+        starsEarned = 1;
+        keyWasCollected = true;
+        Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: false)");
+        
+        // Test 3 stars without key → should NOT award key
+        Debug.Log("\nTest: 3 stars, no key");
+        starsEarned = 3;
+        keyWasCollected = false;
+        Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: false)");
     }
 
     [ContextMenu("Test OCR Scanner Key Saving")]
@@ -1932,27 +2183,54 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log("=== TESTING KEY COLLECTION FLOW ===");
         keyWasCollected = true;
         keySavedToDatabase = false;
-        Debug.Log($"Set keyWasCollected=true, keySavedToDatabase={keySavedToDatabase}");
+        starsEarned = 3;
+        Debug.Log($"Set keyWasCollected=true, starsEarned=3, keySavedToDatabase={keySavedToDatabase}");
     }
 
-    [ContextMenu("Test Win with Key")]
-    public void TestWinWithKey()
+    [ContextMenu("Test Win with Key (3 stars)")]
+    public void TestWinWithKey3Stars()
     {
         if (!isGameOver && !isSummaryActive)
         {
             keyWasCollected = true;
-            remainingHearts = 4;
+            remainingHearts = 5;
+            completionTime = 540f; // 9 minutes
             ShowGameEndScreen(true);
         }
     }
 
-    [ContextMenu("Test Win without Key")]
+    [ContextMenu("Test Win with Key (2 stars)")]
+    public void TestWinWithKey2Stars()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            keyWasCollected = true;
+            remainingHearts = 3;
+            completionTime = 540f; // 9 minutes
+            ShowGameEndScreen(true);
+        }
+    }
+
+    [ContextMenu("Test Win with Key but 1 star")]
+    public void TestWinWithKey1Star()
+    {
+        if (!isGameOver && !isSummaryActive)
+        {
+            keyWasCollected = true;
+            remainingHearts = 1;
+            completionTime = 540f; // 9 minutes
+            ShowGameEndScreen(true);
+        }
+    }
+
+    [ContextMenu("Test Win without Key (3 stars)")]
     public void TestWinWithoutKey()
     {
         if (!isGameOver && !isSummaryActive)
         {
             keyWasCollected = false;
-            remainingHearts = 4;
+            remainingHearts = 5;
+            completionTime = 540f; // 9 minutes
             ShowGameEndScreen(true);
         }
     }
@@ -1979,6 +2257,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log($"OCR Scanner Key status: {(hasKey ? "COLLECTED" : "NOT COLLECTED")}");
         Debug.Log($"Key collected this session: {keyWasCollected}");
         Debug.Log($"Key saved to database: {keySavedToDatabase}");
+        Debug.Log($"Current stars earned: {starsEarned}");
     }
 
     [ContextMenu("Collect OCR Scanner Key (Test)")]
@@ -2015,6 +2294,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log($"coinsText: {(coinsText != null ? "SET" : "NULL")}");
         Debug.Log($"expText: {(expText != null ? "SET" : "NULL")}");
         Debug.Log($"timeText: {(timeText != null ? "SET" : "NULL")}");
+        Debug.Log($"starsEarnedText: {(starsEarnedText != null ? "SET" : "NULL")}");
         Debug.Log($"buttonContainer: {(buttonContainer != null ? "SET" : "NULL")}");
         Debug.Log($"resultBackground: {(resultBackground != null ? "SET" : "NULL")}");
         Debug.Log($"starsContainer: {(starsContainer != null ? "SET" : "NULL")}");
@@ -2025,5 +2305,51 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log($"keyUnlockedController: {(keyUnlockedController != null ? "SET" : "NULL")}");
         Debug.Log($"KeyImageunlocking: {(KeyImageunlocking != null ? "SET" : "NULL")}");
         Debug.Log("==============================");
+    }
+
+    [ContextMenu("Debug Star Animator")]
+    public void DebugStarAnimator()
+    {
+        if (starsAnimator == null)
+        {
+            Debug.LogError("Stars animator is null!");
+            return;
+        }
+        
+        Debug.Log("=== STAR ANIMATOR DEBUG ===");
+        Debug.Log($"Animator GameObject: {starsAnimator.gameObject.name}");
+        Debug.Log($"Animator enabled: {starsAnimator.enabled}");
+        Debug.Log($"Animator active: {starsAnimator.gameObject.activeSelf}");
+        Debug.Log($"Update mode: {starsAnimator.updateMode}");
+        Debug.Log($"Controller: {starsAnimator.runtimeAnimatorController?.name}");
+        
+        Debug.Log($"Current '{starParameter}' value: {starsAnimator.GetInteger(starParameter)}");
+        
+        Debug.Log("All parameters:");
+        foreach (var param in starsAnimator.parameters)
+        {
+            string value = "";
+            switch (param.type)
+            {
+                case AnimatorControllerParameterType.Float:
+                    value = starsAnimator.GetFloat(param.name).ToString();
+                    break;
+                case AnimatorControllerParameterType.Int:
+                    value = starsAnimator.GetInteger(param.name).ToString();
+                    break;
+                case AnimatorControllerParameterType.Bool:
+                    value = starsAnimator.GetBool(param.name).ToString();
+                    break;
+                case AnimatorControllerParameterType.Trigger:
+                    value = "Trigger";
+                    break;
+            }
+            Debug.Log($"- {param.name} (Type: {param.type}, Value: {value})");
+        }
+        
+        AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+        Debug.Log($"Current state hash: {stateInfo.fullPathHash}");
+        Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
+        Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
     }
 }
