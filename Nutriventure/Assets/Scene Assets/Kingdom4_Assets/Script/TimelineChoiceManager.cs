@@ -1,234 +1,341 @@
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.UI;
 using System.Collections;
 
 public class TimelineChoiceManager : MonoBehaviour
 {
     public static TimelineChoiceManager Instance;
-
-    [Header("Timelines")]
-    public PlayableDirector introTimeline;
-    public PlayableDirector acceptTimeline;
     
-    [Header("UI References")]
-    [SerializeField] private Button acceptButton;
-    [SerializeField] private Button rejectButton;
+    [Header("Timeline References")]
+    [SerializeField] private PlayableDirector mainTimeline;      // For HasOCRKey = false (has pause)
+    [SerializeField] private PlayableDirector acceptTimeline;    // Plays when ACCEPT is clicked
     
-    [Header("NPC Reference")]
-    [SerializeField] private WardenInteraction wardenNPC;
+    [Header("Button References")]
+    [SerializeField] private GameObject choiceButtonsPanel;      // Panel containing Accept/Decline buttons
     
-    [Header("Camera Control")]
-    [SerializeField] private GameObject playerCamera; // Assign your player camera
-    [SerializeField] private GameObject timelineCamera; // Assign your timeline camera
+    [Header("Warden Interaction Reference")]
+    [SerializeField] private WardenInteraction wardenInteraction;
     
-    [Header("Button Visibility")]
-    [SerializeField] private bool hideButtonsOnStart = true;
-
-    private bool isPausedForChoice = false;
-    private bool isAccepting = false;
-
+    [Header("Debug Settings")]
+    [SerializeField] private bool enableDebugLogs = true;
+    
+    // Track state
+    private bool hasMadeChoice = false;
+    private bool isWaitingForTimeline = false;
+    
     void Awake()
     {
         if (Instance == null)
+        {
             Instance = this;
+        }
         else
+        {
             Destroy(gameObject);
+        }
     }
     
     void Start()
     {
-        if (wardenNPC == null)
-            wardenNPC = FindObjectOfType<WardenInteraction>();
-        
-        SetupButtons();
-        
-        if (acceptTimeline != null)
-        {
-            acceptTimeline.stopped += OnAcceptTimelineEnded;
-            acceptTimeline.played += OnAcceptTimelineStarted;
-        }
-        
-        if (hideButtonsOnStart)
-            HideChoiceButtons();
-    }
-
-    private void SetupButtons()
-    {
-        if (acceptButton != null)
-        {
-            acceptButton.onClick.RemoveAllListeners();
-            acceptButton.onClick.AddListener(AcceptQuest);
-        }
-        
-        if (rejectButton != null)
-        {
-            rejectButton.onClick.RemoveAllListeners();
-            rejectButton.onClick.AddListener(RejectQuest);
-        }
-    }
-
-    // Call this from Timeline Signal to show choice buttons
-    public void ShowChoiceButtons()
-    {
-        if (introTimeline != null && introTimeline.state == PlayState.Playing)
-        {
-            // Pause the timeline
-            introTimeline.Pause();
-            isPausedForChoice = true;
+        // Hide choice buttons initially
+        if (choiceButtonsPanel != null)
+            choiceButtonsPanel.SetActive(false);
             
-            // Show buttons
-            if (acceptButton != null) 
-            {
-                acceptButton.gameObject.SetActive(true);
-                acceptButton.interactable = true;
-            }
-            
-            if (rejectButton != null) 
-            {
-                rejectButton.gameObject.SetActive(true);
-                rejectButton.interactable = true;
-            }
-            
-            Debug.Log("Choice buttons shown - timeline paused");
-        }
+        // Find warden interaction if not assigned
+        if (wardenInteraction == null)
+            wardenInteraction = FindObjectOfType<WardenInteraction>();
     }
     
-    public void HideChoiceButtons()
+    // Called by WardenInteraction to set which timelines to use
+    public void SetTimelines(PlayableDirector main, PlayableDirector accept)
     {
-        if (acceptButton != null) 
-            acceptButton.gameObject.SetActive(false);
+        mainTimeline = main;
+        acceptTimeline = accept;
         
-        if (rejectButton != null) 
-            rejectButton.gameObject.SetActive(false);
-    }
-
-    public void AcceptQuest()
-    {
-        if (isAccepting) return; // Prevent double acceptance
-        
-        isAccepting = true;
-        Debug.Log("Accept button clicked!");
-        
-        // IMPORTANT: Properly clean up intro timeline
-        if (introTimeline != null)
-        {
-            if (introTimeline.state == PlayState.Playing)
-            {
-                introTimeline.Stop();
-            }
-            
-            // Force evaluate to clear any lingering tracks
-            introTimeline.time = 0;
-            introTimeline.Evaluate();
-        }
-        
-        HideChoiceButtons();
-        
-        // Reset camera control briefly before playing accept timeline
-        StartCoroutine(PlayAcceptTimeline());
+        DebugLog($"Timelines set - Main: {(main != null ? main.name : "null")}, Accept: {(accept != null ? accept.name : "null")}");
     }
     
-    private IEnumerator PlayAcceptTimeline()
+    // Called by WardenInteraction to start the appropriate cutscene
+    public void StartInitialCutscene()
     {
-        // Small delay to ensure intro timeline is completely cleared
-        yield return new WaitForSeconds(0.1f);
-        
-        // Play accept timeline if available
-        if (acceptTimeline != null)
+        if (GameDataManager.Instance == null)
         {
-            // Make sure accept timeline starts from beginning
-            acceptTimeline.time = 0;
-            acceptTimeline.Play();
-            
-            // Notify NPC after a short delay
-            StartCoroutine(DelayedQuestAcceptance());
+            DebugLogError("GameDataManager.Instance is null!");
+            return;
+        }
+        
+        // Check if player has OCR Scanner Key
+        bool hasOCRKey = GameDataManager.Instance.HasOCRScannerKey();
+        
+        DebugLog($"OCR Scanner Key status: {hasOCRKey}");
+        
+        if (hasOCRKey)
+        {
+            // If player has OCR key, this should have been handled by WardenInteraction directly
+            DebugLogWarning("StartInitialCutscene called when player has OCR key - this should not happen!");
         }
         else
         {
-            if (wardenNPC != null)
-                wardenNPC.OnQuestAccepted();
-            isAccepting = false;
+            // If player doesn't have OCR key, play the main timeline (which will pause)
+            PlayMainTimeline();
         }
-        
-        isPausedForChoice = false;
     }
     
-    private void OnAcceptTimelineStarted(PlayableDirector director)
+    void PlayMainTimeline()
     {
-        Debug.Log("Accept timeline started - camera should now be controlled by accept timeline");
-        
-        // If you have specific camera setup, do it here
-        if (timelineCamera != null && playerCamera != null)
+        if (mainTimeline == null)
         {
-            // Ensure timeline camera is active and player camera is disabled
-            // This depends on how your camera system works
+            DebugLogError("Main timeline is not assigned!");
+            return;
         }
+        
+        DebugLog("Playing MAIN timeline (will pause for choice)");
+        
+        // Ensure timeline is reset to beginning
+        mainTimeline.time = 0;
+        
+        // Play the main timeline
+        mainTimeline.Play();
+        
+        // Reset choice state
+        hasMadeChoice = false;
+        isWaitingForTimeline = true;
     }
     
-    private IEnumerator DelayedQuestAcceptance()
+    void PlayAcceptTimeline()
     {
-        yield return new WaitForSeconds(0.1f);
-        
-        if (wardenNPC != null)
+        if (acceptTimeline == null)
         {
-            wardenNPC.OnQuestAccepted();
+            DebugLogError("Accept timeline is not assigned!");
+            return;
         }
         
-        // Wait a bit more before resetting acceptance flag
-        yield return new WaitForSeconds(0.5f);
-        isAccepting = false;
+        DebugLog("Playing ACCEPT timeline");
+        
+        // COMPLETELY STOP the main timeline - not just pause
+        if (mainTimeline != null)
+        {
+            if (mainTimeline.state == PlayState.Playing)
+            {
+                mainTimeline.Stop(); // This completely ends the timeline
+                DebugLog("Main timeline STOPPED completely");
+            }
+            
+            // Also force it to not resume by clearing any pending signals
+            mainTimeline.time = 0;
+            mainTimeline.Evaluate(); // Force evaluate to clear any pending signals
+        }
+        
+        // Also notify TimelinePauseManager that we're done with the main timeline
+        if (TimelinePauseManager.Instance != null)
+        {
+            // We don't want the pause manager to think it's still paused
+            // Since we're not modifying TimelinePauseManager, we'll just log this
+            DebugLog("Main timeline stopped - pause manager will need to be reset for next interaction");
+        }
+        
+        // Ensure accept timeline is reset to beginning
+        acceptTimeline.time = 0;
+        
+        // Play the accept timeline
+        acceptTimeline.Play();
+        
+        // Notify warden interaction that accept timeline is playing
+        if (wardenInteraction != null)
+        {
+            // We'll need to know when this timeline ends
+            StartCoroutine(WaitForAcceptTimelineEnd());
+        }
     }
     
-    public void RejectQuest()
+    IEnumerator WaitForAcceptTimelineEnd()
     {
-        Debug.Log("Reject button clicked!");
+        DebugLog("Waiting for accept timeline to end...");
         
+        while (acceptTimeline != null && acceptTimeline.state == PlayState.Playing)
+        {
+            yield return null;
+        }
+            
+        DebugLog("Accept timeline finished");
+        
+        // Notify warden interaction
+        if (wardenInteraction != null)
+            wardenInteraction.OnAcceptTimelineEnded();
+            
+        isWaitingForTimeline = false;
+    }
+    
+    // Called by TimelinePauseManager when timeline is paused
+    public void OnTimelinePaused()
+    {
+        DebugLog("Timeline paused - showing choice buttons");
+        
+        // Show choice buttons
+        if (choiceButtonsPanel != null)
+            choiceButtonsPanel.SetActive(true);
+    }
+    
+    // Method for ACCEPT button
+    public void OnAcceptButtonClicked()
+    {
+        if (hasMadeChoice)
+        {
+            DebugLog("Choice already made, ignoring button click");
+            return;
+        }
+        
+        DebugLog("ACCEPT button clicked - Playing accept timeline");
+        
+        // Hide choice buttons
         HideChoiceButtons();
         
-        // IMPORTANT: Resume the intro timeline
-        if (introTimeline != null && isPausedForChoice)
-        {
-            introTimeline.Play();
-            Debug.Log("Resuming intro timeline after rejection");
-        }
+        // Notify warden interaction
+        if (wardenInteraction != null)
+            wardenInteraction.OnQuestAccepted();
         
-        if (wardenNPC != null)
-            wardenNPC.OnQuestRejected();
+        // Play the accept timeline (this will STOP the main timeline)
+        PlayAcceptTimeline();
         
-        isPausedForChoice = false;
-    }
-
-    private void OnAcceptTimelineEnded(PlayableDirector director)
-    {
-        Debug.Log("Accept timeline ended - returning control to player camera");
-        
-        // Ensure player camera regains control
-        StartCoroutine(ReturnToPlayerCamera());
+        // Mark that choice has been made
+        hasMadeChoice = true;
     }
     
-    private IEnumerator ReturnToPlayerCamera()
+    // Method for DECLINE button
+    public void OnDeclineButtonClicked()
     {
-        yield return new WaitForSeconds(0.1f);
-        
-        // Force camera to player control
-        // This depends on your camera system. For Cinemachine:
-        // if (cinemachineBrain != null) cinemachineBrain.enabled = true;
-        // if (playerCamera != null) playerCamera.SetActive(true);
-        // if (timelineCamera != null) timelineCamera.SetActive(false);
-        
-        Debug.Log("Camera control returned to player");
-    }
-
-    void OnDestroy()
-    {
-        if (acceptTimeline != null)
+        if (hasMadeChoice)
         {
-            acceptTimeline.stopped -= OnAcceptTimelineEnded;
-            acceptTimeline.played -= OnAcceptTimelineStarted;
+            DebugLog("Choice already made, ignoring button click");
+            return;
         }
         
-        if (Instance == this)
-            Instance = null;
+        DebugLog("DECLINE button clicked - Continuing main timeline");
+        
+        // Hide choice buttons
+        HideChoiceButtons();
+        
+        // Notify warden interaction
+        if (wardenInteraction != null)
+            wardenInteraction.OnQuestRejected();
+        
+        // Resume the paused main timeline (KEEP it alive)
+        if (TimelinePauseManager.Instance != null)
+        {
+            TimelinePauseManager.Instance.ResumeTimeline();
+            
+            // Mark that choice has been made
+            hasMadeChoice = true;
+            
+            DebugLog("Main timeline resumed");
+        }
+        else
+        {
+            DebugLogError("TimelinePauseManager.Instance is null! Cannot resume timeline.");
+            
+            // Fallback - try to resume directly
+            if (mainTimeline != null)
+            {
+                mainTimeline.Resume();
+                hasMadeChoice = true;
+                DebugLog("Resumed main timeline directly");
+            }
+        }
+    }
+    
+    // Public method to hide choice buttons (called from WardenInteraction)
+    public void HideChoiceButtons()
+    {
+        if (choiceButtonsPanel != null)
+        {
+            choiceButtonsPanel.SetActive(false);
+            DebugLog("Choice buttons hidden");
+        }
+    }
+    
+    // Optional: Method to reset for next interaction
+    public void ResetChoiceSystem()
+    {
+        hasMadeChoice = false;
+        isWaitingForTimeline = false;
+        HideChoiceButtons();
+        DebugLog("Choice system reset");
+    }
+    
+    // Force reset if timeline gets stuck
+    public void ForceReset()
+    {
+        DebugLog("FORCE RESETTING CHOICE MANAGER");
+        
+        hasMadeChoice = false;
+        isWaitingForTimeline = false;
+        HideChoiceButtons();
+        
+        // Stop all timelines completely
+        if (mainTimeline != null)
+        {
+            if (mainTimeline.state == PlayState.Playing)
+                mainTimeline.Stop();
+            mainTimeline.time = 0;
+        }
+            
+        if (acceptTimeline != null)
+        {
+            if (acceptTimeline.state == PlayState.Playing)
+                acceptTimeline.Stop();
+            acceptTimeline.time = 0;
+        }
+            
+        DebugLog("Choice manager force reset complete");
+    }
+    
+    [ContextMenu("Debug Timeline State")]
+    public void DebugTimelineState()
+    {
+        Debug.Log("=== TIMELINE CHOICE MANAGER STATE ===");
+        Debug.Log($"hasMadeChoice: {hasMadeChoice}");
+        Debug.Log($"isWaitingForTimeline: {isWaitingForTimeline}");
+        
+        if (mainTimeline != null)
+        {
+            Debug.Log($"Main Timeline: {mainTimeline.name}");
+            Debug.Log($"- State: {mainTimeline.state}");
+            Debug.Log($"- Time: {mainTimeline.time}");
+            Debug.Log($"- Enabled: {mainTimeline.enabled}");
+            Debug.Log($"- GameObject Active: {mainTimeline.gameObject.activeSelf}");
+        }
+        
+        if (acceptTimeline != null)
+        {
+            Debug.Log($"Accept Timeline: {acceptTimeline.name}");
+            Debug.Log($"- State: {acceptTimeline.state}");
+            Debug.Log($"- Time: {acceptTimeline.time}");
+            Debug.Log($"- Enabled: {acceptTimeline.enabled}");
+            Debug.Log($"- GameObject Active: {acceptTimeline.gameObject.activeSelf}");
+        }
+        
+        // Check camera state
+        if (Kingdom4GameEndManager.Instance != null)
+        {
+            Kingdom4GameEndManager.Instance.DebugCameraState();
+        }
+    }
+    
+    private void DebugLog(string message)
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[TimelineChoiceManager] {message}");
+        }
+    }
+    
+    private void DebugLogError(string message)
+    {
+        Debug.LogError($"[TimelineChoiceManager] {message}");
+    }
+    
+    private void DebugLogWarning(string message)
+    {
+        Debug.LogWarning($"[TimelineChoiceManager] {message}");
     }
 }
