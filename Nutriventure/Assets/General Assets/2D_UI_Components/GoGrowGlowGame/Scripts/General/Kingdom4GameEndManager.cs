@@ -25,7 +25,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private TMP_Text timeText;
     [SerializeField] private TMP_Text coinsText;
     [SerializeField] private TMP_Text expText;
-    [SerializeField] private TMP_Text starsEarnedText; // Added for text display
+    [SerializeField] private TMP_Text starsEarnedText;
     [SerializeField] private GameObject buttonContainer;
     [SerializeField] private float countAnimationDuration = 2f;
 
@@ -132,7 +132,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     // Time thresholds (in seconds)
     private const float THREE_STAR_TIME_MAX = 600f;    // Less than 10 minutes
     private const float TWO_STAR_TIME_MAX = 900f;      // Less than 15 minutes
-    // 15 minutes or more = 1 star max
 
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
@@ -204,11 +203,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (healthManager == null)
             healthManager = FindObjectOfType<PlayerHealthManager>();
 
-        // Find collect key script
         if (collectKeyScript == null)
             collectKeyScript = FindObjectOfType<K4_CollectKey>();
 
-        // Find GameTimer
         if (gameTimer == null)
         {
             gameTimer = GameTimer.Instance;
@@ -227,23 +224,19 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
         }
 
-        // Find Cinemachine Brain
         cinemachineBrain = FindObjectOfType<CinemachineBrain>();
         if (cinemachineBrain != null)
         {
             originalBlendDefinition = cinemachineBrain.m_DefaultBlend;
         }
 
-        // Find character animator if not assigned
         if (characterAnimator == null && playerController != null)
         {
             characterAnimator = playerController.GetComponentInChildren<Animator>();
         }
 
-        // Find cameras if not assigned
         FindCameras();
         
-        // Try to find starting point if not assigned
         if (startingPoint == null)
         {
             GameObject startPointObj = GameObject.Find("StartingPoint");
@@ -253,13 +246,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
         }
 
-        // Find KeyUnlockedController if not assigned
         if (keyUnlockedController == null && keyUnlockedCanvas != null)
         {
             keyUnlockedController = keyUnlockedCanvas.GetComponent<KeyUnlockedCanvasController>();
         }
         
-        // If still null, try to find it anywhere in the scene
         if (keyUnlockedController == null)
         {
             keyUnlockedController = FindObjectOfType<KeyUnlockedCanvasController>();
@@ -269,13 +260,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
         }
         
-        // Initialize key unlock canvas to be hidden
         if (keyUnlockedCanvas != null)
         {
             keyUnlockedCanvas.SetActive(false);
         }
         
-        // Set up continue button listener
         if (continueKeyButton != null)
         {
             continueKeyButton.onClick.RemoveAllListeners();
@@ -339,33 +328,27 @@ public class Kingdom4GameEndManager : MonoBehaviour
             restartButton.interactable = true;
         }
 
-        // Initialize key unlock canvas
         if (keyUnlockedCanvas != null)
             keyUnlockedCanvas.SetActive(false);
 
-        // Initialize KeyImageunlocking
         if (KeyImageunlocking != null)
         {
             KeyImageunlocking.SetActive(false);
             Debug.Log("KeyImageunlocking initialized as DISABLED");
         }
 
-        // Make sure stars container is hidden initially
         if (starsContainer != null)
             starsContainer.SetActive(false);
 
-        // Make sure game end camera is disabled initially
         if (gameEndVirtualCamera != null)
         {
             gameEndVirtualCamera.Priority = 0;
             gameEndVirtualCamera.gameObject.SetActive(false);
         }
 
-        // Make sure UI controls are enabled initially
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
         
-        // Reset star animator
         ResetStarAnimator();
     }
 
@@ -411,11 +394,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         isGameOver = true;
         isSummaryActive = true;
         
-        // Store original time scale
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
         
-        // Check if key was collected this session
         CheckKeyCollectionStatus();
         
         CollectGameData();
@@ -423,7 +404,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         
         HideStarsWhenShowingSummary();
         DisableObjectsOnGameEnd();
-        SwitchToGameEndCameraWithCut();
+        
+        ForceSwitchToGameEndCamera();
+        
         TeleportPlayerToResultPoint();
         SetupUI(playerWon);
         UpdateKeyImageDisplay();
@@ -433,7 +416,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             gameSummaryParent.SetActive(true);
             Debug.Log("Game summary parent activated");
             
-            // Start with panel fade in if CanvasGroup exists
             if (panelCanvasGroup != null)
             {
                 panelCanvasGroup.alpha = 0f;
@@ -452,8 +434,236 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
 
         StartCoroutine(GameEndSequence());
+        
+        DebugCameraState();
     }
 
+    private void ForceSwitchToGameEndCamera()
+    {
+        if (gameEndVirtualCamera == null)
+        {
+            Debug.LogError("Game end virtual camera is null!");
+            return;
+        }
+        
+        Debug.Log("=== FORCE SWITCHING TO GAME END CAMERA ===");
+        
+        SetCameraBlendToCut();
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.enabled = false;
+            playerFollowCamera.Priority = 0;
+            playerFollowCamera.gameObject.SetActive(false);
+            
+            Debug.Log($"Player camera DISABLED, GameObject deactivated, and priority set to 0");
+        }
+        
+        if (!gameEndVirtualCamera.gameObject.activeSelf)
+        {
+            gameEndVirtualCamera.gameObject.SetActive(true);
+        }
+        
+        gameEndVirtualCamera.enabled = true;
+        gameEndVirtualCamera.Priority = gameEndCameraPriority;
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.ManualUpdate();
+        }
+        
+        Debug.Log($"Game end camera ENABLED with priority: {gameEndCameraPriority}");
+        
+        StartCoroutine(VerifyForcedCameraSwitch());
+    }
+
+    private IEnumerator VerifyForcedCameraSwitch()
+    {
+        yield return new WaitForSecondsRealtime(0.2f);
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera after force switch: {(activeCam != null ? activeCam.Name : "None")}");
+            
+            if (activeCam == null || activeCam.VirtualCameraGameObject != gameEndVirtualCamera.gameObject)
+            {
+                Debug.LogWarning("Game end camera not active! Forcing again...");
+                
+                if (playerFollowCamera != null)
+                {
+                    playerFollowCamera.gameObject.SetActive(false);
+                }
+                
+                if (gameEndVirtualCamera != null)
+                {
+                    gameEndVirtualCamera.gameObject.SetActive(true);
+                    gameEndVirtualCamera.Priority = 999;
+                    
+                    if (cinemachineBrain != null)
+                    {
+                        cinemachineBrain.ManualUpdate();
+                    }
+                }
+            }
+        }
+    }
+
+    // ==================== CAMERA FIX METHODS ====================
+    
+    public void OnAcceptTimelineEndedAndGameStarting()
+    {
+        Debug.Log("Accept timeline ended - preparing for game to start");
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+            
+            Debug.Log("Player camera prepared for gameplay");
+        }
+    }
+
+    public void ForceResetCamera()
+    {
+        Debug.Log("Force reset camera called on Kingdom4GameEndManager");
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+        }
+        
+        if (gameEndVirtualCamera != null)
+        {
+            gameEndVirtualCamera.Priority = 0;
+        }
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.ManualUpdate();
+            HardResetCamera();
+        }
+    }
+
+    private void HardResetCamera()
+    {
+        Debug.Log("Hard resetting camera...");
+        
+        if (cinemachineBrain == null)
+        {
+            cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+            if (cinemachineBrain == null) return;
+        }
+        
+        var defaultBlend = cinemachineBrain.m_DefaultBlend;
+        
+        cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+        cinemachineBrain.ManualUpdate();
+        
+        StartCoroutine(RestoreBlendAfterFrame(defaultBlend));
+    }
+
+    private IEnumerator RestoreBlendAfterFrame(CinemachineBlendDefinition originalBlend)
+    {
+        yield return new WaitForEndOfFrame();
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.m_DefaultBlend = originalBlend;
+            cinemachineBrain.ManualUpdate();
+        }
+    }
+
+    private IEnumerator DelayedCameraHardReset()
+    {
+        yield return new WaitForEndOfFrame();
+        HardResetCamera();
+    }
+
+    private void SwitchToPlayerCameraWithBlend()
+    {
+        Debug.Log("=== SWITCHING TO PLAYER CAMERA ===");
+        
+        if (playerFollowCamera != null)
+        {
+            RestoreOriginalCameraBlend();
+            
+            if (gameEndVirtualCamera != null)
+            {
+                gameEndVirtualCamera.Priority = 0;
+                Debug.Log("Game end camera priority set to 0");
+            }
+            
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+
+            if (cinemachineBrain != null)
+            {
+                cinemachineBrain.ManualUpdate();
+            }
+            
+            Debug.Log($"Player camera re-enabled with priority: {playerCameraPriority}");
+            
+            StartCoroutine(DelayedCameraHardReset());
+            StartCoroutine(VerifyPlayerCameraSwitch());
+        }
+        else
+        {
+            Debug.LogWarning("Player follow camera is null!");
+        }
+    }
+
+    private IEnumerator VerifyPlayerCameraSwitch()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera after player switch: {(activeCam != null ? activeCam.Name : "None")}");
+            
+            if (activeCam != null && activeCam.VirtualCameraGameObject == playerFollowCamera.gameObject)
+            {
+                Debug.Log("✓ Player camera is now active");
+            }
+        }
+    }
+
+    [ContextMenu("Debug Camera State")]
+    public void DebugCameraState()
+    {
+        Debug.Log("=== CAMERA STATE DEBUG ===");
+        Debug.Log($"GameEnd Camera: {(gameEndVirtualCamera != null ? gameEndVirtualCamera.gameObject.name : "NULL")}");
+        if (gameEndVirtualCamera != null)
+        {
+            Debug.Log($"- Active: {gameEndVirtualCamera.gameObject.activeSelf}");
+            Debug.Log($"- Priority: {gameEndVirtualCamera.Priority}");
+            Debug.Log($"- Enabled: {gameEndVirtualCamera.enabled}");
+        }
+        
+        Debug.Log($"Player Camera: {(playerFollowCamera != null ? playerFollowCamera.gameObject.name : "NULL")}");
+        if (playerFollowCamera != null)
+        {
+            Debug.Log($"- Active: {playerFollowCamera.gameObject.activeSelf}");
+            Debug.Log($"- Priority: {playerFollowCamera.Priority}");
+            Debug.Log($"- Enabled: {playerFollowCamera.enabled}");
+        }
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera: {(activeCam != null ? activeCam.Name : "None")}");
+            Debug.Log($"Current Blend: {cinemachineBrain.ActiveBlend}");
+            Debug.Log($"Default Blend Style: {cinemachineBrain.m_DefaultBlend.m_Style}");
+        }
+    }
+
+    // ==================== EXISTING METHODS (KEPT AS IS) ====================
+    
     private void CheckKeyCollectionStatus()
     {
         if (collectKeyScript != null)
@@ -470,7 +680,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private void CollectGameData()
     {
-        // Get score from Kingdom4ScoreManager
         if (scoreManager != null)
         {
             finalScore = scoreManager.GetFinalScore();
@@ -484,23 +693,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
             scoreManager = FindObjectOfType<Kingdom4ScoreManager>();
         }
 
-        // Get completion time from GameTimer
         if (gameTimer != null)
         {
             completionTime = gameTimer.ElapsedTime;
             Debug.Log($"Timer elapsed time: {completionTime}s");
-            
-            // Stop the timer when game ends
             gameTimer.StopTimer();
         }
         else
         {
-            // Fallback: Use system time
             completionTime = Time.time - gameStartTime;
             Debug.LogWarning("GameTimer not found, using system time");
         }
         
-        // Check if all phases completed
         if (gameManager != null)
         {
             completedAllPhases = gameManager.currentPhase == AllerthriaGameManager.GamePhase.EndGame;
@@ -511,7 +715,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             gameManager = FindObjectOfType<AllerthriaGameManager>();
         }
 
-        // Get remaining hearts from PlayerHealthManager
         GetRemainingHealth();
         
         Debug.Log($"Game Data Collected: Time={completionTime}s, Hearts={remainingHearts}, Allergens={allergensCollected}, WagonHits={wagonHits}, MaxCombo={maxComboAchieved}");
@@ -534,12 +737,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else if (gameManager != null)
         {
-            // Fallback
             remainingHearts = 3;
         }
         else
         {
-            remainingHearts = 3; // Default fallback
+            remainingHearts = 3;
         }
     }
 
@@ -550,76 +752,61 @@ public class Kingdom4GameEndManager : MonoBehaviour
         CalculateRewards();
     }
 
-    // ==================== STAR RATING CALCULATION ====================
-    // Logic:
-    // - Stars based on time AND hearts remaining
-    // - Time caps maximum possible stars
-    // - Key is awarded only for 2 or 3 stars
-    
     private int CalculateStarRating(bool playerWon)
     {
         if (!playerWon || remainingHearts <= 0)
             return 0;
 
-        // First, determine the maximum possible stars based on time
         int maxStarsByTime;
-        if (completionTime < THREE_STAR_TIME_MAX) // Less than 10 minutes
+        if (completionTime < THREE_STAR_TIME_MAX)
             maxStarsByTime = 3;
-        else if (completionTime < TWO_STAR_TIME_MAX) // Less than 15 minutes
+        else if (completionTime < TWO_STAR_TIME_MAX)
             maxStarsByTime = 2;
-        else // 15 minutes or more
+        else
             maxStarsByTime = 1;
 
         Debug.Log($"Max stars by time ({FormatTime(completionTime)}): {maxStarsByTime}");
 
-        // Then, determine stars based on hearts remaining
         int starsByHearts;
-        if (remainingHearts >= 4) // 4-5 hearts
+        if (remainingHearts >= 4)
             starsByHearts = 3;
-        else if (remainingHearts >= 3) // 3 hearts
+        else if (remainingHearts >= 3)
             starsByHearts = 2;
-        else if (remainingHearts >= 1) // 1-2 hearts
+        else if (remainingHearts >= 1)
             starsByHearts = 1;
-        else // 0 hearts
+        else
             starsByHearts = 0;
 
         Debug.Log($"Stars by hearts ({remainingHearts} hearts): {starsByHearts}");
 
-        // The actual stars is the LOWER of the two (both conditions must be satisfied)
         int finalStars = Mathf.Min(maxStarsByTime, starsByHearts);
         
         Debug.Log($"Final stars: {finalStars}");
         return finalStars;
     }
 
-    // ==================== REWARD CALCULATION ====================
-    // Rewards based on stars + performance bonuses
-    // Key is awarded for 2 or 3 stars (handled separately)
-    
     private void CalculateRewards()
     {
-        // Base rewards based on stars
         switch (starsEarned)
         {
-            case 3: // Perfect
+            case 3:
                 baseCoins = 2000;
                 baseExp = 2000;
                 break;
-            case 2: // Good
+            case 2:
                 baseCoins = 1200;
                 baseExp = 1200;
                 break;
-            case 1: // OK
+            case 1:
                 baseCoins = 600;
                 baseExp = 600;
                 break;
-            default: // Failed
+            default:
                 baseCoins = 100;
                 baseExp = 100;
                 break;
         }
 
-        // Bonus for perfect allergen collection
         if (allergensCollected == 9)
         {
             baseCoins += 500;
@@ -639,7 +826,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             Debug.Log("Bonus: Fair allergen collection +150");
         }
 
-        // Bonus for no wagon hits
         if (wagonHits == 0)
         {
             baseCoins += 300;
@@ -653,7 +839,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             Debug.Log("Bonus: Few wagon hits +150");
         }
 
-        // Bonus for high combo multiplier
         if (maxComboAchieved >= 8)
         {
             baseCoins += 400;
@@ -673,13 +858,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
             Debug.Log("Bonus: Fair combo +100");
         }
 
-        // Bonus for remaining hearts (beyond the minimum for star rating)
         int heartBonus = (remainingHearts - 1) * 100;
         baseCoins += heartBonus;
         baseExp += heartBonus;
         Debug.Log($"Bonus: {remainingHearts} hearts remaining +{heartBonus}");
 
-        // Score bonus (10% of final score)
         int scoreBonus = Mathf.FloorToInt(finalScore * 0.1f);
         Debug.Log($"Bonus: Score bonus (10% of {finalScore}) +{scoreBonus}");
         
@@ -689,8 +872,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log($"Final Rewards: Coins={totalCoins}, Exp={totalExp}, Stars={starsEarned}");
     }
 
-    // ==================== UI ANIMATION ====================
-    
     private IEnumerator GameEndSequence()
     {
         Debug.Log("Starting game end sequence...");
@@ -711,7 +892,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             buttonContainer.SetActive(true);
             Debug.Log("Button container activated");
             
-            // Disable home button on lose
             if (!playerWon && homeButton != null)
             {
                 homeButton.interactable = false;
@@ -730,7 +910,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(0.3f);
         PlayStarAnimationDirect();
-        yield return new WaitForSecondsRealtime(1f); // Wait for star animation to complete
+        yield return new WaitForSecondsRealtime(1f);
     }
 
     private void PlayStarAnimationDirect()
@@ -812,20 +992,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
             yield break;
         }
 
-        // Get target values
         float targetTimePlayed = completionTime;
         int targetGameScore = finalScore;
         
-        // Store these for the animation
         currentTimePlayed = targetTimePlayed;
         currentGameScore = targetGameScore;
         targetCoinsEarned = totalCoins;
 
-        // Reset animation
         elapsedAnimationTime = 0f;
         int lastIntegerValue = 0;
 
-        // Start with all zeros
         timeText.text = "00:00";
         pointsText.text = "0";
         coinsText.text = "0";
@@ -834,34 +1010,29 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(0.3f);
 
-        // Calculate how many ticks we want
         int numberOfTicks = Mathf.Clamp(targetGameScore / 50, 10, 30);
         float tickInterval = countAnimationDuration / numberOfTicks;
         float nextTickTime = 0f;
         
         Debug.Log($"Audio: Will play {numberOfTicks} ticks every {tickInterval:F2} seconds");
 
-        // Animate all values simultaneously
         while (elapsedAnimationTime < countAnimationDuration)
         {
             elapsedAnimationTime += Time.unscaledDeltaTime;
             float progress = elapsedAnimationTime / countAnimationDuration;
             float smoothProgress = Mathf.SmoothStep(0f, 1f, progress);
 
-            // Animate time
             float currentTime = Mathf.Lerp(0, targetTimePlayed, smoothProgress);
             timeText.text = FormatTime(currentTime);
 
-            // Animate score
             float currentScore = Mathf.Lerp(0, targetGameScore, smoothProgress);
             int currentInteger = Mathf.FloorToInt(currentScore);
             
-            // Play tick sound at regular intervals
             if (elapsedAnimationTime >= nextTickTime)
             {
                 if (countTickSound != null && countAudioSource != null)
                 {
-                    countAudioSource.Stop(); // Stop any previous sound
+                    countAudioSource.Stop();
                     countAudioSource.PlayOneShot(countTickSound, 0.5f);
                     Debug.Log($"✓ Tick sound played at {elapsedAnimationTime:F2}s - Score: {currentInteger}");
                 }
@@ -875,35 +1046,28 @@ public class Kingdom4GameEndManager : MonoBehaviour
             
             pointsText.text = Mathf.FloorToInt(currentScore).ToString("N0");
 
-            // Animate coins
             float currentCoins = Mathf.Lerp(0, targetCoinsEarned, smoothProgress);
             coinsText.text = Mathf.FloorToInt(currentCoins).ToString("N0");
             
-            // Animate exp
             float currentExp = Mathf.Lerp(0, totalExp, smoothProgress);
             expText.text = Mathf.FloorToInt(currentExp).ToString("N0");
 
-            // Animate stars (as text)
             int currentStarsText = Mathf.FloorToInt(Mathf.Lerp(0, currentStars, smoothProgress));
             starsEarnedText.text = $"{currentStarsText}/3";
 
             yield return null;
         }
 
-        // Set final values
         timeText.text = FormatTime(targetTimePlayed);
         pointsText.text = targetGameScore.ToString("N0");
         coinsText.text = targetCoinsEarned.ToString("N0");
         expText.text = totalExp.ToString("N0");
         starsEarnedText.text = $"{currentStars}/3";
 
-        // Wait a moment for last tick to finish
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Play completion sound
         if (countCompleteSound != null && countAudioSource != null)
         {
-            // Stop any ongoing tick sounds
             if (countAudioSource.isPlaying)
             {
                 countAudioSource.Stop();
@@ -927,8 +1091,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         return $"{minutes:00}:{seconds:00}";
     }
 
-    // ==================== PANEL FADE ANIMATION ====================
-    
     private IEnumerator FadePanel(float startAlpha, float endAlpha, float duration)
     {
         if (panelCanvasGroup == null) yield break;
@@ -946,8 +1108,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         panelCanvasGroup.alpha = endAlpha;
     }
 
-    // ==================== HELPER METHODS ====================
-    
     private void SetupUI(bool playerWon)
     {
         if (resultBackground != null)
@@ -978,15 +1138,10 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (KeyImageunlocking != null)
         {
-            // Only show key image if:
-            // 1. Summary is active
-            // 2. Key was collected this session
-            // 3. Player earned at least 2 stars (2 or 3 stars)
-            // 4. Player won
             bool shouldShowKeyImage = gameSummaryParent != null && 
                                      gameSummaryParent.activeSelf &&
                                      keyWasCollected && 
-                                     starsEarned >= 2 && // Key awarded for 2 or 3 stars
+                                     starsEarned >= 2 && 
                                      playerWon;
             
             KeyImageunlocking.SetActive(shouldShowKeyImage);
@@ -1015,7 +1170,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         keyUnlockedObject.SetActive(false);
         bool shouldShowKey = false;
 
-        // Show key unlocked object only for 2 or 3 stars AND first time completion
         if (questManager != null && playerWon && starsEarned >= 2)
         {
             Quest quest = questManager.GetQuest(questID);
@@ -1041,36 +1195,29 @@ public class Kingdom4GameEndManager : MonoBehaviour
             return;
         }
 
-        // Set animator to work with paused time
         characterAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
         
-        // Reset all animation parameters first
         characterAnimator.SetBool(danceParameter, false);
         characterAnimator.SetBool(thinkParameter, false);
         
-        // Force update to ensure reset takes effect
         characterAnimator.Update(0f);
         
         Debug.Log($"=== SETTING CHARACTER ANIMATION ===");
         Debug.Log($"playerWon: {playerWon}, stars: {stars}");
         
-        // WIN condition: player won AND at least 1 star
         if (playerWon && stars > 0)
         {
             characterAnimator.SetBool(danceParameter, true);
             Debug.Log($"Set {danceParameter} = TRUE (WIN with {stars} stars)");
         }
-        // LOSE or 0 stars: show thinking
         else
         {
             characterAnimator.SetBool(thinkParameter, true);
             Debug.Log($"Set {thinkParameter} = TRUE (LOSE or 0 stars)");
         }
         
-        // Force another update to apply immediately
         characterAnimator.Update(0f);
         
-        // Debug check
         bool danceValue = characterAnimator.GetBool(danceParameter);
         bool thinkValue = characterAnimator.GetBool(thinkParameter);
         Debug.Log($"After setting - Dance: {danceValue}, Think: {thinkValue}");
@@ -1080,11 +1227,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (characterAnimator != null)
         {
-            // Reset all animation parameters
             characterAnimator.SetBool(danceParameter, false);
             characterAnimator.SetBool(thinkParameter, false);
             
-            // Restore normal update mode
             characterAnimator.updateMode = AnimatorUpdateMode.Normal;
             characterAnimator.Update(0f);
             
@@ -1098,7 +1243,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             if (obj != null && obj.activeSelf)
             {
-                // Skip disabling if this is the background music source
                 if (backgroundMusicSource != null && obj == backgroundMusicSource.gameObject)
                 {
                     Debug.Log($"Skipping disable of background music: {obj.name}");
@@ -1109,7 +1253,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
         }
 
-        // Also disable UI controls canvas if assigned
         if (uiControlsCanvas != null && uiControlsCanvas.activeSelf)
         {
             uiControlsCanvas.SetActive(false);
@@ -1132,56 +1275,10 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
     }
 
-    private void SwitchToGameEndCameraWithCut()
-    {
-        if (gameEndVirtualCamera != null)
-        {
-            SetCameraBlendToCut();
-
-            if (playerFollowCamera != null)
-            {
-                playerFollowCamera.Priority = 0;
-                playerFollowCamera.gameObject.SetActive(false);
-            }
-
-            gameEndVirtualCamera.gameObject.SetActive(true);
-            gameEndVirtualCamera.Priority = gameEndCameraPriority;
-            Debug.Log("Switched to game end camera with CUT blend");
-        }
-        else
-        {
-            Debug.LogWarning("Game end virtual camera not found!");
-        }
-    }
-
-    private void SwitchToPlayerCameraWithBlend()
-    {
-        if (playerFollowCamera != null)
-        {
-            // Don't set to cut here - use the restored blend
-            if (gameEndVirtualCamera != null)
-            {
-                gameEndVirtualCamera.Priority = 0;
-                gameEndVirtualCamera.gameObject.SetActive(false);
-            }
-
-            playerFollowCamera.gameObject.SetActive(true);
-            playerFollowCamera.Priority = playerCameraPriority;
-
-            if (cinemachineBrain != null)
-            {
-                cinemachineBrain.ManualUpdate();
-            }
-            
-            Debug.Log("Switched to player camera with blend");
-        }
-    }
-
     private void TeleportPlayerToResultPoint()
     {
         if (playerController != null && resultCharacterSpawnPoint != null)
         {
-            // Disable character controller temporarily to allow position change
             CharacterController charController = playerController.GetComponent<CharacterController>();
             if (charController != null)
             {
@@ -1191,7 +1288,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             playerController.transform.position = resultCharacterSpawnPoint.position;
             playerController.transform.rotation = resultCharacterSpawnPoint.rotation;
             
-            // Re-enable character controller
             if (charController != null)
             {
                 charController.enabled = true;
@@ -1209,7 +1305,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (playerController != null && startingPoint != null)
         {
-            // Disable character controller temporarily to allow position change
             CharacterController charController = playerController.GetComponent<CharacterController>();
             if (charController != null)
             {
@@ -1219,7 +1314,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             playerController.transform.position = startingPoint.position;
             playerController.transform.rotation = startingPoint.rotation;
             
-            // Re-enable character controller
             if (charController != null)
             {
                 charController.enabled = true;
@@ -1325,13 +1419,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         ResetObjectsToInitialState();
         
-        // Reset timer
         if (gameTimer != null)
         {
             gameTimer.ResetTimer(false);
         }
         
-        // Reset AllerthriaGameManager
         if (gameManager != null)
         {
             gameManager.hasScroll = false;
@@ -1340,25 +1432,21 @@ public class Kingdom4GameEndManager : MonoBehaviour
             gameManager.StartPhase(AllerthriaGameManager.GamePhase.ScrollQuest);
         }
 
-        // Reset Kingdom4ScoreManager
         if (scoreManager != null)
         {
             scoreManager.ResetScore();
         }
         
-        // Reset PlayerHealthManager
         if (healthManager != null)
         {
             healthManager.ResetHealth();
         }
         
-        // Reset key collection script
         if (collectKeyScript != null)
         {
             collectKeyScript.ForceFullReset();
         }
         
-        // Reset key tracking flags
         keyWasCollected = false;
         keySavedToDatabase = false;
         coinsAddedToDatabase = false;
@@ -1377,7 +1465,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 obj.transform.rotation = data.rotation;
                 obj.transform.localScale = data.localScale;
 
-                // Reset Rigidbody if exists
                 Rigidbody rb = obj.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
@@ -1390,11 +1477,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     }
 
     // ==================== OCR SCANNER KEY METHODS ====================
-    // Key is awarded only for 2 or 3 stars
     
-    /// <summary>
-    /// Checks if the player already has the OCR Scanner Key in GameData
-    /// </summary>
     private bool CheckIfPlayerHasOCRScannerKey()
     {
         if (GameDataManager.Instance == null)
@@ -1414,9 +1497,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         return hasKey;
     }
     
-    /// <summary>
-    /// Saves the OCR Scanner Key to GameData (sets HasOCRScannerKey to true)
-    /// </summary>
     private void SaveOCRScannerKeyToGameData()
     {
         if (GameDataManager.Instance == null)
@@ -1431,13 +1511,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
             return;
         }
 
-        // Save the OCR Scanner key - this sets ocrScannerKeyCollected to true
         GameDataManager.Instance.CurrentGameData.CollectOCRScannerKey();
-        
-        // Also save using the generic method for consistency
         GameDataManager.Instance.CurrentGameData.CollectKingdomKey("ocr");
-        
-        // Make sure to save the GameData
         GameDataManager.Instance.SaveGameData();
         
         Debug.Log("✓ OCR Scanner key successfully saved to GameData! HasOCRScannerKey is now TRUE");
@@ -1456,7 +1531,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log($"Added {totalCoins} coins to database");
     }
 
-    // ==================== HOME BUTTON HANDLER WITH OCR KEY FLOW ====================
+    // ==================== HOME BUTTON HANDLER ====================
     
     private void OnHomeClicked()
     {
@@ -1466,7 +1541,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             return;
         }
 
-        // Don't proceed if on lose screen (home button disabled)
         if (!playerWon)
         {
             Debug.Log("Home button is disabled on lose screen");
@@ -1480,86 +1554,60 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (homeButton != null)
             homeButton.interactable = false;
 
-        // Check if player already HAS the OCR Scanner Key in saved data
         bool hasOCRScannerKey = CheckIfPlayerHasOCRScannerKey();
         Debug.Log($"OCR Scanner Key status from GameData: {(hasOCRScannerKey ? "TRUE" : "FALSE")}");
 
-        // Check if key was collected THIS SESSION AND player earned 2+ stars (but not saved yet)
         bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase && starsEarned >= 2;
-        
-        // DECISION FLOW:
-        // 1. If key was collected this session, player earned 2+ stars, and doesn't have it in GameData -> Show unlock canvas
-        // 2. If player already has key in GameData -> Return to game (no canvas)
-        // 3. If no key or less than 2 stars -> Return to game (no canvas)
         
         if (keyCollectedThisSession && !hasOCRScannerKey)
         {
-            // KEY WAS COLLECTED THIS SESSION WITH 2+ STARS AND NOT IN GAMEDATA YET - SHOW UNLOCK CANVAS
             Debug.Log("Key collected this session with 2+ stars and not in GameData - showing KeyUnlockedCanvas");
             StartCoroutine(ReturnToPreSummaryStateAndShowKeyUnlockCanvas());
         }
         else if (hasOCRScannerKey)
         {
-            // PLAYER ALREADY HAS KEY IN GAMEDATA - NO CANVAS
             Debug.Log("Player already has OCR Scanner Key in GameData - returning to game (no canvas)");
             StartCoroutine(ReturnToPreSummaryStateOnly());
         }
         else
         {
-            // NO KEY OR LESS THAN 2 STARS - NO CANVAS
             Debug.Log("No key or less than 2 stars - returning to game fully");
             StartCoroutine(ReturnToGameFully());
         }
     }
 
-    // Return to pre-summary state AND show key unlock canvas
     private IEnumerator ReturnToPreSummaryStateAndShowKeyUnlockCanvas()
     {
         Debug.Log("Returning to pre-summary state and showing key unlock canvas");
         
-        // Fade out summary panel
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
         
-        // Stop character animation
         ResetCharacterAnimation();
-        
-        // Restore background music
         RestoreBackgroundMusicVolume();
-        
-        // Restore time scale
         Time.timeScale = originalTimeScale;
         
-        // Switch back to player camera with blend
         SwitchToPlayerCameraWithBlend();
         
-        // Enable player control and UI
         EnablePlayerControl();
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
         
-        // Reset game state
         ResetKingdom4Game();
-        
-        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
         
-        // Small delay to ensure transform applies
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Reset flags
         isGameOver = false;
         isSummaryActive = false;
         
         Debug.Log($"Player at start position, input enabled");
         
-        // Small delay before showing key unlock canvas
         yield return new WaitForSecondsRealtime(0.5f);
         
-        // Now show KeyUnlockedCanvas (unlockdocrcanvas)
         if (keyUnlockedController != null)
         {
             Debug.Log("Showing KeyUnlockedCanvas via controller");
@@ -1570,10 +1618,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
             Debug.Log("Activating KeyUnlockedCanvas GameObject directly");
             keyUnlockedCanvas.SetActive(true);
             
-            // Make sure the continue button is set up
             if (continueKeyButton != null)
             {
-                // Remove any existing listeners to avoid duplicates
                 continueKeyButton.onClick.RemoveAllListeners();
                 continueKeyButton.onClick.AddListener(OnContinueKeyButtonClicked);
             }
@@ -1585,15 +1631,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
     }
 
-    // Callback for when Continue button in key unlock canvas is clicked (via controller)
     private void OnKeyUnlockCanvasContinue()
     {
         Debug.Log("Key unlock canvas continue callback received - SAVING OCR SCANNER KEY TO GAMEDATA");
         
-        // Save the OCR Scanner key to GameData (sets HasOCRScannerKey to true)
         SaveOCRScannerKeyToGameData();
         
-        // Hide key unlock canvas
         if (keyUnlockedController != null)
         {
             keyUnlockedController.ForceHide();
@@ -1603,19 +1646,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
             keyUnlockedCanvas.SetActive(false);
         }
         
-        // Finish the home button sequence
         FinishHomeButtonSequence();
     }
 
-    // Handle ContinueKeyButton click directly - THIS IS THE BUTTON INSIDE unlockdocrcanvas
     public void OnContinueKeyButtonClicked()
     {
         Debug.Log("ContinueKeyButton clicked directly - SAVING OCR SCANNER KEY TO GAMEDATA");
         
-        // Save the OCR Scanner key to GameData (sets HasOCRScannerKey to true)
         SaveOCRScannerKeyToGameData();
         
-        // Hide KeyUnlockedCanvas
         if (keyUnlockedController != null)
         {
             keyUnlockedController.ForceHide();
@@ -1625,49 +1664,34 @@ public class Kingdom4GameEndManager : MonoBehaviour
             keyUnlockedCanvas.SetActive(false);
         }
         
-        // Finish the sequence
         FinishHomeButtonSequence();
     }
 
-    // Return to pre-summary state ONLY (no animation)
     private IEnumerator ReturnToPreSummaryStateOnly()
     {
         Debug.Log("Returning to pre-summary state only (no animation)");
         
-        // Fade out summary panel
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
         
-        // Stop character animation
         ResetCharacterAnimation();
-        
-        // Restore background music
         RestoreBackgroundMusicVolume();
-        
-        // Restore time scale
         Time.timeScale = originalTimeScale;
         
-        // Switch back to player camera with blend
         SwitchToPlayerCameraWithBlend();
         
-        // Enable player control and UI
         EnablePlayerControl();
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
         
-        // Reset game state
         ResetKingdom4Game();
-        
-        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
         
-        // Small delay to ensure transform applies
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Reset flags
         isGameOver = false;
         isSummaryActive = false;
         isProcessingButton = false;
@@ -1680,45 +1704,31 @@ public class Kingdom4GameEndManager : MonoBehaviour
         FinishHomeButtonSequence();
     }
 
-    // Fully return to game (for no key)
     private IEnumerator ReturnToGameFully()
     {
         Debug.Log("Returning to game fully");
         
-        // Fade out summary panel
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
         
-        // Stop character animation
         ResetCharacterAnimation();
-        
-        // Restore background music
         RestoreBackgroundMusicVolume();
-        
-        // Restore time scale
         Time.timeScale = originalTimeScale;
         
-        // Switch back to player camera with blend
         SwitchToPlayerCameraWithBlend();
         
-        // Enable player control and UI
         EnablePlayerControl();
         if (uiControlsCanvas != null)
             uiControlsCanvas.SetActive(true);
         
-        // Reset game state
         ResetKingdom4Game();
-        
-        // Force teleport to starting point with controller disabled/re-enabled
         TeleportPlayerToStartingPoint();
         
-        // Small delay to ensure transform applies
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Reset flags
         isGameOver = false;
         isSummaryActive = false;
         isProcessingButton = false;
@@ -1735,7 +1745,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("Home button sequence complete");
         
-        // Reset processing flag
         isProcessingButton = false;
         
         if (homeButton != null)
@@ -1757,7 +1766,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         PlayButtonClickSound();
         AddCoinsToDatabase();
 
-        // Save key if it was collected AND player earned 2+ stars
         if (keyWasCollected && !keySavedToDatabase && starsEarned >= 2)
         {
             SaveOCRScannerKeyToGameData();
@@ -1781,14 +1789,12 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("Starting soft restart...");
         
-        // Fade out summary panel
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
         
-        // Reset everything
         ResetCharacterAnimation();
         RestoreBackgroundMusicVolume();
         Time.timeScale = originalTimeScale;
@@ -1801,7 +1807,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         ResetKingdom4Game();
         TeleportPlayerToStartingPoint();
         
-        // Reset flags
         isGameOver = false;
         isSummaryActive = false;
         isProcessingButton = false;
@@ -1816,22 +1821,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("Starting complete game restart...");
         
-        // Fade out summary panel
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
         
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
         
-        // Reset persistent data
         ResetPersistentData();
         
-        // Restore time scale
         Time.timeScale = originalTimeScale;
         
         yield return new WaitForSecondsRealtime(0.1f);
         
-        // Reload scene
         ReloadCurrentScene();
     }
 
@@ -1839,10 +1840,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("Resetting persistent data...");
         
-        // Reset all keys globally
         if (collectKeyScript != null)
         {
-            // Use the static method if available
             var method = collectKeyScript.GetType().GetMethod("GlobalResetAllKeys");
             if (method != null && method.IsStatic)
             {
@@ -1850,7 +1849,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
         }
         
-        // Reset key tracking
         keyWasCollected = false;
         keySavedToDatabase = false;
         coinsAddedToDatabase = false;
@@ -1939,7 +1937,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (backgroundMusicSource != null)
         {
-            // Restore to full volume
             backgroundMusicSource.volume = 1f;
         }
     }
@@ -1952,7 +1949,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
-            // Fallback to AudioHandler if exists
             AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
             if (audioHandler != null)
             {
@@ -1994,7 +1990,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     public void TriggerKingdom4Complete() => HandleKingdom4Complete();
     public void TriggerKingdom4GameOver() => HandleKingdom4GameOver();
 
-    // New method for timer integration
     public void OnGameStarted()
     {
         Debug.Log("Game started notification received in GameEndManager");
@@ -2013,8 +2008,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetRemainingHearts() => remainingHearts;
     public Transform GetResultSpawnPoint() => resultCharacterSpawnPoint;
-
-    // New getters for key state
     public bool WasKeyCollectedThisSession() => keyWasCollected;
     public bool IsKeySavedToDatabase() => keySavedToDatabase;
 
@@ -2025,42 +2018,36 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("=== TESTING STAR LOGIC ===");
         
-        // Test Case 1: 5 hearts, 9 minutes → should be 3 stars
         Debug.Log("\nTest 1: 5 hearts, 9 minutes");
         completionTime = 540f;
         remainingHearts = 5;
         int stars = CalculateStarRating(true);
         Debug.Log($"Result: {stars} stars (Expected: 3)");
         
-        // Test Case 2: 5 hearts, 11 minutes → should be 2 stars (time capped)
         Debug.Log("\nTest 2: 5 hearts, 11 minutes");
         completionTime = 660f;
         remainingHearts = 5;
         stars = CalculateStarRating(true);
         Debug.Log($"Result: {stars} stars (Expected: 2)");
         
-        // Test Case 3: 3 hearts, 9 minutes → should be 2 stars (hearts limit)
         Debug.Log("\nTest 3: 3 hearts, 9 minutes");
         completionTime = 540f;
         remainingHearts = 3;
         stars = CalculateStarRating(true);
         Debug.Log($"Result: {stars} stars (Expected: 2)");
         
-        // Test Case 4: 2 hearts, 9 minutes → should be 1 star (hearts limit)
         Debug.Log("\nTest 4: 2 hearts, 9 minutes");
         completionTime = 540f;
         remainingHearts = 2;
         stars = CalculateStarRating(true);
         Debug.Log($"Result: {stars} stars (Expected: 1)");
         
-        // Test Case 5: 5 hearts, 16 minutes → should be 1 star (time capped)
         Debug.Log("\nTest 5: 5 hearts, 16 minutes");
         completionTime = 960f;
         remainingHearts = 5;
         stars = CalculateStarRating(true);
         Debug.Log($"Result: {stars} stars (Expected: 1)");
         
-        // Test Case 6: 0 hearts → should be 0 stars
         Debug.Log("\nTest 6: 0 hearts");
         remainingHearts = 0;
         stars = CalculateStarRating(true);
@@ -2072,8 +2059,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("=== TESTING GAME SUMMARY ===");
         
-        // Set test data for 3 stars
-        completionTime = 540f; // 9 minutes
+        completionTime = 540f;
         remainingHearts = 5;
         allergensCollected = 9;
         wagonHits = 0;
@@ -2137,25 +2123,21 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         Debug.Log("=== TESTING KEY AWARD LOGIC ===");
         
-        // Test 3 stars with key → should award key
         Debug.Log("\nTest: 3 stars, key collected");
         starsEarned = 3;
         keyWasCollected = true;
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
         
-        // Test 2 stars with key → should award key
         Debug.Log("\nTest: 2 stars, key collected");
         starsEarned = 2;
         keyWasCollected = true;
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
         
-        // Test 1 star with key → should NOT award key
         Debug.Log("\nTest: 1 star, key collected");
         starsEarned = 1;
         keyWasCollected = true;
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: false)");
         
-        // Test 3 stars without key → should NOT award key
         Debug.Log("\nTest: 3 stars, no key");
         starsEarned = 3;
         keyWasCollected = false;
@@ -2169,7 +2151,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         isFirstTimeCompletion = true;
         SaveOCRScannerKeyToGameData();
         
-        // Verify the save
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             bool hasKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
@@ -2194,7 +2175,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             keyWasCollected = true;
             remainingHearts = 5;
-            completionTime = 540f; // 9 minutes
+            completionTime = 540f;
             ShowGameEndScreen(true);
         }
     }
@@ -2206,7 +2187,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             keyWasCollected = true;
             remainingHearts = 3;
-            completionTime = 540f; // 9 minutes
+            completionTime = 540f;
             ShowGameEndScreen(true);
         }
     }
@@ -2218,7 +2199,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             keyWasCollected = true;
             remainingHearts = 1;
-            completionTime = 540f; // 9 minutes
+            completionTime = 540f;
             ShowGameEndScreen(true);
         }
     }
@@ -2230,7 +2211,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             keyWasCollected = false;
             remainingHearts = 5;
-            completionTime = 540f; // 9 minutes
+            completionTime = 540f;
             ShowGameEndScreen(true);
         }
     }
@@ -2285,71 +2266,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
     }
 
-    [ContextMenu("Check UI References")]
-    public void CheckUIReferences()
+    [ContextMenu("Debug Camera State")]
+    public void DebugCameraStateMenu()
     {
-        Debug.Log("=== CHECKING UI REFERENCES ===");
-        Debug.Log($"gameSummaryParent: {(gameSummaryParent != null ? "SET" : "NULL")}");
-        Debug.Log($"pointsText: {(pointsText != null ? "SET" : "NULL")}");
-        Debug.Log($"coinsText: {(coinsText != null ? "SET" : "NULL")}");
-        Debug.Log($"expText: {(expText != null ? "SET" : "NULL")}");
-        Debug.Log($"timeText: {(timeText != null ? "SET" : "NULL")}");
-        Debug.Log($"starsEarnedText: {(starsEarnedText != null ? "SET" : "NULL")}");
-        Debug.Log($"buttonContainer: {(buttonContainer != null ? "SET" : "NULL")}");
-        Debug.Log($"resultBackground: {(resultBackground != null ? "SET" : "NULL")}");
-        Debug.Log($"starsContainer: {(starsContainer != null ? "SET" : "NULL")}");
-        Debug.Log($"starsAnimator: {(starsAnimator != null ? "SET" : "NULL")}");
-        Debug.Log($"panelCanvasGroup: {(panelCanvasGroup != null ? "SET" : "NULL")}");
-        Debug.Log($"keyUnlockedCanvas: {(keyUnlockedCanvas != null ? "SET" : "NULL")}");
-        Debug.Log($"continueKeyButton: {(continueKeyButton != null ? "SET" : "NULL")}");
-        Debug.Log($"keyUnlockedController: {(keyUnlockedController != null ? "SET" : "NULL")}");
-        Debug.Log($"KeyImageunlocking: {(KeyImageunlocking != null ? "SET" : "NULL")}");
-        Debug.Log("==============================");
-    }
-
-    [ContextMenu("Debug Star Animator")]
-    public void DebugStarAnimator()
-    {
-        if (starsAnimator == null)
-        {
-            Debug.LogError("Stars animator is null!");
-            return;
-        }
-        
-        Debug.Log("=== STAR ANIMATOR DEBUG ===");
-        Debug.Log($"Animator GameObject: {starsAnimator.gameObject.name}");
-        Debug.Log($"Animator enabled: {starsAnimator.enabled}");
-        Debug.Log($"Animator active: {starsAnimator.gameObject.activeSelf}");
-        Debug.Log($"Update mode: {starsAnimator.updateMode}");
-        Debug.Log($"Controller: {starsAnimator.runtimeAnimatorController?.name}");
-        
-        Debug.Log($"Current '{starParameter}' value: {starsAnimator.GetInteger(starParameter)}");
-        
-        Debug.Log("All parameters:");
-        foreach (var param in starsAnimator.parameters)
-        {
-            string value = "";
-            switch (param.type)
-            {
-                case AnimatorControllerParameterType.Float:
-                    value = starsAnimator.GetFloat(param.name).ToString();
-                    break;
-                case AnimatorControllerParameterType.Int:
-                    value = starsAnimator.GetInteger(param.name).ToString();
-                    break;
-                case AnimatorControllerParameterType.Bool:
-                    value = starsAnimator.GetBool(param.name).ToString();
-                    break;
-                case AnimatorControllerParameterType.Trigger:
-                    value = "Trigger";
-                    break;
-            }
-            Debug.Log($"- {param.name} (Type: {param.type}, Value: {value})");
-        }
-        
-        AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
-        Debug.Log($"Current state hash: {stateInfo.fullPathHash}");
-        Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
-        Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
+        DebugCameraState();
     }
 }
