@@ -2091,7 +2091,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 3
+  sensitivity: 0.1
   invertX: 0
   invertY: 1
   uiInput: {fileID: 1701459693}
@@ -8640,6 +8640,7 @@ GameObject:
   - component: {fileID: 136284500}
   - component: {fileID: 136284499}
   - component: {fileID: 136284498}
+  - component: {fileID: 136284501}
   m_Layer: 0
   m_Name: Claim
   m_TagString: Untagged
@@ -8710,7 +8711,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 136284499}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1300967564}
+        m_TargetAssemblyTypeName: ChestManager, Assembly-CSharp
+        m_MethodName: OnClaimButtonClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &136284499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8749,6 +8762,31 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 136284496}
   m_CullTransparentMesh: 1
+--- !u!114 &136284501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136284496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2106
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 0
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 100
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1001 &139200810
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -45856,10 +45894,6 @@ MonoBehaviour:
   soundEffectsSources:
   - {fileID: 278235833}
   countdownTickSound: {fileID: 8300000, guid: b64e4120cbe1743449b0ad33ee000214, type: 3}
-  useGlobalAudioInterceptor: 1
-  targetScriptNames:
-  - K2_CollectKey
-  - NutriHeartCollector
 --- !u!1 &648784591
 GameObject:
   m_ObjectHideFlags: 0
@@ -215686,6 +215720,7 @@ GameObject:
   - component: {fileID: 5536802451331073601}
   - component: {fileID: 7163894886664558060}
   - component: {fileID: 7976010194807306349}
+  - component: {fileID: 7976010194807306350}
   m_Layer: 5
   m_Name: PickUpBTN
   m_TagString: Untagged
@@ -232346,6 +232381,31 @@ MonoBehaviour:
   buttonClickOutputEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7976010194807306350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6230919820970506584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2101
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 0
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 100
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &7978913695246622260
 Transform:
   m_ObjectHideFlags: 0

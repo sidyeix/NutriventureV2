@@ -223657,6 +223657,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4374681025272418368}
   - component: {fileID: 4374681025272418369}
+  - component: {fileID: 4374681025272418370}
   m_Layer: 0
   m_Name: OxidantGem
   m_TagString: K3_OxidantGEM
@@ -229793,11 +229794,32 @@ MonoBehaviour:
   updateOnTrigger: 1
   destroyOnTrigger: 0
   playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
+  useCooldown: 1
+  cooldownDuration: 120
   feedbackText: {fileID: 0}
   feedbackDuration: 2
   clickSound: ButtonClick
+--- !u!65 &4374681025272418370
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026045008045626868}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &4378107015630589433
 Transform:
   m_ObjectHideFlags: 0
@@ -279070,6 +279092,7 @@ GameObject:
   m_Component:
   - component: {fileID: 284226285184199496}
   - component: {fileID: 7438734748379730756}
+  - component: {fileID: 7438734748379730757}
   m_Layer: 0
   m_Name: MicrobeGem
   m_TagString: K3_MicrobeGEM
@@ -279097,11 +279120,32 @@ MonoBehaviour:
   updateOnTrigger: 1
   destroyOnTrigger: 0
   playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
+  useCooldown: 1
+  cooldownDuration: 120
   feedbackText: {fileID: 0}
   feedbackDuration: 2
   clickSound: ButtonClick
+--- !u!65 &7438734748379730757
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7438734748379730755}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &7482529964986845564
 Transform:
   m_ObjectHideFlags: 0

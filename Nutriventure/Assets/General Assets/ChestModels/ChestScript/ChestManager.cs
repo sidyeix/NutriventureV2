@@ -56,6 +56,11 @@ public class ChestManager : MonoBehaviour
     public GameObject gemRewardFeedbackPrefab;
     public RectTransform gemRewardSpawnPoint;
 
+    private float lastTriggerExitTime = 0f;
+    private float triggerCooldown = 0.5f; // Adjust as needed
+    private bool isShowingClaimButton = false;
+    private Coroutine showButtonCoroutine;
+
     [Header("Animation Settings")]
     public Canvas parentCanvas;
     public float feedbackSlideDuration = 0.5f;
@@ -245,9 +250,13 @@ public class ChestManager : MonoBehaviour
         }
 
         // Chest is now claimable
-        if (currentChest != null && currentChest.isClaimable && isPlayerInTrigger)
+        if (currentChest != null && currentChest.isClaimable)
         {
-            ShowClaimButton();
+            // Only show if player is in trigger AND we're not in cooldown
+            if (isPlayerInTrigger && (Time.time - lastTriggerExitTime) > triggerCooldown)
+            {
+                ShowClaimButton();
+            }
         }
     }
 
@@ -265,27 +274,39 @@ public class ChestManager : MonoBehaviour
         return null;
     }
 
-    // Called when player enters the trigger area
+    // Replace your OnTriggerEnter method:
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             isPlayerInTrigger = true;
-
+            lastTriggerExitTime = 0f; // Reset exit time
+            
+            // Cancel any pending hide operations
+            if (showButtonCoroutine != null)
+                StopCoroutine(showButtonCoroutine);
+            
             // Only show claim button if there's a chest and it's claimable
             if (currentChest != null && currentChest.isClaimable && !currentChest.isOpened)
             {
-                ShowClaimButton();
+                showButtonCoroutine = StartCoroutine(ShowClaimButtonWithDelay(0.1f));
             }
         }
     }
 
+    // Replace your OnTriggerExit method:
     void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
         {
             isPlayerInTrigger = false;
-            HideClaimButton();
+            lastTriggerExitTime = Time.time;
+            
+            // Add a small delay before hiding to prevent flickering
+            if (showButtonCoroutine != null)
+                StopCoroutine(showButtonCoroutine);
+            
+            showButtonCoroutine = StartCoroutine(HideClaimButtonWithDelay(0.1f));
         }
     }
 
@@ -301,6 +322,19 @@ public class ChestManager : MonoBehaviour
         }
     }
 
+        // Add these new coroutines:
+    IEnumerator ShowClaimButtonWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Double-check conditions after delay
+        if (isPlayerInTrigger && currentChest != null && 
+            currentChest.isClaimable && !currentChest.isOpened)
+        {
+            ShowClaimButton();
+        }
+    }
+
     void HideClaimButton()
     {
         if (claimButtonCanvas != null && claimButtonCanvasGroup != null)
@@ -312,6 +346,18 @@ public class ChestManager : MonoBehaviour
             Debug.Log($"Claim button hidden with {claimButtonFadeDuration}s fade");
         }
     }
+
+        IEnumerator HideClaimButtonWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Check if player is still not in trigger (debounce)
+        if (!isPlayerInTrigger)
+        {
+            HideClaimButton();
+        }
+    }
+    
 
     IEnumerator DeactivateAfterDelay(GameObject obj, float delay)
     {
