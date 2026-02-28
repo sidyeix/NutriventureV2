@@ -17,9 +17,8 @@ public class WardenInteraction : MonoBehaviour
     [SerializeField] private GameObject profilePanel; // Reference to profile panel
     
     [Header("Timelines")]
-    [SerializeField] private PlayableDirector firstArrivalTimeline;  // For HasOCRKey = false (with pause)
-    [SerializeField] private PlayableDirector acceptTimeline;        // Plays when ACCEPT is clicked
-    [SerializeField] private PlayableDirector secondCutscene;        // For HasOCRKey = true (plays directly)
+    [SerializeField] private PlayableDirector firstCutscene;  // For HasOCRKey = false
+    [SerializeField] private PlayableDirector secondCutscene; // For HasOCRKey = true
     
     [Header("Quest Settings")]
     [SerializeField] private bool isKeyGiverNPC = true;
@@ -28,17 +27,13 @@ public class WardenInteraction : MonoBehaviour
     [SerializeField] private bool startsGameTimer = true;
     [SerializeField] private bool isFirstWardenInteraction = true;
     
-    [Header("Choice Manager Reference")]
-    [SerializeField] private TimelineChoiceManager choiceManager; // Reference to the choice manager
-    
     [Header("Debug Settings")]
     [SerializeField] private bool enableDebugLogs = true;
     
     private GameTimer gameTimer;
-    private bool questAccepted = false;
-    private bool isTimelinePlaying = false;
+    private bool cutscenePlayed = false; // Track if cutscene has been played
+    private bool isCutscenePlaying = false;
     private bool isPlayerInRange = false;
-    private Coroutine timelineWaitCoroutine;
     private PlayableDirector currentPlayingTimeline;
     
     private void Start()
@@ -59,60 +54,34 @@ public class WardenInteraction : MonoBehaviour
         
         FindGameTimer();
         
-        // Find choice manager if not assigned
-        if (choiceManager == null)
-        {
-            choiceManager = FindObjectOfType<TimelineChoiceManager>();
-            if (choiceManager == null)
-            {
-                Debug.LogError("TimelineChoiceManager not found in scene! Please assign it in the inspector.");
-            }
-        }
-        
         // Register for timeline events
         RegisterTimelineEvents();
     }
     
     private void RegisterTimelineEvents()
     {
-        if (firstArrivalTimeline != null)
+        if (firstCutscene != null)
         {
-            firstArrivalTimeline.stopped += OnTimelineStopped;
-            firstArrivalTimeline.paused += OnTimelinePaused;
-        }
-        
-        if (acceptTimeline != null)
-        {
-            acceptTimeline.stopped += OnTimelineStopped;
-            acceptTimeline.paused += OnTimelinePaused;
+            firstCutscene.stopped += OnTimelineStopped;
         }
         
         if (secondCutscene != null)
         {
             secondCutscene.stopped += OnTimelineStopped;
-            secondCutscene.paused += OnTimelinePaused;
         }
     }
     
     private void OnDestroy()
     {
         // Unregister events
-        if (firstArrivalTimeline != null)
+        if (firstCutscene != null)
         {
-            firstArrivalTimeline.stopped -= OnTimelineStopped;
-            firstArrivalTimeline.paused -= OnTimelinePaused;
-        }
-        
-        if (acceptTimeline != null)
-        {
-            acceptTimeline.stopped -= OnTimelineStopped;
-            acceptTimeline.paused -= OnTimelinePaused;
+            firstCutscene.stopped -= OnTimelineStopped;
         }
         
         if (secondCutscene != null)
         {
             secondCutscene.stopped -= OnTimelineStopped;
-            secondCutscene.paused -= OnTimelinePaused;
         }
     }
     
@@ -120,31 +89,13 @@ public class WardenInteraction : MonoBehaviour
     {
         DebugLog($"Timeline stopped: {director.name}");
         
-        if (director == firstArrivalTimeline)
+        if (director == firstCutscene)
         {
-            OnMainTimelineEnded();
-        }
-        else if (director == acceptTimeline)
-        {
-            OnAcceptTimelineEnded();
+            OnFirstCutsceneEnded();
         }
         else if (director == secondCutscene)
         {
             OnSecondCutsceneEnded();
-        }
-    }
-    
-    private void OnTimelinePaused(PlayableDirector director)
-    {
-        DebugLog($"Timeline paused: {director.name}");
-        
-        if (director == firstArrivalTimeline)
-        {
-            // Notify choice manager that timeline is paused
-            if (choiceManager != null)
-            {
-                choiceManager.OnTimelinePaused();
-            }
         }
     }
     
@@ -191,15 +142,15 @@ public class WardenInteraction : MonoBehaviour
     
     private void OnEnable()
     {
-        questAccepted = false;
+        cutscenePlayed = false;
     }
     
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player") && !isTimelinePlaying)
+        if (other.CompareTag("Player") && !isCutscenePlaying)
         {
             isPlayerInRange = true;
-            if (!questAccepted)
+            if (!cutscenePlayed)
             {
                 ShowTalkButton();
             }
@@ -236,7 +187,7 @@ public class WardenInteraction : MonoBehaviour
     
     private void ShowTalkButton()
     {
-        if (questAccepted) return;
+        if (cutscenePlayed) return;
         
         DebugLog("Showing talk button");
         
@@ -258,18 +209,21 @@ public class WardenInteraction : MonoBehaviour
     
     private void StartInteraction()
     {
-        if (questAccepted) return;
+        if (cutscenePlayed) return;
         
         // Check if player has OCR key
         bool hasOCRKey = CheckPlayerHasKey();
         DebugLog($"Player has OCR key: {hasOCRKey}");
         
+        // Mark that cutscene has been played
+        cutscenePlayed = true;
+        isCutscenePlaying = true;
+        HideTalkButton();
+        
         if (hasOCRKey && secondCutscene != null)
         {
-            // Player has OCR key - play second cutscene directly (no pause/buttons)
-            DebugLog("Player has OCR key, playing second cutscene directly");
-            isTimelinePlaying = true;
-            HideTalkButton();
+            // Player has OCR key - play second cutscene
+            DebugLog("Player has OCR key, playing second cutscene");
             
             // Activate game UI for second cutscene (this will disable profile panel)
             ActivateAllGameUI();
@@ -280,52 +234,36 @@ public class WardenInteraction : MonoBehaviour
             // Play second cutscene
             currentPlayingTimeline = secondCutscene;
             secondCutscene.Play();
-            
-            return;
         }
-        
-        // Player does NOT have OCR key - play intro timeline with pause/buttons
-        if (firstArrivalTimeline != null)
+        else if (!hasOCRKey && firstCutscene != null)
         {
-            DebugLog("Player does NOT have OCR key, playing intro timeline (will pause for choice)");
-            isTimelinePlaying = true;
-            HideTalkButton();
+            // Player does NOT have OCR key - play first cutscene
+            DebugLog("Player does NOT have OCR key, playing first cutscene");
             
-            // Deactivate game UI during intro (this will enable profile panel)
+            // Deactivate game UI during first cutscene (this will enable profile panel)
             DeactivateAllGameUI();
             
             // Stop any currently playing timeline
             StopAllTimelines();
             
-            // Tell choice manager which timelines to use for this interaction
-            if (choiceManager != null)
-            {
-                choiceManager.SetTimelines(firstArrivalTimeline, acceptTimeline);
-                // Start the initial cutscene through choice manager
-                currentPlayingTimeline = firstArrivalTimeline;
-                choiceManager.StartInitialCutscene();
-            }
-            else
-            {
-                // Fallback if no choice manager
-                currentPlayingTimeline = firstArrivalTimeline;
-                firstArrivalTimeline.Play();
-            }
+            // Play first cutscene
+            currentPlayingTimeline = firstCutscene;
+            firstCutscene.Play();
+        }
+        else
+        {
+            isCutscenePlaying = false;
+            cutscenePlayed = false; // Reset so player can try again
+            if (isPlayerInRange) ShowTalkButton();
         }
     }
     
     private void StopAllTimelines()
     {
-        if (firstArrivalTimeline != null && firstArrivalTimeline.state == PlayState.Playing)
+        if (firstCutscene != null && firstCutscene.state == PlayState.Playing)
         {
-            firstArrivalTimeline.Stop();
-            DebugLog("Stopped firstArrivalTimeline");
-        }
-        
-        if (acceptTimeline != null && acceptTimeline.state == PlayState.Playing)
-        {
-            acceptTimeline.Stop();
-            DebugLog("Stopped acceptTimeline");
+            firstCutscene.Stop();
+            DebugLog("Stopped firstCutscene");
         }
         
         if (secondCutscene != null && secondCutscene.state == PlayState.Playing)
@@ -345,21 +283,14 @@ public class WardenInteraction : MonoBehaviour
         StopAllTimelines();
         
         // Reset timeline time
-        if (firstArrivalTimeline != null)
-            firstArrivalTimeline.time = 0;
-            
-        if (acceptTimeline != null)
-            acceptTimeline.time = 0;
+        if (firstCutscene != null)
+            firstCutscene.time = 0;
             
         if (secondCutscene != null)
             secondCutscene.time = 0;
         
-        isTimelinePlaying = false;
-        questAccepted = false;
-        
-        // Hide choice buttons
-        if (choiceManager != null)
-            choiceManager.HideChoiceButtons();
+        isCutscenePlaying = false;
+        cutscenePlayed = false;
         
         // Show talk button if player in range
         if (isPlayerInRange)
@@ -368,67 +299,27 @@ public class WardenInteraction : MonoBehaviour
         DebugLog("Timeline reset complete");
     }
     
-    public void OnQuestAccepted()
+    // Called when the first cutscene finishes playing
+    private void OnFirstCutsceneEnded()
     {
-        if (questAccepted) return;
+        DebugLog("First cutscene ended");
         
-        questAccepted = true;
-        DebugLog("QUEST ACCEPTED via TimelineChoiceManager!");
-        
-        // Hide talk button
-        HideTalkButton();
-        
-        // Note: The timeline switching is handled by TimelineChoiceManager
-        // We just need to prepare the game for when the accept timeline ends
-    }
-    
-    public void OnQuestRejected()
-    {
-        DebugLog("QUEST REJECTED via TimelineChoiceManager");
-        
-        // Note: The timeline resuming is handled by TimelineChoiceManager
-        // We just need to prepare for the main timeline to continue
-    }
-    
-    // Called when the accept timeline finishes playing
-    public void OnAcceptTimelineEnded()
-    {
-        DebugLog("Accept timeline ended - starting the game");
-        
-        // Start the game - this will activate game UI and disable profile panel
-        StartGameTimerNow();
-        ActivateAllGameUI();
-        
-        // Reset timeline playing flag
-        isTimelinePlaying = false;
-        currentPlayingTimeline = null;
-        
-        // FIXED: Notify the GameEndManager that we're starting the game
-        // This ensures camera system is ready for when game ends
-        if (Kingdom4GameEndManager.Instance != null)
+        // For first cutscene, we don't start the game - just reset state
+        if (isPlayerInRange && !cutscenePlayed)
         {
-            // Tell GameEndManager that the game is starting from accept timeline
-            Kingdom4GameEndManager.Instance.OnAcceptTimelineEndedAndGameStarting();
-        }
-    }
-    
-    // Called when the main timeline finishes playing (after rejection or natural end)
-    public void OnMainTimelineEnded()
-    {
-        DebugLog("Main timeline ended");
-        
-        if (!questAccepted && isPlayerInRange)
-        {
-            // If quest wasn't accepted and player is still in range, show talk button again
+            // If cutscenePlayed was somehow reset, show talk button
             ShowTalkButton();
         }
         
-        isTimelinePlaying = false;
+        isCutscenePlaying = false;
         currentPlayingTimeline = null;
+        
+        // Reactivate profile panel since game UI is off
+        DeactivateAllGameUI();
     }
     
     // Called when the second cutscene finishes (for players who already have key)
-    public void OnSecondCutsceneEnded()
+    private void OnSecondCutsceneEnded()
     {
         DebugLog("Second cutscene ended - starting the game");
         
@@ -436,8 +327,15 @@ public class WardenInteraction : MonoBehaviour
         StartGameTimerNow();
         ActivateAllGameUI();
         
-        isTimelinePlaying = false;
+        isCutscenePlaying = false;
         currentPlayingTimeline = null;
+        
+        // FIXED: Notify the GameEndManager that we're starting the game
+        // This ensures camera system is ready for when game ends
+        if (Kingdom4GameEndManager.Instance != null)
+        {
+            Kingdom4GameEndManager.Instance.OnAcceptTimelineEndedAndGameStarting();
+        }
     }
     
     private void StartGameTimerNow()
@@ -475,6 +373,17 @@ public class WardenInteraction : MonoBehaviour
         }
     }
     
+    // Public method to reset interaction (can be called from game manager)
+    public void ResetInteraction()
+    {
+        DebugLog("Resetting interaction");
+        cutscenePlayed = false;
+        isCutscenePlaying = false;
+        
+        if (isPlayerInRange)
+            ShowTalkButton();
+    }
+    
     // Debug methods
     [ContextMenu("Test Show Talk Button")]
     public void TestShowButton()
@@ -486,18 +395,6 @@ public class WardenInteraction : MonoBehaviour
     public void TestHideButton()
     {
         HideTalkButton();
-    }
-    
-    [ContextMenu("Test Quest Acceptance")]
-    public void TestQuestAcceptance()
-    {
-        OnQuestAccepted();
-    }
-    
-    [ContextMenu("Test Quest Rejection")]
-    public void TestQuestRejection()
-    {
-        OnQuestRejected();
     }
     
     [ContextMenu("Test Activate Game UI")]
@@ -539,8 +436,8 @@ public class WardenInteraction : MonoBehaviour
     {
         Debug.Log("=== CURRENT STATE ===");
         Debug.Log($"isPlayerInRange: {isPlayerInRange}");
-        Debug.Log($"questAccepted: {questAccepted}");
-        Debug.Log($"isTimelinePlaying: {isTimelinePlaying}");
+        Debug.Log($"cutscenePlayed: {cutscenePlayed}");
+        Debug.Log($"isCutscenePlaying: {isCutscenePlaying}");
         Debug.Log($"currentPlayingTimeline: {(currentPlayingTimeline != null ? currentPlayingTimeline.name : "None")}");
         
         if (currentPlayingTimeline != null)
