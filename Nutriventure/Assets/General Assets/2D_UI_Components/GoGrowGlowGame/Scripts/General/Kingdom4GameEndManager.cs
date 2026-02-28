@@ -95,7 +95,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [Header("Timer Integration")]
     [SerializeField] private GameTimer gameTimer;
 
-    // ===== K2-style Button Functionality =====
     [Header("K2-style Button Settings")]
     [SerializeField] private CanvasGroup panelCanvasGroup;
     [SerializeField] private float fadeInDuration = 1.0f;
@@ -105,14 +104,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [SerializeField] private AudioClip buttonClickSound;
     [SerializeField] private float buttonClickVolume = 0.7f;
     
-    [Header("Key Unlocked Canvas (unlockdocrcanvas)")]
+    [Header("Key Unlocked Canvas")]
     [SerializeField] private GameObject keyUnlockedCanvas;
     [SerializeField] private Button continueKeyButton;
     [SerializeField] private KeyUnlockedCanvasController keyUnlockedController;
     
     [Header("Key Image Display")]
     [SerializeField] private GameObject KeyImageunlocking;
-    // ==============================================
+
+    [Header("🔑 KEY COLLECTION SETTINGS")]
+    [SerializeField] private bool isKeyKingdom = true;
+    [SerializeField] private string keyName = "OCR";
+    [SerializeField] private int starsRequiredForKey = 2;
 
     // Game end calculations
     private int starsEarned = 0;
@@ -130,8 +133,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
     private float gameStartTime;
 
     // Time thresholds (in seconds)
-    private const float THREE_STAR_TIME_MAX = 600f;    // Less than 10 minutes
-    private const float TWO_STAR_TIME_MAX = 900f;      // Less than 15 minutes
+    private const float THREE_STAR_TIME_MAX = 600f;
+    private const float TWO_STAR_TIME_MAX = 900f;
 
     private Coroutine countAnimationCoroutine;
     private bool isFirstTimeCompletion = false;
@@ -146,6 +149,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
     private bool isProcessingButton = false;
     private float originalTimeScale;
     private bool playerWon = false;
+    
+    // 🔥 KEY COLLECTION TRACKING
     private bool keyWasCollected = false;
     private bool keySavedToDatabase = false;
     private int healthAtKeyCollection = 0;
@@ -438,232 +443,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         DebugCameraState();
     }
 
-    private void ForceSwitchToGameEndCamera()
-    {
-        if (gameEndVirtualCamera == null)
-        {
-            Debug.LogError("Game end virtual camera is null!");
-            return;
-        }
-        
-        Debug.Log("=== FORCE SWITCHING TO GAME END CAMERA ===");
-        
-        SetCameraBlendToCut();
-        
-        if (playerFollowCamera != null)
-        {
-            playerFollowCamera.enabled = false;
-            playerFollowCamera.Priority = 0;
-            playerFollowCamera.gameObject.SetActive(false);
-            
-            Debug.Log($"Player camera DISABLED, GameObject deactivated, and priority set to 0");
-        }
-        
-        if (!gameEndVirtualCamera.gameObject.activeSelf)
-        {
-            gameEndVirtualCamera.gameObject.SetActive(true);
-        }
-        
-        gameEndVirtualCamera.enabled = true;
-        gameEndVirtualCamera.Priority = gameEndCameraPriority;
-        
-        if (cinemachineBrain != null)
-        {
-            cinemachineBrain.ManualUpdate();
-        }
-        
-        Debug.Log($"Game end camera ENABLED with priority: {gameEndCameraPriority}");
-        
-        StartCoroutine(VerifyForcedCameraSwitch());
-    }
-
-    private IEnumerator VerifyForcedCameraSwitch()
-    {
-        yield return new WaitForSecondsRealtime(0.2f);
-        
-        if (cinemachineBrain != null)
-        {
-            var activeCam = cinemachineBrain.ActiveVirtualCamera;
-            Debug.Log($"Active Virtual Camera after force switch: {(activeCam != null ? activeCam.Name : "None")}");
-            
-            if (activeCam == null || activeCam.VirtualCameraGameObject != gameEndVirtualCamera.gameObject)
-            {
-                Debug.LogWarning("Game end camera not active! Forcing again...");
-                
-                if (playerFollowCamera != null)
-                {
-                    playerFollowCamera.gameObject.SetActive(false);
-                }
-                
-                if (gameEndVirtualCamera != null)
-                {
-                    gameEndVirtualCamera.gameObject.SetActive(true);
-                    gameEndVirtualCamera.Priority = 999;
-                    
-                    if (cinemachineBrain != null)
-                    {
-                        cinemachineBrain.ManualUpdate();
-                    }
-                }
-            }
-        }
-    }
-
-    // ==================== CAMERA FIX METHODS ====================
-    
-    public void OnAcceptTimelineEndedAndGameStarting()
-    {
-        Debug.Log("Accept timeline ended - preparing for game to start");
-        
-        if (playerFollowCamera != null)
-        {
-            playerFollowCamera.gameObject.SetActive(true);
-            playerFollowCamera.enabled = true;
-            playerFollowCamera.Priority = playerCameraPriority;
-            
-            Debug.Log("Player camera prepared for gameplay");
-        }
-    }
-
-    public void ForceResetCamera()
-    {
-        Debug.Log("Force reset camera called on Kingdom4GameEndManager");
-        
-        if (playerFollowCamera != null)
-        {
-            playerFollowCamera.gameObject.SetActive(true);
-            playerFollowCamera.enabled = true;
-            playerFollowCamera.Priority = playerCameraPriority;
-        }
-        
-        if (gameEndVirtualCamera != null)
-        {
-            gameEndVirtualCamera.Priority = 0;
-        }
-        
-        if (cinemachineBrain != null)
-        {
-            cinemachineBrain.ManualUpdate();
-            HardResetCamera();
-        }
-    }
-
-    private void HardResetCamera()
-    {
-        Debug.Log("Hard resetting camera...");
-        
-        if (cinemachineBrain == null)
-        {
-            cinemachineBrain = FindObjectOfType<CinemachineBrain>();
-            if (cinemachineBrain == null) return;
-        }
-        
-        var defaultBlend = cinemachineBrain.m_DefaultBlend;
-        
-        cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
-        cinemachineBrain.ManualUpdate();
-        
-        StartCoroutine(RestoreBlendAfterFrame(defaultBlend));
-    }
-
-    private IEnumerator RestoreBlendAfterFrame(CinemachineBlendDefinition originalBlend)
-    {
-        yield return new WaitForEndOfFrame();
-        
-        if (cinemachineBrain != null)
-        {
-            cinemachineBrain.m_DefaultBlend = originalBlend;
-            cinemachineBrain.ManualUpdate();
-        }
-    }
-
-    private IEnumerator DelayedCameraHardReset()
-    {
-        yield return new WaitForEndOfFrame();
-        HardResetCamera();
-    }
-
-    private void SwitchToPlayerCameraWithBlend()
-    {
-        Debug.Log("=== SWITCHING TO PLAYER CAMERA ===");
-        
-        if (playerFollowCamera != null)
-        {
-            RestoreOriginalCameraBlend();
-            
-            if (gameEndVirtualCamera != null)
-            {
-                gameEndVirtualCamera.Priority = 0;
-                Debug.Log("Game end camera priority set to 0");
-            }
-            
-            playerFollowCamera.gameObject.SetActive(true);
-            playerFollowCamera.enabled = true;
-            playerFollowCamera.Priority = playerCameraPriority;
-
-            if (cinemachineBrain != null)
-            {
-                cinemachineBrain.ManualUpdate();
-            }
-            
-            Debug.Log($"Player camera re-enabled with priority: {playerCameraPriority}");
-            
-            StartCoroutine(DelayedCameraHardReset());
-            StartCoroutine(VerifyPlayerCameraSwitch());
-        }
-        else
-        {
-            Debug.LogWarning("Player follow camera is null!");
-        }
-    }
-
-    private IEnumerator VerifyPlayerCameraSwitch()
-    {
-        yield return new WaitForSecondsRealtime(0.1f);
-        
-        if (cinemachineBrain != null)
-        {
-            var activeCam = cinemachineBrain.ActiveVirtualCamera;
-            Debug.Log($"Active Virtual Camera after player switch: {(activeCam != null ? activeCam.Name : "None")}");
-            
-            if (activeCam != null && activeCam.VirtualCameraGameObject == playerFollowCamera.gameObject)
-            {
-                Debug.Log("✓ Player camera is now active");
-            }
-        }
-    }
-
-    [ContextMenu("Debug Camera State")]
-    public void DebugCameraState()
-    {
-        Debug.Log("=== CAMERA STATE DEBUG ===");
-        Debug.Log($"GameEnd Camera: {(gameEndVirtualCamera != null ? gameEndVirtualCamera.gameObject.name : "NULL")}");
-        if (gameEndVirtualCamera != null)
-        {
-            Debug.Log($"- Active: {gameEndVirtualCamera.gameObject.activeSelf}");
-            Debug.Log($"- Priority: {gameEndVirtualCamera.Priority}");
-            Debug.Log($"- Enabled: {gameEndVirtualCamera.enabled}");
-        }
-        
-        Debug.Log($"Player Camera: {(playerFollowCamera != null ? playerFollowCamera.gameObject.name : "NULL")}");
-        if (playerFollowCamera != null)
-        {
-            Debug.Log($"- Active: {playerFollowCamera.gameObject.activeSelf}");
-            Debug.Log($"- Priority: {playerFollowCamera.Priority}");
-            Debug.Log($"- Enabled: {playerFollowCamera.enabled}");
-        }
-        
-        if (cinemachineBrain != null)
-        {
-            var activeCam = cinemachineBrain.ActiveVirtualCamera;
-            Debug.Log($"Active Virtual Camera: {(activeCam != null ? activeCam.Name : "None")}");
-            Debug.Log($"Current Blend: {cinemachineBrain.ActiveBlend}");
-            Debug.Log($"Default Blend Style: {cinemachineBrain.m_DefaultBlend.m_Style}");
-        }
-    }
-
-    // ==================== EXISTING METHODS (KEPT AS IS) ====================
-    
     private void CheckKeyCollectionStatus()
     {
         if (collectKeyScript != null)
@@ -718,15 +497,6 @@ public class Kingdom4GameEndManager : MonoBehaviour
         GetRemainingHealth();
         
         Debug.Log($"Game Data Collected: Time={completionTime}s, Hearts={remainingHearts}, Allergens={allergensCollected}, WagonHits={wagonHits}, MaxCombo={maxComboAchieved}");
-    }
-
-    private float GetElapsedTime()
-    {
-        if (gameTimer != null)
-        {
-            return gameTimer.ElapsedTime;
-        }
-        return Time.time - gameStartTime;
     }
 
     private void GetRemainingHealth()
@@ -1179,6 +949,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
+                    keyWasCollected = true;
                     Debug.Log("Showing key unlocked object - first time completion with 2+ stars!");
                 }
             }
@@ -1272,6 +1043,228 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (cinemachineBrain != null)
         {
             cinemachineBrain.m_DefaultBlend = originalBlendDefinition;
+        }
+    }
+
+    private void ForceSwitchToGameEndCamera()
+    {
+        if (gameEndVirtualCamera == null)
+        {
+            Debug.LogError("Game end virtual camera is null!");
+            return;
+        }
+        
+        Debug.Log("=== FORCE SWITCHING TO GAME END CAMERA ===");
+        
+        SetCameraBlendToCut();
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.enabled = false;
+            playerFollowCamera.Priority = 0;
+            playerFollowCamera.gameObject.SetActive(false);
+            
+            Debug.Log($"Player camera DISABLED, GameObject deactivated, and priority set to 0");
+        }
+        
+        if (!gameEndVirtualCamera.gameObject.activeSelf)
+        {
+            gameEndVirtualCamera.gameObject.SetActive(true);
+        }
+        
+        gameEndVirtualCamera.enabled = true;
+        gameEndVirtualCamera.Priority = gameEndCameraPriority;
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.ManualUpdate();
+        }
+        
+        Debug.Log($"Game end camera ENABLED with priority: {gameEndCameraPriority}");
+        
+        StartCoroutine(VerifyForcedCameraSwitch());
+    }
+
+    private IEnumerator VerifyForcedCameraSwitch()
+    {
+        yield return new WaitForSecondsRealtime(0.2f);
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera after force switch: {(activeCam != null ? activeCam.Name : "None")}");
+            
+            if (activeCam == null || activeCam.VirtualCameraGameObject != gameEndVirtualCamera.gameObject)
+            {
+                Debug.LogWarning("Game end camera not active! Forcing again...");
+                
+                if (playerFollowCamera != null)
+                {
+                    playerFollowCamera.gameObject.SetActive(false);
+                }
+                
+                if (gameEndVirtualCamera != null)
+                {
+                    gameEndVirtualCamera.gameObject.SetActive(true);
+                    gameEndVirtualCamera.Priority = 999;
+                    
+                    if (cinemachineBrain != null)
+                    {
+                        cinemachineBrain.ManualUpdate();
+                    }
+                }
+            }
+        }
+    }
+
+    public void OnAcceptTimelineEndedAndGameStarting()
+    {
+        Debug.Log("Accept timeline ended - preparing for game to start");
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+            
+            Debug.Log("Player camera prepared for gameplay");
+        }
+    }
+
+    public void ForceResetCamera()
+    {
+        Debug.Log("Force reset camera called on Kingdom4GameEndManager");
+        
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+        }
+        
+        if (gameEndVirtualCamera != null)
+        {
+            gameEndVirtualCamera.Priority = 0;
+        }
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.ManualUpdate();
+            HardResetCamera();
+        }
+    }
+
+    private void HardResetCamera()
+    {
+        Debug.Log("Hard resetting camera...");
+        
+        if (cinemachineBrain == null)
+        {
+            cinemachineBrain = FindObjectOfType<CinemachineBrain>();
+            if (cinemachineBrain == null) return;
+        }
+        
+        var defaultBlend = cinemachineBrain.m_DefaultBlend;
+        
+        cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
+        cinemachineBrain.ManualUpdate();
+        
+        StartCoroutine(RestoreBlendAfterFrame(defaultBlend));
+    }
+
+    private IEnumerator RestoreBlendAfterFrame(CinemachineBlendDefinition originalBlend)
+    {
+        yield return new WaitForEndOfFrame();
+        
+        if (cinemachineBrain != null)
+        {
+            cinemachineBrain.m_DefaultBlend = originalBlend;
+            cinemachineBrain.ManualUpdate();
+        }
+    }
+
+    private IEnumerator DelayedCameraHardReset()
+    {
+        yield return new WaitForEndOfFrame();
+        HardResetCamera();
+    }
+
+    private void SwitchToPlayerCameraWithBlend()
+    {
+        Debug.Log("=== SWITCHING TO PLAYER CAMERA ===");
+        
+        if (playerFollowCamera != null)
+        {
+            RestoreOriginalCameraBlend();
+            
+            if (gameEndVirtualCamera != null)
+            {
+                gameEndVirtualCamera.Priority = 0;
+                Debug.Log("Game end camera priority set to 0");
+            }
+            
+            playerFollowCamera.gameObject.SetActive(true);
+            playerFollowCamera.enabled = true;
+            playerFollowCamera.Priority = playerCameraPriority;
+
+            if (cinemachineBrain != null)
+            {
+                cinemachineBrain.ManualUpdate();
+            }
+            
+            Debug.Log($"Player camera re-enabled with priority: {playerCameraPriority}");
+            
+            StartCoroutine(DelayedCameraHardReset());
+            StartCoroutine(VerifyPlayerCameraSwitch());
+        }
+        else
+        {
+            Debug.LogWarning("Player follow camera is null!");
+        }
+    }
+
+    private IEnumerator VerifyPlayerCameraSwitch()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera after player switch: {(activeCam != null ? activeCam.Name : "None")}");
+            
+            if (activeCam != null && activeCam.VirtualCameraGameObject == playerFollowCamera.gameObject)
+            {
+                Debug.Log("✓ Player camera is now active");
+            }
+        }
+    }
+
+    [ContextMenu("Debug Camera State")]
+    public void DebugCameraState()
+    {
+        Debug.Log("=== CAMERA STATE DEBUG ===");
+        Debug.Log($"GameEnd Camera: {(gameEndVirtualCamera != null ? gameEndVirtualCamera.gameObject.name : "NULL")}");
+        if (gameEndVirtualCamera != null)
+        {
+            Debug.Log($"- Active: {gameEndVirtualCamera.gameObject.activeSelf}");
+            Debug.Log($"- Priority: {gameEndVirtualCamera.Priority}");
+            Debug.Log($"- Enabled: {gameEndVirtualCamera.enabled}");
+        }
+        
+        Debug.Log($"Player Camera: {(playerFollowCamera != null ? playerFollowCamera.gameObject.name : "NULL")}");
+        if (playerFollowCamera != null)
+        {
+            Debug.Log($"- Active: {playerFollowCamera.gameObject.activeSelf}");
+            Debug.Log($"- Priority: {playerFollowCamera.Priority}");
+            Debug.Log($"- Enabled: {playerFollowCamera.enabled}");
+        }
+        
+        if (cinemachineBrain != null)
+        {
+            var activeCam = cinemachineBrain.ActiveVirtualCamera;
+            Debug.Log($"Active Virtual Camera: {(activeCam != null ? activeCam.Name : "None")}");
+            Debug.Log($"Current Blend: {cinemachineBrain.ActiveBlend}");
+            Debug.Log($"Default Blend Style: {cinemachineBrain.m_DefaultBlend.m_Style}");
         }
     }
 
@@ -1497,6 +1490,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         return hasKey;
     }
     
+    // 🔥 KEY SAVE METHOD WITH EVENT TRIGGER
     private void SaveOCRScannerKeyToGameData()
     {
         if (GameDataManager.Instance == null)
@@ -1518,6 +1512,10 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log("✓ OCR Scanner key successfully saved to GameData! HasOCRScannerKey is now TRUE");
         
         keySavedToDatabase = true;
+        
+        // 🔥 TRIGGER THE KEY COLLECTION EVENT
+        KeyCollectionEvents.TriggerKeyCollected("OCR");
+        Debug.Log("🔥 Key Collection Event Triggered: OCR");
     }
 
     private void AddCoinsToDatabase()
@@ -1554,10 +1552,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (homeButton != null)
             homeButton.interactable = false;
 
+        // 🔥 SAVE KEY IF COLLECTED AND NOT SAVED
+        if (keyWasCollected && !keySavedToDatabase && starsEarned >= starsRequiredForKey)
+        {
+            SaveOCRScannerKeyToGameData();
+        }
+
         bool hasOCRScannerKey = CheckIfPlayerHasOCRScannerKey();
         Debug.Log($"OCR Scanner Key status from GameData: {(hasOCRScannerKey ? "TRUE" : "FALSE")}");
 
-        bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase && starsEarned >= 2;
+        bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase && starsEarned >= starsRequiredForKey;
         
         if (keyCollectedThisSession && !hasOCRScannerKey)
         {
@@ -1654,6 +1658,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log("ContinueKeyButton clicked directly - SAVING OCR SCANNER KEY TO GAMEDATA");
         
         SaveOCRScannerKeyToGameData();
+        
+        // 🔥 TRIGGER THE EVENT AGAIN TO BE SAFE
+        KeyCollectionEvents.TriggerKeyCollected("OCR");
         
         if (keyUnlockedController != null)
         {
@@ -1766,7 +1773,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         PlayButtonClickSound();
         AddCoinsToDatabase();
 
-        if (keyWasCollected && !keySavedToDatabase && starsEarned >= 2)
+        if (keyWasCollected && !keySavedToDatabase && starsEarned >= starsRequiredForKey)
         {
             SaveOCRScannerKeyToGameData();
         }
@@ -2250,6 +2257,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
             keySavedToDatabase = true;
             Debug.Log("OCR Scanner Key collected and saved to GameData");
+            
+            // 🔥 TRIGGER EVENT FOR TEST
+            KeyCollectionEvents.TriggerKeyCollected("OCR");
         }
     }
 

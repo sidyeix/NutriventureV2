@@ -33,15 +33,9 @@ public class K3_GameSummary : MonoBehaviour
     public GameObject KeyImageunlocking;
     
     [Header("Key Unlocked Animation")]
-    public GameObject keyUnlockedAnimation; // The KeyUnlockedAnimation GameObject
-    public Button continueKeyButton; // The ContinueKeyBTN inside the animation
-    public KeyUnlockedCanvasController keyUnlockedController; // Reference to the controller
-    
-    [Header("Key Button Settings")]
-    public Button keyRewardButton; // The button that rewards the key
-    public Image keyButtonImage; // The image component of the button
-    public Color keyButtonUnlockedColor = Color.white;
-    public Color keyButtonLockedColor = Color.black;
+    public GameObject keyUnlockedAnimation;
+    public Button continueKeyButton;
+    public KeyUnlockedCanvasController keyUnlockedController;
     
     [Header("Fail Game Objects (Disabled on Lose)")]
     public GameObject failGameObject1;
@@ -131,8 +125,8 @@ public class K3_GameSummary : MonoBehaviour
     private bool isCharacterVisualSwapperEnabledBeforeSummary = true;
 
     // Key Collection State
-    private bool keyWasCollected = false; // Whether the key was collected in this session
-    private bool keySavedToDatabase = false; // Whether we've already saved the key to GameData
+    private bool keyWasCollected = false;
+    private bool keySavedToDatabase = false;
 
     // Store original positions for reset
     private Vector3 originalPlayerPosition;
@@ -238,14 +232,6 @@ public class K3_GameSummary : MonoBehaviour
         {
             continueKeyButton.onClick.AddListener(OnContinueKeyButtonClicked);
             Debug.Log("ContinueKeyButton listener added");
-        }
-
-        // Initialize key reward button
-        if (keyRewardButton != null)
-        {
-            keyRewardButton.interactable = false;
-            UpdateKeyButtonColor(false);
-            Debug.Log("Key reward button initialized as LOCKED (black)");
         }
 
         ResetStarAnimator();
@@ -812,48 +798,11 @@ public class K3_GameSummary : MonoBehaviour
 
     private void UpdateKeyStatus(int stars)
     {
-        bool isUnlocked = (stars >= 2);
-        
-        // Update text status
         if (keyStatusText != null)
         {
+            bool isUnlocked = (stars >= 2);
             keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
             keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
-        }
-        
-        // Update key button state
-        UpdateKeyButtonState(isUnlocked);
-    }
-
-    private void UpdateKeyButtonState(bool isUnlocked)
-    {
-        // Check if we have the key reward button
-        if (keyRewardButton != null)
-        {
-            keyRewardButton.interactable = isUnlocked;
-            UpdateKeyButtonColor(isUnlocked);
-            
-            Debug.Log($"Key button {(isUnlocked ? "UNLOCKED (white)" : "LOCKED (black)")} - Interactable: {isUnlocked}");
-        }
-    }
-
-    private void UpdateKeyButtonColor(bool isUnlocked)
-    {
-        if (keyRewardButton == null) return;
-        
-        // Update button image color
-        if (keyButtonImage != null)
-        {
-            keyButtonImage.color = isUnlocked ? keyButtonUnlockedColor : keyButtonLockedColor;
-        }
-        // If no separate image reference, try to get from button
-        else
-        {
-            Image buttonImage = keyRewardButton.GetComponent<Image>();
-            if (buttonImage != null)
-            {
-                buttonImage.color = isUnlocked ? keyButtonUnlockedColor : keyButtonLockedColor;
-            }
         }
     }
 
@@ -1076,6 +1025,8 @@ public class K3_GameSummary : MonoBehaviour
         Debug.Log($"Added {calculatedCoinsEarned} coins to database");
     }
 
+    // ========== KEY COLLECTION METHODS WITH EVENT TRIGGER ==========
+    
     // Save key to database when Continue button is clicked
     private void SaveKeyToDatabase()
     {
@@ -1083,10 +1034,15 @@ public class K3_GameSummary : MonoBehaviour
         
         if (keyWasCollected)
         {
+            // Save to GameData
             GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
             GameDataManager.Instance.SaveGameData();
             keySavedToDatabase = true;
             Debug.Log("AllerthiaKey saved to GameData from Continue button");
+            
+            // 🔥 TRIGGER THE KEY COLLECTION EVENT - THIS UPDATES THE GLOBAL MAP
+            KeyCollectionEvents.TriggerKeyCollected("Allerthia");
+            Debug.Log("🔥 Key Collection Event Triggered: Allerthia");
         }
     }
 
@@ -1456,9 +1412,6 @@ public class K3_GameSummary : MonoBehaviour
         // Reset key collection flags
         keyWasCollected = false;
         keySavedToDatabase = false;
-        
-        // Reset key button state to locked
-        UpdateKeyButtonState(false);
         
         ResetStarAnimator();
         
