@@ -215686,6 +215686,7 @@ GameObject:
   - component: {fileID: 5536802451331073601}
   - component: {fileID: 7163894886664558060}
   - component: {fileID: 7976010194807306349}
+  - component: {fileID: 7976010194807306350}
   m_Layer: 5
   m_Name: PickUpBTN
   m_TagString: Untagged
@@ -232346,6 +232347,31 @@ MonoBehaviour:
   buttonClickOutputEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7976010194807306350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6230919820970506584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2101
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 0
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 100
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!4 &7978913695246622260
 Transform:
   m_ObjectHideFlags: 0

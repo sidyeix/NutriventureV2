@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 2243481381980742631}
   - component: {fileID: 3266184466481923233}
   - component: {fileID: 1418744093426927798}
-  - component: {fileID: 7396810656897318518}
   m_Layer: 0
   m_Name: Soda_13
   m_TagString: Untagged
@@ -136,31 +135,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &7396810656897318518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 17132673547408019}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
-  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
-  kingdomID: Sugaria
-  questID: 2101
-  progressAmount: 1
-  updateOnClick: 1
-  updateOnTrigger: 1
-  destroyOnTrigger: 0
-  playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
-  feedbackText: {fileID: 0}
-  feedbackDuration: 2
-  clickSound: ButtonClick
 --- !u!1 &2624451992907081943
 GameObject:
   m_ObjectHideFlags: 0
@@ -171,7 +145,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1130888917160382168}
   - component: {fileID: 3293744277449355481}
-  - component: {fileID: 572520783416267512}
   m_Layer: 0
   m_Name: SodaCollect
   m_TagString: AddedSugar
@@ -218,31 +191,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &572520783416267512
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2624451992907081943}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
-  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
-  kingdomID: Sugaria
-  questID: 2101
-  progressAmount: 1
-  updateOnClick: 1
-  updateOnTrigger: 1
-  destroyOnTrigger: 0
-  playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
-  feedbackText: {fileID: 0}
-  feedbackDuration: 2
-  clickSound: ButtonClick
 --- !u!1001 &5150183282716913669
 PrefabInstance:
   m_ObjectHideFlags: 0
