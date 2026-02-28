@@ -1639,6 +1639,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Muffin
       objectReference: {fileID: 0}
+    - target: {fileID: 1000011003416750, guid: 78dec3a2e9e50fc46882f9cc3751f692, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000012609690100, guid: 78dec3a2e9e50fc46882f9cc3751f692, type: 3}
       propertyPath: m_LocalScale.x
       value: 33.418488
@@ -1937,6 +1941,10 @@ PrefabInstance:
     - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
       propertyPath: m_Name
       value: Sakura_Tree_Custom (14)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2475,6 +2483,10 @@ PrefabInstance:
     - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
       propertyPath: m_Name
       value: Sakura_Tree_Custom (15)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3546,6 +3558,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 01d6f21fdc9dd05408fc66d1348136e5, type: 3}
       propertyPath: m_Name
       value: PlatformStair_001
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 01d6f21fdc9dd05408fc66d1348136e5, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4694,6 +4710,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Table 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3100971759067971022, guid: 0e960e29558cafc46a13f888ad211f3f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3304113518013637921, guid: 0e960e29558cafc46a13f888ad211f3f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.638
@@ -4874,6 +4894,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -5116,6 +5140,10 @@ PrefabInstance:
     - target: {fileID: 6206070310416003963, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
       propertyPath: m_Name
       value: Chain.002 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6206070310416003963, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6731672789557832129, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
       propertyPath: m_LocalScale.x
@@ -5884,6 +5912,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Donut (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000011379175792, guid: 931dfc52fd271a846b05a6bf70694fca, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000010100078426, guid: 931dfc52fd271a846b05a6bf70694fca, type: 3}
       propertyPath: m_LocalScale.x
       value: 20.59583
@@ -6092,6 +6124,10 @@ PrefabInstance:
     - target: {fileID: 1000011100452964, guid: 94d292219d961b445b269659a3994172, type: 3}
       propertyPath: m_Name
       value: Croissant (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000011100452964, guid: 94d292219d961b445b269659a3994172, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000014199351478, guid: 94d292219d961b445b269659a3994172, type: 3}
       propertyPath: m_LocalScale.x
@@ -7845,6 +7881,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Plant.005 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8810,6 +8850,10 @@ PrefabInstance:
     - target: {fileID: 8944336655422409498, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_Name
       value: MainCamera
+      objectReference: {fileID: 0}
+    - target: {fileID: 8944336655422409498, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8944336655422409503, guid: f6d148d888ffbf54b9afe9936dfaec1f, type: 3}
       propertyPath: m_RootOrder
@@ -13463,6 +13507,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Barrel.001 1 (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 5237822985602558460, guid: 55098c36fb10a5c4c88ab2795fa8b8b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14349,6 +14397,10 @@ PrefabInstance:
     - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_Name
       value: barrel
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
@@ -15932,6 +15984,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sakura_Tree_Custom (12)
       objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16677,6 +16733,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PT_Fruit_Tree_01_apples (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 2946926113898639711, guid: 9998a6e7b2ae5c14b8f66a12a00a35c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -17401,6 +17461,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
       propertyPath: m_Name
       value: Flat_Rock_5 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18854,6 +18918,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MineralNode_09_C
       objectReference: {fileID: 0}
+    - target: {fileID: 826521387320792937, guid: 9737f38f54a41ec47b57ca2ba520f084, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -19183,6 +19251,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bottle.008 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5861961437660673144, guid: e7b08caaadd3f8044aa74608761a5864, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6490265895791570626, guid: e7b08caaadd3f8044aa74608761a5864, type: 3}
       propertyPath: m_LocalScale.x
       value: 5.1012
@@ -19448,6 +19520,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MineralNode_06_B
       objectReference: {fileID: 0}
+    - target: {fileID: 3768963559427269525, guid: 65330233a876e5641a0f72ebeac1d7a2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4541278584810879279, guid: 65330233a876e5641a0f72ebeac1d7a2, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.74367
@@ -19682,6 +19758,10 @@ PrefabInstance:
     - target: {fileID: 6737887832208517662, guid: db8e825d1ca7e264693b9462abeaebb0, type: 3}
       propertyPath: m_Name
       value: Box.001 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6737887832208517662, guid: db8e825d1ca7e264693b9462abeaebb0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -20572,6 +20652,10 @@ PrefabInstance:
     - target: {fileID: 2070925441746177671, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_Name
       value: PlayerFollowCamera
+      objectReference: {fileID: 0}
+    - target: {fileID: 2070925441746177671, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2070925441746177912, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_RootOrder
@@ -24020,6 +24104,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Time
       objectReference: {fileID: 0}
+    - target: {fileID: 8864624805005668522, guid: 05c1bb08d5c7e3b40a87536483a89f10, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -26477,6 +26565,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BuildingAttachable.001 (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.42475995
@@ -26816,6 +26908,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
       propertyPath: m_Name
       value: Flat_Rock_5 (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -28268,6 +28364,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -31116,6 +31216,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BuildingAttachable.001
       objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.37719017
@@ -31241,6 +31345,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e69687702766b8842acc4b12e954c6a6, type: 3}
       propertyPath: m_Name
       value: PlatformStar_001
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e69687702766b8842acc4b12e954c6a6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -31432,6 +31540,10 @@ PrefabInstance:
     - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_Name
       value: IceCream_Cone (16)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_LocalScale.x
@@ -32485,6 +32597,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Muffin (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000011003416750, guid: 78dec3a2e9e50fc46882f9cc3751f692, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000012609690100, guid: 78dec3a2e9e50fc46882f9cc3751f692, type: 3}
       propertyPath: m_LocalScale.x
       value: 98.69816
@@ -33148,6 +33264,10 @@ PrefabInstance:
     - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_Name
       value: Sweet (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7696665215584407318, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_LocalScale.x
@@ -34212,6 +34332,10 @@ PrefabInstance:
     - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_Name
       value: Tree_Place Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6463468226773444093, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_LocalScale.x
@@ -35649,6 +35773,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bush_4 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 54249464800688559, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 831876432966935317, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
       propertyPath: m_LocalScale.x
       value: 8.895066
@@ -37016,6 +37144,10 @@ PrefabInstance:
     - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
       propertyPath: m_Name
       value: CFXR Electrified 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 9027514048236820043, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
@@ -38915,6 +39047,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CombatDummy.003
       objectReference: {fileID: 0}
+    - target: {fileID: 8501113303816732838, guid: 88794e520890f3045a594aa8c9e3f679, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9129312316824246812, guid: 88794e520890f3045a594aa8c9e3f679, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.9324298
@@ -39084,6 +39220,10 @@ PrefabInstance:
     - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_Name
       value: IceCream_Cone (17)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_LocalScale.x
@@ -39799,6 +39939,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -41423,6 +41567,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_Rock_4
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b1466b9b659e3b042804b43f78b3f4ed, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -42839,6 +42987,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EA03_Prop_Container_Barrel_01d_PRE
       objectReference: {fileID: 0}
+    - target: {fileID: 1154291972530608, guid: 7fa469182d2dc504ebec967a2e6bec53, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4252194765844910, guid: 7fa469182d2dc504ebec967a2e6bec53, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.62460965
@@ -43324,6 +43476,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MouseLollipop (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5641414337764685131, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_LocalScale.x
       value: 19.214958
@@ -43684,6 +43840,10 @@ PrefabInstance:
     - target: {fileID: 3916210951609241379, guid: dfbfc8a0514b8d64dabe0ab3a86120ea, type: 3}
       propertyPath: m_Name
       value: Bottle.010
+      objectReference: {fileID: 0}
+    - target: {fileID: 3916210951609241379, guid: dfbfc8a0514b8d64dabe0ab3a86120ea, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4400858718629631385, guid: dfbfc8a0514b8d64dabe0ab3a86120ea, type: 3}
       propertyPath: m_LocalScale.x
@@ -44405,6 +44565,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: barrel (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.19300774
@@ -44823,6 +44987,10 @@ PrefabInstance:
     - target: {fileID: 7098389285256826050, guid: fb070a2d31206d9499ecc8a77be0ebf0, type: 3}
       propertyPath: m_Name
       value: PT_Fruit_Tree_01_stump
+      objectReference: {fileID: 0}
+    - target: {fileID: 7098389285256826050, guid: fb070a2d31206d9499ecc8a77be0ebf0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7622724856221292152, guid: fb070a2d31206d9499ecc8a77be0ebf0, type: 3}
       propertyPath: m_LocalScale.x
@@ -47607,6 +47775,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bush_4
       objectReference: {fileID: 0}
+    - target: {fileID: 54249464800688559, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 831876432966935317, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
       propertyPath: m_LocalScale.x
       value: 8.895066
@@ -47744,6 +47916,10 @@ PrefabInstance:
     - target: {fileID: 1288632940929466, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
       propertyPath: m_Name
       value: EA03_Environment_Rock_Mini_CatHead_01a_PRE (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1288632940929466, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4742876269257456, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
       propertyPath: m_LocalScale.x
@@ -48118,6 +48294,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -48896,6 +49076,10 @@ PrefabInstance:
     - target: {fileID: 3851015956068934394, guid: dfb23d60f30c46847ba7815aa09e2567, type: 3}
       propertyPath: m_Name
       value: Horse_001 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3851015956068934394, guid: dfb23d60f30c46847ba7815aa09e2567, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4483999970917742656, guid: dfb23d60f30c46847ba7815aa09e2567, type: 3}
       propertyPath: m_LocalPosition.x
@@ -50481,6 +50665,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bricks
       objectReference: {fileID: 0}
+    - target: {fileID: 1646791340076447896, guid: 2b93ee916c9e5cc4894ba09696e39ab0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2130558123403010594, guid: 2b93ee916c9e5cc4894ba09696e39ab0, type: 3}
       propertyPath: m_LocalScale.x
       value: 5.4940042
@@ -50589,6 +50777,10 @@ PrefabInstance:
     - target: {fileID: 7526784801685253753, guid: 548d2490c8d321a448bf73aa5fca52f1, type: 3}
       propertyPath: m_Name
       value: Barrel.001 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7526784801685253753, guid: 548d2490c8d321a448bf73aa5fca52f1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -51900,6 +52092,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Barrel.001 1 (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 5237822985602558460, guid: 55098c36fb10a5c4c88ab2795fa8b8b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -53167,6 +53363,10 @@ PrefabInstance:
     - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_Name
       value: MouseLollipop (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5641414337764685131, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_LocalScale.x
@@ -56370,6 +56570,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Donuts
       objectReference: {fileID: 0}
+    - target: {fileID: 401276846098454691, guid: fba2d315c9f154a4d9123232affc62bb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2714615902889040262, guid: fba2d315c9f154a4d9123232affc62bb, type: 3}
       propertyPath: m_LocalScale.x
       value: 326.22827
@@ -57873,6 +58077,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Plant.005 (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -59286,6 +59494,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Box.001 2
       objectReference: {fileID: 0}
+    - target: {fileID: 397217567858095642, guid: 28079079d0247424da3d6b2952db3e32, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1065351903418363040, guid: 28079079d0247424da3d6b2952db3e32, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.07242864
@@ -59951,6 +60163,10 @@ PrefabInstance:
     - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_Name
       value: MouseLollipop (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5641414337764685131, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_LocalScale.x
@@ -61876,6 +62092,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Pal_2
       objectReference: {fileID: 0}
+    - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_LocalScale.x
       value: 8.359151
@@ -62707,6 +62927,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Barrel.001 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 7526784801685253753, guid: 548d2490c8d321a448bf73aa5fca52f1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -62765,6 +62989,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -65916,6 +66144,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MouseLollipop
       objectReference: {fileID: 0}
+    - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5641414337764685131, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_LocalScale.x
       value: 16.086195
@@ -66617,6 +66849,10 @@ PrefabInstance:
     - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_Name
       value: Pal_2 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_LocalScale.x
@@ -67451,6 +67687,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MineralNode_06_A
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e158506f8870b5842a31dba013a461f2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -67572,6 +67812,10 @@ PrefabInstance:
     - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
       propertyPath: m_Name
       value: CFXR Electrified 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6747932735989160330, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
@@ -67868,6 +68112,10 @@ PrefabInstance:
     - target: {fileID: 4860515909522733441, guid: b4bfcf3a5dc448f4b916ab7014e5eda3, type: 3}
       propertyPath: m_Name
       value: Dessert_4 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4860515909522733441, guid: b4bfcf3a5dc448f4b916ab7014e5eda3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -68356,6 +68604,10 @@ PrefabInstance:
     - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_Name
       value: Tree_Place Variant (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6463468226773444093, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_LocalScale.x
@@ -68927,6 +69179,10 @@ PrefabInstance:
     - target: {fileID: 8112347877973815249, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
       propertyPath: m_Name
       value: mydessertshop (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8112347877973815249, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8925863729857672555, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
       propertyPath: m_LocalScale.x
@@ -69593,6 +69849,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Plant.005 (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -69614,6 +69874,10 @@ PrefabInstance:
     - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_Name
       value: Tree_Place Variant (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6463468226773444093, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_LocalScale.x
@@ -69740,6 +70004,10 @@ PrefabInstance:
     - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
       propertyPath: m_Name
       value: Plant.005 (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -70587,6 +70855,10 @@ PrefabInstance:
     - target: {fileID: 4860515909522733441, guid: b4bfcf3a5dc448f4b916ab7014e5eda3, type: 3}
       propertyPath: m_Name
       value: Dessert_4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4860515909522733441, guid: b4bfcf3a5dc448f4b916ab7014e5eda3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -73843,6 +74115,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CandyMan
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 6b03f117a25edb4419025d5f8b116b7e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1092408308860062549, guid: 6b03f117a25edb4419025d5f8b116b7e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.0000049174114
@@ -75906,6 +76182,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: barrel (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.19300774
@@ -76864,6 +77144,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: InkwellandFeather (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 2889291304633219915, guid: d664362e977a45541bd2a155c05a9d9a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -77423,6 +77707,10 @@ PrefabInstance:
     - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
       propertyPath: m_Name
       value: CFXR Electrified 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 9027514048236820045, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 9027514048236820043, guid: effb650189dc5714e9e9801b1cfb3991, type: 3}
@@ -78148,6 +78436,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Pal_2 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_LocalScale.x
       value: 8.359153
@@ -78256,6 +78548,10 @@ PrefabInstance:
     - target: {fileID: 5237822985602558460, guid: 55098c36fb10a5c4c88ab2795fa8b8b8, type: 3}
       propertyPath: m_Name
       value: Barrel.001 1 (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5237822985602558460, guid: 55098c36fb10a5c4c88ab2795fa8b8b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -78953,6 +79249,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Donut (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000011379175792, guid: 931dfc52fd271a846b05a6bf70694fca, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000010100078426, guid: 931dfc52fd271a846b05a6bf70694fca, type: 3}
       propertyPath: m_LocalScale.x
       value: 42.260864
@@ -79277,6 +79577,10 @@ PrefabInstance:
     - target: {fileID: 2874346912576944333, guid: b7bcc701c08852e42b872b9f35fc12e7, type: 3}
       propertyPath: m_Name
       value: Rocks_1_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2874346912576944333, guid: b7bcc701c08852e42b872b9f35fc12e7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3217940565716099703, guid: b7bcc701c08852e42b872b9f35fc12e7, type: 3}
       propertyPath: m_LocalScale.x
@@ -80753,6 +81057,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mochi (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
       value: 19.893196
@@ -81129,6 +81437,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TowerStairs_1
       objectReference: {fileID: 0}
+    - target: {fileID: 6096171229851556351, guid: 49592a117db7f134ba6164aa0121c52b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6904620502895182661, guid: 49592a117db7f134ba6164aa0121c52b, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.7232355
@@ -81377,6 +81689,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree_Place Variant (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6463468226773444093, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.0552155
@@ -81507,6 +81823,10 @@ PrefabInstance:
     - target: {fileID: 3517993574476225683, guid: 3a75be238ffcf7a4992e0d50ba95f91f, type: 3}
       propertyPath: m_Name
       value: Bush_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3517993574476225683, guid: 3a75be238ffcf7a4992e0d50ba95f91f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4294670603055744553, guid: 3a75be238ffcf7a4992e0d50ba95f91f, type: 3}
       propertyPath: m_LocalScale.x
@@ -81884,6 +82204,10 @@ PrefabInstance:
     - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_Name
       value: barrel (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
@@ -83411,6 +83735,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: IceCream_Cone
       objectReference: {fileID: 0}
+    - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_LocalScale.x
       value: 41.76777
@@ -83479,6 +83807,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -85227,6 +85559,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -87176,6 +87512,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Donuts (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 401276846098454691, guid: fba2d315c9f154a4d9123232affc62bb, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2714615902889040262, guid: fba2d315c9f154a4d9123232affc62bb, type: 3}
       propertyPath: m_LocalScale.x
       value: 141.6842
@@ -87480,6 +87820,10 @@ PrefabInstance:
     - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_Name
       value: Pal_2 (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_LocalScale.x
@@ -88024,6 +88368,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_Rock_5 (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -88268,6 +88616,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Croissant
       objectReference: {fileID: 0}
+    - target: {fileID: 1000011100452964, guid: 94d292219d961b445b269659a3994172, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000014199351478, guid: 94d292219d961b445b269659a3994172, type: 3}
       propertyPath: m_LocalScale.x
       value: 32.380386
@@ -88501,6 +88853,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: barrel (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.19300774
@@ -88727,6 +89083,10 @@ PrefabInstance:
     - target: {fileID: 3495799845300563556, guid: 433f95ebbfa48a144b39bf4ed6323489, type: 3}
       propertyPath: m_Name
       value: Rocks_4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3495799845300563556, guid: 433f95ebbfa48a144b39bf4ed6323489, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4307767658095391966, guid: 433f95ebbfa48a144b39bf4ed6323489, type: 3}
       propertyPath: m_LocalScale.x
@@ -93207,6 +93567,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sakura_Tree_Custom (13)
       objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -93345,6 +93709,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e158506f8870b5842a31dba013a461f2, type: 3}
       propertyPath: m_Name
       value: MineralNode_06_A (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e158506f8870b5842a31dba013a461f2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -94588,6 +94956,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: IceCream_Cone (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000013122234568, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000010356322748, guid: 87a32384fe2633648996ab825d5f4b5b, type: 3}
       propertyPath: m_LocalScale.x
       value: 41.76777
@@ -95483,6 +95855,10 @@ PrefabInstance:
     - target: {fileID: 2732242831445707129, guid: eb5f3e0f7a547ae45a42b304e85ed023, type: 3}
       propertyPath: m_Name
       value: WeaponRack.003
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732242831445707129, guid: eb5f3e0f7a547ae45a42b304e85ed023, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3360020456351306691, guid: eb5f3e0f7a547ae45a42b304e85ed023, type: 3}
       propertyPath: m_LocalPosition.x
@@ -97218,6 +97594,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Table 1 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 1972589690951791691, guid: 22622c732cfc589418777af087949096, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -98300,6 +98680,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -101090,6 +101474,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NutriHeart (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 8631495874389552075, guid: 69e5f3c3803215648ae7b3bc76301b3f, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6239831149026833908, guid: 69e5f3c3803215648ae7b3bc76301b3f, type: 3}
     m_RemovedGameObjects:
@@ -102410,6 +102798,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ForgerSeller
       objectReference: {fileID: 0}
+    - target: {fileID: 7917474354368091682, guid: 1d38808eaa877494c8f4a5fec37c47e7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8019744223437901700, guid: 1d38808eaa877494c8f4a5fec37c47e7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.021092512
@@ -103314,6 +103706,10 @@ PrefabInstance:
     - target: {fileID: 8134943901905628466, guid: c73740346d0b5124194768ddffd26857, type: 3}
       propertyPath: m_Name
       value: Bush_3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8134943901905628466, guid: c73740346d0b5124194768ddffd26857, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8912325473160198024, guid: c73740346d0b5124194768ddffd26857, type: 3}
       propertyPath: m_LocalScale.x
@@ -104358,6 +104754,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (9)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -106280,6 +106680,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Barrel.001 1 (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 5237822985602558460, guid: 55098c36fb10a5c4c88ab2795fa8b8b8, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -106332,6 +106736,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -106768,6 +107176,10 @@ PrefabInstance:
     - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_Name
       value: Sweet
+      objectReference: {fileID: 0}
+    - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7696665215584407318, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_LocalScale.x
@@ -109009,6 +109421,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EA03_Environment_Rock_Mini_CatHead_01a_PRE (26)
       objectReference: {fileID: 0}
+    - target: {fileID: 1288632940929466, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4742876269257456, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.12496
@@ -110387,6 +110803,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: WeaponRack.003 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 2732242831445707129, guid: eb5f3e0f7a547ae45a42b304e85ed023, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3360020456351306691, guid: eb5f3e0f7a547ae45a42b304e85ed023, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.4768367
@@ -111322,6 +111742,10 @@ PrefabInstance:
     - target: {fileID: 8344699537773742271, guid: efcc2644184a5a24a9fffbd648af5683, type: 3}
       propertyPath: m_Name
       value: Stone Lamp_1 Variant Asia (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8344699537773742271, guid: efcc2644184a5a24a9fffbd648af5683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8684493317316973061, guid: efcc2644184a5a24a9fffbd648af5683, type: 3}
       propertyPath: m_LocalScale.x
@@ -115573,6 +115997,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mochi (10)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
       value: 7.6052656
@@ -115698,6 +116126,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 28e52df4ada46d049b236766ce641328, type: 3}
       propertyPath: m_Name
       value: Gem_001
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 28e52df4ada46d049b236766ce641328, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -115965,6 +116397,10 @@ PrefabInstance:
     - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_Name
       value: MouseLollipop (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4972401561133264881, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5641414337764685131, guid: 4fb32117a1267d2498a9f8791557afbd, type: 3}
       propertyPath: m_LocalScale.x
@@ -117105,6 +117541,10 @@ PrefabInstance:
     - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
       propertyPath: m_Name
       value: Plant.005 (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -121259,6 +121699,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mochi
       objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
       value: 35.091194
@@ -122092,6 +122536,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -124440,6 +124888,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Donuts_04
       objectReference: {fileID: 0}
+    - target: {fileID: 8303388821088744981, guid: 4ce9f276458c4be4ca310868f06b8ca7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -124706,6 +125158,10 @@ PrefabInstance:
     - target: {fileID: 6206070310416003963, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
       propertyPath: m_Name
       value: Chain.002
+      objectReference: {fileID: 0}
+    - target: {fileID: 6206070310416003963, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6731672789557832129, guid: b712e2ebc10a352428afb1b6201fd6e2, type: 3}
       propertyPath: m_LocalScale.x
@@ -129303,6 +129759,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: barrel (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b899b109968a14f4797d7cd111cb647b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.19300774
@@ -130034,6 +130494,10 @@ PrefabInstance:
     - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_Name
       value: Tree_Place Variant (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5978821765221760839, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6463468226773444093, guid: 594712c9ebc0d824e98424350fda86ff, type: 3}
       propertyPath: m_LocalScale.x
@@ -131536,6 +132000,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wagon.003
       objectReference: {fileID: 0}
+    - target: {fileID: 8676099692105732130, guid: 2af38c48c074460478a0bc224a963e66, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -131897,6 +132365,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -132963,6 +133435,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mochi (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
       value: 44.57793
@@ -133069,6 +133545,10 @@ PrefabInstance:
     - target: {fileID: 1058454772677036, guid: 59979d81e978dba42bd2187d103d475d, type: 3}
       propertyPath: m_Name
       value: awning_wood
+      objectReference: {fileID: 0}
+    - target: {fileID: 1058454772677036, guid: 59979d81e978dba42bd2187d103d475d, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4776715635596958, guid: 59979d81e978dba42bd2187d103d475d, type: 3}
       propertyPath: m_LocalScale.x
@@ -135471,6 +135951,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Plant.005
       objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -136835,6 +137319,10 @@ PrefabInstance:
     - target: {fileID: 1154291972530608, guid: 7fa469182d2dc504ebec967a2e6bec53, type: 3}
       propertyPath: m_Name
       value: EA03_Prop_Container_Barrel_01d_PRE (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1154291972530608, guid: 7fa469182d2dc504ebec967a2e6bec53, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4252194765844910, guid: 7fa469182d2dc504ebec967a2e6bec53, type: 3}
       propertyPath: m_LocalScale.x
@@ -139308,6 +139796,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_Rock_5 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -140144,6 +140636,10 @@ PrefabInstance:
     - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_Name
       value: Mochi (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000012087637210, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4000011655172432, guid: cc3c5a058e6bb634781860012b9aa683, type: 3}
       propertyPath: m_LocalScale.x
@@ -142173,6 +142669,10 @@ PrefabInstance:
     - target: {fileID: 203158854522260778, guid: 40f64c3e9484f5742900adbc7f163261, type: 3}
       propertyPath: m_Name
       value: Donuts_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 203158854522260778, guid: 40f64c3e9484f5742900adbc7f163261, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3872717910088241444, guid: 40f64c3e9484f5742900adbc7f163261, type: 3}
       propertyPath: m_LocalScale.x
@@ -144271,6 +144771,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sakura_Tree_Custom (10)
       objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -144466,6 +144970,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_Rock_5
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db186f1877d44a34e9b06c3a9614d28e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -144527,6 +145035,10 @@ PrefabInstance:
     - target: {fileID: 4530065050681128456, guid: 30b921c80625f8049b5b6e2c9477c391, type: 3}
       propertyPath: m_Name
       value: Chair
+      objectReference: {fileID: 0}
+    - target: {fileID: 4530065050681128456, guid: 30b921c80625f8049b5b6e2c9477c391, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -145345,7 +145857,7 @@ MonoBehaviour:
       skinID: 5555555
     - skinName: Michelle Summer
       characterID: 5
-      skinID: 213123123
+      skinID: 120231564
   - environmentName: Candy Land
     environmentObject: {fileID: 970643131}
     skinMappings:
@@ -145675,6 +146187,10 @@ PrefabInstance:
     - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_Name
       value: Pal_2 (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3808684162021805369, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4580436508280297347, guid: da598b2688d153b4fb7038b45fab7364, type: 3}
       propertyPath: m_LocalScale.x
@@ -146697,6 +147213,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Table 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1972589690951791691, guid: 22622c732cfc589418777af087949096, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -147488,6 +148008,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BuildingAttachable.001 (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.30611205
@@ -147645,6 +148169,10 @@ PrefabInstance:
     - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
       propertyPath: m_Name
       value: Sakura_Tree_Custom (11)
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871660593176721031, guid: 38c87182770f3034b8c1d25d08119eb7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -151078,6 +151606,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sztandar
       objectReference: {fileID: 0}
+    - target: {fileID: 150620354278126178, guid: b59039b6bc37c9946aba75463611b305, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 674639197423839448, guid: b59039b6bc37c9946aba75463611b305, type: 3}
       propertyPath: m_LocalScale.x
       value: 6.973767
@@ -151635,6 +152167,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bottle.008
       objectReference: {fileID: 0}
+    - target: {fileID: 5861961437660673144, guid: e7b08caaadd3f8044aa74608761a5864, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6490265895791570626, guid: e7b08caaadd3f8044aa74608761a5864, type: 3}
       propertyPath: m_LocalScale.x
       value: 3.4395003
@@ -152004,6 +152540,10 @@ PrefabInstance:
     - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_Name
       value: BuildingAttachable.001 (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8643972507487243039, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8988727039556407717, guid: 515df516ee53ea24fba9f71f3ff6c0c1, type: 3}
       propertyPath: m_LocalScale.x
@@ -155068,6 +155608,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Plant.005 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 7990368823354416247, guid: 9ee7747ccbae8eb408a589744d0038cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -155441,6 +155985,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bush_4 (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 54249464800688559, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 831876432966935317, guid: 9ff4f1664f615874a900283c1ffa5b4b, type: 3}
       propertyPath: m_LocalScale.x
       value: 8.895066
@@ -155701,6 +156249,10 @@ PrefabInstance:
     - target: {fileID: 8112347877973815249, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
       propertyPath: m_Name
       value: mydessertshop
+      objectReference: {fileID: 0}
+    - target: {fileID: 8112347877973815249, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8925863729857672555, guid: 4c18d0aaf49d3d342ae4ab41656d5f63, type: 3}
       propertyPath: m_LocalScale.x
@@ -156665,6 +157217,10 @@ PrefabInstance:
     - target: {fileID: 1288632940929466, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
       propertyPath: m_Name
       value: EA03_Environment_Rock_Mini_CatHead_01a_PRE (25)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1288632940929466, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4742876269257456, guid: 6bf942e5f7ca6e4418d0a362191274ce, type: 3}
       propertyPath: m_LocalScale.x
@@ -162363,6 +162919,10 @@ PrefabInstance:
     - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_Name
       value: Sweet
+      objectReference: {fileID: 0}
+    - target: {fileID: 7033457757201356204, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7696665215584407318, guid: 96cc2b1e98d764c499d06110bc2e9513, type: 3}
       propertyPath: m_LocalScale.x
@@ -233049,6 +233609,10 @@ PrefabInstance:
     - target: {fileID: 2946926113898639711, guid: 9998a6e7b2ae5c14b8f66a12a00a35c1, type: 3}
       propertyPath: m_Name
       value: PT_Fruit_Tree_01_apples
+      objectReference: {fileID: 0}
+    - target: {fileID: 2946926113898639711, guid: 9998a6e7b2ae5c14b8f66a12a00a35c1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
