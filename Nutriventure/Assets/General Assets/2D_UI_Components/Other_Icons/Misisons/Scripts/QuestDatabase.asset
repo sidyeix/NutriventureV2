@@ -13,6 +13,179 @@ MonoBehaviour:
   m_Name: QuestDatabase
   m_EditorClassIdentifier: Assembly-CSharp::QuestDatabase
   kingdoms:
+  - kingdomID: Preservia
+    kingdomName: PreserviaKingdom
+    kingdomIcon: {fileID: 21300000, guid: b4875b9b9639ab74db316a3b1109fbf5, type: 3}
+    kingdomColor: {r: 0, g: 0, b: 0, a: 0}
+    quests:
+    - questID: 3101
+      questName: Felipe's Guidance!
+      description: Meet Felipe for insight.
+      longDescription: "Approach Felipe and listen to his explanation of Preservia\u2019s
+        situation. He will introduce you to the dangers threatening the kingdom."
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Approach and Talk to Felipe for the Kingdom''s situation. '
+        type: 0
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 1
+        isOptional: 0
+        isCompleted: 1
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 150
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 2
+        rewardID: 
+      - rewardName: NutriGems
+        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
+        amount: 5
+        type: 7
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 3
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 3102
+      questName: 'Awaken the Anti-Stones! '
+      description: Restore the power of the Anti-Stones.
+      longDescription: Travel to each checkpoint and awaken the stagnating Anti-Stones.
+        Their revived energy will help protect the land.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Approach the checkpoints for anti-stones and awaken their stagnating
+          power. '
+        type: 4
+        targetID: 
+        requiredAmount: 2
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 100
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 3103
+      questName: 'What''s the challenge, King? '
+      description: "Receive the King\u2019s assessment."
+      longDescription: Proceed to the castle and speak with the King. He will deliver
+        your final preservation trial.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Proceed to the castle and talk to the king to gain the final
+          assessment. '
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 1
+        isOptional: 0
+        isCompleted: 1
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 180
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 3
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 3104
+      questName: 'Potion positions? '
+      description: Find the preservative potions.
+      longDescription: Search the kingdom and locate the 3 Preservative Potions.
+        Collect them to aid in food protection.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Locate the 3 preservative potions and collect them. '
+        type: 4
+        targetID: 
+        requiredAmount: 3
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 150
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 3105
+      questName: Food Preservation
+      description: Preserve scattered foods.
+      longDescription: Find and preserve the 8 foods spread across the land. Follow
+        their glow to restore their freshness and safety.
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: 'Preserve the 8 foods scattered across the land, let their glowing
+          need be your way. '
+        type: 4
+        targetID: 
+        requiredAmount: 8
+        currentAmount: 0
+        isOptional: 0
+        isCompleted: 0
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 200
+        type: 1
+        rewardID: 
+      - rewardName: NutriExp
+        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
+        amount: 200
+        type: 2
+        rewardID: 
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: GeneralQuests
     kingdomName: General Quests
     kingdomIcon: {fileID: 0}
@@ -43,7 +216,7 @@ MonoBehaviour:
         type: 5
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 2
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 0002
       questName: Switch me up!
@@ -972,179 +1145,6 @@ MonoBehaviour:
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
       status: 0
       questColor: {r: 0, g: 0, b: 0, a: 0}
-  - kingdomID: Preservia
-    kingdomName: PreserviaKingdom
-    kingdomIcon: {fileID: 21300000, guid: b4875b9b9639ab74db316a3b1109fbf5, type: 3}
-    kingdomColor: {r: 0, g: 0, b: 0, a: 0}
-    quests:
-    - questID: 3101
-      questName: Felipe's Guidance!
-      description: Meet Felipe for insight.
-      longDescription: "Approach Felipe and listen to his explanation of Preservia\u2019s
-        situation. He will introduce you to the dangers threatening the kingdom."
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Approach and Talk to Felipe for the Kingdom''s situation. '
-        type: 0
-        targetID: 
-        requiredAmount: 1
-        currentAmount: 1
-        isOptional: 0
-        isCompleted: 1
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 150
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 150
-        type: 2
-        rewardID: 
-      - rewardName: NutriGems
-        rewardIcon: {fileID: 21300000, guid: ceb491566a835ab4ebf159126b3bcbef, type: 3}
-        amount: 5
-        type: 7
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 2
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 3102
-      questName: 'Awaken the Anti-Stones! '
-      description: Restore the power of the Anti-Stones.
-      longDescription: Travel to each checkpoint and awaken the stagnating Anti-Stones.
-        Their revived energy will help protect the land.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Approach the checkpoints for anti-stones and awaken their stagnating
-          power. '
-        type: 4
-        targetID: 
-        requiredAmount: 2
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 100
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 150
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 3103
-      questName: 'What''s the challenge, King? '
-      description: "Receive the King\u2019s assessment."
-      longDescription: Proceed to the castle and speak with the King. He will deliver
-        your final preservation trial.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Proceed to the castle and talk to the king to gain the final
-          assessment. '
-        type: 4
-        targetID: 
-        requiredAmount: 1
-        currentAmount: 1
-        isOptional: 0
-        isCompleted: 1
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 180
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 150
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 2
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 3104
-      questName: 'Potion positions? '
-      description: Find the preservative potions.
-      longDescription: Search the kingdom and locate the 3 Preservative Potions.
-        Collect them to aid in food protection.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Locate the 3 preservative potions and collect them. '
-        type: 4
-        targetID: 
-        requiredAmount: 3
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 200
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 150
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
-    - questID: 3105
-      questName: Food Preservation
-      description: Preserve scattered foods.
-      longDescription: Find and preserve the 8 foods spread across the land. Follow
-        their glow to restore their freshness and safety.
-      category: 0
-      questIcon: {fileID: 0}
-      requiredQuestIDs: []
-      requiredLevel: 0
-      tasks:
-      - taskID: 110101
-        description: 'Preserve the 8 foods scattered across the land, let their glowing
-          need be your way. '
-        type: 4
-        targetID: 
-        requiredAmount: 8
-        currentAmount: 0
-        isOptional: 0
-        isCompleted: 0
-      rewards:
-      - rewardName: NutriCoins
-        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
-        amount: 200
-        type: 1
-        rewardID: 
-      - rewardName: NutriExp
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 200
-        type: 2
-        rewardID: 
-      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 1
-      questColor: {r: 0, g: 0, b: 0, a: 0}
   - kingdomID: Sugaria
     kingdomName: Sugaria Kingdom
     kingdomIcon: {fileID: 21300000, guid: fc5233e14abc7024eb06de9e4d5d842e, type: 3}
@@ -1165,7 +1165,7 @@ MonoBehaviour:
         type: 0
         targetID: 
         requiredAmount: 8
-        currentAmount: 2
+        currentAmount: 0
         isOptional: 0
         isCompleted: 0
       rewards:
@@ -1294,9 +1294,9 @@ MonoBehaviour:
         type: 4
         targetID: 
         requiredAmount: 1
-        currentAmount: 1
+        currentAmount: 0
         isOptional: 0
-        isCompleted: 1
+        isCompleted: 0
       rewards:
       - rewardName: NutriCoins
         rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
@@ -1308,11 +1308,33 @@ MonoBehaviour:
         amount: 120
         type: 2
         rewardID: 
-      - rewardName: Skin
-        rewardIcon: {fileID: 21300000, guid: 0246a5b11373a3a4e976695aceb7f888, type: 3}
-        amount: 25
-        type: 10
+      timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
+      status: 1
+      questColor: {r: 0, g: 0, b: 0, a: 0}
+    - questID: 2106
+      questName: Chest Opening - Sugaria!
+      description: In Sugaria Kingdom, approach the chest and claim it to unveil
+        exciting rewards.
+      longDescription: Go collect the chest to receive new rewards..
+      category: 0
+      questIcon: {fileID: 0}
+      requiredQuestIDs: []
+      requiredLevel: 0
+      tasks:
+      - taskID: 110101
+        description: Approach the chest in Sugaria Kingdom and Collect it.
+        type: 4
+        targetID: 
+        requiredAmount: 1
+        currentAmount: 1
+        isOptional: 0
+        isCompleted: 1
+      rewards:
+      - rewardName: NutriCoins
+        rewardIcon: {fileID: 21300000, guid: 6326e7f2ea537f84e8b08a7e05757d74, type: 3}
+        amount: 50
+        type: 1
         rewardID: 
       timelineAsset: {fileID: 11400000, guid: 256164210e190dc4abdfc3f785caabb5, type: 2}
-      status: 2
+      status: 3
       questColor: {r: 0, g: 0, b: 0, a: 0}
