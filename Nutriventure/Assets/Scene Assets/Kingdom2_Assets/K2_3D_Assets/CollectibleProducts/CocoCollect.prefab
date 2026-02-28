@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4803514038371278203}
   - component: {fileID: 3031032900392470924}
   - component: {fileID: 3231889475023317439}
+  - component: {fileID: 2546057407209765597}
   m_Layer: 0
   m_Name: Coconut
   m_TagString: Untagged
@@ -104,7 +105,7 @@ MeshCollider:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
+  m_LayerOverridePriority: 22
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -112,6 +113,31 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: fb82fcf142e96f04a9a722bb06351c64, type: 3}
+--- !u!114 &2546057407209765597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7651619026426025697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2101
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &9064385651540129686
 GameObject:
   m_ObjectHideFlags: 0

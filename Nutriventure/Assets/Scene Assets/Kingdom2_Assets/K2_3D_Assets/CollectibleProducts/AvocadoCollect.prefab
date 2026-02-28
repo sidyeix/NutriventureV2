@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1084054347927851545}
   - component: {fileID: 4107742081971549116}
   - component: {fileID: 4406179755397598531}
+  - component: {fileID: 8354984576878902848}
   m_Layer: 0
   m_Name: Avocado_01
   m_TagString: Untagged
@@ -113,6 +114,31 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 8024145040088498865, guid: 53b7a2ef4775adf4d8060e75fc0374cd, type: 3}
+--- !u!114 &8354984576878902848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1753367334316346101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Sugaria
+  questID: 2101
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &7419860229806312305
 GameObject:
   m_ObjectHideFlags: 0
