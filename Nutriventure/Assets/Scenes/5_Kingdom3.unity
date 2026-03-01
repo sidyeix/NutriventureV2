@@ -27405,31 +27405,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44346348008a8dc4aae591cd295e0f65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlobalMapManager
+  loadingPanel: {fileID: 4527338}
+  loadingText: {fileID: 0}
   kingdom1Button: {fileID: 2065787850}
   kingdom2Button: {fileID: 714994954}
   kingdom3Button: {fileID: 224471799}
   kingdom4Button: {fileID: 1399575056}
-  ocrScannerKeyObject: {fileID: 1276901136}
   kingdom1Scene: 3_Kingdom1
   kingdom2Scene: 4_Kingdom 2
   kingdom3Scene: 5_Kingdom3
   kingdom4Scene: 6_Kingdom4
-  kingdom2KeyStatusText: {fileID: 0}
-  kingdom3KeyStatusText: {fileID: 0}
-  kingdom4KeyStatusText: {fileID: 0}
-  ocrKeyStatusText: {fileID: 0}
-  loadingPanel: {fileID: 4527338}
-  loadingSpinner: {fileID: 0}
-  loadingText: {fileID: 0}
-  minimumLoadTime: 1
-  spinnerRotationSpeed: 300
-  loadingMessage: Loading Kingdom...
-  useFadeAnimation: 1
-  loadingCanvasGroup: {fileID: 4527340}
-  fadeDuration: 0.3
-  tipText: {fileID: 0}
-  loadingTips: []
-  tipChangeInterval: 2
+  ocrScannerObject: {fileID: 1276901136}
 --- !u!1 &397941440
 GameObject:
   m_ObjectHideFlags: 0
@@ -110140,7 +110126,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1276901137
 RectTransform:
   m_ObjectHideFlags: 0

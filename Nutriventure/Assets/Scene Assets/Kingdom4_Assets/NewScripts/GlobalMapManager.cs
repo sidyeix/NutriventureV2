@@ -22,6 +22,9 @@ public class GlobalMapManager : MonoBehaviour
     [SerializeField] private string kingdom3Scene = "5_kingdom3";
     [SerializeField] private string kingdom4Scene = "6_kingdom4";
 
+    [Header("OCR Scanner Object")]
+[SerializeField] private GameObject ocrScannerObject;
+
     private void Start()
     {
         if (loadingPanel != null)
@@ -29,7 +32,52 @@ public class GlobalMapManager : MonoBehaviour
 
         SetupButtons();
         UpdateKingdomButtons();
+
+        UpdateOCRScannerObjectVisibility();
     }
+
+    private void UpdateOCRScannerObjectVisibility()
+{
+    if (ocrScannerObject == null)
+    {
+        Debug.LogWarning("OCR Scanner Object not assigned!");
+        return;
+    }
+
+    if (GameDataManager.Instance == null || 
+        GameDataManager.Instance.CurrentGameData == null)
+    {
+        Debug.LogWarning("GameDataManager not ready.");
+        ocrScannerObject.SetActive(false);
+        return;
+    }
+
+    bool hasOCRKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+
+    ocrScannerObject.SetActive(hasOCRKey);
+
+    Debug.Log("Global Map - OCR Scanner Object is now: " + 
+              (hasOCRKey ? "ACTIVE" : "INACTIVE"));
+}
+
+private void OnEnable()
+{
+    KeyCollectionEvents.OnKeyCollected += OnKeyCollected;
+    UpdateOCRScannerObjectVisibility();
+}
+
+private void OnDisable()
+{
+    KeyCollectionEvents.OnKeyCollected -= OnKeyCollected;
+}
+
+private void OnKeyCollected(string keyName)
+{
+    if (keyName == "OCR")
+    {
+        UpdateOCRScannerObjectVisibility();
+    }
+}
 
     void SetupButtons()
     {

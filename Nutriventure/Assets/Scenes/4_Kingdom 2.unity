@@ -135294,6 +135294,7 @@ MonoBehaviour:
   kingdom2Scene: 4_Kingdom 2
   kingdom3Scene: 5_Kingdom3
   kingdom4Scene: 6_Kingdom4
+  ocrScannerObject: {fileID: 1404928592}
 --- !u!4 &1814711581
 Transform:
   m_ObjectHideFlags: 0
