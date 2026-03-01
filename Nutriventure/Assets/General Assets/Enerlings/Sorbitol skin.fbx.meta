@@ -20,7 +20,7 @@ ModelImporter:
       name: Sorbitol body
     second: {fileID: 2800000, guid: 8ddc7852ac9a521468be1e2ace2548e4, type: 3}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
     materialLocation: 0
