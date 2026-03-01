@@ -99,6 +99,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   loopSound: 0
   spatialBlend: 1
+  audioMixerGroup: {fileID: 0}
   showDebugMessages: 1
   drawGizmos: 1
   gizmoColor: {r: 0.5, g: 0, b: 0.5, a: 0.3}

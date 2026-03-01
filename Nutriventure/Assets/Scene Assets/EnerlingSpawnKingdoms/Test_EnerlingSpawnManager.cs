@@ -247,7 +247,7 @@ public class Test_EnerlingSpawnManager : MonoBehaviour
         return shuffled.GetRange(0, Mathf.Min(count, shuffled.Count));
     }
     
-    public void SpawnEnerling(IngredientDatabase.IngredientInfo ingredient)
+        public void SpawnEnerling(IngredientDatabase.IngredientInfo ingredient)
     {
         Vector3 spawnPosition = FindValidSpawnPosition();
         

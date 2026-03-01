@@ -7,6 +7,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
 {
     [Header("UI References")]
     public GameObject enterSelectionButton;
+    public GameObject enterSelectionCanvas; // New canvas for the button
     public Canvas playerInputCanvas;
     public CanvasGroup characterSelectionCanvasGroup;
     public GameObject clothingIcon;
@@ -25,6 +26,12 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     [Header("Character Selection Controller")]
     public CharacterSelectionController characterSelectionController;
 
+    [Header("Pet Manager")]
+    public EnerlingPetManager petManager;
+
+    [Header("Currency Display")]
+    public Player_Data playerData; // Reference to update gem display
+
     private CanvasGroup buttonCanvasGroup;
     private CanvasGroup inputCanvasGroup;
     private bool playerInRange = false;
@@ -33,6 +40,17 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     void Start()
     {
         Debug.Log("=== SimpleCharacterPlatformTrigger START ===");
+
+        // Setup enter selection canvas (initially disabled)
+        if (enterSelectionCanvas != null)
+        {
+            Debug.Log("Enter Selection Canvas found: " + enterSelectionCanvas.name);
+            enterSelectionCanvas.SetActive(false);
+        }
+        else
+        {
+            Debug.LogError("Enter Selection Canvas is NOT assigned!");
+        }
 
         // Setup button
         if (enterSelectionButton != null)
@@ -91,11 +109,30 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         if (characterChangeCamera != null)
         {
             Debug.Log("Character Change Camera found: " + characterChangeCamera.name);
-            // Ensure camera priority is 0 initially
             characterChangeCamera.Priority = 0;
         }
         else
             Debug.LogError("Character Change Camera is NOT assigned!");
+
+        // Find player data if not assigned
+        if (playerData == null)
+        {
+            playerData = FindObjectOfType<Player_Data>();
+            if (playerData != null)
+                Debug.Log("Found Player_Data: " + playerData.name);
+            else
+                Debug.LogWarning("No Player_Data found in scene!");
+        }
+
+        // Find pet manager if not assigned
+        if (petManager == null)
+        {
+            petManager = FindObjectOfType<EnerlingPetManager>();
+            if (petManager != null)
+                Debug.Log("Found EnerlingPetManager: " + petManager.name);
+            else
+                Debug.LogWarning("No EnerlingPetManager found in scene!");
+        }
 
         // Try to find character selection controller if not assigned
         if (characterSelectionController == null)
@@ -124,6 +161,13 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
                 Debug.Log("Player entered trigger zone");
                 playerInRange = true;
 
+                // Enable the canvas first
+                if (enterSelectionCanvas != null && !isActive)
+                {
+                    enterSelectionCanvas.SetActive(true);
+                }
+
+                // Then show and fade in the button
                 if (enterSelectionButton != null && !isActive)
                 {
                     enterSelectionButton.SetActive(true);
@@ -152,6 +196,12 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
                     StartCoroutine(FadeAndHideButton());
                 }
 
+                // Disable the canvas after button is hidden
+                if (enterSelectionCanvas != null && !isActive)
+                {
+                    StartCoroutine(DisableCanvasAfterDelay(enterSelectionCanvas, fadeDuration));
+                }
+
                 if (clothingIcon != null && !isActive)
                 {
                     clothingIcon.SetActive(true);
@@ -173,10 +223,28 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         Debug.Log("=== ACTIVATE CHARACTER SELECTION ===");
         isActive = true;
 
-        // Hide button
+        // Update currency displays before showing selection
+        if (playerData != null)
+        {
+            playerData.UpdateGemDisplayImmediate();
+            playerData.UpdateCoinDisplayImmediate();
+        }
+
+        // Set pets to platform mode
+        if (petManager != null)
+        {
+            petManager.SetPlatformMode(true);
+        }
+
+        // Hide button and its canvas
         if (enterSelectionButton != null)
         {
             StartCoroutine(FadeAndHideButton());
+        }
+
+        if (enterSelectionCanvas != null)
+        {
+            StartCoroutine(DisableCanvasAfterDelay(enterSelectionCanvas, fadeDuration));
         }
 
         // Make sure clothing icon is hidden
@@ -185,7 +253,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             clothingIcon.SetActive(false);
         }
 
-        // Switch camera FIRST - set to 30 instead of 20
+        // Switch camera FIRST - set to 30
         SetCharacterChangeCameraActive();
         yield return null;
 
@@ -247,7 +315,6 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     {
         if (characterSelectionController != null)
         {
-            // This will refresh the character panel data
             characterSelectionController.ActivateCharacterSelection();
         }
     }
@@ -259,6 +326,12 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         if (!isActive)
         {
             yield break;
+        }
+
+        // Resume pets from platform mode
+        if (petManager != null)
+        {
+            petManager.SetPlatformMode(false);
         }
 
         // HIDE CHARACTER SELECTION CANVAS
@@ -287,9 +360,14 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
             clothingIcon.SetActive(true);
         }
 
-        // Show button again if player is still in range
+        // Show button and its canvas again if player is still in range
         if (playerInRange && enterSelectionButton != null)
         {
+            if (enterSelectionCanvas != null)
+            {
+                enterSelectionCanvas.SetActive(true);
+            }
+
             enterSelectionButton.SetActive(true);
             yield return StartCoroutine(FadeCanvasGroup(buttonCanvasGroup, 0f, 1f, fadeDuration));
         }
@@ -304,6 +382,15 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         {
             yield return StartCoroutine(FadeCanvasGroup(buttonCanvasGroup, buttonCanvasGroup.alpha, 0f, fadeDuration));
             enterSelectionButton.SetActive(false);
+        }
+    }
+
+    private IEnumerator DisableCanvasAfterDelay(GameObject canvas, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (canvas != null)
+        {
+            canvas.SetActive(false);
         }
     }
 

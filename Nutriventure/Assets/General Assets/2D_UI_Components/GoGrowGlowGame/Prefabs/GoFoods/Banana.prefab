@@ -143,8 +143,8 @@ MonoBehaviour:
   kingdomID: Nutri Kingdom
   questID: 11011
   progressAmount: 1
-  updateOnClick: 0
-  updateOnTrigger: 1
+  updateOnClick: 1
+  updateOnTrigger: 0
   destroyOnTrigger: 0
   playerTag: Player
   useCooldown: 0

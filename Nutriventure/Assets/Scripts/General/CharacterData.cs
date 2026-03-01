@@ -24,11 +24,10 @@ public class CharacterDatabase : ScriptableObject
         public AudioClip selectionSound;
 
         [Header("Unlock Requirements")]
-        public bool unlock = false; // Changed from unlockedByDefault to unlock
-        public bool isSkinReward = false; // NEW: Added skin reward flag
-        public int nutrigemsToUnlock = 0; // NEW: Changed from coinsToUnlock to nutrigemsToUnlock
-        public string taskToUnlock = "Complete challenges to unlock"; // NEW: Task description for reward skins
-        // Removed levelRequirement
+        public bool unlock = false;
+        public bool isSkinReward = false;
+        public int nutrigemsToUnlock = 0;
+        public string taskToUnlock = "Complete challenges to unlock";
     }
 
     [System.Serializable]
@@ -39,16 +38,16 @@ public class CharacterDatabase : ScriptableObject
         public int characterID;
         public GameObject characterPrefab;
         public Sprite characterIcon;
-        public Avatar characterAvatar;    // Humanoid avatar
+        public Avatar characterAvatar;
 
-        [Header("Character Logo")]  // ADDED SECTION
-        public Sprite characterLogo;  // ADDED FIELD - Character logo sprite
+        [Header("Character Logo")]
+        public Sprite characterLogo;
 
         [Header("Character Tagline")]
         public string characterTagline;
 
         [Header("Skins")]
-        public List<SkinData> skins = new List<SkinData>(); // List of available skins
+        public List<SkinData> skins = new List<SkinData>();
 
         [Header("Gameplay Attributes")]
         public float speedMultiplier = 1f;
@@ -109,7 +108,6 @@ public class CharacterDatabase : ScriptableObject
         CharacterData character = GetCharacterByID(characterID);
         if (character == null || character.skins.Count == 0) return null;
 
-        // You could implement logic here to return unlocked/default skin
         return character.skins[0];
     }
 
@@ -119,7 +117,6 @@ public class CharacterDatabase : ScriptableObject
         return character?.skins.Count ?? 0;
     }
 
-    // In CharacterDatabase.cs
     public bool IsCharacterUnlocked(int characterID, GameData gameData)
     {
         CharacterData character = GetCharacterByID(characterID);
@@ -129,32 +126,12 @@ public class CharacterDatabase : ScriptableObject
             return false;
         }
 
-        Debug.Log($"Checking unlock for {character.characterName} (ID: {characterID})");
-        Debug.Log($"- unlockedByDefault: {character.unlockedByDefault}");
-
         if (character.unlockedByDefault)
         {
-            Debug.Log($"- Returning TRUE (unlocked by default)");
             return true;
         }
 
-        bool inGameData = gameData.unlockedCharacterIDs.Contains(characterID);
-        Debug.Log($"- In GameData unlocked list: {inGameData}");
-        Debug.Log($"- Final result: {inGameData}");
-
-        return inGameData;
-    }
-
-    public bool IsSkinUnlocked(int characterID, int skinID, GameData gameData)
-    {
-        SkinData skin = GetSkinByID(characterID, skinID);
-        if (skin == null) return false;
-
-        // Check if skin is marked as unlock=true in database
-        if (skin.unlock) return true;
-
-        // Check if skin is unlocked in game data
-        return gameData.IsSkinUnlocked(characterID, skinID);
+        return gameData.unlockedCharacterIDs.Contains(characterID);
     }
 
     public CharacterData GetCharacterByName(string characterName)
@@ -162,7 +139,6 @@ public class CharacterDatabase : ScriptableObject
         return characters.Find(c => c.characterName.Equals(characterName, System.StringComparison.OrdinalIgnoreCase));
     }
 
-    // Add this method to CharacterDatabase.cs
     public (int characterId, int skinId)? GetSkinByName(string skinName)
     {
         foreach (var character in characters)

@@ -6,65 +6,63 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using TMPro; // Added for TextMeshPro
+using TMPro;
 
 public class K2_DummypTimeline : MonoBehaviour
 {
     [Header("Dummy Product Collection Detection")]
-    [SerializeField] private CollectProducts collectProductsScript; // Reference to CollectProducts script
-    [SerializeField] private ProductInformationManager productInfoManager; // Reference to track collection
+    [SerializeField] private CollectProducts collectProductsScript;
+    [SerializeField] private ProductInformationManager productInfoManager;
     
     [Header("Second Timeline References")]
-    [SerializeField] private GameObject cutscene2ParentObject; // "Cutscene2Things" parent object
-    [SerializeField] private PlayableDirector npcCutscene2Director; // "NPC_Cutscene2" PlayableDirector
+    [SerializeField] private GameObject cutscene2ParentObject;
+    [SerializeField] private PlayableDirector npcCutscene2Director;
     
     [Header("Third Timeline References")]
-    [SerializeField] private GameObject cutscene3ParentObject; // "Cutscene3" parent object
-    [SerializeField] private PlayableDirector npcTimeline3Director; // "NPC_Timeline3" PlayableDirector
+    [SerializeField] private GameObject cutscene3ParentObject;
+    [SerializeField] private PlayableDirector npcTimeline3Director;
     
     [Header("Player Reference")]
-    [SerializeField] private GameObject playerObject; // Reference to player (with ThirdPersonController)
+    [SerializeField] private GameObject playerObject;
     
     [Header("Game Systems to Control")]
-    [SerializeField] private GameObject audioHandler; // "Audio_Handler" GameObject
-    [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
+    [SerializeField] private GameObject audioHandler;
+    [SerializeField] private GameObject gameUICanvas;
     
     [Header("Dialogue Canvas")]
-    [SerializeField] private GameObject dialogueCanvas; // SINGLE dialogue box canvas for BOTH timelines
+    [SerializeField] private GameObject dialogueCanvas;
     
     [Header("NPC Name Texts")]
-    [SerializeField] private TMP_Text secondCutsceneNPCText; // TextMeshPro for second cutscene NPC name
-    [SerializeField] private TMP_Text thirdCutsceneNPCText; // TextMeshPro for third cutscene NPC name
+    [SerializeField] private TMP_Text secondCutsceneNPCText;
+    [SerializeField] private TMP_Text thirdCutsceneNPCText;
     
     [Header("Subtitle Controller")]
-    [SerializeField] private K2_SubtitleController subtitleController; // Reference to subtitle controller
+    [SerializeField] private K2_SubtitleController subtitleController;
     
     [Header("Skip Button Settings")]
-    [SerializeField] private Button skipButton; // Skip button for cutscenes
-    [SerializeField] private bool enableSkipButton = true; // Whether skip button is enabled
-    [SerializeField] private float skipButtonDelay = 2f; // Delay before skip button appears
+    [SerializeField] private Button skipButton;
+    [SerializeField] private bool enableSkipButton = true;
+    [SerializeField] private float skipButtonDelay = 2f;
     
-    [Header("UI Elements to Control After Cutscene 2")]
-    [SerializeField] private GameObject healthContainer; // Health Container (initially disabled)
-    [SerializeField] private GameObject pointsPanel; // Points Panel (initially disabled)
-    [SerializeField] private GameObject timerPanel; // Timer Panel (initially disabled)
-    [SerializeField] private GameObject profileGameObject; // Profile GameObject (initially enabled)
+    [Header("DYNAMIC UI CONTROL AFTER CUTSCENE 2")]
+    [SerializeField] private List<GameObject> uiElementsToEnable = new List<GameObject>(); // Objects to ENABLE after cutscene 2
+    [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>(); // Objects to DISABLE after cutscene 2
     
     [Header("Events")]
     public UnityEvent onSecondCutsceneStart;
     public UnityEvent onSecondCutsceneEnd;
     public UnityEvent onThirdCutsceneStart;
     public UnityEvent onThirdCutsceneEnd;
-    public UnityEvent onCutsceneSkipped; // Event fired when cutscene is skipped
+    public UnityEvent onCutsceneSkipped;
     
-    // Simple state tracking
+    // State tracking
     private bool isSecondCutscenePlaying = false;
     private bool isThirdCutscenePlaying = false;
     private bool waitingForFinalPanelConfirm = false;
     
     // Monster tracking
     private List<MonsterObstacle> allMonsters = new List<MonsterObstacle>();
-    private List<bool> monsterPauseStates = new List<bool>(); // Track which monsters were already paused
+    private List<bool> monsterPauseStates = new List<bool>();
     
     // Skip button variables
     private float skipButtonTimer = 0f;
@@ -82,30 +80,24 @@ public class K2_DummypTimeline : MonoBehaviour
     private AudioSource cachedAudioSource;
     private Rigidbody cachedRigidbody;
     
-    // NEW: Track original states
+    // Track original states
     private bool dialogueCanvasOriginalState = false;
     private bool subtitleControllerOriginalState = false;
     private bool secondNPCTextOriginalState = false;
     private bool thirdNPCTextOriginalState = false;
     
-    // NEW: Track original UI element states
-    private bool healthContainerOriginalState = false;
-    private bool pointsPanelOriginalState = false;
-    private bool timerPanelOriginalState = false;
-    private bool profileGameObjectOriginalState = false;
+    // NEW: Track original states for dynamic UI elements
+    private Dictionary<GameObject, bool> uiElementsToEnableOriginalStates = new Dictionary<GameObject, bool>();
+    private Dictionary<GameObject, bool> uiElementsToDisableOriginalStates = new Dictionary<GameObject, bool>();
     
-    // NEW: Protection system
+    // Protection system
     private Coroutine protectionCoroutine = null;
-    private const float PROTECTION_CHECK_INTERVAL = 0.1f; // Check every 0.1 seconds
+    private const float PROTECTION_CHECK_INTERVAL = 0.1f;
     
     void Start()
     {
         Debug.Log("K2_DummypTimeline Start called");
-        
-        // Initialize everything in a safe way
         SafeInitialize();
-        
-        // Cache player components
         CachePlayerComponents();
     }
     
@@ -130,7 +122,7 @@ public class K2_DummypTimeline : MonoBehaviour
         // Handle skip button timer
         if ((isSecondCutscenePlaying || isThirdCutscenePlaying) && enableSkipButton && !skipButtonReady)
         {
-            skipButtonTimer += Time.unscaledDeltaTime; // Use unscaled time since game might be paused
+            skipButtonTimer += Time.unscaledDeltaTime;
             
             if (skipButtonTimer >= skipButtonDelay)
             {
@@ -142,10 +134,8 @@ public class K2_DummypTimeline : MonoBehaviour
     
     void SafeInitialize()
     {
-        // Find all monsters in the scene
         FindAllMonsters();
         
-        // Find subtitle controller if not assigned
         if (subtitleController == null)
         {
             subtitleController = FindObjectOfType<K2_SubtitleController>();
@@ -159,10 +149,10 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Store original states BEFORE doing anything
+        // Store original states
         StoreOriginalStates();
         
-        // Disable cutscene parent at start
+        // Disable cutscene parents at start
         if (cutscene2ParentObject != null)
         {
             cutscene2ParentObject.SetActive(false);
@@ -173,7 +163,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogError("Cutscene2 parent object not assigned!");
         }
         
-        // Disable third cutscene parent at start
         if (cutscene3ParentObject != null)
         {
             cutscene3ParentObject.SetActive(false);
@@ -184,11 +173,9 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogError("Cutscene3 parent object not assigned!");
         }
         
-        // Initialize PlayableDirector without touching it much
+        // Initialize PlayableDirectors
         if (npcCutscene2Director != null)
         {
-            // Don't call Stop() or subscribe to events in Start
-            // Just ensure it's not playing
             if (npcCutscene2Director.state == PlayState.Playing)
             {
                 Debug.LogWarning("Timeline was already playing, stopping it");
@@ -200,11 +187,8 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogError("PlayableDirector for cutscene2 not assigned!");
         }
         
-        // Initialize third timeline director
         if (npcTimeline3Director != null)
         {
-            // Don't call Stop() or subscribe to events in Start
-            // Just ensure it's not playing
             if (npcTimeline3Director.state == PlayState.Playing)
             {
                 Debug.LogWarning("Timeline3 was already playing, stopping it");
@@ -220,7 +204,7 @@ public class K2_DummypTimeline : MonoBehaviour
         if (skipButton != null)
         {
             skipButton.onClick.AddListener(OnSkipButtonClicked);
-            skipButton.gameObject.SetActive(false); // Hidden by default
+            skipButton.gameObject.SetActive(false);
             Debug.Log("Skip button initialized");
         }
         else
@@ -228,39 +212,34 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("Skip button not assigned in Inspector!");
         }
         
-        // Disable dialogue canvas (SINGLE CANVAS FOR BOTH)
+        // Disable dialogue canvas
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(false);
             Debug.Log("Dialogue canvas disabled");
         }
         
-        // Initialize second cutscene NPC text
+        // Initialize NPC texts
         if (secondCutsceneNPCText != null)
         {
-            // Store whether it was active before initialization
             secondNPCTextWasActive = secondCutsceneNPCText.gameObject.activeSelf;
-            // Disable it initially (will be enabled when cutscene plays)
             secondCutsceneNPCText.gameObject.SetActive(false);
-            Debug.Log($"Second cutscene NPC text initialized: {secondCutsceneNPCText.name}, was active: {secondNPCTextWasActive}");
+            Debug.Log($"Second cutscene NPC text initialized, was active: {secondNPCTextWasActive}");
         }
         else
         {
-            Debug.Log("No second cutscene NPC text assigned - skipping NPC name display");
+            Debug.Log("No second cutscene NPC text assigned");
         }
         
-        // Initialize third cutscene NPC text
         if (thirdCutsceneNPCText != null)
         {
-            // Store whether it was active before initialization
             thirdNPCTextWasActive = thirdCutsceneNPCText.gameObject.activeSelf;
-            // Disable it initially (will be enabled when cutscene plays)
             thirdCutsceneNPCText.gameObject.SetActive(false);
-            Debug.Log($"Third cutscene NPC text initialized: {thirdCutsceneNPCText.name}, was active: {thirdNPCTextWasActive}");
+            Debug.Log($"Third cutscene NPC text initialized, was active: {thirdNPCTextWasActive}");
         }
         else
         {
-            Debug.Log("No third cutscene NPC text assigned - skipping NPC name display");
+            Debug.Log("No third cutscene NPC text assigned");
         }
         
         // Find player if not assigned
@@ -270,7 +249,6 @@ public class K2_DummypTimeline : MonoBehaviour
             if (playerObject != null)
             {
                 Debug.Log($"Found player: {playerObject.name}");
-                // Cache components after finding player
                 CachePlayerComponents();
             }
         }
@@ -292,7 +270,6 @@ public class K2_DummypTimeline : MonoBehaviour
             if (productInfoManager != null)
             {
                 Debug.Log("Found ProductInformationManager script");
-                // Subscribe to panel events
                 ProductInformationManager.OnProductPanelHidden += OnProductPanelHidden;
                 Debug.Log("Subscribed to ProductInformationManager.OnProductPanelHidden event");
             }
@@ -303,7 +280,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         else
         {
-            // Subscribe to panel events
             ProductInformationManager.OnProductPanelHidden += OnProductPanelHidden;
             Debug.Log("Subscribed to ProductInformationManager.OnProductPanelHidden event");
         }
@@ -328,28 +304,44 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Log UI element assignment status
-        LogUIElementStatus();
+        // Log dynamic UI element status
+        LogDynamicUIElementStatus();
         
         Debug.Log("K2_DummypTimeline initialized successfully");
     }
     
-    // NEW: Log UI element assignment status
-    private void LogUIElementStatus()
+    // NEW: Log dynamic UI element assignment status
+    private void LogDynamicUIElementStatus()
     {
-        Debug.Log("=== UI ELEMENTS STATUS ===");
-        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.name : "NOT ASSIGNED")}");
-        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.name : "NOT ASSIGNED")}");
-        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.name : "NOT ASSIGNED")}");
-        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.name : "NOT ASSIGNED")}");
+        Debug.Log("=== DYNAMIC UI ELEMENTS STATUS ===");
+        Debug.Log($"UI Elements to Enable ({uiElementsToEnable.Count}):");
+        foreach (GameObject obj in uiElementsToEnable)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - {obj.name} (current state: {(obj.activeSelf ? "enabled" : "disabled")})");
+            }
+            else
+            {
+                Debug.LogWarning("  - NULL reference in uiElementsToEnable list!");
+            }
+        }
         
-        if (healthContainer != null) Debug.Log($"Health Container initial state: {(healthContainer.activeSelf ? "enabled" : "disabled")}");
-        if (pointsPanel != null) Debug.Log($"Points Panel initial state: {(pointsPanel.activeSelf ? "enabled" : "disabled")}");
-        if (timerPanel != null) Debug.Log($"Timer Panel initial state: {(timerPanel.activeSelf ? "enabled" : "disabled")}");
-        if (profileGameObject != null) Debug.Log($"Profile GameObject initial state: {(profileGameObject.activeSelf ? "enabled" : "disabled")}");
+        Debug.Log($"UI Elements to Disable ({uiElementsToDisable.Count}):");
+        foreach (GameObject obj in uiElementsToDisable)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - {obj.name} (current state: {(obj.activeSelf ? "enabled" : "disabled")})");
+            }
+            else
+            {
+                Debug.LogWarning("  - NULL reference in uiElementsToDisable list!");
+            }
+        }
     }
     
-    // NEW: Store original states
+    // NEW: Store original states for all UI elements
     private void StoreOriginalStates()
     {
         if (dialogueCanvas != null)
@@ -364,24 +356,31 @@ public class K2_DummypTimeline : MonoBehaviour
         if (thirdCutsceneNPCText != null)
             thirdNPCTextOriginalState = thirdCutsceneNPCText.gameObject.activeSelf;
         
-        // Store UI element original states
-        if (healthContainer != null)
-            healthContainerOriginalState = healthContainer.activeSelf;
+        // Store original states for dynamic UI elements to enable
+        uiElementsToEnableOriginalStates.Clear();
+        foreach (GameObject obj in uiElementsToEnable)
+        {
+            if (obj != null && !uiElementsToEnableOriginalStates.ContainsKey(obj))
+            {
+                uiElementsToEnableOriginalStates.Add(obj, obj.activeSelf);
+            }
+        }
         
-        if (pointsPanel != null)
-            pointsPanelOriginalState = pointsPanel.activeSelf;
-        
-        if (timerPanel != null)
-            timerPanelOriginalState = timerPanel.activeSelf;
-        
-        if (profileGameObject != null)
-            profileGameObjectOriginalState = profileGameObject.activeSelf;
+        // Store original states for dynamic UI elements to disable
+        uiElementsToDisableOriginalStates.Clear();
+        foreach (GameObject obj in uiElementsToDisable)
+        {
+            if (obj != null && !uiElementsToDisableOriginalStates.ContainsKey(obj))
+            {
+                uiElementsToDisableOriginalStates.Add(obj, obj.activeSelf);
+            }
+        }
         
         Debug.Log($"Original states stored: Dialogue={dialogueCanvasOriginalState}, Subtitle={subtitleControllerOriginalState}");
-        Debug.Log($"UI Original states: Health={healthContainerOriginalState}, Points={pointsPanelOriginalState}, Timer={timerPanelOriginalState}, Profile={profileGameObjectOriginalState}");
+        Debug.Log($"Dynamic UI states stored: {uiElementsToEnableOriginalStates.Count} to enable, {uiElementsToDisableOriginalStates.Count} to disable");
     }
     
-    // NEW: Start protection system
+    // Start protection system
     private void StartProtectionSystem()
     {
         if (protectionCoroutine != null)
@@ -391,7 +390,7 @@ public class K2_DummypTimeline : MonoBehaviour
         protectionCoroutine = StartCoroutine(ProtectionSystemCoroutine());
     }
     
-    // NEW: Stop protection system
+    // Stop protection system
     private void StopProtectionSystem()
     {
         if (protectionCoroutine != null)
@@ -401,7 +400,7 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // NEW: Protection system coroutine
+    // Protection system coroutine
     private IEnumerator ProtectionSystemCoroutine()
     {
         Debug.Log("Starting protection system for cutscene...");
@@ -409,20 +408,17 @@ public class K2_DummypTimeline : MonoBehaviour
         while (isSecondCutscenePlaying || isThirdCutscenePlaying)
         {
             yield return new WaitForSeconds(PROTECTION_CHECK_INTERVAL);
-            
-            // FORCE critical components to stay active during cutscene
             ForceComponentsActive();
         }
         
         Debug.Log("Protection system stopped");
     }
     
-    // NEW: Force components to stay active
+    // Force components to stay active
     private void ForceComponentsActive()
     {
         bool anyComponentWasFixed = false;
         
-        // Dialogue canvas MUST stay active
         if (dialogueCanvas != null && !dialogueCanvas.activeSelf)
         {
             dialogueCanvas.SetActive(true);
@@ -430,7 +426,6 @@ public class K2_DummypTimeline : MonoBehaviour
             anyComponentWasFixed = true;
         }
         
-        // Subtitle controller MUST stay active
         if (subtitleController != null && !subtitleController.gameObject.activeSelf)
         {
             subtitleController.gameObject.SetActive(true);
@@ -438,14 +433,13 @@ public class K2_DummypTimeline : MonoBehaviour
             anyComponentWasFixed = true;
         }
         
-        // If any component was fixed, log a warning
         if (anyComponentWasFixed)
         {
             Debug.LogWarning("Timeline is deactivating critical components! Protection system is keeping them active.");
         }
     }
     
-    // Cache player components to avoid GetComponent calls during cutscene
+    // Cache player components
     private void CachePlayerComponents()
     {
         if (playerObject == null) return;
@@ -464,7 +458,6 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log("K2_DummypTimeline enabled");
         
-        // Subscribe to timeline events when script is enabled
         if (npcCutscene2Director != null)
         {
             npcCutscene2Director.stopped += OnSecondCutsceneFinished;
@@ -472,7 +465,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Subscribed to timeline2 events");
         }
         
-        // Subscribe to third timeline events
         if (npcTimeline3Director != null)
         {
             npcTimeline3Director.stopped += OnThirdCutsceneFinished;
@@ -485,7 +477,6 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log("K2_DummypTimeline disabled");
         
-        // Unsubscribe from timeline events
         if (npcCutscene2Director != null)
         {
             npcCutscene2Director.stopped -= OnSecondCutsceneFinished;
@@ -493,7 +484,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Unsubscribed from timeline2 events");
         }
         
-        // Unsubscribe from third timeline events
         if (npcTimeline3Director != null)
         {
             npcTimeline3Director.stopped -= OnThirdCutsceneFinished;
@@ -501,42 +491,36 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Unsubscribed from timeline3 events");
         }
         
-        // Unsubscribe from panel events
         if (productInfoManager != null)
         {
             ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
             Debug.Log("Unsubscribed from ProductInformationManager.OnProductPanelHidden event");
         }
         
-        // Remove skip button listener
         if (skipButton != null)
         {
             skipButton.onClick.RemoveListener(OnSkipButtonClicked);
         }
         
-        // Stop protection system
         StopProtectionSystem();
     }
     
     void OnDestroy()
     {
-        // Remove skip button listener
         if (skipButton != null)
         {
             skipButton.onClick.RemoveListener(OnSkipButtonClicked);
         }
         
-        // Unsubscribe from panel events
         if (productInfoManager != null)
         {
             ProductInformationManager.OnProductPanelHidden -= OnProductPanelHidden;
         }
         
-        // Stop protection system
         StopProtectionSystem();
     }
     
-    // Find all monsters in the scene
+    // Find all monsters
     private void FindAllMonsters()
     {
         MonsterObstacle[] foundMonsters = FindObjectsOfType<MonsterObstacle>();
@@ -546,42 +530,38 @@ public class K2_DummypTimeline : MonoBehaviour
         foreach (MonsterObstacle monster in foundMonsters)
         {
             allMonsters.Add(monster);
-            monsterPauseStates.Add(monster.IsPaused()); // Store current pause state
+            monsterPauseStates.Add(monster.IsPaused());
             Debug.Log($"Found monster: {monster.name}, Current Pause State: {monster.IsPaused()}");
         }
         
         Debug.Log($"Found {allMonsters.Count} monsters in scene");
     }
     
-    // Pause all monsters during cutscene
+    // Pause all monsters
     private void PauseAllMonsters()
     {
         Debug.Log("Pausing all monsters for cutscene...");
         
-        // Clear and rebuild lists
         monsterPauseStates.Clear();
         
         for (int i = 0; i < allMonsters.Count; i++)
         {
             if (allMonsters[i] != null)
             {
-                // Store current pause state before pausing
                 monsterPauseStates.Add(allMonsters[i].IsPaused());
-                
-                // Pause the monster
                 allMonsters[i].PauseMonster();
                 Debug.Log($"Paused monster: {allMonsters[i].name}");
             }
             else
             {
-                monsterPauseStates.Add(false); // Default if monster is null
+                monsterPauseStates.Add(false);
             }
         }
         
         Debug.Log($"Paused {allMonsters.Count} monsters");
     }
     
-    // Resume all monsters after cutscene
+    // Resume all monsters
     private void ResumeAllMonsters()
     {
         Debug.Log("Resuming monsters after cutscene...");
@@ -592,7 +572,6 @@ public class K2_DummypTimeline : MonoBehaviour
         {
             if (allMonsters[i] != null)
             {
-                // Only resume if it wasn't already paused before the cutscene
                 if (i < monsterPauseStates.Count && !monsterPauseStates[i])
                 {
                     allMonsters[i].ResumeMonster();
@@ -601,7 +580,6 @@ public class K2_DummypTimeline : MonoBehaviour
                 }
                 else if (i >= monsterPauseStates.Count)
                 {
-                    // If we don't have a stored state, resume anyway
                     allMonsters[i].ResumeMonster();
                     resumedCount++;
                     Debug.Log($"Resumed monster (no stored state): {allMonsters[i].name}");
@@ -616,7 +594,7 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log($"Resumed {resumedCount} monsters");
     }
     
-    // Force all monsters to return to patrol
+    // Force all monsters to patrol
     private void ForceAllMonstersToPatrol()
     {
         Debug.Log("Forcing all monsters to return to patrol...");
@@ -641,12 +619,10 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log("=== PRODUCT PANEL HIDDEN EVENT RECEIVED ===");
         
-        // Check if we were waiting for the final panel to close
         if (waitingForFinalPanelConfirm)
         {
             Debug.Log("Was waiting for final panel confirm, checking collection...");
             
-            // Check if all products are collected
             if (productInfoManager != null)
             {
                 bool allCollected = productInfoManager.IsAllCollected();
@@ -676,14 +652,12 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Public method to start the second cutscene
-    // Call this from ProductInformationManager when dummy product info panel is confirmed
+    // Start second cutscene
     public void StartSecondCutscene()
     {
-        StartSecondCutsceneWithNPCName(null); // Default call without custom name
+        StartSecondCutsceneWithNPCName(null);
     }
     
-    // NEW: Overload method to start second cutscene with custom NPC name
     public void StartSecondCutscene(string customNPCName = null)
     {
         StartSecondCutsceneWithNPCName(customNPCName);
@@ -699,7 +673,6 @@ public class K2_DummypTimeline : MonoBehaviour
             return;
         }
         
-        // Validate everything before starting
         if (!ValidateComponentsForSecondCutscene())
         {
             Debug.LogError("Failed to validate components for second cutscene!");
@@ -707,52 +680,35 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         isSecondCutscenePlaying = true;
-        
-        // Reset skip button state
         ResetSkipButtonState();
-        
-        // Start protection system BEFORE anything else
         StartProtectionSystem();
-        
-        // Ensure subtitle controller is active
         ActivateSubtitleController();
-        
-        // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
-        
-        // Force all monsters to return to patrol (so they're not hunting when cutscene ends)
         ForceAllMonstersToPatrol();
-        
-        // Freeze player movement
         FreezePlayer();
         
-        // Enable cutscene parent first
         if (cutscene2ParentObject != null)
         {
             cutscene2ParentObject.SetActive(true);
             Debug.Log("Cutscene2 parent enabled");
         }
         
-        // Disable game UI
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(false);
             Debug.Log("Game UI disabled");
         }
         
-        // Disable audio handler
         if (audioHandler != null)
         {
             audioHandler.SetActive(false);
             Debug.Log("Audio handler disabled");
         }
         
-        // Enable second cutscene NPC text
         if (secondCutsceneNPCText != null)
         {
             secondCutsceneNPCText.gameObject.SetActive(true);
             
-            // Set custom NPC name if provided
             if (!string.IsNullOrEmpty(customNPCName))
             {
                 secondCutsceneNPCText.text = customNPCName;
@@ -760,22 +716,19 @@ public class K2_DummypTimeline : MonoBehaviour
             }
             else
             {
-                Debug.Log($"Second cutscene NPC name text activated: {secondCutsceneNPCText.name}");
+                Debug.Log($"Second cutscene NPC name text activated");
             }
         }
         
-        // IMPORTANT: Wait one frame before playing timeline
-        // This ensures everything is properly activated
         StartCoroutine(PlayTimelineAfterFrame(npcCutscene2Director, true));
     }
     
-    // Public method to start the third cutscene
+    // Start third cutscene
     public void StartThirdCutscene()
     {
-        StartThirdCutsceneWithNPCName(null); // Default call without custom name
+        StartThirdCutsceneWithNPCName(null);
     }
     
-    // NEW: Overload method to start third cutscene with custom NPC name
     public void StartThirdCutscene(string customNPCName = null)
     {
         StartThirdCutsceneWithNPCName(customNPCName);
@@ -791,7 +744,6 @@ public class K2_DummypTimeline : MonoBehaviour
             return;
         }
         
-        // Validate everything before starting
         if (!ValidateComponentsForThirdCutscene())
         {
             Debug.LogError("Failed to validate components for third cutscene!");
@@ -799,52 +751,35 @@ public class K2_DummypTimeline : MonoBehaviour
         }
         
         isThirdCutscenePlaying = true;
-        
-        // Reset skip button state
         ResetSkipButtonState();
-        
-        // Start protection system BEFORE anything else
         StartProtectionSystem();
-        
-        // Ensure subtitle controller is active
         ActivateSubtitleController();
-        
-        // Pause all monsters BEFORE freezing player
         PauseAllMonsters();
-        
-        // Force all monsters to return to patrol (so they're not hunting when cutscene ends)
         ForceAllMonstersToPatrol();
-        
-        // Freeze player movement
         FreezePlayer();
         
-        // Enable cutscene parent first
         if (cutscene3ParentObject != null)
         {
             cutscene3ParentObject.SetActive(true);
             Debug.Log("Cutscene3 parent enabled");
         }
         
-        // Disable game UI
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(false);
             Debug.Log("Game UI disabled");
         }
         
-        // Disable audio handler
         if (audioHandler != null)
         {
             audioHandler.SetActive(false);
             Debug.Log("Audio handler disabled");
         }
         
-        // Enable third cutscene NPC text
         if (thirdCutsceneNPCText != null)
         {
             thirdCutsceneNPCText.gameObject.SetActive(true);
             
-            // Set custom NPC name if provided
             if (!string.IsNullOrEmpty(customNPCName))
             {
                 thirdCutsceneNPCText.text = customNPCName;
@@ -852,16 +787,14 @@ public class K2_DummypTimeline : MonoBehaviour
             }
             else
             {
-                Debug.Log($"Third cutscene NPC name text activated: {thirdCutsceneNPCText.name}");
+                Debug.Log($"Third cutscene NPC name text activated");
             }
         }
         
-        // IMPORTANT: Wait one frame before playing timeline
-        // This ensures everything is properly activated
         StartCoroutine(PlayTimelineAfterFrame(npcTimeline3Director, false));
     }
     
-    // Ensure subtitle controller is active before playing timeline
+    // Activate subtitle controller
     private void ActivateSubtitleController()
     {
         if (subtitleController != null)
@@ -880,16 +813,11 @@ public class K2_DummypTimeline : MonoBehaviour
     
     private IEnumerator PlayTimelineAfterFrame(PlayableDirector director, bool isSecondCutscene)
     {
-        // Wait for end of frame to ensure everything is set up
         yield return new WaitForEndOfFrame();
-        
-        // Additional small delay to ensure all components are ready
         yield return new WaitForSeconds(0.1f);
         
-        // CRITICAL: Force components active one more time before playing
         ForceComponentsActive();
         
-        // Now play the timeline
         if (director != null)
         {
             Debug.Log($"Playing timeline: {director.name}...");
@@ -900,7 +828,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogError("Cannot play timeline: Director is null!");
         }
         
-        // Invoke appropriate start event
         if (director == npcCutscene2Director)
         {
             onSecondCutsceneStart?.Invoke();
@@ -917,14 +844,12 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         bool allValid = true;
         
-        // Check player
         if (playerObject == null)
         {
             Debug.LogError("Player object is null!");
             allValid = false;
         }
         
-        // Check CollectProducts script
         if (collectProductsScript == null)
         {
             Debug.LogError("CollectProducts script is null!");
@@ -936,14 +861,12 @@ public class K2_DummypTimeline : MonoBehaviour
             allValid = false;
         }
         
-        // Check timeline director
         if (npcCutscene2Director == null)
         {
             Debug.LogError("Second timeline director is null!");
             allValid = false;
         }
         
-        // Check cutscene parent
         if (cutscene2ParentObject == null)
         {
             Debug.LogError("Cutscene2 parent object is null!");
@@ -958,14 +881,12 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         bool allValid = true;
         
-        // Check player
         if (playerObject == null)
         {
             Debug.LogError("Player object is null!");
             allValid = false;
         }
         
-        // Check product info manager
         if (productInfoManager == null)
         {
             Debug.LogError("ProductInformationManager script is null!");
@@ -977,19 +898,13 @@ public class K2_DummypTimeline : MonoBehaviour
             allValid = false;
         }
         
-        // Check timeline director
         if (npcTimeline3Director == null)
         {
             Debug.LogError("Third timeline director is null!");
             allValid = false;
         }
         
-        // Check cutscene parent
-        if (cutscene3ParentObject != null)
-        {
-            Debug.Log("Cutscene3 parent object found");
-        }
-        else
+        if (cutscene3ParentObject == null)
         {
             Debug.LogError("Cutscene3 parent object is null!");
             allValid = false;
@@ -1007,7 +922,6 @@ public class K2_DummypTimeline : MonoBehaviour
             return;
         }
         
-        // Disable ThirdPersonController
         if (cachedController != null)
         {
             cachedController.enabled = false;
@@ -1018,7 +932,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("ThirdPersonController not found on player!");
         }
         
-        // Disable Animator
         if (cachedAnimator != null)
         {
             cachedAnimator.enabled = false;
@@ -1029,7 +942,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("Animator not found on player!");
         }
         
-        // Reset inputs
         if (cachedInputs != null)
         {
             cachedInputs.move = Vector2.zero;
@@ -1043,7 +955,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("StarterAssetsInputs not found on player!");
         }
         
-        // Disable PlayerInput (Input System)
         if (cachedPlayerInput != null)
         {
             cachedPlayerInput.enabled = false;
@@ -1054,14 +965,12 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.LogWarning("PlayerInput component not found on player!");
         }
         
-        // Stop audio
         if (cachedAudioSource != null)
         {
             cachedAudioSource.Stop();
             Debug.Log("Player audio stopped");
         }
         
-        // Stop physics movement
         if (cachedRigidbody != null)
         {
             cachedRigidbody.linearVelocity = Vector3.zero;
@@ -1076,11 +985,9 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log("Second timeline started playing");
 
-        // FORCE UI & AUDIO OFF (in case something re-enabled them)
         if (gameUICanvas != null) gameUICanvas.SetActive(false);
         if (audioHandler != null) audioHandler.SetActive(false);
 
-        // Enable SINGLE dialogue canvas for both cutscenes
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(true);
@@ -1092,11 +999,9 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log("Third timeline started playing");
 
-        // FORCE UI & AUDIO OFF (THIS FIXES THE MID-CUTSCENE POP)
         if (gameUICanvas != null) gameUICanvas.SetActive(false);
         if (audioHandler != null) audioHandler.SetActive(false);
 
-        // Enable SINGLE dialogue canvas for both cutscenes
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(true);
@@ -1110,7 +1015,7 @@ public class K2_DummypTimeline : MonoBehaviour
         
         if (isSecondCutscenePlaying)
         {
-            FinishSecondCutscene(false); // false = not skipped
+            FinishSecondCutscene(false);
         }
     }
     
@@ -1120,7 +1025,7 @@ public class K2_DummypTimeline : MonoBehaviour
         
         if (isThirdCutscenePlaying)
         {
-            FinishThirdCutscene(false); // false = not skipped
+            FinishThirdCutscene(false);
         }
     }
     
@@ -1128,205 +1033,213 @@ public class K2_DummypTimeline : MonoBehaviour
     {
         Debug.Log($"=== FINISHING SECOND CUTSCENE (Skipped: {wasSkipped}) ===");
         
-        // Stop protection system
         StopProtectionSystem();
-        
-        // Hide skip button
         HideSkipButton();
         
-        // Hide dialogue canvas (SINGLE CANVAS FOR BOTH)
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(dialogueCanvasOriginalState);
             Debug.Log($"Dialogue canvas restored to original state: {(dialogueCanvasOriginalState ? "active" : "inactive")}");
         }
         
-        // Restore subtitle controller
         if (subtitleController != null)
         {
             subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
             Debug.Log($"Subtitle controller restored to original state: {(subtitleControllerOriginalState ? "active" : "inactive")}");
         }
         
-        // Disable second cutscene NPC text
         if (secondCutsceneNPCText != null)
         {
             secondCutsceneNPCText.gameObject.SetActive(secondNPCTextOriginalState);
             Debug.Log("Second cutscene NPC text disabled");
         }
         
-        // Resume monsters BEFORE unfreezing player
         ResumeAllMonsters();
         
-        // Disable cutscene parent
         if (cutscene2ParentObject != null)
         {
             cutscene2ParentObject.SetActive(false);
             Debug.Log("Cutscene2 parent disabled");
         }
         
-        // Re-enable game UI
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(true);
             Debug.Log("Game UI enabled");
         }
         
-        // Re-enable audio handler
         if (audioHandler != null)
         {
             audioHandler.SetActive(true);
             Debug.Log("Audio handler enabled");
         }
         
-        // NEW: Handle UI elements for after cutscene 2
-        HandlePostCutscene2UI();
+        // NEW: Handle dynamic UI elements after cutscene 2
+        HandlePostCutscene2DynamicUI();
         
-        // Unfreeze player (AFTER monsters are resumed and UI is handled)
         UnfreezePlayer();
         
-        // Update state
         isSecondCutscenePlaying = false;
         
-        // If skipped, invoke skipped event
         if (wasSkipped)
         {
             onCutsceneSkipped?.Invoke();
         }
         
-        // Invoke end event
         onSecondCutsceneEnd?.Invoke();
         
         Debug.Log($"Second cutscene {(wasSkipped ? "skipped" : "finished")} successfully");
     }
     
-    // NEW: Handle UI elements after cutscene 2
-    private void HandlePostCutscene2UI()
+    // NEW: Handle dynamic UI elements after cutscene 2
+    private void HandlePostCutscene2DynamicUI()
     {
-        Debug.Log("=== HANDLING POST-CUTSCENE 2 UI ===");
+        Debug.Log("=== HANDLING POST-CUTSCENE 2 DYNAMIC UI ===");
         
-        // Enable initially disabled UI elements
-        if (healthContainer != null)
+        // Enable all UI elements in the enable list
+        if (uiElementsToEnable.Count > 0)
         {
-            healthContainer.SetActive(true);
-            Debug.Log($"Health Container enabled: {healthContainer.name}");
+            Debug.Log($"Enabling {uiElementsToEnable.Count} UI elements...");
+            foreach (GameObject obj in uiElementsToEnable)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(true);
+                    Debug.Log($"  - Enabled: {obj.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("  - NULL reference in uiElementsToEnable list!");
+                }
+            }
         }
         else
         {
-            Debug.LogWarning("Health Container not assigned in inspector!");
+            Debug.Log("No UI elements to enable (list is empty)");
         }
         
-        if (pointsPanel != null)
+        // Disable all UI elements in the disable list
+        if (uiElementsToDisable.Count > 0)
         {
-            pointsPanel.SetActive(true);
-            Debug.Log($"Points Panel enabled: {pointsPanel.name}");
+            Debug.Log($"Disabling {uiElementsToDisable.Count} UI elements...");
+            foreach (GameObject obj in uiElementsToDisable)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(false);
+                    Debug.Log($"  - Disabled: {obj.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("  - NULL reference in uiElementsToDisable list!");
+                }
+            }
         }
         else
         {
-            Debug.LogWarning("Points Panel not assigned in inspector!");
-        }
-        
-        if (timerPanel != null)
-        {
-            timerPanel.SetActive(true);
-            Debug.Log($"Timer Panel enabled: {timerPanel.name}");
-        }
-        else
-        {
-            Debug.LogWarning("Timer Panel not assigned in inspector!");
-        }
-        
-        // Disable Profile GameObject
-        if (profileGameObject != null)
-        {
-            profileGameObject.SetActive(false);
-            Debug.Log($"Profile GameObject disabled: {profileGameObject.name}");
-        }
-        else
-        {
-            Debug.LogWarning("Profile GameObject not assigned in inspector!");
+            Debug.Log("No UI elements to disable (list is empty)");
         }
         
         // Verify changes
-        Debug.Log("=== POST-CUTSCENE UI STATE ===");
-        if (healthContainer != null) Debug.Log($"Health Container: {(healthContainer.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (pointsPanel != null) Debug.Log($"Points Panel: {(pointsPanel.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (timerPanel != null) Debug.Log($"Timer Panel: {(timerPanel.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (profileGameObject != null) Debug.Log($"Profile GameObject: {(profileGameObject.activeSelf ? "ENABLED" : "DISABLED")}");
+        LogPostCutscene2DynamicUIState();
+    }
+    
+    // NEW: Log dynamic UI state after cutscene 2
+    private void LogPostCutscene2DynamicUIState()
+    {
+        Debug.Log("=== POST-CUTSCENE 2 DYNAMIC UI STATE ===");
+        
+        Debug.Log("UI Elements that should be ENABLED:");
+        if (uiElementsToEnable.Count > 0)
+        {
+            foreach (GameObject obj in uiElementsToEnable)
+            {
+                if (obj != null)
+                {
+                    Debug.Log($"  - {obj.name}: {(obj.activeSelf ? "ENABLED ✓" : "DISABLED ✗")}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("  (None in list)");
+        }
+        
+        Debug.Log("UI Elements that should be DISABLED:");
+        if (uiElementsToDisable.Count > 0)
+        {
+            foreach (GameObject obj in uiElementsToDisable)
+            {
+                if (obj != null)
+                {
+                    Debug.Log($"  - {obj.name}: {(obj.activeSelf ? "ENABLED ✗" : "DISABLED ✓")}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("  (None in list)");
+        }
     }
     
     void FinishThirdCutscene(bool wasSkipped = false)
     {
         Debug.Log($"=== FINISHING THIRD CUTSCENE (Skipped: {wasSkipped}) ===");
         
-        // Stop protection system
         StopProtectionSystem();
-        
-        // Hide skip button
         HideSkipButton();
         
-        // Hide dialogue canvas (SINGLE CANVAS FOR BOTH)
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(dialogueCanvasOriginalState);
             Debug.Log($"Dialogue canvas restored to original state: {(dialogueCanvasOriginalState ? "active" : "inactive")}");
         }
         
-        // Restore subtitle controller
         if (subtitleController != null)
         {
             subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
             Debug.Log($"Subtitle controller restored to original state: {(subtitleControllerOriginalState ? "active" : "inactive")}");
         }
         
-        // Disable third cutscene NPC text
         if (thirdCutsceneNPCText != null)
         {
             thirdCutsceneNPCText.gameObject.SetActive(thirdNPCTextOriginalState);
             Debug.Log("Third cutscene NPC text disabled");
         }
         
-        // Resume monsters BEFORE unfreezing player
         ResumeAllMonsters();
         
-        // Disable cutscene parent
         if (cutscene3ParentObject != null)
         {
             cutscene3ParentObject.SetActive(false);
             Debug.Log("Cutscene3 parent disabled");
         }
         
-        // Re-enable game UI
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(true);
             Debug.Log("Game UI enabled");
         }
         
-        // Re-enable audio handler
         if (audioHandler != null)
         {
             audioHandler.SetActive(true);
             Debug.Log("Audio handler enabled");
         }
         
-        // NOTE: For cutscene 3, we DON'T modify the UI elements
+        // NOTE: For cutscene 3, we DON'T modify the dynamic UI elements
         // They should remain as they were after cutscene 2
-        Debug.Log("Third cutscene completed - UI elements unchanged (keeping post-cutscene 2 state)");
+        Debug.Log("Third cutscene completed - dynamic UI elements unchanged (keeping post-cutscene 2 state)");
         
-        // Unfreeze player (AFTER monsters are resumed)
         UnfreezePlayer();
         
-        // Update state
         isThirdCutscenePlaying = false;
         
-        // If skipped, invoke skipped event
         if (wasSkipped)
         {
             onCutsceneSkipped?.Invoke();
         }
         
-        // Invoke end event
         onThirdCutsceneEnd?.Invoke();
         
         Debug.Log($"Third cutscene {(wasSkipped ? "skipped" : "finished")} successfully");
@@ -1338,12 +1251,10 @@ public class K2_DummypTimeline : MonoBehaviour
         {
             Debug.LogError("Cannot unfreeze player: Player object is null! Trying to find player...");
             
-            // Try to find player again
             playerObject = GameObject.FindGameObjectWithTag("Player");
             if (playerObject != null)
             {
                 Debug.Log($"Found player: {playerObject.name}");
-                // Re-cache components
                 CachePlayerComponents();
             }
             else
@@ -1353,25 +1264,20 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Re-enable ThirdPersonController
         if (cachedController != null)
         {
             cachedController.enabled = true;
             Debug.Log("Player controller enabled");
         }
         
-        // Re-enable Animator
         if (cachedAnimator != null)
         {
             cachedAnimator.enabled = true;
-            
-            // Reset animation states
             cachedAnimator.SetFloat("Speed", 0f);
             cachedAnimator.SetFloat("MotionSpeed", 0f);
             Debug.Log("Player animator enabled and reset");
         }
         
-        // Re-enable PlayerInput
         if (cachedPlayerInput != null)
         {
             cachedPlayerInput.enabled = true;
@@ -1381,7 +1287,7 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log("Player unfrozen successfully");
     }
     
-    // NEW: Method to update second cutscene NPC name during cutscene
+    // Update NPC names
     public void UpdateSecondCutsceneNPCName(string newName)
     {
         if (secondCutsceneNPCText != null && isSecondCutscenePlaying)
@@ -1399,7 +1305,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // NEW: Method to update third cutscene NPC name during cutscene
     public void UpdateThirdCutsceneNPCName(string newName)
     {
         if (thirdCutsceneNPCText != null && isThirdCutscenePlaying)
@@ -1417,7 +1322,7 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // NEW: Method to show/hide second cutscene NPC name during cutscene
+    // Show/hide NPC names
     public void SetSecondCutsceneNPCNameActive(bool active)
     {
         if (secondCutsceneNPCText != null && isSecondCutscenePlaying)
@@ -1431,7 +1336,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // NEW: Method to show/hide third cutscene NPC name during cutscene
     public void SetThirdCutsceneNPCNameActive(bool active)
     {
         if (thirdCutsceneNPCText != null && isThirdCutscenePlaying)
@@ -1445,7 +1349,7 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Skip button click handler
+    // Skip button methods
     private void OnSkipButtonClicked()
     {
         if (isSecondCutscenePlaying || isThirdCutscenePlaying)
@@ -1454,7 +1358,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Show skip button with delay
     private void ShowSkipButton()
     {
         if (skipButton != null && enableSkipButton)
@@ -1464,7 +1367,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Hide skip button
     private void HideSkipButton()
     {
         if (skipButton != null)
@@ -1473,103 +1375,69 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Reset skip button state
     private void ResetSkipButtonState()
     {
         skipButtonTimer = 0f;
         skipButtonReady = false;
-        
-        // Hide skip button
         HideSkipButton();
     }
     
-    // Skip the current cutscene
     public void SkipCurrentCutscene()
     {
         if (isSecondCutscenePlaying && npcCutscene2Director != null)
         {
             Debug.Log("Skipping second cutscene");
             
-            // FAST FORWARD TO END: Set timeline to the end before stopping
-            double currentTime = npcCutscene2Director.time;
             double duration = npcCutscene2Director.duration;
-            
             if (duration > 0)
             {
-                // Fast forward to the end
                 npcCutscene2Director.time = duration;
-                
-                // Evaluate the timeline at the end time
                 npcCutscene2Director.Evaluate();
-                
-                // Trigger all bindings that should happen at the end
                 TriggerAllBindings(npcCutscene2Director);
             }
             
-            // Stop the director
             npcCutscene2Director.Stop();
-            
-            // Manually call the finish function
             FinishSecondCutscene(true);
         }
         else if (isThirdCutscenePlaying && npcTimeline3Director != null)
         {
             Debug.Log("Skipping third cutscene");
             
-            // FAST FORWARD TO END: Set timeline to the end before stopping
-            double currentTime = npcTimeline3Director.time;
             double duration = npcTimeline3Director.duration;
-            
             if (duration > 0)
             {
-                // Fast forward to the end
                 npcTimeline3Director.time = duration;
-                
-                // Evaluate the timeline at the end time
                 npcTimeline3Director.Evaluate();
-                
-                // Trigger all bindings that should happen at the end
                 TriggerAllBindings(npcTimeline3Director);
             }
             
-            // Stop the director
             npcTimeline3Director.Stop();
-            
-            // Manually call the finish function
             FinishThirdCutscene(true);
         }
     }
     
-    // NEW: Trigger all timeline bindings to ensure end-of-timeline events fire
     private void TriggerAllBindings(PlayableDirector director)
     {
         if (director == null) return;
         
-        // Get all PlayableBindings
         var bindings = director.playableAsset.outputs;
         
         foreach (var binding in bindings)
         {
             try
             {
-                // Get the bound object
                 var boundObject = director.GetGenericBinding(binding.sourceObject);
                 
                 if (boundObject != null)
                 {
-                    // If it's an animation track, force it to evaluate at the end
                     if (binding.outputTargetType == typeof(Animator))
                     {
                         Animator animator = boundObject as Animator;
                         if (animator != null)
                         {
-                            // Ensure the animator is updated
                             animator.Update(0f);
                         }
                     }
-                    
-                    // You can add more specific handling for other track types here
-                    // For example, Activation tracks, Audio tracks, etc.
                 }
             }
             catch (System.Exception e)
@@ -1578,68 +1446,55 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Force evaluation of all playables
         director.Evaluate();
-        
         Debug.Log("Timeline bindings triggered for skip");
     }
     
-    // Public method to manually start second cutscene from other scripts
+    // Public utility methods
     public void ManualStartSecondCutscene()
     {
         StartSecondCutscene();
     }
     
-    // Public method to manually start third cutscene from other scripts
     public void ManualStartThirdCutscene()
     {
         StartThirdCutscene();
     }
     
-    // Check if a cutscene is currently playing
     public bool IsAnyCutscenePlaying()
     {
         return isSecondCutscenePlaying || isThirdCutscenePlaying;
     }
     
-    // NEW: Check if second cutscene NPC name is active
     public bool IsSecondCutsceneNPCNameActive()
     {
         return secondCutsceneNPCText != null && secondCutsceneNPCText.gameObject.activeSelf;
     }
     
-    // NEW: Check if third cutscene NPC name is active
     public bool IsThirdCutsceneNPCNameActive()
     {
         return thirdCutsceneNPCText != null && thirdCutsceneNPCText.gameObject.activeSelf;
     }
     
-    // Reset all cutscenes
     public void ResetAllCutscenes()
     {
         isSecondCutscenePlaying = false;
         isThirdCutscenePlaying = false;
         waitingForFinalPanelConfirm = false;
         
-        // Reset skip button state
         ResetSkipButtonState();
-        
-        // Stop protection system
         StopProtectionSystem();
         
-        // Hide dialogue canvas (SINGLE CANVAS)
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(dialogueCanvasOriginalState);
         }
         
-        // Restore subtitle controller
         if (subtitleController != null)
         {
             subtitleController.gameObject.SetActive(subtitleControllerOriginalState);
         }
         
-        // Hide NPC name texts
         if (secondCutsceneNPCText != null)
         {
             secondCutsceneNPCText.gameObject.SetActive(secondNPCTextOriginalState);
@@ -1650,10 +1505,8 @@ public class K2_DummypTimeline : MonoBehaviour
             thirdCutsceneNPCText.gameObject.SetActive(thirdNPCTextOriginalState);
         }
         
-        // Resume monsters
         ResumeAllMonsters();
         
-        // Disable cutscene parent objects
         if (cutscene2ParentObject != null)
         {
             cutscene2ParentObject.SetActive(false);
@@ -1664,27 +1517,38 @@ public class K2_DummypTimeline : MonoBehaviour
             cutscene3ParentObject.SetActive(false);
         }
         
-        // Reset UI elements to their original states
-        if (healthContainer != null)
-            healthContainer.SetActive(healthContainerOriginalState);
+        // Reset dynamic UI elements to original states
+        ResetDynamicUIToOriginalStates();
         
-        if (pointsPanel != null)
-            pointsPanel.SetActive(pointsPanelOriginalState);
-        
-        if (timerPanel != null)
-            timerPanel.SetActive(timerPanelOriginalState);
-        
-        if (profileGameObject != null)
-            profileGameObject.SetActive(profileGameObjectOriginalState);
-        
-        // Ensure player is unfrozen
         UnfreezePlayer();
         
         Debug.Log("All cutscenes reset to original states");
     }
     
-    // This method should be called when the last product is collected
-    // It sets up the waiting state for the final panel confirm
+    // NEW: Reset dynamic UI elements to original states
+    private void ResetDynamicUIToOriginalStates()
+    {
+        Debug.Log("Resetting dynamic UI elements to original states...");
+        
+        foreach (var kvp in uiElementsToEnableOriginalStates)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.SetActive(kvp.Value);
+                Debug.Log($"  - {kvp.Key.name} restored to: {(kvp.Value ? "enabled" : "disabled")}");
+            }
+        }
+        
+        foreach (var kvp in uiElementsToDisableOriginalStates)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.SetActive(kvp.Value);
+                Debug.Log($"  - {kvp.Key.name} restored to: {(kvp.Value ? "enabled" : "disabled")}");
+            }
+        }
+    }
+    
     public void OnLastProductCollected()
     {
         if (productInfoManager != null && productInfoManager.IsAllCollected())
@@ -1704,7 +1568,6 @@ public class K2_DummypTimeline : MonoBehaviour
         }
     }
     
-    // Enable/disable skip button functionality
     public void SetSkipButtonEnabled(bool enabled)
     {
         enableSkipButton = enabled;
@@ -1717,74 +1580,101 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log($"Skip button functionality {(enabled ? "enabled" : "disabled")}");
     }
     
-    // Set skip button delay
     public void SetSkipButtonDelay(float delay)
     {
         skipButtonDelay = Mathf.Max(0f, delay);
         Debug.Log($"Skip button delay set to: {skipButtonDelay} seconds");
     }
     
-    // Check if skip button is ready/visible
     public bool IsSkipButtonReady()
     {
         return skipButtonReady;
     }
     
-    // Get remaining time until skip button appears
     public float GetSkipButtonTimeRemaining()
     {
         if (skipButtonReady) return 0f;
         return Mathf.Max(0f, skipButtonDelay - skipButtonTimer);
     }
     
-    // NEW: Individual methods to control UI elements after cutscene 2
-    public void EnableHealthContainer()
+    // NEW: Methods to dynamically add/remove UI elements at runtime
+    public void AddUIElementToEnable(GameObject element)
     {
-        if (healthContainer != null)
+        if (element != null && !uiElementsToEnable.Contains(element))
         {
-            healthContainer.SetActive(true);
-            Debug.Log("Health Container manually enabled");
+            uiElementsToEnable.Add(element);
+            
+            // Also store original state if not already stored
+            if (!uiElementsToEnableOriginalStates.ContainsKey(element))
+            {
+                uiElementsToEnableOriginalStates.Add(element, element.activeSelf);
+            }
+            
+            Debug.Log($"Added {element.name} to UI elements to enable list");
         }
     }
     
-    public void EnablePointsPanel()
+    public void RemoveUIElementFromEnable(GameObject element)
     {
-        if (pointsPanel != null)
+        if (uiElementsToEnable.Contains(element))
         {
-            pointsPanel.SetActive(true);
-            Debug.Log("Points Panel manually enabled");
+            uiElementsToEnable.Remove(element);
+            Debug.Log($"Removed {element.name} from UI elements to enable list");
         }
     }
     
-    public void EnableTimerPanel()
+    public void AddUIElementToDisable(GameObject element)
     {
-        if (timerPanel != null)
+        if (element != null && !uiElementsToDisable.Contains(element))
         {
-            timerPanel.SetActive(true);
-            Debug.Log("Timer Panel manually enabled");
+            uiElementsToDisable.Add(element);
+            
+            // Also store original state if not already stored
+            if (!uiElementsToDisableOriginalStates.ContainsKey(element))
+            {
+                uiElementsToDisableOriginalStates.Add(element, element.activeSelf);
+            }
+            
+            Debug.Log($"Added {element.name} to UI elements to disable list");
         }
     }
     
-    public void DisableProfileGameObject()
+    public void RemoveUIElementFromDisable(GameObject element)
     {
-        if (profileGameObject != null)
+        if (uiElementsToDisable.Contains(element))
         {
-            profileGameObject.SetActive(false);
-            Debug.Log("Profile GameObject manually disabled");
+            uiElementsToDisable.Remove(element);
+            Debug.Log($"Removed {element.name} from UI elements to disable list");
         }
     }
     
-    // NEW: Method to check current UI state
-    public void LogCurrentUIState()
+    public void ClearUIElementLists()
     {
-        Debug.Log("=== CURRENT UI STATE ===");
-        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.activeSelf.ToString() : "NOT ASSIGNED")}");
+        uiElementsToEnable.Clear();
+        uiElementsToDisable.Clear();
+        Debug.Log("Cleared all dynamic UI element lists");
     }
     
-    // Debug method to test monster control
+    // NEW: Method to log current dynamic UI state
+    public void LogCurrentDynamicUIState()
+    {
+        Debug.Log("=== CURRENT DYNAMIC UI STATE ===");
+        LogPostCutscene2DynamicUIState();
+    }
+    
+    // NEW: Method to check if a UI element is in enable list
+    public bool IsInEnableList(GameObject element)
+    {
+        return uiElementsToEnable.Contains(element);
+    }
+    
+    // NEW: Method to check if a UI element is in disable list
+    public bool IsInDisableList(GameObject element)
+    {
+        return uiElementsToDisable.Contains(element);
+    }
+    
+    // Debug methods
     [ContextMenu("Test Pause All Monsters")]
     public void TestPauseAllMonsters()
     {
@@ -1803,7 +1693,6 @@ public class K2_DummypTimeline : MonoBehaviour
         ForceAllMonstersToPatrol();
     }
     
-    // Debug method to test cutscenes
     [ContextMenu("Test Start Second Cutscene")]
     public void TestStartSecondCutscene()
     {
@@ -1818,7 +1707,6 @@ public class K2_DummypTimeline : MonoBehaviour
         StartThirdCutscene();
     }
     
-    // NEW: Test methods for NPC names
     [ContextMenu("Test Start Second Cutscene with Custom Name")]
     public void TestStartSecondCutsceneWithCustomName()
     {
@@ -1872,34 +1760,23 @@ public class K2_DummypTimeline : MonoBehaviour
         Debug.Log($"Player Object: {(playerObject != null ? playerObject.name : "NULL")}");
         Debug.Log($"Dialogue Canvas: {(dialogueCanvas != null ? dialogueCanvas.name : "NOT ASSIGNED")}");
         Debug.Log($"Protection System: {(protectionCoroutine != null ? "ACTIVE" : "INACTIVE")}");
+        
+        LogCurrentDynamicUIState();
     }
     
-    // NEW: Test method for UI state after cutscene 2
-    [ContextMenu("Test Post-Cutscene 2 UI")]
-    public void TestPostCutscene2UI()
+    [ContextMenu("Test Post-Cutscene 2 Dynamic UI")]
+    public void TestPostCutscene2DynamicUI()
     {
-        Debug.Log("=== TESTING POST-CUTSCENE 2 UI ===");
-        HandlePostCutscene2UI();
+        Debug.Log("=== TESTING POST-CUTSCENE 2 DYNAMIC UI ===");
+        HandlePostCutscene2DynamicUI();
     }
     
-    // NEW: Test method to reset UI to original states
-    [ContextMenu("Reset UI to Original States")]
-    public void ResetUIToOriginalStates()
+    [ContextMenu("Reset Dynamic UI to Original States")]
+    public void ResetDynamicUIToOriginalStatesTest()
     {
-        if (healthContainer != null)
-            healthContainer.SetActive(healthContainerOriginalState);
-        
-        if (pointsPanel != null)
-            pointsPanel.SetActive(pointsPanelOriginalState);
-        
-        if (timerPanel != null)
-            timerPanel.SetActive(timerPanelOriginalState);
-        
-        if (profileGameObject != null)
-            profileGameObject.SetActive(profileGameObjectOriginalState);
-        
-        Debug.Log("UI reset to original states");
-        LogCurrentUIState();
+        ResetDynamicUIToOriginalStates();
+        Debug.Log("Dynamic UI reset to original states");
+        LogCurrentDynamicUIState();
     }
     
     // Editor method to auto-find references
@@ -1907,17 +1784,14 @@ public class K2_DummypTimeline : MonoBehaviour
     [ContextMenu("Auto-Find References")]
     public void AutoFindReferences()
     {
-        // Find all monsters
         FindAllMonsters();
         
-        // Find subtitle controller
         subtitleController = FindObjectOfType<K2_SubtitleController>();
         if (subtitleController != null)
         {
             Debug.Log("Auto-found subtitle controller: " + subtitleController.name);
         }
         
-        // Find player
         GameObject foundPlayer = GameObject.FindGameObjectWithTag("Player");
         if (foundPlayer != null)
         {
@@ -1926,7 +1800,6 @@ public class K2_DummypTimeline : MonoBehaviour
             CachePlayerComponents();
         }
         
-        // Find CollectProducts script
         CollectProducts foundCollectScript = FindObjectOfType<CollectProducts>();
         if (foundCollectScript != null)
         {
@@ -1934,7 +1807,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Auto-found CollectProducts script");
         }
         
-        // Find ProductInformationManager script
         ProductInformationManager foundProductInfo = FindObjectOfType<ProductInformationManager>();
         if (foundProductInfo != null)
         {
@@ -1942,7 +1814,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Auto-found ProductInformationManager script");
         }
         
-        // Find Audio Handler
         GameObject foundAudioHandler = GameObject.Find("Audio_Handler");
         if (foundAudioHandler != null)
         {
@@ -1950,7 +1821,6 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Auto-found Audio Handler");
         }
         
-        // Find Game UI Canvas
         GameObject foundGameUICanvas = GameObject.Find("UI_Canvas_StarterAssetsInputs_Joysticks");
         if (foundGameUICanvas != null)
         {
@@ -1958,10 +1828,8 @@ public class K2_DummypTimeline : MonoBehaviour
             Debug.Log("Auto-found Game UI Canvas");
         }
         
-        // Try to find Dialogue Canvas
         if (dialogueCanvas == null)
         {
-            // Look for common dialogue canvas names
             string[] canvasNames = { "DialogueCanvas", "Dialogue_Canvas", "DialogueBox", "DialogCanvas", "SubtitleCanvas" };
             foreach (string canvasName in canvasNames)
             {
@@ -1974,7 +1842,6 @@ public class K2_DummypTimeline : MonoBehaviour
                 }
             }
             
-            // If still not found, look for any canvas with "dialogue" in the name
             if (dialogueCanvas == null)
             {
                 Canvas[] allCanvases = FindObjectsOfType<Canvas>();
@@ -1990,7 +1857,6 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Try to find cutscene3 parent object
         if (cutscene3ParentObject == null)
         {
             GameObject foundCutscene3 = GameObject.Find("Cutscene3");
@@ -2001,7 +1867,6 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Try to find NPC_Timeline3 director
         if (npcTimeline3Director == null)
         {
             PlayableDirector[] allDirectors = FindObjectsOfType<PlayableDirector>();
@@ -2016,30 +1881,7 @@ public class K2_DummypTimeline : MonoBehaviour
             }
         }
         
-        // Try to auto-find UI elements by common names
-        if (healthContainer == null)
-        {
-            healthContainer = GameObject.Find("Health Container");
-            if (healthContainer != null) Debug.Log("Auto-found Health Container");
-        }
-        
-        if (pointsPanel == null)
-        {
-            pointsPanel = GameObject.Find("Points Panel");
-            if (pointsPanel != null) Debug.Log("Auto-found Points Panel");
-        }
-        
-        if (timerPanel == null)
-        {
-            timerPanel = GameObject.Find("Timer Panel");
-            if (timerPanel != null) Debug.Log("Auto-found Timer Panel");
-        }
-        
-        if (profileGameObject == null)
-        {
-            profileGameObject = GameObject.Find("Profile");
-            if (profileGameObject != null) Debug.Log("Auto-found Profile GameObject");
-        }
+        // Note: Dynamic UI lists cannot be auto-filled - they must be manually assigned
         
         UnityEditor.EditorUtility.SetDirty(this);
     }

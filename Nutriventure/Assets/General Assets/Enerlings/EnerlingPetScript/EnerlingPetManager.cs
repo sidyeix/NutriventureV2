@@ -1,73 +1,100 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using StarterAssets;
 
 public class EnerlingPetManager : MonoBehaviour
 {
+    // EVENTS - Add these at the top of the class
+    public delegate void PetChangeHandler(int slotIndex, string petName);
+    public event PetChangeHandler OnPetEquipped;
+    public event PetChangeHandler OnPetRemoved;
+
     [System.Serializable]
     public class PetData
     {
         [Header("Pet Reference")]
         public Transform petTransform; // Reference to the actual pet model
-
-        [Header("Pet Personality")]
-        [Range(0, 1)] public float sidePreference = 0.5f; // 0 = left side, 1 = right side
-        [Range(0.5f, 1.5f)] public float speedMultiplier = 1f; // Individual speed variation
-        [Range(0.5f, 1.5f)] public float distanceMultiplier = 1f; // Individual distance variation
-        [HideInInspector] public Vector3 randomOffset; // Random position offset
-        [HideInInspector] public float randomPhase; // Random phase for movement
+        public string petName; // Store the pet name for identification
+        public bool isFlying; // Whether this is a flying pet
+        public int spawnPointIndex; // Which spawn point index this pet uses
     }
 
     [Header("Player Reference")]
     [SerializeField] private Transform playerTransform; // Reference to the player
 
+    [Header("Spawn Points")]
+    [SerializeField] private Transform[] walkingSpawnPoints; // Spawn points for walking pets
+    [SerializeField] private Transform[] flyingSpawnPoints; // Spawn points for flying pets
+
     [Header("Pets")]
-    [SerializeField] private PetData[] pets = new PetData[2]; // Exactly 2 pets
+    [SerializeField] public List<PetData> pets = new List<PetData>(); // Dynamic list of pets
 
     [Header("Pet Settings (Shared)")]
-    [SerializeField] private float followDistance = 8.3f; // How far the pet stays from player
-    [SerializeField] private float minDistance = 0f; // Minimum distance before moving closer
-    [SerializeField] private float idealDistance = 0.92f; // Ideal distance when player is still
-    [SerializeField] private float maxDistance = 10.65f; // Maximum distance before teleporting
-    [SerializeField] private float moveForce = 34.7f; // Force applied to move pet
-    [SerializeField] private float stoppingForce = 68.6f; // Extra force when trying to reach ideal distance
-    [SerializeField] private float rotationSpeed = 11.43f; // Rotation speed
-    [SerializeField] private float delayFactor = 0.3f; // How much delay in following (0-1)
+    [SerializeField] private float followDistance = 8.3f;
+    [SerializeField] private float minDistance = 0f;
+    [SerializeField] private float idealDistance = 0.92f;
+    [SerializeField] private float maxDistance = 10.65f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float stoppingSpeed = 3f;
+    [SerializeField] private float rotationSpeed = 11.43f;
+    [SerializeField] private float delayFactor = 0.3f;
+    [SerializeField] private float arrivalThreshold = 0.5f;
+
+    [Header("Idle Positioning")]
+    [SerializeField] private float idleSideOffset = 1.2f; // How far to the side pets stay when idle
+    [SerializeField] private float idleForwardOffset = -0.7f; // How far behind the player (negative = behind)
 
     [Header("Jump Settings")]
-    [SerializeField] private bool syncJumpWithPlayer = true; // Whether pet jumps when player jumps
-    [SerializeField] private float jumpForce = 8f; // Jump force for pet
+    [SerializeField] private bool syncJumpWithPlayer = true;
+    [SerializeField] private float jumpForce = 8f;
 
     [Header("Idle Movement")]
-    [SerializeField] private bool enableIdleMovement = true; // Small idle movements
-    [SerializeField] private float idleAmplitude = 0.05f; // How much idle movement
-    [SerializeField] private float idleSpeed = 0.56f; // Speed of idle movement
+    [SerializeField] private bool enableIdleMovement = true;
+    [SerializeField] private float idleAmplitude = 0.05f;
+    [SerializeField] private float idleSpeed = 0.56f;
+
+    [Header("Flying Settings")]
+    [SerializeField] private float flyingHeightOffset = 1.5f;
+    [SerializeField] private float flyingBobAmount = 0.2f;
+    [SerializeField] private float flyingBobSpeed = 1.5f;
+    [SerializeField] private float flyingSmoothTime = 0.3f;
 
     [Header("Collider Settings")]
-    [SerializeField] private float colliderRadius = 0.56f; // Radius of capsule collider
-    [SerializeField] private float colliderHeight = 0f; // Height of capsule collider (0 = use model height)
-    [SerializeField] private Vector3 colliderCenter = Vector3.zero; // Center of capsule
+    [SerializeField] private float colliderRadius = 0.56f;
+    [SerializeField] private float colliderHeight = 0f;
+    [SerializeField] private Vector3 colliderCenter = Vector3.zero;
 
-    [Header("References")]
-    [SerializeField] private string walkAnimationParameter = "Speed";
-    [SerializeField] private string jumpAnimationParameter = "Jump";
-    [SerializeField] private string groundedAnimationParameter = "Grounded";
+    [Header("Animation")]
+    [SerializeField] private string walkAnimationParameter = "isWalking";
+
+    [Header("Platform Mode")]
+    [SerializeField] private bool isInPlatformMode = false;
 
     // Components for each pet
-    private Rigidbody[] petRigidbodies;
-    private CapsuleCollider[] petCapsuleColliders;
-    private Animator[] petAnimators;
+    private List<Rigidbody> petRigidbodies;
+    private List<CapsuleCollider> petCapsuleColliders;
+    private List<Animator> petAnimators;
+    private List<Vector3> originalSpawnPositions;
 
     // Pet state tracking
-    private Vector3[] targetPositions;
-    private Vector3[] lastPlayerPositions;
-    private Vector3[] playerVelocities;
-    private Vector3[] idleOffsets;
-    private float[] idleTimers;
-    private bool[] isJumping;
-    private float[] playerSpeeds;
-    private Vector3[] petVelocities;
-    private Vector3[] lastPetPositions;
+    private List<Vector3> targetPositions;
+    private List<Vector3> lastPlayerPositions;
+    private List<Vector3> playerVelocities;
+    private List<Vector3> idleOffsets;
+    private List<float> idleTimers;
+    private List<bool> isJumping;
+    private List<float> playerSpeeds;
+    private List<Vector3> petVelocities;
+    private List<Vector3> lastPetPositions;
+    private List<float> flyingBobTimers;
+
+    // Smoothing for flying pets - using separate arrays for ref parameters
+    private List<Vector3> flyingCurrentVelocities;
+
+    // Movement state
+    private List<bool> wasMoving;
+    private List<float> distanceToTargets;
 
     // References to player components
     private ThirdPersonController playerController;
@@ -77,9 +104,47 @@ public class EnerlingPetManager : MonoBehaviour
     private float playerSpeed;
     private bool wasPlayerGrounded;
 
+    // Layer for pets
+    private int enerlingOnlyLayer;
+
+    // Flying pet names list
+    private static readonly HashSet<string> FlyingPetNames = new HashSet<string>
+    {
+        "Aspartame", "Sodium Benzoate", "Sorbitol", "Folic Acid"
+    };
+
+    void Awake()
+    {
+        enerlingOnlyLayer = LayerMask.NameToLayer("EnerlingOnly");
+        if (enerlingOnlyLayer == -1)
+        {
+            Debug.LogWarning("Layer 'EnerlingOnly' not found! Using default layer.");
+            enerlingOnlyLayer = 0;
+        }
+
+        // Initialize lists
+        pets = new List<PetData>();
+        petRigidbodies = new List<Rigidbody>();
+        petCapsuleColliders = new List<CapsuleCollider>();
+        petAnimators = new List<Animator>();
+        originalSpawnPositions = new List<Vector3>();
+        targetPositions = new List<Vector3>();
+        lastPlayerPositions = new List<Vector3>();
+        playerVelocities = new List<Vector3>();
+        idleOffsets = new List<Vector3>();
+        idleTimers = new List<float>();
+        isJumping = new List<bool>();
+        playerSpeeds = new List<float>();
+        petVelocities = new List<Vector3>();
+        lastPetPositions = new List<Vector3>();
+        flyingBobTimers = new List<float>();
+        flyingCurrentVelocities = new List<Vector3>();
+        wasMoving = new List<bool>();
+        distanceToTargets = new List<float>();
+    }
+
     void Start()
     {
-        // Find player if not assigned
         if (playerTransform == null)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -95,87 +160,231 @@ public class EnerlingPetManager : MonoBehaviour
             }
         }
 
-        // Validate we have exactly 2 pets
-        if (pets.Length != 2)
-        {
-            Debug.LogError("EnerlingPetManager: Exactly 2 pets required!");
-            enabled = false;
-            return;
-        }
-
-        // Initialize arrays
-        int petCount = pets.Length;
-        petRigidbodies = new Rigidbody[petCount];
-        petCapsuleColliders = new CapsuleCollider[petCount];
-        petAnimators = new Animator[petCount];
-        targetPositions = new Vector3[petCount];
-        lastPlayerPositions = new Vector3[petCount];
-        playerVelocities = new Vector3[petCount];
-        idleOffsets = new Vector3[petCount];
-        idleTimers = new float[petCount];
-        isJumping = new bool[petCount];
-        playerSpeeds = new float[petCount];
-        petVelocities = new Vector3[petCount];
-        lastPetPositions = new Vector3[petCount];
-
-        // Initialize each pet with random personality
-        for (int i = 0; i < petCount; i++)
-        {
-            if (pets[i].petTransform == null)
-            {
-                Debug.LogError($"EnerlingPetManager: Pet {i} has no transform assigned!");
-                enabled = false;
-                return;
-            }
-
-            // Generate random offsets for natural variation
-            pets[i].randomOffset = new Vector3(
-                Random.Range(-0.5f, 0.5f),
-                0,
-                Random.Range(-0.5f, 0.5f)
-            );
-            pets[i].randomPhase = Random.Range(0f, Mathf.PI * 2f);
-
-            // Set up Capsule Collider
-            SetupPetCollider(i);
-
-            // Set up Rigidbody
-            SetupPetRigidbody(i);
-
-            // Get Animator
-            petAnimators[i] = pets[i].petTransform.GetComponent<Animator>();
-
-            // Initialize positions
-            lastPlayerPositions[i] = playerTransform.position;
-            targetPositions[i] = playerTransform.position;
-            lastPetPositions[i] = pets[i].petTransform.position;
-            idleTimers[i] = pets[i].randomPhase;
-        }
-
-        // Get player components
         playerController = playerTransform.GetComponent<ThirdPersonController>();
         playerCharacterController = playerTransform.GetComponent<CharacterController>();
 
-        // Initialize player tracking
         lastPlayerPosition = playerTransform.position;
 
-        Debug.Log($"EnerlingPetManager initialized with {pets.Length} pets");
+        LoadEquippedPets();
+
+        Debug.Log($"EnerlingPetManager initialized with {pets.Count} pets");
+    }
+
+    public void LoadEquippedPets()
+    {
+        ClearAllPets();
+
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return;
+
+        string pet1 = GameDataManager.Instance.CurrentGameData.equippedPetSlot1;
+        string pet2 = GameDataManager.Instance.CurrentGameData.equippedPetSlot2;
+
+        if (!string.IsNullOrEmpty(pet1))
+        {
+            SpawnPet(pet1, 0);
+        }
+
+        if (!string.IsNullOrEmpty(pet2))
+        {
+            SpawnPet(pet2, 1);
+        }
+    }
+
+    public void SpawnPet(string petName, int slotIndex)
+    {
+        IngredientDatabase db = FindObjectOfType<EnerlingSelectionController>()?.ingredientDatabase;
+        if (db == null)
+        {
+            Debug.LogError("Cannot spawn pet: IngredientDatabase not found");
+            return;
+        }
+
+        var ingredient = db.GetIngredientInfo(petName);
+        if (ingredient == null || ingredient.modelPrefab == null)
+        {
+            Debug.LogError($"Cannot spawn pet: {petName} not found or has no prefab");
+            return;
+        }
+
+        // Remove existing pet in this slot
+        for (int i = 0; i < pets.Count; i++)
+        {
+            if (i == slotIndex && pets[i] != null)
+            {
+                if (pets[i].petTransform != null)
+                    Destroy(pets[i].petTransform.gameObject);
+                pets.RemoveAt(i);
+                RemovePetComponents(i);
+                break;
+            }
+        }
+
+        bool isFlying = FlyingPetNames.Contains(petName);
+        Transform[] spawnPoints = isFlying ? flyingSpawnPoints : walkingSpawnPoints;
+
+        if (spawnPoints == null || spawnPoints.Length == 0 || slotIndex >= spawnPoints.Length)
+        {
+            Debug.LogError($"No spawn point available for slot {slotIndex}");
+            return;
+        }
+
+        Transform spawnPoint = spawnPoints[slotIndex];
+
+        // Clean up existing pet at this spawn point
+        foreach (var child in spawnPoint.GetComponentsInChildren<Transform>())
+        {
+            if (child != spawnPoint)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        PetData newPet = new PetData();
+        newPet.petName = petName;
+        newPet.isFlying = isFlying;
+        newPet.spawnPointIndex = slotIndex;
+
+        GameObject petObj = Instantiate(ingredient.modelPrefab, spawnPoint);
+        petObj.transform.localPosition = Vector3.zero;
+        petObj.transform.localRotation = Quaternion.identity;
+
+        SetLayerRecursively(petObj, enerlingOnlyLayer);
+        newPet.petTransform = petObj.transform;
+
+        // Add to lists
+        if (slotIndex < pets.Count)
+        {
+            pets[slotIndex] = newPet;
+            UpdatePetComponents(slotIndex);
+        }
+        else
+        {
+            while (pets.Count < slotIndex)
+            {
+                pets.Add(null);
+                AddEmptyComponents();
+            }
+            pets.Add(newPet);
+
+            petRigidbodies.Add(null);
+            petCapsuleColliders.Add(null);
+            petAnimators.Add(null);
+            originalSpawnPositions.Add(spawnPoint.position);
+            targetPositions.Add(playerTransform.position);
+            lastPlayerPositions.Add(playerTransform.position);
+            playerVelocities.Add(Vector3.zero);
+            idleOffsets.Add(Vector3.zero);
+            idleTimers.Add(Random.Range(0f, Mathf.PI * 2f));
+            isJumping.Add(false);
+            playerSpeeds.Add(0);
+            petVelocities.Add(Vector3.zero);
+            lastPetPositions.Add(petObj.transform.position);
+            flyingBobTimers.Add(Random.Range(0f, Mathf.PI * 2f));
+            flyingCurrentVelocities.Add(Vector3.zero);
+            wasMoving.Add(false);
+            distanceToTargets.Add(0f);
+
+            SetupPetComponents(pets.Count - 1);
+        }
+
+        // Trigger the OnPetEquipped event
+        OnPetEquipped?.Invoke(slotIndex, petName);
+
+        Debug.Log($"Spawned pet {petName} in slot {slotIndex} at {spawnPoint.name} ({(isFlying ? "Flying" : "Walking")})");
+    }
+
+    private void SetLayerRecursively(GameObject obj, int layer)
+    {
+        obj.layer = layer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, layer);
+        }
+    }
+
+    private void AddEmptyComponents()
+    {
+        petRigidbodies.Add(null);
+        petCapsuleColliders.Add(null);
+        petAnimators.Add(null);
+        originalSpawnPositions.Add(Vector3.zero);
+        targetPositions.Add(Vector3.zero);
+        lastPlayerPositions.Add(Vector3.zero);
+        playerVelocities.Add(Vector3.zero);
+        idleOffsets.Add(Vector3.zero);
+        idleTimers.Add(0);
+        isJumping.Add(false);
+        playerSpeeds.Add(0);
+        petVelocities.Add(Vector3.zero);
+        lastPetPositions.Add(Vector3.zero);
+        flyingBobTimers.Add(0);
+        flyingCurrentVelocities.Add(Vector3.zero);
+        wasMoving.Add(false);
+        distanceToTargets.Add(0f);
+    }
+
+    private void RemovePetComponents(int index)
+    {
+        if (index < petRigidbodies.Count)
+        {
+            petRigidbodies.RemoveAt(index);
+            petCapsuleColliders.RemoveAt(index);
+            petAnimators.RemoveAt(index);
+            originalSpawnPositions.RemoveAt(index);
+            targetPositions.RemoveAt(index);
+            lastPlayerPositions.RemoveAt(index);
+            playerVelocities.RemoveAt(index);
+            idleOffsets.RemoveAt(index);
+            idleTimers.RemoveAt(index);
+            isJumping.RemoveAt(index);
+            playerSpeeds.RemoveAt(index);
+            petVelocities.RemoveAt(index);
+            lastPetPositions.RemoveAt(index);
+            flyingBobTimers.RemoveAt(index);
+            flyingCurrentVelocities.RemoveAt(index);
+            wasMoving.RemoveAt(index);
+            distanceToTargets.RemoveAt(index);
+        }
+    }
+
+    private void SetupPetComponents(int petIndex)
+    {
+        PetData pet = pets[petIndex];
+
+        SetupPetCollider(petIndex);
+        SetupPetRigidbody(petIndex);
+        petAnimators[petIndex] = pet.petTransform.GetComponent<Animator>();
+
+        // Initialize animation state
+        if (petAnimators[petIndex] != null)
+        {
+            petAnimators[petIndex].SetBool(walkAnimationParameter, false);
+        }
+    }
+
+    private void UpdatePetComponents(int petIndex)
+    {
+        PetData pet = pets[petIndex];
+
+        SetupPetCollider(petIndex);
+        SetupPetRigidbody(petIndex);
+        petAnimators[petIndex] = pet.petTransform.GetComponent<Animator>();
+        lastPetPositions[petIndex] = pet.petTransform.position;
+        targetPositions[petIndex] = playerTransform.position;
     }
 
     private void SetupPetCollider(int petIndex)
     {
         PetData pet = pets[petIndex];
 
-        // Try to get existing collider
         petCapsuleColliders[petIndex] = pet.petTransform.GetComponent<CapsuleCollider>();
 
         if (petCapsuleColliders[petIndex] == null)
         {
-            // Add new capsule collider
             petCapsuleColliders[petIndex] = pet.petTransform.gameObject.AddComponent<CapsuleCollider>();
         }
 
-        // Configure collider
         petCapsuleColliders[petIndex].radius = colliderRadius;
         petCapsuleColliders[petIndex].height = colliderHeight > 0 ? colliderHeight : GetModelHeight(pet.petTransform);
         petCapsuleColliders[petIndex].center = colliderCenter;
@@ -184,13 +393,12 @@ public class EnerlingPetManager : MonoBehaviour
 
     private float GetModelHeight(Transform model)
     {
-        // Try to get height from renderer bounds
         Renderer renderer = model.GetComponentInChildren<Renderer>();
         if (renderer != null)
         {
             return renderer.bounds.size.y;
         }
-        return 1f; // Default height
+        return 1f;
     }
 
     private void SetupPetRigidbody(int petIndex)
@@ -204,44 +412,158 @@ public class EnerlingPetManager : MonoBehaviour
             petRigidbodies[petIndex] = pet.petTransform.gameObject.AddComponent<Rigidbody>();
         }
 
-        // Configure Rigidbody
-        petRigidbodies[petIndex].mass = 1f;
-        petRigidbodies[petIndex].linearDamping = 2f;
-        petRigidbodies[petIndex].angularDamping = 2f;
-        petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        // Configure Rigidbody based on pet type
+        if (pet.isFlying)
+        {
+            // Flying pets: no gravity, minimal drag
+            petRigidbodies[petIndex].useGravity = false;
+            petRigidbodies[petIndex].mass = 0.5f;
+            petRigidbodies[petIndex].linearDamping = 5f;
+            petRigidbodies[petIndex].angularDamping = 5f;
+            petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+        else
+        {
+            // Walking pets: normal physics but with damping to prevent bouncing
+            petRigidbodies[petIndex].useGravity = true;
+            petRigidbodies[petIndex].mass = 1f;
+            petRigidbodies[petIndex].linearDamping = 3f;
+            petRigidbodies[petIndex].angularDamping = 3f;
+            petRigidbodies[petIndex].constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+
         petRigidbodies[petIndex].collisionDetectionMode = CollisionDetectionMode.Continuous;
+    }
+
+    public void ClearAllPets()
+    {
+        foreach (var pet in pets)
+        {
+            if (pet != null && pet.petTransform != null)
+                Destroy(pet.petTransform.gameObject);
+        }
+
+        pets.Clear();
+        petRigidbodies.Clear();
+        petCapsuleColliders.Clear();
+        petAnimators.Clear();
+        originalSpawnPositions.Clear();
+        targetPositions.Clear();
+        lastPlayerPositions.Clear();
+        playerVelocities.Clear();
+        idleOffsets.Clear();
+        idleTimers.Clear();
+        isJumping.Clear();
+        playerSpeeds.Clear();
+        petVelocities.Clear();
+        lastPetPositions.Clear();
+        flyingBobTimers.Clear();
+        flyingCurrentVelocities.Clear();
+        wasMoving.Clear();
+        distanceToTargets.Clear();
+    }
+
+    public void SetPlatformMode(bool inPlatform)
+    {
+        isInPlatformMode = inPlatform;
+
+        for (int i = 0; i < pets.Count; i++)
+        {
+            if (pets[i] == null || pets[i].petTransform == null) continue;
+
+            if (inPlatform)
+            {
+                originalSpawnPositions[i] = pets[i].petTransform.position;
+
+                Transform spawnPoint = pets[i].isFlying ? flyingSpawnPoints[pets[i].spawnPointIndex] : walkingSpawnPoints[pets[i].spawnPointIndex];
+                pets[i].petTransform.SetParent(spawnPoint);
+                pets[i].petTransform.localPosition = Vector3.zero;
+                pets[i].petTransform.localRotation = Quaternion.identity;
+
+                if (petRigidbodies[i] != null)
+                {
+                    petRigidbodies[i].isKinematic = true;
+                    petRigidbodies[i].linearVelocity = Vector3.zero;
+                }
+
+                // Stop walking animation
+                if (petAnimators[i] != null)
+                {
+                    petAnimators[i].SetBool(walkAnimationParameter, false);
+                }
+            }
+            else
+            {
+                if (petRigidbodies[i] != null)
+                {
+                    petRigidbodies[i].isKinematic = false;
+                }
+
+                pets[i].petTransform.SetParent(transform);
+            }
+        }
+    }
+
+    public void RemovePet(int slotIndex)
+    {
+        string petName = "";
+
+        if (slotIndex < pets.Count && pets[slotIndex] != null)
+        {
+            petName = pets[slotIndex].petName;
+        }
+
+        if (slotIndex >= pets.Count || pets[slotIndex] == null) return;
+
+        if (pets[slotIndex].petTransform != null)
+            Destroy(pets[slotIndex].petTransform.gameObject);
+
+        pets.RemoveAt(slotIndex);
+        RemovePetComponents(slotIndex);
+
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            if (slotIndex == 0)
+                GameDataManager.Instance.CurrentGameData.equippedPetSlot1 = "";
+            else if (slotIndex == 1)
+                GameDataManager.Instance.CurrentGameData.equippedPetSlot2 = "";
+
+            GameDataManager.Instance.SaveGameData();
+        }
+
+        // Trigger the OnPetRemoved event
+        OnPetRemoved?.Invoke(slotIndex, petName);
+
+        Debug.Log($"Removed pet from slot {slotIndex}");
     }
 
     void FixedUpdate()
     {
-        if (playerTransform == null) return;
+        if (playerTransform == null || isInPlatformMode) return;
 
-        // Calculate player velocity and speed
         playerVelocity = (playerTransform.position - lastPlayerPosition) / Time.fixedDeltaTime;
         playerSpeed = playerVelocity.magnitude;
         lastPlayerPosition = playerTransform.position;
 
-        // Sync jump with player for all pets
         if (syncJumpWithPlayer && playerController != null)
         {
             bool playerIsGrounded = IsPlayerGrounded();
 
             if (wasPlayerGrounded && !playerIsGrounded)
             {
-                // Player just jumped - make all pets jump
-                for (int i = 0; i < pets.Length; i++)
+                for (int i = 0; i < pets.Count; i++)
                 {
-                    MakePetJump(i);
+                    if (pets[i] != null && !pets[i].isFlying) // Only walking pets jump
+                        MakePetJump(i);
                 }
             }
 
             wasPlayerGrounded = playerIsGrounded;
         }
 
-        // Update each pet independently
-        for (int i = 0; i < pets.Length; i++)
+        for (int i = 0; i < pets.Count; i++)
         {
-            if (pets[i].petTransform == null || petRigidbodies[i] == null) continue;
+            if (pets[i] == null || pets[i].petTransform == null || petRigidbodies[i] == null) continue;
 
             UpdatePet(i);
         }
@@ -252,95 +574,99 @@ public class EnerlingPetManager : MonoBehaviour
         PetData pet = pets[petIndex];
         Rigidbody rb = petRigidbodies[petIndex];
 
-        // Calculate pet velocity
-        petVelocities[petIndex] = (pet.petTransform.position - lastPetPositions[petIndex]) / Time.fixedDeltaTime;
-        lastPetPositions[petIndex] = pet.petTransform.position;
-
-        // Calculate target position with personality
+        // Calculate target position
         CalculatePetTargetPosition(petIndex);
 
-        // Calculate direction and distance to target
-        Vector3 directionToTarget = targetPositions[petIndex] - pet.petTransform.position;
+        // Calculate desired position (with height offset for flying)
+        Vector3 desiredPosition = targetPositions[petIndex];
+
+        if (pet.isFlying)
+        {
+            desiredPosition.y = playerTransform.position.y + flyingHeightOffset;
+
+            // Add bobbing motion
+            flyingBobTimers[petIndex] += Time.fixedDeltaTime * flyingBobSpeed;
+            float bobOffset = Mathf.Sin(flyingBobTimers[petIndex]) * flyingBobAmount;
+            desiredPosition.y += bobOffset;
+        }
+
+        // Calculate direction and distance
+        Vector3 directionToTarget = desiredPosition - pet.petTransform.position;
         float distanceToTarget = directionToTarget.magnitude;
+        distanceToTargets[petIndex] = distanceToTarget;
 
-        // Apply personality multipliers
-        float personalityMoveForce = moveForce * pet.speedMultiplier;
-        float personalityFollowDistance = followDistance * pet.distanceMultiplier;
-        float personalityIdealDistance = idealDistance * pet.distanceMultiplier;
+        // Determine if moving
+        bool isMoving = distanceToTarget > arrivalThreshold;
 
-        // Determine force based on player movement
-        float currentMoveForce = personalityMoveForce;
-        float targetDistance = personalityFollowDistance;
-
-        if (playerSpeed < 0.1f)
+        // Update animation
+        if (petAnimators[petIndex] != null)
         {
-            // Player is stopped - move to ideal distance
-            targetDistance = personalityIdealDistance;
-            currentMoveForce = stoppingForce * pet.speedMultiplier;
+            petAnimators[petIndex].SetBool(walkAnimationParameter, isMoving);
         }
 
-        // Add random offset for natural positioning
-        Vector3 randomPosition = playerTransform.position + pet.randomOffset;
-        Vector3 blendedTarget = Vector3.Lerp(targetPositions[petIndex], randomPosition, 0.3f);
-
-        // Adjust target position based on desired distance
-        Vector3 directionFromPlayer = (blendedTarget - playerTransform.position).normalized;
-        Vector3 adjustedTarget = playerTransform.position + directionFromPlayer * targetDistance;
-
-        // Consider other pet's position to avoid crowding
-        int otherPetIndex = petIndex == 0 ? 1 : 0;
-        if (pets[otherPetIndex].petTransform != null)
-        {
-            Vector3 toOtherPet = pets[otherPetIndex].petTransform.position - adjustedTarget;
-            if (toOtherPet.magnitude < 1.5f)
-            {
-                // Move away from other pet
-                adjustedTarget -= toOtherPet.normalized * 0.5f;
-            }
-        }
-
-        // Recalculate direction to adjusted target
-        directionToTarget = adjustedTarget - pet.petTransform.position;
-        distanceToTarget = directionToTarget.magnitude;
-
-        // Apply force to move toward target
-        if (distanceToTarget > 0.3f)
+        if (isMoving)
         {
             Vector3 moveDirection = directionToTarget.normalized;
 
-            // Scale force based on distance
-            float forceMultiplier = Mathf.Clamp01(distanceToTarget / personalityFollowDistance);
-            Vector3 force = moveDirection * currentMoveForce * forceMultiplier;
+            // Calculate target velocity
+            float currentSpeed = playerSpeed > 0.1f ? moveSpeed : stoppingSpeed;
+            Vector3 targetVelocity = moveDirection * currentSpeed;
 
-            // Apply force to Rigidbody
-            rb.AddForce(force, ForceMode.Force);
-
-            // Limit velocity
-            float maxSpeed = playerSpeed > 0.1f ? personalityMoveForce * 0.5f : stoppingForce * 0.3f * pet.speedMultiplier;
-            if (rb.linearVelocity.magnitude > maxSpeed)
+            if (pet.isFlying)
             {
-                rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+                // Smooth movement for flying pets - get current velocity from list
+                Vector3 currentVelocity = flyingCurrentVelocities[petIndex];
+
+                // SmoothDamp
+                rb.linearVelocity = Vector3.SmoothDamp(rb.linearVelocity, targetVelocity,
+                    ref currentVelocity, flyingSmoothTime);
+
+                // Store the updated velocity back in the list
+                flyingCurrentVelocities[petIndex] = currentVelocity;
+            }
+            else
+            {
+                // Walking pets - use forces but with damping
+                Vector3 force = moveDirection * currentSpeed * rb.mass * 5f;
+
+                // Scale force based on distance (less force when close)
+                float forceScale = Mathf.Clamp01(distanceToTarget / followDistance);
+                force *= forceScale;
+
+                rb.AddForce(force, ForceMode.Force);
+
+                // Strong damping to prevent overshooting
+                rb.linearVelocity *= 0.95f;
+
+                // Limit maximum speed
+                float maxSpeed = currentSpeed;
+                if (rb.linearVelocity.magnitude > maxSpeed)
+                {
+                    rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+                }
             }
         }
-        else if (playerSpeed < 0.1f && distanceToTarget < 0.5f)
+        else
         {
-            // Player is stopped and pet is close - gentle damping to settle
-            rb.linearVelocity *= 0.95f;
+            // Not moving - strong damping to stop quickly
+            rb.linearVelocity *= 0.9f;
+
+            if (rb.linearVelocity.magnitude < 0.1f)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+
+            // Add idle movement if enabled and player is still
+            if (enableIdleMovement && playerSpeed < 0.1f && !pet.isFlying)
+            {
+                ApplyPetIdleMovement(petIndex);
+            }
         }
 
-        // Add idle movement if enabled and close enough
-        if (enableIdleMovement && distanceToTarget < personalityFollowDistance * 0.8f && playerSpeed < 0.1f)
-        {
-            ApplyPetIdleMovement(petIndex);
-        }
-
-        // ALWAYS face the player first, then rotate to movement direction
+        // Update rotation
         UpdatePetRotation(petIndex);
 
-        // Update animator
-        UpdatePetAnimator(petIndex);
-
-        // Clamp distance to prevent pet from getting too far
+        // Check distance limit
         float distanceToPlayer = Vector3.Distance(pet.petTransform.position, playerTransform.position);
         if (distanceToPlayer > maxDistance)
         {
@@ -352,26 +678,21 @@ public class EnerlingPetManager : MonoBehaviour
     {
         PetData pet = pets[petIndex];
 
-        // Calculate base position relative to player
         Vector3 playerForward = playerTransform.forward;
         Vector3 playerRight = playerTransform.right;
 
-        // Determine side based on sidePreference (0 = left, 1 = right)
-        float sideMultiplier = Mathf.Lerp(-1f, 1f, pet.sidePreference);
+        float sideMultiplier = pet.spawnPointIndex == 0 ? -1f : 1f;
 
-        // Add some randomness to vertical positioning
-        float verticalOffset = Mathf.Sin(Time.time * 0.5f + pet.randomPhase) * 0.1f;
+        // Use idle offsets when player is stopped, otherwise use follow distance
+        float currentForwardOffset = playerSpeed > 0.1f ? -followDistance * 0.7f : idleForwardOffset;
+        float currentSideOffset = playerSpeed > 0.1f ? 1.2f : idleSideOffset;
 
-        // Position pet behind and to the side with personality
-        float personalityFollowDistance = followDistance * pet.distanceMultiplier;
-        Vector3 offset = -playerForward * personalityFollowDistance * 0.7f
-                        + playerRight * 1.2f * sideMultiplier
-                        + Vector3.up * verticalOffset;
+        Vector3 offset = playerForward * currentForwardOffset
+                        + playerRight * currentSideOffset * sideMultiplier;
 
         Vector3 desiredPosition = playerTransform.position + offset;
 
-        // Smooth the target position with some delay
-        float smoothFactor = Time.fixedDeltaTime * (1f - delayFactor) * 10f;
+        float smoothFactor = Time.fixedDeltaTime * (1f - delayFactor) * 5f;
         targetPositions[petIndex] = Vector3.Lerp(targetPositions[petIndex], desiredPosition, smoothFactor);
     }
 
@@ -379,16 +700,17 @@ public class EnerlingPetManager : MonoBehaviour
     {
         PetData pet = pets[petIndex];
 
-        // Small idle movements with personality phase
         idleTimers[petIndex] += Time.fixedDeltaTime * idleSpeed;
 
-        float idleX = Mathf.Sin(idleTimers[petIndex] + pet.randomPhase) * idleAmplitude;
-        float idleZ = Mathf.Cos(idleTimers[petIndex] * 0.7f + pet.randomPhase) * idleAmplitude;
+        float idleX = Mathf.Sin(idleTimers[petIndex]) * idleAmplitude;
+        float idleZ = Mathf.Cos(idleTimers[petIndex] * 0.7f) * idleAmplitude;
 
         idleOffsets[petIndex] = new Vector3(idleX, 0, idleZ);
 
-        // Apply small force for idle movement
-        petRigidbodies[petIndex].AddForce(idleOffsets[petIndex] * moveForce * 0.1f, ForceMode.Force);
+        if (!pet.isFlying)
+        {
+            petRigidbodies[petIndex].AddForce(idleOffsets[petIndex] * moveSpeed * 0.1f, ForceMode.Force);
+        }
     }
 
     private void UpdatePetRotation(int petIndex)
@@ -396,7 +718,6 @@ public class EnerlingPetManager : MonoBehaviour
         PetData pet = pets[petIndex];
         Rigidbody rb = petRigidbodies[petIndex];
 
-        // FIRST: Always face the player
         Vector3 toPlayer = playerTransform.position - pet.petTransform.position;
         toPlayer.y = 0;
 
@@ -404,45 +725,23 @@ public class EnerlingPetManager : MonoBehaviour
         {
             Quaternion targetPlayerRotation = Quaternion.LookRotation(toPlayer.normalized);
 
-            // If moving, blend between facing player and movement direction
-            Vector3 movementDirection = rb.linearVelocity;
-            movementDirection.y = 0;
-
-            if (movementDirection.magnitude > 0.2f && playerSpeed > 0.1f)
+            if (!pet.isFlying && rb.linearVelocity.magnitude > 0.2f && playerSpeed > 0.1f)
             {
-                // Blend between facing player and facing movement direction
-                Quaternion targetMovementRotation = Quaternion.LookRotation(movementDirection.normalized);
-                Quaternion blendedRotation = Quaternion.Slerp(targetPlayerRotation, targetMovementRotation, 0.3f);
-                pet.petTransform.rotation = Quaternion.Slerp(pet.petTransform.rotation, blendedRotation, Time.fixedDeltaTime * rotationSpeed);
+                Vector3 movementDirection = rb.linearVelocity;
+                movementDirection.y = 0;
+
+                if (movementDirection.magnitude > 0.2f)
+                {
+                    Quaternion targetMovementRotation = Quaternion.LookRotation(movementDirection.normalized);
+                    Quaternion blendedRotation = Quaternion.Slerp(targetPlayerRotation, targetMovementRotation, 0.3f);
+                    pet.petTransform.rotation = Quaternion.Slerp(pet.petTransform.rotation, blendedRotation, Time.fixedDeltaTime * rotationSpeed);
+                }
             }
             else
             {
-                // Just face the player
                 pet.petTransform.rotation = Quaternion.Slerp(pet.petTransform.rotation, targetPlayerRotation, Time.fixedDeltaTime * rotationSpeed * 0.5f);
             }
         }
-    }
-
-    private void UpdatePetAnimator(int petIndex)
-    {
-        if (petAnimators[petIndex] == null) return;
-
-        // Calculate speed for walk animation
-        float speed = petRigidbodies[petIndex].linearVelocity.magnitude;
-        petAnimators[petIndex].SetFloat(walkAnimationParameter, speed);
-
-        // Jump animation
-        if (isJumping[petIndex])
-        {
-            petAnimators[petIndex].SetTrigger(jumpAnimationParameter);
-            isJumping[petIndex] = false;
-        }
-
-        // Check if grounded for animator
-        RaycastHit hit;
-        Vector3 rayStart = pets[petIndex].petTransform.position + Vector3.up * 0.1f;
-        bool isGrounded = Physics.Raycast(rayStart, Vector3.down, out hit, 0.3f);
-        petAnimators[petIndex].SetBool(groundedAnimationParameter, isGrounded);
     }
 
     private bool IsPlayerGrounded()
@@ -460,7 +759,8 @@ public class EnerlingPetManager : MonoBehaviour
 
     private void MakePetJump(int petIndex)
     {
-        // Check if pet is grounded
+        if (pets[petIndex].isFlying) return; // Flying pets don't jump
+
         RaycastHit hit;
         Vector3 rayStart = pets[petIndex].petTransform.position + Vector3.up * 0.1f;
 
@@ -478,12 +778,16 @@ public class EnerlingPetManager : MonoBehaviour
 
         if (pet.petTransform != null && rb != null)
         {
-            // Calculate side based on preference
-            float sideMultiplier = Mathf.Lerp(-1f, 1f, pet.sidePreference);
+            float sideMultiplier = pet.spawnPointIndex == 0 ? -1f : 1f;
             Vector3 offset = -playerTransform.forward * idealDistance + playerTransform.right * 1.2f * sideMultiplier;
+
+            if (pet.isFlying)
+            {
+                offset.y += flyingHeightOffset;
+            }
+
             Vector3 teleportPosition = playerTransform.position + offset;
 
-            // Reset velocity
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
@@ -492,30 +796,28 @@ public class EnerlingPetManager : MonoBehaviour
         }
     }
 
-    // Public method to make all pets jump
     public void MakeAllPetsJump()
     {
-        for (int i = 0; i < pets.Length; i++)
+        for (int i = 0; i < pets.Count; i++)
         {
-            MakePetJump(i);
+            if (pets[i] != null && !pets[i].isFlying)
+                MakePetJump(i);
         }
     }
 
-    // Public method to teleport all pets
     public void TeleportAllPetsToPlayer()
     {
-        for (int i = 0; i < pets.Length; i++)
+        for (int i = 0; i < pets.Count; i++)
         {
-            TeleportPetToPlayer(i);
+            if (pets[i] != null)
+                TeleportPetToPlayer(i);
         }
     }
 
-    // Visualize in editor
     void OnDrawGizmosSelected()
     {
         if (playerTransform == null) return;
 
-        // Draw follow distances
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(playerTransform.position, minDistance);
 
@@ -528,15 +830,20 @@ public class EnerlingPetManager : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(playerTransform.position, maxDistance);
 
-        // Draw each pet
-        for (int i = 0; i < pets.Length; i++)
+        // Draw idle positions
+        Gizmos.color = Color.magenta;
+        Vector3 leftIdlePos = playerTransform.position + playerTransform.forward * idleForwardOffset + playerTransform.right * -idleSideOffset;
+        Vector3 rightIdlePos = playerTransform.position + playerTransform.forward * idleForwardOffset + playerTransform.right * idleSideOffset;
+        Gizmos.DrawWireSphere(leftIdlePos, 0.3f);
+        Gizmos.DrawWireSphere(rightIdlePos, 0.3f);
+
+        for (int i = 0; i < pets.Count; i++)
         {
             if (pets[i] != null && pets[i].petTransform != null)
             {
                 Gizmos.color = Color.cyan;
                 Gizmos.DrawLine(playerTransform.position, pets[i].petTransform.position);
 
-                // Draw capsule collider
                 Gizmos.color = new Color(0, 1, 0, 0.3f);
                 Gizmos.DrawWireSphere(pets[i].petTransform.position + pets[i].petTransform.rotation * colliderCenter, colliderRadius);
             }

@@ -54,12 +54,28 @@ public class SkinSelectionController : MonoBehaviour
     [Header("Default Skin Card")]
     public Sprite defaultSkinIcon;
 
-    [Header("Error Handling")]
-    public CanvasGroup skinErrorCanvasGroup;
-    public TMP_Text skinErrorMessageText;
-    public float errorFadeInDuration = 0.3f;
-    public float errorFadeOutDuration = 0.5f;
-    public float errorDisplayDuration = 2f;
+    [Header("Feedback Panels")]
+    public CanvasGroup errorFeedbackCanvasGroup;
+    public TMP_Text errorFeedbackText;
+    public CanvasGroup successFeedbackCanvasGroup;
+    public TMP_Text successFeedbackText;
+    public float feedbackFadeInDuration = 0.3f;
+    public float feedbackDisplayDuration = 2f;
+    public float feedbackFadeOutDuration = 0.5f;
+
+    [Header("Power-Up Panels")]
+    public GameObject powerUpPanel1;  // First power-up panel
+    public GameObject powerUpPanel2;  // Second power-up panel
+    public Image powerUpIcon1;
+    public Image powerUpIcon2;
+    public TMP_Text powerUpAmount1;
+    public TMP_Text powerUpAmount2;
+
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    public AudioClip successSound;
+    public AudioClip errorSound;
+    public AudioClip buttonClickSound;
 
     [Header("Camera Settings")]
     public CinemachineVirtualCamera characterSelectionCamera;
@@ -70,12 +86,16 @@ public class SkinSelectionController : MonoBehaviour
     public CanvasGroup skinSelectionCanvas;
     public CanvasGroup characterControlsCanvas;
 
+    [Header("Database References")]
+    public IngredientDatabase ingredientDatabase; // Added for power-ups
+
     private List<GameObject> skinButtons = new List<GameObject>();
     private CharacterDatabase.CharacterData currentCharacterData;
     private int selectedSkinID = -1;
     private int lastSavedSkinID = -1;
     private bool isInSkinPreview = false;
     private Coroutine errorCoroutine;
+    private Coroutine successCoroutine;
     private GameDataManager gameDataManager;
 
     void Start()
@@ -109,7 +129,6 @@ public class SkinSelectionController : MonoBehaviour
             backButton.onClick.AddListener(OnBackButtonClicked);
         }
 
-        // Setup new action buttons
         if (selectButton != null)
         {
             Button selectBtn = selectButton.GetComponent<Button>();
@@ -140,7 +159,6 @@ public class SkinSelectionController : MonoBehaviour
             }
         }
 
-        // Setup confirmation dialog
         if (confirmationPanel != null)
         {
             confirmationPanel.SetActive(false);
@@ -158,14 +176,74 @@ public class SkinSelectionController : MonoBehaviour
             }
         }
 
-        // Initialize error handling
-        if (skinErrorCanvasGroup != null)
+        if (errorFeedbackCanvasGroup != null)
         {
-            skinErrorCanvasGroup.alpha = 0f;
-            skinErrorCanvasGroup.gameObject.SetActive(false);
+            errorFeedbackCanvasGroup.alpha = 0f;
+            errorFeedbackCanvasGroup.gameObject.SetActive(false);
         }
 
+        if (successFeedbackCanvasGroup != null)
+        {
+            successFeedbackCanvasGroup.alpha = 0f;
+            successFeedbackCanvasGroup.gameObject.SetActive(false);
+        }
+
+        // Hide power-up panels initially
+        if (powerUpPanel1 != null) powerUpPanel1.SetActive(false);
+        if (powerUpPanel2 != null) powerUpPanel2.SetActive(false);
+
         HideAllActionButtons();
+
+        // Subscribe to pet change events
+        SubscribeToPetEvents();
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        UnsubscribeFromPetEvents();
+    }
+
+    private void SubscribeToPetEvents()
+    {
+        // Find the EnerlingPetManager and subscribe to its events
+        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+        if (petManager != null)
+        {
+            petManager.OnPetEquipped += OnPetChanged;
+            petManager.OnPetRemoved += OnPetChanged;
+        }
+    }
+
+    private void UnsubscribeFromPetEvents()
+    {
+        EnerlingPetManager petManager = FindObjectOfType<EnerlingPetManager>();
+        if (petManager != null)
+        {
+            petManager.OnPetEquipped -= OnPetChanged;
+            petManager.OnPetRemoved -= OnPetChanged;
+        }
+    }
+
+    // Called whenever a pet is equipped or removed
+    private void OnPetChanged(int slotIndex, string petName)
+    {
+        Debug.Log($"Pet changed in slot {slotIndex}: {petName}");
+
+        // If we're currently in skin selection, update the power-up panels
+        if (isInSkinPreview && skinSelectionPanel.activeSelf)
+        {
+            UpdatePowerUpPanels();
+        }
+    }
+
+    // Public method that can be called from other scripts (like EnerlingPetManager)
+    public void RefreshPowerUpPanels()
+    {
+        if (isInSkinPreview && skinSelectionPanel.activeSelf)
+        {
+            UpdatePowerUpPanels();
+        }
     }
 
     public void EnterSkinSelection(int characterID)
@@ -177,15 +255,23 @@ public class SkinSelectionController : MonoBehaviour
             return;
         }
 
-        // Load saved skin for this character
         if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
-            lastSavedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(characterID);
-            selectedSkinID = lastSavedSkinID;
-            Debug.Log($"EnterSkinSelection: CharID={characterID}, SavedSkinID={lastSavedSkinID}");
+            lastSavedSkinID = gameDataManager.GetSelectedSkin(characterID);
+
+            // IMPORTANT: Always start with DEFAULT skin (-1)
+            selectedSkinID = -1;
+
+            Debug.Log($"=== ENTERING SKIN SELECTION ===");
+            Debug.Log($"Character: {currentCharacterData.characterName} (ID: {characterID})");
+            Debug.Log($"Last Saved Skin: {lastSavedSkinID}");
+
+            var unlockedSkins = gameDataManager.GetUnlockedSkins(characterID);
+            Debug.Log($"Unlocked Skins: {string.Join(", ", unlockedSkins)}");
         }
         else
         {
+            Debug.LogError("GameDataManager or CurrentGameData is NULL!");
             lastSavedSkinID = -1;
             selectedSkinID = -1;
         }
@@ -195,50 +281,131 @@ public class SkinSelectionController : MonoBehaviour
 
         isInSkinPreview = true;
 
-        // Apply the character visuals with saved skin
+        // Apply DEFAULT character visuals (NOT saved skin)
         if (characterVisualSwapper != null)
         {
-            if (selectedSkinID == -1)
-            {
-                characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
+            characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
 
-                // NOTIFY ENVIRONMENT CONTROLLER - DEFAULT SKIN SELECTED
-                if (skinEnvironmentController != null)
-                {
-                    skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
-                }
-            }
-            else
+            // Reset to default environment
+            if (skinEnvironmentController != null)
             {
-                characterVisualSwapper.ApplySkinToCurrentCharacter(selectedSkinID);
-
-                // Get skin data for environment notification
-                var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
-                if (skinData != null && skinEnvironmentController != null)
-                {
-                    skinEnvironmentController.OnSkinSelected(
-                        currentCharacterData.characterID,
-                        selectedSkinID,
-                        skinData.skinName
-                    );
-                }
+                skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
             }
         }
 
         UpdateSkinNameDisplay();
         UpdateActionButtons();
         UpdateCurrencyDisplays();
+        UpdatePowerUpPanels(); // Update power-up panels
 
         if (skinSelectionPanel != null)
         {
             skinSelectionPanel.SetActive(true);
         }
 
-        // Set skin camera priority to 30
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 30;
         }
+    }
+
+    // Update power-up panels based on equipped pets
+    private void UpdatePowerUpPanels()
+    {
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null || ingredientDatabase == null)
+            return;
+
+        Debug.Log("Updating power-up panels in SkinSelectionController");
+
+        // Get equipped pets
+        string pet1 = gameDataManager.GetEquippedPet(1);
+        string pet2 = gameDataManager.GetEquippedPet(2);
+
+        int activePanels = 0;
+
+        // Update first panel
+        if (!string.IsNullOrEmpty(pet1))
+        {
+            UpdatePowerUpPanel(1, pet1);
+            activePanels++;
+        }
+
+        // Update second panel
+        if (!string.IsNullOrEmpty(pet2))
+        {
+            UpdatePowerUpPanel(2, pet2);
+            activePanels++;
+        }
+
+        // Show/hide panels based on how many pets are equipped
+        if (powerUpPanel1 != null)
+            powerUpPanel1.SetActive(activePanels >= 1);
+
+        if (powerUpPanel2 != null)
+            powerUpPanel2.SetActive(activePanels >= 2);
+    }
+
+    // Update a specific power-up panel
+    private void UpdatePowerUpPanel(int panelIndex, string petName)
+    {
+        if (string.IsNullOrEmpty(petName) || ingredientDatabase == null)
+            return;
+
+        var ingredient = ingredientDatabase.GetIngredientInfo(petName);
+        if (ingredient == null || ingredient.powerUps == null || ingredient.powerUps.Count == 0)
+            return;
+
+        var powerUp = ingredient.powerUps[0]; // First power-up only
+
+        Image iconImage = panelIndex == 1 ? powerUpIcon1 : powerUpIcon2;
+        TMP_Text amountText = panelIndex == 1 ? powerUpAmount1 : powerUpAmount2;
+
+        if (iconImage != null && powerUp.powerUpIcon != null)
+            iconImage.sprite = powerUp.powerUpIcon;
+
+        if (amountText != null)
+        {
+            string prefix = GetPowerUpPrefix(powerUp.powerUpType);
+            amountText.text = $"{prefix}{powerUp.amount}";
+        }
+    }
+
+    // Helper method to get the correct prefix based on power-up type
+    private string GetPowerUpPrefix(IngredientDatabase.PowerUpInfo.PowerUpType type)
+    {
+        switch (type)
+        {
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Time:
+                return "-"; // Time is deducted/reduced
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Heart:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Speed:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Coins:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Exp:
+            case IngredientDatabase.PowerUpInfo.PowerUpType.Gems:
+            default:
+                return "+"; // All others are added/increased
+        }
+    }
+
+    public void ResetToDefaultSkin()
+    {
+        Debug.Log("SkinSelectionController: Resetting to default skin");
+
+        selectedSkinID = -1;
+
+        if (characterVisualSwapper != null && currentCharacterData != null)
+        {
+            characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
+        }
+
+        if (skinEnvironmentController != null && currentCharacterData != null)
+        {
+            skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
+        }
+
+        UpdateAllButtonColors();
+        UpdateSkinNameDisplay();
+        UpdateActionButtons();
     }
 
     public void ExitSkinSelection()
@@ -246,11 +413,9 @@ public class SkinSelectionController : MonoBehaviour
         ClearSkinButtons();
         isInSkinPreview = false;
 
-        // Reset camera priority to 0
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 0;
-            Debug.Log("Skin camera priority set to 0 on exit");
         }
 
         currentCharacterData = null;
@@ -274,6 +439,7 @@ public class SkinSelectionController : MonoBehaviour
         if (playerData != null)
         {
             playerData.UpdateCoinDisplayImmediate();
+            playerData.UpdateGemDisplayImmediate();
         }
     }
 
@@ -367,10 +533,10 @@ public class SkinSelectionController : MonoBehaviour
         {
             skinHorizontalLayout.gameObject.SetActive(true);
 
-            // CREATE DEFAULT SKIN CARD
+            // Create default skin button
             CreateDefaultSkinButton(characterData);
 
-            // CREATE ACTUAL SKIN CARDS
+            // Create skin buttons for each skin
             if (characterData.skins != null && characterData.skins.Count > 0)
             {
                 foreach (var skinData in characterData.skins)
@@ -379,6 +545,10 @@ public class SkinSelectionController : MonoBehaviour
                 }
             }
         }
+
+        // IMPORTANT: Set default skin as selected and update colors
+        selectedSkinID = -1;
+        UpdateAllButtonColors();
     }
 
     private void CreateDefaultSkinButton(CharacterDatabase.CharacterData characterData)
@@ -387,8 +557,6 @@ public class SkinSelectionController : MonoBehaviour
 
         GameObject buttonObj = Instantiate(skinButtonPrefab, skinHorizontalLayout.transform);
         skinButtons.Add(buttonObj);
-
-        bool isUnlocked = true;
 
         Button button = buttonObj.GetComponent<Button>();
         if (button != null)
@@ -406,7 +574,6 @@ public class SkinSelectionController : MonoBehaviour
         if (skinIcon != null)
         {
             skinIcon.sprite = characterData.characterIcon ?? defaultSkinIcon;
-            UpdateButtonIconColor(buttonObj, -1, isUnlocked);
         }
 
         TMP_Text skinNameText = FindSkinNameText(buttonObj.transform);
@@ -422,7 +589,6 @@ public class SkinSelectionController : MonoBehaviour
 
         buttonData.characterID = characterData.characterID;
         buttonData.skinID = -1;
-        buttonData.isUnlocked = true;
         buttonData.isDefaultSkin = true;
         buttonData.skinIcon = skinIcon;
     }
@@ -434,6 +600,7 @@ public class SkinSelectionController : MonoBehaviour
         GameObject buttonObj = Instantiate(skinButtonPrefab, skinHorizontalLayout.transform);
         skinButtons.Add(buttonObj);
 
+        // IMPORTANT: Check unlock status EVERY TIME we create the button
         bool isUnlocked = IsSkinUnlocked(characterData.characterID, skinData.skinID);
 
         Button button = buttonObj.GetComponent<Button>();
@@ -452,7 +619,6 @@ public class SkinSelectionController : MonoBehaviour
         if (skinIcon != null)
         {
             skinIcon.sprite = skinData.skinIcon ?? defaultSkinIcon;
-            UpdateButtonIconColor(buttonObj, skinData.skinID, isUnlocked);
         }
 
         TMP_Text skinNameText = FindSkinNameText(buttonObj.transform);
@@ -468,29 +634,38 @@ public class SkinSelectionController : MonoBehaviour
 
         buttonData.characterID = characterData.characterID;
         buttonData.skinID = skinData.skinID;
-        buttonData.isUnlocked = isUnlocked;
         buttonData.isDefaultSkin = false;
         buttonData.skinIcon = skinIcon;
+
+        Debug.Log($"Created skin button for {skinData.skinName} (ID: {skinData.skinID}) - Unlocked: {isUnlocked}");
     }
 
-    private void UpdateButtonIconColor(GameObject buttonObj, int skinID, bool isUnlocked)
+    private void UpdateAllButtonColors()
     {
-        SkinButtonData buttonData = buttonObj.GetComponent<SkinButtonData>();
-        if (buttonData == null || buttonData.skinIcon == null) return;
+        foreach (var buttonObj in skinButtons)
+        {
+            if (buttonObj == null) continue;
 
-        bool isSelected = (selectedSkinID == skinID);
+            SkinButtonData buttonData = buttonObj.GetComponent<SkinButtonData>();
+            if (buttonData == null || buttonData.skinIcon == null) continue;
 
-        if (isSelected)
-        {
-            buttonData.skinIcon.color = selectedColor;
-        }
-        else if (!isUnlocked)
-        {
-            buttonData.skinIcon.color = lockedColor;
-        }
-        else
-        {
-            buttonData.skinIcon.color = deselectedColor;
+            bool isSelected = (selectedSkinID == buttonData.skinID);
+
+            // IMPORTANT: Check unlock status LIVE for non-default skins
+            bool isUnlocked = buttonData.isDefaultSkin ? true : IsSkinUnlocked(buttonData.characterID, buttonData.skinID);
+
+            if (isSelected)
+            {
+                buttonData.skinIcon.color = selectedColor;
+            }
+            else if (!isUnlocked)
+            {
+                buttonData.skinIcon.color = lockedColor;
+            }
+            else
+            {
+                buttonData.skinIcon.color = deselectedColor;
+            }
         }
     }
 
@@ -524,23 +699,28 @@ public class SkinSelectionController : MonoBehaviour
         return null;
     }
 
+    // CRITICAL: This method MUST check GameData ONLY, not the database unlock field
     private bool IsSkinUnlocked(int characterID, int skinID)
     {
         if (skinID == -1) return true;
 
-        var skinData = characterDatabase.GetSkinByID(characterID, skinID);
-        if (skinData != null && skinData.unlock) return true;
-
-        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
+        if (gameDataManager == null || gameDataManager.CurrentGameData == null)
         {
-            return gameDataManager.CurrentGameData.IsSkinUnlocked(characterID, skinID);
+            Debug.LogError("GameDataManager or CurrentGameData is NULL!");
+            return false;
         }
 
-        return false;
+        // ONLY check GameData, NEVER check the database unlock field
+        bool isUnlockedInGameData = gameDataManager.IsSkinUnlocked(characterID, skinID);
+
+        Debug.Log($"Checking if skin {skinID} for character {characterID} is unlocked: {isUnlockedInGameData}");
+
+        return isUnlockedInGameData;
     }
 
     private void OnDefaultSkinButtonClicked(CharacterDatabase.CharacterData characterData)
     {
+        Debug.Log("Default skin button clicked");
         selectedSkinID = -1;
 
         if (characterVisualSwapper != null)
@@ -548,7 +728,6 @@ public class SkinSelectionController : MonoBehaviour
             characterVisualSwapper.ApplyCharacterVisuals(currentCharacterData);
         }
 
-        // NOTIFY ENVIRONMENT CONTROLLER - DEFAULT SKIN SELECTED
         if (skinEnvironmentController != null)
         {
             skinEnvironmentController.OnDefaultSkinSelected(currentCharacterData.characterID);
@@ -566,15 +745,14 @@ public class SkinSelectionController : MonoBehaviour
 
     private void OnSkinButtonClicked(CharacterDatabase.SkinData skinData)
     {
+        Debug.Log($"Skin button clicked: {skinData.skinName} (ID: {skinData.skinID})");
         selectedSkinID = skinData.skinID;
 
-        // Preview the skin (even if locked)
         if (characterVisualSwapper != null)
         {
             characterVisualSwapper.ApplySkinToCurrentCharacter(skinData.skinID);
         }
 
-        // NOTIFY ENVIRONMENT CONTROLLER - SKIN SELECTED
         if (skinEnvironmentController != null)
         {
             skinEnvironmentController.OnSkinSelected(
@@ -600,37 +778,51 @@ public class SkinSelectionController : MonoBehaviour
 
         if (selectedSkinID == -1)
         {
+            // Default skin always shows select button
             if (selectButton != null) selectButton.SetActive(true);
+            Debug.Log("Default skin - showing SELECT button");
             return;
         }
 
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
         if (skinData == null) return;
 
+        // IMPORTANT: Check unlock status LIVE
         bool isUnlocked = IsSkinUnlocked(currentCharacterData.characterID, selectedSkinID);
+        Debug.Log($"Updating action buttons for skin {selectedSkinID}: isUnlocked = {isUnlocked}");
 
         if (isUnlocked)
         {
-            if (selectButton != null) selectButton.SetActive(true);
+            // Skin is unlocked - show SELECT button
+            if (selectButton != null)
+            {
+                selectButton.SetActive(true);
+                Debug.Log("Showing SELECT button (skin unlocked)");
+            }
         }
         else
         {
+            // Skin is locked
             if (skinData.isSkinReward)
             {
+                // Reward skin - show locked button with task
                 if (lockedButton != null)
                 {
                     lockedButton.SetActive(true);
                     if (lockedButtonText != null)
                         lockedButtonText.text = skinData.taskToUnlock;
+                    Debug.Log("Showing LOCKED button (reward skin)");
                 }
             }
             else
             {
+                // Purchasable skin - show buy button with price
                 if (buyButton != null)
                 {
                     buyButton.SetActive(true);
                     if (buyButtonText != null)
                         buyButtonText.text = $"{skinData.nutrigemsToUnlock}";
+                    Debug.Log("Showing BUY button (purchasable skin)");
                 }
             }
         }
@@ -662,17 +854,17 @@ public class SkinSelectionController : MonoBehaviour
             }
         }
 
-        // NOTIFY ENVIRONMENT CONTROLLER - EXITING (before saving)
+        HideAllFeedback();
+
         if (skinEnvironmentController != null)
         {
             skinEnvironmentController.OnExitSkinSelection();
         }
 
         // Save the skin selection
-        SaveSkinSelection(currentCharacterData.characterID, selectedSkinID);
+        gameDataManager.SetSelectedSkin(currentCharacterData.characterID, selectedSkinID);
         lastSavedSkinID = selectedSkinID;
 
-        // Update character visual with the selected skin
         if (characterVisualSwapper != null)
         {
             if (selectedSkinID == -1)
@@ -685,11 +877,9 @@ public class SkinSelectionController : MonoBehaviour
             }
         }
 
-        // Reset camera priority to 0
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 0;
-            Debug.Log("Skin camera priority set to 0 on select");
         }
 
         if (characterControlsCanvas != null)
@@ -716,6 +906,7 @@ public class SkinSelectionController : MonoBehaviour
         if (gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
             int playerNutriGems = gameDataManager.CurrentGameData.nutriGems;
+            Debug.Log($"Player has {playerNutriGems} gems, skin costs {skinData.nutrigemsToUnlock}");
 
             if (playerNutriGems >= skinData.nutrigemsToUnlock)
             {
@@ -723,7 +914,9 @@ public class SkinSelectionController : MonoBehaviour
             }
             else
             {
-                ShowCustomErrorMessage("Not enough NutriGems!\nCannot proceed with purchase.");
+                ShowErrorMessage($"Not enough NutriGems!\nYou need {skinData.nutrigemsToUnlock} NutriGems to unlock this skin.");
+                // Play error sound
+                PlayErrorSound();
             }
         }
     }
@@ -735,7 +928,9 @@ public class SkinSelectionController : MonoBehaviour
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
         if (skinData != null)
         {
-            ShowCustomErrorMessage(skinData.taskToUnlock);
+            ShowErrorMessage(skinData.taskToUnlock);
+            // Play error sound
+            PlayErrorSound();
         }
     }
 
@@ -748,6 +943,7 @@ public class SkinSelectionController : MonoBehaviour
         }
     }
 
+    // FIXED: This method now properly saves to GameData and updates UI
     private void OnConfirmPurchaseYes()
     {
         PlayButtonClickSound();
@@ -757,20 +953,41 @@ public class SkinSelectionController : MonoBehaviour
 
         if (gameDataManager.CurrentGameData.nutriGems < skinData.nutrigemsToUnlock)
         {
-            ShowCustomErrorMessage("Not enough NutriGems!\nCannot proceed with purchase.");
+            ShowErrorMessage("Not enough NutriGems!\nCannot proceed with purchase.");
+            PlayErrorSound();
             return;
         }
 
+        // Deduct gems
         gameDataManager.CurrentGameData.nutriGems -= skinData.nutrigemsToUnlock;
-        UnlockSkin(currentCharacterData.characterID, selectedSkinID);
+        Debug.Log($"Deducted {skinData.nutrigemsToUnlock} gems. New balance: {gameDataManager.CurrentGameData.nutriGems}");
+
+        // CRITICAL: Unlock the skin in GameData
+        gameDataManager.UnlockSkin(currentCharacterData.characterID, selectedSkinID);
+
+        // Save immediately
         gameDataManager.SaveGameData();
 
+        Debug.Log($"GameData saved. Skin {selectedSkinID} should now be unlocked");
+
+        // FIX: Update the colors of existing buttons instead of repopulating
         UpdateAllButtonColors();
+
+        // Update the action buttons to show SELECT
         UpdateActionButtons();
+
+        // Update currency display
         UpdateCurrencyDisplays();
 
+        // Verify unlock
+        bool isNowUnlocked = gameDataManager.IsSkinUnlocked(currentCharacterData.characterID, selectedSkinID);
+        Debug.Log($"Verification - Skin {selectedSkinID} is now unlocked: {isNowUnlocked}");
+
+        ShowSuccessMessage($"{skinData.skinName} unlocked successfully!");
+        // Play success sound
+        PlaySuccessSound();
+
         if (confirmationPanel != null) confirmationPanel.SetActive(false);
-        ShowCustomErrorMessage($"{skinData.skinName} unlocked!");
     }
 
     private void OnConfirmPurchaseNo()
@@ -784,13 +1001,13 @@ public class SkinSelectionController : MonoBehaviour
         PlayButtonClickSound();
         Debug.Log("Skin Selection Back button clicked");
 
-        // NOTIFY ENVIRONMENT CONTROLLER - EXITING
+        HideAllFeedback();
+
         if (skinEnvironmentController != null)
         {
             skinEnvironmentController.OnExitSkinSelection();
         }
 
-        // Reset camera priority to 0
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 0;
@@ -805,27 +1022,6 @@ public class SkinSelectionController : MonoBehaviour
         }
     }
 
-    private void SaveSkinSelection(int characterID, int skinID)
-    {
-        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
-        {
-            gameDataManager.CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
-            gameDataManager.SaveGameData();
-            Debug.Log($"Saved skin {skinID} for character {characterID}");
-        }
-    }
-
-    private void UpdateAllButtonColors()
-    {
-        foreach (GameObject button in skinButtons)
-        {
-            SkinButtonData buttonData = button.GetComponent<SkinButtonData>();
-            if (buttonData == null) continue;
-
-            UpdateButtonIconColor(button, buttonData.skinID, buttonData.isUnlocked);
-        }
-    }
-
     private void ShowLockedSkinMessage()
     {
         var skinData = characterDatabase.GetSkinByID(currentCharacterData.characterID, selectedSkinID);
@@ -833,41 +1029,80 @@ public class SkinSelectionController : MonoBehaviour
         {
             string message = $"{skinData.skinName} is locked!\n";
             message += skinData.isSkinReward ? $"Task: {skinData.taskToUnlock}" : $"Cost: {skinData.nutrigemsToUnlock} NutriGems";
-            ShowCustomErrorMessage(message);
+            ShowErrorMessage(message);
+            // Play error sound
+            PlayErrorSound();
         }
     }
 
-    private void ShowCustomErrorMessage(string message)
+    private void ShowErrorMessage(string message)
     {
-        if (skinErrorCanvasGroup == null || skinErrorMessageText == null) return;
-
-        skinErrorMessageText.text = message;
+        if (errorFeedbackCanvasGroup == null || errorFeedbackText == null) return;
 
         if (errorCoroutine != null)
         {
             StopCoroutine(errorCoroutine);
         }
+        if (successCoroutine != null)
+        {
+            StopCoroutine(successCoroutine);
+            HideFeedbackImmediate(successFeedbackCanvasGroup);
+        }
 
-        errorCoroutine = StartCoroutine(ShowSkinErrorCoroutine());
+        errorFeedbackText.text = message;
+        errorCoroutine = StartCoroutine(ShowFeedbackCoroutine(errorFeedbackCanvasGroup, feedbackDisplayDuration));
     }
 
-    private IEnumerator ShowSkinErrorCoroutine()
+    private void ShowSuccessMessage(string message)
     {
-        if (skinErrorCanvasGroup != null)
+        if (successFeedbackCanvasGroup == null || successFeedbackText == null) return;
+
+        if (successCoroutine != null)
         {
-            skinErrorCanvasGroup.gameObject.SetActive(true);
-            yield return StartCoroutine(FadeCanvasGroup(skinErrorCanvasGroup, 0f, 1f, errorFadeInDuration));
+            StopCoroutine(successCoroutine);
+        }
+        if (errorCoroutine != null)
+        {
+            StopCoroutine(errorCoroutine);
+            HideFeedbackImmediate(errorFeedbackCanvasGroup);
         }
 
-        yield return new WaitForSeconds(errorDisplayDuration);
+        successFeedbackText.text = message;
+        successCoroutine = StartCoroutine(ShowFeedbackCoroutine(successFeedbackCanvasGroup, feedbackDisplayDuration));
+    }
 
-        if (skinErrorCanvasGroup != null)
+    private IEnumerator ShowFeedbackCoroutine(CanvasGroup canvasGroup, float displayDuration)
+    {
+        canvasGroup.gameObject.SetActive(true);
+        yield return StartCoroutine(FadeCanvasGroup(canvasGroup, 0f, 1f, feedbackFadeInDuration));
+        yield return new WaitForSeconds(displayDuration);
+        yield return StartCoroutine(FadeCanvasGroup(canvasGroup, 1f, 0f, feedbackFadeOutDuration));
+        canvasGroup.gameObject.SetActive(false);
+    }
+
+    private void HideFeedbackImmediate(CanvasGroup canvasGroup)
+    {
+        if (canvasGroup != null)
         {
-            yield return StartCoroutine(FadeCanvasGroup(skinErrorCanvasGroup, 1f, 0f, errorFadeOutDuration));
-            skinErrorCanvasGroup.gameObject.SetActive(false);
+            canvasGroup.alpha = 0f;
+            canvasGroup.gameObject.SetActive(false);
         }
+    }
 
-        errorCoroutine = null;
+    private void HideAllFeedback()
+    {
+        if (errorCoroutine != null)
+        {
+            StopCoroutine(errorCoroutine);
+            errorCoroutine = null;
+        }
+        if (successCoroutine != null)
+        {
+            StopCoroutine(successCoroutine);
+            successCoroutine = null;
+        }
+        HideFeedbackImmediate(errorFeedbackCanvasGroup);
+        HideFeedbackImmediate(successFeedbackCanvasGroup);
     }
 
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
@@ -895,14 +1130,31 @@ public class SkinSelectionController : MonoBehaviour
             if (button != null) Destroy(button);
         }
         skinButtons.Clear();
-        System.GC.Collect();
     }
 
     private void PlayButtonClickSound()
     {
-        if (AudioHandler.Instance != null)
+        if (sfxAudioSource != null && buttonClickSound != null)
         {
-            AudioHandler.Instance.PlayButtonClick();
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
+    }
+
+    // Method to play error sound
+    private void PlayErrorSound()
+    {
+        if (sfxAudioSource != null && errorSound != null)
+        {
+            sfxAudioSource.PlayOneShot(errorSound);
+        }
+    }
+
+    // Method to play success sound
+    private void PlaySuccessSound()
+    {
+        if (sfxAudioSource != null && successSound != null)
+        {
+            sfxAudioSource.PlayOneShot(successSound);
         }
     }
 
@@ -915,28 +1167,12 @@ public class SkinSelectionController : MonoBehaviour
     {
         return isInSkinPreview;
     }
-
-    public void UnlockSkin(int characterID, int skinID)
-    {
-        if (gameDataManager != null && gameDataManager.CurrentGameData != null)
-        {
-            gameDataManager.CurrentGameData.UnlockSkinForCharacter(characterID, skinID);
-            gameDataManager.SaveGameData();
-
-            if (currentCharacterData != null && currentCharacterData.characterID == characterID)
-            {
-                PopulateSkinButtons(currentCharacterData);
-            }
-        }
-    }
 }
 
-// Helper class to store skin button data
 public class SkinButtonData : MonoBehaviour
 {
     public int characterID;
     public int skinID;
-    public bool isUnlocked;
     public bool isDefaultSkin;
     public Image skinIcon;
 }

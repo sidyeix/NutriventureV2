@@ -308,7 +308,7 @@ MonoBehaviour:
   animator: {fileID: 9089004741798091455}
   chestCollider: {fileID: 3449264459141048982}
   touchCollider: {fileID: 0}
-  worldSpaceUI: {fileID: 0}
+  worldSpaceUI: {fileID: 5938846828800054509}
   isClaimable: 0
   isOpened: 0
   clickDistance: 1000

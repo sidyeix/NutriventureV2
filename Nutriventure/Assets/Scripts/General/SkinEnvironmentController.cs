@@ -49,19 +49,49 @@ public class SkinEnvironmentController : MonoBehaviour
     private EnvironmentMapping currentActiveEnvironment;
     private List<GameObject> currentlyDisabledObjects = new List<GameObject>();
 
+    private void Awake()
+    {
+        // Ensure default environment is active at start
+        ResetToDefaultEnvironment();
+    }
+
     private void Start()
     {
-        // Initialize all environments to inactive
+        // Double-check default environment is active
+        ResetToDefaultEnvironment();
+    }
+
+    /// <summary>
+    /// Resets to default environment (called when entering character selection)
+    /// </summary>
+    public void ResetToDefaultEnvironment()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log("SkinEnvironmentController: Resetting to default environment");
+        }
+
+        // Deactivate all special environments
         foreach (var mapping in environmentMappings)
         {
-            if (mapping.environmentObject != null)
+            if (mapping.environmentObject != null && mapping.environmentObject.activeSelf)
             {
                 mapping.environmentObject.SetActive(false);
             }
         }
 
-        // Set default environment active
-        if (defaultEnvironment != null)
+        // Re-enable all previously disabled objects
+        foreach (var obj in currentlyDisabledObjects)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(true);
+            }
+        }
+        currentlyDisabledObjects.Clear();
+
+        // Activate default environment
+        if (defaultEnvironment != null && !defaultEnvironment.activeSelf)
         {
             defaultEnvironment.SetActive(true);
         }
@@ -69,7 +99,7 @@ public class SkinEnvironmentController : MonoBehaviour
         // Enable default objects
         foreach (var obj in defaultObjectsToEnable)
         {
-            if (obj != null)
+            if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
             }
@@ -178,7 +208,7 @@ public class SkinEnvironmentController : MonoBehaviour
         else
         {
             // If no current environment, disable default environment
-            if (defaultEnvironment != null)
+            if (defaultEnvironment != null && defaultEnvironment.activeSelf)
             {
                 defaultEnvironment.SetActive(false);
             }
@@ -198,7 +228,7 @@ public class SkinEnvironmentController : MonoBehaviour
         }
 
         // Activate new environment
-        if (environment.environmentObject != null)
+        if (environment.environmentObject != null && !environment.environmentObject.activeSelf)
         {
             environment.environmentObject.SetActive(true);
         }
@@ -216,11 +246,20 @@ public class SkinEnvironmentController : MonoBehaviour
         // Deactivate current environment if any
         if (currentActiveEnvironment != null)
         {
-            if (currentActiveEnvironment.environmentObject != null)
+            if (currentActiveEnvironment.environmentObject != null && currentActiveEnvironment.environmentObject.activeSelf)
             {
                 currentActiveEnvironment.environmentObject.SetActive(false);
             }
             currentActiveEnvironment = null;
+        }
+
+        // Deactivate all special environments (just to be safe)
+        foreach (var mapping in environmentMappings)
+        {
+            if (mapping.environmentObject != null && mapping.environmentObject.activeSelf)
+            {
+                mapping.environmentObject.SetActive(false);
+            }
         }
 
         // RE-ENABLE UNIFIED OBJECTS
@@ -234,7 +273,7 @@ public class SkinEnvironmentController : MonoBehaviour
         currentlyDisabledObjects.Clear();
 
         // Activate default environment
-        if (defaultEnvironment != null)
+        if (defaultEnvironment != null && !defaultEnvironment.activeSelf)
         {
             defaultEnvironment.SetActive(true);
         }
@@ -242,7 +281,7 @@ public class SkinEnvironmentController : MonoBehaviour
         // Re-enable default objects
         foreach (var obj in defaultObjectsToEnable)
         {
-            if (obj != null)
+            if (obj != null && !obj.activeSelf)
             {
                 obj.SetActive(true);
             }

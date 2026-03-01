@@ -20,9 +20,9 @@ public class GameData
     // Key Kingdom Collections
     public bool sugariaKeyCollected = false;
     public bool preserviaKeyCollected = false;
-    public bool nutriKingdomKeyCollected = true; // Changed to true for default unlock
+    public bool nutriKingdomKeyCollected = true;
     public bool allerthiaKeyCollected = false;
-    public bool ocrScannerKeyCollected = false; // ADD THIS LINE - OCR Scanner Key
+    public bool ocrScannerKeyCollected = false;
 
     // Character System
     public int selectedCharacterID = 0;
@@ -30,20 +30,50 @@ public class GameData
 
     // SKIN SYSTEM
     [System.Serializable]
-    public class SkinDictionary : SerializableDictionary<int, int> { }
+    public class SkinSaveData
+    {
+        public int characterID;
+        public int selectedSkinID = -1;
+        public List<int> unlockedSkinIDs = new List<int>();
+    }
 
+    public List<SkinSaveData> skinData = new List<SkinSaveData>();
+
+    // ENERLING PET SYSTEM
+    public string equippedPetSlot1 = "";
+    public string equippedPetSlot2 = "";
+
+    // POWER-UP TRACKING SYSTEM
     [System.Serializable]
-    public class UnlockedSkinsDictionary : SerializableDictionary<int, List<int>> { }
+    public class PowerUpSaveData
+    {
+        public string petName;              // Name of the pet this power-up belongs to
+        public int powerUpIndex;             // Index in the pet's power-ups list
+        public IngredientDatabase.PowerUpInfo.PowerUpType powerUpType; // Type of power-up
+        public DateTime lastTriggerTime;     // When the power-up was last triggered
+        public float cooldownMinutes;         // Cooldown in minutes
+        public int amount;                    // Amount to add when triggered
+    }
 
-    public SkinDictionary selectedSkinForCharacter = new SkinDictionary();
-    public UnlockedSkinsDictionary unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
+    public List<PowerUpSaveData> activePowerUps = new List<PowerUpSaveData>();
+
+    // HEART AND TIME POWER-UP TRACKING
+    [System.Serializable]
+    public class PassivePowerUpData
+    {
+        public string petName;                // Name of the pet
+        public IngredientDatabase.PowerUpInfo.PowerUpType powerUpType; // Heart or Time
+        public int amount;                     // Amount of hearts to add or time to deduct (in seconds/minutes)
+    }
+
+    public List<PassivePowerUpData> passivePowerUps = new List<PassivePowerUpData>();
 
     // Chest System
     public DateTime lastChestClaimTime;
     public bool isChestAvailable = true;
 
     // Progress Tracking
-    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false }; // Nutri, Sugaria, Preservia, Allerthia
+    public List<bool> unlockedKingdoms = new List<bool>() { true, false, false, false };
     [System.Serializable]
     public class StringBoolDictionary : SerializableDictionary<string, bool> { }
     public StringBoolDictionary completedMinigames = new StringBoolDictionary();
@@ -93,9 +123,9 @@ public class GameData
         // Kingdom Keys
         sugariaKeyCollected = false;
         preserviaKeyCollected = false;
-        nutriKingdomKeyCollected = true; // CHANGED TO true (unlocked by default)
+        nutriKingdomKeyCollected = true;
         allerthiaKeyCollected = false;
-        ocrScannerKeyCollected = false; // ADD THIS LINE
+        ocrScannerKeyCollected = false;
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -117,15 +147,17 @@ public class GameData
         if (claimedAchievementIds == null)
             claimedAchievementIds = new List<string>();
 
-        // Initialize skin dictionaries
-        if (selectedSkinForCharacter == null)
-            selectedSkinForCharacter = new SkinDictionary();
+        // Initialize skin data
+        if (skinData == null)
+            skinData = new List<GameData.SkinSaveData>();
 
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
+        // Initialize power-up tracking
+        if (activePowerUps == null)
+            activePowerUps = new List<PowerUpSaveData>();
 
-        // Initialize default skin for character 0
-        InitializeDefaultSkinForCharacter(0);
+        // Initialize passive power-ups (Heart & Time)
+        if (passivePowerUps == null)
+            passivePowerUps = new List<PassivePowerUpData>();
 
         // Initialize progress tracking
         if (unlockedKingdoms == null)
@@ -144,106 +176,347 @@ public class GameData
 
         if (scannedIngredients == null)
             scannedIngredients = new StringBoolDictionary2();
+
+        // Initialize pet slots
+        equippedPetSlot1 = "";
+        equippedPetSlot2 = "";
+    }
+
+    // Helper method to get or create skin data for a character
+    private SkinSaveData GetOrCreateSkinData(int characterID)
+    {
+        // First try to find existing data
+        foreach (var data in skinData)
+        {
+            if (data.characterID == characterID)
+                return data;
+        }
+
+        // Create new if not found
+        SkinSaveData newData = new SkinSaveData { characterID = characterID };
+        skinData.Add(newData);
+        return newData;
+    }
+
+    public int GetSelectedSkinForCharacter(int characterID)
+    {
+        foreach (var data in skinData)
+        {
+            if (data.characterID == characterID)
+                return data.selectedSkinID;
+        }
+        return -1;
+    }
+
+    public void SetSelectedSkinForCharacter(int characterID, int skinID)
+    {
+        var data = GetOrCreateSkinData(characterID);
+        data.selectedSkinID = skinID;
+        Debug.Log($"Set selected skin {skinID} for character {characterID}");
+    }
+
+    public bool IsSkinUnlocked(int characterID, int skinID)
+    {
+        if (skinID == -1) return true;
+
+        foreach (var data in skinData)
+        {
+            if (data.characterID == characterID && data.unlockedSkinIDs != null)
+            {
+                return data.unlockedSkinIDs.Contains(skinID);
+            }
+        }
+        return false;
+    }
+
+    public void UnlockSkinForCharacter(int characterID, int skinID)
+    {
+        if (skinID == -1) return;
+
+        var data = GetOrCreateSkinData(characterID);
+        if (data.unlockedSkinIDs == null)
+            data.unlockedSkinIDs = new List<int>();
+
+        if (!data.unlockedSkinIDs.Contains(skinID))
+        {
+            data.unlockedSkinIDs.Add(skinID);
+            Debug.Log($"Unlocked skin {skinID} for character {characterID}");
+        }
+        else
+        {
+            Debug.Log($"Skin {skinID} for character {characterID} was already unlocked");
+        }
+    }
+
+    public List<int> GetUnlockedSkinsForCharacter(int characterID)
+    {
+        foreach (var data in skinData)
+        {
+            if (data.characterID == characterID && data.unlockedSkinIDs != null)
+                return new List<int>(data.unlockedSkinIDs);
+        }
+        return new List<int>();
+    }
+
+    public bool HasUnlockedSkins(int characterID)
+    {
+        foreach (var data in skinData)
+        {
+            if (data.characterID == characterID && data.unlockedSkinIDs != null)
+                return data.unlockedSkinIDs.Count > 0;
+        }
+        return false;
+    }
+
+    public void InitializeAllCharactersSkins(CharacterDatabase characterDatabase)
+    {
+        if (characterDatabase == null) return;
+
+        // Ensure each character has an entry
+        foreach (var character in characterDatabase.characters)
+        {
+            GetOrCreateSkinData(character.characterID);
+        }
+
+        Debug.Log("Skin data initialized with list approach");
+    }
+
+    public void DebugPrintSkinData()
+    {
+        Debug.Log("=== SKIN DATA DEBUG ===");
+        Debug.Log($"Selected Character ID: {selectedCharacterID}");
+        Debug.Log($"Total skin data entries: {skinData.Count}");
+
+        foreach (var data in skinData)
+        {
+            Debug.Log($"Character {data.characterID}: Selected={data.selectedSkinID}, Unlocked={string.Join(", ", data.unlockedSkinIDs ?? new List<int>())}");
+        }
+        Debug.Log("=== END SKIN DATA ===");
+    }
+
+    // POWER-UP TRACKING METHODS
+
+    public void AddPowerUp(string petName, int powerUpIndex, IngredientDatabase.PowerUpInfo.PowerUpType type, float cooldownMinutes, int amount)
+    {
+        if (activePowerUps == null)
+            activePowerUps = new List<PowerUpSaveData>();
+
+        // Check if this power-up already exists
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                // Update existing
+                powerUp.lastTriggerTime = DateTime.Now;
+                powerUp.cooldownMinutes = cooldownMinutes;
+                powerUp.amount = amount;
+                return;
+            }
+        }
+
+        // Create new
+        PowerUpSaveData newPowerUp = new PowerUpSaveData
+        {
+            petName = petName,
+            powerUpIndex = powerUpIndex,
+            powerUpType = type,
+            lastTriggerTime = DateTime.Now,
+            cooldownMinutes = cooldownMinutes,
+            amount = amount
+        };
+
+        activePowerUps.Add(newPowerUp);
+        Debug.Log($"Added power-up tracking for {petName} - Type: {type}, Cooldown: {cooldownMinutes}min");
+    }
+
+    public void RemovePowerUpsForPet(string petName)
+    {
+        if (activePowerUps == null) return;
+
+        activePowerUps.RemoveAll(p => p.petName == petName);
+        Debug.Log($"Removed all power-up tracking for {petName}");
+    }
+
+    public void UpdatePowerUpLastTriggerTime(string petName, int powerUpIndex)
+    {
+        if (activePowerUps == null) return;
+
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                powerUp.lastTriggerTime = DateTime.Now;
+                break;
+            }
+        }
+    }
+
+    public TimeSpan GetTimeUntilNextPowerUp(string petName, int powerUpIndex)
+    {
+        if (activePowerUps == null)
+            return TimeSpan.Zero;
+
+        foreach (var powerUp in activePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpIndex == powerUpIndex)
+            {
+                TimeSpan timeSinceLast = DateTime.Now - powerUp.lastTriggerTime;
+                TimeSpan cooldown = TimeSpan.FromMinutes(powerUp.cooldownMinutes);
+                TimeSpan timeRemaining = cooldown - timeSinceLast;
+
+                return timeRemaining > TimeSpan.Zero ? timeRemaining : TimeSpan.Zero;
+            }
+        }
+
+        // No record found - power-up is ready
+        return TimeSpan.Zero;
+    }
+
+    public List<PowerUpSaveData> GetAllActivePowerUps()
+    {
+        if (activePowerUps == null)
+            return new List<PowerUpSaveData>();
+
+        return activePowerUps;
+    }
+
+    // PASSIVE POWER-UP METHODS (HEART & TIME)
+
+    public void AddPassivePowerUp(string petName, IngredientDatabase.PowerUpInfo.PowerUpType type, int amount)
+    {
+        if (passivePowerUps == null)
+            passivePowerUps = new List<PassivePowerUpData>();
+
+        // Check if this passive power-up already exists
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.petName == petName && powerUp.powerUpType == type)
+            {
+                // Update existing
+                powerUp.amount = amount;
+                return;
+            }
+        }
+
+        // Create new
+        PassivePowerUpData newPowerUp = new PassivePowerUpData
+        {
+            petName = petName,
+            powerUpType = type,
+            amount = amount
+        };
+
+        passivePowerUps.Add(newPowerUp);
+        Debug.Log($"Added passive power-up for {petName} - Type: {type}, Amount: {amount}");
+    }
+
+    public void RemovePassivePowerUpsForPet(string petName)
+    {
+        if (passivePowerUps == null) return;
+
+        passivePowerUps.RemoveAll(p => p.petName == petName);
+        Debug.Log($"Removed all passive power-ups for {petName}");
+    }
+
+    // Get total hearts from all equipped pets
+    public int GetTotalHeartBonus()
+    {
+        if (passivePowerUps == null) return 0;
+
+        int totalHearts = 0;
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.powerUpType == IngredientDatabase.PowerUpInfo.PowerUpType.Heart)
+            {
+                totalHearts += powerUp.amount;
+            }
+        }
+        return totalHearts;
+    }
+
+    // Get total time reduction from all equipped pets (in seconds)
+    public int GetTotalTimeReductionSeconds()
+    {
+        if (passivePowerUps == null) return 0;
+
+        int totalSeconds = 0;
+        foreach (var powerUp in passivePowerUps)
+        {
+            if (powerUp.powerUpType == IngredientDatabase.PowerUpInfo.PowerUpType.Time)
+            {
+                totalSeconds += powerUp.amount;
+            }
+        }
+        return totalSeconds;
+    }
+
+    // Get total time reduction formatted as minutes:seconds
+    public string GetTotalTimeReductionFormatted()
+    {
+        int totalSeconds = GetTotalTimeReductionSeconds();
+
+        if (totalSeconds <= 0)
+            return "0s";
+
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+
+        if (minutes > 0)
+            return $"{minutes}m {seconds}s";
+        else
+            return $"{seconds}s";
+    }
+
+    // Clear all power-ups
+    public void ClearAllPowerUps()
+    {
+        if (activePowerUps != null)
+            activePowerUps.Clear();
+
+        if (passivePowerUps != null)
+            passivePowerUps.Clear();
+
+        Debug.Log("All power-up tracking cleared");
     }
 
     // Sugaria Key Methods
-    public bool HasSugariaKey()
-    {
-        return sugariaKeyCollected;
-    }
-
-    public void CollectSugariaKey()
-    {
-        sugariaKeyCollected = true;
-    }
-
-    public void ResetSugariaKey()
-    {
-        sugariaKeyCollected = false;
-    }
+    public bool HasSugariaKey() => sugariaKeyCollected;
+    public void CollectSugariaKey() => sugariaKeyCollected = true;
+    public void ResetSugariaKey() => sugariaKeyCollected = false;
 
     // Preservia Key Methods
-    public bool HasPreserviaKey()
-    {
-        return preserviaKeyCollected;
-    }
-
-    public void CollectPreserviaKey()
-    {
-        preserviaKeyCollected = true;
-    }
-
-    public void ResetPreserviaKey()
-    {
-        preserviaKeyCollected = false;
-    }
+    public bool HasPreserviaKey() => preserviaKeyCollected;
+    public void CollectPreserviaKey() => preserviaKeyCollected = true;
+    public void ResetPreserviaKey() => preserviaKeyCollected = false;
 
     // Nutri Kingdom Key Methods
-    public bool HasNutriKingdomKey()
-    {
-        return nutriKingdomKeyCollected;
-    }
-
-    public void CollectNutriKingdomKey()
-    {
-        nutriKingdomKeyCollected = true;
-    }
-
-    public void ResetNutriKingdomKey()
-    {
-        nutriKingdomKeyCollected = false;
-    }
+    public bool HasNutriKingdomKey() => nutriKingdomKeyCollected;
+    public void CollectNutriKingdomKey() => nutriKingdomKeyCollected = true;
+    public void ResetNutriKingdomKey() => nutriKingdomKeyCollected = false;
 
     // Allerthia Key Methods
-    public bool HasAllerthiaKey()
-    {
-        return allerthiaKeyCollected;
-    }
+    public bool HasAllerthiaKey() => allerthiaKeyCollected;
+    public void CollectAllerthiaKey() => allerthiaKeyCollected = true;
+    public void ResetAllerthiaKey() => allerthiaKeyCollected = false;
 
-    public void CollectAllerthiaKey()
-    {
-        allerthiaKeyCollected = true;
-    }
-
-    public void ResetAllerthiaKey()
-    {
-        allerthiaKeyCollected = false;
-    }
-
-    // OCR SCANNER KEY METHODS - ADD THESE
-    public bool HasOCRScannerKey()
-    {
-        return ocrScannerKeyCollected;
-    }
-
-    public void CollectOCRScannerKey()
-    {
-        ocrScannerKeyCollected = true;
-    }
-
-    public void ResetOCRScannerKey()
-    {
-        ocrScannerKeyCollected = false;
-    }
+    // OCR SCANNER KEY METHODS
+    public bool HasOCRScannerKey() => ocrScannerKeyCollected;
+    public void CollectOCRScannerKey() => ocrScannerKeyCollected = true;
+    public void ResetOCRScannerKey() => ocrScannerKeyCollected = false;
 
     public bool HasKingdomKey(string kingdomName)
     {
         switch (kingdomName.ToLower())
         {
-            case "sugaria":
-                return HasSugariaKey();
-            case "preservia":
-                return HasPreserviaKey();
+            case "sugaria": return HasSugariaKey();
+            case "preservia": return HasPreserviaKey();
             case "nutri":
-            case "nutrikingdom":
-                return HasNutriKingdomKey();
+            case "nutrikingdom": return HasNutriKingdomKey();
             case "allerthia":
-            case "allerthiakingdom":
-                return HasAllerthiaKey();
+            case "allerthiakingdom": return HasAllerthiaKey();
             case "ocr":
             case "ocrscanner":
-            case "ocrscannerkey":
-                return HasOCRScannerKey();
+            case "ocrscannerkey": return HasOCRScannerKey();
             default:
                 Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
                 return false;
@@ -254,36 +527,20 @@ public class GameData
     {
         switch (kingdomName.ToLower())
         {
-            case "sugaria":
-                CollectSugariaKey();
-                break;
-            case "preservia":
-                CollectPreserviaKey();
-                break;
+            case "sugaria": CollectSugariaKey(); break;
+            case "preservia": CollectPreserviaKey(); break;
             case "nutri":
-            case "nutrikingdom":
-                CollectNutriKingdomKey();
-                break;
+            case "nutrikingdom": CollectNutriKingdomKey(); break;
             case "allerthia":
-            case "allerthiakingdom":
-                CollectAllerthiaKey();
-                break;
+            case "allerthiakingdom": CollectAllerthiaKey(); break;
             case "ocr":
             case "ocrscanner":
-            case "ocrscannerkey":
-                CollectOCRScannerKey();
-                break;
-            default:
-                Debug.LogWarning($"Unknown kingdom name: {kingdomName}");
-                break;
+            case "ocrscannerkey": CollectOCRScannerKey(); break;
+            default: Debug.LogWarning($"Unknown kingdom name: {kingdomName}"); break;
         }
     }
 
-    public void AddNutriGems(int amount)
-    {
-        nutriGems += amount;
-    }
-
+    public void AddNutriGems(int amount) => nutriGems += amount;
     public bool SpendNutriGems(int amount)
     {
         if (nutriGems >= amount)
@@ -293,167 +550,7 @@ public class GameData
         }
         return false;
     }
-
-    public int GetNutriGems()
-    {
-        return nutriGems;
-    }
-
-    // Initialize default skin for a character
-    private void InitializeDefaultSkinForCharacter(int characterID)
-    {
-        if (selectedSkinForCharacter == null)
-            selectedSkinForCharacter = new SkinDictionary();
-
-        if (!selectedSkinForCharacter.ContainsKey(characterID))
-        {
-            selectedSkinForCharacter[characterID] = -1;
-        }
-
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        if (!unlockedSkinsForCharacter.ContainsKey(characterID))
-        {
-            unlockedSkinsForCharacter[characterID] = new List<int>();
-        }
-    }
-
-    public int GetSelectedSkinForCharacter(int characterID)
-    {
-        if (selectedSkinForCharacter == null)
-            selectedSkinForCharacter = new SkinDictionary();
-
-        if (selectedSkinForCharacter.ContainsKey(characterID))
-        {
-            return selectedSkinForCharacter[characterID];
-        }
-
-        InitializeDefaultSkinForCharacter(characterID);
-        return selectedSkinForCharacter[characterID];
-    }
-
-    public void SetSelectedSkinForCharacter(int characterID, int skinID)
-    {
-        if (skinID < -1) return;
-
-        if (selectedSkinForCharacter == null)
-            selectedSkinForCharacter = new SkinDictionary();
-
-        if (!selectedSkinForCharacter.ContainsKey(characterID))
-        {
-            selectedSkinForCharacter[characterID] = skinID;
-        }
-        else
-        {
-            selectedSkinForCharacter[characterID] = skinID;
-        }
-
-        if (skinID != -1)
-        {
-            UnlockSkinForCharacter(characterID, skinID);
-        }
-
-        Debug.Log($"Set skin {skinID} for character {characterID}");
-    }
-
-    public bool IsSkinUnlocked(int characterID, int skinID)
-    {
-        if (skinID == -1) return true;
-
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        if (unlockedSkinsForCharacter.ContainsKey(characterID))
-        {
-            var skinsList = unlockedSkinsForCharacter[characterID];
-            if (skinsList != null)
-            {
-                return skinsList.Contains(skinID);
-            }
-        }
-
-        return false;
-    }
-
-    public void UnlockSkinForCharacter(int characterID, int skinID)
-    {
-        if (skinID == -1) return;
-
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        if (!unlockedSkinsForCharacter.ContainsKey(characterID))
-        {
-            unlockedSkinsForCharacter[characterID] = new List<int>();
-        }
-
-        var skinsList = unlockedSkinsForCharacter[characterID];
-        if (skinsList == null)
-        {
-            skinsList = new List<int>();
-            unlockedSkinsForCharacter[characterID] = skinsList;
-        }
-
-        if (!skinsList.Contains(skinID))
-        {
-            skinsList.Add(skinID);
-            Debug.Log($"Unlocked skin {skinID} for character {characterID}");
-        }
-    }
-
-    public List<int> GetUnlockedSkinsForCharacter(int characterID)
-    {
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        if (unlockedSkinsForCharacter.ContainsKey(characterID))
-        {
-            var skinsList = unlockedSkinsForCharacter[characterID];
-            if (skinsList != null)
-            {
-                return skinsList;
-            }
-        }
-
-        return new List<int>();
-    }
-
-    public bool HasUnlockedSkins(int characterID)
-    {
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        return unlockedSkinsForCharacter.ContainsKey(characterID) &&
-               unlockedSkinsForCharacter[characterID] != null &&
-               unlockedSkinsForCharacter[characterID].Count > 0;
-    }
-
-    public void InitializeAllCharactersSkins(CharacterDatabase characterDatabase)
-    {
-        if (characterDatabase == null) return;
-
-        if (selectedSkinForCharacter == null)
-            selectedSkinForCharacter = new SkinDictionary();
-
-        if (unlockedSkinsForCharacter == null)
-            unlockedSkinsForCharacter = new UnlockedSkinsDictionary();
-
-        foreach (var character in characterDatabase.characters)
-        {
-            int characterID = character.characterID;
-
-            if (!selectedSkinForCharacter.ContainsKey(characterID))
-            {
-                selectedSkinForCharacter[characterID] = -1;
-            }
-
-            if (!unlockedSkinsForCharacter.ContainsKey(characterID))
-            {
-                unlockedSkinsForCharacter[characterID] = new List<int>();
-            }
-        }
-    }
+    public int GetNutriGems() => nutriGems;
 
     public void InitializeDefaultIcons(ProfileIconDatabase database)
     {
@@ -514,19 +611,13 @@ public class GameData
         }
     }
 
-    public bool IsAchievementCompleted(string achievementId)
-    {
-        return completedAchievementIds != null && completedAchievementIds.Contains(achievementId);
-    }
-
-    public bool IsAchievementClaimed(string achievementId)
-    {
-        return claimedAchievementIds != null && claimedAchievementIds.Contains(achievementId);
-    }
+    public bool IsAchievementCompleted(string achievementId) => completedAchievementIds != null && completedAchievementIds.Contains(achievementId);
+    public bool IsAchievementClaimed(string achievementId) => claimedAchievementIds != null && claimedAchievementIds.Contains(achievementId);
 
     #endregion
 }
 
+// Keep your SerializableDictionary for other dictionaries
 [System.Serializable]
 public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
 {
@@ -541,10 +632,7 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
         keys.Clear();
         values.Clear();
 
-        var items = new KeyValuePair<TKey, TValue>[this.Count];
-        CopyTo(items, 0);
-
-        foreach (var pair in items)
+        foreach (var pair in this)
         {
             keys.Add(pair.Key);
             values.Add(pair.Value);
@@ -557,18 +645,12 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
 
         if (keys == null || values == null)
         {
-            Debug.LogWarning("SerializableDictionary: Keys or values list is null. Creating empty dictionary.");
             keys = new List<TKey>();
             values = new List<TValue>();
             return;
         }
 
         int count = Math.Min(keys.Count, values.Count);
-
-        if (keys.Count != values.Count)
-        {
-            Debug.LogWarning($"SerializableDictionary: Key count ({keys.Count}) doesn't match value count ({values.Count}). Using minimum count ({count}).");
-        }
 
         for (int i = 0; i < count; i++)
         {
@@ -579,19 +661,8 @@ public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IS
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error adding key-value pair at index {i}: {e.Message}");
+                Debug.LogError($"Error adding key-value pair: {e.Message}");
             }
-        }
-    }
-
-    private void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-    {
-        int i = arrayIndex;
-        foreach (var pair in this)
-        {
-            if (i >= array.Length) break;
-            array[i] = pair;
-            i++;
         }
     }
 }

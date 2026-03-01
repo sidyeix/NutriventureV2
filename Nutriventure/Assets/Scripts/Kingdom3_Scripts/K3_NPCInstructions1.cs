@@ -5,6 +5,7 @@ using StarterAssets;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
+using System.Collections.Generic;
 
 public class K3_NPCinstructions1 : MonoBehaviour
 {
@@ -38,11 +39,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
     [SerializeField] private GameObject audioHandler; // "Audio_Handler" GameObject
     [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
     
-    [Header("UI Elements to Control After Cutscene")]
-    [SerializeField] private GameObject healthContainer; // Health Container (initially disabled)
-    [SerializeField] private GameObject pointsPanel; // Points Panel (initially disabled)
-    [SerializeField] private GameObject timerPanel; // Timer Panel (initially disabled)
-    [SerializeField] private GameObject profileGameObject; // Profile GameObject (initially enabled)
+    [Header("DYNAMIC UI CONTROL AFTER CUTSCENE")]
+    [SerializeField] private List<GameObject> uiElementsToEnable = new List<GameObject>(); // Objects to ENABLE after cutscene
+    [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>(); // Objects to DISABLE after cutscene
     
     [Header("Cutscene Settings")]
     [SerializeField] private float interactionRange = 3f;
@@ -87,11 +86,9 @@ public class K3_NPCinstructions1 : MonoBehaviour
     private bool subtitleCanvasWasActive = false;
     private bool subtitleTextWasActive = false;
     
-    // NEW: Track original UI element states
-    private bool healthContainerOriginalState = false;
-    private bool pointsPanelOriginalState = false;
-    private bool timerPanelOriginalState = false;
-    private bool profileGameObjectOriginalState = false;
+    // NEW: Track original states for dynamic UI elements
+    private Dictionary<GameObject, bool> uiElementsToEnableOriginalStates = new Dictionary<GameObject, bool>();
+    private Dictionary<GameObject, bool> uiElementsToDisableOriginalStates = new Dictionary<GameObject, bool>();
     
     void Start()
     {
@@ -184,36 +181,65 @@ public class K3_NPCinstructions1 : MonoBehaviour
         // NEW: Store original UI element states
         StoreOriginalUIStates();
         
-        // NEW: Log UI element assignment status
-        LogUIElementStatus();
+        // NEW: Log dynamic UI element status
+        LogDynamicUIElementStatus();
     }
     
     // NEW: Store original UI element states
     private void StoreOriginalUIStates()
     {
-        if (healthContainer != null)
-            healthContainerOriginalState = healthContainer.activeSelf;
+        // Store original states for dynamic UI elements to enable
+        uiElementsToEnableOriginalStates.Clear();
+        foreach (GameObject obj in uiElementsToEnable)
+        {
+            if (obj != null && !uiElementsToEnableOriginalStates.ContainsKey(obj))
+            {
+                uiElementsToEnableOriginalStates.Add(obj, obj.activeSelf);
+            }
+        }
         
-        if (pointsPanel != null)
-            pointsPanelOriginalState = pointsPanel.activeSelf;
+        // Store original states for dynamic UI elements to disable
+        uiElementsToDisableOriginalStates.Clear();
+        foreach (GameObject obj in uiElementsToDisable)
+        {
+            if (obj != null && !uiElementsToDisableOriginalStates.ContainsKey(obj))
+            {
+                uiElementsToDisableOriginalStates.Add(obj, obj.activeSelf);
+            }
+        }
         
-        if (timerPanel != null)
-            timerPanelOriginalState = timerPanel.activeSelf;
-        
-        if (profileGameObject != null)
-            profileGameObjectOriginalState = profileGameObject.activeSelf;
-        
-        Debug.Log($"UI Original states: Health={healthContainerOriginalState}, Points={pointsPanelOriginalState}, Timer={timerPanelOriginalState}, Profile={profileGameObjectOriginalState}");
+        Debug.Log($"Dynamic UI states stored: {uiElementsToEnableOriginalStates.Count} to enable, {uiElementsToDisableOriginalStates.Count} to disable");
     }
     
-    // NEW: Log UI element assignment status
-    private void LogUIElementStatus()
+    // NEW: Log dynamic UI element status
+    private void LogDynamicUIElementStatus()
     {
-        Debug.Log("=== UI ELEMENTS STATUS ===");
-        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.name : "NOT ASSIGNED")} - Current: {(healthContainer != null ? healthContainer.activeSelf.ToString() : "N/A")}");
-        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.name : "NOT ASSIGNED")} - Current: {(pointsPanel != null ? pointsPanel.activeSelf.ToString() : "N/A")}");
-        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.name : "NOT ASSIGNED")} - Current: {(timerPanel != null ? timerPanel.activeSelf.ToString() : "N/A")}");
-        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.name : "NOT ASSIGNED")} - Current: {(profileGameObject != null ? profileGameObject.activeSelf.ToString() : "N/A")}");
+        Debug.Log("=== DYNAMIC UI ELEMENTS STATUS ===");
+        Debug.Log($"UI Elements to Enable ({uiElementsToEnable.Count}):");
+        foreach (GameObject obj in uiElementsToEnable)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - {obj.name} (current state: {(obj.activeSelf ? "enabled" : "disabled")})");
+            }
+            else
+            {
+                Debug.LogWarning("  - NULL reference in uiElementsToEnable list!");
+            }
+        }
+        
+        Debug.Log($"UI Elements to Disable ({uiElementsToDisable.Count}):");
+        foreach (GameObject obj in uiElementsToDisable)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - {obj.name} (current state: {(obj.activeSelf ? "enabled" : "disabled")})");
+            }
+            else
+            {
+                Debug.LogWarning("  - NULL reference in uiElementsToDisable list!");
+            }
+        }
     }
     
     void InitializeSubtitleSystem()
@@ -849,8 +875,8 @@ public class K3_NPCinstructions1 : MonoBehaviour
             audioHandler.SetActive(true);
         }
         
-        // NEW: Handle UI elements after cutscene
-        HandlePostCutsceneUI();
+        // NEW: Handle dynamic UI elements after cutscene
+        HandlePostCutsceneDynamicUI();
         
         // Unfreeze the player
         UnfreezePlayer();
@@ -876,59 +902,95 @@ public class K3_NPCinstructions1 : MonoBehaviour
         }
     }
     
-    // NEW: Handle UI elements after cutscene
-    private void HandlePostCutsceneUI()
+    // NEW: Handle dynamic UI elements after cutscene
+    private void HandlePostCutsceneDynamicUI()
     {
-        Debug.Log("=== HANDLING POST-CUTSCENE UI ===");
+        Debug.Log("=== HANDLING POST-CUTSCENE DYNAMIC UI ===");
         
-        // Enable initially disabled UI elements
-        if (healthContainer != null)
+        // Enable all UI elements in the enable list
+        if (uiElementsToEnable.Count > 0)
         {
-            healthContainer.SetActive(true);
-            Debug.Log($"Health Container enabled: {healthContainer.name}");
+            Debug.Log($"Enabling {uiElementsToEnable.Count} UI elements...");
+            foreach (GameObject obj in uiElementsToEnable)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(true);
+                    Debug.Log($"  - Enabled: {obj.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("  - NULL reference in uiElementsToEnable list!");
+                }
+            }
         }
         else
         {
-            Debug.LogWarning("Health Container not assigned in inspector!");
+            Debug.Log("No UI elements to enable (list is empty)");
         }
         
-        if (pointsPanel != null)
+        // Disable all UI elements in the disable list
+        if (uiElementsToDisable.Count > 0)
         {
-            pointsPanel.SetActive(true);
-            Debug.Log($"Points Panel enabled: {pointsPanel.name}");
+            Debug.Log($"Disabling {uiElementsToDisable.Count} UI elements...");
+            foreach (GameObject obj in uiElementsToDisable)
+            {
+                if (obj != null)
+                {
+                    obj.SetActive(false);
+                    Debug.Log($"  - Disabled: {obj.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("  - NULL reference in uiElementsToDisable list!");
+                }
+            }
         }
         else
         {
-            Debug.LogWarning("Points Panel not assigned in inspector!");
-        }
-        
-        if (timerPanel != null)
-        {
-            timerPanel.SetActive(true);
-            Debug.Log($"Timer Panel enabled: {timerPanel.name}");
-        }
-        else
-        {
-            Debug.LogWarning("Timer Panel not assigned in inspector!");
-        }
-        
-        // Disable Profile GameObject
-        if (profileGameObject != null)
-        {
-            profileGameObject.SetActive(false);
-            Debug.Log($"Profile GameObject disabled: {profileGameObject.name}");
-        }
-        else
-        {
-            Debug.LogWarning("Profile GameObject not assigned in inspector!");
+            Debug.Log("No UI elements to disable (list is empty)");
         }
         
         // Verify changes
-        Debug.Log("=== POST-CUTSCENE UI STATE ===");
-        if (healthContainer != null) Debug.Log($"Health Container: {(healthContainer.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (pointsPanel != null) Debug.Log($"Points Panel: {(pointsPanel.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (timerPanel != null) Debug.Log($"Timer Panel: {(timerPanel.activeSelf ? "ENABLED" : "DISABLED")}");
-        if (profileGameObject != null) Debug.Log($"Profile GameObject: {(profileGameObject.activeSelf ? "ENABLED" : "DISABLED")}");
+        LogPostCutsceneDynamicUIState();
+    }
+    
+    // NEW: Log dynamic UI state after cutscene
+    private void LogPostCutsceneDynamicUIState()
+    {
+        Debug.Log("=== POST-CUTSCENE DYNAMIC UI STATE ===");
+        
+        Debug.Log("UI Elements that should be ENABLED:");
+        if (uiElementsToEnable.Count > 0)
+        {
+            foreach (GameObject obj in uiElementsToEnable)
+            {
+                if (obj != null)
+                {
+                    Debug.Log($"  - {obj.name}: {(obj.activeSelf ? "ENABLED ✓" : "DISABLED ✗")}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("  (None in list)");
+        }
+        
+        Debug.Log("UI Elements that should be DISABLED:");
+        if (uiElementsToDisable.Count > 0)
+        {
+            foreach (GameObject obj in uiElementsToDisable)
+            {
+                if (obj != null)
+                {
+                    Debug.Log($"  - {obj.name}: {(obj.activeSelf ? "ENABLED ✗" : "DISABLED ✓")}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("  (None in list)");
+        }
     }
     
     // Disable subtitle display
@@ -1145,23 +1207,37 @@ public class K3_NPCinstructions1 : MonoBehaviour
         // Disable subtitle display on reset
         DisableSubtitleDisplay();
         
-        // NEW: Reset UI elements to original states on reset
-        if (healthContainer != null)
-            healthContainer.SetActive(healthContainerOriginalState);
-        
-        if (pointsPanel != null)
-            pointsPanel.SetActive(pointsPanelOriginalState);
-        
-        if (timerPanel != null)
-            timerPanel.SetActive(timerPanelOriginalState);
-        
-        if (profileGameObject != null)
-            profileGameObject.SetActive(profileGameObjectOriginalState);
+        // NEW: Reset dynamic UI elements to original states on reset
+        ResetDynamicUIToOriginalStates();
         
         // Ensure player is unfrozen on reset
         UnfreezePlayer();
         
         Debug.Log("NPC interaction reset - UI restored to original states");
+    }
+    
+    // NEW: Reset dynamic UI elements to original states
+    private void ResetDynamicUIToOriginalStates()
+    {
+        Debug.Log("Resetting dynamic UI elements to original states...");
+        
+        foreach (var kvp in uiElementsToEnableOriginalStates)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.SetActive(kvp.Value);
+                Debug.Log($"  - {kvp.Key.name} restored to: {(kvp.Value ? "enabled" : "disabled")}");
+            }
+        }
+        
+        foreach (var kvp in uiElementsToDisableOriginalStates)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.SetActive(kvp.Value);
+                Debug.Log($"  - {kvp.Key.name} restored to: {(kvp.Value ? "enabled" : "disabled")}");
+            }
+        }
     }
     
     // Optional: Gizmos for visualization
@@ -1263,51 +1339,81 @@ public class K3_NPCinstructions1 : MonoBehaviour
         }
     }
     
-    // NEW: Individual methods to control UI elements after cutscene
-    public void EnableHealthContainer()
+    // NEW: Methods to dynamically add/remove UI elements at runtime
+    public void AddUIElementToEnable(GameObject element)
     {
-        if (healthContainer != null)
+        if (element != null && !uiElementsToEnable.Contains(element))
         {
-            healthContainer.SetActive(true);
-            Debug.Log("Health Container manually enabled");
+            uiElementsToEnable.Add(element);
+            
+            // Also store original state if not already stored
+            if (!uiElementsToEnableOriginalStates.ContainsKey(element))
+            {
+                uiElementsToEnableOriginalStates.Add(element, element.activeSelf);
+            }
+            
+            Debug.Log($"Added {element.name} to UI elements to enable list");
         }
     }
     
-    public void EnablePointsPanel()
+    public void RemoveUIElementFromEnable(GameObject element)
     {
-        if (pointsPanel != null)
+        if (uiElementsToEnable.Contains(element))
         {
-            pointsPanel.SetActive(true);
-            Debug.Log("Points Panel manually enabled");
+            uiElementsToEnable.Remove(element);
+            Debug.Log($"Removed {element.name} from UI elements to enable list");
         }
     }
     
-    public void EnableTimerPanel()
+    public void AddUIElementToDisable(GameObject element)
     {
-        if (timerPanel != null)
+        if (element != null && !uiElementsToDisable.Contains(element))
         {
-            timerPanel.SetActive(true);
-            Debug.Log("Timer Panel manually enabled");
+            uiElementsToDisable.Add(element);
+            
+            // Also store original state if not already stored
+            if (!uiElementsToDisableOriginalStates.ContainsKey(element))
+            {
+                uiElementsToDisableOriginalStates.Add(element, element.activeSelf);
+            }
+            
+            Debug.Log($"Added {element.name} to UI elements to disable list");
         }
     }
     
-    public void DisableProfileGameObject()
+    public void RemoveUIElementFromDisable(GameObject element)
     {
-        if (profileGameObject != null)
+        if (uiElementsToDisable.Contains(element))
         {
-            profileGameObject.SetActive(false);
-            Debug.Log("Profile GameObject manually disabled");
+            uiElementsToDisable.Remove(element);
+            Debug.Log($"Removed {element.name} from UI elements to disable list");
         }
     }
     
-    // NEW: Method to check current UI state
-    public void LogCurrentUIState()
+    public void ClearUIElementLists()
     {
-        Debug.Log("=== CURRENT UI STATE ===");
-        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.activeSelf.ToString() : "NOT ASSIGNED")}");
-        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.activeSelf.ToString() : "NOT ASSIGNED")}");
+        uiElementsToEnable.Clear();
+        uiElementsToDisable.Clear();
+        Debug.Log("Cleared all dynamic UI element lists");
+    }
+    
+    // NEW: Method to log current dynamic UI state
+    public void LogCurrentDynamicUIState()
+    {
+        Debug.Log("=== CURRENT DYNAMIC UI STATE ===");
+        LogPostCutsceneDynamicUIState();
+    }
+    
+    // NEW: Method to check if a UI element is in enable list
+    public bool IsInEnableList(GameObject element)
+    {
+        return uiElementsToEnable.Contains(element);
+    }
+    
+    // NEW: Method to check if a UI element is in disable list
+    public bool IsInDisableList(GameObject element)
+    {
+        return uiElementsToDisable.Contains(element);
     }
     
     // Test method to show subtitle manually
@@ -1373,32 +1479,21 @@ public class K3_NPCinstructions1 : MonoBehaviour
         SetNPCNameActive(!IsNPCNameActive());
     }
     
-    // NEW: Test method for post-cutscene UI
-    [ContextMenu("Test Post-Cutscene UI")]
-    public void TestPostCutsceneUI()
+    // NEW: Test method for post-cutscene dynamic UI
+    [ContextMenu("Test Post-Cutscene Dynamic UI")]
+    public void TestPostCutsceneDynamicUI()
     {
-        Debug.Log("=== TESTING POST-CUTSCENE UI ===");
-        HandlePostCutsceneUI();
+        Debug.Log("=== TESTING POST-CUTSCENE DYNAMIC UI ===");
+        HandlePostCutsceneDynamicUI();
     }
     
-    // NEW: Test method to reset UI to original states
-    [ContextMenu("Reset UI to Original States")]
-    public void ResetUIToOriginalStates()
+    // NEW: Test method to reset dynamic UI to original states
+    [ContextMenu("Reset Dynamic UI to Original States")]
+    public void ResetDynamicUIToOriginalStatesTest()
     {
-        if (healthContainer != null)
-            healthContainer.SetActive(healthContainerOriginalState);
-        
-        if (pointsPanel != null)
-            pointsPanel.SetActive(pointsPanelOriginalState);
-        
-        if (timerPanel != null)
-            timerPanel.SetActive(timerPanelOriginalState);
-        
-        if (profileGameObject != null)
-            profileGameObject.SetActive(profileGameObjectOriginalState);
-        
-        Debug.Log("UI reset to original states");
-        LogCurrentUIState();
+        ResetDynamicUIToOriginalStates();
+        Debug.Log("Dynamic UI reset to original states");
+        LogCurrentDynamicUIState();
     }
     
     [ContextMenu("Debug Current State")]
@@ -1420,12 +1515,8 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log($"Timeline Time: {(npcCutsceneDirector != null ? $"{npcCutsceneDirector.time:F2}s/{npcCutsceneDirector.duration:F2}s" : "NULL")}");
         Debug.Log($"Cutscene Parent Active: {(cutsceneParentObject != null ? cutsceneParentObject.activeSelf : "NULL")}");
         
-        // NEW: UI State Debug
-        Debug.Log($"=== UI STATE ===");
-        Debug.Log($"Health Container: {(healthContainer != null ? healthContainer.name + " - " + (healthContainer.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
-        Debug.Log($"Points Panel: {(pointsPanel != null ? pointsPanel.name + " - " + (pointsPanel.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
-        Debug.Log($"Timer Panel: {(timerPanel != null ? timerPanel.name + " - " + (timerPanel.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
-        Debug.Log($"Profile GameObject: {(profileGameObject != null ? profileGameObject.name + " - " + (profileGameObject.activeSelf ? "ENABLED" : "DISABLED") : "NOT ASSIGNED")}");
+        // NEW: Dynamic UI State Debug
+        LogCurrentDynamicUIState();
         Debug.Log($"=== END DEBUG ===");
     }
     
@@ -1434,32 +1525,38 @@ public class K3_NPCinstructions1 : MonoBehaviour
     [ContextMenu("Auto-Find UI Elements")]
     public void AutoFindUIElements()
     {
-        // Try to find Health Container
-        if (healthContainer == null)
+        // Try to find common UI elements and add them to appropriate lists
+        
+        // Example: Look for "Health Container" and add to enable list
+        GameObject healthContainer = GameObject.Find("Health Container");
+        if (healthContainer != null && !uiElementsToEnable.Contains(healthContainer))
         {
-            healthContainer = GameObject.Find("Health Container");
-            if (healthContainer != null) Debug.Log("Auto-found Health Container");
+            uiElementsToEnable.Add(healthContainer);
+            Debug.Log("Auto-added Health Container to enable list");
         }
         
-        // Try to find Points Panel
-        if (pointsPanel == null)
+        // Example: Look for "Points Panel" and add to enable list
+        GameObject pointsPanel = GameObject.Find("Points Panel");
+        if (pointsPanel != null && !uiElementsToEnable.Contains(pointsPanel))
         {
-            pointsPanel = GameObject.Find("Points Panel");
-            if (pointsPanel != null) Debug.Log("Auto-found Points Panel");
+            uiElementsToEnable.Add(pointsPanel);
+            Debug.Log("Auto-added Points Panel to enable list");
         }
         
-        // Try to find Timer Panel
-        if (timerPanel == null)
+        // Example: Look for "Timer Panel" and add to enable list
+        GameObject timerPanel = GameObject.Find("Timer Panel");
+        if (timerPanel != null && !uiElementsToEnable.Contains(timerPanel))
         {
-            timerPanel = GameObject.Find("Timer Panel");
-            if (timerPanel != null) Debug.Log("Auto-found Timer Panel");
+            uiElementsToEnable.Add(timerPanel);
+            Debug.Log("Auto-added Timer Panel to enable list");
         }
         
-        // Try to find Profile GameObject
-        if (profileGameObject == null)
+        // Example: Look for "Profile" and add to disable list
+        GameObject profileGameObject = GameObject.Find("Profile");
+        if (profileGameObject != null && !uiElementsToDisable.Contains(profileGameObject))
         {
-            profileGameObject = GameObject.Find("Profile");
-            if (profileGameObject != null) Debug.Log("Auto-found Profile GameObject");
+            uiElementsToDisable.Add(profileGameObject);
+            Debug.Log("Auto-added Profile GameObject to disable list");
         }
         
         UnityEditor.EditorUtility.SetDirty(this);

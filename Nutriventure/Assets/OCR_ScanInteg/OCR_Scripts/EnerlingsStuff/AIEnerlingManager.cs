@@ -213,7 +213,8 @@ public class AIEnerlingManager : MonoBehaviour
             skill2 = original.skill2,
             skill3 = original.skill3,
             skill4 = original.skill4,
-            enerlingDescription = original.enerlingDescription
+            enerlingDescription = original.enerlingDescription,
+            endingCutscene = original.endingCutscene 
         };
     }
 
@@ -916,6 +917,7 @@ public class AIEnerlingManager : MonoBehaviour
             {
                 if (damageBlocked > 0)
                 {
+                    // Only show one defend feedback
                     FeedbackManager.Instance.ShowDefend(
                         FeedbackManager.Instance.aiFeedbackSpawnPoint,
                         damageBlocked,
@@ -923,27 +925,12 @@ public class AIEnerlingManager : MonoBehaviour
                         "AI Defend Block"
                     );
                 }
-
-                // If defend blocked all damage, show special feedback
-                if (damageBlocked >= totalDamage)
-                {
-                    FeedbackManager.Instance.ShowDefend(
-                        FeedbackManager.Instance.aiFeedbackSpawnPoint,
-                        totalDamage,
-                        false,
-                        "AI Defend Complete Block"
-                    );
-                }
             }
 
-            if (activeAIDefend <= 0)
-            {
-                hasAIDefend = false;
-                activeAIDefend = 0;
-                Debug.Log("AI defend used up");
-            }
-
-            yield return new WaitForSeconds(0.3f);
+            // FIX: Defend is used up after this attack
+            hasAIDefend = false;
+            activeAIDefend = 0;
+            Debug.Log("AI defend used up");
         }
 
         int armorDamage = 0;
@@ -1013,13 +1000,14 @@ public class AIEnerlingManager : MonoBehaviour
             );
         }
 
-        Debug.Log($"AI Defend set to {defendAmount} for the next enemy attack");
+        Debug.Log($"AI Defend set to {defendAmount}. Will block next player attack.");
     }
 
     public void ClearAIDefend()
     {
         if (hasAIDefend)
         {
+            Debug.Log($"AI Defend cleared (was {activeAIDefend})");
             hasAIDefend = false;
             activeAIDefend = 0;
         }
@@ -1043,7 +1031,7 @@ public class AIEnerlingManager : MonoBehaviour
     public void ProcessEndTurn()
     {
         UpdateAIOrganCooldown();
-        ClearAIDefend();
+        ClearAIDefend(); // Clear defend at end of turn
     }
 
     public void CheckAndApplyOrganHeal()
@@ -1295,6 +1283,7 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
 
         ProcessOrganEffects();
+        ProcessEndTurn(); // Call ProcessEndTurn which clears defend
     }
 
     void ProcessOrganEffects()

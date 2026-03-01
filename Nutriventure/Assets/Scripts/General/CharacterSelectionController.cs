@@ -22,6 +22,7 @@ public class CharacterSelectionController : MonoBehaviour
     public Button skinButton;
     public Button backButton;
     public Button characterButton;
+    public Button exitButton; // Exit button to return to character selection without saving
 
     [Header("Panel References")]
     public CharacterSelectionPanel characterSelectionPanel;
@@ -45,6 +46,10 @@ public class CharacterSelectionController : MonoBehaviour
 
     [Header("Player Armature Animator")]
     public Animator playerArmatureAnimator;
+
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    public AudioClip buttonClickSound;
 
     private bool isInCharacterSelection = false;
     private bool isInSkinSelection = false;
@@ -90,11 +95,6 @@ public class CharacterSelectionController : MonoBehaviour
             characterControlsCanvas.alpha = 1f;
             characterControlsCanvas.interactable = true;
             characterControlsCanvas.blocksRaycasts = true;
-        }
-
-        if (skinSelectionController != null)
-        {
-            skinSelectionController.gameObject.SetActive(false);
         }
 
         LoadSavedData();
@@ -165,6 +165,13 @@ public class CharacterSelectionController : MonoBehaviour
             characterButton.onClick.RemoveAllListeners();
             characterButton.onClick.AddListener(OnCharacterButtonClicked);
         }
+
+        // Setup exit button
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveAllListeners();
+            exitButton.onClick.AddListener(OnExitButtonClicked);
+        }
     }
 
     public void ActivateCharacterSelection()
@@ -206,6 +213,7 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnFirstSelectButtonClicked()
     {
+        PlayButtonClickSound();
         Debug.Log("First select button clicked");
         int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
         OnSelectCharacterConfirmed(characterToSelect);
@@ -213,6 +221,7 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnSecondSelectButtonClicked()
     {
+        PlayButtonClickSound();
         Debug.Log("Second select button clicked");
         int characterToSelect = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
         OnSelectCharacterConfirmed(characterToSelect);
@@ -220,6 +229,7 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnCharacterButtonClicked()
     {
+        PlayButtonClickSound();
         Debug.Log("Character button clicked");
 
         // NOTIFY ENVIRONMENT CONTROLLER - EXITING SKIN SELECTION
@@ -231,8 +241,82 @@ public class CharacterSelectionController : MonoBehaviour
         ResetToCharacterSelection();
     }
 
+    // Exit button handler - exits without saving any changes
+    public void OnExitButtonClicked()
+    {
+        PlayButtonClickSound();
+        Debug.Log("Exit button clicked - Exiting to character selection without saving");
+
+        // NOTIFY ENVIRONMENT CONTROLLER - EXITING SKIN SELECTION if in skin mode
+        if (isInSkinSelection && skinSelectionController != null && skinSelectionController.skinEnvironmentController != null)
+        {
+            skinSelectionController.skinEnvironmentController.OnExitSkinSelection();
+        }
+
+        // Revert to saved character/skin (discard any pending changes)
+        RevertToSavedCharacter();
+
+        // Exit without saving
+        StartCoroutine(ExitWithoutSaving());
+    }
+
+    // New coroutine for exit without saving
+    private IEnumerator ExitWithoutSaving()
+    {
+        Debug.Log("Exiting without saving changes...");
+
+        if (characterRotationController != null)
+        {
+            characterRotationController.ResetRotation();
+        }
+
+        // Reset camera priorities to 0
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.Priority = 0;
+        }
+
+        if (skinSelectionCamera != null)
+        {
+            skinSelectionCamera.Priority = 0;
+        }
+
+        // Small delay to ensure camera switches
+        yield return null;
+
+        if (playerArmatureAnimator != null)
+        {
+            playerArmatureAnimator.SetBool("LookAround", false);
+        }
+
+        // Hide skin selection UI if active
+        if (isInSkinSelection && skinSelectionCanvas != null && skinSelectionCanvas.gameObject.activeSelf)
+        {
+            HideSkinSelectionUI();
+        }
+
+        // Hide character selection UI
+        if (characterSelectionCanvas != null)
+        {
+            characterSelectionCanvas.interactable = false;
+            characterSelectionCanvas.blocksRaycasts = false;
+            yield return StartCoroutine(FadeCanvasGroup(characterSelectionCanvas, characterSelectionCanvas.alpha, 0f, fadeDuration));
+            characterSelectionCanvas.gameObject.SetActive(false);
+        }
+
+        // Notify platform trigger to exit
+        if (platformTrigger != null)
+        {
+            yield return platformTrigger.ExitCharacterSelection();
+        }
+
+        CompleteExitProcess();
+    }
+
     public void OnSkinButtonClicked()
     {
+        PlayButtonClickSound();
+
         if (isInCharacterSelection && !isInSkinSelection)
         {
             int characterID = pendingCharacterSelection != -1 ? pendingCharacterSelection : lastSavedCharacterID;
@@ -246,12 +330,19 @@ public class CharacterSelectionController : MonoBehaviour
                 selectedSkinID = gameDataManager.CurrentGameData.GetSelectedSkinForCharacter(characterID);
             }
 
+            // Show skin selection UI
             ShowSkinSelectionUI();
 
             if (skinSelectionController != null)
             {
+                // Make sure the skin selection controller is active
                 skinSelectionController.gameObject.SetActive(true);
+
+                // Tell the skin controller we're entering
                 skinSelectionController.EnterSkinSelection(characterID);
+
+                // CRITICAL: Ensure we start with default skin/environment
+                skinSelectionController.ResetToDefaultSkin();
             }
 
             EnterSkinSelection();
@@ -260,6 +351,7 @@ public class CharacterSelectionController : MonoBehaviour
 
     public void OnBackButtonClicked()
     {
+        PlayButtonClickSound();
         Debug.Log("Back button clicked");
 
         if (isInSkinSelection)
@@ -275,6 +367,7 @@ public class CharacterSelectionController : MonoBehaviour
             // REVERT to saved character/skin before exiting
             RevertToSavedCharacter();
 
+            // Exit skin selection
             HideSkinSelectionUI();
             ExitSkinSelection();
         }
@@ -299,13 +392,14 @@ public class CharacterSelectionController : MonoBehaviour
 
         if (skinSelectionController != null)
         {
-            skinSelectionController.gameObject.SetActive(false);
+            // We don't disable it here, just hide the panel
+            // skinSelectionController.gameObject.SetActive(false);
         }
 
         ExitSkinSelection();
     }
 
-    // New method to revert to saved character/skin
+    // Method to revert to saved character/skin
     private void RevertToSavedCharacter()
     {
         Debug.Log($"Reverting to saved character: {lastSavedCharacterID} with skin: {lastSavedSkinID}");
@@ -368,7 +462,7 @@ public class CharacterSelectionController : MonoBehaviour
     {
         Debug.Log("Hiding Skin Selection UI");
 
-        // Reset camera priorities to 0
+        // Reset camera priorities
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 0;
@@ -453,6 +547,9 @@ public class CharacterSelectionController : MonoBehaviour
         {
             skinSelectionCamera.Priority = 0;
         }
+
+        // Small delay to ensure camera switches
+        yield return null;
 
         if (playerArmatureAnimator != null)
         {
@@ -591,7 +688,8 @@ public class CharacterSelectionController : MonoBehaviour
             if (skinSelectionController != null)
             {
                 skinSelectionController.ExitSkinSelection();
-                skinSelectionController.gameObject.SetActive(false);
+                // We don't disable the GameObject, just hide its panel
+                // skinSelectionController.gameObject.SetActive(false);
             }
         }
 
@@ -617,6 +715,19 @@ public class CharacterSelectionController : MonoBehaviour
         }
 
         canvasGroup.alpha = endAlpha;
+    }
+
+    // Helper method to play button click sound
+    private void PlayButtonClickSound()
+    {
+        if (sfxAudioSource != null && buttonClickSound != null)
+        {
+            sfxAudioSource.PlayOneShot(buttonClickSound);
+        }
+        else if (AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
     }
 
     public bool IsInCharacterSelection() => isInCharacterSelection;

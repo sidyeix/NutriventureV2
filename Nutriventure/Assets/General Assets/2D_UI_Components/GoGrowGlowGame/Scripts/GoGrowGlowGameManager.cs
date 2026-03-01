@@ -218,6 +218,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private float pausedTimerValue = 0f;
     private bool wasLowEnergyLastFrame = false;
 
+    // NEW: Variables for power-up tracking
+    private int baseMaxLives; // Store the original max lives without power-ups
+    private float timeReductionSeconds = 0f; // Time reduction from equipped pets
+
     private void Awake()
     {
         if (Instance == null)
@@ -228,6 +232,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // Store the base max lives
+        baseMaxLives = maxLives;
     }
 
     private void Start()
@@ -299,9 +306,38 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         // Set initial feedback sprite based on starting zone
         UpdateFeedbackSpriteForZone(initialZoneType);
+
+        // Apply power-up bonuses from equipped pets
+        ApplyEquippedPetPowerUps();
     }
 
-    // NEW: Method to set slider appearance
+    // NEW: Apply heart and time power-ups from equipped pets
+    private void ApplyEquippedPetPowerUps()
+    {
+        if (PowerUpManager.Instance == null) return;
+
+        // Apply heart bonus - increase max lives
+        int heartBonus = PowerUpManager.Instance.GetStartGameHeartBonus();
+        if (heartBonus > 0)
+        {
+            maxLives = baseMaxLives + heartBonus;
+            currentLifeAmount = maxLives; // Start with full lives
+            currentLives = maxLives;
+            Debug.Log($"Heart power-up applied: +{heartBonus} lives. Total max lives: {maxLives}");
+        }
+
+        // Apply time reduction
+        timeReductionSeconds = PowerUpManager.Instance.GetStartGameTimeReduction();
+        if (timeReductionSeconds > 0)
+        {
+            Debug.Log($"Time reduction power-up applied: -{timeReductionSeconds} seconds from timer");
+        }
+
+        // Reinitialize heart UI with new max lives
+        InitializeHeartSystem();
+    }
+
+    // Method to set slider appearance
     private void SetSliderAppearance(FoodType zoneType, Color fillColor, Sprite handleSprite)
     {
         if (sliderFillImage != null)
@@ -397,7 +433,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
         return false;
     }
 
-    // ====== RESET METHODS ======
     // ====== RESET METHODS ======
     public void ResetGameState()
     {
@@ -784,6 +819,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private void ActualGameStart()
     {
+        // Apply power-up bonuses before starting
+        ApplyEquippedPetPowerUps();
+
         // Reset game state before starting
         ResetGameState();
 
@@ -888,7 +926,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         UpdateUI();
         RespawnPlayer();
-        Debug.Log("Game Started! Starting energy: " + currentEnergy);
+        Debug.Log($"Game Started! Starting energy: {currentEnergy}, Max lives: {maxLives}, Time reduction: {timeReductionSeconds}s");
     }
 
     public void EndGame()
@@ -1092,28 +1130,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
     }
 
     public void CollectGrowFood(GameObject foodObject = null)
-{
-    if (!gameIsActive) return;
-
-    PlayCollectionSound();
-    targetEnergy += growFoodEnergyGain;
-    targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
-    score += foodPoints;
-
-    TriggerStrongAnimation();
-    ShowFoodReactionEffect();
-    ShowFeedbackSprite(growFoodSprite);
-    
-    PlayGrowFoodSound();  // <-- MOVE THIS OUTSIDE THE ZONE CHECK
-
-    if (currentFoodZone == FoodType.Grow)
     {
-        if (targetEnergy >= 100f && !isSizeBoosted) StartSizeBoost();
-        else if (isSizeBoosted) sizeBoostTimer += 2f;
-    }
+        if (!gameIsActive) return;
 
-    UpdateUI();
-}
+        PlayCollectionSound();
+        targetEnergy += growFoodEnergyGain;
+        targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+        score += foodPoints;
+
+        TriggerStrongAnimation();
+        ShowFoodReactionEffect();
+        ShowFeedbackSprite(growFoodSprite);
+
+        PlayGrowFoodSound();  // <-- MOVE THIS OUTSIDE THE ZONE CHECK
+
+        if (currentFoodZone == FoodType.Grow)
+        {
+            if (targetEnergy >= 100f && !isSizeBoosted) StartSizeBoost();
+            else if (isSizeBoosted) sizeBoostTimer += 2f;
+        }
+
+        UpdateUI();
+    }
 
     public void CollectGlowFood(GameObject foodObject = null)
     {
@@ -1615,8 +1653,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (timerText != null)
         {
-            int minutes = Mathf.FloorToInt(gameTimer / 60f);
-            int seconds = Mathf.FloorToInt(gameTimer % 60f);
+            // Apply time reduction if any
+            float adjustedTime = Mathf.Max(0, gameTimer - timeReductionSeconds);
+            int minutes = Mathf.FloorToInt(adjustedTime / 60f);
+            int seconds = Mathf.FloorToInt(adjustedTime % 60f);
             timerText.text = $"{minutes:00}:{seconds:00}";
         }
     }
@@ -1944,4 +1984,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
     public float GetLowEnergyThreshold() => lowEnergyThreshold;
     public float GetGameTimer() => gameTimer;
     public float GetRemainingHearts() => currentLifeAmount;
+
+    // NEW: Get time reduction amount
+    public float GetTimeReduction() => timeReductionSeconds;
 }

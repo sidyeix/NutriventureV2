@@ -382,6 +382,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5494443824755387834}
   - component: {fileID: 2042865463079451263}
+  - component: {fileID: 8545432673735342654}
   m_Layer: 0
   m_Name: Sodium Benzoate
   m_TagString: K3_PreservativePotion
@@ -429,6 +430,31 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8545432673735342654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4624078548867219990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3104
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
 --- !u!1 &5100001187850914580
 GameObject:
   m_ObjectHideFlags: 0
@@ -10386,6 +10412,8 @@ GameObject:
   - component: {fileID: 4713579089775633887}
   - component: {fileID: 2882024209557044423}
   - component: {fileID: 3650145722926092388}
+  - component: {fileID: 7893016114554650870}
+  - component: {fileID: 4365470425325057662}
   m_Layer: 0
   m_Name: bottle_blue
   m_TagString: Untagged
@@ -10487,3 +10515,50 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!64 &7893016114554650870
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8844783889563775238}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: da8a393ba24fc6f49842d87b0937b84d, type: 3}
+--- !u!114 &4365470425325057662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8844783889563775238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 503b930437dfd4f45a77d9698e3abf31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTaskUpdater
+  questDatabase: {fileID: 11400000, guid: 5e2698f666a59f948b2ce91d5d5d1a3e, type: 2}
+  kingdomID: Preservia
+  questID: 3104
+  progressAmount: 1
+  updateOnClick: 1
+  updateOnTrigger: 1
+  destroyOnTrigger: 0
+  playerTag: Player
+  useCooldown: 0
+  cooldownDuration: 2
+  feedbackText: {fileID: 0}
+  feedbackDuration: 2
+  clickSound: ButtonClick
