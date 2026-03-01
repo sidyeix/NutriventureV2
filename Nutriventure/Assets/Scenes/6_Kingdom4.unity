@@ -6944,7 +6944,7 @@ GameObject:
   - component: {fileID: 112320919}
   - component: {fileID: 112320918}
   m_Layer: 5
-  m_Name: WorldMap
+  m_Name: NutriMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38497,7 +38497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &607499174
 RectTransform:
   m_ObjectHideFlags: 0
@@ -110971,17 +110971,9 @@ MonoBehaviour:
   kingdom2Scene: 4_Kingdom 2
   kingdom3Scene: 5_Kingdom3
   kingdom4Scene: 6_Kingdom4
-  kingdom2KeyStatusText: {fileID: 0}
-  kingdom3KeyStatusText: {fileID: 0}
-  kingdom4KeyStatusText: {fileID: 0}
-  ocrKeyStatusText: {fileID: 0}
   minimumLoadTime: 1
-  spinnerRotationSpeed: 300
   useFadeAnimation: 1
   fadeDuration: 0.3
-  tipText: {fileID: 0}
-  loadingTips: []
-  tipChangeInterval: 2
   mapOpenButtonName: Btn_OpenMap
 --- !u!1001 &1704433754
 PrefabInstance:
