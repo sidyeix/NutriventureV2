@@ -44,6 +44,12 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private List<GameObject> objectsToEnableOnHomeButton = new List<GameObject>();
     [SerializeField] private GameObject keyUnlockedObject;
 
+    [Header("🔑 KEY UNLOCKED CANVAS")]
+    [SerializeField] private GameObject keyUnlockedCanvas;
+    [SerializeField] private Button keyUnlockedContinueButton;
+    [SerializeField] private TMP_Text keyUnlockedTitleText;
+    [SerializeField] private TMP_Text keyUnlockedDescriptionText;
+
     [Header("Objects to Disable on Home/Restart")]
     [SerializeField] private List<GameObject> objectsToDisableOnHomeOrRestart = new List<GameObject>();
 
@@ -123,9 +129,9 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private string coinFeedbackSuffix = "";
 
     [Header("🔑 KEY COLLECTION SETTINGS")]
-    [SerializeField] private bool isKeyKingdom = true; // Set to true for Sugar Kingdom
-    [SerializeField] private string keyName = "Sugaria"; // "Sugaria", "Preservia", "Allerthia", "OCR"
-    [SerializeField] private int starsRequiredForKey = 2; // Minimum stars needed to get the key
+    [SerializeField] private bool isKeyKingdom = true;
+    [SerializeField] private string keyName = "Sugaria";
+    [SerializeField] private int starsRequiredForKey = 2;
 
     // Game end calculations
     private int starsEarned = 0;
@@ -148,9 +154,9 @@ public class GameEndManager : MonoBehaviour
     // Reward tracking
     private bool hasAddedRewards = false;
 
-    // 🔥 KEY COLLECTION TRACKING
-    private bool keyWasCollected = false;
-    private bool keySavedToDatabase = false;
+    // 🔑 KEY UNLOCK TRACKING
+    private bool pendingKeyUnlock = false;
+    private string pendingKeyName = "";
 
     private Dictionary<GameObject, TransformData> initialTransformData = new Dictionary<GameObject, TransformData>();
 
@@ -291,6 +297,10 @@ public class GameEndManager : MonoBehaviour
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
 
+        // Hide key unlocked canvas
+        if (keyUnlockedCanvas != null)
+            keyUnlockedCanvas.SetActive(false);
+
         // Disable next button as requested
         if (nextButton != null)
             nextButton.gameObject.SetActive(false);
@@ -303,6 +313,10 @@ public class GameEndManager : MonoBehaviour
 
         if (nextButton != null)
             nextButton.onClick.AddListener(OnNextClicked);
+
+        // Add listener to key unlocked continue button
+        if (keyUnlockedContinueButton != null)
+            keyUnlockedContinueButton.onClick.AddListener(OnKeyUnlockedContinueClicked);
 
         // Make sure stars container is hidden initially
         if (starsContainer != null)
@@ -331,8 +345,7 @@ public class GameEndManager : MonoBehaviour
 
         // Reset flags on start
         hasAddedRewards = false;
-        keyWasCollected = false;
-        keySavedToDatabase = false;
+        pendingKeyUnlock = false;
     }
 
     // ========== PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON ==========
@@ -762,46 +775,6 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    // 🔥 KEY COLLECTION METHOD - SAVES THE KEY AND TRIGGERS EVENT
-    private void SaveKeyToDatabase()
-    {
-        if (keySavedToDatabase || GameDataManager.Instance == null || !isKeyKingdom) return;
-        
-        if (keyWasCollected && starsEarned >= starsRequiredForKey)
-        {
-            // Save the appropriate key based on keyName
-            switch (keyName.ToLower())
-            {
-                case "sugaria":
-                    GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
-                    Debug.Log("✅ Sugaria Key saved to GameData!");
-                    break;
-                case "preservia":
-                    GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
-                    Debug.Log("✅ Preservia Key saved to GameData!");
-                    break;
-                case "allerthia":
-                    GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
-                    Debug.Log("✅ Allerthia Key saved to GameData!");
-                    break;
-                case "ocr":
-                    GameDataManager.Instance.CurrentGameData.CollectOCRScannerKey();
-                    Debug.Log("✅ OCR Scanner Key saved to GameData!");
-                    break;
-                default:
-                    Debug.LogWarning($"Unknown key name: {keyName}");
-                    return;
-            }
-            
-            GameDataManager.Instance.SaveGameData();
-            keySavedToDatabase = true;
-            
-            // 🔥 TRIGGER THE KEY COLLECTION EVENT - THIS UPDATES THE GLOBAL MAP
-            KeyCollectionEvents.TriggerKeyCollected(keyName);
-            Debug.Log($"🔥 Key Collection Event Triggered: {keyName}");
-        }
-    }
-
     // ========== GAME END SCREEN ==========
 
     public void ShowGameEndScreen(bool playerWon)
@@ -819,10 +792,36 @@ public class GameEndManager : MonoBehaviour
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
         
-        // Check if key should be awarded (player won and enough stars)
-        keyWasCollected = playerWon && starsEarned >= starsRequiredForKey;
-        
         CalculateRewards();
+
+        // 🔑 Check if this is a key kingdom and conditions are met
+        if (isKeyKingdom && playerWon && starsEarned >= starsRequiredForKey)
+        {
+            // Check if key hasn't been collected yet
+            bool hasKey = false;
+            switch (keyName.ToLower())
+            {
+                case "sugaria":
+                    hasKey = GameDataManager.Instance.HasSugariaKey();
+                    break;
+                case "preservia":
+                    hasKey = GameDataManager.Instance.HasPreserviaKey();
+                    break;
+                case "allerthia":
+                    hasKey = GameDataManager.Instance.HasAllerthiaKey();
+                    break;
+                case "ocr":
+                    hasKey = GameDataManager.Instance.HasOCRScannerKey();
+                    break;
+            }
+
+            if (!hasKey)
+            {
+                pendingKeyUnlock = true;
+                pendingKeyName = keyName;
+                Debug.Log($"🔑 Key unlock pending for {keyName} with {starsEarned} stars!");
+            }
+        }
 
         if (resultBackground != null)
         {
@@ -842,7 +841,6 @@ public class GameEndManager : MonoBehaviour
 
         isCountingAnimationComplete = false;
         hasAddedRewards = false;
-        keySavedToDatabase = false; // Reset for new game
         StartCoroutine(GameEndSequence());
     }
 
@@ -872,7 +870,6 @@ public class GameEndManager : MonoBehaviour
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
-                    keyWasCollected = true;
                     Debug.Log($"Showing key unlocked object for {keyName} - first time completion with {starsEarned} stars!");
                 }
             }
@@ -1189,14 +1186,114 @@ public class GameEndManager : MonoBehaviour
         ForceEnableBackgroundMusic();
         AddRewardsToGameData();
 
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
+        // 🔑 Check if we have a pending key unlock
+        if (pendingKeyUnlock)
         {
-            SaveKeyToDatabase();
+            // Show the Key Unlocked Canvas instead of saving immediately
+            ShowKeyUnlockedCanvas();
         }
+        else
+        {
+            // No key to unlock, proceed with normal home button behavior
+            ReturnToLobby();
+        }
+    }
 
-        CheckForKingKeyUnlock();
+    // 🔑 NEW METHOD: Show Key Unlocked Canvas
+    private void ShowKeyUnlockedCanvas()
+    {
+        Debug.Log($"🔑 Showing Key Unlocked Canvas for {pendingKeyName}");
+        
+        // Hide the game summary
+        if (gameSummaryParent != null)
+            gameSummaryParent.SetActive(false);
+            
+        // Show the key unlocked canvas
+        if (keyUnlockedCanvas != null)
+        {
+            keyUnlockedCanvas.SetActive(true);
+            
+            // Update text in the canvas
+            if (keyUnlockedTitleText != null)
+            {
+                keyUnlockedTitleText.text = $"{pendingKeyName} Key Unlocked!";
+            }
+            
+            if (keyUnlockedDescriptionText != null)
+            {
+                keyUnlockedDescriptionText.text = $"You've earned the {pendingKeyName} Key with {starsEarned} stars!";
+            }
+        }
+        else
+        {
+            Debug.LogWarning("🔑 Key Unlocked Canvas is not assigned! Saving key immediately.");
+            ActuallySaveKey();
+            ReturnToLobby();
+        }
+    }
 
+    // 🔑 NEW METHOD: Handle Continue Button Click
+    private void OnKeyUnlockedContinueClicked()
+    {
+        Debug.Log($"🔑 Continue button clicked - saving {pendingKeyName} key now");
+        
+        // Save the key
+        ActuallySaveKey();
+        
+        // Hide the key unlocked canvas
+        if (keyUnlockedCanvas != null)
+            keyUnlockedCanvas.SetActive(false);
+            
+        // Now return to lobby
+        ReturnToLobby();
+    }
+
+    // 🔑 NEW METHOD: Actually save the key to GameData
+    private void ActuallySaveKey()
+    {
+        if (!pendingKeyUnlock || string.IsNullOrEmpty(pendingKeyName))
+        {
+            Debug.LogWarning("🔑 No pending key to save!");
+            return;
+        }
+        
+        Debug.Log($"🔑 Saving {pendingKeyName} key to GameData...");
+        
+        // Save the key based on the key name
+        switch (pendingKeyName.ToLower())
+        {
+            case "sugaria":
+                GameDataManager.Instance.CollectSugariaKey();
+                break;
+            case "preservia":
+                GameDataManager.Instance.CollectPreserviaKey();
+                break;
+            case "allerthia":
+                GameDataManager.Instance.CollectAllerthiaKey();
+                break;
+            case "ocr":
+                GameDataManager.Instance.CollectOCRScannerKey();
+                break;
+            default:
+                Debug.LogWarning($"🔑 Unknown key name: {pendingKeyName}");
+                break;
+        }
+        
+        // Trigger the event for UI updates
+        KeyCollectionEvents.TriggerKeyCollected(pendingKeyName);
+        
+        Debug.Log($"🔑 Key '{pendingKeyName}' saved successfully!");
+        
+        // Reset pending flag
+        pendingKeyUnlock = false;
+        pendingKeyName = "";
+    }
+
+    // 🔑 NEW METHOD: Return to lobby (extracted from OnHomeClicked)
+    private void ReturnToLobby()
+    {
+        Debug.Log("Returning to lobby...");
+        
         PlayLobbyMusic();
         ResetGameEndState();
         ResetMinigamesForHomeButton();
@@ -1245,12 +1342,6 @@ public class GameEndManager : MonoBehaviour
         ForceEnableBackgroundMusic();
 
         AddRewardsToGameData();
-
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
-        {
-            SaveKeyToDatabase();
-        }
 
         PlayRestartMusic();
         ResetGameEndState();
@@ -1352,12 +1443,6 @@ public class GameEndManager : MonoBehaviour
 
         AddRewardsToGameData();
 
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
-        {
-            SaveKeyToDatabase();
-        }
-
         PlayLobbyMusic();
         ResetGameEndState();
         ResetMinigamesForHomeButton();
@@ -1454,6 +1539,7 @@ public class GameEndManager : MonoBehaviour
         if (starsAnimator != null) starsAnimator.SetInteger(starParameter, 0);
         if (starsContainer != null) starsContainer.SetActive(false);
         if (keyUnlockedObject != null && keyUnlockedObject.activeSelf) keyUnlockedObject.SetActive(false);
+        if (keyUnlockedCanvas != null && keyUnlockedCanvas.activeSelf) keyUnlockedCanvas.SetActive(false);
 
         if (pointsText != null) pointsText.text = "0";
         if (timeText != null) timeText.text = "00:00";
@@ -1462,6 +1548,10 @@ public class GameEndManager : MonoBehaviour
 
         if (buttonContainer != null) buttonContainer.SetActive(false);
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
+        
+        // Reset pending key flags
+        pendingKeyUnlock = false;
+        pendingKeyName = "";
     }
 
     private void ResetGlowTowers()
@@ -1553,7 +1643,6 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = 0;
         starsEarned = 0;
-        keyWasCollected = false; // No key on game over
         CalculateRewards();
         ShowGameEndScreen(false);
     }
@@ -1569,9 +1658,6 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        
-        // Check if key should be awarded (player won and enough stars)
-        keyWasCollected = starsEarned >= starsRequiredForKey;
         
         ShowGameEndScreen(true);
     }
@@ -1609,7 +1695,6 @@ public class GameEndManager : MonoBehaviour
         }
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        keyWasCollected = starsEarned >= starsRequiredForKey;
         CalculateRewards();
 
         if (resultBackground != null && winBackground != null)
@@ -1624,7 +1709,6 @@ public class GameEndManager : MonoBehaviour
 
         isCountingAnimationComplete = false;
         hasAddedRewards = false;
-        keySavedToDatabase = false;
         StartCoroutine(GameEndSequence());
     }
 
@@ -1652,6 +1736,8 @@ public class GameEndManager : MonoBehaviour
 
     private void CheckForKingKeyUnlock()
     {
+        // This method is now handled by the pending key system
+        // Keeping for compatibility
         KingVitronTimelineButton kingButton = FindObjectOfType<KingVitronTimelineButton>();
         if (kingButton != null)
         {
@@ -1666,7 +1752,11 @@ public class GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
-    public bool WasKeyCollected() => keyWasCollected;
+    
+    public int GetRequiredStarsForKey()
+    {
+        return starsRequiredForKey;
+    }
 
     public void ForceStopCountAudio()
     {
@@ -1679,7 +1769,6 @@ public class GameEndManager : MonoBehaviour
     public void TestWinWithKey()
     {
         starsEarned = 3;
-        keyWasCollected = true;
         HandleLevelComplete();
     }
 
@@ -1687,15 +1776,12 @@ public class GameEndManager : MonoBehaviour
     public void TestWinWithoutKey()
     {
         starsEarned = 1;
-        keyWasCollected = false;
         HandleLevelComplete();
     }
 
     [ContextMenu("Test Force Save Sugaria Key")]
     public void TestForceSaveSugariaKey()
     {
-        keyWasCollected = true;
         starsEarned = 3;
-        SaveKeyToDatabase();
     }
 }

@@ -569,9 +569,9 @@ MonoBehaviour:
         type: 0
         targetID: 
         requiredAmount: 15
-        currentAmount: 6
+        currentAmount: 15
         isOptional: 0
-        isCompleted: 0
+        isCompleted: 1
       rewards:
       - rewardName: Orange Sweets
         rewardIcon: {fileID: 21300000, guid: 6cdca757c1e48904e9136af1c8f7b423, type: 3}
@@ -579,7 +579,7 @@ MonoBehaviour:
         type: 12
         rewardID: 
       timelineAsset: {fileID: 0}
-      status: 1
+      status: 2
       questColor: {r: 0, g: 0, b: 0, a: 0}
     - questID: 11022
       questName: Collect 15 Grow Foods
