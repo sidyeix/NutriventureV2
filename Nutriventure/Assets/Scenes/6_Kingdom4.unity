@@ -6800,8 +6800,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineBasicMultiChannelPerlin
   m_NoiseProfile: {fileID: 11400000, guid: 69ce8388f6785dd4c8c39915efece2f4, type: 2}
   m_PivotOffset: {x: 0, y: 0, z: 0}
-  m_AmplitudeGain: 2.8
-  m_FrequencyGain: 2
+  m_AmplitudeGain: 0
+  m_FrequencyGain: 0
   mNoiseOffsets: {x: -993.90247, y: 251.84079, z: -102.22949}
 --- !u!114 &110609180
 MonoBehaviour:
@@ -12172,7 +12172,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1425123920}
   m_HandleRect: {fileID: 1425123919}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

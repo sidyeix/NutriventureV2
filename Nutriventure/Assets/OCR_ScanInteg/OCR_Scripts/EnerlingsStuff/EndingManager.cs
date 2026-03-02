@@ -55,10 +55,14 @@ public class EndingManager : MonoBehaviour
     public string scanOCRSceneName = "ScanOCR";
 
     [Header("Fade Settings")]
-    public float fadeInDuration = 0.5f;      // Time to fade in
-    public float fadeOutDuration = 0.5f;      // Time to fade out
-    public float videoFadeInDuration = 0.8f;  // Slower fade for video
-    public float videoFadeOutDuration = 0.5f; // Fade out after video
+    public float fadeInDuration = 0.5f;
+    public float fadeOutDuration = 0.5f;
+    public float videoFadeInDuration = 0.8f;
+    public float videoFadeOutDuration = 0.5f;
+
+    [Header("Video Settings")]
+    public float videoPrepareTimeout = 3f; // Shorter timeout since we preload
+    public bool usePreloadedVideos = true; // Use preloaded videos
 
     [Header("Kingdom Sprites")]
     public Sprite nutriKingdomSprite;
@@ -76,6 +80,7 @@ public class EndingManager : MonoBehaviour
     private Animator playerAnimator;
     private Animator aiAnimator;
     private IngredientDatabase.IngredientInfo defeatedAIEnerling;
+    private bool videoPrepared = false;
 
     void Start()
     {
@@ -83,7 +88,6 @@ public class EndingManager : MonoBehaviour
         InitializeReferences();
         SetupButtonListeners();
 
-        // Initially disable all ending canvases
         if (endingCutsceneCanvas != null)
             endingCutsceneCanvas.SetActive(false);
 
@@ -92,6 +96,28 @@ public class EndingManager : MonoBehaviour
 
         if (playerDefeatedCanvas != null)
             playerDefeatedCanvas.SetActive(false);
+
+        // Pre-configure video player
+        ConfigureVideoPlayer();
+    }
+
+    void ConfigureVideoPlayer()
+    {
+        if (endingVideoPlayer == null) return;
+
+        // Configure video player with optimal settings
+        endingVideoPlayer.source = VideoSource.VideoClip;
+        endingVideoPlayer.playOnAwake = false;
+        endingVideoPlayer.waitForFirstFrame = true;
+        endingVideoPlayer.isLooping = false;
+        endingVideoPlayer.skipOnDrop = true;
+        endingVideoPlayer.playbackSpeed = 1f;
+        endingVideoPlayer.renderMode = VideoRenderMode.RenderTexture;
+        endingVideoPlayer.targetTexture = videoRenderTexture;
+        endingVideoPlayer.aspectRatio = VideoAspectRatio.FitVertically;
+        endingVideoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+
+        Debug.Log("Video player configured");
     }
 
     void EnsureSingleAudioListener()
@@ -213,7 +239,6 @@ public class EndingManager : MonoBehaviour
     {
         Debug.Log($"Battle ended: PlayerDead={playerDead}, AIDead={aiDead}");
 
-        // Fade out battlefield canvas if it exists
         if (battlefieldCanvas != null && battlefieldCanvas.activeSelf)
         {
             yield return StartCoroutine(FadeOutCanvas(battlefieldCanvas, fadeOutDuration));
@@ -280,7 +305,6 @@ public class EndingManager : MonoBehaviour
             audioSource.Play();
         }
 
-        // Get the defeated AI enerling
         defeatedAIEnerling = aiManager?.GetAIEnerling();
         if (defeatedAIEnerling == null)
         {
@@ -296,21 +320,18 @@ public class EndingManager : MonoBehaviour
             Debug.Log($"Ending cutscene name: {defeatedAIEnerling.endingCutscene.name}");
         }
 
-        // Set EnerlingDefeat camera priority
         if (enerlingDefeatCamera != null)
         {
             enerlingDefeatCamera.Priority = 30;
             Debug.Log("EnerlingDefeat camera priority set to 30");
         }
 
-        // Play winning timeline
         if (winningTimelineDirector != null && winningTimelineAsset != null)
         {
             winningTimelineDirector.playableAsset = winningTimelineAsset;
             winningTimelineDirector.time = 0;
             winningTimelineDirector.Play();
 
-            // Wait for timeline to complete
             while (winningTimelineDirector.state == PlayState.Playing)
             {
                 yield return null;
@@ -318,7 +339,6 @@ public class EndingManager : MonoBehaviour
             Debug.Log("Winning timeline completed");
         }
 
-        // STEP 1: Play ending cutscene video (First canvas with VideoPlayer)
         if (defeatedAIEnerling.endingCutscene != null)
         {
             yield return StartCoroutine(PlayEndingCutscene());
@@ -328,7 +348,6 @@ public class EndingManager : MonoBehaviour
             Debug.LogWarning($"No ending cutscene assigned for {defeatedAIEnerling.ingredientName} - skipping video");
         }
 
-        // STEP 2: Show EnerlingEndingCatch canvas (Second canvas with UI)
         yield return StartCoroutine(ShowEnerlingEndingCatch());
     }
 
@@ -342,14 +361,12 @@ public class EndingManager : MonoBehaviour
             yield break;
         }
 
-        // Double-check video clip
         if (defeatedAIEnerling.endingCutscene == null)
         {
             Debug.LogError($"endingCutscene is null for {defeatedAIEnerling.ingredientName} even though we checked!");
             yield break;
         }
 
-        // Verify all required components
         if (endingVideoPlayer == null)
         {
             Debug.LogError("endingVideoPlayer is null! Cannot play video.");
@@ -384,51 +401,48 @@ public class EndingManager : MonoBehaviour
 
         // IMPORTANT: Set the video clip from the defeated enerling
         endingVideoPlayer.clip = defeatedAIEnerling.endingCutscene;
-
-        // Configure video player
-        endingVideoPlayer.source = VideoSource.VideoClip;
-        endingVideoPlayer.playOnAwake = false;
-        endingVideoPlayer.waitForFirstFrame = true;
-        endingVideoPlayer.isLooping = false;
-        endingVideoPlayer.skipOnDrop = true;
-        endingVideoPlayer.playbackSpeed = 1f;
-        endingVideoPlayer.renderMode = VideoRenderMode.RenderTexture;
-        endingVideoPlayer.targetTexture = videoRenderTexture;
-        endingVideoPlayer.aspectRatio = VideoAspectRatio.FitVertically;
-        endingVideoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
-
-        // Verify the clip was set
-        Debug.Log($"VideoPlayer clip after assignment: {(endingVideoPlayer.clip != null ? endingVideoPlayer.clip.name : "NULL")}");
-
-        // Set the raw image texture
         videoRawImage.texture = videoRenderTexture;
+
+        Debug.Log($"VideoPlayer clip after assignment: {(endingVideoPlayer.clip != null ? endingVideoPlayer.clip.name : "NULL")}");
         Debug.Log($"RawImage texture set to: {videoRawImage.texture}");
 
-        // Prepare video
-        Debug.Log("Preparing video...");
-        endingVideoPlayer.Prepare();
+        // Check if video is already prepared (from preloading)
+        bool isPrepared = endingVideoPlayer.isPrepared;
+        Debug.Log($"Video prepared status: {isPrepared}");
 
-        // Wait for video to prepare with timeout
-        float prepareTimeout = 5f;
-        float prepareTimer = 0f;
-
-        while (!endingVideoPlayer.isPrepared && prepareTimer < prepareTimeout)
+        if (!isPrepared)
         {
-            prepareTimer += Time.deltaTime;
-            if (prepareTimer % 1f < 0.1f)
-                Debug.Log($"Preparing video... {prepareTimer:F1}s");
-            yield return null;
+            Debug.Log("Preparing video...");
+            endingVideoPlayer.Prepare();
+
+            // Wait for video to prepare with timeout
+            float prepareTimer = 0f;
+
+            while (!endingVideoPlayer.isPrepared && prepareTimer < videoPrepareTimeout)
+            {
+                prepareTimer += Time.deltaTime;
+                if (prepareTimer % 1f < 0.1f)
+                    Debug.Log($"Preparing video... {prepareTimer:F1}s");
+                yield return null;
+            }
+
+            if (!endingVideoPlayer.isPrepared)
+            {
+                Debug.LogError($"Video preparation timed out after {videoPrepareTimeout} seconds!");
+                // Try to play anyway - sometimes it works
+                Debug.Log("Attempting to play video anyway...");
+            }
+            else
+            {
+                Debug.Log("Video prepared successfully");
+            }
+        }
+        else
+        {
+            Debug.Log("Video already prepared (preloaded) - skipping preparation");
         }
 
-        if (!endingVideoPlayer.isPrepared)
-        {
-            Debug.LogError("Video preparation timed out!");
-            yield break;
-        }
-
-        Debug.Log("Video prepared, playing now...");
-
-        // FADE IN: Activate and fade in the canvas
+        // Fade in the canvas
         endingCutsceneCanvas.SetActive(true);
         yield return StartCoroutine(FadeInCanvas(endingCutsceneCanvas, videoFadeInDuration));
 
@@ -436,11 +450,17 @@ public class EndingManager : MonoBehaviour
         MuteAllAudioExcept(endingVideoPlayer);
 
         // Play video
+        Debug.Log("Playing video...");
         endingVideoPlayer.Play();
-        Debug.Log($"Video is playing: {endingVideoPlayer.isPlaying}");
 
-        // Wait for video to start playing
-        yield return new WaitForSeconds(0.5f);
+        // Wait for video to actually start playing
+        float startTimeout = 1f;
+        float startTimer = 0f;
+        while (!endingVideoPlayer.isPlaying && startTimer < startTimeout)
+        {
+            startTimer += Time.deltaTime;
+            yield return null;
+        }
 
         if (!endingVideoPlayer.isPlaying)
         {
@@ -461,7 +481,7 @@ public class EndingManager : MonoBehaviour
 
         Debug.Log("Ending cutscene video completed");
 
-        // FADE OUT: Fade out the canvas
+        // Fade out the canvas
         yield return StartCoroutine(FadeOutCanvas(endingCutsceneCanvas, videoFadeOutDuration));
         endingCutsceneCanvas.SetActive(false);
 
@@ -485,10 +505,8 @@ public class EndingManager : MonoBehaviour
             yield break;
         }
 
-        // Update UI with defeated AI enerling info
         UpdateEnerlingEndingCatchUI();
 
-        // FADE IN: Activate and fade in the canvas
         enerlingEndingCatchCanvas.SetActive(true);
         yield return StartCoroutine(FadeInCanvas(enerlingEndingCatchCanvas, fadeInDuration));
 
@@ -501,15 +519,12 @@ public class EndingManager : MonoBehaviour
 
         Debug.Log($"Updating EnerlingEndingCatch UI for {defeatedAIEnerling.ingredientName}");
 
-        // Set enerling name
         if (enerlingNameText != null)
             enerlingNameText.text = defeatedAIEnerling.ingredientName;
 
-        // Set kingdom name
         if (kingdomText != null)
             kingdomText.text = defeatedAIEnerling.kingdom.ToString();
 
-        // Set the enerling icon/image
         if (enerlingIconImage != null)
         {
             if (defeatedAIEnerling.enerlingSprite != null)
@@ -524,7 +539,6 @@ public class EndingManager : MonoBehaviour
             }
         }
 
-        // Set frame based on rarity
         if (enerlingFrameImage != null && ingredientDatabase != null)
         {
             Sprite frameSprite = ingredientDatabase.GetFrameSprite(defeatedAIEnerling.rarity);
@@ -535,7 +549,6 @@ public class EndingManager : MonoBehaviour
             }
         }
 
-        // Set rarity tag
         if (rarityTagImage != null && ingredientDatabase != null)
         {
             Sprite raritySprite = ingredientDatabase.GetRarityIcon(defeatedAIEnerling.rarity);
@@ -546,7 +559,6 @@ public class EndingManager : MonoBehaviour
             }
         }
 
-        // Set kingdom flag image
         if (kingdomSpriteImage != null)
         {
             Sprite kingdomSprite = GetKingdomSprite(defeatedAIEnerling.kingdom);
@@ -557,7 +569,6 @@ public class EndingManager : MonoBehaviour
             }
         }
 
-        // Show "Unlocked" text
         if (unlockedText != null)
         {
             unlockedText.SetActive(true);
@@ -589,7 +600,6 @@ public class EndingManager : MonoBehaviour
 
     IEnumerator OnContinueButtonClicked()
     {
-        // Fade out the catch canvas
         if (enerlingEndingCatchCanvas != null)
         {
             yield return StartCoroutine(FadeOutCanvas(enerlingEndingCatchCanvas, fadeOutDuration));
@@ -598,14 +608,12 @@ public class EndingManager : MonoBehaviour
 
         if (defeatedAIEnerling != null)
         {
-            // Unlock in PersistentDataManager
             if (PersistentDataManager.Instance != null)
             {
                 PersistentDataManager.Instance.UnlockEnerling(defeatedAIEnerling.ingredientName);
                 Debug.Log($"Unlocked {defeatedAIEnerling.ingredientName} via PersistentDataManager");
             }
 
-            // Also update the database directly
             if (ingredientDatabase != null)
             {
                 var dbEnerling = ingredientDatabase.GetIngredientInfo(defeatedAIEnerling.ingredientName);
@@ -616,7 +624,6 @@ public class EndingManager : MonoBehaviour
                 }
             }
 
-            // Save current life
             if (PersistentDataManager.Instance != null)
             {
                 PersistentDataManager.Instance.SaveEnerlingCurrentLife(
@@ -626,7 +633,6 @@ public class EndingManager : MonoBehaviour
             }
         }
 
-        // Return to scanOCR scene
         ReturnToScanOCRScene();
     }
 
@@ -642,7 +648,6 @@ public class EndingManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f);
 
-        // FADE IN: Show player defeated canvas
         if (playerDefeatedCanvas != null)
         {
             playerDefeatedCanvas.SetActive(true);
@@ -658,7 +663,6 @@ public class EndingManager : MonoBehaviour
 
     IEnumerator OnPlayerDefeatedContinueCoroutine()
     {
-        // Fade out player defeated canvas
         if (playerDefeatedCanvas != null)
         {
             yield return StartCoroutine(FadeOutCanvas(playerDefeatedCanvas, fadeOutDuration));
@@ -682,8 +686,6 @@ public class EndingManager : MonoBehaviour
             Debug.LogError("ScanOCR scene name not set!");
         }
     }
-
-    // ==================== FADE HELPER METHODS ====================
 
     IEnumerator FadeInCanvas(GameObject canvas, float duration)
     {
