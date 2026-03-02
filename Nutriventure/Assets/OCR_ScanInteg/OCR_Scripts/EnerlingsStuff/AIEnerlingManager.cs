@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Video; // Add this for VideoPlayer
 
 public class AIEnerlingManager : MonoBehaviour
 {
@@ -31,6 +32,9 @@ public class AIEnerlingManager : MonoBehaviour
     public Sprite aiCommonNameStatsBG;
     public Sprite aiRareNameStatsBG;
     public Sprite aiUltraRareNameStatsBG;
+
+    [Header("Video Player Reference")]
+    public VideoPlayer endingVideoPlayer; // Reference to the VideoPlayer in EndingCutsceneCanvas
 
     private IngredientDatabase.IngredientInfo aiEnerling;
     private GameObject spawnedAIEnerling;
@@ -65,6 +69,14 @@ public class AIEnerlingManager : MonoBehaviour
         for (int i = 1; i <= 4; i++)
         {
             skillCooldowns[i] = 0;
+        }
+
+        // If video player not assigned, try to find it
+        if (endingVideoPlayer == null)
+        {
+            endingVideoPlayer = FindObjectOfType<VideoPlayer>();
+            if (endingVideoPlayer != null)
+                Debug.Log("Found VideoPlayer automatically");
         }
     }
 
@@ -153,7 +165,7 @@ public class AIEnerlingManager : MonoBehaviour
         hasAIDefend = false;
 
         InitializeAIOrganCooldown();
-        InitializeAISkillCooldowns(); // NEW: Initialize AI skill cooldowns
+        InitializeAISkillCooldowns();
         SpawnAIEnerling();
 
         for (int i = 1; i <= 4; i++)
@@ -164,6 +176,9 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
         UpdateAIUI();
 
+        // Preload the ending cutscene video
+        PreloadEndingCutscene();
+
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
     }
 
@@ -171,13 +186,11 @@ public class AIEnerlingManager : MonoBehaviour
     {
         if (aiEnerling == null) return;
 
-        // Set initial cooldowns for AI skills
         for (int i = 1; i <= 4; i++)
         {
             var skill = GetSkillByNumber(i);
             if (skill != null && skill.cooldownTurns > 0)
             {
-                // Set the skill to be on cooldown at battle start
                 skillCooldowns[i] = skill.cooldownTurns;
                 Debug.Log($"AI Skill {i} starts on cooldown: {skill.cooldownTurns} turns");
             }
@@ -188,6 +201,7 @@ public class AIEnerlingManager : MonoBehaviour
         }
     }
 
+    // FIXED: Added endingCutscene to the copy
     IngredientDatabase.IngredientInfo CreateAICopy(string enerlingName, IngredientDatabase database)
     {
         var original = database.GetIngredientInfo(enerlingName);
@@ -214,8 +228,36 @@ public class AIEnerlingManager : MonoBehaviour
             skill3 = original.skill3,
             skill4 = original.skill4,
             enerlingDescription = original.enerlingDescription,
-            endingCutscene = original.endingCutscene 
+            endingCutscene = original.endingCutscene // CRITICAL FIX: Copy the ending cutscene video
         };
+    }
+
+    // NEW METHOD: Preload the ending cutscene video using VideoPlayer
+    public void PreloadEndingCutscene()
+    {
+        if (aiEnerling == null)
+        {
+            Debug.Log("AI Enerling is null, cannot preload video");
+            return;
+        }
+
+        if (aiEnerling.endingCutscene == null)
+        {
+            Debug.Log($"No ending cutscene to preload for {aiEnerling.ingredientName}");
+            return;
+        }
+
+        if (endingVideoPlayer == null)
+        {
+            Debug.LogError("endingVideoPlayer is null! Cannot preload video. Make sure to assign it in the inspector.");
+            return;
+        }
+
+        Debug.Log($"Preloading ending cutscene for {aiEnerling.ingredientName}: {aiEnerling.endingCutscene.name}");
+
+        // Set the clip and prepare it
+        endingVideoPlayer.clip = aiEnerling.endingCutscene;
+        endingVideoPlayer.Prepare();
     }
 
     void InitializeAIOrganCooldown()
@@ -614,13 +656,10 @@ public class AIEnerlingManager : MonoBehaviour
 
         if (availableSkills.Count == 0) return 0;
 
-        // Rarity-based AI behavior
         float healthPercentage = (float)aiEnerling.currentLife / aiEnerling.baseLife;
 
-        // Common AI: Less likely to heal, focus on attack
         if (aiEnerling.rarity == IngredientDatabase.Rarity.Common)
         {
-            // Common AI prioritizes damage skills
             foreach (int skillNum in availableSkills)
             {
                 var skill = GetSkillByNumber(skillNum);
@@ -630,7 +669,6 @@ public class AIEnerlingManager : MonoBehaviour
                 }
             }
 
-            // Only heal if very low health
             if (healthPercentage < 0.3f)
             {
                 foreach (int skillNum in availableSkills)
@@ -645,7 +683,6 @@ public class AIEnerlingManager : MonoBehaviour
         }
         else
         {
-            // Rare and Ultra-Rare: Can heal more often
             if (healthPercentage < 0.5f)
             {
                 foreach (int skillNum in availableSkills)
@@ -659,7 +696,6 @@ public class AIEnerlingManager : MonoBehaviour
             }
         }
 
-        // Default: Choose strongest damage skill
         int strongestSkill = 0;
         int highestDamage = 0;
 
@@ -679,7 +715,6 @@ public class AIEnerlingManager : MonoBehaviour
 
         if (strongestSkill > 0) return strongestSkill;
 
-        // Fallback: Random skill
         return availableSkills[Random.Range(0, availableSkills.Count)];
     }
 
@@ -690,7 +725,6 @@ public class AIEnerlingManager : MonoBehaviour
 
         int baseDamage = skill.GetValue();
 
-        // Apply rarity-based scaling
         if (battleManager != null && battleManager.GetBattleEnerling() != null)
         {
             var playerEnerling = battleManager.GetBattleEnerling();
@@ -703,47 +737,42 @@ public class AIEnerlingManager : MonoBehaviour
 
     private float GetRarityDamageMultiplier(IngredientDatabase.Rarity attackerRarity, IngredientDatabase.Rarity defenderRarity)
     {
-        // Common vs Common: Player advantage (AI deals 40% less damage)
         if (attackerRarity == IngredientDatabase.Rarity.Common && defenderRarity == IngredientDatabase.Rarity.Common)
         {
-            return 0.6f; // AI deals only 60% damage
+            return 0.6f;
         }
 
-        // Rare vs Rare: Player advantage (AI deals 15% less damage)
         if (attackerRarity == IngredientDatabase.Rarity.Rare && defenderRarity == IngredientDatabase.Rarity.Rare)
         {
-            return 0.85f; // AI deals 85% damage
+            return 0.85f;
         }
 
-        // UltraRare vs UltraRare: Equal match
         if (attackerRarity == IngredientDatabase.Rarity.UltraRare && defenderRarity == IngredientDatabase.Rarity.UltraRare)
         {
-            return 1.0f; // Equal damage
+            return 1.0f;
         }
 
-        // Higher rarity advantage
         if (attackerRarity == IngredientDatabase.Rarity.UltraRare && defenderRarity == IngredientDatabase.Rarity.Common)
         {
-            return 1.2f; // 20% bonus
+            return 1.2f;
         }
 
         if (attackerRarity == IngredientDatabase.Rarity.UltraRare && defenderRarity == IngredientDatabase.Rarity.Rare)
         {
-            return 1.15f; // 15% bonus
+            return 1.15f;
         }
 
         if (attackerRarity == IngredientDatabase.Rarity.Rare && defenderRarity == IngredientDatabase.Rarity.Common)
         {
-            return 1.1f; // 10% bonus
+            return 1.1f;
         }
 
-        // Lower rarity disadvantage
         if (attackerRarity == IngredientDatabase.Rarity.Common && defenderRarity == IngredientDatabase.Rarity.UltraRare)
         {
-            return 0.8f; // 20% penalty
+            return 0.8f;
         }
 
-        return 1.0f; // Default
+        return 1.0f;
     }
 
     IEnumerator UseSkill(int skillNumber)
@@ -788,7 +817,6 @@ public class AIEnerlingManager : MonoBehaviour
 
                         BattleStructs.DamageBreakdown damageBreakdown;
 
-                        // IMPORTANT FIX: If player is immune, DON'T apply any organ bonuses
                         if (playerImmune)
                         {
                             Debug.Log($"Player is immune to organ damage. Only base damage will be applied.");
@@ -806,7 +834,6 @@ public class AIEnerlingManager : MonoBehaviour
                             FeedbackManager.Instance != null ? FeedbackManager.Instance.playerFeedbackSpawnPoint : null
                         ));
 
-                        // Target organ damage - ONLY if player is NOT immune AND cooldown is ready
                         if (aiHasTargetOrgans && aiOrganCooldownReady && !playerImmune)
                         {
                             Debug.Log($"AI Organ Damage Triggered! {aiEnerling.targetOrgans.Count} target organs");
@@ -917,7 +944,6 @@ public class AIEnerlingManager : MonoBehaviour
             {
                 if (damageBlocked > 0)
                 {
-                    // Only show one defend feedback
                     FeedbackManager.Instance.ShowDefend(
                         FeedbackManager.Instance.aiFeedbackSpawnPoint,
                         damageBlocked,
@@ -927,7 +953,6 @@ public class AIEnerlingManager : MonoBehaviour
                 }
             }
 
-            // FIX: Defend is used up after this attack
             hasAIDefend = false;
             activeAIDefend = 0;
             Debug.Log("AI defend used up");
@@ -1031,7 +1056,7 @@ public class AIEnerlingManager : MonoBehaviour
     public void ProcessEndTurn()
     {
         UpdateAIOrganCooldown();
-        ClearAIDefend(); // Clear defend at end of turn
+        ClearAIDefend();
     }
 
     public void CheckAndApplyOrganHeal()
@@ -1041,7 +1066,6 @@ public class AIEnerlingManager : MonoBehaviour
         Debug.Log($"AI CheckAndApplyOrganHeal: Cooldown Ready={aiOrganCooldownReady}, Timer={aiOrganCooldownTimer}/{aiMaxOrganCooldown}");
         Debug.Log($"AI has {aiEnerling.beneficialOrgans?.Count ?? 0} beneficial organs, {aiEnerling.targetOrgans?.Count ?? 0} target organs");
 
-        // Check if organ cooldown is ready AND AI has beneficial organs
         if (aiOrganCooldownReady && aiEnerling.beneficialOrgans.Count > 0)
         {
             int healPerOrgan = Mathf.RoundToInt(aiEnerling.baseLife * 0.05f);
@@ -1066,7 +1090,6 @@ public class AIEnerlingManager : MonoBehaviour
 
             StartCoroutine(ApplyAIHeal(totalHeal, 0));
 
-            // CRITICAL FIX: Reset cooldown AFTER applying heal
             aiOrganCooldownTimer = 0;
             aiOrganCooldownReady = false;
 
@@ -1149,13 +1172,11 @@ public class AIEnerlingManager : MonoBehaviour
         }
     }
 
-    // ==================== NEW METHOD: Initialize with existing AI enerling ====================
     public void InitializeWithExistingAIEnerling(string enerlingName, IngredientDatabase database, GameObject existingEnerling)
     {
         ingredientDatabase = database;
         Debug.Log($"AIEnerlingManager: Initializing with existing AI enerling: {enerlingName}");
 
-        // Load data
         aiEnerling = CreateAICopy(enerlingName, database);
         if (aiEnerling == null)
         {
@@ -1169,12 +1190,10 @@ public class AIEnerlingManager : MonoBehaviour
 
         InitializeAIOrganCooldown();
 
-        // Use existing enerling
         if (existingEnerling != null)
         {
             spawnedAIEnerling = existingEnerling;
 
-            // Reparent to AI spawn point if needed
             if (aiSpawningPoint != null)
             {
                 spawnedAIEnerling.transform.SetParent(aiSpawningPoint);
@@ -1184,11 +1203,9 @@ public class AIEnerlingManager : MonoBehaviour
             }
             else
             {
-                // If no spawn point, just use current transform
                 Debug.LogWarning("AI spawn point not assigned, keeping current transform");
             }
 
-            // Setup animator
             aiAnimator = spawnedAIEnerling.GetComponent<Animator>();
             if (aiAnimator != null && aiEnerling.animatorController != null)
             {
@@ -1199,11 +1216,9 @@ public class AIEnerlingManager : MonoBehaviour
         }
         else
         {
-            // Fallback to spawning new one
             SpawnAIEnerling();
         }
 
-        // Initialize cooldowns
         for (int i = 1; i <= 4; i++)
         {
             skillCooldowns[i] = 0;
@@ -1211,6 +1226,9 @@ public class AIEnerlingManager : MonoBehaviour
 
         UpdateAvailableSkills();
         UpdateAIUI();
+
+        // Preload the ending cutscene video
+        PreloadEndingCutscene();
 
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
     }
@@ -1283,7 +1301,7 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
 
         ProcessOrganEffects();
-        ProcessEndTurn(); // Call ProcessEndTurn which clears defend
+        ProcessEndTurn();
     }
 
     void ProcessOrganEffects()
