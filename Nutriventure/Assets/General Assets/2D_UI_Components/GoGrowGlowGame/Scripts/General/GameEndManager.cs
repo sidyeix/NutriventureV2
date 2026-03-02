@@ -71,7 +71,7 @@ public class GameEndManager : MonoBehaviour
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource backgroundMusicSource;
-    [SerializeField] private GameObject backgroundMusicObject; // Reference to the BackgroundMusic GameObject
+    [SerializeField] private GameObject backgroundMusicObject;
     [SerializeField] private AudioClip winMusicClip;
     [SerializeField] private AudioClip loseMusicClip;
     [SerializeField] private AudioClip restartMusicClip;
@@ -97,10 +97,10 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private GameObject uiControlsCanvas;
 
     [Header("PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON")]
-    [SerializeField] private GameObject playableDirectorObject; // Entire GameObject with PlayableDirector - DISABLED on Home
+    [SerializeField] private GameObject playableDirectorObject;
 
     [Header("PLAYABLE DIRECTOR - RESTART BUTTON TIMELINE")]
-    [SerializeField] private PlayableDirector restartPlayableDirector; // Direct reference for Restart timeline
+    [SerializeField] private PlayableDirector restartPlayableDirector;
     [SerializeField] private PlayableAsset restartPlayableAsset;
     [SerializeField] private float restartTimelineDelay = 0.5f;
 
@@ -113,14 +113,19 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private StartingSequenceManager startingSequenceManager;
 
     [Header("Coin Reward UI Feedback")]
-    [SerializeField] private GameObject coinRewardFeedbackPrefab; // Prefab with TMP_Text
-    [SerializeField] private RectTransform coinRewardSpawnPoint; // Changed to RectTransform for UI positioning
-    [SerializeField] private Canvas parentCanvas; // Reference to the main canvas
+    [SerializeField] private GameObject coinRewardFeedbackPrefab;
+    [SerializeField] private RectTransform coinRewardSpawnPoint;
+    [SerializeField] private Canvas parentCanvas;
     [SerializeField] private float coinFeedbackSlideDuration = 0.5f;
     [SerializeField] private float coinFeedbackFadeOutDuration = 0.3f;
     [SerializeField] private float coinFeedbackSlideUpAmount = 50f;
     [SerializeField] private string coinFeedbackPrefix = "+";
-    [SerializeField] private string coinFeedbackSuffix = ""; // e.g., " Coins" if you want
+    [SerializeField] private string coinFeedbackSuffix = "";
+
+    [Header("🔑 KEY COLLECTION SETTINGS")]
+    [SerializeField] private bool isKeyKingdom = true; // Set to true for Sugar Kingdom
+    [SerializeField] private string keyName = "Sugaria"; // "Sugaria", "Preservia", "Allerthia", "OCR"
+    [SerializeField] private int starsRequiredForKey = 2; // Minimum stars needed to get the key
 
     // Game end calculations
     private int starsEarned = 0;
@@ -142,6 +147,10 @@ public class GameEndManager : MonoBehaviour
 
     // Reward tracking
     private bool hasAddedRewards = false;
+
+    // 🔥 KEY COLLECTION TRACKING
+    private bool keyWasCollected = false;
+    private bool keySavedToDatabase = false;
 
     private Dictionary<GameObject, TransformData> initialTransformData = new Dictionary<GameObject, TransformData>();
 
@@ -221,7 +230,6 @@ public class GameEndManager : MonoBehaviour
         // Find the coin text if spawn point not assigned
         if (coinRewardSpawnPoint == null)
         {
-            // Try to find the CoinText in the hierarchy
             GameObject coinTextObj = GameObject.Find("CoinText");
             if (coinTextObj != null)
             {
@@ -244,6 +252,11 @@ public class GameEndManager : MonoBehaviour
         if (backgroundMusicObject == null)
         {
             GameObject foundMusic = GameObject.Find("BackgroundMusic");
+            if (foundMusic == null)
+                foundMusic = GameObject.Find("BGM");
+            if (foundMusic == null)
+                foundMusic = GameObject.Find("Music");
+
             if (foundMusic != null)
             {
                 backgroundMusicObject = foundMusic;
@@ -252,13 +265,13 @@ public class GameEndManager : MonoBehaviour
             }
         }
 
-        // Warn if playable director object is not assigned (Home button control)
+        // Warn if playable director object is not assigned
         if (playableDirectorObject == null)
         {
             Debug.LogWarning("Playable Director Object is not assigned in the Inspector! Home button timeline control will not work.");
         }
 
-        // Validate Playable Director setup (Restart button)
+        // Validate Playable Director setup
         if (restartPlayableDirector == null)
         {
             Debug.LogWarning("Restart Playable Director is not assigned! Timeline will not play on restart.");
@@ -311,14 +324,15 @@ public class GameEndManager : MonoBehaviour
             StoreInitialTransforms();
         }
 
-        // IMPORTANT: Don't auto-search for background music
         if (backgroundMusicSource == null)
         {
             Debug.LogWarning("BackgroundMusicSource is not assigned in the Inspector!");
         }
 
-        // Reset reward flag on start
+        // Reset flags on start
         hasAddedRewards = false;
+        keyWasCollected = false;
+        keySavedToDatabase = false;
     }
 
     // ========== PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON ==========
@@ -348,16 +362,13 @@ public class GameEndManager : MonoBehaviour
             return;
         }
 
-        // Ensure PlayableDirector is enabled
         restartPlayableDirector.enabled = true;
 
-        // Stop any currently playing timeline
         if (restartPlayableDirector.state == PlayState.Playing)
         {
             restartPlayableDirector.Stop();
         }
 
-        // Assign the asset and play
         restartPlayableDirector.playableAsset = restartPlayableAsset;
         restartPlayableDirector.Play();
 
@@ -382,41 +393,29 @@ public class GameEndManager : MonoBehaviour
 
     private void ForceEnableBackgroundMusic()
     {
-        // Method 1: Use the direct GameObject reference
         if (backgroundMusicObject != null)
         {
             if (!backgroundMusicObject.activeSelf)
             {
                 backgroundMusicObject.SetActive(true);
-                Debug.Log("BackgroundMusic GameObject ENABLED via ForceEnableBackgroundMusic()");
-            }
-            else
-            {
-                Debug.Log("BackgroundMusic GameObject was already active");
+                Debug.Log("BackgroundMusic GameObject ENABLED");
             }
 
-            // Also ensure the AudioSource is enabled and playing
             if (backgroundMusicSource != null)
             {
                 if (!backgroundMusicSource.enabled)
                 {
                     backgroundMusicSource.enabled = true;
-                    Debug.Log("BackgroundMusic AudioSource enabled");
                 }
 
-                // If it's not playing, start playing
                 if (!backgroundMusicSource.isPlaying && backgroundMusicSource.clip != null)
                 {
                     backgroundMusicSource.Play();
-                    Debug.Log("BackgroundMusic started playing");
                 }
             }
         }
         else
         {
-            Debug.LogWarning("BackgroundMusicObject is not assigned! Attempting to find by name...");
-
-            // Method 2: Try to find by common names
             GameObject foundMusic = GameObject.Find("BackgroundMusic");
             if (foundMusic == null)
                 foundMusic = GameObject.Find("BGM");
@@ -431,17 +430,12 @@ public class GameEndManager : MonoBehaviour
                 if (!backgroundMusicObject.activeSelf)
                 {
                     backgroundMusicObject.SetActive(true);
-                    Debug.Log($"Found and enabled BackgroundMusic: {foundMusic.name}");
                 }
 
                 if (backgroundMusicSource != null && !backgroundMusicSource.isPlaying && backgroundMusicSource.clip != null)
                 {
                     backgroundMusicSource.Play();
                 }
-            }
-            else
-            {
-                Debug.LogError("Could not find any BackgroundMusic object in the scene!");
             }
         }
     }
@@ -661,46 +655,34 @@ public class GameEndManager : MonoBehaviour
             return;
         }
 
-        if (coinsAmount <= 0) return; // Don't show feedback for zero coins
+        if (coinsAmount <= 0) return;
 
-        // Play the count complete sound FIRST (so it plays as the feedback appears)
         PlayCountCompleteSound();
 
-        // Spawn the feedback object as a child of the canvas
         GameObject feedbackObject = Instantiate(coinRewardFeedbackPrefab, parentCanvas.transform);
-
-        // Get the RectTransform component
         RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
 
-        // Position it at the spawn point
         if (coinRewardSpawnPoint != null)
         {
-            // Copy the position from the spawn point
             rectTransform.position = coinRewardSpawnPoint.position;
-
-            // Optional: Copy anchor settings from spawn point
             rectTransform.anchorMin = coinRewardSpawnPoint.anchorMin;
             rectTransform.anchorMax = coinRewardSpawnPoint.anchorMax;
             rectTransform.pivot = coinRewardSpawnPoint.pivot;
         }
         else
         {
-            // Default to center of screen if no spawn point
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
             rectTransform.anchoredPosition = Vector2.zero;
-            Debug.LogWarning("CoinRewardSpawnPoint not set! Using center of screen.");
         }
 
-        // Get the text component
         TMP_Text feedbackText = feedbackObject.GetComponentInChildren<TMP_Text>();
         if (feedbackText != null)
         {
             feedbackText.text = $"{coinFeedbackPrefix}{coinsAmount}{coinFeedbackSuffix}";
         }
 
-        // Start the animation coroutine
         StartCoroutine(AnimateCoinRewardFeedback(feedbackObject));
     }
 
@@ -711,46 +693,34 @@ public class GameEndManager : MonoBehaviour
         RectTransform rectTransform = feedbackObject.GetComponent<RectTransform>();
         CanvasGroup canvasGroup = feedbackObject.GetComponent<CanvasGroup>();
 
-        // Add CanvasGroup if it doesn't exist
         if (canvasGroup == null)
         {
             canvasGroup = feedbackObject.AddComponent<CanvasGroup>();
         }
 
-        // Store the starting anchored position (for UI elements)
         Vector2 startAnchoredPosition = rectTransform.anchoredPosition;
         Vector2 endAnchoredPosition = startAnchoredPosition + new Vector2(0, coinFeedbackSlideUpAmount);
 
         float elapsedTime = 0f;
 
-        // Slide up animation
         while (elapsedTime < coinFeedbackSlideDuration)
         {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / coinFeedbackSlideDuration;
-
-            // Smooth step for easing
             float smoothT = Mathf.SmoothStep(0, 1, t);
-
-            // Move upward using anchoredPosition (better for UI)
             rectTransform.anchoredPosition = Vector2.Lerp(startAnchoredPosition, endAnchoredPosition, smoothT);
-
             yield return null;
         }
 
-        // Fade out animation
         elapsedTime = 0f;
         while (elapsedTime < coinFeedbackFadeOutDuration)
         {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / coinFeedbackFadeOutDuration;
-
             canvasGroup.alpha = Mathf.Lerp(1, 0, t);
-
             yield return null;
         }
 
-        // Destroy the feedback object
         Destroy(feedbackObject);
     }
 
@@ -758,50 +728,77 @@ public class GameEndManager : MonoBehaviour
 
     private void AddRewardsToGameData()
     {
-        if (hasAddedRewards) return; // Prevent double addition
+        if (hasAddedRewards || GameDataManager.Instance == null) return;
 
-        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        if (GameDataManager.Instance.CurrentGameData != null)
         {
-            // Store old coin amount for debug
             int oldCoins = GameDataManager.Instance.CurrentGameData.nutriCoins;
 
-            // Add coins
             GameDataManager.Instance.CurrentGameData.nutriCoins += totalCoins;
 
-            // Add EXP
             float expToAdd = totalExp;
             GameDataManager.Instance.CurrentGameData.currentXP += expToAdd;
 
-            // Check for level up
             while (GameDataManager.Instance.CurrentGameData.currentXP >= GameDataManager.Instance.CurrentGameData.xpToNextLevel)
             {
                 GameDataManager.Instance.CurrentGameData.playerLevel++;
                 GameDataManager.Instance.CurrentGameData.currentXP -= GameDataManager.Instance.CurrentGameData.xpToNextLevel;
-                GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f; // Increase XP needed for next level
-
+                GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f;
                 Debug.Log($"Level Up! New Level: {GameDataManager.Instance.CurrentGameData.playerLevel}");
             }
 
-            // Save the game data
             GameDataManager.Instance.SaveGameData();
 
             Debug.Log($"Rewards added to GameData: +{totalCoins} Coins (was {oldCoins}, now {GameDataManager.Instance.CurrentGameData.nutriCoins}), +{totalExp} EXP");
 
-            // Update the Player_Data UI
             Player_Data playerData = FindObjectOfType<Player_Data>();
             if (playerData != null)
             {
                 playerData.ForceUpdateAllUI();
             }
 
-            // Show ONLY the coin reward feedback (this will also play the count complete sound)
             ShowCoinRewardFeedback(totalCoins);
-
             hasAddedRewards = true;
         }
-        else
+    }
+
+    // 🔥 KEY COLLECTION METHOD - SAVES THE KEY AND TRIGGERS EVENT
+    private void SaveKeyToDatabase()
+    {
+        if (keySavedToDatabase || GameDataManager.Instance == null || !isKeyKingdom) return;
+        
+        if (keyWasCollected && starsEarned >= starsRequiredForKey)
         {
-            Debug.LogError("GameDataManager or CurrentGameData is null!");
+            // Save the appropriate key based on keyName
+            switch (keyName.ToLower())
+            {
+                case "sugaria":
+                    GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
+                    Debug.Log("✅ Sugaria Key saved to GameData!");
+                    break;
+                case "preservia":
+                    GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
+                    Debug.Log("✅ Preservia Key saved to GameData!");
+                    break;
+                case "allerthia":
+                    GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
+                    Debug.Log("✅ Allerthia Key saved to GameData!");
+                    break;
+                case "ocr":
+                    GameDataManager.Instance.CurrentGameData.CollectOCRScannerKey();
+                    Debug.Log("✅ OCR Scanner Key saved to GameData!");
+                    break;
+                default:
+                    Debug.LogWarning($"Unknown key name: {keyName}");
+                    return;
+            }
+            
+            GameDataManager.Instance.SaveGameData();
+            keySavedToDatabase = true;
+            
+            // 🔥 TRIGGER THE KEY COLLECTION EVENT - THIS UPDATES THE GLOBAL MAP
+            KeyCollectionEvents.TriggerKeyCollected(keyName);
+            Debug.Log($"🔥 Key Collection Event Triggered: {keyName}");
         }
     }
 
@@ -821,6 +818,10 @@ public class GameEndManager : MonoBehaviour
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
+        
+        // Check if key should be awarded (player won and enough stars)
+        keyWasCollected = playerWon && starsEarned >= starsRequiredForKey;
+        
         CalculateRewards();
 
         if (resultBackground != null)
@@ -840,7 +841,8 @@ public class GameEndManager : MonoBehaviour
             gameSummaryParent.SetActive(true);
 
         isCountingAnimationComplete = false;
-        hasAddedRewards = false; // Reset for new game end
+        hasAddedRewards = false;
+        keySavedToDatabase = false; // Reset for new game
         StartCoroutine(GameEndSequence());
     }
 
@@ -861,16 +863,17 @@ public class GameEndManager : MonoBehaviour
 
         bool shouldShowKey = false;
 
-        if (questManager != null)
+        if (questManager != null && isKeyKingdom && playerWon && starsEarned >= starsRequiredForKey)
         {
             Quest quest = questManager.GetQuest(questID);
             if (quest != null)
             {
-                if ((quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress) &&
-                    starsEarned >= 2 && playerWon)
+                if (quest.status == QuestStatus.NotStarted || quest.status == QuestStatus.InProgress)
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
+                    keyWasCollected = true;
+                    Debug.Log($"Showing key unlocked object for {keyName} - first time completion with {starsEarned} stars!");
                 }
             }
         }
@@ -906,7 +909,6 @@ public class GameEndManager : MonoBehaviour
         {
             if (obj != null && obj.activeSelf)
             {
-                // Skip the background music object - we don't want to disable it
                 if (backgroundMusicObject != null && obj == backgroundMusicObject)
                     continue;
 
@@ -1175,7 +1177,6 @@ public class GameEndManager : MonoBehaviour
     }
 
     // ========== HOME BUTTON ==========
-    // COMPLETELY BYPASSES STARTING SEQUENCE MANAGER - DISABLES PlayableDirectorObject - NO TIMELINE
     private void OnHomeClicked()
     {
         if (!isCountingAnimationComplete) return;
@@ -1185,13 +1186,15 @@ public class GameEndManager : MonoBehaviour
         StopCountAudio();
         OnButtonClicked();
 
-        // FORCE ENABLE BACKGROUND MUSIC
         ForceEnableBackgroundMusic();
-
-        // ADD REWARDS TO GAME DATA
         AddRewardsToGameData();
 
-        // CHECK FOR KING KEY UNLOCK CANVAS - ADD THIS LINE
+        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
+        if (keyWasCollected && !keySavedToDatabase)
+        {
+            SaveKeyToDatabase();
+        }
+
         CheckForKingKeyUnlock();
 
         PlayLobbyMusic();
@@ -1230,7 +1233,6 @@ public class GameEndManager : MonoBehaviour
     }
 
     // ========== RESTART BUTTON ==========
-    // FULL RESET + PLAY TIMELINE (using restartPlayableDirector)
     private void OnRestartClicked()
     {
         if (!isCountingAnimationComplete) return;
@@ -1240,20 +1242,23 @@ public class GameEndManager : MonoBehaviour
         StopCountAudio();
         OnButtonClicked();
 
-        // FORCE ENABLE BACKGROUND MUSIC - THIS MUST HAPPEN BEFORE ANYTHING ELSE
         ForceEnableBackgroundMusic();
 
-        // ADD REWARDS TO GAME DATA (includes coin feedback with count complete sound)
         AddRewardsToGameData();
+
+        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
+        if (keyWasCollected && !keySavedToDatabase)
+        {
+            SaveKeyToDatabase();
+        }
 
         PlayRestartMusic();
         ResetGameEndState();
 
-        // DISABLE objects in the Home/Restart list
         DisableObjectsOnHomeOrRestart();
 
         Debug.Log("STEP 1: Performing complete game reset...");
-        ResetMinigames(); // Full reset with StartingSequenceManager
+        ResetMinigames();
         ResetAllContinueButtons();
 
         if (gameManager != null)
@@ -1278,18 +1283,15 @@ public class GameEndManager : MonoBehaviour
 
         StartCoroutine(RestoreCameraBlendAfterTeleport());
 
-        // FORCE ENABLE BACKGROUND MUSIC AGAIN AT THE END (in case something disabled it)
         ForceEnableBackgroundMusic();
 
         Debug.Log("=== RESTART BUTTON COMPLETE ===");
         Debug.Log($"Rewards added: +{totalCoins} Coins, +{totalExp} EXP");
-        Debug.Log("Restart timeline started - Game reset complete");
     }
 
     // Coroutine to play restart timeline
     private IEnumerator PlayRestartTimeline()
     {
-        // Validate playable director and asset
         if (restartPlayableDirector == null)
         {
             Debug.LogError("Cannot play restart timeline - Playable Director is not assigned!");
@@ -1302,7 +1304,6 @@ public class GameEndManager : MonoBehaviour
             yield break;
         }
 
-        // Wait for the specified delay
         if (restartTimelineDelay > 0)
         {
             Debug.Log($"Waiting {restartTimelineDelay}s before playing restart timeline...");
@@ -1311,26 +1312,20 @@ public class GameEndManager : MonoBehaviour
 
         Debug.Log("Playing restart timeline...");
 
-        // Stop any currently playing timeline
         if (restartPlayableDirector.state == PlayState.Playing)
         {
             restartPlayableDirector.Stop();
         }
 
-        // Make sure player controller is disabled during timeline
         if (playerController != null)
         {
             playerController.enabled = false;
         }
 
-        // Ensure PlayableDirector is enabled
         restartPlayableDirector.enabled = true;
-
-        // Assign the asset and play
         restartPlayableDirector.playableAsset = restartPlayableAsset;
         restartPlayableDirector.Play();
 
-        // Wait for the timeline to finish
         while (restartPlayableDirector.state == PlayState.Playing)
         {
             yield return null;
@@ -1338,7 +1333,6 @@ public class GameEndManager : MonoBehaviour
 
         Debug.Log("Restart timeline finished - Game is now ready to play");
 
-        // Re-enable player controller
         if (playerController != null)
         {
             playerController.enabled = true;
@@ -1354,11 +1348,15 @@ public class GameEndManager : MonoBehaviour
         StopCountAudio();
         OnButtonClicked();
 
-        // FORCE ENABLE BACKGROUND MUSIC
         ForceEnableBackgroundMusic();
 
-        // ADD REWARDS TO GAME DATA (includes coin feedback with count complete sound)
         AddRewardsToGameData();
+
+        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
+        if (keyWasCollected && !keySavedToDatabase)
+        {
+            SaveKeyToDatabase();
+        }
 
         PlayLobbyMusic();
         ResetGameEndState();
@@ -1377,13 +1375,11 @@ public class GameEndManager : MonoBehaviour
         TeleportPlayerToLobbyPoint();
         StartCoroutine(RestoreCameraBlendAfterTeleport());
 
-        // FORCE ENABLE BACKGROUND MUSIC AGAIN
         ForceEnableBackgroundMusic();
     }
 
     // ========== RESET METHODS ==========
 
-    // SPECIAL ResetMinigames for Home Button - NO StartingSequenceManager
     public void ResetMinigamesForHomeButton()
     {
         Debug.Log("=== COMPLETE MINIGAMES RESET (HOME BUTTON - NO STARTING SEQUENCE) ===");
@@ -1396,9 +1392,6 @@ public class GameEndManager : MonoBehaviour
 
         ResetGlowTowers();
         ResetDayNightTransition();
-
-        // CRITICAL: DO NOT call any StartingSequenceManager methods here
-        // COMPLETELY BYPASSED FOR HOME BUTTON
 
         ResetTorchMinigame();
 
@@ -1414,7 +1407,6 @@ public class GameEndManager : MonoBehaviour
         Debug.Log("=== MINIGAMES COMPLETELY RESET (HOME BUTTON) ===");
     }
 
-    // Full ResetMinigames for Restart button - WITH StartingSequenceManager
     public void ResetMinigames()
     {
         Debug.Log("=== COMPLETE MINIGAMES RESET (RESTART BUTTON) ===");
@@ -1428,7 +1420,6 @@ public class GameEndManager : MonoBehaviour
         ResetGlowTowers();
         ResetDayNightTransition();
 
-        // ONLY for Restart button - StartingSequenceManager needs to be reset
         if (startingSequenceManager != null)
         {
             startingSequenceManager.EnableAllControlsAndUI();
@@ -1562,6 +1553,7 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = 0;
         starsEarned = 0;
+        keyWasCollected = false; // No key on game over
         CalculateRewards();
         ShowGameEndScreen(false);
     }
@@ -1577,6 +1569,10 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
+        
+        // Check if key should be awarded (player won and enough stars)
+        keyWasCollected = starsEarned >= starsRequiredForKey;
+        
         ShowGameEndScreen(true);
     }
 
@@ -1613,6 +1609,7 @@ public class GameEndManager : MonoBehaviour
         }
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
+        keyWasCollected = starsEarned >= starsRequiredForKey;
         CalculateRewards();
 
         if (resultBackground != null && winBackground != null)
@@ -1626,7 +1623,8 @@ public class GameEndManager : MonoBehaviour
             gameSummaryParent.SetActive(true);
 
         isCountingAnimationComplete = false;
-        hasAddedRewards = false; // Reset for new game end
+        hasAddedRewards = false;
+        keySavedToDatabase = false;
         StartCoroutine(GameEndSequence());
     }
 
@@ -1654,13 +1652,10 @@ public class GameEndManager : MonoBehaviour
 
     private void CheckForKingKeyUnlock()
     {
-        // Find the King Vitron button and check for key unlock
         KingVitronTimelineButton kingButton = FindObjectOfType<KingVitronTimelineButton>();
         if (kingButton != null)
         {
-            // Pass the stars earned
             kingButton.SetStarsEarned(starsEarned);
-            // Check if we need to show key unlocked canvas
             kingButton.CheckKeyUnlockAfterHomeButton();
         }
     }
@@ -1671,9 +1666,36 @@ public class GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
+    public bool WasKeyCollected() => keyWasCollected;
 
     public void ForceStopCountAudio()
     {
         StopCountAudio();
+    }
+
+    // ========== DEBUG METHODS ==========
+    
+    [ContextMenu("Test Win with Key")]
+    public void TestWinWithKey()
+    {
+        starsEarned = 3;
+        keyWasCollected = true;
+        HandleLevelComplete();
+    }
+
+    [ContextMenu("Test Win without Key")]
+    public void TestWinWithoutKey()
+    {
+        starsEarned = 1;
+        keyWasCollected = false;
+        HandleLevelComplete();
+    }
+
+    [ContextMenu("Test Force Save Sugaria Key")]
+    public void TestForceSaveSugariaKey()
+    {
+        keyWasCollected = true;
+        starsEarned = 3;
+        SaveKeyToDatabase();
     }
 }

@@ -6,6 +6,7 @@ public class PlayTimelineOnTrigger : MonoBehaviour
 {
     [Header("References")]
     public PlayableDirector playableDirector;
+    public Kingdom4GameEndManager gameEndManager; // Add reference to GameEndManager
     
     [Header("Settings")]
     public bool playOnlyOnce = true;
@@ -20,9 +21,16 @@ public class PlayTimelineOnTrigger : MonoBehaviour
     public bool completeGame = true;
     
     private bool hasPlayed = false;
+    private AllerthriaGameManager gameManager;
     
     void Start()
     {
+        // Get references
+        gameManager = AllerthriaGameManager.Instance;
+        
+        if (gameEndManager == null)
+            gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
+        
         // Ensure playableDirector is found if not assigned
         if (playableDirector == null)
         {
@@ -36,15 +44,15 @@ public class PlayTimelineOnTrigger : MonoBehaviour
     void InitializeKeyCheck()
     {
         // This ensures managers are loaded before we check
-        bool hasKey = CheckIfPlayerHasKey();
-        Debug.Log($"PlayTimelineOnTrigger initialized. Has Key: {hasKey}");
+        bool hasKey = CheckIfPlayerHasOCRScannerKey();
+        Debug.Log($"PlayTimelineOnTrigger initialized. Has OCR Scanner Key: {hasKey}");
         
         // If player already has key, make sure game manager is in EndGame phase
-        if (hasKey && AllerthriaGameManager.Instance != null)
+        if (hasKey && gameManager != null)
         {
-            AllerthriaGameManager.Instance.hasKey = true;
-            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
-            Debug.Log("Player already has key - set phase to EndGame");
+            gameManager.hasKey = true;
+            gameManager.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+            Debug.Log("Player already has OCR Scanner Key - set phase to EndGame");
         }
     }
     
@@ -55,39 +63,34 @@ public class PlayTimelineOnTrigger : MonoBehaviour
             Debug.Log($"Player entered trigger. Checking phase...");
             
             // Check current phase
-            if (AllerthriaGameManager.Instance == null)
+            if (gameManager == null)
             {
                 Debug.LogError("AllerthriaGameManager.Instance is null!");
                 return;
             }
             
-            Debug.Log($"Current Phase: {AllerthriaGameManager.Instance.currentPhase}");
+            Debug.Log($"Current Phase: {gameManager.currentPhase}");
             
-            // Check if player already has key (returning player)
-            bool hasKeyAlready = CheckIfPlayerHasKey();
-            Debug.Log($"Player has key already: {hasKeyAlready}");
+            // Check if player already has OCR Scanner Key (returning player)
+            bool hasKeyAlready = CheckIfPlayerHasOCRScannerKey();
+            Debug.Log($"Player has OCR Scanner Key already: {hasKeyAlready}");
             
-            // Handle Castle Phase OR Platform Phase (first arrival OR returning without key collected yet)
-            if ((triggerOnCastlePhase && 
-                 AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.CastlePhase) ||
-                (triggerOnPlatformPhase && 
-                 AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase))
+            // Handle different phases
+            if ((triggerOnCastlePhase && gameManager.currentPhase == AllerthriaGameManager.GamePhase.CastlePhase) ||
+                (triggerOnPlatformPhase && gameManager.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase))
             {
                 Debug.Log("Trigger: Platform or Castle Phase - Player reached queen area");
                 HandleCastlePhase(hasKeyAlready);
             }
-            // Handle End Game Phase (returning with key)
-            else if (triggerOnEndGame && 
-                     AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.EndGame)
+            else if (triggerOnEndGame && gameManager.currentPhase == AllerthriaGameManager.GamePhase.EndGame)
             {
                 Debug.Log("Trigger: End Game - Player returned with key");
                 HandleEndGamePhase(hasKeyAlready);
             }
-            // Handle Key Phase (player has key but game manager might not be in EndGame yet)
-            else if (hasKeyAlready && AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.KeyPhase)
+            else if (hasKeyAlready && gameManager.currentPhase == AllerthriaGameManager.GamePhase.KeyPhase)
             {
                 Debug.Log("Trigger: Player has key but still in KeyPhase - transitioning to EndGame");
-                AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
+                gameManager.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
                 HandleEndGamePhase(true);
             }
         }
@@ -95,21 +98,21 @@ public class PlayTimelineOnTrigger : MonoBehaviour
     
     private void HandleCastlePhase(bool hasKeyAlready)
     {
-        // If player already has key AND we should skip to summary
+        // If player already has OCR Scanner Key AND we should skip to summary
         if (hasKeyAlready && skipToSummaryIfHasKey)
         {
-            Debug.Log("Player already has key in Castle Phase - going straight to summary");
+            Debug.Log("Player already has OCR Scanner Key in Castle Phase - going straight to summary");
             
             // Trigger castle phase actions
             if (reachQueen)
             {
-                AllerthriaGameManager.Instance.ReachQueen();
+                gameManager.ReachQueen();
             }
             
             // If we're in Platform Phase, transition to Castle Phase first
-            if (AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
+            if (gameManager.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
             {
-                AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
+                gameManager.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
             }
             
             // Go straight to game summary
@@ -120,16 +123,16 @@ public class PlayTimelineOnTrigger : MonoBehaviour
         }
         
         // If we're in Platform Phase, transition to Castle Phase first
-        if (AllerthriaGameManager.Instance.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
+        if (gameManager.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
         {
             Debug.Log("Transitioning from Platform Phase to Castle Phase");
-            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
+            gameManager.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
         }
         
         // Normal flow (first time or if we're not skipping)
         if (reachQueen)
         {
-            AllerthriaGameManager.Instance.ReachQueen();
+            gameManager.ReachQueen();
         }
         
         // Play timeline if assigned (only for first time)
@@ -150,18 +153,18 @@ public class PlayTimelineOnTrigger : MonoBehaviour
         // Player should definitely have key if they're in EndGame phase
         if (!hasKeyAlready)
         {
-            Debug.LogWarning("Player in EndGame phase but doesn't have key! Checking saved data...");
-            hasKeyAlready = CheckIfPlayerHasKey(); // Re-check
+            Debug.LogWarning("Player in EndGame phase but doesn't have OCR Scanner Key! Checking saved data...");
+            hasKeyAlready = CheckIfPlayerHasOCRScannerKey(); // Re-check
         }
         
         if (hasKeyAlready)
         {
-            Debug.Log("Player in EndGame phase with key - showing summary");
+            Debug.Log("Player in EndGame phase with OCR Scanner Key - showing summary");
             
             // Trigger end game actions
             if (completeGame)
             {
-                AllerthriaGameManager.Instance.CompleteGame();
+                gameManager.CompleteGame();
             }
             
             // Trigger game summary immediately (no timeline)
@@ -169,104 +172,60 @@ public class PlayTimelineOnTrigger : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Player in EndGame phase but no key found!");
+            Debug.LogError("Player in EndGame phase but no OCR Scanner Key found!");
         }
         
         MarkAsPlayed();
     }
     
-    private bool CheckIfPlayerHasKey()
+    private bool CheckIfPlayerHasOCRScannerKey()
     {
         try
         {
-            // Method 1: Check AllerthriaGameManager (current session)
-            if (AllerthriaGameManager.Instance != null && AllerthriaGameManager.Instance.hasKey)
+            // Method 1: Check GameDataManager (saved data) - This is the primary source
+            if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
             {
-                Debug.Log("Key found in AllerthriaGameManager");
+                bool hasKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+                Debug.Log($"OCR Scanner Key status from GameData: {hasKey}");
+                
+                // Sync with AllerthriaGameManager if needed
+                if (hasKey && gameManager != null)
+                {
+                    gameManager.hasKey = true;
+                    Debug.Log("Synced OCR Scanner Key to AllerthriaGameManager");
+                }
+                return hasKey;
+            }
+            
+            // Method 2: Check AllerthriaGameManager (current session) as fallback
+            if (gameManager != null && gameManager.hasKey)
+            {
+                Debug.Log("OCR Scanner Key found in AllerthriaGameManager");
                 return true;
             }
             
-            // Method 2: Check GameDataManager (saved data)
-            if (GameDataManager1.Instance != null && GameDataManager1.Instance.currentGameData.hasKey)
-            {
-                Debug.Log("Key found in GameDataManager");
-                // Sync with AllerthriaGameManager
-                if (AllerthriaGameManager.Instance != null)
-                {
-                    AllerthriaGameManager.Instance.hasKey = true;
-                    // Only set to EndGame if we're not in the middle of getting the key
-                    if (AllerthriaGameManager.Instance.currentPhase != AllerthriaGameManager.GamePhase.KeyPhase)
-                    {
-                        AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
-                    }
-                    Debug.Log("Synced key to AllerthriaGameManager");
-                }
-                return true;
-            }
-            
-            // Method 3: Check PlayerPrefs as fallback
-            if (PlayerPrefs.GetInt("KeyCollected_castle_key", 0) == 1)
-            {
-                Debug.Log("Key found in PlayerPrefs");
-                // Sync with both managers
-                if (AllerthriaGameManager.Instance != null)
-                {
-                    AllerthriaGameManager.Instance.hasKey = true;
-                    // Only set to EndGame if we're not in the middle of getting the key
-                    if (AllerthriaGameManager.Instance.currentPhase != AllerthriaGameManager.GamePhase.KeyPhase)
-                    {
-                        AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
-                    }
-                }
-                if (GameDataManager1.Instance != null)
-                {
-                    GameDataManager1.Instance.currentGameData.hasKey = true;
-                    GameDataManager1.Instance.SaveGameProgress();
-                }
-                return true;
-            }
-            
-            Debug.Log("Key not found in any system");
+            Debug.Log("OCR Scanner Key not found in any system");
             return false;
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Error checking key: {e.Message}");
+            Debug.LogError($"Error checking OCR Scanner Key: {e.Message}");
             return false;
         }
     }
     
     private void TriggerGameSummary()
     {
-        Debug.Log("Triggering game summary...");
+        Debug.Log("Triggering game summary via Kingdom4GameEndManager...");
         
-        // Try K4GameSummary first
-        K4GameSummary gameSummary = FindObjectOfType<K4GameSummary>();
-        if (gameSummary != null)
-        {
-            gameSummary.TriggerSummaryFromKey();
-            Debug.Log("Triggered game summary via K4GameSummary");
-            return;
-        }
-        
-        // Fallback to Kingdom4GameEndManager
-        Kingdom4GameEndManager gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
         if (gameEndManager != null)
         {
+            // This will call ShowGameEndScreen(true) which handles the key check internally
             gameEndManager.HandleKingdom4Complete();
-            Debug.Log("Triggered game summary via Kingdom4GameEndManager");
-            return;
+            Debug.Log("Game summary triggered successfully");
         }
-        
-        // Fallback to AllerthriaGameManager's CompleteGame
-        if (AllerthriaGameManager.Instance != null)
-        {
-            AllerthriaGameManager.Instance.CompleteGame();
-            Debug.Log("Triggered game completion via AllerthriaGameManager");
-            return;
-        }
-        
-        Debug.LogWarning("No game summary manager found!");
+        else
+            Debug.LogError("Kingdom4GameEndManager reference is null! Cannot trigger summary.");
     }
     
     private IEnumerator PlayTimelineWithDelay()
@@ -302,53 +261,16 @@ public class PlayTimelineOnTrigger : MonoBehaviour
     }
     
     // For debugging
-    [ContextMenu("Test Check Key Status")]
-    public void TestCheckKeyStatus()
+    [ContextMenu("Test Check OCR Scanner Key Status")]
+    public void TestCheckOCRScannerKeyStatus()
     {
-        bool hasKey = CheckIfPlayerHasKey();
-        Debug.Log($"=== KEY STATUS TEST ===");
-        Debug.Log($"AllerthriaGameManager.Instance: {AllerthriaGameManager.Instance}");
-        Debug.Log($"AllerthriaGameManager.hasKey: {(AllerthriaGameManager.Instance != null ? AllerthriaGameManager.Instance.hasKey.ToString() : "N/A")}");
-        Debug.Log($"AllerthriaGameManager.Phase: {(AllerthriaGameManager.Instance != null ? AllerthriaGameManager.Instance.currentPhase.ToString() : "N/A")}");
-        Debug.Log($"GameDataManager1.Instance: {GameDataManager1.Instance}");
-        Debug.Log($"GameDataManager1.hasKey: {(GameDataManager1.Instance != null ? GameDataManager1.Instance.currentGameData.hasKey.ToString() : "N/A")}");
-        Debug.Log($"PlayerPrefs Key: {PlayerPrefs.GetInt("KeyCollected_castle_key", 0)}");
-        Debug.Log($"Player has key: {hasKey}");
-        Debug.Log($"========================");
-    }
-    
-    [ContextMenu("Force Set Has Key")]
-    public void ForceSetHasKey()
-    {
-        if (AllerthriaGameManager.Instance != null)
-        {
-            AllerthriaGameManager.Instance.hasKey = true;
-            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
-        }
-        if (GameDataManager1.Instance != null)
-        {
-            GameDataManager1.Instance.currentGameData.hasKey = true;
-            GameDataManager1.Instance.SaveGameProgress();
-        }
-        PlayerPrefs.SetInt("KeyCollected_castle_key", 1);
-        PlayerPrefs.Save();
-        Debug.Log("Key force-set for testing! Phase set to EndGame.");
-    }
-    
-    [ContextMenu("Reset Key")]
-    public void ResetKey()
-    {
-        if (AllerthriaGameManager.Instance != null)
-        {
-            AllerthriaGameManager.Instance.hasKey = false;
-            AllerthriaGameManager.Instance.StartPhase(AllerthriaGameManager.GamePhase.ScrollQuest);
-        }
-        if (GameDataManager1.Instance != null)
-        {
-            GameDataManager1.Instance.currentGameData.hasKey = false;
-            GameDataManager1.Instance.SaveGameProgress();
-        }
-        PlayerPrefs.DeleteKey("KeyCollected_castle_key");
-        Debug.Log("Key reset! Phase set to ScrollQuest.");
+        bool hasKey = CheckIfPlayerHasOCRScannerKey();
+        Debug.Log($"=== OCR SCANNER KEY STATUS TEST ===");
+        Debug.Log($"GameDataManager.Instance: {GameDataManager.Instance}");
+        Debug.Log($"GameData Current: {(GameDataManager.Instance != null ? GameDataManager.Instance.CurrentGameData != null ? "Loaded" : "Not Loaded" : "N/A")}");
+        Debug.Log($"GameData.HasOCRScannerKey(): {(GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null ? GameDataManager.Instance.CurrentGameData.HasOCRScannerKey().ToString() : "N/A")}");
+        Debug.Log($"AllerthriaGameManager.hasKey: {(gameManager != null ? gameManager.hasKey.ToString() : "N/A")}");
+        Debug.Log($"Player has OCR Scanner Key: {hasKey}");
+        Debug.Log($"=====================================");
     }
 }

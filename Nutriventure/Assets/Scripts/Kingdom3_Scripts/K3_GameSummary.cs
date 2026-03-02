@@ -33,9 +33,9 @@ public class K3_GameSummary : MonoBehaviour
     public GameObject KeyImageunlocking;
     
     [Header("Key Unlocked Animation")]
-    public GameObject keyUnlockedAnimation; // The KeyUnlockedAnimation GameObject
-    public Button continueKeyButton; // The ContinueKeyBTN inside the animation
-    public KeyUnlockedCanvasController keyUnlockedController; // Reference to the controller
+    public GameObject keyUnlockedAnimation;
+    public Button continueKeyButton;
+    public KeyUnlockedCanvasController keyUnlockedController;
     
     [Header("Fail Game Objects (Disabled on Lose)")]
     public GameObject failGameObject1;
@@ -125,8 +125,8 @@ public class K3_GameSummary : MonoBehaviour
     private bool isCharacterVisualSwapperEnabledBeforeSummary = true;
 
     // Key Collection State
-    private bool keyWasCollected = false; // Whether the key was collected in this session
-    private bool keySavedToDatabase = false; // Whether we've already saved the key to GameData
+    private bool keyWasCollected = false;
+    private bool keySavedToDatabase = false;
 
     // Store original positions for reset
     private Vector3 originalPlayerPosition;
@@ -796,6 +796,16 @@ public class K3_GameSummary : MonoBehaviour
         return Mathf.Clamp(stars, 0, 3);
     }
 
+    private void UpdateKeyStatus(int stars)
+    {
+        if (keyStatusText != null)
+        {
+            bool isUnlocked = (stars >= 2);
+            keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
+            keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
+        }
+    }
+
     private void PlayStarAnimationDirect()
     {
         if (starAnimator != null)
@@ -876,16 +886,6 @@ public class K3_GameSummary : MonoBehaviour
             starAnimator.Update(0f);
             
             Debug.Log("Star animator reset to default state");
-        }
-    }
-
-    private void UpdateKeyStatus(int stars)
-    {
-        if (keyStatusText != null)
-        {
-            bool isUnlocked = (stars >= 2);
-            keyStatusText.text = isUnlocked ? "KEY: UNLOCKED" : "KEY: LOCKED";
-            keyStatusText.color = isUnlocked ? unlockedColor : lockedColor;
         }
     }
 
@@ -1025,6 +1025,8 @@ public class K3_GameSummary : MonoBehaviour
         Debug.Log($"Added {calculatedCoinsEarned} coins to database");
     }
 
+    // ========== KEY COLLECTION METHODS WITH EVENT TRIGGER ==========
+    
     // Save key to database when Continue button is clicked
     private void SaveKeyToDatabase()
     {
@@ -1032,10 +1034,15 @@ public class K3_GameSummary : MonoBehaviour
         
         if (keyWasCollected)
         {
+            // Save to GameData
             GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
             GameDataManager.Instance.SaveGameData();
             keySavedToDatabase = true;
             Debug.Log("AllerthiaKey saved to GameData from Continue button");
+            
+            // 🔥 TRIGGER THE KEY COLLECTION EVENT - THIS UPDATES THE GLOBAL MAP
+            KeyCollectionEvents.TriggerKeyCollected("Allerthia");
+            Debug.Log("🔥 Key Collection Event Triggered: Allerthia");
         }
     }
 

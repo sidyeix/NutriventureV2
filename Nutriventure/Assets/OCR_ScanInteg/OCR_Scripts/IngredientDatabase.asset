@@ -27,7 +27,7 @@ MonoBehaviour:
   - ingredientName: Calcium
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -237,7 +237,7 @@ MonoBehaviour:
       skillDescription: Boosts immune system to block 50% of incoming damage.
     skill3:
       skillName: Cell Shield
-      type: 2
+      type: 0
       baseValue: 45
       minValue: 0
       maxValue: 0
@@ -249,7 +249,7 @@ MonoBehaviour:
       skillDescription: Creates a cellular shield that blocks 45 damage for 1 turn.
     skill4:
       skillName: Antioxidant Wave
-      type: 1
+      type: 2
       baseValue: 20
       minValue: 0
       maxValue: 0
@@ -361,7 +361,7 @@ MonoBehaviour:
     currentCatchCount: 4
     animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
-    currentLife: 15
+    currentLife: 65
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -676,7 +676,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
     baseLife: 160
-    currentLife: 147
+    currentLife: 99
     armorPercent: 20
     baseDamage: 15
     immuneToOrganDamage: 0
@@ -757,7 +757,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: fa54f501130bb794fbb46e29f05f6e08, type: 2}
     baseLife: 160
-    currentLife: 160
+    currentLife: 111
     armorPercent: 15
     baseDamage: 20
     immuneToOrganDamage: 0
@@ -835,7 +835,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 87145e9cf25700144b03f9702f78b2f7, type: 2}
     baseLife: 160
-    currentLife: 160
+    currentLife: 110
     armorPercent: 20
     baseDamage: 22
     immuneToOrganDamage: 0
@@ -869,7 +869,7 @@ MonoBehaviour:
       skillDescription: Artificial sweetener barrier blocks 30% of damage.
     skill3:
       skillName: Sweet Charge
-      type: 1
+      type: 0
       baseValue: 50
       minValue: 0
       maxValue: 0
@@ -1147,7 +1147,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 839ea9275a237e348bf398b3de21dbe7, type: 2}
     baseLife: 160
-    currentLife: 160
+    currentLife: 136
     armorPercent: 20
     baseDamage: 15
     immuneToOrganDamage: 0
@@ -1225,7 +1225,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 130f5ae0b85b3a44c907d79199dfc3a8, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 96
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1

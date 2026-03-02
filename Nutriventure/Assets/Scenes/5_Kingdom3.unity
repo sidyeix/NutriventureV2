@@ -16465,14 +16465,13 @@ GameObject:
   - component: {fileID: 224471801}
   - component: {fileID: 224471800}
   - component: {fileID: 224471799}
-  - component: {fileID: 224471798}
   m_Layer: 5
   m_Name: Preservia_Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &224471797
 RectTransform:
   m_ObjectHideFlags: 0
@@ -16492,22 +16491,6 @@ RectTransform:
   m_AnchoredPosition: {x: -907, y: -338.8}
   m_SizeDelta: {x: 1763.4, y: 933}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &224471798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 224471796}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4687141963a9dd34aa573239dcbc6216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KingdomButtonController
-  sceneToLoad: Scenes/5_Kingdom3
-  kingdomButton: {fileID: 224471799}
-  loadingIndicator: {fileID: 4527340}
-  clickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
 --- !u!114 &224471799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16533,7 +16516,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.4433962, g: 0.37019402, b: 0.37019402, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -16551,7 +16534,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 224471800}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 395708835}
+        m_TargetAssemblyTypeName: GlobalMapManager, Assembly-CSharp
+        m_MethodName: LoadKingdom3
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &224471800
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16572,7 +16567,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 25afb744aef84714098db521f3dd4686, type: 3}
+  m_Sprite: {fileID: 21300000, guid: fe8465531a1dc66498120886b9b34cd3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -20377,8 +20372,9 @@ MonoBehaviour:
   - {fileID: 1204469347}
   - {fileID: 54599009}
   - {fileID: 2029959052}
-  - {fileID: 494335204}
-  - {fileID: 1276901136}
+  - {fileID: 1403687243}
+  - {fileID: 1354482830}
+  - {fileID: 2135737281}
   KAFoods:
   - {fileID: 1901878551}
   - {fileID: 832831537}
@@ -22154,10 +22150,10 @@ RectTransform:
   - {fileID: 379265195}
   m_Father: {fileID: 2114352549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1305, y: 706}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &313101833
 MonoBehaviour:
@@ -27372,6 +27368,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 395708834}
+  - component: {fileID: 395708835}
   m_Layer: 0
   m_Name: WorldMap
   m_TagString: Untagged
@@ -27392,11 +27389,33 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1092629373}
   - {fileID: 703679011}
   - {fileID: 2114352549}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &395708835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 395708833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44346348008a8dc4aae591cd295e0f65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlobalMapManager
+  loadingPanel: {fileID: 4527338}
+  loadingText: {fileID: 0}
+  kingdom1Button: {fileID: 2065787850}
+  kingdom2Button: {fileID: 714994954}
+  kingdom3Button: {fileID: 224471799}
+  kingdom4Button: {fileID: 1399575056}
+  kingdom1Scene: 3_Kingdom1
+  kingdom2Scene: 4_Kingdom 2
+  kingdom3Scene: 5_Kingdom3
+  kingdom4Scene: 6_Kingdom4
+  ocrScannerObject: {fileID: 1276901136}
 --- !u!1 &397941440
 GameObject:
   m_ObjectHideFlags: 0
@@ -39751,7 +39770,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &560842276
 RectTransform:
   m_ObjectHideFlags: 0
@@ -40167,6 +40186,8 @@ MonoBehaviour:
   frameDatabase: {fileID: 11400000, guid: 1a54455482b95d242b73521dbb5e24e2, type: 2}
   achievementDatabase: {fileID: 11400000, guid: 8cdb5b4c0496eac45865ebf5ee526122, type: 2}
   ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
+  enableDebugLogs: 1
+  autoSaveOnQuit: 1
 --- !u!1001 &567491883
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -57055,7 +57076,6 @@ GameObject:
   - component: {fileID: 714994956}
   - component: {fileID: 714994955}
   - component: {fileID: 714994954}
-  - component: {fileID: 714994953}
   m_Layer: 5
   m_Name: Sugaria_Area
   m_TagString: Untagged
@@ -57082,22 +57102,6 @@ RectTransform:
   m_AnchoredPosition: {x: 1035, y: 503.2}
   m_SizeDelta: {x: 1615.7, y: 898.5}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &714994953
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 714994951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4687141963a9dd34aa573239dcbc6216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KingdomButtonController
-  sceneToLoad: Scenes/4_Kingdom 2
-  kingdomButton: {fileID: 714994954}
-  loadingIndicator: {fileID: 4527340}
-  clickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
 --- !u!114 &714994954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57123,7 +57127,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.4433962, g: 0.37019402, b: 0.37019402, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -57141,7 +57145,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 714994955}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 395708835}
+        m_TargetAssemblyTypeName: GlobalMapManager, Assembly-CSharp
+        m_MethodName: LoadKingdom2
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &714994955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57162,7 +57178,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b604f88a1acfe1544a2dd31e88b466be, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 51390b312ef41f14abfe28af88210aa5, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -71092,6 +71108,10 @@ PrefabInstance:
     - target: {fileID: 5144261826867725013, guid: 9d437b36670cbd7478b31c44eb7824b3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5551831949176128439, guid: 9d437b36670cbd7478b31c44eb7824b3, type: 3}
+      propertyPath: soundVolume
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -92240,50 +92260,6 @@ MonoBehaviour:
   feedbackText: {fileID: 0}
   feedbackDuration: 2
   clickSound: ButtonClick
---- !u!1 &1092629372
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1092629373}
-  - component: {fileID: 1092629374}
-  m_Layer: 0
-  m_Name: 'SceneManagerController '
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1092629373
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1092629372}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 395708834}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1092629374
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1092629372}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94bca84e3e93bc54481c8af90b567c0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SceneManagerController
 --- !u!1 &1092860592
 GameObject:
   m_ObjectHideFlags: 0
@@ -93537,7 +93513,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 3
+  sensitivity: 0.1
   invertX: 0
   invertY: 1
   uiInput: {fileID: 1580538451}
@@ -127965,6 +127941,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: -34.509
       objectReference: {fileID: 0}
+    - target: {fileID: 6594581642157339256, guid: 9d437b36670cbd7478b31c44eb7824b3, type: 3}
+      propertyPath: minVolumeAtRange
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7921956419981286664, guid: 9d437b36670cbd7478b31c44eb7824b3, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.34
@@ -130263,7 +130243,6 @@ GameObject:
   - component: {fileID: 1399575058}
   - component: {fileID: 1399575057}
   - component: {fileID: 1399575056}
-  - component: {fileID: 1399575055}
   m_Layer: 5
   m_Name: Allerthria_Area
   m_TagString: Untagged
@@ -130290,22 +130269,6 @@ RectTransform:
   m_AnchoredPosition: {x: 1002, y: -369.1}
   m_SizeDelta: {x: 1621.3, y: 939}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1399575055
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1399575053}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4687141963a9dd34aa573239dcbc6216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KingdomButtonController
-  sceneToLoad: Scenes/6_Kingdom4
-  kingdomButton: {fileID: 1399575056}
-  loadingIndicator: {fileID: 4527340}
-  clickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
 --- !u!114 &1399575056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130331,7 +130294,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.4433962, g: 0.37019402, b: 0.37019402, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -130349,7 +130312,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1399575057}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 395708835}
+        m_TargetAssemblyTypeName: GlobalMapManager, Assembly-CSharp
+        m_MethodName: LoadKingdom4
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1399575057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130370,7 +130345,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2bd0dc364217bff46aba67f3dd27dc10, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8d837669223da724bb19f6bce5085039, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -131996,6 +131971,63 @@ Transform:
   - {fileID: 939576458}
   m_Father: {fileID: 1139632486}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1427417142
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 809926408753039736, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_Name
+      value: NutriKey
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -483.36142
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 102.676125
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3438303820094532710, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2bbcfdcaa3ab73e4cbe0879005f0c7a1, type: 3}
 --- !u!1 &1428224949
 GameObject:
   m_ObjectHideFlags: 0
@@ -146464,81 +146496,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1646443002}
   m_CullTransparentMesh: 1
---- !u!1 &1646702790
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1646702791}
-  - component: {fileID: 1646702793}
-  - component: {fileID: 1646702792}
-  m_Layer: 5
-  m_Name: Bg
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1646702791
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1646702790}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2114352549}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1316, y: 722}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1646702792
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1646702790}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ae1f6242a0441fe4da147f700896af31, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1646702793
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1646702790}
-  m_CullTransparentMesh: 1
 --- !u!1 &1648360375
 GameObject:
   m_ObjectHideFlags: 0
@@ -155362,10 +155319,6 @@ MonoBehaviour:
   soundEffectsSources:
   - {fileID: 1250697502}
   countdownTickSound: {fileID: 8300000, guid: b64e4120cbe1743449b0ad33ee000214, type: 3}
-  useGlobalAudioInterceptor: 1
-  targetScriptNames:
-  - K2_CollectKey
-  - NutriHeartCollector
 --- !u!1 &1706657303
 GameObject:
   m_ObjectHideFlags: 0
@@ -202022,7 +201975,6 @@ GameObject:
   - component: {fileID: 2065787852}
   - component: {fileID: 2065787851}
   - component: {fileID: 2065787850}
-  - component: {fileID: 2065787849}
   m_Layer: 5
   m_Name: Nutri_Area
   m_TagString: Untagged
@@ -202049,22 +202001,6 @@ RectTransform:
   m_AnchoredPosition: {x: -899, y: 525.7}
   m_SizeDelta: {x: 1804.5, y: 975.7}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2065787849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2065787847}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4687141963a9dd34aa573239dcbc6216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KingdomButtonController
-  sceneToLoad: Scenes/3_Kingdom1
-  kingdomButton: {fileID: 2065787850}
-  loadingIndicator: {fileID: 4527340}
-  clickSound: {fileID: 8300000, guid: 297a429679f29b04e873f78133bbfa18, type: 3}
 --- !u!114 &2065787850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202090,7 +202026,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.4433962, g: 0.37019402, b: 0.37019402, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -202108,7 +202044,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2065787851}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 395708835}
+        m_TargetAssemblyTypeName: GlobalMapManager, Assembly-CSharp
+        m_MethodName: LoadKingdom1
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2065787851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202129,7 +202077,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5077c61d9a5c56543b328e73d783aea7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1bc1478759158b44aa44f7220b89eac9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -204631,7 +204579,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2114352549
 RectTransform:
   m_ObjectHideFlags: 0
@@ -204645,9 +204593,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 536944150}
-  - {fileID: 1875967286}
-  - {fileID: 1646702791}
   - {fileID: 313101832}
+  - {fileID: 1875967286}
   - {fileID: 4527339}
   m_Father: {fileID: 395708834}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -223661,6 +223608,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4374681025272418368}
   - component: {fileID: 4374681025272418369}
+  - component: {fileID: 4374681025272418370}
   m_Layer: 0
   m_Name: OxidantGem
   m_TagString: K3_OxidantGEM
@@ -229797,11 +229745,32 @@ MonoBehaviour:
   updateOnTrigger: 1
   destroyOnTrigger: 0
   playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
+  useCooldown: 1
+  cooldownDuration: 120
   feedbackText: {fileID: 0}
   feedbackDuration: 2
   clickSound: ButtonClick
+--- !u!65 &4374681025272418370
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026045008045626868}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &4378107015630589433
 Transform:
   m_ObjectHideFlags: 0
@@ -279074,6 +279043,7 @@ GameObject:
   m_Component:
   - component: {fileID: 284226285184199496}
   - component: {fileID: 7438734748379730756}
+  - component: {fileID: 7438734748379730757}
   m_Layer: 0
   m_Name: MicrobeGem
   m_TagString: K3_MicrobeGEM
@@ -279101,11 +279071,32 @@ MonoBehaviour:
   updateOnTrigger: 1
   destroyOnTrigger: 0
   playerTag: Player
-  useCooldown: 0
-  cooldownDuration: 2
+  useCooldown: 1
+  cooldownDuration: 120
   feedbackText: {fileID: 0}
   feedbackDuration: 2
   clickSound: ButtonClick
+--- !u!65 &7438734748379730757
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7438734748379730755}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &7482529964986845564
 Transform:
   m_ObjectHideFlags: 0
@@ -289429,3 +289420,4 @@ SceneRoots:
   - {fileID: 282158931}
   - {fileID: 1130043144}
   - {fileID: 2137529163}
+  - {fileID: 1427417142}
