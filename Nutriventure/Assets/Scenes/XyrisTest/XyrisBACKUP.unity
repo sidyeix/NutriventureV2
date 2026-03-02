@@ -9611,7 +9611,7 @@ Camera:
     height: 1
   near clip plane: 0.2
   far clip plane: 500
-  field of view: 60.000004
+  field of view: 40
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -9637,8 +9637,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 74788066}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.008385257, y: -0.9907212, z: 0.070253484, w: -0.11604186}
-  m_LocalPosition: {x: -15.220198, y: 1.2628965, z: -53.442627}
+  m_LocalRotation: {x: 0, y: -0.58521676, z: 0, w: -0.81087697}
+  m_LocalPosition: {x: 116.1723, y: 1.9473524, z: 169.9609}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -54466,7 +54466,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &417580290
 Transform:
   m_ObjectHideFlags: 0
@@ -59844,7 +59844,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &458434618
 Transform:
   m_ObjectHideFlags: 0
@@ -191324,31 +191324,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.04362759
+      value: -0.030229187
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.043627605
+      value: -0.09979407
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.7057596
+      value: 0.66358984
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.7057597
+      value: 0.7407941
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -97.075
+      value: -102.276
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 90
+      value: 117.865005
       objectReference: {fileID: 0}
     - target: {fileID: -2869760674079162177, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 90
+      value: 56.463997
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3045e457f32754c4ab519b38148bb2c6, type: 3}
       propertyPath: m_Name
@@ -193953,6 +193953,8 @@ PlayableDirector:
     value: {fileID: 1123681777}
   - key: {fileID: -8925486754007729444, guid: c501acfd3a65a964d8529adda150c890, type: 2}
     value: {fileID: 887716511}
+  - key: {fileID: 3211272758292044211, guid: c501acfd3a65a964d8529adda150c890, type: 2}
+    value: {fileID: 0}
   m_ExposedReferences:
     m_References:
     - 0e983daef6af1434a9ebe4269c75a1d9: {fileID: 1310464497}
@@ -207218,7 +207220,7 @@ PlayableDirector:
   m_GameObject: {fileID: 1555225637}
   m_Enabled: 1
   serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 0e65d56b6acd0e84397d7316fdf95c64, type: 2}
+  m_PlayableAsset: {fileID: 11400000, guid: 274c7baef6197ad479264b3cde1d6165, type: 2}
   m_InitialState: 1
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
@@ -207719,6 +207721,12 @@ PlayableDirector:
   - key: {fileID: 6168987458561057492, guid: e5a804827edb71940a85f576c3be7151, type: 2}
     value: {fileID: 0}
   - key: {fileID: 3047175731223537471, guid: 352e9f2f8d12bab458423545a4674c27, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -6433081652566178871, guid: 66c5012d6d907b44d9a98e61fc17abef, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 3211272758292044211, guid: c501acfd3a65a964d8529adda150c890, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8087153454981593965, guid: f182a1c7b1fa7594eb3dcdc9a0a690ac, type: 2}
     value: {fileID: 0}
   m_ExposedReferences:
     m_References:
@@ -243737,7 +243745,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1691558577
 Transform:
   m_ObjectHideFlags: 0
@@ -293422,7 +293430,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2024333662
 Transform:
   m_ObjectHideFlags: 0
