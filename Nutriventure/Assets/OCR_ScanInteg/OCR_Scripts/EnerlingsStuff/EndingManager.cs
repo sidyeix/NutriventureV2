@@ -60,10 +60,6 @@ public class EndingManager : MonoBehaviour
     public float videoFadeInDuration = 0.8f;
     public float videoFadeOutDuration = 0.5f;
 
-    [Header("Video Settings")]
-    public float videoPrepareTimeout = 3f; // Shorter timeout since we preload
-    public bool usePreloadedVideos = true; // Use preloaded videos
-
     [Header("Kingdom Sprites")]
     public Sprite nutriKingdomSprite;
     public Sprite alerthiaSprite;
@@ -73,14 +69,12 @@ public class EndingManager : MonoBehaviour
     [Header("Audio Listener")]
     public AudioListener audioListener;
 
-    // State
     private bool gameEnded = false;
     private GameObject spawnedPlayerEnerling;
     private GameObject spawnedAIEnerling;
     private Animator playerAnimator;
     private Animator aiAnimator;
     private IngredientDatabase.IngredientInfo defeatedAIEnerling;
-    private bool videoPrepared = false;
 
     void Start()
     {
@@ -88,6 +82,7 @@ public class EndingManager : MonoBehaviour
         InitializeReferences();
         SetupButtonListeners();
 
+        // Initially disable all ending canvases
         if (endingCutsceneCanvas != null)
             endingCutsceneCanvas.SetActive(false);
 
@@ -97,7 +92,6 @@ public class EndingManager : MonoBehaviour
         if (playerDefeatedCanvas != null)
             playerDefeatedCanvas.SetActive(false);
 
-        // Pre-configure video player
         ConfigureVideoPlayer();
     }
 
@@ -105,9 +99,8 @@ public class EndingManager : MonoBehaviour
     {
         if (endingVideoPlayer == null) return;
 
-        // Configure video player with optimal settings
-        endingVideoPlayer.source = VideoSource.VideoClip;
-        endingVideoPlayer.playOnAwake = false;
+        // Configure video player with manual control
+        endingVideoPlayer.playOnAwake = false; // Manual control
         endingVideoPlayer.waitForFirstFrame = true;
         endingVideoPlayer.isLooping = false;
         endingVideoPlayer.skipOnDrop = true;
@@ -117,7 +110,7 @@ public class EndingManager : MonoBehaviour
         endingVideoPlayer.aspectRatio = VideoAspectRatio.FitVertically;
         endingVideoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
 
-        Debug.Log("Video player configured");
+        Debug.Log("Video player configured for manual playback");
     }
 
     void EnsureSingleAudioListener()
@@ -363,25 +356,13 @@ public class EndingManager : MonoBehaviour
 
         if (defeatedAIEnerling.endingCutscene == null)
         {
-            Debug.LogError($"endingCutscene is null for {defeatedAIEnerling.ingredientName} even though we checked!");
+            Debug.LogError($"endingCutscene is null for {defeatedAIEnerling.ingredientName}");
             yield break;
         }
 
         if (endingVideoPlayer == null)
         {
             Debug.LogError("endingVideoPlayer is null! Cannot play video.");
-            yield break;
-        }
-
-        if (videoRawImage == null)
-        {
-            Debug.LogError("videoRawImage is null! Cannot display video.");
-            yield break;
-        }
-
-        if (videoRenderTexture == null)
-        {
-            Debug.LogError("videoRenderTexture is null! Cannot render video.");
             yield break;
         }
 
@@ -399,62 +380,46 @@ public class EndingManager : MonoBehaviour
             endingVideoPlayer.Stop();
         }
 
-        // IMPORTANT: Set the video clip from the defeated enerling
+        // Set the video clip from the defeated enerling
         endingVideoPlayer.clip = defeatedAIEnerling.endingCutscene;
         videoRawImage.texture = videoRenderTexture;
 
         Debug.Log($"VideoPlayer clip after assignment: {(endingVideoPlayer.clip != null ? endingVideoPlayer.clip.name : "NULL")}");
-        Debug.Log($"RawImage texture set to: {videoRawImage.texture}");
 
         // Check if video is already prepared (from preloading)
-        bool isPrepared = endingVideoPlayer.isPrepared;
-        Debug.Log($"Video prepared status: {isPrepared}");
-
-        if (!isPrepared)
+        if (!endingVideoPlayer.isPrepared)
         {
-            Debug.Log("Preparing video...");
+            Debug.Log("Video not prepared yet, preparing now...");
             endingVideoPlayer.Prepare();
 
-            // Wait for video to prepare with timeout
-            float prepareTimer = 0f;
-
-            while (!endingVideoPlayer.isPrepared && prepareTimer < videoPrepareTimeout)
+            // Wait for preparation to complete
+            while (!endingVideoPlayer.isPrepared)
             {
-                prepareTimer += Time.deltaTime;
-                if (prepareTimer % 1f < 0.1f)
-                    Debug.Log($"Preparing video... {prepareTimer:F1}s");
                 yield return null;
             }
-
-            if (!endingVideoPlayer.isPrepared)
-            {
-                Debug.LogError($"Video preparation timed out after {videoPrepareTimeout} seconds!");
-                // Try to play anyway - sometimes it works
-                Debug.Log("Attempting to play video anyway...");
-            }
-            else
-            {
-                Debug.Log("Video prepared successfully");
-            }
+            Debug.Log("Video prepared successfully");
         }
         else
         {
-            Debug.Log("Video already prepared (preloaded) - skipping preparation");
+            Debug.Log("Video already prepared (preloaded) - ready to play");
         }
 
-        // Fade in the canvas
+        // Activate the canvas
+        Debug.Log("Activating Ending Cutscene Canvas");
         endingCutsceneCanvas.SetActive(true);
+
+        // Fade in the canvas
         yield return StartCoroutine(FadeInCanvas(endingCutsceneCanvas, videoFadeInDuration));
 
         // Mute other audio while video plays
         MuteAllAudioExcept(endingVideoPlayer);
 
-        // Play video
-        Debug.Log("Playing video...");
+        // MANUALLY PLAY THE VIDEO
+        Debug.Log("Starting video playback with Play()");
         endingVideoPlayer.Play();
 
         // Wait for video to actually start playing
-        float startTimeout = 1f;
+        float startTimeout = 2f;
         float startTimer = 0f;
         while (!endingVideoPlayer.isPlaying && startTimer < startTimeout)
         {
@@ -465,15 +430,13 @@ public class EndingManager : MonoBehaviour
         if (!endingVideoPlayer.isPlaying)
         {
             Debug.LogError("Video failed to start playing!");
-            yield return StartCoroutine(FadeOutCanvas(endingCutsceneCanvas, fadeOutDuration));
-            endingCutsceneCanvas.SetActive(false);
-            RestoreAudio();
-            yield break;
+        }
+        else
+        {
+            Debug.Log($"Video successfully playing. Length: {endingVideoPlayer.clip.length} seconds");
         }
 
-        Debug.Log($"Video successfully playing. Length: {endingVideoPlayer.clip.length} seconds");
-
-        // Wait for video to finish
+        // Wait for video to finish - THIS IS CRITICAL
         while (endingVideoPlayer.isPlaying)
         {
             yield return null;

@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.Video; // Add this for VideoPlayer
+using UnityEngine.Video;
 
 public class AIEnerlingManager : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class AIEnerlingManager : MonoBehaviour
     public Sprite aiUltraRareNameStatsBG;
 
     [Header("Video Player Reference")]
-    public VideoPlayer endingVideoPlayer; // Reference to the VideoPlayer in EndingCutsceneCanvas
+    public VideoPlayer endingVideoPlayer;
 
     private IngredientDatabase.IngredientInfo aiEnerling;
     private GameObject spawnedAIEnerling;
@@ -71,7 +71,6 @@ public class AIEnerlingManager : MonoBehaviour
             skillCooldowns[i] = 0;
         }
 
-        // If video player not assigned, try to find it
         if (endingVideoPlayer == null)
         {
             endingVideoPlayer = FindObjectOfType<VideoPlayer>();
@@ -149,7 +148,6 @@ public class AIEnerlingManager : MonoBehaviour
     public void InitializeAIEnerling(string enerlingName, IngredientDatabase database)
     {
         ingredientDatabase = database;
-
         Debug.Log($"Initializing AI Enerling in BATTLE SCENE: {enerlingName}");
 
         aiEnerling = CreateAICopy(enerlingName, database);
@@ -176,7 +174,7 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
         UpdateAIUI();
 
-        // Preload the ending cutscene video
+        // Preload the ending cutscene video immediately
         PreloadEndingCutscene();
 
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
@@ -201,7 +199,6 @@ public class AIEnerlingManager : MonoBehaviour
         }
     }
 
-    // FIXED: Added endingCutscene to the copy
     IngredientDatabase.IngredientInfo CreateAICopy(string enerlingName, IngredientDatabase database)
     {
         var original = database.GetIngredientInfo(enerlingName);
@@ -228,11 +225,10 @@ public class AIEnerlingManager : MonoBehaviour
             skill3 = original.skill3,
             skill4 = original.skill4,
             enerlingDescription = original.enerlingDescription,
-            endingCutscene = original.endingCutscene // CRITICAL FIX: Copy the ending cutscene video
+            endingCutscene = original.endingCutscene
         };
     }
 
-    // NEW METHOD: Preload the ending cutscene video using VideoPlayer
     public void PreloadEndingCutscene()
     {
         if (aiEnerling == null)
@@ -255,9 +251,35 @@ public class AIEnerlingManager : MonoBehaviour
 
         Debug.Log($"Preloading ending cutscene for {aiEnerling.ingredientName}: {aiEnerling.endingCutscene.name}");
 
-        // Set the clip and prepare it
+        // Set the clip and prepare it immediately
         endingVideoPlayer.clip = aiEnerling.endingCutscene;
         endingVideoPlayer.Prepare();
+
+        // Optional: You can check preparation status periodically
+        StartCoroutine(CheckVideoPreparation());
+    }
+
+    IEnumerator CheckVideoPreparation()
+    {
+        float checkInterval = 0.5f;
+        float maxWaitTime = 10f;
+        float elapsedTime = 0f;
+
+        while (!endingVideoPlayer.isPrepared && elapsedTime < maxWaitTime)
+        {
+            yield return new WaitForSeconds(checkInterval);
+            elapsedTime += checkInterval;
+            Debug.Log($"Video preparation in progress... {elapsedTime}s elapsed");
+        }
+
+        if (endingVideoPlayer.isPrepared)
+        {
+            Debug.Log($"Video successfully prepared after {elapsedTime:F1}s");
+        }
+        else
+        {
+            Debug.LogWarning($"Video preparation taking longer than expected, but will continue in background");
+        }
     }
 
     void InitializeAIOrganCooldown()
@@ -1227,7 +1249,6 @@ public class AIEnerlingManager : MonoBehaviour
         UpdateAvailableSkills();
         UpdateAIUI();
 
-        // Preload the ending cutscene video
         PreloadEndingCutscene();
 
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
