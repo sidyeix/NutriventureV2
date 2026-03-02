@@ -5,6 +5,7 @@ using System.Collections;
 using StarterAssets;
 using Cinemachine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic; // ADDED: Required for List
 
 public class K3_GameSummary : MonoBehaviour
 {
@@ -97,6 +98,13 @@ public class K3_GameSummary : MonoBehaviour
     [Header("Complete Restart Settings")]
     public bool completeRestartOnConfirm = true;
     public string sceneToReload = "";
+
+    // NEW: Dynamic List for Home Button GameObject Controls
+    [Header("Home Button GameObject Controls")]
+    [SerializeField] private List<GameObject> gameObjectsToEnableOnHome = new List<GameObject>();
+    [SerializeField] private List<GameObject> gameObjectsToDisableOnHome = new List<GameObject>();
+    [SerializeField] private bool preserveOriginalGameState = false; // Set to false by default to prevent reverting
+    private Dictionary<GameObject, bool> originalEnableStates = new Dictionary<GameObject, bool>();
 
     private string[] starStateNames = new string[] { "Empty", "Star1", "Star2", "Star3" };
 
@@ -1046,6 +1054,191 @@ public class K3_GameSummary : MonoBehaviour
         }
     }
 
+    // ========== HOME BUTTON GAME OBJECT MANAGEMENT ==========
+
+    /// <summary>
+    /// Records the current active states of all game objects in the enable/disable lists
+    /// </summary>
+    private void RecordOriginalGameObjectStates()
+    {
+        originalEnableStates.Clear();
+        
+        // Record states for objects to be enabled
+        foreach (GameObject obj in gameObjectsToEnableOnHome)
+        {
+            if (obj != null && !originalEnableStates.ContainsKey(obj))
+            {
+                originalEnableStates.Add(obj, obj.activeSelf);
+                Debug.Log($"Recorded {obj.name} original state: {obj.activeSelf}");
+            }
+        }
+        
+        // Record states for objects to be disabled
+        foreach (GameObject obj in gameObjectsToDisableOnHome)
+        {
+            if (obj != null && !originalEnableStates.ContainsKey(obj))
+            {
+                originalEnableStates.Add(obj, obj.activeSelf);
+                Debug.Log($"Recorded {obj.name} original state: {obj.activeSelf}");
+            }
+        }
+        
+        Debug.Log($"Recorded original states for {originalEnableStates.Count} game objects");
+    }
+
+    /// <summary>
+    /// Applies the home button game object state changes
+    /// </summary>
+    private void ApplyHomeButtonGameObjectStates()
+    {
+        Debug.Log("=== APPLYING HOME BUTTON GAME OBJECT STATES ===");
+        
+        // Enable specified objects
+        Debug.Log($"Enabling {gameObjectsToEnableOnHome.Count} objects:");
+        foreach (GameObject obj in gameObjectsToEnableOnHome)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - Enabling: {obj.name}");
+                obj.SetActive(true);
+                Debug.Log($"  - {obj.name} is now: {(obj.activeSelf ? "ENABLED" : "DISABLED")}");
+            }
+            else
+            {
+                Debug.LogWarning("Null game object found in enable list");
+            }
+        }
+        
+        // Disable specified objects
+        Debug.Log($"Disabling {gameObjectsToDisableOnHome.Count} objects:");
+        foreach (GameObject obj in gameObjectsToDisableOnHome)
+        {
+            if (obj != null)
+            {
+                Debug.Log($"  - Disabling: {obj.name}");
+                obj.SetActive(false);
+                Debug.Log($"  - {obj.name} is now: {(obj.activeSelf ? "ENABLED" : "DISABLED")}");
+            }
+            else
+            {
+                Debug.LogWarning("Null game object found in disable list");
+            }
+        }
+        
+        Debug.Log("=== HOME BUTTON STATE APPLICATION COMPLETE ===");
+    }
+
+    /// <summary>
+    /// Restores the original game object states (if preserveOriginalGameState is true)
+    /// </summary>
+    private void RestoreOriginalGameObjectStates()
+    {
+        if (!preserveOriginalGameState) 
+        {
+            Debug.Log("Skipping restore - preserveOriginalGameState is false");
+            return;
+        }
+        
+        Debug.Log("Restoring original game object states...");
+        
+        foreach (var kvp in originalEnableStates)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.SetActive(kvp.Value);
+                Debug.Log($"Restored {kvp.Key.name} to: {kvp.Value}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Public method to add a game object to the enable list at runtime
+    /// </summary>
+    public void AddGameObjectToEnableOnHome(GameObject obj)
+    {
+        if (obj != null && !gameObjectsToEnableOnHome.Contains(obj))
+        {
+            gameObjectsToEnableOnHome.Add(obj);
+            Debug.Log($"Added {obj.name} to home button enable list");
+        }
+    }
+
+    /// <summary>
+    /// Public method to add a game object to the disable list at runtime
+    /// </summary>
+    public void AddGameObjectToDisableOnHome(GameObject obj)
+    {
+        if (obj != null && !gameObjectsToDisableOnHome.Contains(obj))
+        {
+            gameObjectsToDisableOnHome.Add(obj);
+            Debug.Log($"Added {obj.name} to home button disable list");
+        }
+    }
+
+    /// <summary>
+    /// Public method to remove a game object from both lists
+    /// </summary>
+    public void RemoveGameObjectFromHomeLists(GameObject obj)
+    {
+        if (obj == null) return;
+        
+        bool removed = false;
+        
+        if (gameObjectsToEnableOnHome.Contains(obj))
+        {
+            gameObjectsToEnableOnHome.Remove(obj);
+            removed = true;
+        }
+        
+        if (gameObjectsToDisableOnHome.Contains(obj))
+        {
+            gameObjectsToDisableOnHome.Remove(obj);
+            removed = true;
+        }
+        
+        if (removed)
+        {
+            originalEnableStates.Remove(obj);
+            Debug.Log($"Removed {obj.name} from home button lists");
+        }
+    }
+
+    /// <summary>
+    /// Clears all game object lists
+    /// </summary>
+    public void ClearHomeGameObjectLists()
+    {
+        gameObjectsToEnableOnHome.Clear();
+        gameObjectsToDisableOnHome.Clear();
+        originalEnableStates.Clear();
+        Debug.Log("Cleared all home button game object lists");
+    }
+
+    /// <summary>
+    /// Gets the list of game objects to enable on home button click
+    /// </summary>
+    public List<GameObject> GetGameObjectsToEnableOnHome()
+    {
+        return gameObjectsToEnableOnHome;
+    }
+
+    /// <summary>
+    /// Gets the list of game objects to disable on home button click
+    /// </summary>
+    public List<GameObject> GetGameObjectsToDisableOnHome()
+    {
+        return gameObjectsToDisableOnHome;
+    }
+
+    /// <summary>
+    /// Sets whether to preserve original game object states
+    /// </summary>
+    public void SetPreserveOriginalGameState(bool preserve)
+    {
+        preserveOriginalGameState = preserve;
+        Debug.Log($"Preserve original game state set to: {preserve}");
+    }
+
     public void OnRetryButtonClicked()
     {
         if (!isSummaryActive || !isGameOver || isProcessingConfirm || !isCountingAnimationComplete) 
@@ -1101,6 +1294,19 @@ public class K3_GameSummary : MonoBehaviour
 
         if (homeButton != null)
             homeButton.interactable = false;
+
+        // Record original states if needed (though we won't restore them)
+        if (preserveOriginalGameState)
+        {
+            RecordOriginalGameObjectStates();
+        }
+
+        // Apply home button game object state changes
+        ApplyHomeButtonGameObjectStates();
+        
+        // IMPORTANT: Clear the recorded states so they don't get restored
+        originalEnableStates.Clear();
+        Debug.Log("Original states cleared - changes will persist");
 
         // BOTH key collected this session AND key already in database go to spawn point
         if (keyWasCollected || keySavedToDatabase)
@@ -1163,6 +1369,9 @@ public class K3_GameSummary : MonoBehaviour
         isSummaryActive = false;
         summaryLocked = false;
         
+        // NOTE: We do NOT restore original game object states here
+        // This preserves the changes made by ApplyHomeButtonGameObjectStates()
+        
         // Finish up
         FinishHomeButtonSequence();
         
@@ -1203,6 +1412,9 @@ public class K3_GameSummary : MonoBehaviour
         isGameOver = false;
         isSummaryActive = false;
         summaryLocked = false;
+        
+        // NOTE: We do NOT restore original game object states here
+        // This preserves the changes made by ApplyHomeButtonGameObjectStates()
         
         Debug.Log($"Player at spawn position, input enabled: {playerObject.transform.position}");
         
@@ -1438,6 +1650,9 @@ public class K3_GameSummary : MonoBehaviour
 
         if (starsEarnedText != null)
             starsEarnedText.text = "0/3";
+
+        // Clear the original states dictionary
+        originalEnableStates.Clear();
 
         Debug.Log("K3 GameSummaryManager reset for new game");
     }
