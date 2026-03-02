@@ -18,22 +18,19 @@ public class PlayerEnerlingManager : MonoBehaviour
     public Sprite defendSkillSprite;
     public Sprite healSkillSprite;
 
-    [Header("Skill Button Text References")]
-    private List<Button> skillButtons = new List<Button>();
-    private List<TextMeshProUGUI> skillCooldownTexts = new List<TextMeshProUGUI>();
-    private List<TextMeshProUGUI> skillNameTexts = new List<TextMeshProUGUI>();
-
     [Header("Cooldown UI Settings")]
     public Color cooldownTextColor = Color.red;
     public Color readyTextColor = Color.white;
     public Color disabledButtonColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
     public Color enabledButtonColor = Color.white;
 
-    [Header("Cooldown Slider References")]
-    public Slider skill1CooldownSlider;
-    public Slider skill2CooldownSlider;
-    public Slider skill3CooldownSlider;
-    public Slider skill4CooldownSlider;
+    // Dynamic lists to store references to spawned button components
+    private List<Button> skillButtons = new List<Button>();
+    private List<TextMeshProUGUI> skillCooldownTexts = new List<TextMeshProUGUI>();
+    private List<Slider> skillCooldownSliders = new List<Slider>();
+    private List<TextMeshProUGUI> skillNameTexts = new List<TextMeshProUGUI>();
+    private List<Image> skillButtonImages = new List<Image>();
+    private List<GameObject> skillButtonObjects = new List<GameObject>();
 
     [Header("Current Enerling")]
     public IngredientDatabase.IngredientInfo playerEnerling;
@@ -46,12 +43,15 @@ public class PlayerEnerlingManager : MonoBehaviour
         battleManager = FindObjectOfType<BattleEnerlingManager>();
         turnSystem = FindObjectOfType<TurnSystem>();
 
-        // Initialize lists
+        // Initialize lists with 4 slots (for skills 1-4)
         for (int i = 0; i < 4; i++)
         {
             skillButtons.Add(null);
             skillCooldownTexts.Add(null);
+            skillCooldownSliders.Add(null);
             skillNameTexts.Add(null);
+            skillButtonImages.Add(null);
+            skillButtonObjects.Add(null);
         }
     }
 
@@ -63,11 +63,25 @@ public class PlayerEnerlingManager : MonoBehaviour
             return;
         }
 
-        playerEnerling = ingredientDatabase.CreateBattleCopy(enerlingName);
-        if (playerEnerling == null)
+        // IMPORTANT: Get the reference from BattleEnerlingManager instead of creating a new copy
+        if (battleManager != null)
         {
-            Debug.LogError($"Failed to create player enerling: {enerlingName}");
-            return;
+            playerEnerling = battleManager.GetBattleEnerling();
+            if (playerEnerling == null)
+            {
+                Debug.LogError("BattleEnerlingManager returned null player enerling!");
+                return;
+            }
+        }
+        else
+        {
+            // Fallback to creating a copy if battleManager not found
+            playerEnerling = ingredientDatabase.CreateBattleCopy(enerlingName);
+            if (playerEnerling == null)
+            {
+                Debug.LogError($"Failed to create player enerling: {enerlingName}");
+                return;
+            }
         }
 
         Debug.Log($"Player enerling initialized: {playerEnerling.ingredientName}");
@@ -84,15 +98,16 @@ public class PlayerEnerlingManager : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        skillButtons.Clear();
-        skillCooldownTexts.Clear();
-        skillNameTexts.Clear();
-
-        // Reset slider references
-        skill1CooldownSlider = null;
-        skill2CooldownSlider = null;
-        skill3CooldownSlider = null;
-        skill4CooldownSlider = null;
+        // Reset lists
+        for (int i = 0; i < 4; i++)
+        {
+            skillButtons[i] = null;
+            skillCooldownTexts[i] = null;
+            skillCooldownSliders[i] = null;
+            skillNameTexts[i] = null;
+            skillButtonImages[i] = null;
+            skillButtonObjects[i] = null;
+        }
 
         // Create 4 skill buttons
         for (int i = 1; i <= 4; i++)
@@ -112,6 +127,7 @@ public class PlayerEnerlingManager : MonoBehaviour
         GameObject buttonObj = Instantiate(skillButtonPrefab, skillsUIPanel);
         buttonObj.name = $"Skill{skillNumber}Button";
 
+        // Get button component
         Button button = buttonObj.GetComponent<Button>();
         if (button == null)
         {
@@ -121,31 +137,31 @@ public class PlayerEnerlingManager : MonoBehaviour
 
         // Get skill info
         IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
+        int buttonIndex = skillNumber - 1;
 
-        // Find UI elements by name (based on your prefab structure)
-        TextMeshProUGUI damageValueText = FindChildComponent<TextMeshProUGUI>(buttonObj, "DamageValue");
-        Image skillTypeImage = FindChildComponent<Image>(buttonObj, "SkillType");
-        TextMeshProUGUI skillNameText = FindChildComponent<TextMeshProUGUI>(buttonObj, "SkillName");
-        Slider skillCooldownSlider = FindChildComponent<Slider>(buttonObj, "SkillCooldownSlider");
+        // Store references
+        skillButtonObjects[buttonIndex] = buttonObj;
+        skillButtons[buttonIndex] = button;
+        skillButtonImages[buttonIndex] = buttonObj.GetComponent<Image>();
 
-        // Set skill name
+        // Find UI elements by name based on your hierarchy
+        // SkillName (child of the button)
+        TextMeshProUGUI skillNameText = buttonObj.transform.Find("SkillName")?.GetComponent<TextMeshProUGUI>();
         if (skillNameText != null && skill != null)
         {
             skillNameText.text = skill.skillName;
-            skillNameTexts.Add(skillNameText);
-        }
-        else
-        {
-            skillNameTexts.Add(null);
+            skillNameTexts[buttonIndex] = skillNameText;
         }
 
-        // Set base value
+        // DamageValue (child of the button)
+        TextMeshProUGUI damageValueText = buttonObj.transform.Find("DamageValue")?.GetComponent<TextMeshProUGUI>();
         if (damageValueText != null && skill != null)
         {
             damageValueText.text = skill.GetValue().ToString();
         }
 
-        // Set skill type image
+        // SkillType (child of the button)
+        Image skillTypeImage = buttonObj.transform.Find("SkillType")?.GetComponent<Image>();
         if (skillTypeImage != null && skill != null)
         {
             switch (skill.type)
@@ -163,28 +179,30 @@ public class PlayerEnerlingManager : MonoBehaviour
             skillTypeImage.preserveAspect = true;
         }
 
-        // Initialize cooldown slider
-        if (skillCooldownSlider != null && skill != null)
+        // SkillCooldownSlider (child of the button)
+        Slider cooldownSlider = buttonObj.transform.Find("SkillCooldownSlider")?.GetComponent<Slider>();
+        if (cooldownSlider != null && skill != null)
         {
-            if (skill.cooldownTurns > 0)
-            {
-                skillCooldownSlider.maxValue = skill.cooldownTurns;
-                skillCooldownSlider.value = 0; // Start at 0 (ready)
-                skillCooldownSlider.gameObject.SetActive(false); // Hidden when ready
-            }
-            else
-            {
-                skillCooldownSlider.gameObject.SetActive(false);
-            }
+            skillCooldownSliders[buttonIndex] = cooldownSlider;
 
-            // Store reference to cooldown slider
-            switch (skillNumber)
-            {
-                case 1: skill1CooldownSlider = skillCooldownSlider; break;
-                case 2: skill2CooldownSlider = skillCooldownSlider; break;
-                case 3: skill3CooldownSlider = skillCooldownSlider; break;
-                case 4: skill4CooldownSlider = skillCooldownSlider; break;
-            }
+            // Configure slider
+            cooldownSlider.minValue = 0;
+            cooldownSlider.maxValue = skill.cooldownTurns > 0 ? skill.cooldownTurns : 1;
+            cooldownSlider.value = 0;
+            cooldownSlider.gameObject.SetActive(false); // Hidden when ready
+        }
+
+        // CooldownText (if it exists as a separate child)
+        TextMeshProUGUI cooldownText = buttonObj.transform.Find("CooldownText")?.GetComponent<TextMeshProUGUI>();
+        if (cooldownText == null)
+        {
+            // If not in prefab, create it
+            cooldownText = CreateCooldownText(buttonObj);
+        }
+        skillCooldownTexts[buttonIndex] = cooldownText;
+        if (cooldownText != null)
+        {
+            cooldownText.gameObject.SetActive(false);
         }
 
         // Set button image (skill icon)
@@ -194,7 +212,15 @@ public class PlayerEnerlingManager : MonoBehaviour
             buttonImage.sprite = skill.skillSprite;
         }
 
-        // Create cooldown text object
+        // Add click listener
+        int skillNum = skillNumber;
+        button.onClick.AddListener(() => OnSkillButtonClicked(skillNum));
+
+        Debug.Log($"Created Skill {skillNumber} button with cooldown: {skill?.cooldownTurns ?? 0}");
+    }
+
+    TextMeshProUGUI CreateCooldownText(GameObject buttonObj)
+    {
         GameObject cooldownObj = new GameObject("CooldownText");
         cooldownObj.transform.SetParent(buttonObj.transform);
         cooldownObj.transform.localPosition = Vector3.zero;
@@ -206,27 +232,8 @@ public class PlayerEnerlingManager : MonoBehaviour
         cooldownText.fontStyle = FontStyles.Bold;
         cooldownText.color = cooldownTextColor;
         cooldownText.raycastTarget = false;
-        cooldownText.gameObject.SetActive(false);
 
-        skillCooldownTexts.Add(cooldownText);
-        skillButtons.Add(button);
-
-        // Add click listener
-        int skillNum = skillNumber; // Capture for closure
-        button.onClick.AddListener(() => OnSkillButtonClicked(skillNum));
-
-        Debug.Log($"Created Skill {skillNumber} button with cooldown: {skill?.cooldownTurns ?? 0}");
-    }
-
-    // Helper method to find child components
-    private T FindChildComponent<T>(GameObject parent, string childName) where T : Component
-    {
-        Transform childTransform = parent.transform.Find(childName);
-        if (childTransform != null)
-        {
-            return childTransform.GetComponent<T>();
-        }
-        return null;
+        return cooldownText;
     }
 
     IngredientDatabase.SkillInfo GetSkillByNumber(int skillNumber)
@@ -321,15 +328,14 @@ public class PlayerEnerlingManager : MonoBehaviour
         if (buttonIndex < 0 || buttonIndex >= skillButtons.Count || skillButtons[buttonIndex] == null)
             return;
 
-        bool isReady = playerEnerling.IsSkillReady(skillNumber);
+        // Get fresh cooldown value from playerEnerling
+        int cooldown = GetSkillCooldownValue(skillNumber);
+        bool isReady = (cooldown == 0);
+
         Button button = skillButtons[buttonIndex];
         TextMeshProUGUI cooldownText = skillCooldownTexts[buttonIndex];
-
-        // Get skill cooldown
-        int cooldown = GetSkillCooldownValue(skillNumber);
-
-        // Get the cooldown slider
-        Slider cooldownSlider = GetCooldownSliderByNumber(skillNumber);
+        Slider cooldownSlider = skillCooldownSliders[buttonIndex];
+        Image buttonImage = skillButtonImages[buttonIndex];
 
         // Get skill info for max cooldown
         IngredientDatabase.SkillInfo skill = GetSkillByNumber(skillNumber);
@@ -339,18 +345,14 @@ public class PlayerEnerlingManager : MonoBehaviour
         {
             if (cooldown > 0)
             {
-                // Skill is on cooldown
+                // Skill is on cooldown - show slider
+                // IMPORTANT: Set maxValue to the skill's cooldownTurns
                 cooldownSlider.maxValue = skill.cooldownTurns;
-                // Slider shows progress from 0 to max
-                // When cooldown = max (just used): slider value = 0
-                // When cooldown = 1 (almost ready): slider value = max-1
-                // When cooldown = 0 (ready): slider hidden
-                int remainingCooldown = cooldown;
-                int currentSliderValue = skill.cooldownTurns - remainingCooldown;
-                cooldownSlider.value = currentSliderValue;
+                // Show the current cooldown value (not the inverse)
+                cooldownSlider.value = cooldown;
                 cooldownSlider.gameObject.SetActive(true);
 
-                Debug.Log($"Skill {skillNumber}: Cooldown={cooldown}, Max={skill.cooldownTurns}, SliderValue={currentSliderValue}");
+                Debug.Log($"Skill {skillNumber}: Cooldown={cooldown}, Max={skill.cooldownTurns}, SliderValue={cooldown}");
             }
             else
             {
@@ -363,7 +365,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         button.interactable = isReady;
 
         // Update button color
-        Image buttonImage = button.GetComponent<Image>();
         if (buttonImage != null)
         {
             buttonImage.color = isReady ? enabledButtonColor : disabledButtonColor;
@@ -387,9 +388,11 @@ public class PlayerEnerlingManager : MonoBehaviour
         Debug.Log($"Skill {skillNumber}: Ready={isReady}, Cooldown={cooldown}, ButtonInteractable={button.interactable}");
     }
 
-    // Helper method to get cooldown value
+    // Helper method to get cooldown value directly from playerEnerling
     private int GetSkillCooldownValue(int skillNumber)
     {
+        if (playerEnerling == null) return 0;
+
         switch (skillNumber)
         {
             case 1: return playerEnerling.skill1Cooldown;
@@ -400,18 +403,6 @@ public class PlayerEnerlingManager : MonoBehaviour
         }
     }
 
-    private Slider GetCooldownSliderByNumber(int skillNumber)
-    {
-        switch (skillNumber)
-        {
-            case 1: return skill1CooldownSlider;
-            case 2: return skill2CooldownSlider;
-            case 3: return skill3CooldownSlider;
-            case 4: return skill4CooldownSlider;
-            default: return null;
-        }
-    }
-
     IEnumerator FlashButtonCooldown(int skillNumber)
     {
         int buttonIndex = skillNumber - 1;
@@ -419,7 +410,7 @@ public class PlayerEnerlingManager : MonoBehaviour
             yield break;
 
         Button button = skillButtons[buttonIndex];
-        Image buttonImage = button.GetComponent<Image>();
+        Image buttonImage = skillButtonImages[buttonIndex];
         if (buttonImage == null) yield break;
 
         Color originalColor = buttonImage.color;
@@ -433,27 +424,23 @@ public class PlayerEnerlingManager : MonoBehaviour
             buttonImage.color = originalColor;
             yield return new WaitForSeconds(0.1f);
         }
-
-        // Restore original state
-        UpdateSkillButton(skillNumber);
     }
 
     public void SetButtonsInteractable(bool interactable)
     {
-        // Only enable buttons that are not on cooldown
-        if (playerEnerling != null)
-        {
-            for (int i = 1; i <= 4; i++)
-            {
-                int buttonIndex = i - 1;
-                if (buttonIndex >= 0 && buttonIndex < skillButtons.Count && skillButtons[buttonIndex] != null)
-                {
-                    bool skillReady = playerEnerling.IsSkillReady(i);
-                    skillButtons[buttonIndex].interactable = interactable && skillReady;
+        if (playerEnerling == null) return;
 
-                    // Update visual state
-                    UpdateSkillButton(i);
-                }
+        for (int i = 1; i <= 4; i++)
+        {
+            int buttonIndex = i - 1;
+            if (buttonIndex >= 0 && buttonIndex < skillButtons.Count && skillButtons[buttonIndex] != null)
+            {
+                bool skillReady = playerEnerling.IsSkillReady(i);
+                // Only set interactable if the skill is ready AND we want it interactable
+                skillButtons[buttonIndex].interactable = interactable && skillReady;
+
+                // Update visual state immediately
+                UpdateSkillButton(i);
             }
         }
     }
@@ -473,9 +460,11 @@ public class PlayerEnerlingManager : MonoBehaviour
     {
         if (playerEnerling != null)
         {
-            // Reduce cooldowns
+            // Reduce cooldowns by 1 each turn
             playerEnerling.ReduceCooldowns();
-            Debug.Log("Reduced player skill cooldowns");
+            Debug.Log("Reduced player skill cooldowns. New values: " +
+                $"S1:{playerEnerling.skill1Cooldown}, S2:{playerEnerling.skill2Cooldown}, " +
+                $"S3:{playerEnerling.skill3Cooldown}, S4:{playerEnerling.skill4Cooldown}");
 
             // Update all skill buttons
             UpdateAllSkillButtons();
@@ -484,10 +473,13 @@ public class PlayerEnerlingManager : MonoBehaviour
 
     void Update()
     {
-        // Update UI periodically
-        if (Time.frameCount % 30 == 0) // Update every 30 frames
+        // Update UI more frequently during player turn to ensure cooldowns are accurate
+        if (turnSystem != null && turnSystem.IsPlayerTurn() && playerEnerling != null)
         {
-            UpdateAllSkillButtons();
+            if (Time.frameCount % 15 == 0)
+            {
+                UpdateAllSkillButtons();
+            }
         }
     }
 
@@ -501,16 +493,14 @@ public class PlayerEnerlingManager : MonoBehaviour
             }
         }
 
+        // Clear all lists
         skillButtons.Clear();
         skillCooldownTexts.Clear();
+        skillCooldownSliders.Clear();
         skillNameTexts.Clear();
+        skillButtonImages.Clear();
+        skillButtonObjects.Clear();
 
         playerEnerling = null;
-
-        // Reset cooldown sliders
-        skill1CooldownSlider = null;
-        skill2CooldownSlider = null;
-        skill3CooldownSlider = null;
-        skill4CooldownSlider = null;
     }
 }
