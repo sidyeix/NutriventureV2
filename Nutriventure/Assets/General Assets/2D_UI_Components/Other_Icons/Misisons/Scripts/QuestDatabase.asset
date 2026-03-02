@@ -569,7 +569,7 @@ MonoBehaviour:
         type: 0
         targetID: 
         requiredAmount: 15
-        currentAmount: 3
+        currentAmount: 6
         isOptional: 0
         isCompleted: 0
       rewards:
