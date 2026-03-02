@@ -77073,6 +77073,16 @@ MonoBehaviour:
   joystickCanvas: {fileID: 1580538452}
   completeRestartOnConfirm: 1
   sceneToReload: 
+  gameObjectsToEnableOnHome:
+  - {fileID: 657271162}
+  - {fileID: 1276901136}
+  - {fileID: 494335204}
+  gameObjectsToDisableOnHome:
+  - {fileID: 1066917611}
+  - {fileID: 308117034}
+  - {fileID: 2099173352}
+  - {fileID: 351884216}
+  preserveOriginalGameState: 0
 --- !u!4 &930956682 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8339399946432816022, guid: f1c73e2a311b6424a8ba766dc5033871, type: 3}
@@ -94803,7 +94813,7 @@ Transform:
   m_GameObject: {fileID: 1130043143}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.81836146, z: -0, w: 0.5747039}
-  m_LocalPosition: {x: -491.8162, y: 0.14, z: 100.39303}
+  m_LocalPosition: {x: -491.568, y: 0.14, z: 99.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
