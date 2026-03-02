@@ -1449,7 +1449,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2434415942222693236, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
       propertyPath: m_LocalPosition.x
@@ -13570,6 +13570,7 @@ MonoBehaviour:
   skinButton: {fileID: 1053241513}
   backButton: {fileID: 1128667653}
   characterButton: {fileID: 406014555}
+  exitButton: {fileID: 0}
   characterSelectionPanel: {fileID: 641576472}
   fadeDuration: 0.65
   elementFadeDelay: 0.1
@@ -13579,6 +13580,8 @@ MonoBehaviour:
   skinSelectionController: {fileID: 2137998982}
   platformTrigger: {fileID: 0}
   playerArmatureAnimator: {fileID: 0}
+  sfxAudioSource: {fileID: 0}
+  buttonClickSound: {fileID: 0}
 --- !u!4 &458180562
 Transform:
   m_ObjectHideFlags: 0
@@ -29184,6 +29187,9 @@ MonoBehaviour:
   iconDatabase: {fileID: 0}
   frameDatabase: {fileID: 0}
   achievementDatabase: {fileID: 0}
+  ingredientDatabase: {fileID: 0}
+  enableDebugLogs: 1
+  autoSaveOnQuit: 1
 --- !u!4 &966705938
 Transform:
   m_ObjectHideFlags: 0
@@ -47321,7 +47327,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5545957314174723285, guid: cf46ddbcd33ac4544a75969cb9acee8e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9003757455743408921, guid: cf46ddbcd33ac4544a75969cb9acee8e, type: 3}
       propertyPath: jump
@@ -56300,6 +56306,9 @@ MonoBehaviour:
   fadeOutDuration: 0.5
   displayDuration: 2
   lockedMessageText: {fileID: 0}
+  sfxAudioSource: {fileID: 0}
+  errorSound: {fileID: 0}
+  buttonClickSound: {fileID: 0}
   maxColumns: 3
   buttonSpacing: 20
   buttonSize: {x: 350, y: 450}
@@ -67614,16 +67623,29 @@ MonoBehaviour:
   deselectedColor: {r: 0.588, g: 0.588, b: 0.588, a: 1}
   lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
   defaultSkinIcon: {fileID: 0}
-  skinErrorCanvasGroup: {fileID: 0}
-  skinErrorMessageText: {fileID: 0}
-  errorFadeInDuration: 0.3
-  errorFadeOutDuration: 0.5
-  errorDisplayDuration: 2
+  errorFeedbackCanvasGroup: {fileID: 0}
+  errorFeedbackText: {fileID: 0}
+  successFeedbackCanvasGroup: {fileID: 0}
+  successFeedbackText: {fileID: 0}
+  feedbackFadeInDuration: 0.3
+  feedbackDisplayDuration: 2
+  feedbackFadeOutDuration: 0.5
+  powerUpPanel1: {fileID: 0}
+  powerUpPanel2: {fileID: 0}
+  powerUpIcon1: {fileID: 0}
+  powerUpIcon2: {fileID: 0}
+  powerUpAmount1: {fileID: 0}
+  powerUpAmount2: {fileID: 0}
+  sfxAudioSource: {fileID: 0}
+  successSound: {fileID: 0}
+  errorSound: {fileID: 0}
+  buttonClickSound: {fileID: 0}
   characterSelectionCamera: {fileID: 0}
   skinSelectionCamera: {fileID: 0}
   characterSelectionCanvas: {fileID: 0}
   skinSelectionCanvas: {fileID: 0}
   characterControlsCanvas: {fileID: 0}
+  ingredientDatabase: {fileID: 0}
 --- !u!4 &2137998983
 Transform:
   m_ObjectHideFlags: 0
