@@ -5,7 +5,7 @@ using System.Collections;
 using StarterAssets;
 using Cinemachine;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic; // ADDED: Required for List
+using System.Collections.Generic; // Required for List
 
 public class K2_GameSummary : MonoBehaviour
 {
@@ -113,7 +113,7 @@ public class K2_GameSummary : MonoBehaviour
     public bool completeRestartOnConfirm = true;
     public string sceneToReload = "";
 
-    // NEW: Dynamic List for Home Button GameObject Controls
+    // Dynamic List for Home Button GameObject Controls
     [Header("Home Button GameObject Controls")]
     [SerializeField] private List<GameObject> gameObjectsToEnableOnHome = new List<GameObject>();
     [SerializeField] private List<GameObject> gameObjectsToDisableOnHome = new List<GameObject>();
@@ -692,7 +692,7 @@ public class K2_GameSummary : MonoBehaviour
         if (panelCanvasGroup != null)
             StartCoroutine(FadePanel(0f, 1f, fadeInDuration));
             
-        // NEW: Disable home button on lose
+        // Disable home button on lose
         if (!isVictory && homeButton != null)
         {
             homeButton.interactable = false;
@@ -1412,7 +1412,7 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, Total={calculatedCoinsEarned}");
     }
 
-    // Save key to database when Continue button is clicked
+    // Save key to database only when continue button is clicked
     private void SaveKeyToDatabase()
     {
         if (keySavedToDatabase || GameDataManager.Instance == null) return;
@@ -1439,7 +1439,7 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
-    #region Home Button GameObject Management (NEW)
+    #region Home Button GameObject Management
 
     /// <summary>
     /// Records the current active states of all game objects in the enable/disable lists
@@ -1616,43 +1616,7 @@ public class K2_GameSummary : MonoBehaviour
 
     #endregion
 
-    #region Button Handlers
-
-    public void OnRestartButtonClicked()
-    {
-        if (!isSummaryActive || !isGameOver || isProcessingConfirm) return;
-        
-        // Check if counting animation is complete
-        if (!isCountingAnimationComplete)
-        {
-            Debug.Log("Cannot confirm - counting animation still in progress!");
-            return;
-        }
-        
-        isProcessingConfirm = true;
-
-        PlayButtonClickSound();
-        AddCoinsToDatabase();
-
-        // Save key if it was collected (only if we're doing a restart that saves)
-        if (keyWasCollected && !keySavedToDatabase)
-        {
-            SaveKeyToDatabase();
-        }
-
-        if (restartButton != null)
-            restartButton.interactable = false;
-
-        if (completeRestartOnConfirm)
-        {
-            Debug.Log("Complete restart requested - reloading scene");
-            StartCoroutine(CompleteRestartGame());
-        }
-        else
-        {
-            StartCoroutine(HidePanelAndRestartGame());
-        }
-    }
+    #region Button Handlers - FIXED VERSION
 
     public void OnHomeButtonClicked()
     {
@@ -1665,7 +1629,7 @@ public class K2_GameSummary : MonoBehaviour
             return;
         }
         
-        // NEW: Don't proceed if on lose screen (home button disabled)
+        // Don't proceed if on lose screen (home button disabled)
         if (!isVictory)
         {
             Debug.Log("Home button is disabled on lose screen");
@@ -1680,39 +1644,28 @@ public class K2_GameSummary : MonoBehaviour
         if (homeButton != null)
             homeButton.interactable = false;
 
-        // NEW: Record original states before applying home button changes
+        // Record original states before applying home button changes
         if (preserveOriginalGameState)
         {
             RecordOriginalGameObjectStates();
         }
 
-        // NEW: Apply home button game object state changes
+        // Apply home button game object state changes
         ApplyHomeButtonGameObjectStates();
 
-        // BOTH key collected this session AND key already in database go to pre-summary state
-        if (keyWasCollected || keySavedToDatabase)
+        // Check if key was collected this session
+        if (keyWasCollected)
         {
-            // Key was collected this session OR already in database
-            // Both go to pre-summary state
-            Debug.Log($"Key state - Collected this session: {keyWasCollected}, Saved to database: {keySavedToDatabase}");
-            
-            if (keyWasCollected && !keySavedToDatabase)
-            {
-                // Key collected this session AND not saved yet - show animation
-                Debug.Log("Key collected this session - showing KeyUnlockedAnimation");
-                StartCoroutine(ReturnToPreSummaryStateAndShowAnimation());
-            }
-            else
-            {
-                // Key already in database - just return to pre-summary state without animation
-                Debug.Log("Key already in database - returning to pre-summary state without animation");
-                StartCoroutine(ReturnToPreSummaryStateOnly());
-            }
+            // Key was collected this session - show animation
+            // IMPORTANT: Do NOT save key to database here
+            // Key will be saved when player clicks continue button
+            Debug.Log("Key collected this session - showing KeyUnlockedAnimation");
+            StartCoroutine(ReturnToPreSummaryStateAndShowAnimation());
         }
         else
         {
-            // No key at all - return to original game state
-            Debug.Log("No key - returning to game fully");
+            // No key collected - return to game
+            Debug.Log("No key collected - returning to game fully");
             StartCoroutine(ReturnToGameFully());
         }
     }
@@ -1764,12 +1717,23 @@ public class K2_GameSummary : MonoBehaviour
         if (keyUnlockedController != null)
         {
             Debug.Log("Showing KeyUnlockedAnimation via controller");
+            // Pass the continue callback
             keyUnlockedController.ShowKeyUnlockedCanvas(OnKeyAnimationContinue);
         }
         else if (keyUnlockedAnimation != null)
         {
             Debug.LogWarning("KeyUnlockedController not found, activating GameObject directly");
             keyUnlockedAnimation.SetActive(true);
+            
+            // Find and setup continue button manually if needed
+            Button continueBtn = keyUnlockedAnimation.GetComponentInChildren<Button>();
+            if (continueBtn != null)
+            {
+                // Remove any existing listeners to avoid duplicates
+                continueBtn.onClick.RemoveAllListeners();
+                continueBtn.onClick.AddListener(OnContinueKeyButtonClicked);
+                Debug.Log("Setup continue button manually");
+            }
         }
         else
         {
@@ -1818,7 +1782,7 @@ public class K2_GameSummary : MonoBehaviour
         
         Debug.Log($"Player at spawn position, input enabled: {playerObject.transform.position}");
         
-        // NEW: Restore original game object states if needed
+        // Restore original game object states if needed
         if (preserveOriginalGameState)
         {
             RestoreOriginalGameObjectStates();
@@ -1871,7 +1835,7 @@ public class K2_GameSummary : MonoBehaviour
         isSummaryActive = false;
         summaryLocked = false;
         
-        // NEW: Restore original game object states if needed
+        // Restore original game object states if needed
         if (preserveOriginalGameState)
         {
             RestoreOriginalGameObjectStates();
@@ -1888,11 +1852,73 @@ public class K2_GameSummary : MonoBehaviour
     {
         Debug.Log("Key animation continue callback received");
         
-        // Save the key to database
+        // Save the key to database - ONLY NOW
         SaveKeyToDatabase();
+        
+        // Hide KeyUnlockedAnimation
+        if (keyUnlockedController != null && keyUnlockedController.IsShowing())
+        {
+            keyUnlockedController.ForceHide();
+        }
+        else if (keyUnlockedAnimation != null)
+        {
+            keyUnlockedAnimation.SetActive(false);
+        }
+        
+        // IMPORTANT: Update the GlobalMapManager to enable Preservia area button
+        UpdateGlobalMapManager();
         
         // Finish the home button sequence
         FinishHomeButtonSequence();
+    }
+
+    // Handle ContinueKeyButton click (direct button reference, separate from controller callback)
+    public void OnContinueKeyButtonClicked()
+    {
+        Debug.Log("ContinueKeyButton clicked directly");
+        
+        // Save the key to database - ONLY NOW
+        SaveKeyToDatabase();
+        
+        // Hide KeyUnlockedAnimation
+        if (keyUnlockedController != null && keyUnlockedController.IsShowing())
+        {
+            keyUnlockedController.ForceHide();
+        }
+        else if (keyUnlockedAnimation != null)
+        {
+            keyUnlockedAnimation.SetActive(false);
+        }
+        
+        // IMPORTANT: Update the GlobalMapManager to enable Preservia area button
+        UpdateGlobalMapManager();
+        
+        // Finish the sequence
+        FinishHomeButtonSequence();
+    }
+
+    // New method to update GlobalMapManager when key is saved
+    private void UpdateGlobalMapManager()
+    {
+        Debug.Log("Updating GlobalMapManager to enable Preservia area button");
+        
+        // Find the GlobalMapManager in the scene
+        GlobalMapManager globalMapManager = FindObjectOfType<GlobalMapManager>();
+        
+        if (globalMapManager != null)
+        {
+            // Call the public method to update the kingdom buttons
+            globalMapManager.UpdateKingdomButtons();
+            
+            // Also update the OCR scanner visibility if needed
+            globalMapManager.UpdateOCRScannerObjectVisibility();
+            
+            Debug.Log("GlobalMapManager updated successfully - Preservia area button should now be enabled");
+        }
+        else
+        {
+            Debug.LogWarning("GlobalMapManager not found in scene. The Preservia area button may not update until scene reload.");
+        }
     }
 
     // Common cleanup for home button sequence
@@ -1916,27 +1942,59 @@ public class K2_GameSummary : MonoBehaviour
         Debug.Log("Home button sequence complete");
     }
 
-    // Handle ContinueKeyButton click (direct button reference, separate from controller callback)
-    public void OnContinueKeyButtonClicked()
+    public void OnRestartButtonClicked()
     {
-        Debug.Log("ContinueKeyButton clicked directly");
+        if (!isSummaryActive || !isGameOver || isProcessingConfirm) return;
         
-        // Save the key to database
-        SaveKeyToDatabase();
-        
-        // Hide KeyUnlockedAnimation
-        if (keyUnlockedController != null && keyUnlockedController.IsShowing())
+        // Check if counting animation is complete
+        if (!isCountingAnimationComplete)
         {
-            // Controller will handle hiding through its own method
-            // We just need to wait for it
-        }
-        else if (keyUnlockedAnimation != null)
-        {
-            keyUnlockedAnimation.SetActive(false);
+            Debug.Log("Cannot confirm - counting animation still in progress!");
+            return;
         }
         
-        // Finish the sequence
-        FinishHomeButtonSequence();
+        isProcessingConfirm = true;
+
+        PlayButtonClickSound();
+        AddCoinsToDatabase();
+
+        // Save key if it was collected (only if we're doing a restart that saves)
+        if (keyWasCollected && !keySavedToDatabase)
+        {
+            SaveKeyToDatabase();
+        }
+
+        if (restartButton != null)
+            restartButton.interactable = false;
+
+        if (completeRestartOnConfirm)
+        {
+            Debug.Log("Complete restart requested - reloading scene");
+            StartCoroutine(CompleteRestartGame());
+        }
+        else
+        {
+            StartCoroutine(HidePanelAndRestartGame());
+        }
+    }
+
+    #endregion
+
+    #region Game Restart
+
+    private void RestartGame()
+    {
+        Debug.Log("Restarting game...");
+
+        SwitchToPlayerCameraWithBlend();
+        ResetGameState();
+        RespawnAllProducts();
+        EnablePlayerInput();
+        EnsureGameMode();
+        ResetManager();
+
+        summaryLocked = false;
+        Debug.Log("Game restarted - Ready to play again!");
     }
 
     private IEnumerator HidePanelAndRestartGame()
@@ -1976,30 +2034,25 @@ public class K2_GameSummary : MonoBehaviour
         ReloadCurrentScene();
     }
 
-    private void PlayButtonClickSound()
+    private void ReloadCurrentScene()
     {
-        AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
-        if (audioHandler != null)
-            InvokeMethodIfExists(audioHandler, "PlayButtonClick");
+        Debug.Log("Reloading scene for complete restart...");
+        
+        string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
+            SceneManager.GetActiveScene().name : sceneToReload;
+        
+        ResetPersistentData();
+        
+        SceneManager.LoadScene(sceneName);
     }
 
-    #endregion
-
-    #region Game Restart
-
-    private void RestartGame()
+    private void ResetPersistentData()
     {
-        Debug.Log("Restarting game...");
-
-        SwitchToPlayerCameraWithBlend();
-        ResetGameState();
-        RespawnAllProducts();
-        EnablePlayerInput();
-        EnsureGameMode();
-        ResetManager();
-
-        summaryLocked = false;
-        Debug.Log("Game restarted - Ready to play again!");
+        Debug.Log("Resetting persistent data...");
+        
+        K2_CollectKey.GlobalResetAllKeys();
+        
+        Debug.Log("Persistent data reset complete");
     }
 
     private void ResetGameState()
@@ -2136,35 +2189,17 @@ public class K2_GameSummary : MonoBehaviour
         if (starsEarnedText != null)
             starsEarnedText.text = "0/3";
 
-        // NEW: Clear the original states dictionary
+        // Clear the original states dictionary
         originalEnableStates.Clear();
 
         Debug.Log($"GameSummaryManager reset - keyWasCollected: {keyWasCollected}, keySavedToDatabase: {keySavedToDatabase}");
     }
 
-    #endregion
-
-    #region Complete Scene Reload
-
-    private void ReloadCurrentScene()
+    private void PlayButtonClickSound()
     {
-        Debug.Log("Reloading scene for complete restart...");
-        
-        string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
-            SceneManager.GetActiveScene().name : sceneToReload;
-        
-        ResetPersistentData();
-        
-        SceneManager.LoadScene(sceneName);
-    }
-
-    private void ResetPersistentData()
-    {
-        Debug.Log("Resetting persistent data...");
-        
-        K2_CollectKey.GlobalResetAllKeys();
-        
-        Debug.Log("Persistent data reset complete");
+        AudioHandler audioHandler = FindObjectOfType<AudioHandler>();
+        if (audioHandler != null)
+            InvokeMethodIfExists(audioHandler, "PlayButtonClick");
     }
 
     #endregion

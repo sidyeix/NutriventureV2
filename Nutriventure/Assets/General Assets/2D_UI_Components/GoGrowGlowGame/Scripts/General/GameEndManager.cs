@@ -1199,7 +1199,7 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    // 🔑 NEW METHOD: Show Key Unlocked Canvas
+    // 🔑 Show Key Unlocked Canvas
     private void ShowKeyUnlockedCanvas()
     {
         Debug.Log($"🔑 Showing Key Unlocked Canvas for {pendingKeyName}");
@@ -1232,7 +1232,7 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    // 🔑 NEW METHOD: Handle Continue Button Click
+    // 🔑 Handle Continue Button Click
     private void OnKeyUnlockedContinueClicked()
     {
         Debug.Log($"🔑 Continue button clicked - saving {pendingKeyName} key now");
@@ -1243,12 +1243,19 @@ public class GameEndManager : MonoBehaviour
         // Hide the key unlocked canvas
         if (keyUnlockedCanvas != null)
             keyUnlockedCanvas.SetActive(false);
-            
-        // Now return to lobby
+        
+        // Small delay to ensure event is processed before returning to lobby
+        StartCoroutine(DelayedReturnToLobby());
+    }
+
+    private IEnumerator DelayedReturnToLobby()
+    {
+        // Wait a frame to ensure the KeyCollectionEvents are processed
+        yield return null;
         ReturnToLobby();
     }
 
-    // 🔑 NEW METHOD: Actually save the key to GameData
+    // 🔑 Actually save the key to GameData and update UI
     private void ActuallySaveKey()
     {
         if (!pendingKeyUnlock || string.IsNullOrEmpty(pendingKeyName))
@@ -1279,17 +1286,17 @@ public class GameEndManager : MonoBehaviour
                 break;
         }
         
-        // Trigger the event for UI updates
+        // Trigger the event for UI updates (this will update Global Map)
         KeyCollectionEvents.TriggerKeyCollected(pendingKeyName);
         
-        Debug.Log($"🔑 Key '{pendingKeyName}' saved successfully!");
+        Debug.Log($"🔑 Key '{pendingKeyName}' saved successfully! Global Map button should now be enabled.");
         
         // Reset pending flag
         pendingKeyUnlock = false;
         pendingKeyName = "";
     }
 
-    // 🔑 NEW METHOD: Return to lobby (extracted from OnHomeClicked)
+    // 🔑 Return to lobby
     private void ReturnToLobby()
     {
         Debug.Log("Returning to lobby...");
