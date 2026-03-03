@@ -23,9 +23,9 @@ public class GlobalMapManager : MonoBehaviour
     [SerializeField] private string kingdom4Scene = "6_kingdom4";
 
     [Header("OCR Scanner Object")]
-[SerializeField] private GameObject ocrScannerObject;
+    [SerializeField] private GameObject ocrScannerObject;
 
-    private void Start()
+    public void Start()
     {
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
@@ -36,66 +36,84 @@ public class GlobalMapManager : MonoBehaviour
         UpdateOCRScannerObjectVisibility();
     }
 
-    private void UpdateOCRScannerObjectVisibility()
-{
-    if (ocrScannerObject == null)
+    public void UpdateOCRScannerObjectVisibility()
     {
-        Debug.LogWarning("OCR Scanner Object not assigned!");
-        return;
+        if (ocrScannerObject == null)
+        {
+            Debug.LogWarning("OCR Scanner Object not assigned!");
+            return;
+        }
+
+        if (GameDataManager.Instance == null || 
+            GameDataManager.Instance.CurrentGameData == null)
+        {
+            Debug.LogWarning("GameDataManager not ready.");
+            ocrScannerObject.SetActive(false);
+            return;
+        }
+
+        bool hasOCRKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+
+        ocrScannerObject.SetActive(hasOCRKey);
+
+        Debug.Log("Global Map - OCR Scanner Object is now: " + 
+                  (hasOCRKey ? "ACTIVE" : "INACTIVE"));
     }
 
-    if (GameDataManager.Instance == null || 
-        GameDataManager.Instance.CurrentGameData == null)
+    public void OnEnable()
     {
-        Debug.LogWarning("GameDataManager not ready.");
-        ocrScannerObject.SetActive(false);
-        return;
+        // Listen for ALL key collection events
+        KeyCollectionEvents.OnKeyCollected += OnKeyCollected;
+        UpdateAllUI();
     }
 
-    bool hasOCRKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
-
-    ocrScannerObject.SetActive(hasOCRKey);
-
-    Debug.Log("Global Map - OCR Scanner Object is now: " + 
-              (hasOCRKey ? "ACTIVE" : "INACTIVE"));
-}
-
-private void OnEnable()
-{
-    KeyCollectionEvents.OnKeyCollected += OnKeyCollected;
-    UpdateOCRScannerObjectVisibility();
-}
-
-private void OnDisable()
-{
-    KeyCollectionEvents.OnKeyCollected -= OnKeyCollected;
-}
-
-private void OnKeyCollected(string keyName)
-{
-    if (keyName == "OCR")
+    public void OnDisable()
     {
+        KeyCollectionEvents.OnKeyCollected -= OnKeyCollected;
+    }
+
+    public void OnKeyCollected(string keyName)
+    {
+        Debug.Log($"GlobalMapManager received key collection event: {keyName}");
+        
+        // Update ALL UI elements when ANY key is collected
+        UpdateAllUI();
+    }
+
+    public void UpdateAllUI()
+    {
+        UpdateKingdomButtons();
         UpdateOCRScannerObjectVisibility();
     }
-}
 
     void SetupButtons()
     {
+        // Clear existing listeners to prevent duplicates
+        kingdom1Button.onClick.RemoveAllListeners();
+        kingdom2Button.onClick.RemoveAllListeners();
+        kingdom3Button.onClick.RemoveAllListeners();
+        kingdom4Button.onClick.RemoveAllListeners();
+        
         kingdom1Button.onClick.AddListener(() => TryLoad(kingdom1Scene, true));
         kingdom2Button.onClick.AddListener(() => TryLoad(kingdom2Scene, GameDataManager.Instance.HasSugariaKey()));
         kingdom3Button.onClick.AddListener(() => TryLoad(kingdom3Scene, GameDataManager.Instance.HasPreserviaKey()));
         kingdom4Button.onClick.AddListener(() => TryLoad(kingdom4Scene, GameDataManager.Instance.HasAllerthiaKey()));
     }
 
-    void UpdateKingdomButtons()
+    public void UpdateKingdomButtons()
     {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return;
+            
         kingdom1Button.interactable = true;
         kingdom2Button.interactable = GameDataManager.Instance.HasSugariaKey();
         kingdom3Button.interactable = GameDataManager.Instance.HasPreserviaKey();
         kingdom4Button.interactable = GameDataManager.Instance.HasAllerthiaKey();
+        
+        Debug.Log($"Kingdom Buttons Updated - Kingdom2 (Sugaria): {kingdom2Button.interactable}");
     }
 
-    void TryLoad(string sceneName, bool canLoad)
+    public void TryLoad(string sceneName, bool canLoad)
     {
         if (!canLoad)
         {

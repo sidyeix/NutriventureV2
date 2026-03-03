@@ -39,6 +39,9 @@ public class KingVitronTimelineButton : MonoBehaviour
     private bool isPlayingTimeline = false;
 
     private PlayableAsset currentPlayableToPlay;
+    
+    // Track whether this is first time or subsequent playthrough
+    private bool isFirstTimePlaythrough = false;
 
     void Start()
     {
@@ -75,12 +78,14 @@ public class KingVitronTimelineButton : MonoBehaviour
         if (!hasSugariaKey)
         {
             currentPlayableToPlay = firstTimePlayable;
-            Debug.Log("Playing FIRST-TIME timeline");
+            isFirstTimePlaythrough = true;
+            Debug.Log("Playing FIRST-TIME timeline - will NOT show game summary");
         }
         else
         {
             currentPlayableToPlay = subsequentPlayable;
-            Debug.Log("Playing SUBSEQUENT timeline");
+            isFirstTimePlaythrough = false;
+            Debug.Log("Playing SUBSEQUENT timeline - WILL show game summary");
         }
     }
 
@@ -141,7 +146,27 @@ public class KingVitronTimelineButton : MonoBehaviour
 
         ResumeGameState();
 
-        Debug.Log("Timeline finished. Player can now roam freely.");
+        Debug.Log($"Timeline finished. isFirstTimePlaythrough: {isFirstTimePlaythrough}");
+
+        // Only show game summary if this is a subsequent playthrough (already have key)
+        if (!isFirstTimePlaythrough)
+        {
+            Debug.Log("Showing game summary after timeline (subsequent playthrough)");
+            
+            // Use the GameEndManager directly instead of starting a coroutine
+            // This avoids the "GameObject is inactive" error
+            if (gameEndManager != null)
+            {
+                // Make sure the GameEndManager's GameObject is active
+                // The GameEndManager should be on a persistent GameObject that doesn't get disabled
+                gameEndManager.ShowGameEndAfterKingTimeline();
+            }
+        }
+        else
+        {
+            Debug.Log("First time playthrough - player can now roam freely (no game summary)");
+            // No game summary for first time playthrough
+        }
     }
 
     private void DisableOtherDirectorObjects()
