@@ -2099,7 +2099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 10
+  sensitivity: 0.1
   invertX: 0
   invertY: 1
   uiInput: {fileID: 1701459693}
@@ -101062,7 +101062,7 @@ MonoBehaviour:
   - {fileID: 1733681768320106238, guid: 40e66630baa69814d8b62579a58c58f0, type: 3}
   - {fileID: 9064385651540129686, guid: e6f197828a1a0ee4e9787161fb1bb3fc, type: 3}
   - {fileID: 734968219280685595, guid: 6fab5704e4c0a8f4ba266c845eef8312, type: 3}
-  - {fileID: 6847286953101804840, guid: 4b896b1a38ba129489811bc808b6bb7b, type: 3}
+  - {fileID: 6847286953101804840, guid: d3360163125b28845ac6d8e531e2ff48, type: 3}
   - {fileID: 2624451992907081943, guid: 47772403f29efbd4b96e8aacbf270ed5, type: 3}
   spawnOnStart: 1
   respawnOnDemand: 1
