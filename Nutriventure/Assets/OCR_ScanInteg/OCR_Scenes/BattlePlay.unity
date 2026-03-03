@@ -40256,10 +40256,6 @@ MonoBehaviour:
   readyTextColor: {r: 1, g: 1, b: 1, a: 1}
   disabledButtonColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
   enabledButtonColor: {r: 1, g: 1, b: 1, a: 1}
-  skill1CooldownSlider: {fileID: 0}
-  skill2CooldownSlider: {fileID: 0}
-  skill3CooldownSlider: {fileID: 0}
-  skill4CooldownSlider: {fileID: 0}
   playerEnerling:
     ingredientName: 
     rarity: 0
