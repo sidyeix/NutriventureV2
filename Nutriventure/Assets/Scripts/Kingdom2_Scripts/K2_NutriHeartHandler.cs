@@ -22,7 +22,7 @@ public class NutriHeartCollector : MonoBehaviour
     public bool showGizmos = true;
     
     private SugariaPlayerStat playerHealth;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private Transform playerTransform;
     private bool isInitialized = false;
 
@@ -46,14 +46,7 @@ public class NutriHeartCollector : MonoBehaviour
             }
         }
 
-        // Get or add AudioSource
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f;
-            audioSource.playOnAwake = false;
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
 
         isInitialized = true;
         
@@ -61,7 +54,6 @@ public class NutriHeartCollector : MonoBehaviour
         {
             Debug.Log("NutriHeart collector initialized successfully!");
             Debug.Log($"Player Health Found: {playerHealth != null}");
-            Debug.Log($"Audio Source Ready: {audioSource != null}");
             Debug.Log($"Particle System Assigned: {collectionParticleSystem != null}");
         }
     }
@@ -157,7 +149,7 @@ public class NutriHeartCollector : MonoBehaviour
         // Play particle effect
         PlayCollectionParticles();
         
-        // Play sound
+        // CHANGED: Play sound through AudioHandler
         PlayCollectionSound();
         
         // Destroy the heart
@@ -196,19 +188,20 @@ public class NutriHeartCollector : MonoBehaviour
         }
     }
 
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayCollectionSound()
     {
-        if (collectionSound != null && audioSource != null)
+        if (collectionSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(collectionSound, soundVolume);
-            if (showDebugLogs) Debug.Log("Collection sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(collectionSound);
+            if (showDebugLogs) Debug.Log("Collection sound played through AudioHandler");
         }
         else
         {
             if (showDebugLogs) 
             {
                 if (collectionSound == null) Debug.LogWarning("No collection sound assigned!");
-                if (audioSource == null) Debug.LogWarning("No audio source available!");
+                if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance is null!");
             }
         }
     }
@@ -296,10 +289,10 @@ public class NutriHeartCollector : MonoBehaviour
         Debug.Log($"Initialized: {isInitialized}");
         Debug.Log($"Player Transform: {playerTransform}");
         Debug.Log($"Player Health: {playerHealth}");
-        Debug.Log($"Audio Source: {audioSource}");
         Debug.Log($"Particle System: {collectionParticleSystem}");
         Debug.Log($"Collection Range: {collectionRange}");
         Debug.Log($"Heart Tag: {heartTag}");
+        Debug.Log($"AudioHandler.Instance exists: {AudioHandler.Instance != null}");
         
         if (playerHealth != null)
         {

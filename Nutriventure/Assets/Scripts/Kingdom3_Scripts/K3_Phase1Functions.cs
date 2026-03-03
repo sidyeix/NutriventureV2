@@ -69,8 +69,7 @@ public class K3_Phase1Functions : MonoBehaviour
     public float newParticleOutroDuration = 0.5f;
     
     [Header("Audio Settings")]
-    [Tooltip("Audio source for playing SFX (will create if not assigned)")]
-    public AudioSource audioSource;
+    // REMOVED: [Tooltip("Audio source for playing SFX (will create if not assigned)")] public AudioSource audioSource;
     
     [Tooltip("Sound when opening info panel")]
     public AudioClip panelOpenSFX;
@@ -130,7 +129,7 @@ public class K3_Phase1Functions : MonoBehaviour
     
     private void Start()
     {
-        InitializeAudio();
+        // REMOVED: InitializeAudio(); - no local audio source needed
         InitializeSystem();
         SetupButtonListeners();
         InitializeMaterials();
@@ -141,6 +140,12 @@ public class K3_Phase1Functions : MonoBehaviour
             Debug.Log($"Player: {playerArmature?.name ?? "Not assigned"}");
             Debug.Log($"Oxidant GEM: {oxidantGEM?.name ?? "Not assigned"}");
             Debug.Log($"Microbe GEM: {microbeGEM?.name ?? "Not assigned"}");
+        }
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null && showDebugMessages)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
         }
     }
     
@@ -158,22 +163,7 @@ public class K3_Phase1Functions : MonoBehaviour
         }
     }
     
-    private void InitializeAudio()
-    {
-        // Get or create AudioSource
-        if (audioSource == null)
-        {
-            audioSource = GetComponent<AudioSource>();
-            if (audioSource == null)
-            {
-                audioSource = gameObject.AddComponent<AudioSource>();
-                audioSource.playOnAwake = false;
-                audioSource.spatialBlend = 0f; // 2D sound for UI
-                
-                if (showDebugMessages) Debug.Log("Created AudioSource component");
-            }
-        }
-    }
+    // REMOVED: InitializeAudio() method - no local audio source needed
     
     private void InitializeMaterials()
     {
@@ -329,7 +319,7 @@ public class K3_Phase1Functions : MonoBehaviour
             // Notify scoring system
             NotifyAntioxidantPanelOpened();
             
-            // Play panel open SFX
+            // CHANGED: Play panel open SFX through AudioHandler
             PlayPanelOpenSound();
             
             if (showDebugMessages) Debug.Log("Antioxidant info panel opened");
@@ -346,7 +336,7 @@ public class K3_Phase1Functions : MonoBehaviour
             // Notify scoring system
             NotifyAntimicrobePanelOpened();
             
-            // Play panel open SFX
+            // CHANGED: Play panel open SFX through AudioHandler
             PlayPanelOpenSound();
             
             if (showDebugMessages) Debug.Log("Antimicrobe info panel opened");
@@ -360,6 +350,7 @@ public class K3_Phase1Functions : MonoBehaviour
             // Play panel close SFX if closed by button
             if (fromButton)
             {
+                // CHANGED: Play panel close SFX through AudioHandler
                 PlayPanelCloseSound();
             }
             
@@ -389,7 +380,7 @@ public class K3_Phase1Functions : MonoBehaviour
                 oxidantParticles.gameObject.SetActive(true);
                 oxidantParticles.Play();
                 
-                // Play particle activation SFX
+                // CHANGED: Play particle activation SFX through AudioHandler
                 PlayParticleActivateSound();
                 
                 if (showDebugMessages) Debug.Log("Oxidant particles activated");
@@ -404,6 +395,7 @@ public class K3_Phase1Functions : MonoBehaviour
             // Play panel close SFX if closed by button
             if (fromButton)
             {
+                // CHANGED: Play panel close SFX through AudioHandler
                 PlayPanelCloseSound();
             }
             
@@ -433,7 +425,7 @@ public class K3_Phase1Functions : MonoBehaviour
                 microbeParticles.gameObject.SetActive(true);
                 microbeParticles.Play();
                 
-                // Play particle activation SFX
+                // CHANGED: Play particle activation SFX through AudioHandler
                 PlayParticleActivateSound();
                 
                 if (showDebugMessages) Debug.Log("Microbe particles activated");
@@ -448,7 +440,7 @@ public class K3_Phase1Functions : MonoBehaviour
             oxidantGemRenderer.material = antiOxidantMat;
             oxidantMaterialSwitched = true;
             
-            // Play material switch SFX
+            // CHANGED: Play material switch SFX through AudioHandler
             PlayMaterialSwitchSound();
             
             if (showDebugMessages) Debug.Log("Switched oxidant GEM to AntiOxidant material");
@@ -467,7 +459,7 @@ public class K3_Phase1Functions : MonoBehaviour
             microbeGemRenderer.material = antiMicrobeMat;
             microbeMaterialSwitched = true;
             
-            // Play material switch SFX
+            // CHANGED: Play material switch SFX through AudioHandler
             PlayMaterialSwitchSound();
             
             if (showDebugMessages) Debug.Log("Switched microbe GEM to AntiMicrobe material");
@@ -551,63 +543,63 @@ public class K3_Phase1Functions : MonoBehaviour
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayPanelOpenSound()
     {
-        if (panelOpenSFX != null && audioSource != null)
+        if (panelOpenSFX != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(panelOpenSFX, panelSoundVolume);
-            
-            if (showDebugMessages) Debug.Log("Played panel open sound");
+            AudioHandler.Instance.PlayCharacterSelectionSound(panelOpenSFX);
+            if (showDebugMessages) Debug.Log("Played panel open sound through AudioHandler");
         }
         else if (showDebugMessages)
         {
             if (panelOpenSFX == null) Debug.LogWarning("Panel open SFX not assigned!");
-            if (audioSource == null) Debug.LogWarning("Audio source not available!");
+            if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance not available!");
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayPanelCloseSound()
     {
-        if (panelCloseSFX != null && audioSource != null)
+        if (panelCloseSFX != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(panelCloseSFX, panelSoundVolume);
-            
-            if (showDebugMessages) Debug.Log("Played panel close sound");
+            AudioHandler.Instance.PlayCharacterSelectionSound(panelCloseSFX);
+            if (showDebugMessages) Debug.Log("Played panel close sound through AudioHandler");
         }
         else if (showDebugMessages)
         {
             if (panelCloseSFX == null) Debug.LogWarning("Panel close SFX not assigned!");
-            if (audioSource == null) Debug.LogWarning("Audio source not available!");
+            if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance not available!");
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayParticleActivateSound()
     {
-        if (particleActivateSFX != null && audioSource != null)
+        if (particleActivateSFX != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(particleActivateSFX, particleSoundVolume);
-            
-            if (showDebugMessages) Debug.Log("Played particle activation sound");
+            AudioHandler.Instance.PlayCharacterSelectionSound(particleActivateSFX);
+            if (showDebugMessages) Debug.Log("Played particle activation sound through AudioHandler");
         }
         else if (showDebugMessages)
         {
             if (particleActivateSFX == null) Debug.LogWarning("Particle activate SFX not assigned!");
-            if (audioSource == null) Debug.LogWarning("Audio source not available!");
+            if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance not available!");
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayMaterialSwitchSound()
     {
-        if (materialSwitchSFX != null && audioSource != null)
+        if (materialSwitchSFX != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(materialSwitchSFX, particleSoundVolume);
-            
-            if (showDebugMessages) Debug.Log("Played material switch sound");
+            AudioHandler.Instance.PlayCharacterSelectionSound(materialSwitchSFX);
+            if (showDebugMessages) Debug.Log("Played material switch sound through AudioHandler");
         }
         else if (showDebugMessages)
         {
             if (materialSwitchSFX == null) Debug.LogWarning("Material switch SFX not assigned!");
-            if (audioSource == null) Debug.LogWarning("Audio source not available!");
+            if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance not available!");
         }
     }
     
@@ -868,7 +860,7 @@ public class K3_Phase1Functions : MonoBehaviour
         Debug.Log($"- Panel Reopen Cooldown: {panelReopenCooldown}s");
         Debug.Log($"");
         Debug.Log($"AUDIO:");
-        Debug.Log($"- Audio Source: {audioSource != null}");
+        Debug.Log($"- AudioHandler.Instance: {(AudioHandler.Instance != null ? "Ready" : "Missing")}");
         Debug.Log($"- Panel Open SFX: {panelOpenSFX?.name ?? "Not assigned"}");
         Debug.Log($"- Panel Close SFX: {panelCloseSFX?.name ?? "Not assigned"}");
         Debug.Log($"- Particle Activate SFX: {particleActivateSFX?.name ?? "Not assigned"}");
@@ -911,7 +903,7 @@ public class K3_Phase1Functions : MonoBehaviour
         }
     }
 
-        // Call this when Antioxidant panel opens
+    // Call this when Antioxidant panel opens
     public void NotifyAntioxidantPanelOpened()
     {
         if (PreserviaScoringSystem.Instance != null && !oxidantActivated)
@@ -930,5 +922,4 @@ public class K3_Phase1Functions : MonoBehaviour
             microbeActivated = true;
         }
     }
-    
 }

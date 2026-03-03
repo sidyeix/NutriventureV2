@@ -29,13 +29,13 @@ public class K3_KingAS2 : MonoBehaviour
     [SerializeField] private float buttonScaleDuration = 0.2f;
     [SerializeField] private float buttonScaleFactor = 1.2f;
     
-    [Header("Sound Effects (Optional)")]
-    [SerializeField] private AudioSource audioSource;
+    [Header("Sound Effects")]
     [SerializeField] private AudioClip sliderFillSound;
     [SerializeField] private AudioClip bounceSound;
     [SerializeField] private AudioClip successSound;
     [SerializeField] private AudioClip failureSound;
     [SerializeField] private AudioClip buttonClickSound;
+    // REMOVED: [SerializeField] private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     
     [Header("Scoring System")]
     [SerializeField] private PreserviaScoringSystem scoringSystem;
@@ -136,14 +136,16 @@ public class K3_KingAS2 : MonoBehaviour
             scoringSystem = FindObjectOfType<PreserviaScoringSystem>();
         }
         
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Initialize collection system references
         InitializeCollectionReferences();
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
+        }
     }
     
     private void InitializeCollectionReferences()
@@ -571,6 +573,7 @@ public class K3_KingAS2 : MonoBehaviour
         
         if (isPreserving) return;
         
+        // CHANGED: Play sound through AudioHandler
         PlaySound(buttonClickSound);
         
         isPreserving = true;
@@ -608,9 +611,6 @@ public class K3_KingAS2 : MonoBehaviour
                 return false;
         }
     }
-    
-    // Rest of the class remains the same...
-    // [The rest of the class code from the original remains unchanged]
     
     private void OnButtonReleased()
     {
@@ -1284,11 +1284,16 @@ public class K3_KingAS2 : MonoBehaviour
         if (sodiumBenzoateValueText != null) sodiumBenzoateValueText.text = "0";
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlaySound(AudioClip clip)
     {
-        if (audioSource != null && clip != null)
+        if (clip != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(clip);
+            AudioHandler.Instance.PlayCharacterSelectionSound(clip);
+        }
+        else if (clip != null && AudioHandler.Instance == null && Debug.isDebugBuild)
+        {
+            Debug.LogWarning($"AudioHandler.Instance is null! Cannot play sound: {clip.name}");
         }
     }
     

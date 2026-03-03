@@ -37,7 +37,7 @@ public class CollectProducts : MonoBehaviour
     private GameObject currentNearbyProduct = null;
     private bool isRegularButtonVisible = false;
     private bool isDummyButtonVisible = false;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private bool isNearDummyProduct = false;
     private bool hasCollectedDummyProduct = false;
     
@@ -63,20 +63,7 @@ public class CollectProducts : MonoBehaviour
             playerMovementScript = GetComponent<StarterAssets.ThirdPersonController>();
         }
         
-        // Get or add AudioSource component
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-            audioSource.rolloffMode = AudioRolloffMode.Linear;
-            audioSource.maxDistance = 10f;
-            Debug.Log("AudioSource component added");
-        }
-        else
-        {
-            Debug.Log("AudioSource component found");
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Convert parameter name to hash for better performance
         pickupHash = Animator.StringToHash(pickupParameterName);
@@ -132,24 +119,10 @@ public class CollectProducts : MonoBehaviour
         // Subscribe to panel events
         SubscribeToPanelEvents();
         
-        // Test audio source
-        TestAudioSource();
-    }
-    
-    void TestAudioSource()
-    {
-        if (audioSource == null)
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
         {
-            Debug.LogError("AudioSource is null! Sound will not play.");
-        }
-        else
-        {
-            Debug.Log($"AudioSource is ready. PlayOnAwake: {audioSource.playOnAwake}, IsPlaying: {audioSource.isPlaying}");
-        }
-        
-        if (pickupSound == null)
-        {
-            Debug.LogWarning("Pickup sound clip is not assigned!");
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
         }
     }
     
@@ -408,14 +381,14 @@ public class CollectProducts : MonoBehaviour
         
         Debug.Log($"Pickup animation started for: {currentNearbyProduct.name}");
         
-        // Play pickup sound with delay to align with animation
-        if (playSoundOnPickup && pickupSound != null && audioSource != null)
+        // Play pickup sound with delay to align with animation - CHANGED to use AudioHandler
+        if (playSoundOnPickup && pickupSound != null && AudioHandler.Instance != null)
         {
             StartCoroutine(PlayPickupSoundWithDelay());
         }
         else
         {
-            Debug.LogWarning($"Cannot play pickup sound. PlaySoundOnPickup: {playSoundOnPickup}, PickupSound: {pickupSound != null}, AudioSource: {audioSource != null}");
+            Debug.LogWarning($"Cannot play pickup sound. PlaySoundOnPickup: {playSoundOnPickup}, PickupSound: {pickupSound != null}, AudioHandler.Instance: {AudioHandler.Instance != null}");
         }
         
         // Wait for animation to complete
@@ -425,18 +398,15 @@ public class CollectProducts : MonoBehaviour
         CompletePickup();
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private IEnumerator PlayPickupSoundWithDelay()
     {
         yield return new WaitForSeconds(soundPlayDelay);
         
-        if (audioSource != null && pickupSound != null)
+        if (pickupSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
-            Debug.Log($"Pickup sound played: {pickupSound.name}, Volume: {pickupSoundVolume}");
-        }
-        else
-        {
-            Debug.LogError("Cannot play pickup sound - audio source or pickup sound is null!");
+            AudioHandler.Instance.PlayCharacterSelectionSound(pickupSound);
+            Debug.Log($"Pickup sound played through AudioHandler: {pickupSound.name}");
         }
     }
     
@@ -662,11 +632,7 @@ public class CollectProducts : MonoBehaviour
             isPickingUp = false;
             pickupTimer = 0f;
             
-            // Stop any playing sounds
-            if (audioSource != null && audioSource.isPlaying)
-            {
-                audioSource.Stop();
-            }
+            // REMOVED: Audio stopping code - AudioHandler handles this globally
             
             // Re-enable movement
             if (playerMovementScript != null)
@@ -871,18 +837,18 @@ public class CollectProducts : MonoBehaviour
         Debug.Log($"Instruction Canvas 2 active: {(instructionCanvas2 != null ? instructionCanvas2.gameObject.activeSelf.ToString() : "null")}");
     }
     
-    // Test sound method
+    // Test sound method - UPDATED to use AudioHandler
     [ContextMenu("Test Pickup Sound")]
     public void TestPickupSound()
     {
-        if (audioSource != null && pickupSound != null)
+        if (pickupSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
-            Debug.Log("Test pickup sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(pickupSound);
+            Debug.Log("Test pickup sound played through AudioHandler");
         }
         else
         {
-            Debug.LogWarning($"Cannot test pickup sound - AudioSource: {audioSource != null}, PickupSound: {pickupSound != null}");
+            Debug.LogWarning($"Cannot test pickup sound - PickupSound: {pickupSound != null}, AudioHandler.Instance: {AudioHandler.Instance != null}");
         }
     }
 }

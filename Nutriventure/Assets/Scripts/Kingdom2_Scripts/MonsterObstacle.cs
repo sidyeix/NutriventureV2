@@ -53,7 +53,7 @@ public class MonsterObstacle : MonoBehaviour
     private bool isCollidingWithPlayer = false;
     private CapsuleCollider triggerCollider;
     private CapsuleCollider blockingCollider;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     
     // Hunting state variables
     private bool isHunting = false;
@@ -98,15 +98,7 @@ public class MonsterObstacle : MonoBehaviour
         // Get animator component
         animator = GetComponent<Animator>();
         
-        // Get or add AudioSource component
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-            audioSource.rolloffMode = AudioRolloffMode.Linear;
-            audioSource.maxDistance = 20f;
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Find player
         player = GameObject.FindGameObjectWithTag("Player");
@@ -462,12 +454,13 @@ public class MonsterObstacle : MonoBehaviour
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayMonsterSound()
     {
-        if (monsterSound != null && audioSource != null)
+        if (monsterSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(monsterSound, monsterSoundVolume);
-            Debug.Log("Monster sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(monsterSound);
+            Debug.Log("Monster sound played through AudioHandler");
         }
     }
     
@@ -542,10 +535,10 @@ public class MonsterObstacle : MonoBehaviour
             animator.SetBool(IsAttackingHash, true);
         }
         
-        // Play attack sound
-        if (attackSound != null && audioSource != null)
+        // CHANGED: Play attack sound through AudioHandler
+        if (attackSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(attackSound, attackSoundVolume);
+            AudioHandler.Instance.PlayCharacterSelectionSound(attackSound);
         }
         
         Debug.Log("Monster attacking player - animation started!");
@@ -604,7 +597,7 @@ public class MonsterObstacle : MonoBehaviour
         // Apply damage to player
         ApplyDamageToPlayer();
         
-        // Play collision sound
+        // CHANGED: Play collision sound through AudioHandler
         PlayCollisionSound();
         
         // Trigger vibration
@@ -637,12 +630,13 @@ public class MonsterObstacle : MonoBehaviour
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayCollisionSound()
     {
-        if (collisionSound != null && audioSource != null)
+        if (collisionSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(collisionSound, collisionSoundVolume);
-            Debug.Log("Collision sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(collisionSound);
+            Debug.Log("Collision sound played through AudioHandler");
         }
     }
     
@@ -702,11 +696,7 @@ public class MonsterObstacle : MonoBehaviour
             // Set to idle state while paused
             currentState = MonsterState.Idle;
             
-            // Stop any audio
-            if (audioSource != null && audioSource.isPlaying)
-            {
-                audioSource.Stop();
-            }
+            // REMOVED: Audio stopping code - AudioHandler handles this globally
             
             Debug.Log($"Monster paused. Previous state: {stateBeforePause}, Was attacking: {wasInAttackAnimation}");
         }

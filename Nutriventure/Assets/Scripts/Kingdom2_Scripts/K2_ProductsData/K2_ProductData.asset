@@ -101,20 +101,20 @@ MonoBehaviour:
       is very high in added sugar.
     funFact: "Sugar helps cookies stay soft \u2014 it actually traps moisture like
       a sponge!"
-  - productID: MILKCOLLECT
-    displayName: Boxed Milk
+  - productID: JUICECOLLECT
+    displayName: Juice Box
     productType: 1
-    productPrefab: {fileID: 6847286953101804840, guid: 4b896b1a38ba129489811bc808b6bb7b, type: 3}
-    productIcon: {fileID: 21300000, guid: dc74a80330abb244e8afb83d769d6bbc, type: 3}
+    productPrefab: {fileID: 6847286953101804840, guid: d3360163125b28845ac6d8e531e2ff48, type: 3}
+    productIcon: {fileID: 21300000, guid: f10d47fa563e46345a35e877eeb1f647, type: 3}
     nutritionLabelImage: {fileID: 21300000, guid: d044a20af919b2b4caa2dd94799fcf67, type: 3}
     sugarContentAmount: 16
-    description: "Flavored milks (like chocolate or strawberry) usually contain 10\u201320g
-      of sugar (2.5 to 5 teaspoons), mostly from added sugar. Natural milk sugar
-      (lactose) is mild, but added sugar makes these drinks much sweeter \u2014 and
-      faster to digest, causing quicker sugar spikes."
+    description: "Many juice boxes contain 15\u201325g of sugar (about 4\u20136 teaspoons)
+      per serving. While fruit naturally contains sugar (fructose), many commercial
+      juice drinks have added sugar or high-fructose corn syrup to enhance sweetness. "
     labelTip: "Check the \u201CAdded Sugars\u201D line to see how much sweetener
-      was added on top of natural milk sugar."
-    funFact: Some flavored milks contain as much sugar as a small candy bar!
+      was added beyond the fruit\u2019s natural sugar."
+    funFact: "Some juice boxes can contain as much sugar as a can of soda \u2014
+      even if they\u2019re labeled as \u201C100% Vitamin C\u201D!"
   - productID: SODACOLLECT
     displayName: Soft Drinks
     productType: 1
