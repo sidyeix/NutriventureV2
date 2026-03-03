@@ -26,16 +26,7 @@ public class K3_MonsterProximityAudio : MonoBehaviour
     [Range(0f, 1f)]
     public float minVolumeAtRange = 0.2f;
     
-    [Header("Audio Source Settings")]
-    [Tooltip("Audio source to use (if not assigned, will create one)")]
-    public AudioSource audioSource;
-    
-    [Tooltip("Loop the proximity sound?")]
-    public bool loopSound = false;
-    
-    [Tooltip("Spatial blend (0 = 2D, 1 = 3D)")]
-    [Range(0f, 1f)]
-    public float spatialBlend = 1f;
+    // REMOVED: Audio Source Settings section - using AudioHandler instead
     
     [Header("Debug")]
     [Tooltip("Show debug messages in console")]
@@ -53,20 +44,25 @@ public class K3_MonsterProximityAudio : MonoBehaviour
     
     void Start()
     {
-        InitializeAudioSystem();
+        // REMOVED: InitializeAudioSystem() - no local AudioSource needed
         FindPlayer();
         
         if (showDebugMessages)
         {
             Debug.Log($"Monster proximity audio initialized. Range: {detectionRange}m");
             Debug.Log($"Sound: {(proximitySound != null ? proximitySound.name : "Not assigned")}");
-            Debug.Log($"Audio Source: {(audioSource != null ? "Ready" : "Missing")}");
+        }
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
         }
     }
     
     void Update()
     {
-        if (player == null || proximitySound == null || audioSource == null)
+        if (player == null || proximitySound == null)
             return;
         
         // Calculate distance to player
@@ -80,40 +76,11 @@ public class K3_MonsterProximityAudio : MonoBehaviour
         else if (isPlaying)
         {
             // Player left range, stop audio
-            StopProximityAudio();
+            isPlaying = false; // Just reset the flag since we don't need to stop anything
         }
     }
     
-    private void InitializeAudioSystem()
-    {
-        // Get or create AudioSource
-        if (audioSource == null)
-        {
-            audioSource = GetComponent<AudioSource>();
-            if (audioSource == null)
-            {
-                audioSource = gameObject.AddComponent<AudioSource>();
-                if (showDebugMessages) Debug.Log("Created AudioSource component");
-            }
-        }
-        
-        // Configure AudioSource
-        if (audioSource != null)
-        {
-            audioSource.playOnAwake = false;
-            audioSource.spatialBlend = spatialBlend;
-            audioSource.loop = loopSound;
-            audioSource.volume = soundVolume;
-            
-            if (proximitySound != null)
-            {
-                audioSource.clip = proximitySound;
-            }
-        }
-        
-        // Set initial next sound time
-        nextSoundTime = Time.time + Random.Range(minSoundInterval, maxSoundInterval);
-    }
+    // REMOVED: InitializeAudioSystem() method
     
     private void FindPlayer()
     {
@@ -131,39 +98,8 @@ public class K3_MonsterProximityAudio : MonoBehaviour
     
     private void HandleProximityAudio(float distance)
     {
-        if (loopSound)
-        {
-            HandleLoopingAudio(distance);
-        }
-        else
-        {
-            HandleTriggeredAudio(distance);
-        }
-    }
-    
-    private void HandleLoopingAudio(float distance)
-    {
-        // For looping audio, adjust volume based on distance
-        if (!audioSource.isPlaying)
-        {
-            audioSource.Play();
-            isPlaying = true;
-            if (showDebugMessages) Debug.Log("Started looping proximity audio");
-        }
-        
-        // Adjust volume based on distance if enabled
-        if (distanceBasedVolume)
-        {
-            float volumeMultiplier = 1f - Mathf.Clamp01(distance / detectionRange);
-            float targetVolume = Mathf.Lerp(minVolumeAtRange, soundVolume, volumeMultiplier);
-            audioSource.volume = targetVolume;
-        }
-    }
-    
-    private void HandleTriggeredAudio(float distance)
-    {
         // For triggered audio, play at intervals
-        if (Time.time >= nextSoundTime && !audioSource.isPlaying)
+        if (Time.time >= nextSoundTime && !isPlaying && AudioHandler.Instance != null)
         {
             PlayProximitySound(distance);
             
@@ -172,9 +108,10 @@ public class K3_MonsterProximityAudio : MonoBehaviour
         }
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayProximitySound(float distance)
     {
-        if (audioSource == null || proximitySound == null) return;
+        if (proximitySound == null || AudioHandler.Instance == null) return;
         
         // Calculate volume based on distance if enabled
         float finalVolume = soundVolume;
@@ -184,27 +121,18 @@ public class K3_MonsterProximityAudio : MonoBehaviour
             finalVolume = Mathf.Lerp(minVolumeAtRange, soundVolume, volumeMultiplier);
         }
         
-        // Play the sound
-        audioSource.PlayOneShot(proximitySound, finalVolume);
+        // Play the sound through AudioHandler
+        AudioHandler.Instance.PlayCharacterSelectionSound(proximitySound);
         isPlaying = true;
         
         if (showDebugMessages)
         {
-            Debug.Log($"Playing proximity sound at {finalVolume:F2} volume");
+            Debug.Log($"Playing proximity sound at {finalVolume:F2} volume (through AudioHandler)");
             Debug.Log($"Distance to player: {distance:F1}m");
         }
     }
     
-    private void StopProximityAudio()
-    {
-        if (audioSource != null && audioSource.isPlaying)
-        {
-            audioSource.Stop();
-            isPlaying = false;
-            
-            if (showDebugMessages) Debug.Log("Stopped proximity audio (player out of range)");
-        }
-    }
+    // REMOVED: StopProximityAudio() method - no need to stop anything
     
     [ContextMenu("Test Proximity Sound")]
     public void TestProximitySound()
@@ -215,14 +143,14 @@ public class K3_MonsterProximityAudio : MonoBehaviour
             return;
         }
         
-        if (proximitySound == null || audioSource == null)
+        if (proximitySound == null || AudioHandler.Instance == null)
         {
-            Debug.LogError("Cannot test: proximity sound or audio source not assigned!");
+            Debug.LogError("Cannot test: proximity sound not assigned or AudioHandler missing!");
             return;
         }
         
         Debug.Log("=== TESTING PROXIMITY SOUND ===");
-        audioSource.PlayOneShot(proximitySound, soundVolume);
+        AudioHandler.Instance.PlayCharacterSelectionSound(proximitySound);
         isPlaying = true;
     }
     
@@ -245,10 +173,9 @@ public class K3_MonsterProximityAudio : MonoBehaviour
         Debug.Log("=== PROXIMITY AUDIO STATUS ===");
         Debug.Log($"Player: {(player != null ? player.name : "Not found")}");
         Debug.Log($"Proximity Sound: {(proximitySound != null ? proximitySound.name : "Not assigned")}");
-        Debug.Log($"Audio Source: {(audioSource != null ? "Ready" : "Missing")}");
+        Debug.Log($"AudioHandler.Instance: {(AudioHandler.Instance != null ? "Ready" : "Missing")}");
         Debug.Log($"Detection Range: {detectionRange}m");
         Debug.Log($"Sound Interval: {minSoundInterval}-{maxSoundInterval}s");
-        Debug.Log($"Loop Sound: {loopSound}");
         Debug.Log($"Distance Based Volume: {distanceBasedVolume}");
         Debug.Log($"Is Playing: {isPlaying}");
         Debug.Log($"Next Sound Time: {(nextSoundTime - Time.time):F1}s");

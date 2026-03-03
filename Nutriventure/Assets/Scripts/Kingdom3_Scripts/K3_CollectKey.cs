@@ -37,7 +37,7 @@ public class K3_CollectKey : MonoBehaviour
     private bool hasTriggeredSummary = false;
     private float pickupTimer = 0f;
     private GameObject currentNearbyKey = null;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private int pickupHash;
     private int healthAtKeyCollection = 0;
     
@@ -69,13 +69,7 @@ public class K3_CollectKey : MonoBehaviour
             playerMovementScript = GetComponent<StarterAssets.ThirdPersonController>();
         }
         
-        // Set up AudioSource
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Convert animation parameter to hash
         pickupHash = Animator.StringToHash(pickupAnimationParameter);
@@ -108,6 +102,12 @@ public class K3_CollectKey : MonoBehaviour
         }
         
         Debug.Log("K3_CollectKey initialized. Has key: " + hasKey + ", Has triggered summary: " + hasTriggeredSummary);
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
+        }
     }
     
     void Update()
@@ -197,8 +197,8 @@ public class K3_CollectKey : MonoBehaviour
             pickupTimer = 0f;
         }
         
-        // Play pickup sound with delay
-        if (audioSource != null && pickupSound != null)
+        // CHANGED: Play pickup sound with delay using AudioHandler
+        if (pickupSound != null && AudioHandler.Instance != null)
         {
             StartCoroutine(PlayPickupSoundWithDelay());
         }
@@ -213,10 +213,16 @@ public class K3_CollectKey : MonoBehaviour
         isCompletingPickup = false;
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private IEnumerator PlayPickupSoundWithDelay()
     {
         yield return new WaitForSeconds(soundPlayDelay);
-        audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
+        
+        if (pickupSound != null && AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayCharacterSelectionSound(pickupSound);
+            Debug.Log("Key pickup sound played through AudioHandler");
+        }
     }
     
     private void CompleteKeyPickup()
