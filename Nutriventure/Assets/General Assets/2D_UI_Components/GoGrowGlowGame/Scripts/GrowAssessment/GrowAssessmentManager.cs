@@ -852,4 +852,22 @@ public class GrowAssessmentManager : MonoBehaviour
 
         Debug.Log("Assessment state reset (panel position preserved)");
     }
+
+    // ====== SAVE / RESTORE HELPERS ======
+
+    /// <summary>
+    /// Restores the assessment progress from a saved game state.
+    /// Called by GameStateManager when the player chooses to resume.
+    /// </summary>
+    public void RestoreProgress(int correctAnswers, bool assessmentCompleted, bool waitingForEndTrigger)
+    {
+        correctAnswersCount = Mathf.Clamp(correctAnswers, 0, totalQuestions);
+        hasCompletedAllQuestions = assessmentCompleted;
+        isWaitingForEndTrigger = waitingForEndTrigger;
+
+        UpdateTrackerText();
+
+        Debug.Log($"GrowAssessmentManager: Restored progress – {correctAnswersCount}/{totalQuestions} correct, " +
+                  $"Completed: {hasCompletedAllQuestions}, WaitingForEnd: {isWaitingForEndTrigger}");
+    }
 }

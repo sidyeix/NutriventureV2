@@ -107,6 +107,13 @@ public class InGameSettingsButton : MonoBehaviour
             resumeGameButton.onClick.RemoveAllListeners();
             resumeGameButton.onClick.AddListener(OnResumeGameClicked);
         }
+
+        // Subscribe to ProfileSettings close event so we know when the panel closes
+        // (covers the X/close button, save button, dialog yes/no — any close path)
+        if (profileSettings != null)
+        {
+            profileSettings.OnClosed += OnProfileSettingsClosed;
+        }
     }
 
     private void InitializeUI()
@@ -155,11 +162,8 @@ public class InGameSettingsButton : MonoBehaviour
     {
         PlayButtonSound();
 
-        // Pause the game first
-        if (isGameActive)
-        {
-            PauseGame();
-        }
+        // Pause the game (whether game is active or just roaming)
+        PauseGame();
 
         // Open the profile settings and switch to settings view
         if (profileSettings != null)
@@ -180,12 +184,36 @@ public class InGameSettingsButton : MonoBehaviour
             originalTimeScale = Time.timeScale;
             Time.timeScale = 0f;
 
-            if (gameManager != null)
+            if (isGameActive && gameManager != null)
             {
                 gameManager.PauseGameTimer();
             }
 
-            Debug.Log("Game paused");
+            Debug.Log(isGameActive ? "Game paused (active)" : "Game paused (roaming)");
+        }
+    }
+
+    /// <summary>
+    /// Called automatically whenever ProfileSettings finishes closing (any close path).
+    /// Re-shows the settings button and resumes the game if it was active.
+    /// </summary>
+    private void OnProfileSettingsClosed()
+    {
+        // Always re-show the settings button
+        if (settingsButton != null)
+            settingsButton.gameObject.SetActive(true);
+
+        // If the game was active and we paused it, resume with countdown
+        if (isGameActive && isPaused)
+        {
+            StartCountdownCoroutine();
+        }
+        else if (isPaused)
+        {
+            // Game wasn't active (just roaming) — resume immediately, no countdown
+            Time.timeScale = originalTimeScale;
+            isPaused = false;
+            Debug.Log("Settings closed while roaming — resumed immediately.");
         }
     }
 
@@ -199,14 +227,13 @@ public class InGameSettingsButton : MonoBehaviour
             return;
         }
 
-        // Close the profile settings panel first (hide it)
+        // Close the profile settings panel.
+        // OnProfileSettingsClosed will fire automatically and handle
+        // re-showing the button + starting the countdown.
         if (profileSettings != null)
         {
             profileSettings.CloseProfileSettingsDirect();
         }
-
-        // Start countdown before resuming
-        StartCountdownCoroutine();
     }
 
     private void StartCountdownCoroutine()
@@ -323,59 +350,19 @@ public class InGameSettingsButton : MonoBehaviour
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(true);
 
-        // Use GameEndManager logic for restart - EXACTLY like OnRestartClicked in GameEndManager
+        // Delegate the entire restart flow to GameEndManager
+        // This properly resets minigames, teleports to lobby, and plays the farmer NPC cutscene
         if (gameEndManager != null)
         {
-            // Stop count audio (like GameEndManager)
-            gameEndManager.ForceStopCountAudio();
-
-            // Force enable background music (like GameEndManager)
-            ForceEnableBackgroundMusic();
-
-            // Add rewards to game data (like GameEndManager)
-            // Note: This requires public methods in GameEndManager to access rewards
-            // For now, we'll rely on GameEndManager's internal logic
-
-            // Play restart music (like GameEndManager)
-            // This would need a public method in GameEndManager
-
-            // Reset game end state (like GameEndManager)
-            gameEndManager.ResetGameEndState();
-
-            // Disable objects on home/restart (like GameEndManager)
-            // This would need a public method in GameEndManager
-
-            Debug.Log("STEP 1: Performing complete game reset...");
-
-            // Reset minigames (like GameEndManager)
-            gameEndManager.ResetMinigames();
-
-            // Reset all continue buttons (like GameEndManager)
-            ResetAllContinueButtons();
-
-            // Full game reset (like GameEndManager)
-            if (gameManager != null)
-            {
-                gameManager.FullGameReset();
-                Debug.Log("GameManager fully reset");
-            }
-
-            Debug.Log("STEP 2: Teleporting to lobby point...");
-
-            // Teleport to lobby point (like GameEndManager)
-            TeleportPlayerToLobbyPoint();
-
-            // Note: The restart timeline in GameEndManager is specific to that context
-            // We don't need to play it here as this is an in-game restart
-
-            Debug.Log("=== IN-GAME RESTART BUTTON COMPLETE ===");
+            gameEndManager.PerformInGameRestart();
         }
         else
         {
-            // Fallback: reload current scene
-            Debug.LogWarning("GameEndManager not found, reloading scene");
+            Debug.LogWarning("GameEndManager not found, reloading scene as fallback");
             SceneManager.LoadScene(currentSceneName);
         }
+
+        Debug.Log("=== IN-GAME RESTART BUTTON COMPLETE ===");
     }
 
     private void OnBackToHomeClicked()
@@ -417,49 +404,16 @@ public class InGameSettingsButton : MonoBehaviour
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(true);
 
-        // Use GameEndManager logic for home button - EXACTLY like OnHomeClicked in GameEndManager
+        // Delegate the entire home flow to GameEndManager
+        // This properly ends the game, resets everything, disables the playable director,
+        // and returns the player to the lobby
         if (gameEndManager != null)
         {
-            // Stop count audio (like GameEndManager)
-            gameEndManager.ForceStopCountAudio();
-
-            // Force enable background music (like GameEndManager)
-            ForceEnableBackgroundMusic();
-
-            // Add rewards to game data (like GameEndManager)
-            // Note: This requires public methods in GameEndManager to access rewards
-
-            // Check for pending key unlock (like GameEndManager)
-            // This would need public methods in GameEndManager to check key state
-
-            // Play lobby music (like GameEndManager)
-            // This would need a public method in GameEndManager
-
-            // Reset game end state (like GameEndManager)
-            gameEndManager.ResetGameEndState();
-
-            // Reset minigames for home button (like GameEndManager)
-            gameEndManager.ResetMinigamesForHomeButton();
-
-            // Reset all continue buttons (like GameEndManager)
-            ResetAllContinueButtons();
-
-            // Disable objects on home/restart (like GameEndManager)
-            // This would need a public method in GameEndManager
-
-            // Switch to player camera (handled by GameEndManager in ResetGameEndState)
-
-            // Teleport to lobby point (like GameEndManager)
-            TeleportPlayerToLobbyPoint();
-
-            // Enable objects on home button (handled by GameEndManager in ResetGameEndState)
-
-            Debug.Log("=== IN-GAME HOME BUTTON COMPLETE ===");
+            gameEndManager.PerformInGameHome();
         }
         else
         {
-            // Fallback: just teleport
-            Debug.LogWarning("GameEndManager not found, using basic teleport");
+            Debug.LogWarning("GameEndManager not found, using basic teleport fallback");
             TeleportPlayerToLobbyPoint();
 
             if (gameManager != null)
@@ -467,6 +421,8 @@ public class InGameSettingsButton : MonoBehaviour
                 gameManager.FullGameReset();
             }
         }
+
+        Debug.Log("=== IN-GAME HOME BUTTON COMPLETE ===");
     }
 
     private void ForceEnableBackgroundMusic()
@@ -617,6 +573,12 @@ public class InGameSettingsButton : MonoBehaviour
         {
             StopCoroutine(countdownCoroutine);
             countdownCoroutine = null;
+        }
+
+        // Unsubscribe from the close event to avoid leaks
+        if (profileSettings != null)
+        {
+            profileSettings.OnClosed -= OnProfileSettingsClosed;
         }
     }
 }

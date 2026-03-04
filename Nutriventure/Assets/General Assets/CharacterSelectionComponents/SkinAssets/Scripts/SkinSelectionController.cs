@@ -1114,7 +1114,7 @@ public class SkinSelectionController : MonoBehaviour
 
         while (elapsedTime < duration)
         {
-            elapsedTime += Time.deltaTime;
+            elapsedTime += Time.unscaledDeltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsedTime / duration);
             canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, t);
             yield return null;

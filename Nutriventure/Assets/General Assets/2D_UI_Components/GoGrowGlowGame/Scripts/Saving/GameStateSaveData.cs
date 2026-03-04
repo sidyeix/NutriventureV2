@@ -13,17 +13,34 @@ public class GameStateSaveData
     public Vector3 playerPosition;
     public Quaternion playerRotation;
 
+    // Player armature rotation (separate from player root)
+    public Quaternion playerArmatureRotation;
+    public Vector3 playerArmatureScale = Vector3.one;
+
     // Game state for 3_Kingdom1 (GoGrowGlow game)
     public bool hasSavedGameState = false;
 
     // GoGrowGlowGameManager state
     public float currentEnergy;
+    public float targetEnergy;
     public int currentScore;
     public float currentLifeAmount;
     public int currentLives;
     public float gameTimer;
     public bool isGameActive;
     public GoGrowGlowGameManager.FoodType currentFoodZone;
+    public bool isEnergyDecreasePaused;
+    public bool isGameTimerPaused;
+
+    // Boost states
+    public bool isSpeedBoosted;
+    public float speedBoostTimer;
+    public bool isSizeBoosted;
+    public float sizeBoostTimer;
+
+    // Player speed/size
+    public float playerSpeed;
+    public float playerSize;
 
     // Kingdom keys and progress
     public bool sugariaKeyCollected;
@@ -51,14 +68,37 @@ public class GameStateSaveData
     public string currentCheckpointName;
     public bool hasCheckpoint;
 
-    // Timestamp for save
-    public DateTime saveTime;
+    // Activated checkpoints (so we don't lose checkpoint progress)
+    public List<string> activatedCheckpointNames = new List<string>();
+
+    // Timestamp for save (stored as ticks for JSON serialization reliability)
+    public long saveTimeTicks;
+
+    [System.NonSerialized]
+    private DateTime? _saveTime;
+
+    public DateTime saveTime
+    {
+        get
+        {
+            if (_saveTime == null)
+                _saveTime = new DateTime(saveTimeTicks);
+            return _saveTime.Value;
+        }
+        set
+        {
+            _saveTime = value;
+            saveTimeTicks = value.Ticks;
+        }
+    }
 
     public GameStateSaveData()
     {
         litTorchIDs = new List<string>();
         litTowerNames = new List<string>();
+        activatedCheckpointNames = new List<string>();
         saveTime = DateTime.Now;
+        playerArmatureScale = Vector3.one;
     }
 
     // Helper to check if save is from today

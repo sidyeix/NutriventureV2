@@ -1640,4 +1640,46 @@ public class GlowPartManager : MonoBehaviour
         towerCameraPriority = priority;
         Debug.Log($"GlowPartManager: Tower camera active priority set to {priority}");
     }
+
+    // ====== SAVE / RESTORE HELPERS ======
+
+    /// <summary>
+    /// Returns the names of all glow towers that are fully lit.
+    /// Used by GameStateManager to persist tower progress.
+    /// </summary>
+    public List<string> GetLitTowerNames()
+    {
+        List<string> names = new List<string>();
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && tower.IsFullyLit())
+            {
+                names.Add(tower.gameObject.name);
+            }
+        }
+        return names;
+    }
+
+    /// <summary>
+    /// Restores towers that were fully lit in a previous session.
+    /// Towers whose names appear in <paramref name="litNames"/> are set to fully lit.
+    /// </summary>
+    public void RestoreTowerStates(List<string> litNames)
+    {
+        if (litNames == null || litNames.Count == 0) return;
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && litNames.Contains(tower.gameObject.name))
+            {
+                // Fill the tower to max so it counts as fully lit
+                tower.SetEnergy(tower.GetMaxEnergy());
+                tower.SetFullyLitAnimation(true);
+                Debug.Log($"GlowPartManager: Restored lit tower: {tower.gameObject.name}");
+            }
+        }
+
+        UpdateLitTowersCount();
+        Debug.Log($"GlowPartManager: Restored tower states – {litTowersCount}/{glowTowers.Count} lit");
+    }
 }

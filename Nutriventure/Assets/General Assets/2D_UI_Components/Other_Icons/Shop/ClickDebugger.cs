@@ -3,12 +3,17 @@ using UnityEngine.InputSystem;
 
 public class ClickDebugger : MonoBehaviour
 {
+    private Camera cachedCamera;
+
     void Update()
     {
-        // Check for mouse click
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (cachedCamera == null) cachedCamera = Camera.main;
+        if (cachedCamera == null) return;
+
+        // Check for mouse click (null-safe for mobile)
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Ray ray = cachedCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
             RaycastHit hit;
 
             if (Physics.Raycast(ray, out hit))
@@ -25,7 +30,7 @@ public class ClickDebugger : MonoBehaviour
         if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
         {
             Vector2 touchPos = Touchscreen.current.primaryTouch.position.ReadValue();
-            Ray ray = Camera.main.ScreenPointToRay(touchPos);
+            Ray ray = cachedCamera.ScreenPointToRay(touchPos);
             RaycastHit hit;
 
             if (Physics.Raycast(ray, out hit))

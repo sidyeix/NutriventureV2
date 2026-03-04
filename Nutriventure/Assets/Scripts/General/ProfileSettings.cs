@@ -8,6 +8,11 @@ using UnityEngine.SceneManagement;
 
 public class ProfileSettings : MonoBehaviour
 {
+    /// <summary>
+    /// Fired after the ProfileSettings canvas has fully closed (fade complete).
+    /// InGameSettingsButton listens to this to re-show itself and resume the game.
+    /// </summary>
+    public event System.Action OnClosed;
     [Header("Main References")]
     public GameObject canvas;
     public Player_Data playerData;
@@ -625,6 +630,9 @@ public class ProfileSettings : MonoBehaviour
     {
         yield return StartCoroutine(FadeCanvasGroup(mainCanvasGroup, 0f, panelFadeDuration));
         canvas.SetActive(false);
+
+        // Notify listeners (InGameSettingsButton) that the panel has closed
+        OnClosed?.Invoke();
     }
 
     private void FadeMainCanvas(float targetAlpha, float duration)
@@ -774,6 +782,11 @@ public class ProfileSettings : MonoBehaviour
 
     private void OnSettingsClicked()
     {
+        // Refresh all profile data (name, icon, frame, XP, counters) just like opening the profile tab
+        RefreshProfileDisplay();
+        RefreshLevelAndXP();
+        UpdateAllCounters();
+
         ShowSettingsView();
         HighlightNavigationButton(ViewMode.Settings);
     }
@@ -943,7 +956,8 @@ public class ProfileSettings : MonoBehaviour
         var gameData = gameDataManager.CurrentGameData;
         List<AchievementDatabase.AchievementData> allAchievements = achievementDatabase.achievements;
 
-        allAchievements.Sort((a, b) => {
+        allAchievements.Sort((a, b) =>
+        {
             AchievementStatus statusA = gameDataManager.GetAchievementStatus(a.id);
             AchievementStatus statusB = gameDataManager.GetAchievementStatus(b.id);
 
@@ -1589,10 +1603,25 @@ public class ProfileSettings : MonoBehaviour
     {
         PlayButtonSound();
 
+        // 1. Reset the main game data (profile, characters, resources, etc.)
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.ResetGameData();
         }
+
+        // 2. Clear the kingdom game-state save file (game_state.json)
+        if (GameStateManager.Instance != null)
+        {
+            GameStateManager.Instance.ClearSavedGameState();
+        }
+
+        // 3. Clear PlayerPrefs keys so the loading screen treats this as a first-time player
+        PlayerPrefs.DeleteKey("ProfileCompleted");
+        PlayerPrefs.DeleteKey("LastScene");
+        PlayerPrefs.DeleteKey("NextScene");
+        PlayerPrefs.Save();
+
+        Debug.Log("ProfileSettings: Full data reset complete — returning to LogoScreen as new player.");
 
         if (resetDataDialog != null)
             resetDataDialog.SetActive(false);
