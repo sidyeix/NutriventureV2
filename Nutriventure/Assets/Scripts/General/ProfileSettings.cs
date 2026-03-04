@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class ProfileSettings : MonoBehaviour
 {
@@ -34,10 +35,19 @@ public class ProfileSettings : MonoBehaviour
     public string levelFormat = "Level: {0}";
     public string xpFormat = "{0}/{1}";
 
+    [Header("Stats Counters")]
+    public TextMeshProUGUI achievementsCountText;
+    public TextMeshProUGUI kingdomsCountText;
+    public TextMeshProUGUI enerlingsCountText;
+    public string achievementsFormat = "Achievements: {0}/{1}";
+    public string kingdomsFormat = "Kingdoms: {0}";
+    public string enerlingsFormat = "Enerlings: {0}";
+
     [Header("Navigation")]
     public Button profileIconsButton;
     public Button framesButton;
     public Button achievementsButton;
+    public Button settingsButton;
 
     [Header("Navigation Colors")]
     public Color normalButtonColor = Color.white;
@@ -68,6 +78,42 @@ public class ProfileSettings : MonoBehaviour
     public Button achievementInfoCloseButton;
     public Button achievementInfoClaimButton;
 
+    [Header("Settings Panel")]
+    public GameObject settingsPanel;
+    public Slider musicSlider;
+    public Slider sfxSlider;
+    public List<AudioSource> backgroundMusicSources = new List<AudioSource>();
+    public List<AudioSource> soundEffectSources = new List<AudioSource>();
+
+    [Header("Settings - Mute Buttons")]
+    public Button muteBGButton;
+    public Button muteSFXButton;
+    public Button muteAllButton;
+    public TextMeshProUGUI muteBGButtonText;
+    public TextMeshProUGUI muteSFXButtonText;
+    public TextMeshProUGUI muteAllButtonText;
+
+    [Header("Settings - Action Buttons")]
+    public Button exitGameButton;
+    public Button resetPlayerDataButton;
+
+    [Header("Exit Confirmation Dialog")]
+    public GameObject exitConfirmationDialog;
+    public Button yesExitButton;
+    public Button noExitButton;
+
+    [Header("Reset Data Dialog")]
+    public GameObject resetDataDialog;
+    public TMP_InputField resetConfirmationInput;
+    public Button confirmResetButton;
+    public Button cancelResetButton;
+    public string requiredConfirmationText = "I want to reset my Data";
+
+    [Header("Other Buttons (Disabled)")]
+    public Button restartCurrentGameButton;
+    public Button backToHomeButton;
+    public Button resumeGameButton;
+
     [Header("Close Dialog")]
     public GameObject dialogPanel;
     public Button closeButton;
@@ -93,8 +139,15 @@ public class ProfileSettings : MonoBehaviour
     private List<AchievementButton> achievementButtons = new List<AchievementButton>();
     private AchievementDatabase.AchievementData currentlySelectedAchievement;
 
+    // Settings tracking
+    private bool isBGMusicMuted = false;
+    private bool isSFXMuted = false;
+    private bool isAllMuted = false;
+    private float lastMusicVolume;
+    private float lastSFXVolume;
+
     // Current view state
-    private enum ViewMode { Icons, Frames, Achievements }
+    private enum ViewMode { Icons, Frames, Achievements, Settings }
     private ViewMode currentView = ViewMode.Icons;
     private GridLayoutGroup gridLayout;
 
@@ -102,6 +155,7 @@ public class ProfileSettings : MonoBehaviour
     private Color originalProfileIconColor;
     private Color originalFramesColor;
     private Color originalAchievementsColor;
+    private Color originalSettingsColor;
 
     // Save button fade animation
     private CanvasGroup saveButtonCanvasGroup;
@@ -115,7 +169,6 @@ public class ProfileSettings : MonoBehaviour
 
     private void Awake()
     {
-        // Initialize default icons and frames once when the game starts
         if (!hasInitializedDefaults && gameDataManager != null && gameDataManager.CurrentGameData != null)
         {
             InitializeDefaultItems();
@@ -125,11 +178,23 @@ public class ProfileSettings : MonoBehaviour
 
     private void Start()
     {
-        // Initialize UI state
         nameInputField.interactable = false;
         dialogPanel.SetActive(false);
 
-        // Setup main canvas group for fade transitions
+        InitializeSettings();
+        SetupCanvas();
+        SetupAchievementPanel();
+        SetupSaveButton();
+        StoreOriginalColors();
+        SetupGridLayout();
+        SetupButtonListeners();
+        DisableOtherButtons();
+
+        UpdateAllCounters();
+    }
+
+    private void SetupCanvas()
+    {
         if (canvas != null)
         {
             mainCanvasGroup = canvas.GetComponent<CanvasGroup>();
@@ -139,8 +204,10 @@ public class ProfileSettings : MonoBehaviour
             }
             mainCanvasGroup.alpha = 0f;
         }
+    }
 
-        // Setup achievement info panel
+    private void SetupAchievementPanel()
+    {
         if (achievementInfoPanel != null)
         {
             achievementInfoCanvasGroup = achievementInfoPanel.GetComponent<CanvasGroup>();
@@ -151,8 +218,10 @@ public class ProfileSettings : MonoBehaviour
             achievementInfoPanel.SetActive(false);
             achievementInfoCanvasGroup.alpha = 0f;
         }
+    }
 
-        // Setup save button for fade transitions
+    private void SetupSaveButton()
+    {
         if (saveButton != null)
         {
             saveButton.gameObject.SetActive(false);
@@ -163,20 +232,25 @@ public class ProfileSettings : MonoBehaviour
             }
             saveButtonCanvasGroup.alpha = 0f;
 
-            // Add both listeners
             saveButton.onClick.AddListener(PlayButtonSound);
             saveButton.onClick.AddListener(OnSaveClicked);
         }
+    }
 
-        // Store original button colors
+    private void StoreOriginalColors()
+    {
         if (profileIconsButton != null)
             originalProfileIconColor = profileIconsButton.GetComponent<Image>().color;
         if (framesButton != null)
             originalFramesColor = framesButton.GetComponent<Image>().color;
         if (achievementsButton != null)
             originalAchievementsColor = achievementsButton.GetComponent<Image>().color;
+        if (settingsButton != null)
+            originalSettingsColor = settingsButton.GetComponent<Image>().color;
+    }
 
-        // Get grid layout component
+    private void SetupGridLayout()
+    {
         if (iconGridParent != null)
         {
             gridLayout = iconGridParent.GetComponent<GridLayoutGroup>();
@@ -185,8 +259,10 @@ public class ProfileSettings : MonoBehaviour
                 gridLayout = iconGridParent.gameObject.AddComponent<GridLayoutGroup>();
             }
         }
+    }
 
-        // Setup listeners with click sounds
+    private void SetupButtonListeners()
+    {
         if (editNameButton != null)
         {
             editNameButton.onClick.AddListener(OnEditNameClicked);
@@ -211,7 +287,6 @@ public class ProfileSettings : MonoBehaviour
             dialogNoButton.onClick.AddListener(PlayButtonSound);
         }
 
-        // Navigation buttons with click sounds
         if (profileIconsButton != null)
         {
             profileIconsButton.onClick.AddListener(OnProfileIconsClicked);
@@ -230,7 +305,45 @@ public class ProfileSettings : MonoBehaviour
             achievementsButton.onClick.AddListener(PlayButtonSound);
         }
 
-        // Achievement info panel buttons
+        if (settingsButton != null)
+        {
+            settingsButton.onClick.AddListener(OnSettingsClicked);
+            settingsButton.onClick.AddListener(PlayButtonSound);
+        }
+
+        if (muteBGButton != null)
+            muteBGButton.onClick.AddListener(OnMuteBGButtonClicked);
+
+        if (muteSFXButton != null)
+            muteSFXButton.onClick.AddListener(OnMuteSFXButtonClicked);
+
+        if (muteAllButton != null)
+            muteAllButton.onClick.AddListener(OnMuteAllButtonClicked);
+
+        if (exitGameButton != null)
+            exitGameButton.onClick.AddListener(OnExitGameButtonClicked);
+
+        if (resetPlayerDataButton != null)
+            resetPlayerDataButton.onClick.AddListener(OnResetPlayerDataClicked);
+
+        if (yesExitButton != null)
+            yesExitButton.onClick.AddListener(OnYesExitClicked);
+
+        if (noExitButton != null)
+            noExitButton.onClick.AddListener(OnNoExitClicked);
+
+        if (confirmResetButton != null)
+        {
+            confirmResetButton.interactable = false;
+            confirmResetButton.onClick.AddListener(OnConfirmResetClicked);
+        }
+
+        if (cancelResetButton != null)
+            cancelResetButton.onClick.AddListener(OnCancelResetClicked);
+
+        if (resetConfirmationInput != null)
+            resetConfirmationInput.onValueChanged.AddListener(OnResetConfirmationTextChanged);
+
         if (achievementInfoCloseButton != null)
         {
             achievementInfoCloseButton.onClick.AddListener(OnAchievementInfoCloseClicked);
@@ -243,9 +356,106 @@ public class ProfileSettings : MonoBehaviour
             achievementInfoClaimButton.onClick.AddListener(PlayButtonSound);
         }
 
-        // Add listener for name input field changes
         if (nameInputField != null)
             nameInputField.onValueChanged.AddListener(OnNameChanged);
+    }
+
+    private void UpdateAllCounters()
+    {
+        UpdateAchievementsCounter();
+        UpdateKingdomsCounter();
+        UpdateEnerlingsCounter();
+    }
+
+    private void UpdateAchievementsCounter()
+    {
+        if (achievementsCountText == null || gameDataManager?.CurrentGameData == null || achievementDatabase == null)
+            return;
+
+        int unlockedCount = 0;
+        int totalCount = achievementDatabase.achievements.Count;
+
+        foreach (var achievement in achievementDatabase.achievements)
+        {
+            AchievementStatus status = gameDataManager.GetAchievementStatus(achievement.id);
+            if (status == AchievementStatus.Completed || status == AchievementStatus.Claimed)
+            {
+                unlockedCount++;
+            }
+        }
+
+        achievementsCountText.text = string.Format(achievementsFormat, unlockedCount, totalCount);
+    }
+
+    private void UpdateKingdomsCounter()
+    {
+        if (kingdomsCountText == null || gameDataManager?.CurrentGameData == null)
+            return;
+
+        var gameData = gameDataManager.CurrentGameData;
+        int unlockedCount = 0;
+
+        if (gameData.HasSugariaKey()) unlockedCount++;
+        if (gameData.HasPreserviaKey()) unlockedCount++;
+        if (gameData.HasNutriKingdomKey()) unlockedCount++;
+        if (gameData.HasAllerthiaKey()) unlockedCount++;
+        if (gameData.HasOCRScannerKey()) unlockedCount++;
+
+        kingdomsCountText.text = string.Format(kingdomsFormat, unlockedCount);
+    }
+
+    private void UpdateEnerlingsCounter()
+    {
+        if (enerlingsCountText == null || gameDataManager?.CurrentGameData == null)
+            return;
+
+        int unlockedCount = gameDataManager.CurrentGameData.unlockedEnerlings?.Count ?? 0;
+        enerlingsCountText.text = string.Format(enerlingsFormat, unlockedCount);
+    }
+
+    private void InitializeSettings()
+    {
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+
+        if (GameDataManager.Instance != null)
+        {
+            var gameData = GameDataManager.Instance.CurrentGameData;
+
+            musicSlider.minValue = 0;
+            musicSlider.maxValue = 100;
+            sfxSlider.minValue = 0;
+            sfxSlider.maxValue = 100;
+
+            musicSlider.value = gameData.musicVolume * 100;
+            sfxSlider.value = gameData.soundVolume * 100;
+
+            lastMusicVolume = gameData.musicVolume;
+            lastSFXVolume = gameData.soundVolume;
+        }
+
+        musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
+        sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
+
+        UpdateMuteButtonTexts();
+
+        if (exitConfirmationDialog != null)
+            exitConfirmationDialog.SetActive(false);
+
+        if (resetDataDialog != null)
+            resetDataDialog.SetActive(false);
+    }
+
+    private void DisableOtherButtons()
+    {
+        if (restartCurrentGameButton != null)
+            restartCurrentGameButton.interactable = false;
+
+        if (backToHomeButton != null)
+            backToHomeButton.interactable = false;
+
+        if (resumeGameButton != null)
+            resumeGameButton.interactable = false;
     }
 
     private void PlayButtonSound()
@@ -260,8 +470,6 @@ public class ProfileSettings : MonoBehaviour
     {
         if (gameDataManager?.CurrentGameData == null) return;
 
-        Debug.Log("=== INITIALIZING DEFAULT ITEMS FROM PROFILE SETTINGS ===");
-
         if (iconDatabase != null)
         {
             List<string> defaultIconIds = new List<string>();
@@ -270,7 +478,6 @@ public class ProfileSettings : MonoBehaviour
                 if (icon.unlockedByDefault)
                 {
                     defaultIconIds.Add(icon.id);
-                    Debug.Log($"Found default icon: {icon.id}");
                 }
             }
 
@@ -279,14 +486,12 @@ public class ProfileSettings : MonoBehaviour
                 if (!gameDataManager.CurrentGameData.unlockedIconIds.Contains(iconId))
                 {
                     gameDataManager.CurrentGameData.unlockedIconIds.Add(iconId);
-                    Debug.Log($"Added default icon to GameData: {iconId}");
                 }
             }
 
             if (string.IsNullOrEmpty(gameDataManager.CurrentGameData.equippedIconId) && defaultIconIds.Count > 0)
             {
                 gameDataManager.CurrentGameData.equippedIconId = defaultIconIds[0];
-                Debug.Log($"Set default equipped icon to: {defaultIconIds[0]}");
             }
         }
 
@@ -298,7 +503,6 @@ public class ProfileSettings : MonoBehaviour
                 if (frame.unlockedByDefault)
                 {
                     defaultFrameIds.Add(frame.id);
-                    Debug.Log($"Found default frame: {frame.id}");
                 }
             }
 
@@ -307,19 +511,16 @@ public class ProfileSettings : MonoBehaviour
                 if (!gameDataManager.CurrentGameData.unlockedFrameIds.Contains(frameId))
                 {
                     gameDataManager.CurrentGameData.unlockedFrameIds.Add(frameId);
-                    Debug.Log($"Added default frame to GameData: {frameId}");
                 }
             }
 
             if (string.IsNullOrEmpty(gameDataManager.CurrentGameData.equippedFrameId) && defaultFrameIds.Count > 0)
             {
                 gameDataManager.CurrentGameData.equippedFrameId = defaultFrameIds[0];
-                Debug.Log($"Set default equipped frame to: {defaultFrameIds[0]}");
             }
         }
 
         gameDataManager.SaveGameData();
-        Debug.Log("=== DEFAULT ITEMS INITIALIZATION COMPLETE ===");
     }
 
     public void OpenProfileSettings()
@@ -334,6 +535,7 @@ public class ProfileSettings : MonoBehaviour
 
         RefreshProfileDisplay();
         RefreshLevelAndXP();
+        UpdateAllCounters();
 
         ShowIconsView();
         HighlightNavigationButton(ViewMode.Icons);
@@ -353,6 +555,65 @@ public class ProfileSettings : MonoBehaviour
         FadeMainCanvas(1f, panelFadeDuration);
 
         PlayButtonSound();
+    }
+
+    public void OpenSettingsView()
+    {
+        if (gameDataManager?.CurrentGameData == null) return;
+
+        var gameData = gameDataManager.CurrentGameData;
+
+        originalName = gameData.playerName;
+        originalIconId = gameData.equippedIconId;
+        originalFrameId = gameData.equippedFrameId;
+
+        RefreshProfileDisplay();
+        RefreshLevelAndXP();
+        UpdateAllCounters();
+
+        ShowSettingsView();
+        HighlightNavigationButton(ViewMode.Settings);
+
+        hasChanges = false;
+        nameInputField.interactable = false;
+        dialogPanel.SetActive(false);
+
+        if (saveButton != null)
+        {
+            saveButton.gameObject.SetActive(false);
+            if (saveButtonCanvasGroup != null)
+                saveButtonCanvasGroup.alpha = 0f;
+        }
+
+        canvas.SetActive(true);
+        FadeMainCanvas(1f, panelFadeDuration);
+
+        PlayButtonSound();
+    }
+
+    public void CloseProfileSettingsDirect()
+    {
+        if (hasChanges)
+        {
+            RevertChanges();
+        }
+
+        CloseProfileSettings();
+    }
+
+    public bool IsProfileSettingsOpen()
+    {
+        return canvas != null && canvas.activeSelf;
+    }
+
+    public bool IsSettingsViewActive()
+    {
+        return currentView == ViewMode.Settings;
+    }
+
+    public void RefreshCounters()
+    {
+        UpdateAllCounters();
     }
 
     private void CloseProfileSettings()
@@ -378,6 +639,7 @@ public class ProfileSettings : MonoBehaviour
         StartCoroutine(FadeCanvasGroup(mainCanvasGroup, targetAlpha, duration));
     }
 
+    // UPDATED: Use unscaledDeltaTime for all fades
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float targetAlpha, float duration)
     {
         if (canvasGroup == null) yield break;
@@ -387,7 +649,7 @@ public class ProfileSettings : MonoBehaviour
 
         while (elapsedTime < duration)
         {
-            elapsedTime += Time.deltaTime;
+            elapsedTime += Time.unscaledDeltaTime;
             float t = elapsedTime / duration;
             canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
             yield return null;
@@ -399,6 +661,39 @@ public class ProfileSettings : MonoBehaviour
         {
             canvasGroup.gameObject.SetActive(false);
         }
+    }
+
+    // UPDATED: Use unscaledDeltaTime for save button fade
+    private IEnumerator FadeSaveButtonCoroutine(float targetAlpha, float duration)
+    {
+        if (saveButtonCanvasGroup == null)
+            yield break;
+
+        if (targetAlpha > 0 && !saveButton.gameObject.activeSelf)
+        {
+            saveButton.gameObject.SetActive(true);
+            saveButtonCanvasGroup.alpha = 0f;
+        }
+
+        float startAlpha = saveButtonCanvasGroup.alpha;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.unscaledDeltaTime;
+            float t = elapsedTime / duration;
+            saveButtonCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            yield return null;
+        }
+
+        saveButtonCanvasGroup.alpha = targetAlpha;
+
+        if (targetAlpha <= 0f)
+        {
+            saveButton.gameObject.SetActive(false);
+        }
+
+        saveButtonFadeCoroutine = null;
     }
 
     private void RefreshProfileDisplay()
@@ -435,6 +730,8 @@ public class ProfileSettings : MonoBehaviour
             framesButton.GetComponent<Image>().color = normalButtonColor;
         if (achievementsButton != null)
             achievementsButton.GetComponent<Image>().color = normalButtonColor;
+        if (settingsButton != null)
+            settingsButton.GetComponent<Image>().color = normalButtonColor;
 
         switch (activeView)
         {
@@ -449,6 +746,10 @@ public class ProfileSettings : MonoBehaviour
             case ViewMode.Achievements:
                 if (achievementsButton != null)
                     achievementsButton.GetComponent<Image>().color = selectedButtonColor;
+                break;
+            case ViewMode.Settings:
+                if (settingsButton != null)
+                    settingsButton.GetComponent<Image>().color = selectedButtonColor;
                 break;
         }
     }
@@ -471,9 +772,21 @@ public class ProfileSettings : MonoBehaviour
         HighlightNavigationButton(ViewMode.Achievements);
     }
 
+    private void OnSettingsClicked()
+    {
+        ShowSettingsView();
+        HighlightNavigationButton(ViewMode.Settings);
+    }
+
     private void ShowIconsView()
     {
         currentView = ViewMode.Icons;
+
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+
+        if (iconGridParent != null)
+            iconGridParent.gameObject.SetActive(true);
 
         if (gridLayout != null)
         {
@@ -488,6 +801,12 @@ public class ProfileSettings : MonoBehaviour
     {
         currentView = ViewMode.Frames;
 
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+
+        if (iconGridParent != null)
+            iconGridParent.gameObject.SetActive(true);
+
         if (gridLayout != null)
         {
             gridLayout.cellSize = frameCellSize;
@@ -501,6 +820,12 @@ public class ProfileSettings : MonoBehaviour
     {
         currentView = ViewMode.Achievements;
 
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+
+        if (iconGridParent != null)
+            iconGridParent.gameObject.SetActive(true);
+
         if (gridLayout != null)
         {
             gridLayout.cellSize = achievementCellSize;
@@ -508,6 +833,40 @@ public class ProfileSettings : MonoBehaviour
 
         ClearGrid();
         RefreshAchievementGrid();
+    }
+
+    private void ShowSettingsView()
+    {
+        currentView = ViewMode.Settings;
+
+        if (iconGridParent != null)
+            iconGridParent.gameObject.SetActive(false);
+
+        if (settingsPanel != null)
+            settingsPanel.SetActive(true);
+
+        RefreshSettingsValues();
+    }
+
+    private void RefreshSettingsValues()
+    {
+        if (GameDataManager.Instance != null)
+        {
+            var gameData = GameDataManager.Instance.CurrentGameData;
+
+            musicSlider.value = gameData.musicVolume * 100;
+            sfxSlider.value = gameData.soundVolume * 100;
+
+            lastMusicVolume = gameData.musicVolume;
+            lastSFXVolume = gameData.soundVolume;
+        }
+
+        isBGMusicMuted = false;
+        isSFXMuted = false;
+        isAllMuted = false;
+        musicSlider.interactable = true;
+        sfxSlider.interactable = true;
+        UpdateMuteButtonTexts();
     }
 
     private void ClearGrid()
@@ -526,29 +885,14 @@ public class ProfileSettings : MonoBehaviour
         var gameData = gameDataManager.CurrentGameData;
         List<ProfileIconDatabase.ProfileIcon> allIcons = iconDatabase.icons;
 
-        Debug.Log("=== REFRESHING ICON GRID ===");
-        Debug.Log($"Player unlocked icons: {string.Join(", ", gameData.unlockedIconIds)}");
-
         foreach (var icon in allIcons)
         {
-            // Check if icon is unlocked in GameData by ID OR by name
             bool isUnlockedById = gameData.unlockedIconIds.Contains(icon.id);
             bool isUnlockedByName = gameData.unlockedIconIds.Contains(icon.iconName);
             bool isUnlockedInGameData = isUnlockedById || isUnlockedByName;
-
-            // Check if icon is unlocked by default in database
             bool isDefaultUnlock = icon.unlockedByDefault;
-
-            // Combined unlock state
             bool isLocked = !(isUnlockedInGameData || isDefaultUnlock);
             bool isSelected = (!isLocked && icon.id == gameData.equippedIconId);
-
-            Debug.Log($"Icon: {icon.iconName} (ID: {icon.id})");
-            Debug.Log($"  - Default Unlock: {isDefaultUnlock}");
-            Debug.Log($"  - In GameData by ID: {isUnlockedById}");
-            Debug.Log($"  - In GameData by Name: {isUnlockedByName}");
-            Debug.Log($"  - Final Locked State: {isLocked}");
-            Debug.Log($"  - Selected: {isSelected}");
 
             GameObject buttonObj = Instantiate(iconButtonPrefab, iconGridParent);
             ProfileIconButton iconButton = buttonObj.GetComponent<ProfileIconButton>();
@@ -562,7 +906,6 @@ public class ProfileSettings : MonoBehaviour
 
             iconButtons.Add(iconButton);
         }
-        Debug.Log("=== ICON GRID REFRESH COMPLETE ===");
     }
 
     private void RefreshFrameGrid()
@@ -570,30 +913,14 @@ public class ProfileSettings : MonoBehaviour
         var gameData = gameDataManager.CurrentGameData;
         List<FrameDatabase.FrameData> allFrames = frameDatabase.frames;
 
-        Debug.Log("=== REFRESHING FRAME GRID ===");
-        Debug.Log($"Player unlocked frames (IDs): {string.Join(", ", gameData.unlockedFrameIds)}");
-
         foreach (var frame in allFrames)
         {
-            // Check if frame is unlocked in GameData by ID OR by name
             bool isUnlockedById = gameData.unlockedFrameIds.Contains(frame.id);
             bool isUnlockedByName = gameData.unlockedFrameIds.Contains(frame.frameName);
             bool isUnlockedInGameData = isUnlockedById || isUnlockedByName;
-
-            // Check if frame is unlocked by default in database
             bool isDefaultUnlock = frame.unlockedByDefault;
-
-            // Combined unlock state
             bool isLocked = !(isUnlockedInGameData || isDefaultUnlock);
-
             bool isSelected = (!isLocked && frame.id == gameData.equippedFrameId);
-
-            Debug.Log($"Frame: {frame.frameName} (ID: {frame.id})");
-            Debug.Log($"  - Default Unlock: {isDefaultUnlock}");
-            Debug.Log($"  - In GameData by ID: {isUnlockedById}");
-            Debug.Log($"  - In GameData by Name: {isUnlockedByName}");
-            Debug.Log($"  - Final Locked State: {isLocked}");
-            Debug.Log($"  - Selected: {isSelected}");
 
             GameObject buttonObj = Instantiate(frameButtonPrefab, iconGridParent);
             FrameButton frameButton = buttonObj.GetComponent<FrameButton>();
@@ -607,7 +934,6 @@ public class ProfileSettings : MonoBehaviour
 
             frameButtons.Add(frameButton);
         }
-        Debug.Log("=== FRAME GRID REFRESH COMPLETE ===");
     }
 
     private void RefreshAchievementGrid()
@@ -750,7 +1076,7 @@ public class ProfileSettings : MonoBehaviour
                 AudioHandler.Instance.PlayClaimSound();
             }
 
-            Debug.Log($"Achievement {currentlySelectedAchievement.achievementName} claimed! +{currentlySelectedAchievement.prizeGems} gems");
+            UpdateAchievementsCounter();
         }
     }
 
@@ -861,44 +1187,10 @@ public class ProfileSettings : MonoBehaviour
         saveButtonFadeCoroutine = StartCoroutine(FadeSaveButtonCoroutine(targetAlpha, duration));
     }
 
-    private IEnumerator FadeSaveButtonCoroutine(float targetAlpha, float duration)
-    {
-        if (saveButtonCanvasGroup == null)
-            yield break;
-
-        if (targetAlpha > 0 && !saveButton.gameObject.activeSelf)
-        {
-            saveButton.gameObject.SetActive(true);
-            saveButtonCanvasGroup.alpha = 0f;
-        }
-
-        float startAlpha = saveButtonCanvasGroup.alpha;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < duration)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = elapsedTime / duration;
-            saveButtonCanvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-            yield return null;
-        }
-
-        saveButtonCanvasGroup.alpha = targetAlpha;
-
-        if (targetAlpha <= 0f)
-        {
-            saveButton.gameObject.SetActive(false);
-        }
-
-        saveButtonFadeCoroutine = null;
-    }
-
     private void OnSaveClicked()
     {
-        Debug.Log("Save button clicked - saving changes");
         SaveChanges();
         CloseProfileSettings();
-        Debug.Log("Profile changes saved and canvas closed!");
     }
 
     private void OnCloseClicked()
@@ -918,7 +1210,6 @@ public class ProfileSettings : MonoBehaviour
         SaveChanges();
         dialogPanel.SetActive(false);
         CloseProfileSettings();
-        Debug.Log("Profile changes saved via dialog!");
     }
 
     private void OnDialogNo()
@@ -926,17 +1217,14 @@ public class ProfileSettings : MonoBehaviour
         RevertChanges();
         dialogPanel.SetActive(false);
         CloseProfileSettings();
-        Debug.Log("Profile changes discarded!");
     }
 
     private void SaveChanges()
     {
-        Debug.Log("=== SAVING CHANGES ===");
         var gameData = gameDataManager.CurrentGameData;
 
         if (nameInputField.text != originalName)
         {
-            Debug.Log($"Saving name: {nameInputField.text} (was: {originalName})");
             gameData.playerName = nameInputField.text;
 
             if (playerData != null)
@@ -948,7 +1236,6 @@ public class ProfileSettings : MonoBehaviour
         if (currentlySelectedIconButton != null && currentlySelectedIconButton.GetIconId() != originalIconId)
         {
             string newIconId = currentlySelectedIconButton.GetIconId();
-            Debug.Log($"Saving icon: {newIconId} (was: {originalIconId})");
             gameData.equippedIconId = newIconId;
 
             if (playerData != null)
@@ -960,7 +1247,6 @@ public class ProfileSettings : MonoBehaviour
         if (currentlySelectedFrameButton != null && currentlySelectedFrameButton.GetFrameId() != originalFrameId)
         {
             string newFrameId = currentlySelectedFrameButton.GetFrameId();
-            Debug.Log($"Saving frame: {newFrameId} (was: {originalFrameId})");
             gameData.equippedFrameId = newFrameId;
 
             if (playerData != null)
@@ -970,7 +1256,6 @@ public class ProfileSettings : MonoBehaviour
         }
 
         gameDataManager.SaveGameData();
-        Debug.Log("GameData saved to disk");
 
         originalName = nameInputField.text;
         if (currentlySelectedIconButton != null)
@@ -984,8 +1269,6 @@ public class ProfileSettings : MonoBehaviour
         {
             FadeSaveButton(0f, saveButtonFadeDuration);
         }
-
-        Debug.Log("=== SAVE COMPLETE ===");
     }
 
     private void RevertChanges()
@@ -1062,5 +1345,268 @@ public class ProfileSettings : MonoBehaviour
                 UpdateAchievementInfoPanel(currentlySelectedAchievement);
             }
         }
+
+        UpdateAchievementsCounter();
     }
+
+    #region Settings Methods
+
+    private void OnMusicSliderChanged(float value)
+    {
+        float volume = value / 100f;
+
+        foreach (var source in backgroundMusicSources)
+        {
+            if (source != null)
+                source.volume = volume;
+        }
+
+        if (!isBGMusicMuted && !isAllMuted)
+        {
+            lastMusicVolume = volume;
+        }
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.musicVolume = volume;
+            GameDataManager.Instance.SaveGameData();
+        }
+    }
+
+    private void OnSFXSliderChanged(float value)
+    {
+        float volume = value / 100f;
+
+        foreach (var source in soundEffectSources)
+        {
+            if (source != null)
+                source.volume = volume;
+        }
+
+        if (!isSFXMuted && !isAllMuted)
+        {
+            lastSFXVolume = volume;
+        }
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.soundVolume = volume;
+            GameDataManager.Instance.SaveGameData();
+        }
+    }
+
+    private void OnMuteBGButtonClicked()
+    {
+        PlayButtonSound();
+
+        if (!isBGMusicMuted && !isAllMuted)
+        {
+            isBGMusicMuted = true;
+            musicSlider.interactable = false;
+
+            foreach (var source in backgroundMusicSources)
+            {
+                if (source != null)
+                    source.volume = 0;
+            }
+        }
+        else if (isBGMusicMuted)
+        {
+            isBGMusicMuted = false;
+            musicSlider.interactable = true;
+
+            float volume = lastMusicVolume;
+
+            foreach (var source in backgroundMusicSources)
+            {
+                if (source != null)
+                    source.volume = volume;
+            }
+        }
+
+        UpdateMuteAllState();
+        UpdateMuteButtonTexts();
+    }
+
+    private void OnMuteSFXButtonClicked()
+    {
+        PlayButtonSound();
+
+        if (!isSFXMuted && !isAllMuted)
+        {
+            isSFXMuted = true;
+            sfxSlider.interactable = false;
+
+            foreach (var source in soundEffectSources)
+            {
+                if (source != null)
+                    source.volume = 0;
+            }
+        }
+        else if (isSFXMuted)
+        {
+            isSFXMuted = false;
+            sfxSlider.interactable = true;
+
+            float volume = lastSFXVolume;
+
+            foreach (var source in soundEffectSources)
+            {
+                if (source != null)
+                    source.volume = volume;
+            }
+        }
+
+        UpdateMuteAllState();
+        UpdateMuteButtonTexts();
+    }
+
+    private void OnMuteAllButtonClicked()
+    {
+        PlayButtonSound();
+
+        if (!isAllMuted)
+        {
+            isAllMuted = true;
+            musicSlider.interactable = false;
+            sfxSlider.interactable = false;
+
+            foreach (var source in backgroundMusicSources)
+            {
+                if (source != null)
+                    source.volume = 0;
+            }
+
+            foreach (var source in soundEffectSources)
+            {
+                if (source != null)
+                    source.volume = 0;
+            }
+
+            isBGMusicMuted = true;
+            isSFXMuted = true;
+        }
+        else
+        {
+            isAllMuted = false;
+            musicSlider.interactable = true;
+            sfxSlider.interactable = true;
+
+            float musicVol = lastMusicVolume;
+            float sfxVol = lastSFXVolume;
+
+            foreach (var source in backgroundMusicSources)
+            {
+                if (source != null)
+                    source.volume = musicVol;
+            }
+
+            foreach (var source in soundEffectSources)
+            {
+                if (source != null)
+                    source.volume = sfxVol;
+            }
+
+            isBGMusicMuted = false;
+            isSFXMuted = false;
+        }
+
+        UpdateMuteButtonTexts();
+    }
+
+    private void UpdateMuteAllState()
+    {
+        isAllMuted = (isBGMusicMuted && isSFXMuted);
+    }
+
+    private void UpdateMuteButtonTexts()
+    {
+        if (muteBGButtonText != null)
+            muteBGButtonText.text = isBGMusicMuted ? "Unmute BG Music" : "Mute BG Music";
+
+        if (muteSFXButtonText != null)
+            muteSFXButtonText.text = isSFXMuted ? "Unmute SFX" : "Mute SFX";
+
+        if (muteAllButtonText != null)
+            muteAllButtonText.text = isAllMuted ? "Unmute All" : "Mute All";
+    }
+
+    private void OnExitGameButtonClicked()
+    {
+        PlayButtonSound();
+
+        if (exitConfirmationDialog != null)
+            exitConfirmationDialog.SetActive(true);
+    }
+
+    private void OnYesExitClicked()
+    {
+        PlayButtonSound();
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.SaveGameData();
+        }
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    private void OnNoExitClicked()
+    {
+        PlayButtonSound();
+
+        if (exitConfirmationDialog != null)
+            exitConfirmationDialog.SetActive(false);
+    }
+
+    private void OnResetPlayerDataClicked()
+    {
+        PlayButtonSound();
+
+        if (resetConfirmationInput != null)
+            resetConfirmationInput.text = "";
+
+        if (confirmResetButton != null)
+            confirmResetButton.interactable = false;
+
+        if (resetDataDialog != null)
+            resetDataDialog.SetActive(true);
+    }
+
+    private void OnResetConfirmationTextChanged(string text)
+    {
+        if (confirmResetButton == null) return;
+
+        bool isMatch = string.Equals(text.Trim(), requiredConfirmationText, System.StringComparison.OrdinalIgnoreCase);
+        confirmResetButton.interactable = isMatch;
+    }
+
+    private void OnConfirmResetClicked()
+    {
+        PlayButtonSound();
+
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.ResetGameData();
+        }
+
+        if (resetDataDialog != null)
+            resetDataDialog.SetActive(false);
+
+        SceneManager.LoadScene("LogoScreen");
+    }
+
+    private void OnCancelResetClicked()
+    {
+        PlayButtonSound();
+
+        if (resetDataDialog != null)
+            resetDataDialog.SetActive(false);
+    }
+
+    #endregion
 }
