@@ -43,6 +43,7 @@ public class InGameSettingsButton : MonoBehaviour
     // Private variables
     private bool isGameActive = false;
     private bool isPaused = false;
+    private bool wasGameActiveWhenPaused = false;
     private float originalTimeScale;
     private Coroutine countdownCoroutine;
     private AudioSource audioSource; // For playing countdown sounds
@@ -181,15 +182,16 @@ public class InGameSettingsButton : MonoBehaviour
         if (!isPaused)
         {
             isPaused = true;
+            wasGameActiveWhenPaused = isGameActive;
             originalTimeScale = Time.timeScale;
             Time.timeScale = 0f;
 
-            if (isGameActive && gameManager != null)
+            if (wasGameActiveWhenPaused && gameManager != null)
             {
                 gameManager.PauseGameTimer();
             }
 
-            Debug.Log(isGameActive ? "Game paused (active)" : "Game paused (roaming)");
+            Debug.Log(wasGameActiveWhenPaused ? "Game paused (active)" : "Game paused (roaming)");
         }
     }
 
@@ -203,8 +205,8 @@ public class InGameSettingsButton : MonoBehaviour
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(true);
 
-        // If the game was active and we paused it, resume with countdown
-        if (isGameActive && isPaused)
+        // If the game was active when we paused, resume with countdown
+        if (wasGameActiveWhenPaused && isPaused)
         {
             StartCountdownCoroutine();
         }
@@ -213,6 +215,7 @@ public class InGameSettingsButton : MonoBehaviour
             // Game wasn't active (just roaming) — resume immediately, no countdown
             Time.timeScale = originalTimeScale;
             isPaused = false;
+            wasGameActiveWhenPaused = false;
             Debug.Log("Settings closed while roaming — resumed immediately.");
         }
     }
@@ -221,9 +224,9 @@ public class InGameSettingsButton : MonoBehaviour
     {
         PlayButtonSound();
 
-        if (!isGameActive)
+        if (!wasGameActiveWhenPaused)
         {
-            Debug.LogWarning("Cannot resume: Game is not active");
+            Debug.LogWarning("Cannot resume: Game was not active when paused");
             return;
         }
 
@@ -297,6 +300,7 @@ public class InGameSettingsButton : MonoBehaviour
         // Resume game
         Time.timeScale = originalTimeScale;
         isPaused = false;
+        wasGameActiveWhenPaused = false;
 
         // Resume game manager timers
         if (gameManager != null)
@@ -321,7 +325,20 @@ public class InGameSettingsButton : MonoBehaviour
             return;
         }
 
-        Debug.Log("=== IN-GAME RESTART BUTTON CLICKED ===");
+        // Show warning dialog before restarting
+        if (profileSettings != null)
+        {
+            profileSettings.ShowWarningDialog(
+                "Are you sure you want to restart the game?",
+                onYes: () => PerformRestart(),
+                onNo: null
+            );
+        }
+    }
+
+    private void PerformRestart()
+    {
+        Debug.Log("=== IN-GAME RESTART CONFIRMED ===");
 
         // Close settings panel
         if (profileSettings != null)
@@ -351,7 +368,6 @@ public class InGameSettingsButton : MonoBehaviour
             settingsButton.gameObject.SetActive(true);
 
         // Delegate the entire restart flow to GameEndManager
-        // This properly resets minigames, teleports to lobby, and plays the farmer NPC cutscene
         if (gameEndManager != null)
         {
             gameEndManager.PerformInGameRestart();
@@ -362,7 +378,7 @@ public class InGameSettingsButton : MonoBehaviour
             SceneManager.LoadScene(currentSceneName);
         }
 
-        Debug.Log("=== IN-GAME RESTART BUTTON COMPLETE ===");
+        Debug.Log("=== IN-GAME RESTART COMPLETE ===");
     }
 
     private void OnBackToHomeClicked()
@@ -375,7 +391,20 @@ public class InGameSettingsButton : MonoBehaviour
             return;
         }
 
-        Debug.Log("=== IN-GAME HOME BUTTON CLICKED ===");
+        // Show warning dialog before going home
+        if (profileSettings != null)
+        {
+            profileSettings.ShowWarningDialog(
+                "Are you sure you want to go back to the lobby?",
+                onYes: () => PerformGoHome(),
+                onNo: null
+            );
+        }
+    }
+
+    private void PerformGoHome()
+    {
+        Debug.Log("=== IN-GAME HOME CONFIRMED ===");
 
         // Close settings panel
         if (profileSettings != null)
@@ -405,8 +434,6 @@ public class InGameSettingsButton : MonoBehaviour
             settingsButton.gameObject.SetActive(true);
 
         // Delegate the entire home flow to GameEndManager
-        // This properly ends the game, resets everything, disables the playable director,
-        // and returns the player to the lobby
         if (gameEndManager != null)
         {
             gameEndManager.PerformInGameHome();
@@ -422,7 +449,7 @@ public class InGameSettingsButton : MonoBehaviour
             }
         }
 
-        Debug.Log("=== IN-GAME HOME BUTTON COMPLETE ===");
+        Debug.Log("=== IN-GAME HOME COMPLETE ===");
     }
 
     private void ForceEnableBackgroundMusic()
@@ -561,12 +588,34 @@ public class InGameSettingsButton : MonoBehaviour
         OpenSettingsPanel();
     }
 
+    /// <summary>
+    /// Called externally (e.g. by GameStateManager) to show the 3-2-1 countdown
+    /// before the player regains control after resuming from a saved state.
+    /// </summary>
+    public void ShowResumeCountdown()
+    {
+        Debug.Log("ShowResumeCountdown called — starting countdown for save resume");
+
+        // Freeze time so the game waits during countdown
+        originalTimeScale = 1f;
+        Time.timeScale = 0f;
+        isPaused = true;
+        wasGameActiveWhenPaused = true;
+
+        // Hide the settings button during countdown
+        if (settingsButton != null)
+            settingsButton.gameObject.SetActive(false);
+
+        StartCountdownCoroutine();
+    }
+
     private void OnDisable()
     {
         if (isPaused)
         {
             Time.timeScale = 1f;
             isPaused = false;
+            wasGameActiveWhenPaused = false;
         }
 
         if (countdownCoroutine != null)

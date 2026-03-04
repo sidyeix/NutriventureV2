@@ -105,6 +105,21 @@ public class GameData
     public List<string> completedAchievementIds = new List<string>();
     public List<string> claimedAchievementIds = new List<string>();
 
+    // ===== OCR BATTLE LIFE & ENERGY SYSTEM =====
+    public int ocrBattleLives = 5;              // Current lives (max 5)
+    public int ocrBattleMaxLives = 5;
+    public int ocrBattleEnergy = 15;             // Current energy (max 15)
+    public int ocrBattleMaxEnergy = 15;
+    public string ocrLastLifeLossTime = "";      // ISO 8601 timestamp when the most recent life was lost
+    public string ocrLastEnergyUseTime = "";     // ISO 8601 timestamp when the most recent energy was used
+    public int ocrLivesRegening = 0;             // How many lives are currently regenerating
+    public int ocrEnergyRegening = 0;            // How many energy units are currently regenerating
+
+    // Enerling catch counts (enerlingName -> catchCount)
+    [System.Serializable]
+    public class StringIntDictionary3 : SerializableDictionary<string, int> { }
+    public StringIntDictionary3 enerlingCatchCounts = new StringIntDictionary3();
+
     public GameData()
     {
         // Initialize default values
@@ -180,6 +195,19 @@ public class GameData
         // Initialize pet slots
         equippedPetSlot1 = "";
         equippedPetSlot2 = "";
+
+        // Initialize OCR battle life & energy
+        ocrBattleLives = 5;
+        ocrBattleMaxLives = 5;
+        ocrBattleEnergy = 15;
+        ocrBattleMaxEnergy = 15;
+        ocrLastLifeLossTime = "";
+        ocrLastEnergyUseTime = "";
+        ocrLivesRegening = 0;
+        ocrEnergyRegening = 0;
+
+        if (enerlingCatchCounts == null)
+            enerlingCatchCounts = new StringIntDictionary3();
     }
 
     // Helper method to get or create skin data for a character

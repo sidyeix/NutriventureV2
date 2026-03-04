@@ -305,6 +305,12 @@ public class EndingManager : MonoBehaviour
             yield break;
         }
 
+        // --- Increment catch count via BattlePlayManager ---
+        if (BattlePlayManager.Instance != null)
+        {
+            BattlePlayManager.Instance.OnBattleWin(defeatedAIEnerling.ingredientName);
+        }
+
         Debug.Log($"Defeated enerling: {defeatedAIEnerling.ingredientName}");
         Debug.Log($"Has ending cutscene: {defeatedAIEnerling.endingCutscene != null}");
 
@@ -602,6 +608,12 @@ public class EndingManager : MonoBehaviour
     IEnumerator HandlePlayerDefeated()
     {
         Debug.Log("Player defeated!");
+
+        // --- Deduct 1 life via BattlePlayManager ---
+        if (BattlePlayManager.Instance != null)
+        {
+            BattlePlayManager.Instance.OnBattleLose();
+        }
 
         if (audioSource != null && defeatAudio != null)
         {

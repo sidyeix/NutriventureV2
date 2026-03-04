@@ -125,7 +125,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("Respawn Effect")]
     public GameObject respawnEffect;
-    public float respawnEffectDuration = 1f;
+    public float respawnEffectDuration = 2f;
     private Coroutine respawnEffectCoroutine;
 
     [Header("Food Settings")]
@@ -516,6 +516,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         // Stop all coroutines first
         StopAllCoroutines();
+
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
 
         // Reset one life check
         StopOneLifeCheck();
@@ -956,6 +959,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         StopAllCoroutines();
         if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
         if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
+
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
 
         if (characterAnimator != null)
         {
@@ -1398,16 +1404,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
     }
 
-    private void ShowRespawnEffect()
+    /// <summary>
+    /// Shows the respawn VFX at its scene position and auto-hides it after respawnEffectDuration.
+    /// Called internally on checkpoint respawn, and externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void ShowRespawnEffect()
     {
         if (respawnEffect != null)
         {
-            respawnEffect.transform.position = playerTransform.position;
             respawnEffect.SetActive(true);
 
             if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
             respawnEffectCoroutine = StartCoroutine(HideRespawnEffectAfterDelay());
         }
+    }
+
+    /// <summary>
+    /// Plays the respawn sound effect. Called externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void PlayRespawnSound()
+    {
+        if (respawnSound != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(respawnSound);
     }
 
     private IEnumerator HideRespawnEffectAfterDelay()
@@ -2011,6 +2029,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         // --- Stop any ongoing processes ---
         StopAllCoroutines();
+        HideRespawnEffect(); // Clean up in case respawn effect was active
         StopKnockback();
         isRespawning = false;
         isStartingGame = false;
@@ -2050,26 +2069,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
             targetSize = size;
         }
 
-        // --- Slider / UI ---
-        if (energySlider != null)
-        {
-            energySlider.maxValue = 100f;
-            energySlider.minValue = 0f;
-            energySlider.value = currentEnergy;
-        }
-
-        // Re-apply zone-specific slider appearance
-        // (We set colour/handle based on the zone; the initialSlider fields store start values,
-        //  but during gameplay the zone may have changed. We use the saved zone.)
-        UpdateFeedbackSpriteForZone(currentFoodZone);
-
-        // --- Heart UI ---
-        InitializeHeartSystem(); // rebuilds heart images for maxLives
-        currentLifeAmount = saveData.currentLifeAmount;
-        currentLives = saveData.currentLives;
-        UpdateHeartUI();
-
-        // --- Activate game ---
+        // --- Activate game canvas FIRST so UI elements rebuild properly ---
         gameIsActive = true;
 
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
@@ -2080,6 +2080,24 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Disable lobby UI elements
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(false);
+
+        // --- Slider / UI (must be set AFTER canvas is active for proper layout rebuild) ---
+        if (energySlider != null)
+        {
+            energySlider.maxValue = 100f;
+            energySlider.minValue = 0f;
+            energySlider.value = currentEnergy;
+        }
+
+        // Re-apply slider appearance (use initial as base; zone triggers will update if needed)
+        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
+        UpdateFeedbackSpriteForZone(currentFoodZone);
+
+        // --- Heart UI ---
+        InitializeHeartSystem(); // rebuilds heart images for maxLives
+        currentLifeAmount = saveData.currentLifeAmount;
+        currentLives = saveData.currentLives;
+        UpdateHeartUI();
 
         // --- Boost visual indicators ---
         HideAllBoostUI();
@@ -2118,6 +2136,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
+
+        // --- Pause timer initially; InGameSettingsButton will resume after countdown ---
+        isGameTimerPaused = true;
 
         // --- One-life check ---
         StartOneLifeCheck();

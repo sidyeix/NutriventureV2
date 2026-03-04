@@ -26,6 +26,9 @@ public class PersistentDataManager : MonoBehaviour
 
             // Then apply unlocks to database
             ApplyUnlocksToDatabase();
+
+            // Sync catch counts from persistent save
+            SyncCatchCountsFromGameData();
         }
         else
         {
@@ -169,6 +172,54 @@ public class PersistentDataManager : MonoBehaviour
 
             Debug.Log($"Unlocked enerling: {enerlingName}");
         }
+    }
+
+    /// <summary>
+    /// Increment the catch count for a specific enerling in the database and in GameData.
+    /// </summary>
+    public void IncrementCatchCount(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        // Update runtime database
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                if (ingredient.currentCatchCount < ingredient.maxCatch)
+                {
+                    ingredient.currentCatchCount++;
+                    Debug.Log($"Catch count for {enerlingName}: {ingredient.currentCatchCount}/{ingredient.maxCatch}");
+                }
+                else
+                {
+                    Debug.Log($"{enerlingName} already at max catch ({ingredient.maxCatch})");
+                }
+            }
+        }
+
+        // Also save to GameDataManager for persistence
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.IncrementEnerlingCatchCount(enerlingName);
+        }
+    }
+
+    /// <summary>
+    /// Syncs catch counts from GameData back into the runtime IngredientDatabase.
+    /// Call this on startup / scene load.
+    /// </summary>
+    public void SyncCatchCountsFromGameData()
+    {
+        if (ingredientDatabase == null || GameDataManager.Instance == null) return;
+
+        foreach (var ingredient in ingredientDatabase.ingredients)
+        {
+            int savedCount = GameDataManager.Instance.GetEnerlingCatchCount(ingredient.ingredientName);
+            ingredient.currentCatchCount = Mathf.Min(savedCount, ingredient.maxCatch);
+        }
+        Debug.Log("Synced catch counts from GameData to IngredientDatabase");
     }
 
     // Check if enerling is unlocked

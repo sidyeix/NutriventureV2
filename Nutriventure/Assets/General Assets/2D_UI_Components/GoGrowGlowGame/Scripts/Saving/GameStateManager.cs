@@ -37,6 +37,7 @@ public class GameStateManager : MonoBehaviour
     private GrowAssessmentManager growManager;
     private GlowPartManager glowManager;
     private GameEndManager gameEndManager;
+    private InGameSettingsButton inGameSettings;
 
     // ============================================================
     //  LIFECYCLE
@@ -106,6 +107,7 @@ public class GameStateManager : MonoBehaviour
         growManager = FindObjectOfType<GrowAssessmentManager>();
         glowManager = FindObjectOfType<GlowPartManager>();
         gameEndManager = FindObjectOfType<GameEndManager>();
+        inGameSettings = FindObjectOfType<InGameSettingsButton>();
     }
 
     // ============================================================
@@ -319,6 +321,16 @@ public class GameStateManager : MonoBehaviour
         {
             if (enableDebugLogs) Debug.Log("=== APPLYING SAVED GAME STATE ===");
             RestoreFullGameState();
+
+            // Show 3-2-1 countdown before the player can move
+            if (inGameSettings != null)
+            {
+                inGameSettings.ShowResumeCountdown();
+            }
+            else
+            {
+                if (enableDebugLogs) Debug.LogWarning("InGameSettingsButton not found — skipping resume countdown");
+            }
         }
 
         pendingResumeAfterSceneLoad = false;

@@ -102,10 +102,12 @@ public class ProfileSettings : MonoBehaviour
     public Button exitGameButton;
     public Button resetPlayerDataButton;
 
-    [Header("Exit Confirmation Dialog")]
-    public GameObject exitConfirmationDialog;
-    public Button yesExitButton;
-    public Button noExitButton;
+    [Header("Warning Dialog (Unified)")]
+    public GameObject warningDialogPanel;
+    public TextMeshProUGUI warningText;
+    public Button warningYesButton;
+    public Button warningNoButton;
+    public Button closeButton;
 
     [Header("Reset Data Dialog")]
     public GameObject resetDataDialog;
@@ -113,17 +115,6 @@ public class ProfileSettings : MonoBehaviour
     public Button confirmResetButton;
     public Button cancelResetButton;
     public string requiredConfirmationText = "I want to reset my Data";
-
-    [Header("Other Buttons (Disabled)")]
-    public Button restartCurrentGameButton;
-    public Button backToHomeButton;
-    public Button resumeGameButton;
-
-    [Header("Close Dialog")]
-    public GameObject dialogPanel;
-    public Button closeButton;
-    public Button dialogYesButton;
-    public Button dialogNoButton;
 
     // Private variables
     private string originalName;
@@ -172,6 +163,10 @@ public class ProfileSettings : MonoBehaviour
     // Main canvas fade
     private CanvasGroup mainCanvasGroup;
 
+    // Warning dialog dynamic callbacks
+    private System.Action warningYesAction;
+    private System.Action warningNoAction;
+
     private void Awake()
     {
         if (!hasInitializedDefaults && gameDataManager != null && gameDataManager.CurrentGameData != null)
@@ -184,7 +179,8 @@ public class ProfileSettings : MonoBehaviour
     private void Start()
     {
         nameInputField.interactable = false;
-        dialogPanel.SetActive(false);
+        if (warningDialogPanel != null)
+            warningDialogPanel.SetActive(false);
 
         InitializeSettings();
         SetupCanvas();
@@ -193,7 +189,6 @@ public class ProfileSettings : MonoBehaviour
         StoreOriginalColors();
         SetupGridLayout();
         SetupButtonListeners();
-        DisableOtherButtons();
 
         UpdateAllCounters();
     }
@@ -280,16 +275,17 @@ public class ProfileSettings : MonoBehaviour
             closeButton.onClick.AddListener(PlayButtonSound);
         }
 
-        if (dialogYesButton != null)
+        // Unified warning dialog buttons
+        if (warningYesButton != null)
         {
-            dialogYesButton.onClick.AddListener(OnDialogYes);
-            dialogYesButton.onClick.AddListener(PlayButtonSound);
+            warningYesButton.onClick.AddListener(OnWarningYesClicked);
+            warningYesButton.onClick.AddListener(PlayButtonSound);
         }
 
-        if (dialogNoButton != null)
+        if (warningNoButton != null)
         {
-            dialogNoButton.onClick.AddListener(OnDialogNo);
-            dialogNoButton.onClick.AddListener(PlayButtonSound);
+            warningNoButton.onClick.AddListener(OnWarningNoClicked);
+            warningNoButton.onClick.AddListener(PlayButtonSound);
         }
 
         if (profileIconsButton != null)
@@ -330,12 +326,6 @@ public class ProfileSettings : MonoBehaviour
 
         if (resetPlayerDataButton != null)
             resetPlayerDataButton.onClick.AddListener(OnResetPlayerDataClicked);
-
-        if (yesExitButton != null)
-            yesExitButton.onClick.AddListener(OnYesExitClicked);
-
-        if (noExitButton != null)
-            noExitButton.onClick.AddListener(OnNoExitClicked);
 
         if (confirmResetButton != null)
         {
@@ -444,23 +434,8 @@ public class ProfileSettings : MonoBehaviour
 
         UpdateMuteButtonTexts();
 
-        if (exitConfirmationDialog != null)
-            exitConfirmationDialog.SetActive(false);
-
         if (resetDataDialog != null)
             resetDataDialog.SetActive(false);
-    }
-
-    private void DisableOtherButtons()
-    {
-        if (restartCurrentGameButton != null)
-            restartCurrentGameButton.interactable = false;
-
-        if (backToHomeButton != null)
-            backToHomeButton.interactable = false;
-
-        if (resumeGameButton != null)
-            resumeGameButton.interactable = false;
     }
 
     private void PlayButtonSound()
@@ -475,53 +450,55 @@ public class ProfileSettings : MonoBehaviour
     {
         if (gameDataManager?.CurrentGameData == null) return;
 
-        if (iconDatabase != null)
+        var gameData = gameDataManager.CurrentGameData;
+
+        if (iconDatabase != null && iconDatabase.icons.Count > 0)
         {
-            List<string> defaultIconIds = new List<string>();
+            // Unlock all unlockedByDefault icons
             foreach (var icon in iconDatabase.icons)
             {
-                if (icon.unlockedByDefault)
+                if (icon.unlockedByDefault && !gameData.unlockedIconIds.Contains(icon.id))
                 {
-                    defaultIconIds.Add(icon.id);
+                    gameData.unlockedIconIds.Add(icon.id);
                 }
             }
 
-            foreach (string iconId in defaultIconIds)
+            // Always ensure the first icon in the database is unlocked
+            string firstIconId = iconDatabase.icons[0].id;
+            if (!gameData.unlockedIconIds.Contains(firstIconId))
             {
-                if (!gameDataManager.CurrentGameData.unlockedIconIds.Contains(iconId))
-                {
-                    gameDataManager.CurrentGameData.unlockedIconIds.Add(iconId);
-                }
+                gameData.unlockedIconIds.Add(firstIconId);
             }
 
-            if (string.IsNullOrEmpty(gameDataManager.CurrentGameData.equippedIconId) && defaultIconIds.Count > 0)
+            // Equip the first icon in the database for new players
+            if (string.IsNullOrEmpty(gameData.equippedIconId))
             {
-                gameDataManager.CurrentGameData.equippedIconId = defaultIconIds[0];
+                gameData.equippedIconId = firstIconId;
             }
         }
 
-        if (frameDatabase != null)
+        if (frameDatabase != null && frameDatabase.frames.Count > 0)
         {
-            List<string> defaultFrameIds = new List<string>();
+            // Unlock all unlockedByDefault frames
             foreach (var frame in frameDatabase.frames)
             {
-                if (frame.unlockedByDefault)
+                if (frame.unlockedByDefault && !gameData.unlockedFrameIds.Contains(frame.id))
                 {
-                    defaultFrameIds.Add(frame.id);
+                    gameData.unlockedFrameIds.Add(frame.id);
                 }
             }
 
-            foreach (string frameId in defaultFrameIds)
+            // Always ensure the first frame in the database is unlocked
+            string firstFrameId = frameDatabase.frames[0].id;
+            if (!gameData.unlockedFrameIds.Contains(firstFrameId))
             {
-                if (!gameDataManager.CurrentGameData.unlockedFrameIds.Contains(frameId))
-                {
-                    gameDataManager.CurrentGameData.unlockedFrameIds.Add(frameId);
-                }
+                gameData.unlockedFrameIds.Add(firstFrameId);
             }
 
-            if (string.IsNullOrEmpty(gameDataManager.CurrentGameData.equippedFrameId) && defaultFrameIds.Count > 0)
+            // Equip the first frame in the database for new players
+            if (string.IsNullOrEmpty(gameData.equippedFrameId))
             {
-                gameDataManager.CurrentGameData.equippedFrameId = defaultFrameIds[0];
+                gameData.equippedFrameId = firstFrameId;
             }
         }
 
@@ -547,7 +524,8 @@ public class ProfileSettings : MonoBehaviour
 
         hasChanges = false;
         nameInputField.interactable = false;
-        dialogPanel.SetActive(false);
+        if (warningDialogPanel != null)
+            warningDialogPanel.SetActive(false);
 
         if (saveButton != null)
         {
@@ -581,7 +559,8 @@ public class ProfileSettings : MonoBehaviour
 
         hasChanges = false;
         nameInputField.interactable = false;
-        dialogPanel.SetActive(false);
+        if (warningDialogPanel != null)
+            warningDialogPanel.SetActive(false);
 
         if (saveButton != null)
         {
@@ -1211,7 +1190,19 @@ public class ProfileSettings : MonoBehaviour
     {
         if (hasChanges)
         {
-            dialogPanel.SetActive(true);
+            ShowWarningDialog(
+                "You have unsaved changes.\nDo you want to save before closing?",
+                onYes: () =>
+                {
+                    SaveChanges();
+                    CloseProfileSettings();
+                },
+                onNo: () =>
+                {
+                    RevertChanges();
+                    CloseProfileSettings();
+                }
+            );
         }
         else
         {
@@ -1219,18 +1210,44 @@ public class ProfileSettings : MonoBehaviour
         }
     }
 
-    private void OnDialogYes()
+    /// <summary>
+    /// Shows the unified warning dialog with dynamic Yes/No actions.
+    /// Use this for save confirmation, exit, restart, home, etc.
+    /// </summary>
+    public void ShowWarningDialog(string message, System.Action onYes, System.Action onNo = null)
     {
-        SaveChanges();
-        dialogPanel.SetActive(false);
-        CloseProfileSettings();
+        if (warningDialogPanel == null) return;
+
+        if (warningText != null)
+            warningText.text = message;
+
+        warningYesAction = onYes;
+        warningNoAction = onNo;
+
+        warningDialogPanel.SetActive(true);
     }
 
-    private void OnDialogNo()
+    private void HideWarningDialog()
     {
-        RevertChanges();
-        dialogPanel.SetActive(false);
-        CloseProfileSettings();
+        if (warningDialogPanel != null)
+            warningDialogPanel.SetActive(false);
+
+        warningYesAction = null;
+        warningNoAction = null;
+    }
+
+    private void OnWarningYesClicked()
+    {
+        System.Action action = warningYesAction;
+        HideWarningDialog();
+        action?.Invoke();
+    }
+
+    private void OnWarningNoClicked()
+    {
+        System.Action action = warningNoAction;
+        HideWarningDialog();
+        action?.Invoke();
     }
 
     private void SaveChanges()
@@ -1549,32 +1566,22 @@ public class ProfileSettings : MonoBehaviour
     {
         PlayButtonSound();
 
-        if (exitConfirmationDialog != null)
-            exitConfirmationDialog.SetActive(true);
-    }
-
-    private void OnYesExitClicked()
-    {
-        PlayButtonSound();
-
-        if (GameDataManager.Instance != null)
-        {
-            GameDataManager.Instance.SaveGameData();
-        }
+        ShowWarningDialog(
+            "Are you sure you want to exit the game?",
+            onYes: () =>
+            {
+                if (GameDataManager.Instance != null)
+                {
+                    GameDataManager.Instance.SaveGameData();
+                }
 
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
+                UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+                Application.Quit();
 #endif
-    }
-
-    private void OnNoExitClicked()
-    {
-        PlayButtonSound();
-
-        if (exitConfirmationDialog != null)
-            exitConfirmationDialog.SetActive(false);
+            }
+        );
     }
 
     private void OnResetPlayerDataClicked()

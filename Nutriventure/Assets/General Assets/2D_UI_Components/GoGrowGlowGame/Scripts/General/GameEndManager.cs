@@ -538,6 +538,13 @@ public class GameEndManager : MonoBehaviour
     private void TeleportPlayerToLobbyPoint()
     {
         TeleportPlayerToTransform(lobbyPoint, "Lobby Point");
+
+        // Play respawn sound & effect at the lobby arrival point
+        if (gameManager != null)
+        {
+            gameManager.PlayRespawnSound();
+            gameManager.ShowRespawnEffect();
+        }
     }
 
     // ========== AUDIO METHODS ==========
