@@ -696,30 +696,17 @@ public class BattlePlayManager : MonoBehaviour
         if (GameDataManager.Instance != null)
         {
             int livesBefore = GameDataManager.Instance.GetOCRBattleLives();
-            int energyBefore = GameDataManager.Instance.GetOCRBattleEnergy();
-            Debug.Log($"[Fight] Before — Lives: {livesBefore}, Energy: {energyBefore}");
+            Debug.Log($"[Fight] Before — Lives: {livesBefore}");
 
             if (livesBefore <= 0)
             {
                 ShowNoResourceWarning("No lives remaining! Wait for regeneration.");
                 return;
             }
-            if (energyBefore <= 0)
-            {
-                ShowNoResourceWarning("No energy remaining! Wait for regeneration.");
-                return;
-            }
-
-            // Consume 1 energy
-            GameDataManager.Instance.UseOCRBattleEnergy();
-            RefreshLifeEnergyUI();
-
-            int energyAfter = GameDataManager.Instance.GetOCRBattleEnergy();
-            Debug.Log($"[Fight] After energy use — Energy: {energyAfter}");
         }
         else
         {
-            Debug.LogWarning("BattlePlayManager: GameDataManager not found — skipping energy/life check.");
+            Debug.LogWarning("BattlePlayManager: GameDataManager not found — skipping life check.");
         }
 
         // RESET GROCERY CAMERA TO BATTLE POSITION (0) WHEN CATCH/FIGHT IS CLICKED
