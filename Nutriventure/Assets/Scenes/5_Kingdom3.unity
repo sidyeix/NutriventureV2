@@ -21197,7 +21197,6 @@ MonoBehaviour:
   retryIcon: {fileID: 21300000, guid: 91278f57ca4328f4295bb098d83061b9, type: 3}
   buttonScaleDuration: 0.2
   buttonScaleFactor: 1.2
-  audioSource: {fileID: 0}
   sliderFillSound: {fileID: 8300000, guid: a9e3fee688cf000499bded40dd54ff48, type: 3}
   bounceSound: {fileID: 8300000, guid: 13c242d1c3bf4db4fbfc19aae7fe7da1, type: 3}
   successSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
@@ -41289,7 +41288,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &560842276
 RectTransform:
   m_ObjectHideFlags: 0
@@ -59671,7 +59670,6 @@ MonoBehaviour:
   newRespawnParticles: {fileID: 1482029314}
   newParticleDuration: 0.7
   newParticleOutroDuration: 0.5
-  audioSource: {fileID: 0}
   panelOpenSFX: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
   panelCloseSFX: {fileID: 8300000, guid: c2eaae29c09b4e241974e0e123e5047f, type: 3}
   panelSoundVolume: 1
@@ -68773,9 +68771,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Antimicrobials on labels may appear as sodium benzoate, potassium sorbate,
-    or calcium propionate. These ingredients are commonly used to prevent microbial
-    spoilage.
+  m_text: Ingredients that provide antimicrobial protection may appear on labels
+    as sodium benzoate, potassium sorbate, or calcium propionate.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -75481,8 +75478,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: Antioxidants on labels may appear as ascorbic acid (Vitamin C), tocopherols
-    (Vitamin E), BHA, or BHT. These ingredients help protect food from damage caused
-    by air.
+    (Vitamin E), BHA, or BHT.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -141542,8 +141538,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: When food is exposed to air, oxygen can cause it to lose color, flavor,
-    and freshness. This process is called oxidation. Antioxidant preservatives help
-    slow oxidation and keep food looking and tasting better.
+    and freshness. This process is called oxidation. Some preservatives work as antioxidants
+    to slow down this process.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -168981,7 +168977,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Protecting Food from Microbes
+  m_text: Stopping Microbes from Spoiling Food
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -210109,8 +210105,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Vinegar and salt have been used as antimicrobial preservatives long before
-    modern food packaging existed.
+  m_text: Salt and vinegar were used to preserve food long before modern preservatives
+    because they slow down microbial growth.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -211372,9 +211368,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Food can spoil when bacteria, yeast, and mold grow on it. Antimicrobial
-    preservatives help slow down or stop the growth of these microorganisms to keep
-    food safe. They help extend shelf life but do not protect food from air damage.
+  m_text: Some preservatives work by stopping the growth of bacteria, molds, and
+    yeast that can spoil food or make it unsafe to eat. This is called antimicrobial
+    action.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
