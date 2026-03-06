@@ -6,6 +6,9 @@ public class ContinueButton : MonoBehaviour
     [Header("Button Settings")]
     [SerializeField] private bool disableAfterUse = false; // Checkbox in Inspector
 
+    [Header("Audio Settings")]
+    [SerializeField] private bool playClickSound = true; // Option to enable/disable click sound
+
     private Button button;
     private bool isButtonEnabled = true;
 
@@ -28,6 +31,12 @@ public class ContinueButton : MonoBehaviour
     void OnButtonClick()
     {
         if (!isButtonEnabled) return;
+
+        // Play click sound effect
+        if (playClickSound && AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
         if (TimelinePauseManager.Instance != null)
         {

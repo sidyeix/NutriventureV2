@@ -13,43 +13,47 @@ public class Test_EnerlingController : MonoBehaviour
     public float maxWaitTime = 6f;
     public float walkSpeed = 1.5f;
     public float runSpeed = 3f;
-    
+
+    [Header("Rotation Settings")]
+    public float rotationSpeed = 8f;
+
     [Header("Interaction Settings")]
     public float interactionRange = 3f;
-    public float lookAtSpeed = 5f; // Speed for looking at camera
-    
+    public float lookAtSpeed = 5f;
+
     [Header("Idle Behavior")]
     public bool canIdleAnimate = true;
     public float idleAnimationChance = 0.3f;
     public float minIdleTime = 5f;
     public float maxIdleTime = 15f;
-    
+
     [Header("Social Behavior")]
     public float socialDistance = 3f;
     public float socialCheckInterval = 2f;
     public float followChance = 0.2f;
-    
+
     [Header("Collision Avoidance")]
     public float minDistanceBetweenEnerlings = 2f;
     public float avoidanceCheckInterval = 1f;
     public float avoidanceForce = 2f;
-    
+
     [Header("Interaction Animations")]
     public string[] interactionIdleAnimations = { "Idle1", "Idle2", "LookAround", "Stretch" };
     public float interactionAnimationInterval = 3f;
-    
+
     [HideInInspector] public NavMeshAgent navAgent;
     private Animator animator;
     private Vector3 spawnPosition;
     private bool isRoaming = true;
     private float currentIdleTime = 0f;
+    private float nextIdleThreshold = 0f;
     private Test_EnerlingController followingTarget = null;
     private IngredientDatabase.IngredientInfo ingredientInfo;
-    
-    // Animation parameters
-    private readonly int isWalkingHash = Animator.StringToHash("isWalking");
-    private bool wasMoving = false; // Track previous movement state
-    
+
+    // Cached animation parameter hash — only isWalking is needed
+    private static readonly int isWalkingHash = Animator.StringToHash("isWalking");
+    private bool wasMoving = false;
+
     // Interaction states
     private bool isInteracting = false;
     private CinemachineVirtualCamera currentVirtualCamera;
@@ -58,127 +62,174 @@ public class Test_EnerlingController : MonoBehaviour
     private Coroutine socialCoroutine;
     private Coroutine interactionAnimationCoroutine;
     private Coroutine avoidanceCoroutine;
-    
-    // Virtual Camera reference
+
+    // Virtual Camera reference — created lazily on first interaction
     private CinemachineVirtualCamera virtualCamera;
-    
-    // Static reference to all enerlings for coordinated movement
-    private static List<Test_EnerlingController> allEnerlings = new List<Test_EnerlingController>();
-    
+    private bool virtualCameraCreated = false;
+
+    // Static reference to all enerlings — use HashSet for O(1) add/remove/contains
+    private static HashSet<Test_EnerlingController> allEnerlingsSet = new HashSet<Test_EnerlingController>();
+    // Also keep a cached list for iteration (updated when set changes)
+    private static List<Test_EnerlingController> allEnerlingsList = new List<Test_EnerlingController>();
+    private static bool listDirty = true;
+
+    // Pre-squared distances to avoid per-frame sqrt
+    private float minDistSqr;
+    private float socialDistSqr;
+
     // Track if behavior coroutines are running
     private bool isBehaviorRunning = false;
-    
+
+    // Stagger offset for coroutine starts (avoid all ticking same frame)
+    private static int spawnIndex = 0;
+
     void Awake()
     {
-        // Register this enerling
-        if (!allEnerlings.Contains(this))
+        if (allEnerlingsSet.Add(this))
         {
-            allEnerlings.Add(this);
+            listDirty = true;
         }
     }
-    
+
     void Start()
     {
         navAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         spawnPosition = transform.position;
         originalRotation = transform.rotation;
-        
-        // Create virtual camera as child
-        CreateVirtualCamera();
-        
-        // Start behavior coroutines
-        StartBehaviorCoroutines();
-        
+
+        // Pre-compute squared distances
+        minDistSqr = minDistanceBetweenEnerlings * minDistanceBetweenEnerlings;
+        socialDistSqr = socialDistance * socialDistance;
+
+        // Disable NavMeshAgent rotation — we handle facing direction manually
+        if (navAgent != null)
+        {
+            navAgent.updateRotation = false;
+            navAgent.updateUpAxis = true;
+        }
+
+        // Disable root motion so the walking animation doesn't override our manual rotation
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
+
+        // DO NOT create virtual camera on start — defer until interaction (saves memory + CPU)
+
+        // Stagger coroutine starts so enerlings don't all tick on the same frame
+        float stagger = (spawnIndex++) * 0.05f;
+        StartCoroutine(StartBehaviorCoroutinesStaggered(stagger));
+
         // Ensure animator starts in idle state
         if (animator != null)
         {
             animator.SetBool(isWalkingHash, false);
         }
-        
-        Debug.Log($"Enerling {gameObject.name} initialized and added to movement coordination");
+
+        // Pre-calculate first idle threshold
+        nextIdleThreshold = Random.Range(minIdleTime, maxIdleTime);
     }
-    
+
+    private IEnumerator StartBehaviorCoroutinesStaggered(float delay)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+        StartBehaviorCoroutines();
+    }
+
     void Update()
     {
-        // Only look at camera if we have a valid camera reference that's not our own
+        // Only look at camera if interacting with an external camera
         if (isInteracting && currentVirtualCamera != null && currentVirtualCamera != virtualCamera)
         {
             LookAtCamera(currentVirtualCamera.transform.position);
+            return; // Skip roaming logic while interacting
         }
-        
-        // Update animation parameters
-        if (animator != null)
+
+        if (navAgent == null || !navAgent.isOnNavMesh) return;
+
+        // Determine if the enerling is moving
+        bool isMoving = navAgent.velocity.sqrMagnitude > 0.01f; // 0.01 = 0.1^2
+
+        // Rotate to face the direction the agent needs to go (steeringTarget),
+        // NOT navAgent.velocity which includes sideways avoidance corrections.
+        if (isMoving && navAgent.hasPath)
         {
-            // Check if the agent is moving
-            bool isMoving = navAgent.velocity.magnitude > 0.1f && navAgent.hasPath;
-            
-            // Only update if state has changed to avoid unnecessary animator calls
-            if (isMoving != wasMoving)
+            Vector3 lookTarget = navAgent.steeringTarget - transform.position;
+            lookTarget.y = 0f;
+            if (lookTarget.sqrMagnitude > 0.001f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(lookTarget.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+            }
+        }
+
+        // Only update isWalking when movement state changes
+        if (isMoving != wasMoving)
+        {
+            wasMoving = isMoving;
+            if (animator != null)
             {
                 animator.SetBool(isWalkingHash, isMoving);
-                wasMoving = isMoving;
-                
-                // Optional: Debug to verify animation state changes
-                // Debug.Log($"{gameObject.name} isMoving: {isMoving}, velocity: {navAgent.velocity.magnitude}");
             }
-            
-            // Keep the Speed parameter for blending if needed
-            animator.SetFloat("Speed", navAgent.velocity.magnitude);
-            animator.SetBool("IsMoving", isMoving);
         }
-        
-        // Handle idle behavior (only when not interacting)
-        if (!isInteracting && !navAgent.pathPending && navAgent.remainingDistance <= navAgent.stoppingDistance)
+
+        // Handle idle behavior (only when stopped)
+        if (!isMoving && !isInteracting && !navAgent.pathPending && navAgent.remainingDistance <= navAgent.stoppingDistance)
         {
             currentIdleTime += Time.deltaTime;
-            
-            // Random idle animation
-            if (canIdleAnimate && currentIdleTime > Random.Range(minIdleTime, maxIdleTime))
+
+            if (canIdleAnimate && currentIdleTime > nextIdleThreshold)
             {
                 TriggerIdleAnimation();
                 currentIdleTime = 0f;
+                nextIdleThreshold = Random.Range(minIdleTime, maxIdleTime);
             }
         }
     }
-    
-    private void CreateVirtualCamera()
+
+    private void EnsureVirtualCamera()
     {
-        // Create a new GameObject for the virtual camera
+        if (virtualCameraCreated) return;
+        virtualCameraCreated = true;
+
         GameObject vcamGO = new GameObject("EnerlingVirtualCamera");
         vcamGO.transform.SetParent(transform);
-        
-        // Set transform properties as specified
         vcamGO.transform.localPosition = new Vector3(-0.695f, 1.24005f, 1.799f);
         vcamGO.transform.localRotation = Quaternion.Euler(0, 190.004f, 0);
         vcamGO.transform.localScale = new Vector3(1.886793f, 1.886793f, 1.886793f);
-        
-        // Add CinemachineVirtualCamera component
+
         virtualCamera = vcamGO.AddComponent<CinemachineVirtualCamera>();
-        
-        // Configure camera settings
-        virtualCamera.Priority = 0; // Default priority (inactive)
+        virtualCamera.Priority = 0;
         virtualCamera.m_Lens.FieldOfView = 60f;
-        
-        // Don't set LookAt or Follow - these should remain null as per requirements
         virtualCamera.LookAt = null;
         virtualCamera.Follow = null;
-        
-        Debug.Log($"Created virtual camera for {gameObject.name}");
     }
-    
+
     private void LookAtCamera(Vector3 cameraPosition)
     {
-        Vector3 direction = (cameraPosition - transform.position).normalized;
-        direction.y = 0; // Keep rotation horizontal only
-        
-        if (direction != Vector3.zero)
+        Vector3 direction = (cameraPosition - transform.position);
+        direction.y = 0;
+
+        if (direction.sqrMagnitude > 0.001f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, lookAtSpeed * Time.deltaTime);
         }
     }
-    
+
+    private static List<Test_EnerlingController> GetEnerlingsList()
+    {
+        if (listDirty)
+        {
+            allEnerlingsList.Clear();
+            allEnerlingsList.AddRange(allEnerlingsSet);
+            listDirty = false;
+        }
+        return allEnerlingsList;
+    }
+
     private void StartBehaviorCoroutines()
     {
         isBehaviorRunning = true;
@@ -186,97 +237,89 @@ public class Test_EnerlingController : MonoBehaviour
         socialCoroutine = StartCoroutine(SocialBehaviorCheck());
         avoidanceCoroutine = StartCoroutine(CollisionAvoidanceCheck());
     }
-    
+
     private void StopBehaviorCoroutines()
     {
         isBehaviorRunning = false;
-        
+
         if (roamingCoroutine != null)
         {
             StopCoroutine(roamingCoroutine);
             roamingCoroutine = null;
         }
-        
+
         if (socialCoroutine != null)
         {
             StopCoroutine(socialCoroutine);
             socialCoroutine = null;
         }
-        
+
         if (avoidanceCoroutine != null)
         {
             StopCoroutine(avoidanceCoroutine);
             avoidanceCoroutine = null;
         }
     }
-    
+
     private IEnumerator RoamingBehavior()
     {
         while (isRoaming && isBehaviorRunning)
         {
             if (!isInteracting && followingTarget == null)
             {
-                // Choose a random destination
                 Vector3 randomDirection = Random.insideUnitSphere * Random.Range(minRoamDistance, maxRoamDistance);
                 randomDirection += spawnPosition;
-                
-                // Try to find a valid position on NavMesh
+
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(randomDirection, out hit, maxRoamDistance, NavMesh.AllAreas))
                 {
-                    // Check if destination is too close to other enerlings
                     if (!IsTooCloseToOtherEnerlings(hit.position))
                     {
                         navAgent.speed = Random.value > 0.7f ? runSpeed : walkSpeed;
                         navAgent.SetDestination(hit.position);
-                        
-                        // Wait until reaching destination
-                        yield return new WaitUntil(() => 
-                            !navAgent.pathPending && 
+
+                        yield return new WaitUntil(() =>
+                            !navAgent.pathPending &&
                             navAgent.remainingDistance <= navAgent.stoppingDistance);
-                        
-                        // Wait for random time before next roam
+
                         yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
                     }
                     else
                     {
-                        // If too close, wait a bit and try again
                         yield return new WaitForSeconds(1f);
                     }
                 }
                 else
                 {
-                    // If can't find valid position, wait and try again
                     yield return new WaitForSeconds(1f);
                 }
             }
             else if (!isInteracting && followingTarget != null)
             {
-                // Following behavior
-                float distance = Vector3.Distance(transform.position, followingTarget.transform.position);
-                if (distance > socialDistance)
+                float distSqr = (transform.position - followingTarget.transform.position).sqrMagnitude;
+                if (distSqr > socialDistSqr)
                 {
                     navAgent.SetDestination(followingTarget.transform.position);
                 }
-                
                 yield return new WaitForSeconds(1f);
             }
             else
             {
-                // If interacting, just wait
                 yield return new WaitForSeconds(0.5f);
             }
         }
     }
-    
+
     private bool IsTooCloseToOtherEnerlings(Vector3 position)
     {
-        foreach (var enerling in allEnerlings)
+        var list = GetEnerlingsList();
+        for (int i = 0; i < list.Count; i++)
         {
+            var enerling = list[i];
             if (enerling != null && enerling != this && enerling.gameObject.activeInHierarchy && !enerling.isInteracting)
             {
-                float distance = Vector3.Distance(position, enerling.transform.position);
-                if (distance < minDistanceBetweenEnerlings)
+                float distSqr = (position - enerling.transform.position).sqrMagnitude;
+                if (distSqr < minDistSqr)
                 {
                     return true;
                 }
@@ -284,41 +327,40 @@ public class Test_EnerlingController : MonoBehaviour
         }
         return false;
     }
-    
+
     private IEnumerator CollisionAvoidanceCheck()
     {
         while (isBehaviorRunning)
         {
             yield return new WaitForSeconds(avoidanceCheckInterval);
-            
+
             if (!isInteracting && navAgent.hasPath)
             {
-                // Check for nearby enerlings and avoid them
                 Vector3 avoidanceVector = Vector3.zero;
                 int nearbyCount = 0;
-                
-                foreach (var enerling in allEnerlings)
+
+                var list = GetEnerlingsList();
+                for (int i = 0; i < list.Count; i++)
                 {
+                    var enerling = list[i];
                     if (enerling != null && enerling != this && enerling.gameObject.activeInHierarchy && !enerling.isInteracting)
                     {
-                        float distance = Vector3.Distance(transform.position, enerling.transform.position);
-                        if (distance < minDistanceBetweenEnerlings)
+                        Vector3 diff = transform.position - enerling.transform.position;
+                        float distSqr = diff.sqrMagnitude;
+                        if (distSqr < minDistSqr && distSqr > 0.001f)
                         {
-                            Vector3 awayDirection = (transform.position - enerling.transform.position).normalized;
-                            avoidanceVector += awayDirection * (1f - (distance / minDistanceBetweenEnerlings));
+                            float dist = Mathf.Sqrt(distSqr);
+                            avoidanceVector += (diff / dist) * (1f - (dist / minDistanceBetweenEnerlings));
                             nearbyCount++;
                         }
                     }
                 }
-                
+
                 if (nearbyCount > 0)
                 {
-                    // Calculate new destination with avoidance
                     avoidanceVector /= nearbyCount;
-                    Vector3 currentDestination = navAgent.destination;
-                    Vector3 newDestination = currentDestination + avoidanceVector * avoidanceForce;
-                    
-                    // Sample position on NavMesh
+                    Vector3 newDestination = navAgent.destination + avoidanceVector * avoidanceForce;
+
                     NavMeshHit hit;
                     if (NavMesh.SamplePosition(newDestination, out hit, 2f, NavMesh.AllAreas))
                     {
@@ -328,42 +370,45 @@ public class Test_EnerlingController : MonoBehaviour
             }
         }
     }
-    
+
+    // Optimized: iterate static list instead of Physics.OverlapSphere
     private IEnumerator SocialBehaviorCheck()
     {
         while (isBehaviorRunning)
         {
             yield return new WaitForSeconds(socialCheckInterval);
-            
-            // Only check for social behavior when not interacting
-            if (!isInteracting)
+
+            if (!isInteracting && followingTarget == null)
             {
-                // Check for nearby Enerlings
-                Collider[] nearbyEnerlings = Physics.OverlapSphere(transform.position, socialDistance * 2);
-                
-                foreach (Collider collider in nearbyEnerlings)
+                float socialDistSqr2x = (socialDistance * 2f) * (socialDistance * 2f);
+                var list = GetEnerlingsList();
+                for (int i = 0; i < list.Count; i++)
                 {
-                    Test_EnerlingController otherEnerling = collider.GetComponent<Test_EnerlingController>();
-                    if (otherEnerling != null && otherEnerling != this && followingTarget == null && !otherEnerling.isInteracting)
+                    var other = list[i];
+                    if (other != null && other != this && !other.isInteracting)
                     {
-                        if (Random.value < followChance)
+                        float distSqr = (transform.position - other.transform.position).sqrMagnitude;
+                        if (distSqr < socialDistSqr2x)
                         {
-                            followingTarget = otherEnerling;
-                            StartCoroutine(StopFollowingAfterTime(Random.Range(10f, 30f)));
-                            break;
+                            if (Random.value < followChance)
+                            {
+                                followingTarget = other;
+                                StartCoroutine(StopFollowingAfterTime(Random.Range(10f, 30f)));
+                                break;
+                            }
                         }
                     }
                 }
             }
         }
     }
-    
+
     private IEnumerator StopFollowingAfterTime(float time)
     {
         yield return new WaitForSeconds(time);
         followingTarget = null;
     }
-    
+
     private void TriggerIdleAnimation()
     {
         if (animator != null && !isInteracting)
@@ -373,103 +418,85 @@ public class Test_EnerlingController : MonoBehaviour
             animator.SetTrigger(randomTrigger);
         }
     }
-    
+
     private IEnumerator InteractionAnimationRoutine()
     {
         while (isInteracting)
         {
             yield return new WaitForSeconds(interactionAnimationInterval);
-            
+
             if (animator != null && interactionIdleAnimations.Length > 0)
             {
                 string randomAnimation = interactionIdleAnimations[Random.Range(0, interactionIdleAnimations.Length)];
                 animator.SetTrigger(randomAnimation);
-                Debug.Log($"Playing interaction animation: {randomAnimation}");
             }
         }
     }
-    
-    // Public method to start interaction
+
     public void StartInteraction(CinemachineVirtualCamera vcam = null)
     {
         if (isInteracting) return;
-        
+
         isInteracting = true;
+
+        // Lazily create virtual camera only when needed
+        EnsureVirtualCamera();
         currentVirtualCamera = vcam != null ? vcam : virtualCamera;
-        
-        // Store original rotation
+
         originalRotation = transform.rotation;
-        
-        // Stop current movement
+
         navAgent.isStopped = true;
         navAgent.ResetPath();
-        
-        // Update animation to idle
+
         if (animator != null)
         {
             animator.SetBool(isWalkingHash, false);
-            animator.SetBool("IsMoving", false);
-            animator.SetFloat("Speed", 0f);
         }
-        
-        // Stop behavior coroutines
+        wasMoving = false;
+
         StopBehaviorCoroutines();
-        
-        // Activate virtual camera
+
         if (virtualCamera != null)
         {
-            virtualCamera.Priority = 20; // Set to high priority when interacting
+            virtualCamera.Priority = 20;
         }
-        
-        // Start interaction animations
+
         if (interactionAnimationCoroutine != null)
         {
             StopCoroutine(interactionAnimationCoroutine);
         }
         interactionAnimationCoroutine = StartCoroutine(InteractionAnimationRoutine());
-        
-        Debug.Log($"{gameObject.name} started interaction with virtual camera");
     }
-    
-    // Public method to end interaction
+
     public void EndInteraction()
     {
         if (!isInteracting) return;
-        
+
         isInteracting = false;
         currentVirtualCamera = null;
-        
-        // Deactivate virtual camera
+
         if (virtualCamera != null)
         {
-            virtualCamera.Priority = 0; // Set back to low priority
+            virtualCamera.Priority = 0;
         }
-        
-        // Stop interaction animations
+
         if (interactionAnimationCoroutine != null)
         {
             StopCoroutine(interactionAnimationCoroutine);
             interactionAnimationCoroutine = null;
         }
-        
-        // Resume movement
+
         navAgent.isStopped = false;
-        
-        // Restart behavior coroutines
         StartBehaviorCoroutines();
-        
-        // Reset rotation to original
         StartCoroutine(ResetRotation());
-        
-        Debug.Log($"{gameObject.name} ended interaction");
     }
-    
+
     private IEnumerator ResetRotation()
     {
         float elapsedTime = 0f;
         float duration = 1f;
         Quaternion startRotation = transform.rotation;
-        
+
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
@@ -477,14 +504,14 @@ public class Test_EnerlingController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(startRotation, originalRotation, t);
             yield return null;
         }
-        
+
         transform.rotation = originalRotation;
     }
-    
+
     public void SetIngredientInfo(IngredientDatabase.IngredientInfo info)
     {
         ingredientInfo = info;
-        
+
         if (ingredientInfo != null)
         {
             switch (ingredientInfo.rarity)
@@ -492,12 +519,13 @@ public class Test_EnerlingController : MonoBehaviour
                 case IngredientDatabase.Rarity.UltraRare:
                     walkSpeed *= 1.2f;
                     socialDistance *= 1.5f;
+                    socialDistSqr = socialDistance * socialDistance;
                     break;
                 case IngredientDatabase.Rarity.Rare:
                     walkSpeed *= 1.1f;
                     break;
             }
-            
+
             switch (ingredientInfo.kingdom)
             {
                 case IngredientDatabase.KingdomOrigin.NutriKingdom:
@@ -510,88 +538,78 @@ public class Test_EnerlingController : MonoBehaviour
             }
         }
     }
-    
+
     public IngredientDatabase.IngredientInfo GetIngredientInfo()
     {
         return ingredientInfo;
     }
-    
+
     public bool IsInteracting()
     {
         return isInteracting;
     }
-    
+
     public CinemachineVirtualCamera GetVirtualCamera()
     {
+        EnsureVirtualCamera();
         return virtualCamera;
     }
-    
-    // Static method to pause all enerlings (COMPLETELY stop them)
+
     public static void PauseAllEnerlings()
     {
-        foreach (var enerling in allEnerlings)
+        var list = GetEnerlingsList();
+        for (int i = 0; i < list.Count; i++)
         {
+            var enerling = list[i];
             if (enerling != null && !enerling.isInteracting)
             {
-                // Stop NavMeshAgent
                 enerling.navAgent.isStopped = true;
                 enerling.navAgent.ResetPath();
-                
-                // Update animation to idle
+
                 if (enerling.animator != null)
                 {
-                    enerling.animator.SetBool(enerling.isWalkingHash, false);
-                    enerling.animator.SetBool("IsMoving", false);
-                    enerling.animator.SetFloat("Speed", 0f);
+                    enerling.animator.SetBool(isWalkingHash, false);
                 }
-                
-                // Stop all behavior coroutines
+                enerling.wasMoving = false;
+
                 enerling.StopBehaviorCoroutines();
             }
         }
-        Debug.Log($"Paused {allEnerlings.Count} enerlings");
     }
-    
-    // Static method to resume all enerlings
+
     public static void ResumeAllEnerlings()
     {
-        foreach (var enerling in allEnerlings)
+        var list = GetEnerlingsList();
+        for (int i = 0; i < list.Count; i++)
         {
+            var enerling = list[i];
             if (enerling != null && !enerling.isInteracting)
             {
-                // Resume NavMeshAgent
                 enerling.navAgent.isStopped = false;
-                
-                // Restart behavior coroutines
                 enerling.StartBehaviorCoroutines();
-                
-                // Note: The walking animation will automatically be set when the agent starts moving
-                // as the Update method will detect the velocity change
             }
         }
-        Debug.Log($"Resumed {allEnerlings.Count} enerlings");
     }
-    
+
     void OnDestroy()
     {
-        // Unregister this enerling
-        if (allEnerlings.Contains(this))
+        if (allEnerlingsSet.Remove(this))
         {
-            allEnerlings.Remove(this);
+            listDirty = true;
         }
     }
-    
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, socialDistance);
-        
+
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
-        
+
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, socialDistance * 2);
-        
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, minDistanceBetweenEnerlings);
     }

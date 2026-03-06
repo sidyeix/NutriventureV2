@@ -25,16 +25,16 @@ MonoBehaviour:
     chestRewards:
     - rewardName: NutriCoins
       rewardType: Coins
-      amount: 500
+      amount: 100
       rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
     - rewardName: NutriGems
       rewardType: Gems
-      amount: 100
+      amount: 10
       rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
     - rewardName: Experience
       rewardType: EXP
       amount: 50
-      rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
+      rewardIcon: {fileID: 21300000, guid: 81a992e94d442d044b3eaaf463f49d44, type: 3}
   - chestName: Rare Chest
     chestPrefab: {fileID: 1990241744087739384, guid: 44db6db5671b43c4b8a9411cf5d4827a, type: 3}
     rewardDelay: 4
@@ -47,16 +47,16 @@ MonoBehaviour:
     chestRewards:
     - rewardName: NutriCoins
       rewardType: Coins
-      amount: 10
+      amount: 500
       rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
     - rewardName: NutriGems
       rewardType: Gems
-      amount: 100
+      amount: 50
       rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
     - rewardName: Experience
       rewardType: EXP
-      amount: 80
-      rewardIcon: {fileID: 21300000, guid: f419c55ac59d54b4dab9900bd1635eac, type: 3}
+      amount: 100
+      rewardIcon: {fileID: 21300000, guid: 81a992e94d442d044b3eaaf463f49d44, type: 3}
   - chestName: Epic Chest
     chestPrefab: {fileID: 1990241744087739384, guid: b2810c8307bf17b468a50f98ac1b5f72, type: 3}
     rewardDelay: 7.5
@@ -69,13 +69,13 @@ MonoBehaviour:
     chestRewards:
     - rewardName: NutriCoins
       rewardType: Coins
-      amount: 10
+      amount: 1000
       rewardIcon: {fileID: 21300000, guid: 9d8e5b2a1a7abcf4dba7c3cfff26deb0, type: 3}
     - rewardName: NutriGems
       rewardType: Gem
-      amount: 10
+      amount: 100
       rewardIcon: {fileID: 21300000, guid: 90122e0085395634e9ebbaf119e4ac3a, type: 3}
-    - rewardName: Nutri Expi
-      rewardType: Experience
-      amount: 50
-      rewardIcon: {fileID: 21300000, guid: be841510c761e934f84a2e8aa6b2f6a6, type: 3}
+    - rewardName: Experience
+      rewardType: EXP
+      amount: 500
+      rewardIcon: {fileID: 21300000, guid: 81a992e94d442d044b3eaaf463f49d44, type: 3}

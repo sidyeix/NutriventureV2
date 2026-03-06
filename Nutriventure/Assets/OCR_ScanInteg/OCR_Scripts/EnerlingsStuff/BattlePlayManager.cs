@@ -10,6 +10,8 @@ using UnityEngine.SceneManagement;
 
 public class BattlePlayManager : MonoBehaviour
 {
+    public static BattlePlayManager Instance { get; private set; }
+
     [Header("Database Reference")]
     public IngredientDatabase ingredientDatabase;
 
@@ -85,19 +87,77 @@ public class BattlePlayManager : MonoBehaviour
     public PlayerEnerlingManager playerManager;
     public TurnSystem turnSystem;
 
+    [Header("Player Character Spawn")]
+    [Tooltip("Transform where the player's character/skin prefab will be spawned")]
+    public Transform playerCharacterSpawnPoint;
+
+    [Header("EnerlingPanelFight UI")]
+    [Tooltip("The canvas/panel shown before a fight with life/energy display")]
+    public GameObject enerlingPanelFight;
+    [Tooltip("Warning text shown when player has no energy or no lives")]
+    public TextMeshProUGUI noResourceWarningText;
+
+    [Header("Heart Panel (Life System)")]
+    [Tooltip("Parent transform inside the heart panel to hold heart images (add HorizontalLayoutGroup)")]
+    public Transform heartContainer;
+    [Tooltip("Sprite for a full heart")]
+    public Sprite fullHeartSprite;
+    [Tooltip("Sprite for an empty heart")]
+    public Sprite emptyHeartSprite;
+    [Tooltip("Size of each heart image (width x height)")]
+    public Vector2 heartSize = new Vector2(64f, 64f);
+
+    [Header("Energy & Regen UI")]
+    [Tooltip("Energy text with format '15/15'")]
+    public TextMeshProUGUI energyText;
+    [Tooltip("Text that shows remaining regen time for life (hidden when full)")]
+    public TextMeshProUGUI lifeRegenTimerText;
+    [Tooltip("Text that shows remaining regen time for energy (hidden when full)")]
+    public TextMeshProUGUI energyRegenTimerText;
+
     [Header("Scene Names")]
     public string scanOCRSceneName = "ScanOCR";
 
     private IngredientDatabase.IngredientInfo opponentEnerling;
     private GameObject spawnedOpponent;
+    private GameObject spawnedPlayerCharacter;
     private PlayableAsset currentTimeline;
     private bool timelinePlaying = false;
     private bool isUnlocked = false;
     private bool battleStarted = false;
+    private System.Collections.Generic.List<Image> heartImages = new System.Collections.Generic.List<Image>();
+
+    void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
 
     void Start()
     {
         Debug.Log("=== BATTLE PLAY MANAGER START ===");
+
+        // Process any offline regen before UI setup
+        if (GameDataManager.Instance != null)
+            GameDataManager.Instance.ProcessOCRBattleRegen();
+
+        // Spawn the player's equipped character/skin at the spawn point
+        SpawnPlayerCharacterModel();
+
+        // Build life heart images & initial UI
+        Debug.Log($"[LifeEnergy] heartContainer={heartContainer != null}, energyText={energyText != null}, lifeRegenTimerText={lifeRegenTimerText != null}, energyRegenTimerText={energyRegenTimerText != null}");
+        Debug.Log($"[LifeEnergy] fullHeartSprite={fullHeartSprite != null}, emptyHeartSprite={emptyHeartSprite != null}");
+        Debug.Log($"[LifeEnergy] GameDataManager={GameDataManager.Instance != null}");
+        if (GameDataManager.Instance != null)
+            Debug.Log($"[LifeEnergy] Lives={GameDataManager.Instance.GetOCRBattleLives()}/{GameDataManager.Instance.GetOCRBattleMaxLives()}, Energy={GameDataManager.Instance.GetOCRBattleEnergy()}/{GameDataManager.Instance.GetOCRBattleMaxEnergy()}");
+        BuildHeartImages();
+        RefreshLifeEnergyUI();
+        Debug.Log($"[LifeEnergy] Hearts built: {heartImages.Count}");
 
         // STOP ALL OTHER PLAYABLE DIRECTORS IN THE SCENE
         StopAllOtherPlayableDirectors();
@@ -126,6 +186,23 @@ public class BattlePlayManager : MonoBehaviour
         StartCoroutine(InitializeBattleScene());
     }
 
+    void Update()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        // Lazy-build hearts if they weren't created yet (e.g. container was inactive at Start)
+        if (heartImages.Count == 0 && heartContainer != null)
+            BuildHeartImages();
+
+        // Tick regen and refresh UI every frame
+        GameDataManager.Instance.ProcessOCRBattleRegen();
+        RefreshLifeEnergyUI();
+
+        bool lifeFull = GameDataManager.Instance.GetOCRBattleLives() >= GameDataManager.Instance.GetOCRBattleMaxLives();
+        bool energyFull = GameDataManager.Instance.GetOCRBattleEnergy() >= GameDataManager.Instance.GetOCRBattleMaxEnergy();
+        UpdateRegenTimerTexts(lifeFull, energyFull);
+    }
+
     void StopAllOtherPlayableDirectors()
     {
         Debug.Log("=== STOPPING ALL OTHER PLAYABLE DIRECTORS ===");
@@ -152,6 +229,39 @@ public class BattlePlayManager : MonoBehaviour
         }
 
         Debug.Log("All other PlayableDirectors stopped");
+    }
+
+    void SpawnPlayerCharacterModel()
+    {
+        if (playerCharacterSpawnPoint == null)
+        {
+            Debug.LogWarning("BattlePlayManager: playerCharacterSpawnPoint not assigned!");
+            return;
+        }
+
+        if (GameDataManager.Instance == null)
+        {
+            Debug.LogWarning("BattlePlayManager: GameDataManager not found — cannot spawn player character.");
+            return;
+        }
+
+        GameObject prefab = GameDataManager.Instance.GetEquippedCharacterOrSkinPrefab();
+        if (prefab == null)
+        {
+            Debug.LogWarning("BattlePlayManager: No character/skin prefab found!");
+            return;
+        }
+
+        if (spawnedPlayerCharacter != null)
+            Destroy(spawnedPlayerCharacter);
+
+        spawnedPlayerCharacter = Instantiate(prefab, playerCharacterSpawnPoint.position,
+            playerCharacterSpawnPoint.rotation, playerCharacterSpawnPoint);
+        spawnedPlayerCharacter.transform.localPosition = Vector3.zero;
+        spawnedPlayerCharacter.transform.localRotation = Quaternion.identity;
+        spawnedPlayerCharacter.name = "PlayerCharacter_Spawned";
+
+        Debug.Log($"BattlePlayManager: Spawned player character '{prefab.name}' at {playerCharacterSpawnPoint.name}");
     }
 
     IEnumerator InitializeBattleScene()
@@ -581,10 +691,50 @@ public class BattlePlayManager : MonoBehaviour
 
     void OnCatchFightButtonClicked()
     {
+        Debug.Log("=== CATCH/FIGHT BUTTON CLICKED ===");
+
+        if (GameDataManager.Instance != null)
+        {
+            int livesBefore = GameDataManager.Instance.GetOCRBattleLives();
+            Debug.Log($"[Fight] Before — Lives: {livesBefore}");
+
+            if (livesBefore <= 0)
+            {
+                ShowNoResourceWarning("No lives remaining! Wait for regeneration.");
+                return;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("BattlePlayManager: GameDataManager not found — skipping life check.");
+        }
+
         // RESET GROCERY CAMERA TO BATTLE POSITION (0) WHEN CATCH/FIGHT IS CLICKED
         SetBattleGroceryCameraPosition();
 
         StartCoroutine(ShowPlayerSelectionScreen());
+    }
+
+    void ShowNoResourceWarning(string message)
+    {
+        if (noResourceWarningText != null)
+        {
+            noResourceWarningText.gameObject.SetActive(true);
+            noResourceWarningText.text = message;
+            // Auto-hide after 2 seconds
+            StartCoroutine(HideWarningAfterDelay(2f));
+        }
+        else
+        {
+            Debug.LogWarning($"BattlePlayManager: {message}");
+        }
+    }
+
+    IEnumerator HideWarningAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (noResourceWarningText != null)
+            noResourceWarningText.gameObject.SetActive(false);
     }
 
     void SetBattleGroceryCameraPosition()
@@ -768,6 +918,10 @@ public class BattlePlayManager : MonoBehaviour
     {
         if (spawnedOpponent != null)
             Destroy(spawnedOpponent);
+        if (spawnedPlayerCharacter != null)
+            Destroy(spawnedPlayerCharacter);
+        if (Instance == this)
+            Instance = null;
     }
 
     public bool IsTimelinePlaying()
@@ -778,5 +932,161 @@ public class BattlePlayManager : MonoBehaviour
     public IngredientDatabase.IngredientInfo GetCurrentOpponent()
     {
         return opponentEnerling;
+    }
+
+    // ========================================================================
+    //  HEART (LIFE) UI
+    // ========================================================================
+
+    void BuildHeartImages()
+    {
+        if (heartContainer == null) return;
+
+        heartImages.Clear();
+
+        // Remove any existing children
+        for (int i = heartContainer.childCount - 1; i >= 0; i--)
+            Destroy(heartContainer.GetChild(i).gameObject);
+
+        int maxLives = GameDataManager.Instance != null ? GameDataManager.Instance.GetOCRBattleMaxLives() : 5;
+
+        for (int i = 0; i < maxLives; i++)
+        {
+            GameObject heartGO = new GameObject($"Heart_{i}", typeof(RectTransform), typeof(Image));
+            heartGO.transform.SetParent(heartContainer, false);
+
+            RectTransform rt = heartGO.GetComponent<RectTransform>();
+            rt.sizeDelta = heartSize;
+
+            Image img = heartGO.GetComponent<Image>();
+            img.sprite = fullHeartSprite;
+            img.preserveAspect = true;
+
+            heartImages.Add(img);
+        }
+    }
+
+    void UpdateHeartUI()
+    {
+        if (heartImages == null || heartImages.Count == 0) return;
+        if (GameDataManager.Instance == null) return;
+
+        int currentLives = GameDataManager.Instance.GetOCRBattleLives();
+
+        for (int i = 0; i < heartImages.Count; i++)
+        {
+            if (heartImages[i] == null) continue;
+            heartImages[i].sprite = (i < currentLives) ? fullHeartSprite : emptyHeartSprite;
+        }
+    }
+
+    // ========================================================================
+    //  ENERGY & REGEN TIMER UI
+    // ========================================================================
+
+    void RefreshLifeEnergyUI()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        UpdateHeartUI();
+
+        if (energyText != null)
+        {
+            int cur = GameDataManager.Instance.GetOCRBattleEnergy();
+            int max = GameDataManager.Instance.GetOCRBattleMaxEnergy();
+            energyText.text = $"{cur}/{max}";
+        }
+    }
+
+    void UpdateRegenTimerTexts(bool lifeFull, bool energyFull)
+    {
+        if (lifeRegenTimerText != null)
+        {
+            if (lifeFull)
+            {
+                lifeRegenTimerText.gameObject.SetActive(false);
+            }
+            else
+            {
+                lifeRegenTimerText.gameObject.SetActive(true);
+                float remainSec = GameDataManager.Instance.GetOCRLifeRegenRemainingSeconds();
+                lifeRegenTimerText.text = $"Regen in: {FormatTime(remainSec)}";
+            }
+        }
+
+        if (energyRegenTimerText != null)
+        {
+            if (energyFull)
+            {
+                energyRegenTimerText.gameObject.SetActive(false);
+            }
+            else
+            {
+                energyRegenTimerText.gameObject.SetActive(true);
+                float remainSec = GameDataManager.Instance.GetOCREnergyRegenRemainingSeconds();
+                energyRegenTimerText.text = $"Regen in: {FormatTime(remainSec)}";
+            }
+        }
+    }
+
+    static string FormatTime(float totalSeconds)
+    {
+        if (totalSeconds <= 0f) return "00:00";
+        int minutes = Mathf.FloorToInt(totalSeconds / 60f);
+        int seconds = Mathf.FloorToInt(totalSeconds % 60f);
+        return $"{minutes:00}:{seconds:00}";
+    }
+
+    // ========================================================================
+    //  PUBLIC API — called by EndingManager
+    // ========================================================================
+
+    /// <summary>
+    /// Call when the player WINS a battle — catch count increases, life stays.
+    /// </summary>
+    public void OnBattleWin(string defeatedEnerlingName)
+    {
+        Debug.Log($"BattlePlayManager: Battle won vs {defeatedEnerlingName}");
+
+        if (PersistentDataManager.Instance != null)
+            PersistentDataManager.Instance.IncrementCatchCount(defeatedEnerlingName);
+
+        RefreshLifeEnergyUI();
+    }
+
+    /// <summary>
+    /// Call when the player LOSES a battle — deduct 1 life.
+    /// </summary>
+    public void OnBattleLose()
+    {
+        Debug.Log("BattlePlayManager: Battle lost — deducting 1 life");
+
+        if (GameDataManager.Instance != null)
+            GameDataManager.Instance.UseOCRBattleLife();
+
+        RefreshLifeEnergyUI();
+    }
+
+    /// <summary>
+    /// Consume 1 energy to start a battle. Returns false if not enough energy.
+    /// </summary>
+    public bool TryUseEnergy()
+    {
+        if (GameDataManager.Instance == null) return false;
+        bool success = GameDataManager.Instance.UseOCRBattleEnergy();
+        RefreshLifeEnergyUI();
+        return success;
+    }
+
+    /// <summary>Returns true if the player has at least 1 life left.</summary>
+    public bool HasLivesRemaining()
+    {
+        return GameDataManager.Instance != null && GameDataManager.Instance.GetOCRBattleLives() > 0;
+    }
+
+    /// <summary>Returns true if the player has at least 1 energy.</summary>
+    public bool HasEnergyRemaining()
+    {
+        return GameDataManager.Instance != null && GameDataManager.Instance.GetOCRBattleEnergy() > 0;
     }
 }

@@ -125,7 +125,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("Respawn Effect")]
     public GameObject respawnEffect;
-    public float respawnEffectDuration = 1f;
+    public float respawnEffectDuration = 2f;
     private Coroutine respawnEffectCoroutine;
 
     [Header("Food Settings")]
@@ -279,10 +279,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         UpdateUI();
         SetGameActive(false);
 
-        // Set initial BGM to gameEndBGM
+        // Set initial BGM to gameEndBGM (looping)
         if (backgroundMusicSource != null && gameEndBGM != null)
         {
             backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
@@ -516,6 +517,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Stop all coroutines first
         StopAllCoroutines();
 
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
+
         // Reset one life check
         StopOneLifeCheck();
 
@@ -582,10 +586,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
         StopLowEnergySound();
 
-        // Reset audio
+        // Reset audio (looping)
         if (backgroundMusicSource != null && gameEndBGM != null)
         {
             backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
@@ -917,10 +922,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else Debug.LogError("FoodSpawner not assigned to GameManager!");
 
-        // Change background music
+        // Change background music (looping)
         if (backgroundMusicSource != null && gameStartBGM != null)
         {
             backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
@@ -953,6 +959,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         StopAllCoroutines();
         if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
         if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
+
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
 
         if (characterAnimator != null)
         {
@@ -1395,16 +1404,28 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
     }
 
-    private void ShowRespawnEffect()
+    /// <summary>
+    /// Shows the respawn VFX at its scene position and auto-hides it after respawnEffectDuration.
+    /// Called internally on checkpoint respawn, and externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void ShowRespawnEffect()
     {
         if (respawnEffect != null)
         {
-            respawnEffect.transform.position = playerTransform.position;
             respawnEffect.SetActive(true);
 
             if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
             respawnEffectCoroutine = StartCoroutine(HideRespawnEffectAfterDelay());
         }
+    }
+
+    /// <summary>
+    /// Plays the respawn sound effect. Called externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void PlayRespawnSound()
+    {
+        if (respawnSound != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(respawnSound);
     }
 
     private IEnumerator HideRespawnEffectAfterDelay()
@@ -1987,4 +2008,177 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     // NEW: Get time reduction amount
     public float GetTimeReduction() => timeReductionSeconds;
+
+    // ====== RESUME FROM SAVED STATE ======
+
+    /// <summary>
+    /// Called by GameStateManager to restore the game from a previously saved state.
+    /// Sets all internal fields to match the snapshot, enables the game canvas,
+    /// starts the food spawner and UI, then un-pauses so gameplay continues exactly
+    /// where the player left off.
+    /// </summary>
+    public void ResumeFromSavedState(GameStateSaveData saveData)
+    {
+        if (saveData == null)
+        {
+            Debug.LogError("ResumeFromSavedState: saveData is null!");
+            return;
+        }
+
+        Debug.Log("=== RESUMING FROM SAVED STATE ===");
+
+        // --- Stop any ongoing processes ---
+        StopAllCoroutines();
+        HideRespawnEffect(); // Clean up in case respawn effect was active
+        StopKnockback();
+        isRespawning = false;
+        isStartingGame = false;
+
+        // --- Apply power-up bonuses ---
+        ApplyEquippedPetPowerUps();
+
+        // --- Core state ---
+        currentEnergy = saveData.currentEnergy;
+        targetEnergy = saveData.targetEnergy;
+        currentLifeAmount = saveData.currentLifeAmount;
+        currentLives = saveData.currentLives;
+        score = saveData.currentScore;
+        gameTimer = saveData.gameTimer;
+        currentFoodZone = saveData.currentFoodZone;
+        isEnergyDecreasePaused = saveData.isEnergyDecreasePaused;
+        isGameTimerPaused = saveData.isGameTimerPaused;
+
+        // --- Boost state ---
+        isSpeedBoosted = saveData.isSpeedBoosted;
+        speedBoostTimer = saveData.speedBoostTimer;
+        isSizeBoosted = saveData.isSizeBoosted;
+        sizeBoostTimer = saveData.sizeBoostTimer;
+
+        // --- Player speed / size ---
+        if (playerController != null)
+        {
+            playerController.MoveSpeed = saveData.playerSpeed > 0 ? saveData.playerSpeed : initialPlayerSpeed;
+            targetSpeed = playerController.MoveSpeed;
+            playerController.enabled = true;
+        }
+
+        if (playerArmature != null)
+        {
+            float size = saveData.playerSize > 0 ? saveData.playerSize : initialPlayerSize;
+            playerArmature.localScale = Vector3.one * size;
+            targetSize = size;
+        }
+
+        // --- Activate game canvas FIRST so UI elements rebuild properly ---
+        gameIsActive = true;
+
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
+
+        // Hide start button
+        if (startButton != null) startButton.gameObject.SetActive(false);
+
+        // Disable lobby UI elements
+        foreach (GameObject uiElement in uiElementsToDisable)
+            if (uiElement != null) uiElement.SetActive(false);
+
+        // --- Slider / UI (must be set AFTER canvas is active for proper layout rebuild) ---
+        if (energySlider != null)
+        {
+            energySlider.maxValue = 100f;
+            energySlider.minValue = 0f;
+            energySlider.value = currentEnergy;
+        }
+
+        // Re-apply slider appearance (use initial as base; zone triggers will update if needed)
+        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
+        UpdateFeedbackSpriteForZone(currentFoodZone);
+
+        // --- Heart UI ---
+        InitializeHeartSystem(); // rebuilds heart images for maxLives
+        currentLifeAmount = saveData.currentLifeAmount;
+        currentLives = saveData.currentLives;
+        UpdateHeartUI();
+
+        // --- Boost visual indicators ---
+        HideAllBoostUI();
+        HideAllVisualEffects();
+
+        if (isSpeedBoosted)
+        {
+            if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
+            ShowBoostUI(FoodType.Go);
+        }
+        if (isSizeBoosted)
+        {
+            if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
+            ShowBoostUI(FoodType.Grow);
+        }
+
+        // --- Low-energy canvas ---
+        if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
+        wasLowEnergyLastFrame = false;
+
+        // --- Timer display ---
+        UpdateTimerDisplay();
+        UpdateUI();
+
+        // --- Food spawner ---
+        if (foodSpawner != null)
+        {
+            foodSpawner.StopSpawning();
+            foodSpawner.StartSpawning();
+        }
+
+        // --- BGM (looping) ---
+        if (backgroundMusicSource != null && gameStartBGM != null)
+        {
+            backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.loop = true;
+            backgroundMusicSource.Play();
+        }
+
+        // --- Pause timer initially; InGameSettingsButton will resume after countdown ---
+        isGameTimerPaused = true;
+
+        // --- One-life check ---
+        StartOneLifeCheck();
+
+        // --- Reset animations to clean state ---
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+            characterAnimator.SetBool(deathTrigger, false);
+        }
+
+        Debug.Log($"Resume complete. Energy:{currentEnergy} Score:{score} Lives:{currentLifeAmount} " +
+                  $"Timer:{gameTimer}s Zone:{currentFoodZone} SpeedBoosted:{isSpeedBoosted} SizeBoosted:{isSizeBoosted}");
+    }
+
+    // ====== ADDITIONAL SETTERS (for save/restore) ======
+
+    /// <summary>Sets the life amount + count and refreshes the heart UI.</summary>
+    public void SetLives(float lifeAmount)
+    {
+        currentLifeAmount = Mathf.Max(0f, lifeAmount);
+        currentLives = Mathf.CeilToInt(currentLifeAmount);
+        UpdateHeartUI();
+    }
+
+    /// <summary>Sets the game timer to an exact value.</summary>
+    public void SetGameTimer(float time)
+    {
+        gameTimer = Mathf.Max(0f, time);
+        UpdateTimerDisplay();
+    }
+
+    /// <summary>Sets the score to an exact value.</summary>
+    public void SetScore(int newScore)
+    {
+        score = Mathf.Max(0, newScore);
+        UpdateUI();
+    }
 }

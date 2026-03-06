@@ -140,7 +140,28 @@ public class CharacterVisualSwapper : MonoBehaviour
             var characterData = characterDatabase.GetCharacterByID(characterID);
             if (characterData != null)
             {
-                ApplyCharacterVisuals(characterData);
+                if (savedSkinID != -1)
+                {
+                    // Apply character with saved skin (includes LookAround animation)
+                    var skinData = characterDatabase.GetSkinByID(characterID, savedSkinID);
+                    if (skinData != null)
+                    {
+                        currentCharacterID = characterID;
+                        currentSkinID = savedSkinID;
+                        if (swapCoroutine != null) StopCoroutine(swapCoroutine);
+                        swapCoroutine = StartCoroutine(ApplySkinAndTriggerLookAround(characterData, skinData));
+                    }
+                    else
+                    {
+                        // Skin not found, fallback to base character
+                        ApplyCharacterVisuals(characterData);
+                    }
+                }
+                else
+                {
+                    // No skin saved, apply base character
+                    ApplyCharacterVisuals(characterData);
+                }
             }
         }
     }

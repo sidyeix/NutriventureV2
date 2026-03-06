@@ -361,6 +361,10 @@ public class CharacterSelectionManager : MonoBehaviour
         // Save to disk
         GameDataManager.Instance.SaveGameData();
 
+        // Mark profile as completed so LogoManager knows this isn't a first-time player
+        PlayerPrefs.SetInt("ProfileCompleted", 1);
+        PlayerPrefs.Save();
+
         Debug.Log($"Saved: Character={selectedCharacterID}, Nickname={GameDataManager.Instance.CurrentGameData.playerName}");
     }
 

@@ -19,6 +19,14 @@ public static class ProductManager
             this.lastSelectedIngredient = "";
         }
         
+        public ProductScanData(string fingerprint, DateTime firstScan, int count, string lastIngredient)
+        {
+            this.fingerprint = fingerprint;
+            this.firstScanTime = firstScan;
+            this.scanCount = count;
+            this.lastSelectedIngredient = lastIngredient;
+        }
+        
         public bool CanScanAgain()
         {
             return scanCount < 3;
@@ -46,12 +54,32 @@ public static class ProductManager
         }
     }
     
+    // Serializable wrapper for JSON persistence
+    [Serializable]
+    private class SavedProduct
+    {
+        public string fingerprint;
+        public string firstScanTime; // ISO 8601
+        public int scanCount;
+        public string lastSelectedIngredient;
+    }
+    
+    [Serializable]
+    private class SavedProductList
+    {
+        public List<SavedProduct> products = new List<SavedProduct>();
+    }
+    
+    private const string SAVE_KEY = "ProductManager_ScanData";
+    
     // Storage for all scanned products
     private static Dictionary<string, ProductScanData> scannedProducts = new Dictionary<string, ProductScanData>();
     private static DateTime lastProductResetTime = DateTime.Now;
+    private static bool isLoaded = false;
     
     public static bool CanScanProduct(string fingerprint)
     {
+        EnsureLoaded();
         CleanOldProducts();
         
         if (string.IsNullOrEmpty(fingerprint))
@@ -69,6 +97,7 @@ public static class ProductManager
         if (string.IsNullOrEmpty(fingerprint))
             return;
             
+        EnsureLoaded();
         CleanOldProducts();
         
         if (scannedProducts.ContainsKey(fingerprint))
@@ -86,10 +115,12 @@ public static class ProductManager
         }
         
         Debug.Log($"[ProductManager] Product scanned: {fingerprint}. Scan {scannedProducts[fingerprint].scanCount}/3");
+        SaveData();
     }
     
     public static int GetProductScanCount(string fingerprint)
     {
+        EnsureLoaded();
         if (!string.IsNullOrEmpty(fingerprint) && scannedProducts.ContainsKey(fingerprint))
         {
             return scannedProducts[fingerprint].scanCount;
@@ -99,6 +130,7 @@ public static class ProductManager
 
     public static int GetRemainingScans(string fingerprint)
     {
+        EnsureLoaded();
         if (string.IsNullOrEmpty(fingerprint))
             return 0;
             
@@ -110,6 +142,7 @@ public static class ProductManager
 
     public static TimeSpan GetProductCooldown(string fingerprint)
     {
+        EnsureLoaded();
         if (!string.IsNullOrEmpty(fingerprint) && scannedProducts.ContainsKey(fingerprint))
         {
             return scannedProducts[fingerprint].GetRemainingCooldown();
@@ -119,6 +152,7 @@ public static class ProductManager
 
     public static bool IsProductOnCooldown(string fingerprint)
     {
+        EnsureLoaded();
         if (!string.IsNullOrEmpty(fingerprint) && scannedProducts.ContainsKey(fingerprint))
         {
             return scannedProducts[fingerprint].IsCooldownActive();
@@ -128,6 +162,7 @@ public static class ProductManager
 
     public static string GetProductStatus(string fingerprint)
     {
+        EnsureLoaded();
         if (string.IsNullOrEmpty(fingerprint))
             return "Invalid product";
             
@@ -149,12 +184,14 @@ public static class ProductManager
 
     public static int GetTotalScannedProducts()
     {
+        EnsureLoaded();
         CleanOldProducts();
         return scannedProducts.Count;
     }
 
     public static bool AnyProductsOnCooldown()
     {
+        EnsureLoaded();
         CleanOldProducts();
         
         foreach (var product in scannedProducts.Values)
@@ -169,6 +206,7 @@ public static class ProductManager
     
     public static Dictionary<string, TimeSpan> GetAllProductsOnCooldown()
     {
+        EnsureLoaded();
         CleanOldProducts();
         
         Dictionary<string, TimeSpan> cooldownProducts = new Dictionary<string, TimeSpan>();
@@ -186,6 +224,7 @@ public static class ProductManager
     
     public static void CleanupExpiredProducts()
     {
+        EnsureLoaded();
         CleanOldProducts();
     }
     
@@ -193,6 +232,7 @@ public static class ProductManager
     {
         scannedProducts.Clear();
         lastProductResetTime = DateTime.Now;
+        SaveData();
         Debug.Log("[ProductManager] All product data reset");
     }
     
@@ -220,6 +260,74 @@ public static class ProductManager
         if (removedAny)
         {
             lastProductResetTime = DateTime.Now;
+            SaveData();
+        }
+    }
+    
+    // ========================================================================
+    //  PERSISTENCE (PlayerPrefs JSON)
+    // ========================================================================
+    
+    private static void EnsureLoaded()
+    {
+        if (!isLoaded)
+        {
+            LoadData();
+            isLoaded = true;
+        }
+    }
+    
+    private static void SaveData()
+    {
+        SavedProductList list = new SavedProductList();
+        foreach (var pair in scannedProducts)
+        {
+            list.products.Add(new SavedProduct
+            {
+                fingerprint = pair.Value.fingerprint,
+                firstScanTime = pair.Value.firstScanTime.ToString("o"),
+                scanCount = pair.Value.scanCount,
+                lastSelectedIngredient = pair.Value.lastSelectedIngredient
+            });
+        }
+        string json = JsonUtility.ToJson(list);
+        PlayerPrefs.SetString(SAVE_KEY, json);
+        PlayerPrefs.Save();
+    }
+    
+    private static void LoadData()
+    {
+        scannedProducts.Clear();
+        
+        if (!PlayerPrefs.HasKey(SAVE_KEY))
+            return;
+        
+        string json = PlayerPrefs.GetString(SAVE_KEY, "");
+        if (string.IsNullOrEmpty(json))
+            return;
+        
+        try
+        {
+            SavedProductList list = JsonUtility.FromJson<SavedProductList>(json);
+            if (list == null || list.products == null)
+                return;
+            
+            foreach (var saved in list.products)
+            {
+                DateTime firstScan;
+                if (!DateTime.TryParse(saved.firstScanTime, null, System.Globalization.DateTimeStyles.RoundtripKind, out firstScan))
+                    firstScan = DateTime.Now;
+                
+                scannedProducts[saved.fingerprint] = new ProductScanData(
+                    saved.fingerprint, firstScan, saved.scanCount, saved.lastSelectedIngredient ?? ""
+                );
+            }
+            Debug.Log($"[ProductManager] Loaded {scannedProducts.Count} products from save");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[ProductManager] Failed to load save data: {e.Message}");
+            scannedProducts.Clear();
         }
     }
 }

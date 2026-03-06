@@ -538,6 +538,13 @@ public class GameEndManager : MonoBehaviour
     private void TeleportPlayerToLobbyPoint()
     {
         TeleportPlayerToTransform(lobbyPoint, "Lobby Point");
+
+        // Play respawn sound & effect at the lobby arrival point
+        if (gameManager != null)
+        {
+            gameManager.PlayRespawnSound();
+            gameManager.ShowRespawnEffect();
+        }
     }
 
     // ========== AUDIO METHODS ==========
@@ -791,7 +798,7 @@ public class GameEndManager : MonoBehaviour
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        
+
         CalculateRewards();
 
         // 🔑 Check if this is a key kingdom and conditions are met
@@ -1203,22 +1210,22 @@ public class GameEndManager : MonoBehaviour
     private void ShowKeyUnlockedCanvas()
     {
         Debug.Log($"🔑 Showing Key Unlocked Canvas for {pendingKeyName}");
-        
+
         // Hide the game summary
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
-            
+
         // Show the key unlocked canvas
         if (keyUnlockedCanvas != null)
         {
             keyUnlockedCanvas.SetActive(true);
-            
+
             // Update text in the canvas
             if (keyUnlockedTitleText != null)
             {
                 keyUnlockedTitleText.text = $"{pendingKeyName} Key Unlocked!";
             }
-            
+
             if (keyUnlockedDescriptionText != null)
             {
                 keyUnlockedDescriptionText.text = $"You've earned the {pendingKeyName} Key with {starsEarned} stars!";
@@ -1236,14 +1243,14 @@ public class GameEndManager : MonoBehaviour
     private void OnKeyUnlockedContinueClicked()
     {
         Debug.Log($"🔑 Continue button clicked - saving {pendingKeyName} key now");
-        
+
         // Save the key
         ActuallySaveKey();
-        
+
         // Hide the key unlocked canvas
         if (keyUnlockedCanvas != null)
             keyUnlockedCanvas.SetActive(false);
-        
+
         // Small delay to ensure event is processed before returning to lobby
         StartCoroutine(DelayedReturnToLobby());
     }
@@ -1263,9 +1270,9 @@ public class GameEndManager : MonoBehaviour
             Debug.LogWarning("🔑 No pending key to save!");
             return;
         }
-        
+
         Debug.Log($"🔑 Saving {pendingKeyName} key to GameData...");
-        
+
         // Save the key based on the key name
         switch (pendingKeyName.ToLower())
         {
@@ -1285,12 +1292,12 @@ public class GameEndManager : MonoBehaviour
                 Debug.LogWarning($"🔑 Unknown key name: {pendingKeyName}");
                 break;
         }
-        
+
         // Trigger the event for UI updates (this will update Global Map)
         KeyCollectionEvents.TriggerKeyCollected(pendingKeyName);
-        
+
         Debug.Log($"🔑 Key '{pendingKeyName}' saved successfully! Global Map button should now be enabled.");
-        
+
         // Reset pending flag
         pendingKeyUnlock = false;
         pendingKeyName = "";
@@ -1300,7 +1307,7 @@ public class GameEndManager : MonoBehaviour
     private void ReturnToLobby()
     {
         Debug.Log("Returning to lobby...");
-        
+
         PlayLobbyMusic();
         ResetGameEndState();
         ResetMinigamesForHomeButton();
@@ -1555,7 +1562,7 @@ public class GameEndManager : MonoBehaviour
 
         if (buttonContainer != null) buttonContainer.SetActive(false);
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
-        
+
         // Reset pending key flags
         pendingKeyUnlock = false;
         pendingKeyName = "";
@@ -1665,7 +1672,7 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        
+
         ShowGameEndScreen(true);
     }
 
@@ -1759,7 +1766,7 @@ public class GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
-    
+
     public int GetRequiredStarsForKey()
     {
         return starsRequiredForKey;
@@ -1770,8 +1777,102 @@ public class GameEndManager : MonoBehaviour
         StopCountAudio();
     }
 
+    // ========== IN-GAME SETTINGS BUTTON SUPPORT ==========
+    // These public methods allow InGameSettingsButton to perform the same
+    // restart/home actions that the game-end buttons do.
+
+    /// <summary>
+    /// Full in-game restart: resets everything and plays the farmer NPC cutscene.
+    /// Call this from InGameSettingsButton instead of manually replicating logic.
+    /// </summary>
+    public void PerformInGameRestart()
+    {
+        Debug.Log("=== IN-GAME RESTART (via GameEndManager) ===");
+
+        ForceEnableBackgroundMusic();
+        PlayRestartMusic();
+        ResetGameEndState();
+        DisableObjectsOnHomeOrRestart();
+
+        ResetMinigames();
+        ResetAllContinueButtons();
+
+        if (gameManager != null)
+        {
+            gameManager.FullGameReset();
+            Debug.Log("GameManager fully reset");
+        }
+
+        TeleportPlayerToLobbyPoint();
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = playerCameraPriority;
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        // Play the restart timeline (farmer NPC cutscene)
+        StartCoroutine(PlayRestartTimeline());
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+        ForceEnableBackgroundMusic();
+
+        Debug.Log("=== IN-GAME RESTART COMPLETE ===");
+    }
+
+    /// <summary>
+    /// Full in-game home: stops the game, resets everything, returns to lobby.
+    /// Call this from InGameSettingsButton instead of manually replicating logic.
+    /// </summary>
+    public void PerformInGameHome()
+    {
+        Debug.Log("=== IN-GAME HOME (via GameEndManager) ===");
+
+        ForceEnableBackgroundMusic();
+
+        // End the active game first
+        if (gameManager != null && gameManager.IsGameActive())
+        {
+            gameManager.EndGame();
+        }
+
+        PlayLobbyMusic();
+        ResetGameEndState();
+        ResetMinigamesForHomeButton();
+        ResetAllContinueButtons();
+
+        DisableObjectsOnHomeOrRestart();
+        DisablePlayableDirectorObject();
+
+        SwitchToPlayerCameraWithCut();
+        TeleportPlayerToLobbyPoint();
+
+        if (playerController != null && !playerController.gameObject.activeSelf)
+            playerController.gameObject.SetActive(true);
+
+        if (playerController != null && !playerController.enabled)
+            playerController.enabled = true;
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        if (gameManager != null)
+        {
+            gameManager.FullGameReset();
+        }
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+        ForceEnableBackgroundMusic();
+
+        Debug.Log("=== IN-GAME HOME COMPLETE ===");
+    }
+
     // ========== DEBUG METHODS ==========
-    
+
     [ContextMenu("Test Win with Key")]
     public void TestWinWithKey()
     {

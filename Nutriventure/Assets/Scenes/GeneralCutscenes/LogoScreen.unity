@@ -535,6 +535,8 @@ MonoBehaviour:
   preloadScene: 3_Kingdom1
   minLoadingTime: 10
   skipTime: 5
+  profileScene: PlayerProfile
+  defaultScene: MainMenu
   tips:
   - "Go foods like rice and bread give your muscles glucose, the body\u2019s main
     fuel for running, thinking, and playing. "
