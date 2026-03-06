@@ -42,11 +42,46 @@ public class K2_Instructions2D : MonoBehaviour
     private UnityEngine.InputSystem.PlayerInput playerInput;
     private bool panelOpenedExternally = false; // Track if panel was opened by button
     
+    [Header("Game Start References")]
+    [SerializeField] private GameplayProgression gameplayProgression;
+    [SerializeField] private K2_IntroCutsceneManager introCutsceneManager;
+    private bool hasTriggeredGameStart = false;
+    private bool cutscenePlayedOnEntry = false;
+    
     void Start()
     {
         InitializePanel();
         SetupButtonListeners();
         InitializeExternalButton();
+        
+        // Play intro cutscene on scene entry if Preservia key not yet collected
+        StartCoroutine(CheckAndPlayIntroCutscene());
+    }
+    
+    private System.Collections.IEnumerator CheckAndPlayIntroCutscene()
+    {
+        // Wait a frame for all managers to initialize
+        yield return null;
+        
+        if (introCutsceneManager == null)
+            introCutsceneManager = FindObjectOfType<K2_IntroCutsceneManager>();
+        
+        bool hasPreserviaKey = GameDataManager.Instance != null 
+            && GameDataManager.Instance.CurrentGameData != null 
+            && GameDataManager.Instance.CurrentGameData.preserviaKeyCollected;
+
+        if (!hasPreserviaKey && introCutsceneManager != null)
+        {
+            cutscenePlayedOnEntry = true;
+            introCutsceneManager.PlayCutscene();
+            Debug.Log("K2: Preservia key not yet collected — playing intro cutscene on scene entry");
+        }
+        else
+        {
+            Debug.Log(hasPreserviaKey 
+                ? "K2: Preservia key already collected — skipping intro cutscene" 
+                : "K2: No intro cutscene manager found");
+        }
     }
     
     void InitializePanel()
@@ -228,12 +263,46 @@ public class K2_Instructions2D : MonoBehaviour
         if (playerInput != null)
             playerInput.enabled = true;
         
+        // Start the game when instructions are confirmed (first time only)
+        if (!hasTriggeredGameStart)
+        {
+            hasTriggeredGameStart = true;
+            
+            if (gameplayProgression == null)
+                gameplayProgression = FindObjectOfType<GameplayProgression>();
+            
+            // Cutscene already played on scene entry — just start the game timer
+            StartGameTimer();
+        }
+        
         // Reset player references
         playerController = null;
         playerInput = null;
         
         // Reset external button state
         panelOpenedExternally = false;
+    }
+    
+    private void OnIntroCutsceneFinished()
+    {
+        // Unsubscribe to avoid duplicate calls
+        if (introCutsceneManager != null)
+            introCutsceneManager.OnCutsceneFinished -= OnIntroCutsceneFinished;
+        
+        StartGameTimer();
+    }
+    
+    private void StartGameTimer()
+    {
+        if (gameplayProgression != null)
+        {
+            gameplayProgression.StartGame();
+            Debug.Log("K2: Game timer started");
+        }
+        else
+        {
+            Debug.LogWarning("K2: GameplayProgression not found — cannot start game!");
+        }
     }
     
     void PreviousInstruction()

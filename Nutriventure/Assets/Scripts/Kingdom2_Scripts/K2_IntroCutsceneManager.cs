@@ -3,6 +3,7 @@ using UnityEngine.Playables;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using TMPro;
+using System;
 using System.Collections;
 
 public class K2_IntroCutsceneManager : MonoBehaviour
@@ -40,6 +41,11 @@ public class K2_IntroCutsceneManager : MonoBehaviour
     private bool dialogueCanvasWasActive = false;
     private bool titleTextWasActive = false;
     private bool gameUICanvasWasActive = false; // Track GameUI Canvas state
+
+    /// <summary>
+    /// Fired when the cutscene finishes (naturally or via skip).
+    /// </summary>
+    public event Action OnCutsceneFinished;
     
     void Start()
     {
@@ -314,6 +320,8 @@ public class K2_IntroCutsceneManager : MonoBehaviour
         }
         
         Debug.Log("Cutscene finished - GameUI Canvas re-enabled");
+
+        OnCutsceneFinished?.Invoke();
     }
     
     // NEW: Method to manually control GameUI Canvas

@@ -607,11 +607,32 @@ public class ProfileSettings : MonoBehaviour
 
     private IEnumerator CloseProfileSettingsCoroutine()
     {
-        yield return StartCoroutine(FadeCanvasGroup(mainCanvasGroup, 0f, panelFadeDuration));
-        canvas.SetActive(false);
+        // Fade to 0 but DON'T let FadeCanvasGroup deactivate the object,
+        // because that would kill this coroutine before OnClosed fires.
+        yield return StartCoroutine(FadeCanvasGroupNoDeactivate(mainCanvasGroup, 0f, panelFadeDuration));
 
-        // Notify listeners (InGameSettingsButton) that the panel has closed
+        // Notify listeners BEFORE deactivating the canvas
         OnClosed?.Invoke();
+
+        canvas.SetActive(false);
+    }
+
+    private IEnumerator FadeCanvasGroupNoDeactivate(CanvasGroup canvasGroup, float targetAlpha, float duration)
+    {
+        if (canvasGroup == null) yield break;
+
+        float startAlpha = canvasGroup.alpha;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.unscaledDeltaTime;
+            float t = elapsedTime / duration;
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+            yield return null;
+        }
+
+        canvasGroup.alpha = targetAlpha;
     }
 
     private void FadeMainCanvas(float targetAlpha, float duration)

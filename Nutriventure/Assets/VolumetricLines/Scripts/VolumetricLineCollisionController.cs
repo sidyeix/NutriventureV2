@@ -60,6 +60,9 @@ public class VolumetricLineCollisionController : MonoBehaviour
     private Vector3 currentBeamStart; // Track current beam start position
     private Vector3 currentBeamEnd;   // Track current beam end position
 
+    // Performance: pre-allocated array for SphereCastNonAlloc (avoids GC every frame)
+    private RaycastHit[] _hitBuffer = new RaycastHit[16];
+
     void Start()
     {
         lineBehavior = GetComponent<VolumetricLineBehavior>();
@@ -175,12 +178,12 @@ public class VolumetricLineCollisionController : MonoBehaviour
         Vector3 direction = (worldEnd - worldStart).normalized;
         float maxDistance = Vector3.Distance(worldStart, worldEnd);
 
-        // Use SphereCast to detect pushable objects
-        // IMPORTANT: Use IGNORE RAYCAST layer for the damage collider so it doesn't interfere
-        RaycastHit[] hits = Physics.SphereCastAll(
+        // Use SphereCastNonAlloc to avoid GC allocation every frame
+        int hitCount = Physics.SphereCastNonAlloc(
             worldStart,
             collisionThickness,
             direction,
+            _hitBuffer,
             maxDistance,
             pushableCollisionLayers,
             QueryTriggerInteraction.Ignore
@@ -190,9 +193,8 @@ public class VolumetricLineCollisionController : MonoBehaviour
         float closestDistance = float.MaxValue;
         bool foundPushable = false;
 
-        foreach (RaycastHit hit in hits)
-        {
-            // Check if it's a pushable object (not the player)
+        for (int i = 0; i < hitCount; i++)
+        {            RaycastHit hit = _hitBuffer[i];            // Check if it's a pushable object (not the player)
             if (!hit.collider.CompareTag(pushableTag) || hit.collider.CompareTag("Player"))
                 continue;
 
@@ -263,17 +265,21 @@ public class VolumetricLineCollisionController : MonoBehaviour
         // Only apply damage to players
         if (other.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("=== PLAYER TOUCHED LASER BEAM ===");
+#endif
 
             // Check if the player is touching the ACTIVE portion of the beam
             if (IsPlayerTouchingActiveBeam(other.transform.position))
             {
                 ApplyDamage(other.transform);
             }
+#if UNITY_EDITOR
             else
             {
                 Debug.Log("Player is touching blocked portion of beam, no damage");
             }
+#endif
         }
     }
 
@@ -284,17 +290,21 @@ public class VolumetricLineCollisionController : MonoBehaviour
         // Player collision (backup method)
         if (collision.gameObject.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("=== PLAYER COLLIDED WITH LASER BEAM ===");
+#endif
 
             // Check if the player is touching the ACTIVE portion of the beam
             if (IsPlayerTouchingActiveBeam(collision.transform.position))
             {
                 ApplyDamage(collision.transform);
             }
+#if UNITY_EDITOR
             else
             {
                 Debug.Log("Player is touching blocked portion of beam, no damage");
             }
+#endif
         }
     }
 
@@ -314,36 +324,21 @@ public class VolumetricLineCollisionController : MonoBehaviour
         // Player is "touching" the beam if within the collision thickness
         if (distanceToBeam > collisionThickness * 2f)
         {
-            Debug.Log($"Player is too far from beam: {distanceToBeam}");
             return false;
         }
 
         // If beam is NOT blocked, all parts are active
         if (!isBlocked)
         {
-            Debug.Log("Beam not blocked, all parts active");
             return true;
         }
 
         // If beam IS blocked, check if player is BEHIND the obstruction
-        // (i.e., closer to the end than to the obstruction point)
         float distanceToObstruction = Vector3.Distance(hitPoint, beamStart);
         float distanceFromStartToPlayer = Vector3.Distance(beamStart, closestPoint);
 
-        Debug.Log($"Distance to obstruction: {distanceToObstruction}, Player distance from start: {distanceFromStartToPlayer}");
-
         // Player is in active portion if they're BEYOND the obstruction point
-        // (with a small buffer to account for collision thickness)
-        if (distanceFromStartToPlayer > distanceToObstruction - collisionThickness)
-        {
-            Debug.Log("Player is in active portion (beyond obstruction)");
-            return true;
-        }
-        else
-        {
-            Debug.Log("Player is in blocked portion (before obstruction)");
-            return false;
-        }
+        return distanceFromStartToPlayer > distanceToObstruction - collisionThickness;
     }
 
     private void ApplyDamage(Transform playerTransform = null)
@@ -351,7 +346,6 @@ public class VolumetricLineCollisionController : MonoBehaviour
         // Skip if beam is too short (effectively blocked)
         if (currentBeamLength < 0.3f)
         {
-            Debug.Log("Laser beam is too short, no damage applied");
             return;
         }
 
@@ -366,13 +360,11 @@ public class VolumetricLineCollisionController : MonoBehaviour
         // 2. Check if GameManager exists
         if (GoGrowGlowGameManager.Instance == null)
         {
-            Debug.LogError("GameManager is NULL!");
             return;
         }
 
         if (GoGrowGlowGameManager.Instance.IsRespawning())
         {
-            Debug.Log("Player is respawning, ignoring damage");
             return;
         }
 
@@ -402,7 +394,6 @@ public class VolumetricLineCollisionController : MonoBehaviour
         {
             // Reduce energy instead of life
             GoGrowGlowGameManager.Instance.RemoveEnergy(energyReductionAmount);
-            Debug.Log($"Laser beam energy reduced by: {energyReductionAmount}");
         }
         else
         {
@@ -415,7 +406,6 @@ public class VolumetricLineCollisionController : MonoBehaviour
             {
                 GoGrowGlowGameManager.Instance.LoseLifeAmount(damageAmount, false);
             }
-            Debug.Log($"Laser beam life damage applied: {damageAmount}");
         }
 
         // 6. Visual effect at the point of contact
@@ -454,7 +444,7 @@ public class VolumetricLineCollisionController : MonoBehaviour
 
         // Wait for display time
         float displayTime = useCustomDisplayTime ? panelDisplayTime : 1f;
-        yield return new WaitForSeconds(displayTime);
+        yield return CoroutineYieldCache.WaitForSeconds(displayTime);
 
         // Hide the panel
         damagePanel.SetActive(false);

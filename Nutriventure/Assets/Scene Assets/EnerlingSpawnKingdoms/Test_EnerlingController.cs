@@ -196,7 +196,7 @@ public class Test_EnerlingController : MonoBehaviour
 
         GameObject vcamGO = new GameObject("EnerlingVirtualCamera");
         vcamGO.transform.SetParent(transform);
-        vcamGO.transform.localPosition = new Vector3(-0.695f, 1.24005f, 1.799f);
+        vcamGO.transform.localPosition = new Vector3(-1.32f, 1.03f, 3.34f);
         vcamGO.transform.localRotation = Quaternion.Euler(0, 190.004f, 0);
         vcamGO.transform.localScale = new Vector3(1.886793f, 1.886793f, 1.886793f);
 

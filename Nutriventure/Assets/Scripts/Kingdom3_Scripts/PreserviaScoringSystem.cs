@@ -162,7 +162,9 @@ public class PreserviaScoringSystem : MonoBehaviour
         InitializeSystem();
         StartMonitoring();
         
+#if UNITY_EDITOR
         Debug.Log("Preservia Scoring System initialized");
+#endif
     }
 
     void InitializeSystem()
@@ -196,7 +198,6 @@ public class PreserviaScoringSystem : MonoBehaviour
             if (canvas != null)
             {
                 scorePopupParent = canvas.transform;
-                Debug.Log($"Auto-assigned Canvas as score popup parent: {canvas.name}");
             }
         }
     }
@@ -217,10 +218,12 @@ public class PreserviaScoringSystem : MonoBehaviour
         _assessmentSystem = FindObjectOfType<K3_KingAssessment>();
         _gameplayProgression = FindObjectOfType<GameplayProgression>();
         
+#if UNITY_EDITOR
         if (_collectionSystem != null) Debug.Log("Found collection system");
         if (_gemSystem != null) Debug.Log("Found GEM system");
         if (_assessmentSystem != null) Debug.Log("Found assessment system");
         if (_gameplayProgression != null) Debug.Log("Found gameplay progression");
+#endif
     }
     
     void SubscribeToEvents()
@@ -229,7 +232,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         if (_collectionSystem != null)
         {
             _collectionSystem.OnPotionCollected += HandlePreservativeCollected;
-            Debug.Log("Subscribed to preservative collection events");
         }
     }
     
@@ -246,8 +248,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         
         // Start checking for scoring events
         InvokeRepeating("CheckForScoringEvents", 0.5f, 0.5f);
-        
-        Debug.Log("Scoring monitoring started");
     }
 
     void StopMonitoring()
@@ -293,7 +293,6 @@ public class PreserviaScoringSystem : MonoBehaviour
                     AwardGEMPoints("Anti-Oxidant GEM");
                     _oxidantGEMScored = true;
                     _gemsCompleted++;
-                    Debug.Log("Scored Anti-Oxidant GEM (panel opened for first time)");
                 }
             }
             
@@ -308,13 +307,14 @@ public class PreserviaScoringSystem : MonoBehaviour
                     AwardGEMPoints("Anti-Microbe GEM");
                     _microbeGEMScored = true;
                     _gemsCompleted++;
-                    Debug.Log("Scored Anti-Microbe GEM (panel opened for first time)");
                 }
             }
         }
         catch (Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"Error monitoring GEM completion: {e.Message}");
+#endif
         }
     }
 
@@ -350,8 +350,6 @@ public class PreserviaScoringSystem : MonoBehaviour
                             _foodPreservedThisSession[foodIndex] = true;
                             _foodsPreserved++;
                             
-                            Debug.Log($"Scored food preservation: {foodName} (Index: {foodIndex})");
-                            
                             // Check for full completion bonus
                             int completedCount = foodCompleted.Count(kvp => kvp.Value);
                             if (completedCount >= 8 && !_bonusAwarded)
@@ -366,7 +364,9 @@ public class PreserviaScoringSystem : MonoBehaviour
         }
         catch (Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"Error monitoring food preservation: {e.Message}");
+#endif
         }
     }
     
@@ -427,8 +427,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         OnMultiplierChanged?.Invoke(_progressiveMultiplier);
         OnMultiplierIncreased?.Invoke();
         
-        Debug.Log($"Multiplier increased to {_progressiveMultiplier:F1}x (Streak: {_multiplierStreak})");
-        
         UpdateMultiplierDisplay();
     }
 
@@ -446,8 +444,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         // Trigger events
         OnMultiplierChanged?.Invoke(_progressiveMultiplier);
         OnMultiplierReset?.Invoke();
-        
-        Debug.Log($"Multiplier reset from {oldMultiplier:F1}x to {_progressiveMultiplier:F1}x");
         
         UpdateMultiplierDisplay();
     }
@@ -478,13 +474,10 @@ public class PreserviaScoringSystem : MonoBehaviour
         if (_lastCollectionTime == 0f || timeSinceLast > comboTimeWindow)
         {
             _comboCount = 1;
-            Debug.Log($"Starting new combo (first preservative or combo expired: {timeSinceLast:F1}s > {comboTimeWindow}s)");
         }
         else if (timeSinceLast <= comboTimeWindow)
         {
-            // Continue combo
             _comboCount = Mathf.Min(_comboCount + 1, maxComboMultiplier);
-            Debug.Log($"Continuing combo: {_comboCount}x (time since last: {timeSinceLast:F1}s)");
         }
         
         _lastCollectionTime = Time.time;
@@ -494,7 +487,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         if (_comboCount > 1)
         {
             comboPoints = comboBonus * (_comboCount - 1);
-            Debug.Log($"Combo bonus: {comboPoints} (Combo x{_comboCount}, Bonus per level: {comboBonus})");
         }
         
         // Type bonus based on preservative ID
@@ -505,15 +497,10 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             case "AscorbicAcid":
                 typeBonus = antiOxidantBonus;
-                Debug.Log($"Anti-Oxidant bonus: +{typeBonus}");
                 break;
             case "PotassiumSorbate":
             case "SodiumBenzoate":
                 typeBonus = antiMicrobeBonus;
-                Debug.Log($"Anti-Microbe bonus: +{typeBonus}");
-                break;
-            default:
-                Debug.Log($"Regular preservative type: {preservativeType}");
                 break;
         }
         
@@ -560,14 +547,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             string comboMessage = $"Combo x{_comboCount}! +{comboPoints}";
             OnBonusEarned?.Invoke(comboMessage);
-            Debug.Log($"Bonus earned: {comboMessage}");
         }
-        
-        // Debug breakdown
-        Debug.Log($"Preservative collected: {preservativeID} | " +
-                 $"Base: {basePreservativePoints} + Combo: {comboPoints} + Type: {typeBonus} = Raw: {rawScore} " +
-                 $"× Multiplier: {multiplier:F2} = Final: {finalScore} points | " +
-                 $"Combo: x{_comboCount} | New Multiplier: {GetCurrentMultiplier():F1}x");
         
         // Update UI
         UpdateScoreDisplay();
@@ -609,10 +589,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             ShowScorePopup(finalScore, gemScoreColor, "GEM");
         }
-        
-        Debug.Log($"GEM completed: {gemType} | " +
-                 $"Raw: {rawScore} (Base:{basePoints}, Type:{typeBonus}) " +
-                 $"× {multiplier:F2} = {finalScore} points");
         
         // Update UI
         UpdateScoreDisplay();
@@ -664,11 +640,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         // INCREASE MULTIPLIER for successful preservation
         IncreaseMultiplier();
         
-        Debug.Log($"Food preserved: {foodName} | " +
-                 $"Raw: {rawScore} (Base:{basePoints}, Acc:{accuracyBonus}, Type:{typeBonus}, Time:{timeBonus}) " +
-                 $"× {multiplier:F2} = {finalScore} points | " +
-                 $"Perfect: {isPerfect}, Correct Type: {correctType}");
-        
         // Update UI
         UpdateScoreDisplay();
     }
@@ -691,8 +662,6 @@ public class PreserviaScoringSystem : MonoBehaviour
             ShowScorePopup(finalBonus, bonusScoreColor, "Completion Bonus");
         }
         
-        Debug.Log($"Full completion bonus: {bonus} × {multiplier:F2} = {finalBonus} points");
-        
         // Update UI
         UpdateScoreDisplay();
     }
@@ -701,7 +670,6 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         if (_foodMistakeMade.ContainsKey(foodIndex) && _foodMistakeMade[foodIndex])
         {
-            Debug.Log($"Mistake already recorded for food {foodIndex}");
             return;
         }
         
@@ -720,8 +688,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             ShowScorePopup(-points, Color.red, "Mistake");
         }
-        
-        Debug.Log($"Deducted {points} points for mistake on food {foodIndex}. Total negative: {_totalNegativeScore}");
         
         // Check if we need to deduct a heart (every 500 negative points)
         CheckForHeartDeduction();
@@ -742,22 +708,14 @@ public class PreserviaScoringSystem : MonoBehaviour
             PreserviaPlayerStat healthSystem = FindObjectOfType<PreserviaPlayerStat>();
             if (healthSystem != null)
             {
-                // Deduct hearts
                 for (int i = 0; i < heartsToDeduct; i++)
                 {
                     healthSystem.TakeDamage(1);
-                    Debug.Log($"Deducted 1 heart! Health: {healthSystem.currentHealth}/{healthSystem.maxHealth}");
                 }
                 
-                // Reduce negative score by the amount used
                 _totalNegativeScore -= heartsToDeduct * 500;
                 
-                // Show warning message
                 OnBonusEarned?.Invoke($"Lost {heartsToDeduct} heart(s)!");
-            }
-            else
-            {
-                Debug.LogWarning("PreserviaPlayerStat not found! Cannot deduct hearts.");
             }
         }
     }
@@ -821,11 +779,6 @@ public class PreserviaScoringSystem : MonoBehaviour
         
         // INCREASE MULTIPLIER for successful preservation
         IncreaseMultiplier();
-        
-        Debug.Log($"Food preserved: {foodName} | " +
-                 $"Raw: {rawScore} (Base:{basePoints}, Acc:{accuracyBonus}, Type:{typeBonus}, Time:{timeBonus}) " +
-                 $"× {multiplier:F2} = {finalScore} points | " +
-                 $"Perfect: {isPerfect}, Correct Type: {correctType}");
         
         UpdateScoreDisplay();
     }
@@ -938,7 +891,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             CreateScorePopup(popupData);
             
             // Small delay between popups to prevent overlap
-            yield return new WaitForSeconds(0.05f);
+            yield return CoroutineYieldCache.WaitForSeconds(0.05f);
         }
         
         _isProcessingPopup = false;
@@ -1256,7 +1209,9 @@ public class PreserviaScoringSystem : MonoBehaviour
         
         UpdateScoreDisplay();
         
+#if UNITY_EDITOR
         Debug.Log("Scoring session reset");
+#endif
     }
     
     public void EndSession()
@@ -1267,6 +1222,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     
     void PrintSessionSummary()
     {
+#if UNITY_EDITOR
         float sessionDuration = Time.time - _sessionStartTime;
         float finalMultiplier = GetCurrentMultiplier();
         
@@ -1290,6 +1246,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             Debug.Log($"  {kvp.Key}: {kvp.Value}");
         }
         Debug.Log("==================");
+#endif
     }
     
     string FormatTime(float seconds)

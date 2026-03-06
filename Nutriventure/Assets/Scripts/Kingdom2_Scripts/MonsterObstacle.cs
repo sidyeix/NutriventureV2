@@ -180,7 +180,6 @@ public class MonsterObstacle : MonoBehaviour
             if (stuckTimer >= stuckDetectionTime)
             {
                 isStuck = true;
-                Debug.Log("Monster is stuck! Returning to patrol.");
                 ReturnToPatrolState();
             }
         }
@@ -199,14 +198,10 @@ public class MonsterObstacle : MonoBehaviour
             {
                 if (!hit.collider.CompareTag("Player") && hit.collider != blockingCollider)
                 {
-                    // There's an obstacle between monster and player
-                    Debug.Log($"Obstacle detected: {hit.collider.name}");
-                    
                     // Check if we've been stuck for the required time
                     if (stuckTimer >= stuckDetectionTime)
                     {
                         isStuck = true;
-                        Debug.Log("Monster blocked by obstacle! Returning to patrol.");
                         ReturnToPatrolState();
                     }
                 }
