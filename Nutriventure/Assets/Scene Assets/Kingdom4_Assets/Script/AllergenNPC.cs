@@ -39,10 +39,14 @@ public class AllergenNPC : MonoBehaviour
     private AllergenProductData.AllergenType selectedAllergen;
     private bool hasBeenTriggered = false;
 
+    private Coroutine autoProceedCoroutine;
+    private bool hasProceedStarted = false;
+
     void Awake()
     {
         if (announcementPanel != null) announcementPanel.SetActive(false);
-        if (proceedButton     != null) proceedButton.onClick.AddListener(OnProceedClicked);
+        // Button is optional — auto-proceed handles progression
+        if (proceedButton != null) proceedButton.onClick.AddListener(OnProceedClicked);
 
         if (rockChallenge != null)
             rockChallenge.OnChoiceMade += OnChallengeResult;
@@ -80,7 +84,12 @@ public class AllergenNPC : MonoBehaviour
 
     private void ShowAnnouncement()
     {
-        if (announcementPanel == null) return;
+        if (announcementPanel == null)
+        {
+            // No announcement panel — jump straight to the challenge
+            ProceedToChallenge();
+            return;
+        }
 
         string allergenName = AllergenManager.GetDisplayName(selectedAllergen);
         string description  = AllergenManager.GetDescription(selectedAllergen);
@@ -95,10 +104,35 @@ public class AllergenNPC : MonoBehaviour
             allergenNameText.text = allergenName;
 
         announcementPanel.SetActive(true);
+
+        // Auto-proceed after 3 seconds — no button click required
+        hasProceedStarted = false;
+        if (autoProceedCoroutine != null) StopCoroutine(autoProceedCoroutine);
+        autoProceedCoroutine = StartCoroutine(AutoProceedAfterDelay(3f));
+    }
+
+    private IEnumerator AutoProceedAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ProceedToChallenge();
     }
 
     private void OnProceedClicked()
     {
+        // Stop the auto-proceed coroutine if the player clicks early
+        if (autoProceedCoroutine != null)
+        {
+            StopCoroutine(autoProceedCoroutine);
+            autoProceedCoroutine = null;
+        }
+        ProceedToChallenge();
+    }
+
+    private void ProceedToChallenge()
+    {
+        if (hasProceedStarted) return;
+        hasProceedStarted = true;
+
         if (announcementPanel != null) announcementPanel.SetActive(false);
 
         if (rockChallenge != null)
@@ -117,6 +151,12 @@ public class AllergenNPC : MonoBehaviour
     public void ResetNPC()
     {
         hasBeenTriggered = false;
+        hasProceedStarted = false;
+        if (autoProceedCoroutine != null)
+        {
+            StopCoroutine(autoProceedCoroutine);
+            autoProceedCoroutine = null;
+        }
         if (announcementPanel != null) announcementPanel.SetActive(false);
         if (rockChallenge     != null) rockChallenge.HideChallenge();
     }

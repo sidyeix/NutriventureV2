@@ -45,9 +45,9 @@ public class BigRockInteraction : MonoBehaviour
         // Small rocks start with colliders disabled
         SetSmallRocksColliders(false);
         
-        // Ensure NPC is active
+        // NPC starts hidden — it will appear when the player collides with the big rock
         if (npcObject != null)
-            npcObject.SetActive(true);
+            npcObject.SetActive(false);
         
         // Make sure this big rock has a trigger collider
         EnsureTriggerCollider();
@@ -98,11 +98,15 @@ public class BigRockInteraction : MonoBehaviour
         // Randomly select what THIS SPECIFIC NPC is allergic to
         currentNPCAllergen = nineAllergens[Random.Range(0, nineAllergens.Length)];
         
-        // Randomly select which column contains that allergen
+        // Randomly select which column contains that allergen (0=left, 1=middle, 2=right)
         dangerousColumn = Random.Range(0, 3);
         
         Debug.Log($"<color=green>✅ ROCK {rockID} ACTIVATED - NPC should be allergic to: {currentNPCAllergen}</color>");
         Debug.Log($"<color=green>   Dangerous column: {GetColumnName(dangerousColumn)}</color>");
+        
+        // Show the NPC now that the player has collided with the big rock
+        if (npcObject != null)
+            npcObject.SetActive(true);
         
         // Play effects
         if (collisionEffect != null)
@@ -152,18 +156,33 @@ public class BigRockInteraction : MonoBehaviour
             return;
         }
         
-        AllergenSpawnerFinal.Row tempRow = new AllergenSpawnerFinal.Row();
-        tempRow.rowName = $"Rock {rockID} Columns";
-        tempRow.itemHeight = 1.5f;
-        
-        tempRow.rocks.AddRange(leftColumnRocks);
-        tempRow.rocks.AddRange(middleColumnRocks);
-        tempRow.rocks.AddRange(rightColumnRocks);
-        
-        allergenSpawner.ClearItemsOnRocks(tempRow.rocks);
-        allergenSpawner.RandomizeRow(tempRow);
-        
+        // Build column lists (left=0, middle=1, right=2)
+        List<GameObject>[] columns = new List<GameObject>[3];
+        columns[0] = new List<GameObject>(leftColumnRocks);
+        columns[1] = new List<GameObject>(middleColumnRocks);
+        columns[2] = new List<GameObject>(rightColumnRocks);
+
+        // Identify the two safe columns
+        List<GameObject> safeColumn1 = null;
+        List<GameObject> safeColumn2 = null;
+        for (int i = 0; i < 3; i++)
+        {
+            if (i == dangerousColumn) continue;
+            if (safeColumn1 == null) safeColumn1 = columns[i];
+            else safeColumn2 = columns[i];
+        }
+
+        // Spawn the NPC's allergen on the dangerous column (this is the path to avoid)
+        allergenSpawner.SpawnSpecificAllergenOnRocks(columns[dangerousColumn], currentNPCAllergen, 1.5f);
+
+        // Spawn two different safe allergens on the other columns
+        if (safeColumn1 != null && safeColumn2 != null)
+            allergenSpawner.SpawnSafeAllergensOnRocks(safeColumn1, safeColumn2, currentNPCAllergen, 1.5f);
+
+        // Mark rocks in the dangerous column so the trigger logic can detect them
         MarkDangerousRocks();
+
+        Debug.Log($"Rock {rockID} columns set up — dangerous column: {GetColumnName(dangerousColumn)} ({currentNPCAllergen})");
     }
     
     private void MarkDangerousRocks()
@@ -212,25 +231,34 @@ public class BigRockInteraction : MonoBehaviour
     {
         int count = 0;
         foreach (GameObject rock in leftColumnRocks)
-            if (rock != null && rock.GetComponent<Collider>() != null)
+        {
+            if (rock == null) continue;
+            foreach (Collider col in rock.GetComponents<Collider>())
             {
-                rock.GetComponent<Collider>().enabled = enabled;
+                col.enabled = enabled;
                 count++;
             }
+        }
             
         foreach (GameObject rock in middleColumnRocks)
-            if (rock != null && rock.GetComponent<Collider>() != null)
+        {
+            if (rock == null) continue;
+            foreach (Collider col in rock.GetComponents<Collider>())
             {
-                rock.GetComponent<Collider>().enabled = enabled;
+                col.enabled = enabled;
                 count++;
             }
+        }
             
         foreach (GameObject rock in rightColumnRocks)
-            if (rock != null && rock.GetComponent<Collider>() != null)
+        {
+            if (rock == null) continue;
+            foreach (Collider col in rock.GetComponents<Collider>())
             {
-                rock.GetComponent<Collider>().enabled = enabled;
+                col.enabled = enabled;
                 count++;
             }
+        }
         
         Debug.Log($"Set {count} small rock colliders to {(enabled ? "ENABLED" : "DISABLED")}");
     }
@@ -252,6 +280,12 @@ public class BigRockInteraction : MonoBehaviour
     private void HandleAllergenHit(string allergen)
     {
         Debug.Log($"❌ Player touched {allergen} - NPC is allergic to {currentNPCAllergen}!");
+        
+        // Deduct one heart from the player's health
+        if (PlayerHealthManager.Instance != null)
+        {
+            PlayerHealthManager.Instance.TakeDamage(1);
+        }
         
         if (AllerthriaGameManager.Instance != null)
         {
@@ -301,6 +335,16 @@ public class BigRockInteraction : MonoBehaviour
         }
     }
     
+    private void ResetSmallRocks()
+    {
+        foreach (GameObject rock in leftColumnRocks)
+            if (rock != null) { var t = rock.GetComponent<SmallRockTrigger>(); if (t != null) t.ResetRock(); }
+        foreach (GameObject rock in middleColumnRocks)
+            if (rock != null) { var t = rock.GetComponent<SmallRockTrigger>(); if (t != null) t.ResetRock(); }
+        foreach (GameObject rock in rightColumnRocks)
+            if (rock != null) { var t = rock.GetComponent<SmallRockTrigger>(); if (t != null) t.ResetRock(); }
+    }
+
     private IEnumerator ResetAfterFailure()
     {
         if (AllerthriaGameManager.Instance != null)
@@ -310,9 +354,8 @@ public class BigRockInteraction : MonoBehaviour
         
         yield return new WaitForSeconds(2f);
         
-        GetComponent<Collider>().enabled = true;
-        hasBeenActivated = false;
-        
+        // Reset small rock triggers so the player can land on them again
+        ResetSmallRocks();
         SetSmallRocksColliders(false);
         
         if (allergenSpawner != null)
@@ -323,5 +366,15 @@ public class BigRockInteraction : MonoBehaviour
             allRocks.AddRange(rightColumnRocks);
             allergenSpawner.ClearItemsOnRocks(allRocks);
         }
+
+        // Reset NPC state so dialogue triggers again, then hide it
+        if (npcScript != null)
+            npcScript.ResetNPC();
+        if (npcObject != null)
+            npcObject.SetActive(false);
+
+        // Re-enable the big rock collider so the player can collide again
+        GetComponent<Collider>().enabled = true;
+        hasBeenActivated = false;
     }
 }
