@@ -32,6 +32,12 @@ public class Kingdom4ScoreManager : MonoBehaviour
     [Tooltip("Bonus for no wagon hits")]
     public int noWagonHitsBonus = 300;
 
+    [Header("Phase 3: Allergen Challenge (5 Big Rocks)")]
+    [Tooltip("Points awarded for each correct (safe) path choice – set via Phase3ChallengeController")]
+    public int allergenChallengeCorrectPoints = 150;
+    [Tooltip("Bonus awarded when the player answers all 5 rocks correctly")]
+    public int allergenChallengeAllCorrectBonus = 500;
+
     [Header("Phase 3: Platform Phase - Combo System")]
     [Tooltip("Base points for landing on healthy food")]
     public int healthyFoodBasePoints = 100;
@@ -208,6 +214,20 @@ public class Kingdom4ScoreManager : MonoBehaviour
             noWagonHitsBonusApplied = true;
             Debug.Log($"No wagon hits! +{noWagonHitsBonus} bonus");
         }
+    }
+
+    // ---------------- PHASE 3: Allergen Challenge (5 Big Rocks) ----------------
+    public void AddPhase3AllergenChallengePoints(int points)
+    {
+        if (points <= 0) return;
+
+        totalScore += points;
+
+        UpdateAllUI();
+        OnScoreChanged?.Invoke(totalScore);
+        OnScoreUpdated?.Invoke(totalScore, allergensFound, totalWagonHits);
+
+        Debug.Log($"[Phase3 AllergenChallenge] +{points} pts. Total score: {totalScore}");
     }
 
     // ---------------- PHASE 3: Platform Phase - Combo System ----------------
