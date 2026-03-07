@@ -22,9 +22,9 @@ public class AllerthriaGameManager : MonoBehaviour
     public GamePhase currentPhase = GamePhase.ScrollQuest;
     
     [Header("Game State")]
-    public bool isGameStarted = false; // Track if game has officially started
-    public bool isTimerRunning = false; // Track if timer is running
-    public bool isGameComplete = false; // Track if game is completed
+    public bool isGameStarted = false;
+    public bool isTimerRunning = false;
+    public bool isGameComplete = false;
     
     [Header("Quest Items")]
     public bool hasScroll = false;
@@ -46,14 +46,26 @@ public class AllerthriaGameManager : MonoBehaviour
     public TextMeshProUGUI finalScoreText;
     
     [Header("Timer Integration")]
-    [SerializeField] private GameTimer gameTimer; // Reference to timer
-    [SerializeField] private Kingdom4GameEndManager gameEndManager; // Reference to game end manager
+    [SerializeField] private GameTimer gameTimer;
+    [SerializeField] private Kingdom4GameEndManager gameEndManager;
+    
+    [Header("Rock System")]
+    [SerializeField] private int rocksCompleted = 0;
+    [SerializeField] private bool[] rocksStatus = new bool[5];
+    [SerializeField] private TextMeshProUGUI warningMessageText;
+    [SerializeField] private float messageDisplayTime = 2f;
+    [SerializeField] private AudioClip rockCompleteSound;
+    [SerializeField] private AudioClip wrongPathSound;
+    [SerializeField] private AudioClip successSound;
     
     // Events
     public event Action<GamePhase> OnPhaseChanged;
     public event Action OnGameStarted;
     public event Action OnGameCompleted;
     public event Action OnGameOver;
+    
+    private bool completedAllPhases = false;
+    private AudioSource audioSource;
     
     void Awake()
     {
@@ -70,6 +82,16 @@ public class AllerthriaGameManager : MonoBehaviour
     
     void Start()
     {
+        // Initialize audio source
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+        
         StartPhase(GamePhase.ScrollQuest);
         
         UpdateQuestText("Find the scroll");
@@ -95,13 +117,6 @@ public class AllerthriaGameManager : MonoBehaviour
             Kingdom4ScoreManager.Instance.OnMultiplierChanged.AddListener(OnMultiplierChanged);
         }
         
-        // Subscribe to timer events if available
-        if (gameTimer != null)
-        {
-            // Optional: Listen for timer events
-            Debug.Log("Connected to GameTimer");
-        }
-        
         Debug.Log("AllerthriaGameManager initialized");
     }
     
@@ -109,19 +124,109 @@ public class AllerthriaGameManager : MonoBehaviour
     {
         UpdatePhaseSpecificDisplay();
         
-        // Check for time up game over
         if (isGameStarted && !isGameComplete && gameTimer != null && gameTimer.IsOverMaxTime)
         {
             TriggerGameOverByTime();
         }
         
-        // Optional: Check for health-based game over
         CheckHealthBasedGameOver();
     }
     
+    #region Rock System Methods
+    
+    public void OnRockActivated(int rockID, string allergen)
+    {
+        Debug.Log($"Rock {rockID} activated with allergen: {allergen}");
+        ShowMessage($"Warning: {allergen} detected in this area!");
+    }
+    
+    public bool IsRockCompleted(int rockID)
+    {
+        if (rockID >= 1 && rockID <= 5)
+        {
+            return rocksStatus[rockID - 1];
+        }
+        return false;
+    }
+    
+    public void MarkRockCompleted(int rockID)
+    {
+        if (rockID >= 1 && rockID <= 5 && !rocksStatus[rockID - 1])
+        {
+            rocksStatus[rockID - 1] = true;
+            rocksCompleted++;
+            
+            if (rockCompleteSound != null && audioSource != null)
+                audioSource.PlayOneShot(rockCompleteSound);
+            
+            Debug.Log($"Rock {rockID} completed. Total: {rocksCompleted}/5");
+            
+            if (allergenCountText != null)
+            {
+                allergenCountText.text = $"Allergens: {collectedAllergens.Count}/9";
+            }
+            
+            if (rocksCompleted >= 5)
+            {
+                ShowMessage("All rocks navigated! Find 4 more allergens to continue!");
+            }
+            
+            if (collectedAllergens.Count >= 9)
+            {
+                StartPhase(GamePhase.WagonPhase);
+            }
+        }
+    }
+    
+    public void ShowMessage(string message)
+    {
+        if (warningMessageText != null)
+        {
+            StopAllCoroutines();
+            StartCoroutine(DisplayMessage(message, Color.white));
+        }
+    }
+    
+    public void ShowWarningMessage(string message)
+    {
+        if (warningMessageText != null)
+        {
+            if (wrongPathSound != null && audioSource != null)
+                audioSource.PlayOneShot(wrongPathSound);
+                
+            StopAllCoroutines();
+            StartCoroutine(DisplayMessage(message, Color.red));
+        }
+    }
+    
+    // ADD THIS MISSING METHOD
+    public void ShowSuccessMessage(string message)
+    {
+        if (warningMessageText != null)
+        {
+            if (successSound != null && audioSource != null)
+                audioSource.PlayOneShot(successSound);
+                
+            StopAllCoroutines();
+            StartCoroutine(DisplayMessage(message, Color.green));
+        }
+    }
+    
+    private System.Collections.IEnumerator DisplayMessage(string message, Color color)
+    {
+        warningMessageText.color = color;
+        warningMessageText.text = message;
+        warningMessageText.gameObject.SetActive(true);
+        
+        yield return new WaitForSeconds(messageDisplayTime);
+        
+        warningMessageText.gameObject.SetActive(false);
+    }
+    
+    #endregion
+    
     #region Game State Management
     
-    // Called when timer starts (from WardenInteraction)
     public void OnGameTimerStarted()
     {
         isGameStarted = true;
@@ -131,7 +236,6 @@ public class AllerthriaGameManager : MonoBehaviour
         UpdateQuestText("Game started! Timer is running.");
         OnGameStarted?.Invoke();
         
-        // Notify WardenInteraction if needed
         var warden = FindObjectOfType<WardenInteraction>();
         if (warden != null && warden.DoesStartTimer())
         {
@@ -139,14 +243,12 @@ public class AllerthriaGameManager : MonoBehaviour
         }
     }
     
-    // Called when timer stops
     public void OnGameTimerStopped()
     {
         isTimerRunning = false;
         Debug.Log("Game timer stopped");
     }
     
-    // Get elapsed time for scoring
     public float GetElapsedTime()
     {
         if (gameTimer != null)
@@ -156,7 +258,6 @@ public class AllerthriaGameManager : MonoBehaviour
         return 0f;
     }
     
-    // Get remaining time
     public float GetRemainingTime()
     {
         if (gameTimer != null)
@@ -166,23 +267,20 @@ public class AllerthriaGameManager : MonoBehaviour
         return 0f;
     }
     
-    // Check if all phases completed
     public bool AllPhasesCompleted()
     {
         return currentPhase == GamePhase.EndGame;
     }
     
-    // Get current life amount (for compatibility with health system)
     public float GetCurrentLifeAmount()
     {
         if (PlayerHealthManager.Instance != null)
         {
             return PlayerHealthManager.Instance.currentHealth;
         }
-        return 3f; // Default fallback
+        return 3f;
     }
     
-    // Get current star rating based on time
     public int GetCurrentStarRating()
     {
         if (gameTimer != null)
@@ -195,14 +293,15 @@ public class AllerthriaGameManager : MonoBehaviour
     #endregion
     
     #region UI Management
+    
     private void UpdatePhaseSpecificDisplay()
     {
         switch (currentPhase)
         {
             case GamePhase.AllergenHunt:
-                if (allergenCountText != null && Kingdom4ScoreManager.Instance != null)
+                if (allergenCountText != null)
                 {
-                    allergenCountText.text = $"Allergens: {collectedAllergens.Count}/9";
+                    allergenCountText.text = $"Allergens: {collectedAllergens.Count}/9 | Rocks: {rocksCompleted}/5";
                 }
                 break;
                 
@@ -214,10 +313,8 @@ public class AllerthriaGameManager : MonoBehaviour
                 break;
         }
         
-        // Update timer UI if available
         if (gameTimer != null && questText != null)
         {
-            // Add timer info to quest text during gameplay
             if (isGameStarted && !isGameComplete && currentPhase != GamePhase.ScrollQuest)
             {
                 string timeInfo = $" | Time: {gameTimer.GetElapsedTimeFormatted()}";
@@ -249,7 +346,6 @@ public class AllerthriaGameManager : MonoBehaviour
 
     public bool CanAccessCastle()
     {
-        // Allow castle access during PlatformPhase OR CastlePhase
         return currentPhase == GamePhase.PlatformPhase || currentPhase == GamePhase.CastlePhase;
     }
     
@@ -270,7 +366,6 @@ public class AllerthriaGameManager : MonoBehaviour
         UpdateUIVisibility();
         OnPhaseChanged?.Invoke(phase);
         
-        // Log phase transition for debugging
         LogPhaseTransition(phase);
         
         switch (phase)
@@ -307,7 +402,6 @@ public class AllerthriaGameManager : MonoBehaviour
         
         Debug.Log($"Phase Transition: {currentPhase} -> {newPhase} at {elapsedTime:F1}s (Star Rating: {starRating})");
         
-        // Save phase completion time for analytics
         PlayerPrefs.SetString($"Phase_{phaseName}_CompletionTime", elapsedTime.ToString("F1"));
         PlayerPrefs.Save();
     }
@@ -335,7 +429,6 @@ public class AllerthriaGameManager : MonoBehaviour
         {
             questText.text = text;
             
-            // If timer is running, append time info
             if (isTimerRunning && gameTimer != null && currentPhase != GamePhase.ScrollQuest)
             {
                 questText.text += $" | Time: {gameTimer.GetElapsedTimeFormatted()}";
@@ -362,11 +455,13 @@ public class AllerthriaGameManager : MonoBehaviour
     
     private void StartAllergenHunt()
     {
-        UpdateQuestText($"Find allergens: {collectedAllergens.Count}/9");
+        UpdateQuestText($"Find allergens: {collectedAllergens.Count}/9 | Rocks: {rocksCompleted}/5");
         
         AllergenSpawnManager spawner = FindObjectOfType<AllergenSpawnManager>();
         if (spawner != null)
+        {
             spawner.SpawnNow();
+        }
     }
     
     public void CollectAllergen(string allergenId)
@@ -380,17 +475,17 @@ public class AllerthriaGameManager : MonoBehaviour
                 Kingdom4ScoreManager.Instance.AddAllergenFound();
             }
             
-            UpdateQuestText($"Find allergens: {collectedAllergens.Count}/9");
+            ShowSuccessMessage($"Collected: {allergenId}!");
+            UpdateQuestText($"Find allergens: {collectedAllergens.Count}/9 | Rocks: {rocksCompleted}/5");
             
             if (collectedAllergens.Count >= 9)
             {
                 StartPhase(GamePhase.WagonPhase);
             }
             
-            // Update timer UI with allergen count
             if (gameTimer != null && questText != null)
             {
-                questText.text = $"Allergens: {collectedAllergens.Count}/9 | Time: {gameTimer.GetElapsedTimeFormatted()}";
+                questText.text = $"Allergens: {collectedAllergens.Count}/9 | Rocks: {rocksCompleted}/5 | Time: {gameTimer.GetElapsedTimeFormatted()}";
             }
         }
     }
@@ -405,23 +500,6 @@ public class AllerthriaGameManager : MonoBehaviour
     public void CompleteWagonPhase()
     {
         StartPhase(GamePhase.PlatformPhase);
-    }
-    
-    /// <summary>
-    /// Called by <see cref="Phase3ChallengeController"/> when all 5 big-rock allergen
-    /// challenges have been completed.  Advances the game to the next appropriate phase.
-    /// </summary>
-    public void CompleteAllergenChallenge()
-    {
-        Debug.Log("Phase 3 allergen challenge completed!");
-        
-        int correct   = Phase3ChallengeController.Instance != null
-            ? Phase3ChallengeController.Instance.GetCorrectCount() : 0;
-        int total     = Phase3ChallengeController.Instance != null
-            ? Phase3ChallengeController.Instance.GetCompletedCount() : 5;
-
-        UpdateQuestText($"Allergen challenge done! {correct}/{total} correct. Head to the castle!");
-        StartPhase(GamePhase.CastlePhase);
     }
     
     public void WagonHitAllergen()
@@ -486,16 +564,12 @@ public class AllerthriaGameManager : MonoBehaviour
     private void StartEndGame()
     {
         UpdateQuestText("Return to the entrance with the key");
-        
-        // Notify that all phases are complete
         completedAllPhases = true;
     }
     
     #endregion
     
     #region Game Completion
-    
-    private bool completedAllPhases = false;
     
     public void CompleteGame()
     {
@@ -505,14 +579,12 @@ public class AllerthriaGameManager : MonoBehaviour
         UpdateQuestText("Mission Complete!");
         Debug.Log("Game Complete!");
         
-        // Stop the timer
         if (gameTimer != null)
         {
             gameTimer.StopTimer();
             OnGameTimerStopped();
         }
         
-        // Trigger game end manager for win
         if (gameEndManager != null)
         {
             gameEndManager.HandleKingdom4Complete();
@@ -524,49 +596,39 @@ public class AllerthriaGameManager : MonoBehaviour
         }
         
         OnGameCompleted?.Invoke();
-        
-        // Save completion stats
         SaveCompletionStats();
     }
     
-    // Trigger game over (lose condition)
     public void TriggerGameOver()
     {
         if (isGameComplete) return;
         
         Debug.Log("Game Over triggered");
         
-        // Stop the timer
         if (gameTimer != null)
         {
             gameTimer.StopTimer();
             OnGameTimerStopped();
         }
         
-        // Trigger game end manager for lose
         if (gameEndManager != null)
         {
             gameEndManager.HandleKingdom4GameOver();
         }
         
         OnGameOver?.Invoke();
-        
-        // Save game over stats
         SaveGameOverStats();
     }
     
-    // Trigger game over by time
     private void TriggerGameOverByTime()
     {
         if (isGameComplete) return;
         
         Debug.Log("Game Over - Time's up!");
         UpdateQuestText("Time's up! Game Over.");
-        
         TriggerGameOver();
     }
     
-    // Check for health-based game over
     private void CheckHealthBasedGameOver()
     {
         if (!isGameStarted || isGameComplete) return;
@@ -624,10 +686,12 @@ public class AllerthriaGameManager : MonoBehaviour
                 finalScoreText.text = $"FINAL SCORE: {finalScore}\n" +
                                       $"Time: {elapsedTime:F1}s\n" +
                                       $"Star Rating: {starRating}/3\n" +
-                                      $"Allergens: {collectedAllergens.Count}/9";
+                                      $"Allergens: {collectedAllergens.Count}/9\n" +
+                                      $"Rocks Completed: {rocksCompleted}/5";
                 
                 Debug.Log($"Final Score Breakdown:");
                 Debug.Log($"- Allergens Found: {Kingdom4ScoreManager.Instance.allergensFound}");
+                Debug.Log($"- Rocks Completed: {rocksCompleted}/5");
                 Debug.Log($"- Wagon Hits: {Kingdom4ScoreManager.Instance.totalWagonHits}");
                 Debug.Log($"- Max Combo: {Kingdom4ScoreManager.Instance.maxComboAchieved}");
                 Debug.Log($"- Time: {elapsedTime:F1}s");
@@ -654,19 +718,23 @@ public class AllerthriaGameManager : MonoBehaviour
         isTimerRunning = false;
         isGameComplete = false;
         completedAllPhases = false;
+        rocksCompleted = 0;
+        
+        for (int i = 0; i < rocksStatus.Length; i++)
+        {
+            rocksStatus[i] = false;
+        }
         
         if (Kingdom4ScoreManager.Instance != null)
         {
             Kingdom4ScoreManager.Instance.ResetScore();
         }
         
-        // Reset timer if exists
         if (gameTimer != null)
         {
             gameTimer.ResetTimer(false);
         }
         
-        // Reset health if exists
         if (PlayerHealthManager.Instance != null)
         {
             PlayerHealthManager.Instance.ResetHealth();
@@ -683,7 +751,6 @@ public class AllerthriaGameManager : MonoBehaviour
         Debug.Log("Game reset to initial state");
     }
     
-    // Pause game (for pause menu)
     public void PauseGame()
     {
         Time.timeScale = 0f;
@@ -694,7 +761,6 @@ public class AllerthriaGameManager : MonoBehaviour
         Debug.Log("Game paused");
     }
     
-    // Resume game
     public void ResumeGame()
     {
         Time.timeScale = 1f;
@@ -705,7 +771,6 @@ public class AllerthriaGameManager : MonoBehaviour
         Debug.Log("Game resumed");
     }
     
-    // Get game stats for display
     public string GetGameStats()
     {
         float elapsedTime = GetElapsedTime();
@@ -715,6 +780,7 @@ public class AllerthriaGameManager : MonoBehaviour
         
         return $"Time: {FormatTime(elapsedTime)}\n" +
                $"Allergens: {allergens}/9\n" +
+               $"Rocks: {rocksCompleted}/5\n" +
                $"Score: {score}\n" +
                $"Star Rating: {starRating}/3\n" +
                $"Phase: {currentPhase}";
@@ -767,7 +833,7 @@ public class AllerthriaGameManager : MonoBehaviour
             Debug.Log($"Timer: Elapsed={gameTimer.ElapsedTime:F1}s, Max={gameTimer.MaxGameTime:F1}s, OverMax={gameTimer.IsOverMaxTime}");
             Debug.Log($"Star Rating: {gameTimer.CurrentStarRatingText}");
         }
-        Debug.Log($"Allergens: {collectedAllergens.Count}/9, HasScroll={hasScroll}, HasKey={hasKey}");
+        Debug.Log($"Allergens: {collectedAllergens.Count}/9, Rocks: {rocksCompleted}/5, HasScroll={hasScroll}, HasKey={hasKey}");
     }
     
     [ContextMenu("Force All Phases")]
@@ -777,6 +843,11 @@ public class AllerthriaGameManager : MonoBehaviour
         for (int i = 1; i <= 9; i++)
         {
             collectedAllergens.Add($"allergen_{i}");
+        }
+        rocksCompleted = 5;
+        for (int i = 0; i < rocksStatus.Length; i++)
+        {
+            rocksStatus[i] = true;
         }
         hasKey = true;
         StartPhase(GamePhase.EndGame);
@@ -797,6 +868,20 @@ public class AllerthriaGameManager : MonoBehaviour
             gameTimer.StartTimer();
             OnGameTimerStarted();
         }
+    }
+    
+    [ContextMenu("Complete 1 Rock")]
+    public void TestCompleteOneRock()
+    {
+        for (int i = 1; i <= 5; i++)
+        {
+            if (!IsRockCompleted(i))
+            {
+                MarkRockCompleted(i);
+                return;
+            }
+        }
+        Debug.Log("All rocks already completed!");
     }
     
     #endregion
