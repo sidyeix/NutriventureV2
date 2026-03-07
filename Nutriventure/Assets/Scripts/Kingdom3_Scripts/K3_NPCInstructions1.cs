@@ -12,48 +12,48 @@ public class K3_NPCinstructions1 : MonoBehaviour
     [Header("Cutscene References")]
     [SerializeField] private GameObject cutsceneParentObject; // "CutsceneThings" parent object
     [SerializeField] private PlayableDirector npcCutsceneDirector; // PlayableDirector for this timeline
-    
+
     [Header("NPC References")]
     [SerializeField] private GameObject arrowIndicatorCanvas; // The floating arrow UI
     [SerializeField] private Transform npcTransform; // Reference to NPC (optional)
-    
+
     [Header("Dialogue Canvas")]
     [SerializeField] private GameObject dialogueCanvas; // NPC dialogue box canvas
     [SerializeField] private bool showDialogueDuringCutscene = true; // Toggle for dialogue visibility
     [SerializeField] private TMP_Text npcNameText; // TextMeshPro for NPC name
-    
+
     [Header("Subtitle System - CRITICAL: Assign These")]
     [SerializeField] private GameObject subtitleCanvas; // Separate canvas for subtitles (optional)
     [SerializeField] private TextMeshProUGUI subtitleTextUI; // MUST be TextMeshProUGUI for K2_SubtitleController
     [SerializeField] private K2_SubtitleController subtitleController; // Subtitle controller component
-    
+
     [Header("Skip Button")]
     [SerializeField] private Button skipButton; // Button to skip the cutscene
     [SerializeField] private bool enableSkipButton = true; // Whether skip button is enabled
     [SerializeField] private float skipButtonDelay = 2f; // Delay before skip button appears
-    
+
     [Header("Player Reference")]
     [SerializeField] private GameObject playerObject; // Reference to player (with ThirdPersonController)
-    
+
     [Header("Game Systems to Control")]
     [SerializeField] private GameObject audioHandler; // "Audio_Handler" GameObject
     [SerializeField] private GameObject gameUICanvas; // "UI_Canvas_StarterAssetsInputs_Joysticks"
-    
+
     [Header("DYNAMIC UI CONTROL AFTER CUTSCENE")]
     [SerializeField] private List<GameObject> uiElementsToEnable = new List<GameObject>(); // Objects to ENABLE after cutscene
     [SerializeField] private List<GameObject> uiElementsToDisable = new List<GameObject>(); // Objects to DISABLE after cutscene
-    
+
     [Header("Cutscene Settings")]
     [SerializeField] private float interactionRange = 3f;
     [SerializeField] private bool requirePlayerFacingNPC = false;
     [SerializeField] private float facingAngleThreshold = 45f;
     [SerializeField] private bool oneTimeInteraction = true; // Can only trigger once
-    
+
     [Header("Events")]
     public UnityEvent onCutsceneStart;
     public UnityEvent onCutsceneEnd;
     public UnityEvent onCutsceneSkipped; // Event fired when cutscene is skipped
-    
+
     private bool isCutscenePlaying = false;
     private bool hasTriggered = false;
     private Transform playerTransform;
@@ -61,7 +61,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
     private Animator playerAnimator; // Reference to player's Animator
     private AudioSource playerAudioSource; // Reference to player's AudioSource
     private StarterAssetsInputs playerInputs; // Reference to player inputs
-    
+
     // Store original states
     private bool wasControllerEnabled = true;
     private bool wasAnimatorEnabled = true;
@@ -70,31 +70,31 @@ public class K3_NPCinstructions1 : MonoBehaviour
     private bool originalSprintState;
     private bool originalJumpState;
     private float originalAnimatorSpeed;
-    
+
     // Skip button timer
     private float skipButtonTimer = 0f;
     private bool skipButtonReady = false;
-    
+
     // Input System reference
     private PlayerInput playerInputComponent;
     private bool playerInputWasEnabled = true;
-    
+
     // NPC name text state
     private bool npcNameTextWasActive = false;
-    
+
     // Subtitle tracking
     private bool subtitleCanvasWasActive = false;
     private bool subtitleTextWasActive = false;
-    
+
     // NEW: Track original states for dynamic UI elements
     private Dictionary<GameObject, bool> uiElementsToEnableOriginalStates = new Dictionary<GameObject, bool>();
     private Dictionary<GameObject, bool> uiElementsToDisableOriginalStates = new Dictionary<GameObject, bool>();
-    
+
     void Start()
     {
         InitializeComponents();
     }
-    
+
     void InitializeComponents()
     {
         // Ensure cutscene parent is disabled initially
@@ -102,31 +102,31 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             cutsceneParentObject.SetActive(false);
         }
-        
+
         // Ensure PlayableDirector is stopped
         if (npcCutsceneDirector != null)
         {
             npcCutsceneDirector.Stop();
             npcCutsceneDirector.stopped += OnCutsceneFinished;
-            
+
             // Subscribe to timeline events
             npcCutsceneDirector.played += OnCutscenePlayed;
             npcCutsceneDirector.paused += OnCutscenePaused;
         }
-        
+
         // Ensure arrow indicator is visible initially
         if (arrowIndicatorCanvas != null)
         {
             arrowIndicatorCanvas.SetActive(true);
         }
-        
+
         // Initialize dialogue canvas
         if (dialogueCanvas != null)
         {
             // Hide dialogue canvas initially
             dialogueCanvas.SetActive(false);
         }
-        
+
         // Initialize NPC name text
         if (npcNameText != null)
         {
@@ -140,29 +140,29 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.Log("No NPC name text assigned - skipping NPC name display");
         }
-        
+
         // Initialize subtitle system
         InitializeSubtitleSystem();
-        
+
         // Initialize skip button
         if (skipButton != null)
         {
             skipButton.onClick.AddListener(OnSkipButtonClicked);
             skipButton.gameObject.SetActive(false); // Hidden by default
         }
-        
+
         // Ensure game UI canvas is enabled initially (if reference exists)
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(true);
         }
-        
+
         // Ensure audio handler is enabled initially (if reference exists)
         if (audioHandler != null)
         {
             audioHandler.SetActive(true);
         }
-        
+
         // Get player component references
         if (playerObject != null)
         {
@@ -171,20 +171,20 @@ public class K3_NPCinstructions1 : MonoBehaviour
             playerAudioSource = playerObject.GetComponent<AudioSource>();
             playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
             playerInputComponent = playerObject.GetComponent<PlayerInput>();
-            
+
             if (playerController == null)
             {
                 Debug.LogWarning("ThirdPersonController not found on player object!");
             }
         }
-        
+
         // NEW: Store original UI element states
         StoreOriginalUIStates();
-        
+
         // NEW: Log dynamic UI element status
         LogDynamicUIElementStatus();
     }
-    
+
     // NEW: Store original UI element states
     private void StoreOriginalUIStates()
     {
@@ -197,7 +197,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 uiElementsToEnableOriginalStates.Add(obj, obj.activeSelf);
             }
         }
-        
+
         // Store original states for dynamic UI elements to disable
         uiElementsToDisableOriginalStates.Clear();
         foreach (GameObject obj in uiElementsToDisable)
@@ -207,10 +207,10 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 uiElementsToDisableOriginalStates.Add(obj, obj.activeSelf);
             }
         }
-        
+
         Debug.Log($"Dynamic UI states stored: {uiElementsToEnableOriginalStates.Count} to enable, {uiElementsToDisableOriginalStates.Count} to disable");
     }
-    
+
     // NEW: Log dynamic UI element status
     private void LogDynamicUIElementStatus()
     {
@@ -227,7 +227,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.LogWarning("  - NULL reference in uiElementsToEnable list!");
             }
         }
-        
+
         Debug.Log($"UI Elements to Disable ({uiElementsToDisable.Count}):");
         foreach (GameObject obj in uiElementsToDisable)
         {
@@ -241,7 +241,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     void InitializeSubtitleSystem()
     {
         // Initialize subtitle canvas
@@ -263,7 +263,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.Log($"Using dialogue canvas as subtitle canvas: {subtitleCanvas.name}");
             }
         }
-        
+
         // Initialize subtitle text - CRITICAL: Must be TextMeshProUGUI
         if (subtitleTextUI != null)
         {
@@ -278,7 +278,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         else
         {
             Debug.LogWarning("No subtitle text assigned! Subtitles won't display.");
-            
+
             // Try to find a TextMeshProUGUI component automatically
             if (subtitleCanvas != null)
             {
@@ -291,13 +291,13 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 }
             }
         }
-        
+
         // Initialize subtitle controller
         if (subtitleController == null)
         {
             // Try to find it automatically
             subtitleController = FindObjectOfType<K2_SubtitleController>();
-            
+
             if (subtitleController == null)
             {
                 // If not found, try to find it on the subtitle canvas
@@ -305,7 +305,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 {
                     subtitleController = subtitleCanvas.GetComponentInChildren<K2_SubtitleController>(true);
                 }
-                
+
                 if (subtitleController == null && subtitleTextUI != null)
                 {
                     // Create a subtitle controller on this GameObject
@@ -314,11 +314,11 @@ public class K3_NPCinstructions1 : MonoBehaviour
                     Debug.Log($"Created subtitle controller for text: {subtitleTextUI.name}");
                 }
             }
-            
+
             if (subtitleController != null)
             {
                 Debug.Log($"Subtitle controller found/created: {subtitleController.name}");
-                
+
                 // Ensure subtitle controller has the text reference
                 if (subtitleController.subtitleTextUI == null && subtitleTextUI != null)
                 {
@@ -334,7 +334,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         else
         {
             Debug.Log($"Subtitle controller assigned: {subtitleController.name}");
-            
+
             // Ensure subtitle controller has the text reference
             if (subtitleController.subtitleTextUI == null && subtitleTextUI != null)
             {
@@ -343,7 +343,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     void OnDestroy()
     {
         if (npcCutsceneDirector != null)
@@ -352,21 +352,21 @@ public class K3_NPCinstructions1 : MonoBehaviour
             npcCutsceneDirector.played -= OnCutscenePlayed;
             npcCutsceneDirector.paused -= OnCutscenePaused;
         }
-        
+
         // Remove skip button listener
         if (skipButton != null)
         {
             skipButton.onClick.RemoveListener(OnSkipButtonClicked);
         }
     }
-    
+
     void Update()
     {
         // Handle skip button timer
         if (isCutscenePlaying && enableSkipButton && !skipButtonReady)
         {
             skipButtonTimer += Time.deltaTime;
-            
+
             if (skipButtonTimer >= skipButtonDelay)
             {
                 skipButtonReady = true;
@@ -374,32 +374,32 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     void OnTriggerEnter(Collider other)
     {
         // Auto-trigger when player enters trigger collider
         if (other.CompareTag("Player") && !hasTriggered && !isCutscenePlaying)
         {
             playerTransform = other.transform;
-            
+
             // If player object not assigned, get it from the collider
             if (playerObject == null)
             {
                 playerObject = other.gameObject;
                 InitializePlayerComponents();
             }
-            
+
             TriggerCutscene();
         }
     }
-    
+
     void OnTriggerStay(Collider other)
     {
         // Alternative: Use Input System for interaction (mobile touch/button)
         if (other.CompareTag("Player") && !hasTriggered && !isCutscenePlaying)
         {
             playerTransform = other.transform;
-            
+
             // If player object not assigned, get it from the collider
             if (playerObject == null)
             {
@@ -408,7 +408,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     void InitializePlayerComponents()
     {
         playerController = playerObject.GetComponent<ThirdPersonController>();
@@ -417,26 +417,26 @@ public class K3_NPCinstructions1 : MonoBehaviour
         playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
         playerInputComponent = playerObject.GetComponent<PlayerInput>();
     }
-    
+
     bool IsPlayerFacingNPC()
     {
         if (playerTransform == null || npcTransform == null) return true;
-        
+
         Vector3 directionToNPC = (npcTransform.position - playerTransform.position).normalized;
         Vector3 playerForward = playerTransform.forward;
-        
+
         float angle = Vector3.Angle(playerForward, directionToNPC);
-        
+
         return angle <= facingAngleThreshold;
     }
-    
+
     // Public method to trigger cutscene from UI button (for mobile)
     public void TriggerCutsceneFromUI()
     {
         if (!hasTriggered && !isCutscenePlaying && playerTransform != null)
         {
             float distance = Vector3.Distance(transform.position, playerTransform.position);
-            
+
             if (distance <= interactionRange)
             {
                 // Check if player is facing NPC (if required)
@@ -447,62 +447,62 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     public void TriggerCutscene()
     {
         TriggerCutsceneWithNPCName(null); // Default call without custom name
     }
-    
+
     // Overload method to trigger cutscene with custom NPC name
     public void TriggerCutscene(string customNPCName = null)
     {
         TriggerCutsceneWithNPCName(customNPCName);
     }
-    
+
     private void TriggerCutsceneWithNPCName(string customNPCName = null)
     {
         if (hasTriggered || isCutscenePlaying) return;
-        
+
         hasTriggered = true;
         isCutscenePlaying = true;
         skipButtonTimer = 0f;
         skipButtonReady = false;
-        
+
         // Store original player states
         StoreOriginalPlayerStates();
-        
+
         // Completely freeze the player
         FreezePlayerCompletely();
-        
+
         // Hide arrow indicator
         if (arrowIndicatorCanvas != null)
         {
             arrowIndicatorCanvas.SetActive(false);
         }
-        
+
         // Enable cutscene parent object
         if (cutsceneParentObject != null)
         {
             cutsceneParentObject.SetActive(true);
         }
-        
+
         // Disable game UI during cutscene
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(false);
         }
-        
+
         // Disable audio handler during cutscene
         if (audioHandler != null)
         {
             audioHandler.SetActive(false);
         }
-        
+
         // Enable NPC name text
         if (npcNameText != null)
         {
             npcNameText.gameObject.SetActive(true);
-            
+
             // Set custom NPC name if provided
             if (!string.IsNullOrEmpty(customNPCName))
             {
@@ -514,55 +514,55 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.Log($"NPC name text activated: {npcNameText.name}");
             }
         }
-        
+
         // Clear any existing subtitles before starting
         ClearSubtitles();
-        
+
         // Play the cutscene
         if (npcCutsceneDirector != null)
         {
             npcCutsceneDirector.Play();
         }
-        
+
         // Invoke start event
         onCutsceneStart?.Invoke();
-        
+
         Debug.Log($"NPC Cutscene triggered - Player completely frozen, NPC name: {(npcNameText != null && npcNameText.gameObject.activeSelf ? "SHOWN" : "HIDDEN")}");
         Debug.Log($"Subtitle system: {(subtitleTextUI != null ? "ASSIGNED" : "NOT ASSIGNED")}");
     }
-    
+
     private void StoreOriginalPlayerStates()
     {
         if (playerController != null)
         {
             wasControllerEnabled = playerController.enabled;
         }
-        
+
         if (playerAnimator != null)
         {
             wasAnimatorEnabled = playerAnimator.enabled;
             originalAnimatorSpeed = playerAnimator.speed;
         }
-        
+
         if (playerAudioSource != null)
         {
             wasAudioSourceEnabled = playerAudioSource.enabled;
         }
-        
+
         if (playerInputs != null)
         {
             originalMoveInput = playerInputs.move;
             originalSprintState = playerInputs.sprint;
             originalJumpState = playerInputs.jump;
         }
-        
+
         // Store PlayerInput state
         if (playerInputComponent != null)
         {
             playerInputWasEnabled = playerInputComponent.enabled;
         }
     }
-    
+
     private void FreezePlayerCompletely()
     {
         // 1. Disable the ThirdPersonController
@@ -570,19 +570,19 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             playerController.enabled = false;
         }
-        
+
         // 2. Stop all animations completely
         if (playerAnimator != null)
         {
             playerAnimator.enabled = false;
         }
-        
+
         // 3. Stop all audio
         if (playerAudioSource != null)
         {
             playerAudioSource.enabled = false;
             playerAudioSource.Stop();
-            
+
             // Also stop any AudioSource components on children
             AudioSource[] allAudioSources = playerObject.GetComponentsInChildren<AudioSource>();
             foreach (AudioSource audioSource in allAudioSources)
@@ -591,7 +591,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 audioSource.Stop();
             }
         }
-        
+
         // 4. Reset all player inputs
         if (playerInputs != null)
         {
@@ -599,11 +599,11 @@ public class K3_NPCinstructions1 : MonoBehaviour
             playerInputs.look = Vector2.zero;
             playerInputs.sprint = false;
             playerInputs.jump = false;
-            
+
             // Disable the input component
             playerInputs.enabled = false;
         }
-        
+
         // 5. Stop any physics movement
         Rigidbody rb = playerObject.GetComponent<Rigidbody>();
         if (rb != null)
@@ -612,20 +612,20 @@ public class K3_NPCinstructions1 : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
         }
-        
+
         // 6. Disable CharacterController movement
         CharacterController characterController = playerObject.GetComponent<CharacterController>();
         if (characterController != null)
         {
             characterController.enabled = false;
         }
-        
+
         // 7. Disable PlayerInput component (Input System)
         if (playerInputComponent != null)
         {
             playerInputComponent.enabled = false;
         }
-        
+
         // 8. Find and disable any additional movement scripts
         MonoBehaviour[] allScripts = playerObject.GetComponents<MonoBehaviour>();
         foreach (MonoBehaviour script in allScripts)
@@ -633,13 +633,13 @@ public class K3_NPCinstructions1 : MonoBehaviour
             if (script != null && script.enabled && script != this)
             {
                 // Skip specific scripts we don't want to disable
-                if (script.GetType().Name.Contains("Camera") || 
+                if (script.GetType().Name.Contains("Camera") ||
                     script.GetType().Name.Contains("UI") ||
                     script.GetType().Name.Contains("Canvas"))
                 {
                     continue;
                 }
-                
+
                 // Disable anything that might affect movement
                 if (script is Behaviour behaviour)
                 {
@@ -647,26 +647,26 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 }
             }
         }
-        
+
         Debug.Log("Player completely frozen - Controller, Animator, Audio, and Inputs disabled");
     }
-    
+
     // Event handler when cutscene starts playing
     private void OnCutscenePlayed(PlayableDirector director)
     {
         Debug.Log("Cutscene started playing");
-        
+
         // Show dialogue canvas when cutscene starts
         if (showDialogueDuringCutscene && dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(true);
             Debug.Log("Dialogue canvas activated");
         }
-        
+
         // CRITICAL: Enable subtitle canvas and text
         EnableSubtitleDisplay();
     }
-    
+
     // Enable subtitle display
     private void EnableSubtitleDisplay()
     {
@@ -676,7 +676,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             subtitleCanvas.SetActive(true);
             Debug.Log($"Subtitle canvas enabled: {subtitleCanvas.name}");
         }
-        
+
         // Enable subtitle text
         if (subtitleTextUI != null)
         {
@@ -687,7 +687,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.LogWarning("Subtitle text UI is null! Subtitles won't display.");
         }
-        
+
         // Ensure subtitle controller has the text reference
         if (subtitleController != null && subtitleController.subtitleTextUI == null && subtitleTextUI != null)
         {
@@ -695,28 +695,28 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log($"Assigned subtitle text to controller: {subtitleTextUI.name}");
         }
     }
-    
+
     // Event handler when cutscene is paused
     private void OnCutscenePaused(PlayableDirector director)
     {
         Debug.Log("Cutscene paused");
-        
+
         // Hide dialogue canvas when cutscene is paused
         if (dialogueCanvas != null && dialogueCanvas.activeSelf)
         {
             dialogueCanvas.SetActive(false);
         }
-        
+
         // Hide NPC name text when cutscene is paused
         if (npcNameText != null && npcNameText.gameObject.activeSelf)
         {
             npcNameText.gameObject.SetActive(false);
         }
-        
+
         // Clear subtitles when paused
         ClearSubtitles();
     }
-    
+
     private void OnCutsceneFinished(PlayableDirector director)
     {
         // Check if this was triggered by skip (to avoid double-finishing)
@@ -725,7 +725,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             FinishCutscene(false); // false = not skipped
         }
     }
-    
+
     // Skip button click handler
     private void OnSkipButtonClicked()
     {
@@ -734,7 +734,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             SkipCutscene();
         }
     }
-    
+
     // Show skip button with delay
     private void ShowSkipButton()
     {
@@ -744,7 +744,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log("Skip button activated");
         }
     }
-    
+
     // Hide skip button
     private void HideSkipButton()
     {
@@ -753,38 +753,38 @@ public class K3_NPCinstructions1 : MonoBehaviour
             skipButton.gameObject.SetActive(false);
         }
     }
-    
+
     // Public method to skip cutscene
     public void SkipCutscene()
     {
         if (isCutscenePlaying && npcCutsceneDirector != null)
         {
             Debug.Log("NPC cutscene skipped by player");
-            
+
             // FAST FORWARD TO END: Set timeline to the end before stopping
             double currentTime = npcCutsceneDirector.time;
             double duration = npcCutsceneDirector.duration;
-            
+
             if (duration > 0)
             {
                 Debug.Log($"Fast-forwarding from {currentTime} to {duration}");
-                
+
                 // Fast forward to the end
                 npcCutsceneDirector.time = duration;
-                
+
                 // Evaluate the timeline at the end time
                 npcCutsceneDirector.Evaluate();
-                
+
                 // Trigger all bindings that should happen at the end
                 TriggerAllBindings(npcCutsceneDirector);
             }
-            
+
             // Stop the director
             npcCutsceneDirector.Stop();
-            
+
             // Finish the cutscene with skipped flag
             FinishCutscene(true); // true = skipped
-            
+
             // Invoke skipped event
             onCutsceneSkipped?.Invoke();
         }
@@ -793,17 +793,17 @@ public class K3_NPCinstructions1 : MonoBehaviour
     private void TriggerAllBindings(PlayableDirector director)
     {
         if (director == null) return;
-        
+
         // Get all PlayableBindings
         var bindings = director.playableAsset.outputs;
-        
+
         foreach (var binding in bindings)
         {
             try
             {
                 // Get the bound object
                 var boundObject = director.GetGenericBinding(binding.sourceObject);
-                
+
                 if (boundObject != null)
                 {
                     // If it's an animation track, force it to evaluate at the end
@@ -823,64 +823,64 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.LogWarning($"Error evaluating binding: {e.Message}");
             }
         }
-        
+
         // Force evaluation of all playables
         director.Evaluate();
-        
+
         Debug.Log("Timeline bindings triggered for skip");
     }
-    
+
     private void FinishCutscene(bool wasSkipped = false)
     {
         isCutscenePlaying = false;
-        
+
         // Hide skip button
         HideSkipButton();
-        
+
         // Hide dialogue canvas when cutscene ends
         if (dialogueCanvas != null && dialogueCanvas.activeSelf)
         {
             dialogueCanvas.SetActive(false);
             Debug.Log("Dialogue canvas deactivated");
         }
-        
+
         // Clear subtitles when cutscene ends
         ClearSubtitles();
-        
+
         // Disable subtitle display
         DisableSubtitleDisplay();
-        
+
         // Disable NPC name text after cutscene
         if (npcNameText != null)
         {
             npcNameText.gameObject.SetActive(false);
             Debug.Log("NPC name text disabled after cutscene");
         }
-        
+
         // Disable cutscene parent object
         if (cutsceneParentObject != null)
         {
             cutsceneParentObject.SetActive(false);
         }
-        
+
         // Re-enable game UI after cutscene
         if (gameUICanvas != null)
         {
             gameUICanvas.SetActive(true);
         }
-        
+
         // Re-enable audio handler after cutscene
         if (audioHandler != null)
         {
             audioHandler.SetActive(true);
         }
-        
+
         // NEW: Handle dynamic UI elements after cutscene
         HandlePostCutsceneDynamicUI();
-        
+
         // Unfreeze the player
         UnfreezePlayer();
-        
+
         // Note: Arrow indicator stays hidden after cutscene
         // If you want it to reappear (for repeatable interactions), use this:
         if (!oneTimeInteraction && arrowIndicatorCanvas != null)
@@ -888,10 +888,15 @@ public class K3_NPCinstructions1 : MonoBehaviour
             arrowIndicatorCanvas.SetActive(true);
             hasTriggered = false; // Reset trigger for repeat interactions
         }
-        
+
         // Invoke end event
         onCutsceneEnd?.Invoke();
-        
+
+        // Mark the game as in-progress so settings buttons become interactable
+        K3_GameplayProgression progression = FindObjectOfType<K3_GameplayProgression>();
+        if (progression != null)
+            progression.SetGameInProgress(true);
+
         if (wasSkipped)
         {
             Debug.Log("NPC Cutscene skipped - Player unfrozen, NPC name text disabled, subtitles cleared");
@@ -901,12 +906,21 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log("NPC Cutscene finished - Player unfrozen, NPC name text disabled, subtitles cleared");
         }
     }
-    
+
+    /// <summary>
+    /// Public version called by K3_GameStateManager to restore game-active UI
+    /// when resuming from a saved state (same as after cutscene).
+    /// </summary>
+    public void HandlePostCutscene2DynamicUI()
+    {
+        HandlePostCutsceneDynamicUI();
+    }
+
     // NEW: Handle dynamic UI elements after cutscene
     private void HandlePostCutsceneDynamicUI()
     {
         Debug.Log("=== HANDLING POST-CUTSCENE DYNAMIC UI ===");
-        
+
         // Enable all UI elements in the enable list
         if (uiElementsToEnable.Count > 0)
         {
@@ -928,7 +942,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.Log("No UI elements to enable (list is empty)");
         }
-        
+
         // Disable all UI elements in the disable list
         if (uiElementsToDisable.Count > 0)
         {
@@ -950,16 +964,16 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.Log("No UI elements to disable (list is empty)");
         }
-        
+
         // Verify changes
         LogPostCutsceneDynamicUIState();
     }
-    
+
     // NEW: Log dynamic UI state after cutscene
     private void LogPostCutsceneDynamicUIState()
     {
         Debug.Log("=== POST-CUTSCENE DYNAMIC UI STATE ===");
-        
+
         Debug.Log("UI Elements that should be ENABLED:");
         if (uiElementsToEnable.Count > 0)
         {
@@ -975,7 +989,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             Debug.Log("  (None in list)");
         }
-        
+
         Debug.Log("UI Elements that should be DISABLED:");
         if (uiElementsToDisable.Count > 0)
         {
@@ -992,7 +1006,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log("  (None in list)");
         }
     }
-    
+
     // Disable subtitle display
     private void DisableSubtitleDisplay()
     {
@@ -1002,7 +1016,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             subtitleTextUI.gameObject.SetActive(false);
             Debug.Log($"Subtitle text disabled: {subtitleTextUI.name}");
         }
-        
+
         // Only disable subtitle canvas if it's separate from dialogue canvas
         if (subtitleCanvas != null && subtitleCanvas != dialogueCanvas)
         {
@@ -1010,7 +1024,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log($"Subtitle canvas disabled: {subtitleCanvas.name}");
         }
     }
-    
+
     private void UnfreezePlayer()
     {
         // 1. Re-enable the ThirdPersonController (if it was enabled before)
@@ -1018,12 +1032,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             playerController.enabled = wasControllerEnabled;
         }
-        
+
         // 2. Re-enable animator
         if (playerAnimator != null)
         {
             playerAnimator.enabled = wasAnimatorEnabled;
-            
+
             // Reset animation states
             if (wasAnimatorEnabled)
             {
@@ -1034,12 +1048,12 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 playerAnimator.SetBool("FreeFall", false);
             }
         }
-        
+
         // 3. Re-enable audio
         if (playerAudioSource != null)
         {
             playerAudioSource.enabled = wasAudioSourceEnabled;
-            
+
             // Re-enable AudioSource components on children
             AudioSource[] allAudioSources = playerObject.GetComponentsInChildren<AudioSource>();
             foreach (AudioSource audioSource in allAudioSources)
@@ -1047,7 +1061,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 audioSource.enabled = wasAudioSourceEnabled;
             }
         }
-        
+
         // 4. Re-enable and restore inputs
         if (playerInputs != null)
         {
@@ -1057,7 +1071,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             playerInputs.sprint = false;
             playerInputs.jump = false;
         }
-        
+
         // 5. Re-enable physics
         Rigidbody rb = playerObject.GetComponent<Rigidbody>();
         if (rb != null)
@@ -1066,20 +1080,20 @@ public class K3_NPCinstructions1 : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
-        
+
         // 6. Re-enable CharacterController
         CharacterController characterController = playerObject.GetComponent<CharacterController>();
         if (characterController != null)
         {
             characterController.enabled = true;
         }
-        
+
         // 7. Re-enable PlayerInput component (Input System)
         if (playerInputComponent != null)
         {
             playerInputComponent.enabled = playerInputWasEnabled;
         }
-        
+
         // 8. Re-enable all other scripts
         MonoBehaviour[] allScripts = playerObject.GetComponents<MonoBehaviour>();
         foreach (MonoBehaviour script in allScripts)
@@ -1087,21 +1101,21 @@ public class K3_NPCinstructions1 : MonoBehaviour
             if (script != null && script != this)
             {
                 // Skip specific scripts
-                if (script.GetType().Name.Contains("Camera") || 
+                if (script.GetType().Name.Contains("Camera") ||
                     script.GetType().Name.Contains("UI") ||
                     script.GetType().Name.Contains("Canvas"))
                 {
                     continue;
                 }
-                
+
                 // Re-enable the script
                 script.enabled = true;
             }
         }
-        
+
         Debug.Log("Player unfrozen - All components restored");
     }
-    
+
     // Clear subtitles
     private void ClearSubtitles()
     {
@@ -1116,7 +1130,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log("Subtitle text cleared directly");
         }
     }
-    
+
     // Method to update NPC name text during cutscene
     public void UpdateNPCName(string newName)
     {
@@ -1134,7 +1148,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.LogWarning("Cannot update NPC name - cutscene is not playing!");
         }
     }
-    
+
     // Method to show/hide NPC name text during cutscene
     public void SetNPCNameActive(bool active)
     {
@@ -1148,7 +1162,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.LogWarning("Cannot show/hide NPC name - no NPC name text assigned!");
         }
     }
-    
+
     // Method to assign NPC name text at runtime
     public void SetNPCNameText(TMP_Text newNameText)
     {
@@ -1157,22 +1171,40 @@ public class K3_NPCinstructions1 : MonoBehaviour
         {
             npcNameText.gameObject.SetActive(false);
         }
-        
+
         npcNameText = newNameText;
-        
+
         if (npcNameText != null)
         {
             npcNameText.gameObject.SetActive(isCutscenePlaying);
             Debug.Log($"NPC name text assigned: {npcNameText.name}");
         }
     }
-    
+
     // Method to get current NPC name
     public string GetCurrentNPCName()
     {
         return npcNameText != null ? npcNameText.text : "";
     }
-    
+
+    /// <summary>
+    /// Mark this NPC as already triggered so its cutscene will not play.
+    /// Used when resuming a saved game — the player has already seen the intro.
+    /// </summary>
+    public void MarkAsTriggered()
+    {
+        hasTriggered = true;
+        isCutscenePlaying = false;
+
+        // Hide arrow indicator since cutscene is considered "done"
+        if (arrowIndicatorCanvas != null)
+            arrowIndicatorCanvas.SetActive(false);
+
+#if UNITY_EDITOR
+        Debug.Log($"K3_NPCinstructions1: {gameObject.name} marked as already triggered.");
+#endif
+    }
+
     // Reset the interaction (for debugging or game reset)
     public void ResetInteraction()
     {
@@ -1180,47 +1212,62 @@ public class K3_NPCinstructions1 : MonoBehaviour
         isCutscenePlaying = false;
         skipButtonReady = false;
         skipButtonTimer = 0f;
-        
+
         // Hide skip button
         HideSkipButton();
-        
+
+        // Reset the PlayableDirector so the cutscene can be replayed
+        // NOTE: Do NOT call Evaluate() here – it processes frame 0 of the
+        // timeline, which can activate Cinemachine tracks and steal camera priority.
+        if (npcCutsceneDirector != null)
+        {
+            npcCutsceneDirector.Stop();
+            npcCutsceneDirector.time = 0;
+        }
+
+        // Ensure cutscene parent is disabled (initial state)
+        if (cutsceneParentObject != null)
+        {
+            cutsceneParentObject.SetActive(false);
+        }
+
         if (arrowIndicatorCanvas != null)
         {
             arrowIndicatorCanvas.SetActive(true);
         }
-        
+
         // Hide dialogue canvas on reset
         if (dialogueCanvas != null)
         {
             dialogueCanvas.SetActive(false);
         }
-        
+
         // Hide NPC name text on reset
         if (npcNameText != null)
         {
             npcNameText.gameObject.SetActive(false);
         }
-        
+
         // Clear subtitles on reset
         ClearSubtitles();
-        
+
         // Disable subtitle display on reset
         DisableSubtitleDisplay();
-        
+
         // NEW: Reset dynamic UI elements to original states on reset
         ResetDynamicUIToOriginalStates();
-        
+
         // Ensure player is unfrozen on reset
         UnfreezePlayer();
-        
+
         Debug.Log("NPC interaction reset - UI restored to original states");
     }
-    
+
     // NEW: Reset dynamic UI elements to original states
     private void ResetDynamicUIToOriginalStates()
     {
         Debug.Log("Resetting dynamic UI elements to original states...");
-        
+
         foreach (var kvp in uiElementsToEnableOriginalStates)
         {
             if (kvp.Key != null)
@@ -1229,7 +1276,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
                 Debug.Log($"  - {kvp.Key.name} restored to: {(kvp.Value ? "enabled" : "disabled")}");
             }
         }
-        
+
         foreach (var kvp in uiElementsToDisableOriginalStates)
         {
             if (kvp.Key != null)
@@ -1239,14 +1286,14 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     // Optional: Gizmos for visualization
     void OnDrawGizmosSelected()
     {
         // Draw interaction range sphere
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionRange);
-        
+
         // Draw trigger collider bounds
         Collider collider = GetComponent<Collider>();
         if (collider != null)
@@ -1255,7 +1302,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Gizmos.DrawCube(collider.bounds.center, collider.bounds.size);
         }
     }
-    
+
     // Public method to manually trigger cutscene from other scripts
     public void ManualTriggerCutscene()
     {
@@ -1264,71 +1311,71 @@ public class K3_NPCinstructions1 : MonoBehaviour
             TriggerCutscene();
         }
     }
-    
+
     // Enable/disable skip button functionality
     public void SetSkipButtonEnabled(bool enabled)
     {
         enableSkipButton = enabled;
-        
+
         if (!enabled && skipButton != null)
         {
             HideSkipButton();
         }
-        
+
         Debug.Log($"Skip button functionality {(enabled ? "enabled" : "disabled")}");
     }
-    
+
     // Set skip button delay
     public void SetSkipButtonDelay(float delay)
     {
         skipButtonDelay = Mathf.Max(0f, delay);
         Debug.Log($"Skip button delay set to: {skipButtonDelay} seconds");
     }
-    
+
     // Check if cutscene is currently playing
     public bool IsCutscenePlaying()
     {
         return isCutscenePlaying;
     }
-    
+
     // Check if NPC name text is active
     public bool IsNPCNameActive()
     {
         return npcNameText != null && npcNameText.gameObject.activeSelf;
     }
-    
+
     // Check if skip button is ready/visible
     public bool IsSkipButtonReady()
     {
         return skipButtonReady;
     }
-    
+
     // Check if subtitle text is assigned
     public bool IsSubtitleTextAssigned()
     {
         return subtitleTextUI != null;
     }
-    
+
     // Check if subtitle controller is assigned
     public bool IsSubtitleControllerAssigned()
     {
         return subtitleController != null;
     }
-    
+
     // Get remaining time until skip button appears
     public float GetSkipButtonTimeRemaining()
     {
         if (skipButtonReady) return 0f;
         return Mathf.Max(0f, skipButtonDelay - skipButtonTimer);
     }
-    
+
     // Mobile-specific method: Trigger cutscene from proximity
     public void CheckAndTriggerCutscene()
     {
         if (hasTriggered || isCutscenePlaying || playerTransform == null) return;
-        
+
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        
+
         if (distance <= interactionRange)
         {
             // Check if player is facing NPC (if required)
@@ -1338,24 +1385,24 @@ public class K3_NPCinstructions1 : MonoBehaviour
             }
         }
     }
-    
+
     // NEW: Methods to dynamically add/remove UI elements at runtime
     public void AddUIElementToEnable(GameObject element)
     {
         if (element != null && !uiElementsToEnable.Contains(element))
         {
             uiElementsToEnable.Add(element);
-            
+
             // Also store original state if not already stored
             if (!uiElementsToEnableOriginalStates.ContainsKey(element))
             {
                 uiElementsToEnableOriginalStates.Add(element, element.activeSelf);
             }
-            
+
             Debug.Log($"Added {element.name} to UI elements to enable list");
         }
     }
-    
+
     public void RemoveUIElementFromEnable(GameObject element)
     {
         if (uiElementsToEnable.Contains(element))
@@ -1364,23 +1411,23 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log($"Removed {element.name} from UI elements to enable list");
         }
     }
-    
+
     public void AddUIElementToDisable(GameObject element)
     {
         if (element != null && !uiElementsToDisable.Contains(element))
         {
             uiElementsToDisable.Add(element);
-            
+
             // Also store original state if not already stored
             if (!uiElementsToDisableOriginalStates.ContainsKey(element))
             {
                 uiElementsToDisableOriginalStates.Add(element, element.activeSelf);
             }
-            
+
             Debug.Log($"Added {element.name} to UI elements to disable list");
         }
     }
-    
+
     public void RemoveUIElementFromDisable(GameObject element)
     {
         if (uiElementsToDisable.Contains(element))
@@ -1389,33 +1436,33 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.Log($"Removed {element.name} from UI elements to disable list");
         }
     }
-    
+
     public void ClearUIElementLists()
     {
         uiElementsToEnable.Clear();
         uiElementsToDisable.Clear();
         Debug.Log("Cleared all dynamic UI element lists");
     }
-    
+
     // NEW: Method to log current dynamic UI state
     public void LogCurrentDynamicUIState()
     {
         Debug.Log("=== CURRENT DYNAMIC UI STATE ===");
         LogPostCutsceneDynamicUIState();
     }
-    
+
     // NEW: Method to check if a UI element is in enable list
     public bool IsInEnableList(GameObject element)
     {
         return uiElementsToEnable.Contains(element);
     }
-    
+
     // NEW: Method to check if a UI element is in disable list
     public bool IsInDisableList(GameObject element)
     {
         return uiElementsToDisable.Contains(element);
     }
-    
+
     // Test method to show subtitle manually
     [ContextMenu("Test Show Subtitle")]
     public void TestShowSubtitle()
@@ -1427,7 +1474,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             {
                 subtitleTextUI.gameObject.SetActive(true);
             }
-            
+
             subtitleController.ShowSubtitle("This is a test subtitle! The text should appear.", 0.03f);
             Debug.Log("Test subtitle shown via controller");
         }
@@ -1438,7 +1485,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
             {
                 subtitleTextUI.gameObject.SetActive(true);
             }
-            
+
             subtitleTextUI.text = "Test subtitle - Direct text assignment";
             Debug.Log("Test subtitle shown (direct text assignment)");
         }
@@ -1447,38 +1494,38 @@ public class K3_NPCinstructions1 : MonoBehaviour
             Debug.LogWarning("Cannot show test subtitle - no subtitle text or controller assigned!");
         }
     }
-    
+
     // Context menu for testing
     [ContextMenu("Test Trigger Cutscene")]
     public void TestTriggerCutscene()
     {
         TriggerCutscene();
     }
-    
+
     [ContextMenu("Test Trigger Cutscene with Custom Name")]
     public void TestTriggerCutsceneWithCustomName()
     {
         TriggerCutscene("SIR KALEB");
     }
-    
+
     [ContextMenu("Test Skip Cutscene")]
     public void TestSkipCutscene()
     {
         SkipCutscene();
     }
-    
+
     [ContextMenu("Update NPC Name to 'TEST NPC'")]
     public void TestUpdateNPCName()
     {
         UpdateNPCName("TEST NPC");
     }
-    
+
     [ContextMenu("Toggle NPC Name Visibility")]
     public void TestToggleNPCName()
     {
         SetNPCNameActive(!IsNPCNameActive());
     }
-    
+
     // NEW: Test method for post-cutscene dynamic UI
     [ContextMenu("Test Post-Cutscene Dynamic UI")]
     public void TestPostCutsceneDynamicUI()
@@ -1486,7 +1533,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log("=== TESTING POST-CUTSCENE DYNAMIC UI ===");
         HandlePostCutsceneDynamicUI();
     }
-    
+
     // NEW: Test method to reset dynamic UI to original states
     [ContextMenu("Reset Dynamic UI to Original States")]
     public void ResetDynamicUIToOriginalStatesTest()
@@ -1495,7 +1542,7 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log("Dynamic UI reset to original states");
         LogCurrentDynamicUIState();
     }
-    
+
     [ContextMenu("Debug Current State")]
     public void DebugCurrentState()
     {
@@ -1514,14 +1561,14 @@ public class K3_NPCinstructions1 : MonoBehaviour
         Debug.Log($"Timeline Director State: {(npcCutsceneDirector != null ? npcCutsceneDirector.state.ToString() : "NULL")}");
         Debug.Log($"Timeline Time: {(npcCutsceneDirector != null ? $"{npcCutsceneDirector.time:F2}s/{npcCutsceneDirector.duration:F2}s" : "NULL")}");
         Debug.Log($"Cutscene Parent Active: {(cutsceneParentObject != null ? cutsceneParentObject.activeSelf : "NULL")}");
-        
+
         // NEW: Dynamic UI State Debug
         LogCurrentDynamicUIState();
         Debug.Log($"=== END DEBUG ===");
     }
-    
+
     // NEW: Auto-find UI elements in editor
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     [ContextMenu("Auto-Find UI Elements")]
     public void AutoFindUIElements()
     {
@@ -1561,5 +1608,5 @@ public class K3_NPCinstructions1 : MonoBehaviour
         
         UnityEditor.EditorUtility.SetDirty(this);
     }
-    #endif
+#endif
 }

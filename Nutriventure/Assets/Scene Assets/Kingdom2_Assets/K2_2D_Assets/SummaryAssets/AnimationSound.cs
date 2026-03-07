@@ -28,10 +28,10 @@ public class AnimationSound : MonoBehaviour
     public void PlayStarSFX()
     {
         if (audioSource == null)
-        {
-            Debug.LogError("AudioSource is not assigned for PlayStarSFX!");
+            TryResolveAudioSource();
+
+        if (audioSource == null)
             return;
-        }
 
         if (star != null)
         {
@@ -46,10 +46,10 @@ public class AnimationSound : MonoBehaviour
     public void PlayWhoosh()
     {
         if (audioSource == null)
-        {
-            Debug.LogError("AudioSource is not assigned for PlayWhoosh!");
+            TryResolveAudioSource();
+
+        if (audioSource == null)
             return;
-        }
 
         if (swoosh != null)
         {
@@ -58,6 +58,20 @@ public class AnimationSound : MonoBehaviour
         else
         {
             Debug.LogWarning("Swoosh AudioClip is not assigned!");
+        }
+    }
+
+    private void TryResolveAudioSource()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = GetComponentInParent<AudioSource>();
+        if (audioSource == null)
+            audioSource = FindObjectOfType<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
         }
     }
 }

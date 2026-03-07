@@ -116,6 +116,12 @@ public class K3_KingAssessment : MonoBehaviour
             confirmButton.interactable = false;
         }
         
+        // Subscribe to auto-close on correct hit from preservation system
+        if (preservationSystem != null)
+        {
+            preservationSystem.OnCorrectPreservativeApplied += HandleCorrectPreservativeApplied;
+        }
+        
         // Try to get database if not assigned
         if (foodDatabase == null)
         {
@@ -458,6 +464,21 @@ public class K3_KingAssessment : MonoBehaviour
         ClosePreservationPanel();
     }
     
+    /// <summary>
+    /// Called automatically by K3_KingAS2 when the player lands in the correct zone
+    /// with the correct preservative. Runs the same logic as OnConfirmButtonClicked.
+    /// </summary>
+    private void HandleCorrectPreservativeApplied()
+    {
+        StartCoroutine(AutoConfirmAfterDelay());
+    }
+    
+    private IEnumerator AutoConfirmAfterDelay()
+    {
+        yield return new WaitForSeconds(0.5f); // Brief pause so feedback is visible
+        OnConfirmButtonClicked();
+    }
+    
     private float GetTargetMinForFood(int foodIndex, PreservativeType type)
     {
         K3_FoodDatabase.FoodProfile profile = foodDatabase.GetFoodProfile(foodIndex);
@@ -644,17 +665,10 @@ public class K3_KingAssessment : MonoBehaviour
             }
         }
         
+        // Target range is now hidden — range is shown visually on the slider zone only
         if (targetRangesText != null)
         {
-            if (foodIndex == 7)
-            {
-                // UPDATE: Only show Sodium Benzoate range
-                targetRangesText.text = $"<b>Sodium Benzoate Range:</b> 50-60";
-            }
-            else
-            {
-                targetRangesText.text = $"<b>Target Range:</b> {profile.minSliderValue}-{profile.maxSliderValue}";
-            }
+            targetRangesText.gameObject.SetActive(false);
         }
         
         if (collectedPreservativeText != null)

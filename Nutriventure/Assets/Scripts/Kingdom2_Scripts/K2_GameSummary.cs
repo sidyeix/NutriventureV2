@@ -1474,7 +1474,7 @@ public class K2_GameSummary : MonoBehaviour
     /// <summary>
     /// Applies the home button game object state changes
     /// </summary>
-    private void ApplyHomeButtonGameObjectStates()
+    public void ApplyHomeButtonGameObjectStates()
     {
         Debug.Log("Applying home button game object state changes...");
         

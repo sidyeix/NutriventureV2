@@ -12,43 +12,78 @@ public class K2_Instructions2D : MonoBehaviour
     [Header("Panel References")]
     [SerializeField] private GameObject systemsPanel; // Parent "SystemsPanel"
     [SerializeField] private RawImage instVisuals; // RawImage UI "InstVisuals"
-    
+
     [Header("Navigation Buttons")]
     [SerializeField] private Button confirmButton; // Button to close panel
     [SerializeField] private Button leftNavBtn; // Previous instruction
     [SerializeField] private Button rightNavBtn; // Next instruction
-    
+
     [Header("Page Indicator")]
     [SerializeField] private TMP_Text pageText; // Text component for page indicator (e.g., "1/3")
-    
+
     [Header("Instruction Images")]
     [SerializeField] private List<Texture2D> instructionImages = new List<Texture2D>(); // List of 2D sprites/images
-    
+
     [Header("External UI Button")]
     [SerializeField] private Button externalOpenButton; // UI Button that can open the panel
     [SerializeField] private bool enableExternalButton = true; // Whether the external button is enabled
     [SerializeField] private bool showButtonAfterTrigger = true; // Show button after collider is triggered
-    
+
     [Header("Player Detection")]
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private bool disableAfterFirstTrigger = true;
-    
+
     [Header("Input Settings (Optional)")]
     [SerializeField] private bool enableKeyboardNavigation = false; // Disabled for mobile
-    
+
     private int currentPage = 0;
     private bool hasBeenTriggered = false;
     private StarterAssets.ThirdPersonController playerController;
     private UnityEngine.InputSystem.PlayerInput playerInput;
     private bool panelOpenedExternally = false; // Track if panel was opened by button
-    
+
+    [Header("Game Start References")]
+    [SerializeField] private GameplayProgression gameplayProgression;
+    [SerializeField] private K2_IntroCutsceneManager introCutsceneManager;
+    private bool hasTriggeredGameStart = false;
+    private bool cutscenePlayedOnEntry = false;
+
     void Start()
     {
         InitializePanel();
         SetupButtonListeners();
         InitializeExternalButton();
+
+        // Play intro cutscene on scene entry if Preservia key not yet collected
+        StartCoroutine(CheckAndPlayIntroCutscene());
     }
-    
+
+    private System.Collections.IEnumerator CheckAndPlayIntroCutscene()
+    {
+        // Wait a frame for all managers to initialize
+        yield return null;
+
+        if (introCutsceneManager == null)
+            introCutsceneManager = FindObjectOfType<K2_IntroCutsceneManager>();
+
+        bool hasPreserviaKey = GameDataManager.Instance != null
+            && GameDataManager.Instance.CurrentGameData != null
+            && GameDataManager.Instance.CurrentGameData.preserviaKeyCollected;
+
+        if (!hasPreserviaKey && introCutsceneManager != null)
+        {
+            cutscenePlayedOnEntry = true;
+            introCutsceneManager.PlayCutscene();
+            Debug.Log("K2: Preservia key not yet collected — playing intro cutscene on scene entry");
+        }
+        else
+        {
+            Debug.Log(hasPreserviaKey
+                ? "K2: Preservia key already collected — skipping intro cutscene"
+                : "K2: No intro cutscene manager found");
+        }
+    }
+
     void InitializePanel()
     {
         // Ensure panel is disabled at start
@@ -61,14 +96,14 @@ public class K2_Instructions2D : MonoBehaviour
         {
             Debug.LogError("SystemsPanel not assigned!");
         }
-        
+
         // Disable collider at start if already triggered
         if (disableAfterFirstTrigger && hasBeenTriggered)
         {
             GetComponent<Collider>().enabled = false;
         }
     }
-    
+
     void InitializeExternalButton()
     {
         if (externalOpenButton != null)
@@ -76,11 +111,11 @@ public class K2_Instructions2D : MonoBehaviour
             // Initially disable the external button
             externalOpenButton.gameObject.SetActive(showButtonAfterTrigger ? false : true);
             externalOpenButton.interactable = false;
-            
+
             // Add listener to open panel
             externalOpenButton.onClick.RemoveAllListeners();
             externalOpenButton.onClick.AddListener(OpenPanelFromButton);
-            
+
             Debug.Log("External button initialized - initially disabled");
         }
         else if (enableExternalButton)
@@ -88,7 +123,7 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogWarning("ExternalOpenButton not assigned but enableExternalButton is true!");
         }
     }
-    
+
     void SetupButtonListeners()
     {
         // Confirm button - close panel
@@ -102,7 +137,7 @@ public class K2_Instructions2D : MonoBehaviour
         {
             Debug.LogError("ConfirmButton not assigned!");
         }
-        
+
         // Left navigation button - previous page
         if (leftNavBtn != null)
         {
@@ -114,7 +149,7 @@ public class K2_Instructions2D : MonoBehaviour
         {
             Debug.LogError("LeftNavBtn not assigned!");
         }
-        
+
         // Right navigation button - next page
         if (rightNavBtn != null)
         {
@@ -127,7 +162,7 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogError("RightNavBtn not assigned!");
         }
     }
-    
+
     void OnTriggerEnter(Collider other)
     {
         // Check if player entered trigger
@@ -137,14 +172,14 @@ public class K2_Instructions2D : MonoBehaviour
             TriggerInstructionPanel();
         }
     }
-    
+
     // This method handles the initial trigger (from collider)
     public void TriggerInstructionPanel()
     {
         if (!hasBeenTriggered)
         {
             hasBeenTriggered = true;
-            
+
             // Activate external button if enabled
             if (enableExternalButton && externalOpenButton != null)
             {
@@ -152,18 +187,18 @@ public class K2_Instructions2D : MonoBehaviour
                 externalOpenButton.interactable = true;
                 Debug.Log("External button activated after collider trigger");
             }
-            
+
             // Disable trigger collider if needed
             if (disableAfterFirstTrigger)
             {
                 GetComponent<Collider>().enabled = false;
             }
-            
+
             // Open the panel immediately
             OpenInstructionPanel(false); // false = not opened by button
         }
     }
-    
+
     // Called by external UI button
     public void OpenPanelFromButton()
     {
@@ -177,7 +212,7 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogWarning("Cannot open panel from button: Collider not triggered yet!");
         }
     }
-    
+
     void OpenInstructionPanel(bool fromButton = false)
     {
         if (systemsPanel == null || instructionImages.Count == 0)
@@ -185,34 +220,34 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogError("Cannot open panel: Missing references!");
             return;
         }
-        
+
         // Get player references
         GameObject player = GameObject.FindGameObjectWithTag(playerTag);
         if (player != null)
         {
             playerController = player.GetComponent<StarterAssets.ThirdPersonController>();
             playerInput = player.GetComponent<UnityEngine.InputSystem.PlayerInput>();
-            
+
             // Disable player movement and input
             if (playerController != null)
                 playerController.enabled = false;
-            
+
             if (playerInput != null)
                 playerInput.enabled = false;
         }
-        
+
         // Reset to first page
         currentPage = 0;
-        
+
         // Update UI
         UpdateInstructionDisplay();
-        
+
         // Activate panel
         systemsPanel.SetActive(true);
-        
+
         Debug.Log($"Instruction panel opened {(fromButton ? "from button" : "from trigger")}");
     }
-    
+
     void CloseInstructionPanel()
     {
         if (systemsPanel != null)
@@ -220,46 +255,80 @@ public class K2_Instructions2D : MonoBehaviour
             systemsPanel.SetActive(false);
             Debug.Log("Instruction panel closed");
         }
-        
+
         // Re-enable player movement and input
         if (playerController != null)
             playerController.enabled = true;
-        
+
         if (playerInput != null)
             playerInput.enabled = true;
-        
+
+        // Start the game when instructions are confirmed (first time only)
+        if (!hasTriggeredGameStart)
+        {
+            hasTriggeredGameStart = true;
+
+            if (gameplayProgression == null)
+                gameplayProgression = FindObjectOfType<GameplayProgression>();
+
+            // Cutscene already played on scene entry — just start the game timer
+            StartGameTimer();
+        }
+
         // Reset player references
         playerController = null;
         playerInput = null;
-        
+
         // Reset external button state
         panelOpenedExternally = false;
     }
-    
+
+    private void OnIntroCutsceneFinished()
+    {
+        // Unsubscribe to avoid duplicate calls
+        if (introCutsceneManager != null)
+            introCutsceneManager.OnCutsceneFinished -= OnIntroCutsceneFinished;
+
+        StartGameTimer();
+    }
+
+    private void StartGameTimer()
+    {
+        if (gameplayProgression != null)
+        {
+            gameplayProgression.StartGame();
+            Debug.Log("K2: Game timer started");
+        }
+        else
+        {
+            Debug.LogWarning("K2: GameplayProgression not found — cannot start game!");
+        }
+    }
+
     void PreviousInstruction()
     {
         if (instructionImages.Count == 0) return;
-        
+
         currentPage--;
         if (currentPage < 0)
             currentPage = instructionImages.Count - 1; // Wrap to last page
-        
+
         UpdateInstructionDisplay();
         Debug.Log($"Previous instruction: Page {currentPage + 1}/{instructionImages.Count}");
     }
-    
+
     void NextInstruction()
     {
         if (instructionImages.Count == 0) return;
-        
+
         currentPage++;
         if (currentPage >= instructionImages.Count)
             currentPage = 0; // Wrap to first page
-        
+
         UpdateInstructionDisplay();
         Debug.Log($"Next instruction: Page {currentPage + 1}/{instructionImages.Count}");
     }
-    
+
     void UpdateInstructionDisplay()
     {
         // Update instruction image
@@ -271,14 +340,14 @@ public class K2_Instructions2D : MonoBehaviour
                 Debug.Log($"Displaying instruction image {currentPage + 1}");
             }
         }
-        
+
         // Update page text indicator
         UpdatePageText();
-        
+
         // Update navigation button states (optional visual feedback)
         UpdateNavigationButtons();
     }
-    
+
     void UpdatePageText()
     {
         if (pageText != null)
@@ -299,7 +368,7 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogWarning("PageText not assigned!");
         }
     }
-    
+
     void UpdateNavigationButtons()
     {
         // You can add visual feedback here (like changing button colors)
@@ -316,9 +385,9 @@ public class K2_Instructions2D : MonoBehaviour
         }
         */
     }
-    
+
     // Public methods for external control
-    
+
     public void OpenPanelManually()
     {
         if (!hasBeenTriggered)
@@ -332,23 +401,23 @@ public class K2_Instructions2D : MonoBehaviour
             OpenInstructionPanel(false);
         }
     }
-    
+
     public void ClosePanelManually()
     {
         CloseInstructionPanel();
     }
-    
+
     public void GoToPage(int pageIndex)
     {
         if (instructionImages.Count == 0) return;
-        
+
         if (pageIndex >= 0 && pageIndex < instructionImages.Count)
         {
             currentPage = pageIndex;
             UpdateInstructionDisplay();
         }
     }
-    
+
     public void AddInstructionImage(Texture2D newImage)
     {
         if (newImage != null)
@@ -358,75 +427,78 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.Log($"Added new instruction image. Total: {instructionImages.Count}");
         }
     }
-    
+
     public void RemoveInstructionImage(int index)
     {
         if (index >= 0 && index < instructionImages.Count)
         {
             instructionImages.RemoveAt(index);
-            
+
             // Adjust current page if necessary
             if (currentPage >= instructionImages.Count)
             {
                 currentPage = Mathf.Max(0, instructionImages.Count - 1);
             }
-            
+
             UpdateInstructionDisplay();
             Debug.Log($"Removed instruction image at index {index}. Total: {instructionImages.Count}");
         }
     }
-    
+
     // Getter methods
-    
+
     public int GetCurrentPage()
     {
         return currentPage;
     }
-    
+
     public int GetTotalPages()
     {
         return instructionImages.Count;
     }
-    
+
     public bool HasBeenTriggered()
     {
         return hasBeenTriggered;
     }
-    
+
     public bool IsPanelOpen()
     {
         return systemsPanel != null && systemsPanel.activeInHierarchy;
     }
-    
+
     public bool IsExternalButtonEnabled()
     {
         return externalOpenButton != null && externalOpenButton.interactable;
     }
-    
+
     // Reset functionality
-    
+
     public void ResetTrigger()
     {
         hasBeenTriggered = false;
+        hasTriggeredGameStart = false;
+        cutscenePlayedOnEntry = false;
+        currentPage = 0;
         GetComponent<Collider>().enabled = true;
         panelOpenedExternally = false;
-        
+
         // Reset external button
         if (externalOpenButton != null)
         {
             externalOpenButton.gameObject.SetActive(showButtonAfterTrigger ? false : true);
             externalOpenButton.interactable = false;
         }
-        
+
         Debug.Log("Instruction trigger and external button reset");
     }
-    
+
     // Enable/disable external button programmatically
-    
+
     public void SetExternalButtonEnabled(bool enabled)
     {
         enableExternalButton = enabled;
-        
+
         if (externalOpenButton != null)
         {
             if (enabled && hasBeenTriggered)
@@ -443,10 +515,10 @@ public class K2_Instructions2D : MonoBehaviour
                 }
             }
         }
-        
+
         Debug.Log($"External button {(enabled ? "enabled" : "disabled")}");
     }
-    
+
     public void SetExternalButtonVisible(bool visible)
     {
         if (externalOpenButton != null)
@@ -455,9 +527,9 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.Log($"External button {(visible ? "made visible" : "hidden")}");
         }
     }
-    
+
     // Input handling with Input System - Disabled for mobile by default
-    
+
     void Update()
     {
         if (IsPanelOpen() && enableKeyboardNavigation)
@@ -465,10 +537,10 @@ public class K2_Instructions2D : MonoBehaviour
             HandleInputSystemNavigation();
         }
     }
-    
+
     void HandleInputSystemNavigation()
     {
-        #if ENABLE_INPUT_SYSTEM
+#if ENABLE_INPUT_SYSTEM
         // Get keyboard input
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
@@ -491,12 +563,12 @@ public class K2_Instructions2D : MonoBehaviour
                 CloseInstructionPanel();
             }
         }
-        #endif
+#endif
     }
-    
+
     // Editor helper
-    
-    #if UNITY_EDITOR
+
+#if UNITY_EDITOR
     [ContextMenu("Auto-Find References in Children")]
     void AutoFindReferences()
     {
@@ -564,10 +636,10 @@ public class K2_Instructions2D : MonoBehaviour
         
         UnityEditor.EditorUtility.SetDirty(this);
     }
-    #endif
-    
+#endif
+
     // Debug methods
-    
+
     [ContextMenu("Test Open Panel")]
     void TestOpenPanel()
     {
@@ -576,35 +648,35 @@ public class K2_Instructions2D : MonoBehaviour
             Debug.LogWarning("No instruction images assigned! Add some images first.");
             return;
         }
-        
+
         TriggerInstructionPanel();
     }
-    
+
     [ContextMenu("Test Close Panel")]
     void TestClosePanel()
     {
         CloseInstructionPanel();
     }
-    
+
     [ContextMenu("Test Next Instruction")]
     void TestNextInstruction()
     {
         NextInstruction();
     }
-    
+
     [ContextMenu("Test Previous Instruction")]
     void TestPreviousInstruction()
     {
         PreviousInstruction();
     }
-    
+
     [ContextMenu("Test Trigger From Button")]
     void TestTriggerFromButton()
     {
         // Simulate button click
         OpenPanelFromButton();
     }
-    
+
     [ContextMenu("Test Reset Trigger")]
     void TestResetTrigger()
     {

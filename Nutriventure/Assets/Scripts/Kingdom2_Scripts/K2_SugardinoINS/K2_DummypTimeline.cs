@@ -1092,7 +1092,8 @@ public class K2_DummypTimeline : MonoBehaviour
     }
     
     // NEW: Handle dynamic UI elements after cutscene 2
-    private void HandlePostCutscene2DynamicUI()
+    // Public so K2_GameStateManager can call it during resume to restore game-active UI state
+    public void HandlePostCutscene2DynamicUI()
     {
         Debug.Log("=== HANDLING POST-CUTSCENE 2 DYNAMIC UI ===");
         
