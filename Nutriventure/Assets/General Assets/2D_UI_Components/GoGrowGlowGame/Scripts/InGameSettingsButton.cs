@@ -191,7 +191,9 @@ public class InGameSettingsButton : MonoBehaviour
                 gameManager.PauseGameTimer();
             }
 
+#if UNITY_EDITOR
             Debug.Log(wasGameActiveWhenPaused ? "Game paused (active)" : "Game paused (roaming)");
+#endif
         }
     }
 
@@ -216,7 +218,9 @@ public class InGameSettingsButton : MonoBehaviour
             Time.timeScale = originalTimeScale;
             isPaused = false;
             wasGameActiveWhenPaused = false;
+#if UNITY_EDITOR
             Debug.Log("Settings closed while roaming — resumed immediately.");
+#endif
         }
     }
 
@@ -226,7 +230,6 @@ public class InGameSettingsButton : MonoBehaviour
 
         if (!wasGameActiveWhenPaused)
         {
-            Debug.LogWarning("Cannot resume: Game was not active when paused");
             return;
         }
 
@@ -269,19 +272,19 @@ public class InGameSettingsButton : MonoBehaviour
             // Countdown from 3
             countdownText.text = "3";
             PlaySound(countdownTickSound);
-            yield return new WaitForSecondsRealtime(1f);
+            yield return CoroutineYieldCache.WaitForSecondsRealtime(1f);
 
             countdownText.text = "2";
             PlaySound(countdownTickSound);
-            yield return new WaitForSecondsRealtime(1f);
+            yield return CoroutineYieldCache.WaitForSecondsRealtime(1f);
 
             countdownText.text = "1";
             PlaySound(countdownTickSound);
-            yield return new WaitForSecondsRealtime(1f);
+            yield return CoroutineYieldCache.WaitForSecondsRealtime(1f);
 
             countdownText.text = "GO!";
             PlaySound(countdownGoSound);
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return CoroutineYieldCache.WaitForSecondsRealtime(0.5f);
 
             // Stop any playing audio
             if (audioSource != null && audioSource.isPlaying)
@@ -312,7 +315,9 @@ public class InGameSettingsButton : MonoBehaviour
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(true);
 
+#if UNITY_EDITOR
         Debug.Log("Game resumed");
+#endif
     }
 
     private void OnRestartGameClicked()
@@ -321,7 +326,6 @@ public class InGameSettingsButton : MonoBehaviour
 
         if (!isGameActive)
         {
-            Debug.LogWarning("Cannot restart: Game is not active");
             return;
         }
 
@@ -338,7 +342,9 @@ public class InGameSettingsButton : MonoBehaviour
 
     private void PerformRestart()
     {
+#if UNITY_EDITOR
         Debug.Log("=== IN-GAME RESTART CONFIRMED ===");
+#endif
 
         // Close settings panel
         if (profileSettings != null)
@@ -374,11 +380,8 @@ public class InGameSettingsButton : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("GameEndManager not found, reloading scene as fallback");
             SceneManager.LoadScene(currentSceneName);
         }
-
-        Debug.Log("=== IN-GAME RESTART COMPLETE ===");
     }
 
     private void OnBackToHomeClicked()
@@ -387,7 +390,6 @@ public class InGameSettingsButton : MonoBehaviour
 
         if (!isGameActive)
         {
-            Debug.LogWarning("Cannot go to home: Game is not active");
             return;
         }
 
@@ -404,7 +406,9 @@ public class InGameSettingsButton : MonoBehaviour
 
     private void PerformGoHome()
     {
+#if UNITY_EDITOR
         Debug.Log("=== IN-GAME HOME CONFIRMED ===");
+#endif
 
         // Close settings panel
         if (profileSettings != null)
@@ -440,7 +444,6 @@ public class InGameSettingsButton : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("GameEndManager not found, using basic teleport fallback");
             TeleportPlayerToLobbyPoint();
 
             if (gameManager != null)
@@ -448,8 +451,6 @@ public class InGameSettingsButton : MonoBehaviour
                 gameManager.FullGameReset();
             }
         }
-
-        Debug.Log("=== IN-GAME HOME COMPLETE ===");
     }
 
     private void ForceEnableBackgroundMusic()
@@ -467,7 +468,6 @@ public class InGameSettingsButton : MonoBehaviour
             if (!backgroundMusicObject.activeSelf)
             {
                 backgroundMusicObject.SetActive(true);
-                Debug.Log("BackgroundMusic GameObject ENABLED");
             }
 
             AudioSource bgSource = backgroundMusicObject.GetComponent<AudioSource>();
@@ -490,7 +490,6 @@ public class InGameSettingsButton : MonoBehaviour
     {
         if (gameManager == null || lobbyPoint == null)
         {
-            Debug.LogError("Cannot teleport player - GameManager or Lobby Point is null!");
             return;
         }
 
@@ -507,7 +506,9 @@ public class InGameSettingsButton : MonoBehaviour
         Vector3 targetPosition = lobbyPoint.position;
         Quaternion targetRotation = lobbyPoint.rotation;
 
+#if UNITY_EDITOR
         Debug.Log($"Teleporting player to Lobby Point: {targetPosition}");
+#endif
 
         // Reset animator before teleport (like GameEndManager)
         if (gameManager.characterAnimator != null)
@@ -545,21 +546,18 @@ public class InGameSettingsButton : MonoBehaviour
         {
             playerController.enabled = true;
         }
-
-        Debug.Log("Player teleported to lobby point successfully");
     }
 
     private void ResetAllContinueButtons()
     {
         ContinueButton[] continueButtons = FindObjectsOfType<ContinueButton>(true);
-        foreach (ContinueButton continueButton in continueButtons)
+        for (int i = 0; i < continueButtons.Length; i++)
         {
-            if (continueButton != null)
+            if (continueButtons[i] != null)
             {
-                continueButton.ResetButton();
+                continueButtons[i].ResetButton();
             }
         }
-        Debug.Log("All Continue buttons reset");
     }
 
     private void PlayButtonSound()

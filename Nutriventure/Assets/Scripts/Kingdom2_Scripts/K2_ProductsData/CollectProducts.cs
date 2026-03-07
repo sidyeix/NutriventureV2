@@ -270,7 +270,6 @@ public class CollectProducts : MonoBehaviour
             // No products nearby
             if (currentNearbyProduct != null)
             {
-                Debug.Log("Moved away from product");
                 currentNearbyProduct = null;
             }
         }
@@ -305,14 +304,6 @@ public class CollectProducts : MonoBehaviour
             if (instructionCanvas1 != null)
             {
                 instructionCanvas1.gameObject.SetActive(showDummyButton && !hasCollectedDummyProduct);
-                if (showDummyButton && !hasCollectedDummyProduct)
-                {
-                    Debug.Log("Showing instruction canvas 1 - Near DummyProduct");
-                }
-                else if (instructionCanvas1.gameObject.activeSelf)
-                {
-                    Debug.Log("Hiding instruction canvas 1");
-                }
             }
         }
     }

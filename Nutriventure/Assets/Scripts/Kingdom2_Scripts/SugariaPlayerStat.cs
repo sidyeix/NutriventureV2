@@ -145,20 +145,19 @@ public class SugariaPlayerStat : MonoBehaviour
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"Heart icon at index {i} is null!");
+#endif
             }
         }
         
-        // Force UI update
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(heartsContainer as RectTransform);
-        
-        Debug.Log($"Health UI updated: {currentHealth}/{maxHealth} hearts");
+        // Rebuild layout without forcing full canvas update
+        if (heartsContainer != null)
+            LayoutRebuilder.MarkLayoutForRebuild(heartsContainer as RectTransform);
     }
     
     private void Die()
     {
-        Debug.Log("Player died!");
         // Add your death logic here (respawn, game over, etc.)
     }
     

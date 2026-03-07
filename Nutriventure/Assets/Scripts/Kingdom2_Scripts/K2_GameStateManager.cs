@@ -1,0 +1,457 @@
+using UnityEngine;
+using System;
+using System.IO;
+using System.Collections;
+using UnityEngine.SceneManagement;
+
+/// <summary>
+/// Manages saving and restoring the game state for Kingdom 2 (Sugaria).
+/// Saves automatically on application quit / pause.
+/// Works with K2_InGameSettingsButton for resume-with-countdown flow.
+/// </summary>
+public class K2_GameStateManager : MonoBehaviour
+{
+    public static K2_GameStateManager Instance { get; private set; }
+
+    [Header("Settings")]
+    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private string kingdomSceneName = "4_Kingdom 2";
+    [SerializeField] private string saveFileName = "k2_game_state.json";
+
+    private K2_GameStateSaveData currentGameState;
+    private string saveFilePath;
+    private bool pendingResumeAfterSceneLoad = false;
+    private bool pendingSilentRestore = false;
+
+    /// <summary>True while a resume is actively being processed.</summary>
+    public bool IsResumeInProgress { get; private set; } = false;
+
+    // Cached references – refreshed every scene load
+    private GameplayProgression gameplayProgression;
+    private SugariaPlayerStat playerHealth;
+    private SugariaScoringSystem scoringSystem;
+    private K2_InGameSettingsButton inGameSettings;
+    private K2_DummypTimeline dummypTimeline;
+    private Transform _cachedPlayer;
+    private CharacterController _cachedPlayerCC;
+
+    // ============================================================
+    //  LIFECYCLE
+    // ============================================================
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            Initialize();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void Initialize()
+    {
+        saveFilePath = Path.Combine(Application.persistentDataPath, saveFileName);
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private static readonly string[] transientScenes = { "LogoScreen", "LoadingScreen", "PlayerProfile" };
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Track last meaningful scene
+        if (!Array.Exists(transientScenes, s => s == scene.name))
+        {
+            PlayerPrefs.SetString("LastScene", scene.name);
+            PlayerPrefs.Save();
+        }
+
+        // Refresh references when entering the kingdom scene
+        if (scene.name == kingdomSceneName)
+        {
+            StartCoroutine(RefreshReferencesNextFrame());
+        }
+
+        // If we were asked to restore, do it after the scene is ready
+        if (pendingResumeAfterSceneLoad && scene.name == kingdomSceneName)
+        {
+            StartCoroutine(ApplySavedStateAfterLoad());
+        }
+        else if (pendingSilentRestore && scene.name == kingdomSceneName)
+        {
+            StartCoroutine(ApplySilentRestoreAfterLoad());
+        }
+    }
+
+    private IEnumerator RefreshReferencesNextFrame()
+    {
+        yield return null;
+        FindManagerReferences();
+    }
+
+    private void FindManagerReferences()
+    {
+        gameplayProgression = FindObjectOfType<GameplayProgression>();
+        playerHealth = FindObjectOfType<SugariaPlayerStat>();
+        scoringSystem = FindObjectOfType<SugariaScoringSystem>();
+        inGameSettings = FindObjectOfType<K2_InGameSettingsButton>();
+        dummypTimeline = FindObjectOfType<K2_DummypTimeline>();
+
+        // Cache player reference to avoid repeated Find calls
+        if (_cachedPlayer == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj == null)
+                playerObj = GameObject.Find("PlayerArmature");
+            if (playerObj != null)
+            {
+                _cachedPlayer = playerObj.transform;
+                _cachedPlayerCC = playerObj.GetComponent<CharacterController>();
+            }
+        }
+    }
+
+    // ============================================================
+    //  SAVE
+    // ============================================================
+
+    public void SaveCurrentGameState()
+    {
+        if (!IsInKingdomScene())
+        {
+#if UNITY_EDITOR
+            if (enableDebugLogs) Debug.Log("K2_GameStateManager: Not in kingdom scene – skipping save.");
+#endif
+            return;
+        }
+
+        FindManagerReferences();
+
+        K2_GameStateSaveData saveData = new K2_GameStateSaveData();
+        saveData.currentSceneName = SceneManager.GetActiveScene().name;
+        saveData.saveTime = DateTime.Now.ToString("o");
+
+        // Player position
+        SavePlayerPosition(saveData);
+
+        // Game state
+        saveData.isGameActive = gameplayProgression != null && gameplayProgression.IsGameStarted2();
+        saveData.gameTimer = gameplayProgression != null ? gameplayProgression.GetCurrentTime() : 0f;
+        saveData.currentHealth = playerHealth != null ? playerHealth.currentHealth : 0;
+        saveData.maxHealth = playerHealth != null ? playerHealth.maxHealth : 5;
+        saveData.currentScore = scoringSystem != null ? scoringSystem.GetCurrentScore() : 0;
+
+        // Game mode state (based on whether the game is actively running)
+        saveData.isInGameMode = gameplayProgression != null && gameplayProgression.IsGameStarted2();
+
+        saveData.hasSavedGameState = true;
+        currentGameState = saveData;
+        SaveToFile(saveData);
+
+#if UNITY_EDITOR
+        if (enableDebugLogs)
+        {
+            Debug.Log("=== K2 GAME STATE SAVED ===");
+            Debug.Log($"Scene: {saveData.currentSceneName}, Active: {saveData.isGameActive}");
+            Debug.Log($"Position: {saveData.playerPosition}, Timer: {saveData.gameTimer}s");
+            Debug.Log($"Health: {saveData.currentHealth}/{saveData.maxHealth}, Score: {saveData.currentScore}");
+        }
+#endif
+    }
+
+    private void SavePlayerPosition(K2_GameStateSaveData saveData)
+    {
+        if (_cachedPlayer != null)
+        {
+            saveData.playerPosition = _cachedPlayer.position;
+            saveData.playerRotation = _cachedPlayer.rotation;
+        }
+    }
+
+    // ============================================================
+    //  LOAD / RESTORE
+    // ============================================================
+
+    public void LoadAndResumeGame()
+    {
+        K2_GameStateSaveData loaded = LoadFromFile();
+        if (loaded == null || !loaded.hasSavedGameState)
+        {
+            Debug.LogWarning("K2_GameStateManager: No valid saved game state to load.");
+            return;
+        }
+
+        currentGameState = loaded;
+        IsResumeInProgress = true;
+
+        if (IsInKingdomScene())
+        {
+            StartCoroutine(ApplySavedStateAfterLoad());
+        }
+        else
+        {
+            pendingResumeAfterSceneLoad = true;
+            SceneManager.LoadScene(currentGameState.currentSceneName);
+        }
+    }
+
+    private IEnumerator ApplySavedStateAfterLoad()
+    {
+        yield return null;
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
+
+        FindManagerReferences();
+
+        if (currentGameState != null && currentGameState.hasSavedGameState)
+        {
+#if UNITY_EDITOR
+            if (enableDebugLogs) Debug.Log("=== APPLYING K2 SAVED GAME STATE ===");
+#endif
+            RestoreFullGameState();
+
+            // Show 3-2-1 countdown before the player can move
+            if (inGameSettings != null)
+            {
+                inGameSettings.ShowResumeCountdown();
+            }
+            else
+            {
+#if UNITY_EDITOR
+                if (enableDebugLogs) Debug.LogWarning("K2_InGameSettingsButton not found — skipping resume countdown");
+#endif
+            }
+        }
+
+        pendingResumeAfterSceneLoad = false;
+        IsResumeInProgress = false;
+    }
+
+    private void RestoreFullGameState()
+    {
+        if (currentGameState == null) return;
+
+        // 1. Restore player position
+        RestorePlayerPosition();
+
+        // 2. Restore timer
+        if (gameplayProgression != null && currentGameState.isGameActive)
+        {
+            gameplayProgression.SetTime(currentGameState.gameTimer);
+            gameplayProgression.StartGame();
+            gameplayProgression.PauseTimer(); // Will be resumed by countdown
+        }
+
+        // 3. Restore health
+        if (playerHealth != null)
+        {
+            playerHealth.ResetHealth();
+            int damageTaken = playerHealth.maxHealth - currentGameState.currentHealth;
+            if (damageTaken > 0 && currentGameState.currentHealth > 0)
+            {
+                playerHealth.currentHealth = currentGameState.currentHealth;
+                playerHealth.ForceRefreshHearts();
+            }
+        }
+
+        // 4. Restore game-active UI (timer, hearts, score panel, etc.)
+        if (currentGameState.isGameActive && dummypTimeline != null)
+        {
+            dummypTimeline.HandlePostCutscene2DynamicUI();
+        }
+
+#if UNITY_EDITOR
+        if (enableDebugLogs) Debug.Log("=== K2 GAME STATE FULLY RESTORED ===");
+#endif
+    }
+
+    private void RestorePlayerPosition()
+    {
+        if (_cachedPlayer == null) return;
+
+        if (_cachedPlayerCC != null) _cachedPlayerCC.enabled = false;
+
+        _cachedPlayer.position = currentGameState.playerPosition;
+        _cachedPlayer.rotation = currentGameState.playerRotation;
+
+        if (_cachedPlayerCC != null) _cachedPlayerCC.enabled = true;
+
+#if UNITY_EDITOR
+        if (enableDebugLogs) Debug.Log($"K2: Player position restored to {currentGameState.playerPosition}");
+#endif
+    }
+
+    /// <summary>
+    /// Silently restores only the player position.
+    /// Used when the player was just roaming (game was NOT active).
+    /// </summary>
+    public void SilentRestorePositionOnly()
+    {
+        K2_GameStateSaveData loaded = LoadFromFile();
+        if (loaded == null || !loaded.hasSavedGameState)
+        {
+            if (enableDebugLogs) Debug.Log("K2_GameStateManager: No save data for silent restore.");
+            return;
+        }
+
+        currentGameState = loaded;
+        IsResumeInProgress = true;
+
+        if (IsInKingdomScene())
+        {
+            StartCoroutine(ApplySilentRestoreAfterLoad());
+        }
+        else
+        {
+            pendingResumeAfterSceneLoad = false;
+            pendingSilentRestore = true;
+            SceneManager.LoadScene(currentGameState.currentSceneName);
+        }
+    }
+
+    private IEnumerator ApplySilentRestoreAfterLoad()
+    {
+        yield return null;
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
+
+        FindManagerReferences();
+
+        if (currentGameState != null && currentGameState.hasSavedGameState)
+        {
+            RestorePlayerPosition();
+
+#if UNITY_EDITOR
+            if (enableDebugLogs)
+                Debug.Log($"K2: Silent restore complete – player at {currentGameState.playerPosition}. Game was not active.");
+#endif
+        }
+
+        pendingSilentRestore = false;
+        IsResumeInProgress = false;
+    }
+
+    // ============================================================
+    //  FILE I/O
+    // ============================================================
+
+    private void SaveToFile(K2_GameStateSaveData saveData)
+    {
+        try
+        {
+            string json = JsonUtility.ToJson(saveData, true);
+            File.WriteAllText(saveFilePath, json);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"K2_GameStateManager: Save failed – {e.Message}");
+        }
+    }
+
+    private K2_GameStateSaveData LoadFromFile()
+    {
+        if (!File.Exists(saveFilePath)) return null;
+        try
+        {
+            string json = File.ReadAllText(saveFilePath);
+            return JsonUtility.FromJson<K2_GameStateSaveData>(json);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"K2_GameStateManager: Load failed – {e.Message}");
+            return null;
+        }
+    }
+
+    // ============================================================
+    //  PUBLIC QUERIES
+    // ============================================================
+
+    public bool HasSavedGameState()
+    {
+        K2_GameStateSaveData data = LoadFromFile();
+        return data != null && data.hasSavedGameState;
+    }
+
+    public K2_GameStateSaveData GetLastSavedState()
+    {
+        return LoadFromFile();
+    }
+
+    public void ClearSavedGameState()
+    {
+        if (File.Exists(saveFilePath))
+        {
+            try
+            {
+                File.Delete(saveFilePath);
+                currentGameState = null;
+                if (enableDebugLogs) Debug.Log("K2_GameStateManager: Saved state cleared.");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"K2_GameStateManager: Failed to clear saved state – {e.Message}");
+            }
+        }
+    }
+
+    public bool IsInKingdomScene()
+    {
+        return SceneManager.GetActiveScene().name == kingdomSceneName;
+    }
+
+    public string GetKingdomSceneName() => kingdomSceneName;
+
+    // ============================================================
+    //  AUTO-SAVE HOOKS
+    // ============================================================
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+#if UNITY_EDITOR
+            if (enableDebugLogs) Debug.Log("K2_GameStateManager: App paused – saving state.");
+#endif
+            SaveCurrentGameState();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+#if UNITY_EDITOR
+        if (enableDebugLogs) Debug.Log("K2_GameStateManager: App quitting – saving state.");
+#endif
+        SaveCurrentGameState();
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+}
+
+/// <summary>
+/// Serializable data class for Kingdom 2 game state.
+/// </summary>
+[Serializable]
+public class K2_GameStateSaveData
+{
+    public bool hasSavedGameState = false;
+    public string currentSceneName;
+    public string saveTime;
+
+    // Player transform
+    public Vector3 playerPosition;
+    public Quaternion playerRotation;
+
+    // Game state
+    public bool isGameActive;
+    public bool isInGameMode;
+    public float gameTimer;
+    public int currentHealth;
+    public int maxHealth;
+    public int currentScore;
+}

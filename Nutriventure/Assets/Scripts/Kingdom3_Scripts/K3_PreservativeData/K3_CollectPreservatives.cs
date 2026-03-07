@@ -191,7 +191,6 @@ public class K3_CollectPreservatives : MonoBehaviour
             // No potions nearby
             if (currentNearbyPotion != null)
             {
-                Debug.Log("Moved away from preservative potion");
                 currentNearbyPotion = null;
             }
             

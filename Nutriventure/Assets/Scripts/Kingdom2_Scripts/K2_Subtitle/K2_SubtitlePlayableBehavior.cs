@@ -9,11 +9,17 @@ public class SubtitlePlayableBehaviour : PlayableBehaviour
 
     public override void OnGraphStart(Playable playable)
     {
-        controller = GameObject.FindObjectOfType<K2_SubtitleController>();
+        // includeInactive:true ensures we find the controller even if its
+        // canvas starts disabled and is enabled just before timeline playback
+        controller = GameObject.FindObjectOfType<K2_SubtitleController>(true);
     }
 
     public override void OnBehaviourPlay(Playable playable, FrameData info)
     {
+        // Re-query in case the controller wasn't active during OnGraphStart
+        if (controller == null)
+            controller = GameObject.FindObjectOfType<K2_SubtitleController>(true);
+        
         if (controller != null)
             controller.ShowSubtitle(subtitleText, typingSpeed);
     }
