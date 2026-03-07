@@ -464,6 +464,19 @@ public class Kingdom4ScoreManager : MonoBehaviour
         return $"{minutes:00}:{seconds:00}";
     }
 
+    // ADD THIS METHOD - For Phase 3 Allergen Challenge Points
+public void AddPhase3AllergenChallengePoints(int points)
+{
+    totalScore += points;
+    totalScore = Mathf.Max(0, totalScore); // Ensure score doesn't go negative
+    
+    UpdateAllUI();
+    OnScoreChanged?.Invoke(totalScore);
+    OnScoreUpdated?.Invoke(totalScore, allergensFound, totalWagonHits);
+    
+    Debug.Log($"Phase 3 Allergen Challenge: +{points} points. New score: {totalScore}");
+}
+
     // ---------------- PUBLIC METHODS ----------------
     
     // ADD THIS METHOD - Used by BigRockInteraction for penalty

@@ -510,6 +510,25 @@ public class AllerthriaGameManager : MonoBehaviour
         }
     }
     
+    // ADD THIS MISSING METHOD - Called when all allergen rocks are complete
+public void CompleteAllergenChallenge()
+{
+    Debug.Log("Allergen challenge completed!");
+    
+    // Check if we should transition to the next phase
+    if (currentPhase == GamePhase.AllergenHunt)
+    {
+        if (collectedAllergens.Count >= 9)
+        {
+            StartPhase(GamePhase.WagonPhase);
+        }
+        else
+        {
+            // Still need more allergens
+            ShowMessage("All rocks complete! Find the remaining 4 allergens to continue!");
+        }
+    }
+}
     private void StartPlatformPhase()
     {
         UpdateQuestText("Land on healthy foods to build combo!");
