@@ -407,6 +407,23 @@ public class AllerthriaGameManager : MonoBehaviour
         StartPhase(GamePhase.PlatformPhase);
     }
     
+    /// <summary>
+    /// Called by <see cref="Phase3ChallengeController"/> when all 5 big-rock allergen
+    /// challenges have been completed.  Advances the game to the next appropriate phase.
+    /// </summary>
+    public void CompleteAllergenChallenge()
+    {
+        Debug.Log("Phase 3 allergen challenge completed!");
+        
+        int correct   = Phase3ChallengeController.Instance != null
+            ? Phase3ChallengeController.Instance.GetCorrectCount() : 0;
+        int total     = Phase3ChallengeController.Instance != null
+            ? Phase3ChallengeController.Instance.GetCompletedCount() : 5;
+
+        UpdateQuestText($"Allergen challenge done! {correct}/{total} correct. Head to the castle!");
+        StartPhase(GamePhase.CastlePhase);
+    }
+    
     public void WagonHitAllergen()
     {
         if (Kingdom4ScoreManager.Instance != null)
