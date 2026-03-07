@@ -14,20 +14,11 @@ public class AllergenSpawnerFinal : MonoBehaviour
     [Header("YOUR ROWS")]
     public List<Row> rows = new List<Row>();
 
-    [Header("ITEM PREFABS")]
-    [Header("ALLERGEN PREFABS (UNSAFE)")]
+    [Header("ALLERGEN PREFABS")]
     public List<GameObject> allergenPrefabs = new List<GameObject>();
 
-    [Header("HEALTHY FOODS (SAFE)")]
-    public GameObject bananaPrefab;
-    public GameObject applePrefab;
-    public GameObject avocadoPrefab;
-    public GameObject kiwiPrefab;
-
     [Header("SPAWN SETTINGS")]
-    public int safePerRow = 1;          // Healthy foods per row
-    public int allergensPerRow = 2;     // Allergen items per row
-    [Range(0, 1)] public float healthyFoodChance = 1.0f; // Always healthy food (since no coins)
+    public int itemsPerRow = 3; // How many items to spawn per row
 
     // Store all spawned items
     private Dictionary<GameObject, GameObject> rockToItemMap = new Dictionary<GameObject, GameObject>();
@@ -51,86 +42,30 @@ public class AllergenSpawnerFinal : MonoBehaviour
         Debug.Log($"Spawned items on {rockToItemMap.Count} rocks");
     }
 
-    void RandomizeRow(Row row)
+    public void RandomizeRow(Row row)
     {
-        if (row.rocks.Count < 3) return;
+        if (row.rocks.Count == 0) return;
+
+        // Clear existing items on these rocks first
+        ClearItemsOnRocks(row.rocks);
 
         // Shuffle rocks
         List<GameObject> shuffled = new List<GameObject>(row.rocks);
         Shuffle(shuffled);
 
-        int index = 0;
-
-        // ✅ Spawn SAFE items (healthy foods only)
-        for (int i = 0; i < safePerRow && index < shuffled.Count; i++)
-        {
-            GameObject healthyFoodPrefab = GetRandomHealthyFoodPrefab();
-            if (healthyFoodPrefab != null)
-            {
-                SpawnItemOnRock(shuffled[index], healthyFoodPrefab, row.itemHeight);
-                index++;
-            }
-        }
-
-        // ✅ Spawn ALLERGEN items (random from list)
-        for (int i = 0; i < allergensPerRow && index < shuffled.Count; i++)
+        // Spawn allergens on ALL rocks (up to itemsPerRow)
+        int itemsToSpawn = Mathf.Min(itemsPerRow, shuffled.Count);
+        
+        for (int i = 0; i < itemsToSpawn; i++)
         {
             GameObject allergenPrefab = GetRandomAllergenPrefab();
             if (allergenPrefab != null)
             {
-                SpawnItemOnRock(shuffled[index], allergenPrefab, row.itemHeight);
-                index++;
+                SpawnItemOnRock(shuffled[i], allergenPrefab, row.itemHeight);
             }
         }
-    }
-
-    GameObject GetRandomHealthyFoodPrefab()
-    {
-        List<GameObject> availableHealthyFoods = new List<GameObject>();
         
-        if (bananaPrefab != null) availableHealthyFoods.Add(bananaPrefab);
-        if (applePrefab != null) availableHealthyFoods.Add(applePrefab);
-        if (avocadoPrefab != null) availableHealthyFoods.Add(avocadoPrefab);
-        if (kiwiPrefab != null) availableHealthyFoods.Add(kiwiPrefab);
-        
-        if (availableHealthyFoods.Count > 0)
-        {
-            return availableHealthyFoods[Random.Range(0, availableHealthyFoods.Count)];
-        }
-        
-        Debug.LogWarning("No healthy food prefabs assigned!");
-        return null;
-    }
-
-    void SpawnItemOnRock(GameObject rock, GameObject itemPrefab, float height)
-    {
-        if (rock == null || itemPrefab == null) return;
-
-        // Create item at rock's position
-        Vector3 spawnPos = rock.transform.position + Vector3.up * height;
-        GameObject item = Instantiate(itemPrefab, spawnPos, Quaternion.identity);
-
-        // **CRITICAL: Add the TransformFollower component**
-        TransformFollower follower = item.AddComponent<TransformFollower>();
-        follower.target = rock.transform;
-        follower.enableFloating = true;
-        follower.floatHeight = 0.2f;
-        follower.floatSpeed = 1.4f;
-        follower.verticalOffset = 1.0f;
-
-        // Store references
-        rockToItemMap[rock] = item;
-        itemFollowers[item] = follower;
-
-        // Setup ItemCollectible if needed
-        ItemCollectible collectible = item.GetComponent<ItemCollectible>();
-        if (collectible == null)
-        {
-            collectible = item.AddComponent<ItemCollectible>();
-        }
-
-        // Name for clarity
-        item.name = $"{itemPrefab.name}_On_{rock.name}";
+        Debug.Log($"Randomized row {row.rowName} with {itemsToSpawn} allergens");
     }
 
     GameObject GetRandomAllergenPrefab()
@@ -143,6 +78,80 @@ public class AllergenSpawnerFinal : MonoBehaviour
 
         int index = Random.Range(0, allergenPrefabs.Count);
         return allergenPrefabs[index];
+    }
+
+   void SpawnItemOnRock(GameObject rock, GameObject itemPrefab, float height)
+{
+    if (rock == null || itemPrefab == null) return;
+
+    Vector3 spawnPos = rock.transform.position + Vector3.up * height;
+    GameObject item = Instantiate(itemPrefab, spawnPos, Quaternion.identity);
+    
+    // Add TransformFollower component
+    TransformFollower follower = item.AddComponent<TransformFollower>();
+    follower.target = rock.transform;
+    follower.enableFloating = true;
+    follower.floatHeight = 0.2f;
+    follower.floatSpeed = 1.4f;
+    follower.verticalOffset = 1.0f;
+
+    // ADD THIS: Tag the item for detection
+    item.tag = "AllergenItem";
+    
+    // Make it a child of the rock for organization
+    item.transform.SetParent(rock.transform);
+
+    // Store references
+    rockToItemMap[rock] = item;
+    itemFollowers[item] = follower;
+
+    string allergenName = itemPrefab.name.Replace("(Clone)", "").Trim();
+
+    SmallRockTrigger trigger = rock.GetComponent<SmallRockTrigger>();
+    if (trigger != null)
+    {
+        trigger.SetAllergen(allergenName);
+    }
+
+    item.name = $"{allergenName}_On_{rock.name}";
+}
+
+    public void ClearItemsOnRocks(List<GameObject> rocks)
+    {
+        foreach (GameObject rock in rocks)
+        {
+            if (rockToItemMap.ContainsKey(rock))
+            {
+                GameObject item = rockToItemMap[rock];
+                if (item != null)
+                {
+                    Destroy(item);
+                }
+                rockToItemMap.Remove(rock);
+            }
+        }
+    }
+
+    public GameObject GetItemOnRock(GameObject rock)
+    {
+        if (rockToItemMap.ContainsKey(rock))
+        {
+            return rockToItemMap[rock];
+        }
+        return null;
+    }
+
+    public string GetRockItemType(GameObject rock)
+    {
+        if (rockToItemMap.ContainsKey(rock))
+        {
+            GameObject item = rockToItemMap[rock];
+            if (item != null)
+            {
+                return item.name;
+            }
+        }
+        return "Empty";
     }
 
     [ContextMenu("Clear All Items")]
@@ -170,58 +179,7 @@ public class AllergenSpawnerFinal : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        // Optional: Debug visualization
-        foreach (var kvp in rockToItemMap)
-        {
-            if (kvp.Key != null && kvp.Value != null)
-            {
-                Debug.DrawLine(kvp.Key.transform.position, kvp.Value.transform.position, Color.green);
-            }
-        }
-    }
-
-    // Helper method to get info about what's on a rock
-    public string GetRockItemType(GameObject rock)
-    {
-        if (rockToItemMap.ContainsKey(rock))
-        {
-            GameObject item = rockToItemMap[rock];
-            if (item != null)
-            {
-                return item.name;
-            }
-        }
-        return "Empty";
-    }
-
-    // Get all items of a specific type
-    public List<GameObject> GetAllItemsOfType(string containsName)
-    {
-        List<GameObject> items = new List<GameObject>();
-        foreach (var item in rockToItemMap.Values)
-        {
-            if (item != null && item.name.Contains(containsName))
-            {
-                items.Add(item);
-            }
-        }
-        return items;
-    }
-
     #if UNITY_EDITOR
-    [ContextMenu("Create Default 4 Rows")]
-    void CreateDefaultRows()
-    {
-        rows.Clear();
-        for (int i = 0; i < 4; i++)
-        {
-            rows.Add(new Row { rowName = $"Row {i + 1}", itemHeight = 1.5f });
-        }
-        Debug.Log("Created 4 default rows");
-    }
-
     [ContextMenu("Print Current Setup")]
     void PrintCurrentSetup()
     {
@@ -231,12 +189,7 @@ public class AllergenSpawnerFinal : MonoBehaviour
         foreach (Row row in rows)
         {
             report += $"\n{row.rowName}:\n";
-            int safeCount = 0;
-            int allergenCount = 0;
-            int bananaCount = 0;
-            int appleCount = 0;
-            int avocadoCount = 0;
-            int kiwiCount = 0;
+            Dictionary<string, int> allergenCounts = new Dictionary<string, int>();
             
             foreach (GameObject rock in row.rocks)
             {
@@ -245,40 +198,19 @@ public class AllergenSpawnerFinal : MonoBehaviour
                     GameObject item = rockToItemMap[rock];
                     if (item != null)
                     {
-                        string itemName = item.name.ToLower();
-                        
-                        // Check for allergens
-                        bool isAllergen = false;
-                        foreach (GameObject allergenPrefab in allergenPrefabs)
-                        {
-                            if (allergenPrefab != null && itemName.Contains(allergenPrefab.name.ToLower()))
-                            {
-                                allergenCount++;
-                                isAllergen = true;
-                                break;
-                            }
-                        }
-                        
-                        // Check for healthy foods
-                        if (!isAllergen)
-                        {
-                            safeCount++;
-                            if (itemName.Contains("banana")) bananaCount++;
-                            else if (itemName.Contains("apple")) appleCount++;
-                            else if (itemName.Contains("avocado")) avocadoCount++;
-                            else if (itemName.Contains("kiwi")) kiwiCount++;
-                        }
+                        string itemName = item.name.Replace("(Clone)", "").Trim();
+                        if (allergenCounts.ContainsKey(itemName))
+                            allergenCounts[itemName]++;
+                        else
+                            allergenCounts[itemName] = 1;
                     }
                 }
             }
             
-            report += $"  Safe Items: {safeCount}\n";
-            report += $"    • Banana: {bananaCount}\n";
-            report += $"    • Apple: {appleCount}\n";
-            report += $"    • Avocado: {avocadoCount}\n";
-            report += $"    • Kiwi: {kiwiCount}\n";
-            report += $"  Allergens: {allergenCount}\n";
-            report += $"  Total: {safeCount + allergenCount} items\n";
+            foreach (var kvp in allergenCounts)
+            {
+                report += $"  • {kvp.Key}: {kvp.Value}\n";
+            }
         }
         
         report += "\n=========================\n";
