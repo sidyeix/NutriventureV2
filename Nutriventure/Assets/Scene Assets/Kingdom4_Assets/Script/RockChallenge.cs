@@ -70,7 +70,7 @@ public class RockChallenge : MonoBehaviour
         List<AllergenProductData.AllergenType> safeAllergens = AllergenManager.GetSafeAllergens(dangerous, 2);
 
         // Randomly place the dangerous allergen in one of the three slots
-        int dangerousIndex = Random.Range(0, 3);
+        int dangerousIndex = UnityEngine.Random.Range(0, 3);
         int safeIndex = 0;
         for (int i = 0; i < 3; i++)
         {
