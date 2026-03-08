@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1899641746064901090
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -35.4
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.0558823
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 5.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      propertyPath: m_Name
+      value: CommonerMan
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5328485593828295857}
+  m_SourcePrefab: {fileID: 100100000, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+--- !u!1 &1629612346701692595 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8dfe0e899aedd4185b09056ec1c5c0, type: 3}
+  m_PrefabInstance: {fileID: 1899641746064901090}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5328485593828295857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629612346701692595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abaaf7878f2799d4e953b5f4f79c6ffa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RockNPCInteraction
+  dialoguePanel: {fileID: 0}
+  dialogueText: {fileID: 0}
+  typingSpeed: 0.05
+  npcMaleNames:
+  - Allerthrian Man
+  npcFemaleNames:
+  - Allerthrian Woman
+  rotationSpeed: 2
+  interactionDistance: 5

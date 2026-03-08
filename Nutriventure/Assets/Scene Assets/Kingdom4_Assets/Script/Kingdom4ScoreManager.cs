@@ -464,7 +464,34 @@ public class Kingdom4ScoreManager : MonoBehaviour
         return $"{minutes:00}:{seconds:00}";
     }
 
+    // ADD THIS METHOD - For Phase 3 Allergen Challenge Points
+public void AddPhase3AllergenChallengePoints(int points)
+{
+    totalScore += points;
+    totalScore = Mathf.Max(0, totalScore); // Ensure score doesn't go negative
+    
+    UpdateAllUI();
+    OnScoreChanged?.Invoke(totalScore);
+    OnScoreUpdated?.Invoke(totalScore, allergensFound, totalWagonHits);
+    
+    Debug.Log($"Phase 3 Allergen Challenge: +{points} points. New score: {totalScore}");
+}
+
     // ---------------- PUBLIC METHODS ----------------
+    
+    // ADD THIS METHOD - Used by BigRockInteraction for penalty
+    public void AddScore(int amount)
+    {
+        totalScore += amount;
+        totalScore = Mathf.Max(0, totalScore); // Ensure score doesn't go negative
+        
+        UpdateAllUI();
+        OnScoreChanged?.Invoke(totalScore);
+        OnScoreUpdated?.Invoke(totalScore, allergensFound, totalWagonHits);
+        
+        Debug.Log($"Score adjusted by {amount}. New score: {totalScore}");
+    }
+    
     public void ResetScore()
     {
         allergensFound = 0;
@@ -566,6 +593,18 @@ public class Kingdom4ScoreManager : MonoBehaviour
     public void TestHealthyFoodHit()
     {
         HitHealthyFood();
+    }
+    
+    [ContextMenu("Test Add Score +50")]
+    public void TestAddScore()
+    {
+        AddScore(50);
+    }
+    
+    [ContextMenu("Test Add Score -50")]
+    public void TestSubtractScore()
+    {
+        AddScore(-50);
     }
     
     [ContextMenu("Check Score State")]
