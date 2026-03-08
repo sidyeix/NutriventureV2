@@ -123,6 +123,7 @@ public class K3_GameSummary : MonoBehaviour
     private bool isSummaryActive = false;
     private float originalTimeScale;
     private int calculatedCoinsEarned = 0;
+    private int calculatedExpEarned = 0;
     private bool coinsAddedToDatabase = false;
     private int healthBeforeDeath = 0;
     private bool isProcessingConfirm = false;
@@ -132,6 +133,9 @@ public class K3_GameSummary : MonoBehaviour
     private Coroutine countAnimationCoroutine;
     private bool isCountingAnimationComplete = false;
     private bool isCharacterVisualSwapperEnabledBeforeSummary = true;
+
+    // Saved time played (captured when summary triggers, used for display)
+    private float savedTimePlayed = 0f;
 
     // Key Collection State
     private bool keyWasCollected = false;
@@ -301,7 +305,10 @@ public class K3_GameSummary : MonoBehaviour
         isSummaryActive = true;
         summaryLocked = true;
 
-        Debug.Log($"Starting K3 ShowSummaryPanel() - Victory: {isVictory}");
+        // Save the time played NOW before anything can reset it
+        savedTimePlayed = gameplayProgression != null ? gameplayProgression.GetCurrentTime() : 0f;
+
+        Debug.Log($"Starting K3 ShowSummaryPanel() - Victory: {isVictory}, TimePlayed: {savedTimePlayed}");
 
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
@@ -767,16 +774,11 @@ public class K3_GameSummary : MonoBehaviour
 
     private void UpdateTimePlayed()
     {
-        if (timePlayedText != null && gameplayProgression != null)
+        if (timePlayedText != null)
         {
-            float timePlayed = gameplayProgression.GetCurrentTime();
-            int minutes = Mathf.FloorToInt(timePlayed / 60f);
-            int seconds = Mathf.FloorToInt(timePlayed % 60f);
+            int minutes = Mathf.FloorToInt(savedTimePlayed / 60f);
+            int seconds = Mathf.FloorToInt(savedTimePlayed % 60f);
             timePlayedText.text = $"{minutes:00}:{seconds:00}";
-        }
-        else if (timePlayedText != null)
-        {
-            timePlayedText.text = "Time: --:--";
         }
     }
 
@@ -933,7 +935,19 @@ public class K3_GameSummary : MonoBehaviour
         float multiplier = isVictory ? winMultiplier : loseMultiplier;
         calculatedCoinsEarned = Mathf.Max(1, Mathf.RoundToInt(totalBaseCoins * multiplier));
 
-        Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, Total={calculatedCoinsEarned}");
+        // Calculate EXP reward (same formula as K1)
+        int baseExp;
+        switch (stars)
+        {
+            case 3: baseExp = 1000; break;
+            case 2: baseExp = 500; break;
+            case 1: baseExp = 100; break;
+            default: baseExp = 0; break;
+        }
+        int bonusExpFromScore = Mathf.FloorToInt(score / 7f);
+        calculatedExpEarned = baseExp + bonusExpFromScore;
+
+        Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, TotalCoins={calculatedCoinsEarned}, TotalExp={calculatedExpEarned}");
     }
 
     private IEnumerator AnimateCountingNumbers()
@@ -945,8 +959,8 @@ public class K3_GameSummary : MonoBehaviour
             yield break;
         }
 
-        // Get final values
-        float finalTimePlayed = gameplayProgression != null ? gameplayProgression.GetCurrentTime() : 0f;
+        // Use the saved time captured when summary was triggered
+        float finalTimePlayed = savedTimePlayed;
         int finalScore = scoringSystem != null ? scoringSystem.GetCurrentScore() : 0;
         int finalCoins = calculatedCoinsEarned;
 
@@ -1050,11 +1064,30 @@ public class K3_GameSummary : MonoBehaviour
     {
         if (coinsAddedToDatabase || GameDataManager.Instance == null) return;
 
-        GameDataManager.Instance.CurrentGameData.nutriCoins += calculatedCoinsEarned;
-        GameDataManager.Instance.SaveGameData();
-        coinsAddedToDatabase = true;
+        if (GameDataManager.Instance.CurrentGameData != null)
+        {
+            int oldCoins = GameDataManager.Instance.CurrentGameData.nutriCoins;
+            GameDataManager.Instance.CurrentGameData.nutriCoins += calculatedCoinsEarned;
 
-        Debug.Log($"Added {calculatedCoinsEarned} coins to database");
+            // Add XP and handle level-up
+            GameDataManager.Instance.CurrentGameData.currentXP += calculatedExpEarned;
+            while (GameDataManager.Instance.CurrentGameData.currentXP >= GameDataManager.Instance.CurrentGameData.xpToNextLevel)
+            {
+                GameDataManager.Instance.CurrentGameData.playerLevel++;
+                GameDataManager.Instance.CurrentGameData.currentXP -= GameDataManager.Instance.CurrentGameData.xpToNextLevel;
+                GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f;
+                Debug.Log($"Level Up! New Level: {GameDataManager.Instance.CurrentGameData.playerLevel}");
+            }
+
+            GameDataManager.Instance.SaveGameData();
+            coinsAddedToDatabase = true;
+
+            Debug.Log($"K3 Rewards added: +{calculatedCoinsEarned} Coins (was {oldCoins}, now {GameDataManager.Instance.CurrentGameData.nutriCoins}), +{calculatedExpEarned} EXP");
+
+            Player_Data playerData = FindObjectOfType<Player_Data>();
+            if (playerData != null)
+                playerData.ForceUpdateAllUI();
+        }
     }
 
     // ========== KEY COLLECTION METHODS WITH EVENT TRIGGER ==========

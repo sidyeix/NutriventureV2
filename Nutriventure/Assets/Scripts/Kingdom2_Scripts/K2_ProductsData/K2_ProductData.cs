@@ -41,7 +41,7 @@ public class ProductData : ScriptableObject
     {
         foreach (var product in allProducts)
         {
-            if (product.productID == productID)
+            if (string.Equals(product.productID, productID, System.StringComparison.OrdinalIgnoreCase))
                 return product;
         }
         return null;

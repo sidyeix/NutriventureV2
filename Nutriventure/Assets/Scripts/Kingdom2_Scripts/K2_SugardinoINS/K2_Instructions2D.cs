@@ -54,34 +54,10 @@ public class K2_Instructions2D : MonoBehaviour
         SetupButtonListeners();
         InitializeExternalButton();
 
-        // Play intro cutscene on scene entry if Preservia key not yet collected
-        StartCoroutine(CheckAndPlayIntroCutscene());
-    }
-
-    private System.Collections.IEnumerator CheckAndPlayIntroCutscene()
-    {
-        // Wait a frame for all managers to initialize
-        yield return null;
-
-        if (introCutsceneManager == null)
-            introCutsceneManager = FindObjectOfType<K2_IntroCutsceneManager>();
-
-        bool hasPreserviaKey = GameDataManager.Instance != null
-            && GameDataManager.Instance.CurrentGameData != null
-            && GameDataManager.Instance.CurrentGameData.preserviaKeyCollected;
-
-        if (!hasPreserviaKey && introCutsceneManager != null)
-        {
-            cutscenePlayedOnEntry = true;
-            introCutsceneManager.PlayCutscene();
-            Debug.Log("K2: Preservia key not yet collected — playing intro cutscene on scene entry");
-        }
-        else
-        {
-            Debug.Log(hasPreserviaKey
-                ? "K2: Preservia key already collected — skipping intro cutscene"
-                : "K2: No intro cutscene manager found");
-        }
+        // NOTE: Auto-play of the intro cutscene is handled by K2_ResumeGameCanvas.
+        // It checks preserviaKeyCollected and saved-game state after a short delay
+        // (to guarantee GameDataManager & K2_GameStateManager are initialised)
+        // and calls K2_IntroCutsceneManager.PlayCutscene() when appropriate.
     }
 
     void InitializePanel()

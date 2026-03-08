@@ -19,6 +19,10 @@ public class K2_InGameSettingsButton : MonoBehaviour
     [Header("Lobby/Spawn Point")]
     [SerializeField] private Transform lobbyPoint;
 
+    [Header("Restart Point")]
+    [Tooltip("Where the player is teleported on Restart. If unset, falls back to lobbyPoint.")]
+    [SerializeField] private Transform restartPoint;
+
     [Header("UI Elements")]
     [SerializeField] private GameObject countdownCanvas;
     [SerializeField] private GameObject countdownPanel;
@@ -35,6 +39,10 @@ public class K2_InGameSettingsButton : MonoBehaviour
 
     [Header("Audio Source for Countdown")]
     [SerializeField] private AudioSource countdownAudioSource;
+
+    [Header("Sugardino NPC")]
+    [Tooltip("Drag the Sugardino NPC trigger GameObject here. It will be re-enabled and reset on Restart / Home.")]
+    [SerializeField] private GameObject sugardinoNPC;
 
     [Header("Scene Names")]
     [SerializeField] private string currentSceneName;
@@ -130,6 +138,12 @@ public class K2_InGameSettingsButton : MonoBehaviour
     {
         SetGameButtonsInteractable(false);
 
+#if UNITY_EDITOR
+        if (restartGameButton == null) Debug.LogWarning("K2_InGameSettingsButton: restartGameButton is NOT assigned!");
+        if (backToHomeButton == null) Debug.LogWarning("K2_InGameSettingsButton: backToHomeButton is NOT assigned!");
+        if (resumeGameButton == null) Debug.LogWarning("K2_InGameSettingsButton: resumeGameButton is NOT assigned!");
+#endif
+
         if (countdownCanvas != null)
             countdownCanvas.SetActive(false);
 
@@ -146,13 +160,9 @@ public class K2_InGameSettingsButton : MonoBehaviour
     {
         if (gameplayProgression != null)
         {
-            bool gameWasActive = isGameActive;
             isGameActive = gameplayProgression.IsGameStarted2();
-
-            if (gameWasActive != isGameActive)
-            {
-                SetGameButtonsInteractable(isGameActive);
-            }
+            // Enforce every frame so Animators / Canvas rebuilds can't override
+            SetGameButtonsInteractable(isGameActive);
         }
     }
 
@@ -184,6 +194,10 @@ public class K2_InGameSettingsButton : MonoBehaviour
         {
             profileSettings.OpenSettingsView();
         }
+
+        // Force-refresh button interactability so restart/home/resume
+        // are disabled when the player is just roaming (not in-game).
+        SetGameButtonsInteractable(isGameActive);
 
         // Hide settings button
         if (settingsButton != null)
@@ -419,24 +433,35 @@ public class K2_InGameSettingsButton : MonoBehaviour
             gameSessionManager.RestartGame();
         }
 
-        // Reset timer and restart it
+        // Respawn products so they appear in the world again
+        RespawnAllProducts();
+
+        // Reset the timer and mark the game as not in-progress.
+        // The game will start again when the player approaches
+        // the Sugardino NPC and confirms the instruction panel.
         if (gameplayProgression != null)
         {
+            gameplayProgression.SetGameInProgress(false);
             gameplayProgression.ResetTimer();
-            gameplayProgression.StartGame();
         }
 
         // Reset monsters and key system
         ResetMonstersAndKeys();
 
-        // Teleport player to spawn/lobby point
-        TeleportPlayerToSpawnPoint();
+        // Reset NPC interactions, instructions, DummypTimeline cutscenes, DYK, and scoring
+        ResetNPCAndInstructionState();
+
+        // Teleport player to the restart point (not the lobby)
+        TeleportPlayerToRestartPoint();
 
         // Clear any saved game state so we don't resume into old data
         if (K2_GameStateManager.Instance != null)
         {
             K2_GameStateManager.Instance.ClearSavedGameState();
         }
+
+        // Auto-trigger the first NPC cutscene so the game restarts from the beginning
+        TriggerSugardinoNPCCutscene();
 
 #if UNITY_EDITOR
         Debug.Log("=== K2 IN-GAME RESTART COMPLETE ===");
@@ -506,9 +531,10 @@ public class K2_InGameSettingsButton : MonoBehaviour
             gameSessionManager.EndCurrentSession();
         }
 
-        // Stop and reset the timer
+        // Stop the game and reset the timer
         if (gameplayProgression != null)
         {
+            gameplayProgression.SetGameInProgress(false);
             gameplayProgression.ResetTimer();
         }
 
@@ -520,6 +546,9 @@ public class K2_InGameSettingsButton : MonoBehaviour
 
         // Reset monsters and key system
         ResetMonstersAndKeys();
+
+        // Reset NPC interactions, instructions, DummypTimeline cutscenes, DYK, and scoring
+        ResetNPCAndInstructionState();
 
         // Teleport player to spawn point
         TeleportPlayerToSpawnPoint();
@@ -551,6 +580,7 @@ public class K2_InGameSettingsButton : MonoBehaviour
             if (allMonsters[i] != null)
             {
                 allMonsters[i].gameObject.SetActive(true);
+                allMonsters[i].ResetMonster();
             }
         }
 
@@ -571,13 +601,155 @@ public class K2_InGameSettingsButton : MonoBehaviour
     }
 
     /// <summary>
-    /// Public accessor so other scripts (e.g. K2_ResumeGameCanvas) can trigger the teleport.
+    /// Resets all NPC interactions, instruction triggers, DummypTimeline cutscenes,
+    /// DYK popups, and scoring so the game returns to its initial "lobby" state.
+    /// </summary>
+    private void ResetNPCAndInstructionState()
+    {
+        // Re-enable the Sugardino NPC GameObject (may have been disabled
+        // after its cutscene played or in the inspector). Must happen
+        // BEFORE FindObjectsOfType since disabled objects aren't found.
+        if (sugardinoNPC != null)
+        {
+            sugardinoNPC.SetActive(true);
+
+            // Also reset its K2_NPCtrigInstructs directly since
+            // the FindObjectsOfType below might not pick it up
+            // if the GO was just re-enabled this frame.
+            K2_NPCtrigInstructs npcTrig = sugardinoNPC.GetComponent<K2_NPCtrigInstructs>();
+            if (npcTrig != null)
+                npcTrig.ResetInteraction();
+        }
+
+        // Reset NPC trigger interactions (arrow indicator, hasTriggered, etc.)
+        K2_NPCtrigInstructs[] allNPCs = FindObjectsOfType<K2_NPCtrigInstructs>();
+        for (int i = 0; i < allNPCs.Length; i++)
+        {
+            if (allNPCs[i] != null)
+                allNPCs[i].ResetInteraction();
+        }
+
+        // Reset 2D instruction triggers
+        K2_Instructions2D[] allInstructions = FindObjectsOfType<K2_Instructions2D>();
+        for (int i = 0; i < allInstructions.Length; i++)
+        {
+            if (allInstructions[i] != null)
+                allInstructions[i].ResetTrigger();
+        }
+
+        // Reset DummypTimeline cutscene state (dialogue, subtitle, dynamic UI)
+        K2_DummypTimeline dummyTimeline = FindObjectOfType<K2_DummypTimeline>();
+        if (dummyTimeline != null)
+            dummyTimeline.ResetAllCutscenes();
+
+        // Reset DYK popup system
+        K2_Dyk dyk = FindObjectOfType<K2_Dyk>();
+        if (dyk != null)
+            dyk.ResetPopupSystem();
+
+        // Reset scoring
+        SugariaScoringSystem scoring = FindObjectOfType<SugariaScoringSystem>();
+        if (scoring != null)
+            scoring.ResetSessionStats();
+
+        // Reset QA1 assessment fully (trigger, spawned products, UI)
+        K2_QA1system qa1 = FindObjectOfType<K2_QA1system>();
+        if (qa1 != null)
+            qa1.ResetForNewGame();
+
+        // Reset QA2 assessment
+        K2_QA2system qa2 = FindObjectOfType<K2_QA2system>();
+        if (qa2 != null)
+            qa2.ClearScannedProducts();
+
+        // Respawn the dummy product (hidden, not destroyed, on collection)
+        CollectProducts collectProducts = FindObjectOfType<CollectProducts>();
+        if (collectProducts != null)
+            collectProducts.RespawnDummyProduct();
+    }
+
+    /// <summary>
+    /// Public accessor — teleports to the lobby (home button).
     /// </summary>
     public void TeleportPlayerToSpawnPointPublic() => TeleportPlayerToSpawnPoint();
 
+    /// <summary>
+    /// Public accessor — teleports to the restart point (restart button).
+    /// </summary>
+    public void TeleportPlayerToRestartPointPublic() => TeleportPlayerToRestartPoint();
+
+    /// <summary>
+    /// Teleports the player to restartPoint. Falls back to lobbyPoint if restartPoint is unset.
+    /// </summary>
+    private void TeleportPlayerToRestartPoint()
+    {
+        Transform target = restartPoint != null ? restartPoint : lobbyPoint;
+        TeleportPlayerTo(target);
+    }
+
+    /// <summary>
+    /// Triggers the Sugardino NPC cutscene so the game replays from the very
+    /// beginning after a restart. Mirrors K3's TriggerNPCInstructionCutscene().
+    /// </summary>
+    public void TriggerSugardinoNPCCutscene()
+    {
+        // Prefer the explicit inspector reference
+        if (sugardinoNPC != null)
+        {
+            K2_NPCtrigInstructs npcTrig = sugardinoNPC.GetComponent<K2_NPCtrigInstructs>();
+            if (npcTrig != null)
+            {
+                npcTrig.TriggerCutscene();
+#if UNITY_EDITOR
+                Debug.Log("K2: Auto-triggered Sugardino NPC cutscene via inspector ref");
+#endif
+                return;
+            }
+        }
+
+        // Fallback: find the first K2_NPCtrigInstructs in the scene
+        K2_NPCtrigInstructs[] allNPCs = FindObjectsOfType<K2_NPCtrigInstructs>();
+        for (int i = 0; i < allNPCs.Length; i++)
+        {
+            if (allNPCs[i] != null)
+            {
+                allNPCs[i].TriggerCutscene();
+#if UNITY_EDITOR
+                Debug.Log($"K2: Auto-triggered NPC cutscene on {allNPCs[i].gameObject.name}");
+#endif
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Respawns all products so they appear in the world again.
+    /// </summary>
+    private void RespawnAllProducts()
+    {
+        ProductSpawner spawner = FindObjectOfType<ProductSpawner>();
+        if (spawner != null)
+        {
+            System.Reflection.MethodInfo respawnMethod = spawner.GetType().GetMethod("RespawnProducts");
+            if (respawnMethod != null)
+            {
+                respawnMethod.Invoke(spawner, null);
+            }
+            else
+            {
+                spawner.SpawnProducts();
+            }
+        }
+    }
+
     private void TeleportPlayerToSpawnPoint()
     {
-        if (lobbyPoint == null)
+        TeleportPlayerTo(lobbyPoint);
+    }
+
+    private void TeleportPlayerTo(Transform target)
+    {
+        if (target == null)
         {
             return;
         }
@@ -595,8 +767,8 @@ public class K2_InGameSettingsButton : MonoBehaviour
         CharacterController cc = player.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
 
-        player.transform.position = lobbyPoint.position;
-        player.transform.rotation = lobbyPoint.rotation;
+        player.transform.position = target.position;
+        player.transform.rotation = target.rotation;
 
         if (cc != null) cc.enabled = true;
 
@@ -613,7 +785,7 @@ public class K2_InGameSettingsButton : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        Debug.Log($"K2: Player teleported to {lobbyPoint.position}");
+        Debug.Log($"K2: Player teleported to {target.position}");
 #endif
     }
 

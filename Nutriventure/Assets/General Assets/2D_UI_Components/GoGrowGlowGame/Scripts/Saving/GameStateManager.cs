@@ -92,6 +92,18 @@ public class GameStateManager : MonoBehaviour
         {
             StartCoroutine(ApplySilentRestoreAfterLoad());
         }
+        else if (scene.name == kingdomSceneName)
+        {
+            // No pending resume — clear any stale non-active save immediately
+            // so no other system can restore the player position before the
+            // ResumeGameCanvas decides what to do.
+            GameStateSaveData stale = LoadFromFile();
+            if (stale != null && stale.hasSavedGameState && !stale.isGameActive)
+            {
+                ClearSavedGameState();
+                if (enableDebugLogs) Debug.Log("GameStateManager: Cleared stale non-active save on scene load.");
+            }
+        }
     }
 
     private IEnumerator RefreshReferencesNextFrame()

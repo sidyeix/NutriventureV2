@@ -123,10 +123,9 @@ public class ResumeGameCanvas : MonoBehaviour
 
             if (saveData != null && !saveData.isGameActive)
             {
-                // Player was just roaming the kingdom (game not active).
-                // Silently restore position – no panel needed.
-                Debug.Log("ResumeGameCanvas: Game was NOT active – silently restoring position.");
-                gameStateManager.SilentRestorePositionOnly();
+                // Game was NOT active (roaming) – just start at spawn point, no position restore.
+                Debug.Log("ResumeGameCanvas: Game was NOT active – starting at spawn point.");
+                gameStateManager.ClearSavedGameState(kingdomSceneName);
                 return;
             }
 
@@ -251,11 +250,22 @@ public class ResumeGameCanvas : MonoBehaviour
         GlowPartManager glowMgr = FindObjectOfType<GlowPartManager>();
         if (glowMgr != null) glowMgr.ResetAllTowers();
 
-        // Teleport player to lobby (GameEndManager handles this)
+        // Reset GameEndManager UI state
         GameEndManager gameEndMgr = FindObjectOfType<GameEndManager>();
         if (gameEndMgr != null)
         {
             gameEndMgr.ResetGameEndState();
+            // Teleport player to the lobby point
+            gameEndMgr.TeleportToLobbyPoint();
+        }
+        else
+        {
+            // Fallback: try InGameSettingsButton lobby teleport
+            InGameSettingsButton settings = FindObjectOfType<InGameSettingsButton>();
+            if (settings != null)
+            {
+                settings.TeleportPlayerToLobbyPointPublic();
+            }
         }
 
         // If we're on the main menu (not in the kingdom scene), load the scene fresh
@@ -290,9 +300,10 @@ public class ResumeGameCanvas : MonoBehaviour
 
             if (saveData != null && !saveData.isGameActive)
             {
-                // Player was just roaming – silently load scene and restore position
-                Debug.Log("ResumeGameCanvas: Game was NOT active – loading scene and restoring position silently.");
-                gameStateManager.SilentRestorePositionOnly();
+                // Game was NOT active (roaming) – just load the scene fresh, no position restore.
+                Debug.Log("ResumeGameCanvas: Game was NOT active – loading scene fresh (no position restore).");
+                gameStateManager.ClearSavedGameState(kingdomSceneName);
+                UnityEngine.SceneManagement.SceneManager.LoadScene(kingdomSceneName);
                 return;
             }
 

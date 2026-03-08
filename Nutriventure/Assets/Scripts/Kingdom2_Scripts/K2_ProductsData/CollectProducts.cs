@@ -40,6 +40,7 @@ public class CollectProducts : MonoBehaviour
     // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private bool isNearDummyProduct = false;
     private bool hasCollectedDummyProduct = false;
+    private GameObject dummyProductInstance; // kept alive so it can be respawned on restart
     
     // Track product type
     public enum ProductType { Regular, Dummy }
@@ -432,8 +433,17 @@ public class CollectProducts : MonoBehaviour
             
             // Play product disappearance effect if available
             PlayProductDisappearanceEffect();
-            
-            Destroy(currentNearbyProduct);
+
+            if (currentProductType == ProductType.Dummy)
+            {
+                // Hide instead of destroying so it can be respawned on restart / home
+                dummyProductInstance = currentNearbyProduct;
+                currentNearbyProduct.SetActive(false);
+            }
+            else
+            {
+                Destroy(currentNearbyProduct);
+            }
             
             // Invoke complete event
             OnPickupComplete?.Invoke(currentNearbyProduct);
@@ -521,15 +531,16 @@ public class CollectProducts : MonoBehaviour
     private string ExtractProductID(string productName)
     {
         // Extract product ID from the name
-        // Example: "Banana_Instance" -> "BANANA"
+        // Example: "Banana_Spawned" -> "BANANA", "3D_Banana_Instance" -> "3D_BANANA"
         string cleanName = productName.ToUpper();
         
-        // Remove common suffixes
-        if (cleanName.Contains("_"))
-            cleanName = cleanName.Split('_')[0];
-        
-        if (cleanName.Contains("(CLONE)"))
-            cleanName = cleanName.Replace("(CLONE)", "").Trim();
+        // Remove common suffixes added by spawning/instantiation
+        string[] suffixesToRemove = { "_SPAWNED", "(CLONE)", "_INSTANCE", "_CLONE" };
+        foreach (string suffix in suffixesToRemove)
+        {
+            if (cleanName.Contains(suffix))
+                cleanName = cleanName.Replace(suffix, "").Trim();
+        }
         
         return cleanName;
     }
@@ -773,6 +784,21 @@ public class CollectProducts : MonoBehaviour
             instructionCanvas2.gameObject.SetActive(false);
         }
         Debug.Log("Dummy product collection state reset");
+    }
+
+    /// <summary>
+    /// Re-show the dummy product so the player can collect it again
+    /// after a restart or home-button reset.
+    /// </summary>
+    public void RespawnDummyProduct()
+    {
+        ResetDummyProductCollection();
+
+        if (dummyProductInstance != null)
+        {
+            dummyProductInstance.SetActive(true);
+            Debug.Log("Dummy product respawned");
+        }
     }
     
     // Clean up

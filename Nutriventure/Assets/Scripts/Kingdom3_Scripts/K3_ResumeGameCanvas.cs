@@ -122,11 +122,11 @@ public class K3_ResumeGameCanvas : MonoBehaviour
 
       if (saveData != null && !saveData.isGameActive)
       {
-        // Player was just roaming (game not active) – silently restore position
+        // Game was NOT active (roaming) – just start at spawn point, no position restore.
 #if UNITY_EDITOR
-                Debug.Log("K3_ResumeGameCanvas: Game was NOT active – silently restoring position.");
+                Debug.Log("K3_ResumeGameCanvas: Game was NOT active – starting at spawn point.");
 #endif
-        gameStateManager.SilentRestorePositionOnly();
+        gameStateManager.ClearSavedGameState();
         // Re-enable NPC triggers for normal roaming
         SetNPCTriggersEnabled(true);
         return;
