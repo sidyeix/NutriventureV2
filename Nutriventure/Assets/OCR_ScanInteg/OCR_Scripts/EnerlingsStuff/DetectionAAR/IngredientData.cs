@@ -7,11 +7,18 @@ public class IngredientData
     public string ingredient; // Name of the scanned ingredient
     public string status;     // Success or error status
     
-    // NEW FIELDS for enhanced system - MUST MATCH JSON FIELD NAMES EXACTLY
+    // Product identification
     public string fingerprint;      // Unique product identifier
     public int total_detected;      // How many ingredients were detected
     public string mode;             // automatic or manual mode
     public string[] all_ingredients; // All detected ingredients array
+    
+    // TIMING METRICS - NEW
+    public int ocr_time_ms;         // ML Kit OCR processing time
+    public int decode_time_ms;       // Base64 decode time
+    public int bitmap_time_ms;       // Bitmap conversion time
+    public int match_time_ms;        // Ingredient matching time
+    public int total_time_ms;        // Total processing time in plugin
     
     // Check if the data is valid and usable
     public bool IsValid()
@@ -70,5 +77,11 @@ public class IngredientData
         if (string.IsNullOrEmpty(fingerprint))
             return "New product - 3 scans available";
         return ProductManager.GetProductStatus(fingerprint);
+    }
+    
+    // Get formatted timing string for debugging
+    public string GetTimingSummary()
+    {
+        return $"OCR: {ocr_time_ms}ms, Decode: {decode_time_ms}ms, Bitmap: {bitmap_time_ms}ms, Match: {match_time_ms}ms, Total: {total_time_ms}ms";
     }
 }
