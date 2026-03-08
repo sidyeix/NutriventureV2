@@ -40,7 +40,7 @@ public class PreservativesInformationManager : MonoBehaviour
     public bool showInGameCounter = true;
     public bool autoUpdateInGameCounter = true;
     public string inGameCounterPrefix = "Preservatives Collected: ";
-    
+
     [Header("Display Settings")]
     public Vector3 displayScale = Vector3.one * 1.5f; // Scale for displayed preservative
     public bool autoRotateDisplay = true;
@@ -54,7 +54,7 @@ public class PreservativesInformationManager : MonoBehaviour
     private List<string> collectedPreservativeIDs = new List<string>();
     private GameObject currentDisplayedPreservative;
     private K3_PreservativeData.PreservativeInfo currentPreservativeInfo;
-    
+
     void Start()
     {
         InitializeUI();
@@ -62,7 +62,7 @@ public class PreservativesInformationManager : MonoBehaviour
         // Hide panel at start
         if (infoPanel != null)
             infoPanel.SetActive(false);
-            
+
         // Reset collection at start of each session
         ResetSessionCollection();
     }

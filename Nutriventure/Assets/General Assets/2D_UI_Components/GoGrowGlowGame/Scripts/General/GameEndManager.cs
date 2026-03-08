@@ -547,6 +547,15 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Public accessor for teleporting the player to the lobby point.
+    /// Used by ResumeGameCanvas when the player clicks "No" (Restart).
+    /// </summary>
+    public void TeleportToLobbyPoint()
+    {
+        TeleportPlayerToLobbyPoint();
+    }
+
     // ========== AUDIO METHODS ==========
 
     private void StopCountAudio()

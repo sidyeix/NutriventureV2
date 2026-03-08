@@ -840,6 +840,15 @@ public class K2_NPCtrigInstructs : MonoBehaviour
         
         Debug.Log("NPC interaction reset");
     }
+
+    // Mark this NPC as already triggered so it won't replay on resume
+    public void MarkAsTriggered()
+    {
+        hasTriggered = true;
+        isCutscenePlaying = false;
+        if (arrowIndicatorCanvas != null)
+            arrowIndicatorCanvas.SetActive(false);
+    }
     
     // Optional: Gizmos for visualization
     void OnDrawGizmosSelected()

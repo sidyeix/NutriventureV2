@@ -548,6 +548,15 @@ public class InGameSettingsButton : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Public accessor for teleporting the player to the lobby point.
+    /// Used by ResumeGameCanvas when the player clicks "No" (Restart).
+    /// </summary>
+    public void TeleportPlayerToLobbyPointPublic()
+    {
+        TeleportPlayerToLobbyPoint();
+    }
+
     private void ResetAllContinueButtons()
     {
         ContinueButton[] continueButtons = FindObjectsOfType<ContinueButton>(true);

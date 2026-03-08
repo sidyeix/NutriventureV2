@@ -316,7 +316,7 @@ public class ProductInformationManager : MonoBehaviour
     
     private void UpdateInGameCollectionDisplay()
     {
-        if (inGameCollectionText != null && showInGameCounter && productDatabase != null)
+        if (inGameCollectionText != null && productDatabase != null)
         {
             int collected = collectedProductIDs.Count;
             int total = productDatabase.GetTotalCount();
@@ -348,7 +348,12 @@ public class ProductInformationManager : MonoBehaviour
     
     public bool IsProductCollected(string productID)
     {
-        return collectedProductIDs.Contains(productID);
+        foreach (string id in collectedProductIDs)
+        {
+            if (string.Equals(id, productID, System.StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
     
     // Show product info for dummy products (doesn't add to collection)
@@ -413,8 +418,8 @@ public class ProductInformationManager : MonoBehaviour
         // Set dummy product flag to false
         isDummyProductDisplay = false;
         
-        // Add to session collection if not already collected
-        if (!collectedProductIDs.Contains(productID))
+        // Add to session collection if not already collected (case-insensitive check)
+        if (!IsProductCollected(productID))
         {
             collectedProductIDs.Add(productID);
             UpdateAllCollectionDisplays();

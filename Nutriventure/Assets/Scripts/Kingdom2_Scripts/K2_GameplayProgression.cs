@@ -55,18 +55,12 @@ public class GameplayProgression : MonoBehaviour
     
     private void SetupGameStartListener()
     {
-        // We'll check for game start in Update instead of events
-        // since MainMenu_Manager doesn't have events we can subscribe to
+        // Game start is now handled explicitly via SetGameInProgress()
+        // called by K2_Instructions2D when the player confirms the instruction panel.
     }
     
     private void Update()
     {
-        // Check if game should start (when menu is hidden and joystick is shown)
-        if (!gameStarted && IsGameStarted())
-        {
-            StartGame();
-        }
-        
         if (isTimerRunning)
         {
             if (countUp)
@@ -273,6 +267,25 @@ public class GameplayProgression : MonoBehaviour
     public bool IsGameStarted2()
     {
         return gameStarted;
+    }
+
+    /// <summary>
+    /// Explicitly set the game in-progress state. Called by K2_Instructions2D
+    /// when the player confirms the instruction panel (true), and by
+    /// restart / home flows to end the game (false).
+    /// </summary>
+    public void SetGameInProgress(bool inProgress)
+    {
+        if (inProgress)
+        {
+            StartGame();
+        }
+        else
+        {
+            gameStarted = false;
+            StopTimer();
+        }
+        Debug.Log($"Game in-progress set to: {inProgress}");
     }
     
     public float GetCurrentTime()

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using StarterAssets;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Shows a "Do you want to resume?" panel when the player enters the 4_Kingdom 2
@@ -43,8 +44,14 @@ public class K2_ResumeGameCanvas : MonoBehaviour
     [Header("Pause Gameplay While Showing")]
     [SerializeField] private bool freezeTimeWhileShowing = true;
 
+    [Header("Sugardino NPC")]
+    [Tooltip("Drag the Sugardino NPC trigger GameObject here so it can be re-enabled on Restart.")]
+    [SerializeField] private GameObject sugardinoNPC;
+
     private K2_GameStateManager gameStateManager;
     private bool hasResumeData = false;
+    private K2_Instructions2D[] cachedInstructions;
+    private K2_NPCtrigInstructs[] cachedNPCs;
 
     // ============================================================
     //  LIFECYCLE
@@ -59,6 +66,12 @@ public class K2_ResumeGameCanvas : MonoBehaviour
 
         if (canvasGroup == null && resumeCanvas != null)
             canvasGroup = resumeCanvas.AddComponent<CanvasGroup>();
+
+        // Cache NPC / instruction triggers so we can disable them
+        // while the resume panel is showing (prevents cutscene from firing).
+        cachedInstructions = FindObjectsOfType<K2_Instructions2D>();
+        cachedNPCs = FindObjectsOfType<K2_NPCtrigInstructs>();
+        SetNPCTriggersEnabled(false);
     }
 
     private void Start()
@@ -99,6 +112,7 @@ public class K2_ResumeGameCanvas : MonoBehaviour
 #if UNITY_EDITOR
             Debug.LogWarning("K2_ResumeGameCanvas: K2_GameStateManager not found – cannot check for resume data.");
 #endif
+            SetNPCTriggersEnabled(true);
             return;
         }
 
@@ -111,28 +125,81 @@ public class K2_ResumeGameCanvas : MonoBehaviour
             return;
         }
 
+        // Check whether the Preservia key has already been collected
+        bool preserviaKeyCollected = GameDataManager.Instance != null &&
+                                     GameDataManager.Instance.CurrentGameData != null &&
+                                     GameDataManager.Instance.CurrentGameData.preserviaKeyCollected;
+
         hasResumeData = gameStateManager.HasSavedGameState();
 
         if (hasResumeData)
         {
             K2_GameStateSaveData saveData = gameStateManager.GetLastSavedState();
 
-            if (saveData != null && !saveData.isGameActive)
+            if (saveData != null && saveData.isGameActive)
             {
-                // Player was just roaming (game not active) – silently restore position
+                // Game WAS active – player has real progress.
+                // Show Resume / Restart panel regardless of key state.
+                // NPC triggers stay disabled until the player picks Resume or Restart.
 #if UNITY_EDITOR
-                Debug.Log("K2_ResumeGameCanvas: Game was NOT active – silently restoring position.");
+                Debug.Log("K2_ResumeGameCanvas: Game was ACTIVE – showing resume panel.");
 #endif
-                gameStateManager.SilentRestorePositionOnly();
-                return;
+                ShowResumeCanvas();
             }
-
-            // Game WAS active – show Resume / Restart panel
+            else
+            {
+                // Game was NOT active (roaming) – just start at spawn point, no position restore.
 #if UNITY_EDITOR
-            Debug.Log("K2_ResumeGameCanvas: Game was ACTIVE – showing resume panel.");
+                Debug.Log("K2_ResumeGameCanvas: Game was NOT active – starting at spawn point.");
 #endif
-            ShowResumeCanvas();
+                gameStateManager.ClearSavedGameState();
+                SetNPCTriggersEnabled(true);
+
+                // Play intro cutscene if key not yet collected
+                if (!preserviaKeyCollected)
+                {
+                    TriggerIntroCutscene();
+                }
+            }
         }
+        else
+        {
+            // No saved state at all.
+            SetNPCTriggersEnabled(true);
+
+            if (!preserviaKeyCollected)
+            {
+                // First-time entry with key not collected – play intro cutscene.
+#if UNITY_EDITOR
+                Debug.Log("K2_ResumeGameCanvas: No save & key NOT collected – playing intro cutscene.");
+#endif
+                TriggerIntroCutscene();
+            }
+#if UNITY_EDITOR
+            else
+            {
+                Debug.Log("K2_ResumeGameCanvas: No save & key already collected – proceeding normally.");
+            }
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Finds the K2_IntroCutsceneManager in the scene and plays it.
+    /// </summary>
+    private void TriggerIntroCutscene()
+    {
+        K2_IntroCutsceneManager introCutscene = FindObjectOfType<K2_IntroCutsceneManager>();
+        if (introCutscene != null)
+        {
+            introCutscene.PlayCutscene();
+        }
+#if UNITY_EDITOR
+        else
+        {
+            Debug.LogWarning("K2_ResumeGameCanvas: K2_IntroCutsceneManager not found in scene!");
+        }
+#endif
     }
 
     private void ShowResumeCanvas()
@@ -200,10 +267,15 @@ public class K2_ResumeGameCanvas : MonoBehaviour
     private void OnResumeClicked()
     {
 #if UNITY_EDITOR
-        Debug.Log("K2_ResumeGameCanvas: RESUME clicked – restoring saved game state.");
+        Debug.Log("K2_ResumeGameCanvas: RESUME clicked – restoring saved game state (no cutscene).");
 #endif
 
         HideResumeCanvas();
+
+        // Mark all NPC / instruction triggers as already triggered so the
+        // intro cutscene and instruction panels won't replay on resume.
+        MarkAllTriggersAsTriggered();
+        SetNPCTriggersEnabled(true);
 
         if (gameStateManager != null)
         {
@@ -225,27 +297,45 @@ public class K2_ResumeGameCanvas : MonoBehaviour
             gameStateManager.ClearSavedGameState();
         }
 
-        // Reset K2 game managers to initial state
+        // Reset K2 game managers to initial state (NPCs, timer, health, etc.)
         ResetKingdom2State();
+
+        // Re-enable NPC triggers AFTER the reset to prevent premature firing
+        SetNPCTriggersEnabled(true);
 
         // If not in the kingdom scene, load it fresh
         if (gameStateManager != null && !gameStateManager.IsInKingdomScene())
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene(kingdomSceneName);
+            SceneManager.LoadScene(kingdomSceneName);
             return;
         }
 
+        // Already in the kingdom scene.
+        // Play the intro cutscene ONLY if the Preservia key has NOT been collected.
+        // If the key is already collected the player just restarts at the lobby.
+        bool preserviaKeyCollected = GameDataManager.Instance != null &&
+                                     GameDataManager.Instance.CurrentGameData != null &&
+                                     GameDataManager.Instance.CurrentGameData.preserviaKeyCollected;
+
+        if (!preserviaKeyCollected)
+        {
+            TriggerIntroCutscene();
+        }
+
 #if UNITY_EDITOR
-        Debug.Log("K2_ResumeGameCanvas: Restart complete – player at lobby with fresh state.");
+        Debug.Log($"K2_ResumeGameCanvas: Restart complete – key collected: {preserviaKeyCollected}");
 #endif
     }
 
     private void ResetKingdom2State()
     {
-        // Reset timer
+        // Stop the game and reset timer
         GameplayProgression gp = FindObjectOfType<GameplayProgression>();
         if (gp != null)
+        {
+            gp.SetGameInProgress(false);
             gp.ResetTimer();
+        }
 
         // Reset health
         SugariaPlayerStat playerHealth = FindObjectOfType<SugariaPlayerStat>();
@@ -267,7 +357,10 @@ public class K2_ResumeGameCanvas : MonoBehaviour
         for (int i = 0; i < allMonsters.Length; i++)
         {
             if (allMonsters[i] != null)
+            {
                 allMonsters[i].gameObject.SetActive(true);
+                allMonsters[i].ResetMonster();
+            }
         }
 
         // Reset keys
@@ -283,10 +376,50 @@ public class K2_ResumeGameCanvas : MonoBehaviour
         for (int i = 0; i < remainingKeys.Length; i++)
             Destroy(remainingKeys[i]);
 
+        // Re-enable the Sugardino NPC so the player can trigger it again
+        if (sugardinoNPC != null)
+        {
+            sugardinoNPC.SetActive(true);
+            K2_NPCtrigInstructs npcTrig = sugardinoNPC.GetComponent<K2_NPCtrigInstructs>();
+            if (npcTrig != null)
+                npcTrig.ResetInteraction();
+        }
+
+        // Reset NPC interactions so they can trigger again
+        K2_NPCtrigInstructs[] allNPCs = FindObjectsOfType<K2_NPCtrigInstructs>();
+        for (int i = 0; i < allNPCs.Length; i++)
+        {
+            if (allNPCs[i] != null)
+                allNPCs[i].ResetInteraction();
+        }
+
+        // Reset 2D instruction triggers so they can fire again next game
+        K2_Instructions2D[] allInstructions = FindObjectsOfType<K2_Instructions2D>();
+        for (int i = 0; i < allInstructions.Length; i++)
+        {
+            if (allInstructions[i] != null)
+                allInstructions[i].ResetTrigger();
+        }
+
+        // Reset DummypTimeline cutscene state
+        K2_DummypTimeline dummyTimeline = FindObjectOfType<K2_DummypTimeline>();
+        if (dummyTimeline != null)
+            dummyTimeline.ResetAllCutscenes();
+
+        // Reset DYK popup system
+        K2_Dyk dyk = FindObjectOfType<K2_Dyk>();
+        if (dyk != null)
+            dyk.ResetPopupSystem();
+
         // Apply home button game object states (same objects the GameSummary toggles)
         K2_GameSummary gameSummary = FindObjectOfType<K2_GameSummary>();
         if (gameSummary != null)
             gameSummary.ApplyHomeButtonGameObjectStates();
+
+        // Respawn the dummy product (hidden on collection, not destroyed)
+        CollectProducts collectProducts = FindObjectOfType<CollectProducts>();
+        if (collectProducts != null)
+            collectProducts.RespawnDummyProduct();
 
         // Teleport player to lobby
         TeleportPlayerToLobby();
@@ -321,6 +454,65 @@ public class K2_ResumeGameCanvas : MonoBehaviour
                 if (cc != null) cc.enabled = true;
             }
         }
+    }
+
+    // ============================================================
+    //  NPC / INSTRUCTION TRIGGER HELPERS
+    // ============================================================
+
+    /// <summary>
+    /// Enable or disable all NPC and instruction trigger colliders so the intro
+    /// cutscene cannot fire while we are showing the resume panel.
+    /// </summary>
+    private void SetNPCTriggersEnabled(bool enabled)
+    {
+        if (cachedNPCs != null)
+        {
+            for (int i = 0; i < cachedNPCs.Length; i++)
+            {
+                if (cachedNPCs[i] != null)
+                {
+                    Collider col = cachedNPCs[i].GetComponent<Collider>();
+                    if (col != null) col.enabled = enabled;
+                }
+            }
+        }
+
+        if (cachedInstructions != null)
+        {
+            for (int i = 0; i < cachedInstructions.Length; i++)
+            {
+                if (cachedInstructions[i] != null)
+                {
+                    Collider col = cachedInstructions[i].GetComponent<Collider>();
+                    if (col != null) col.enabled = enabled;
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        Debug.Log($"K2_ResumeGameCanvas: Triggers {(enabled ? "ENABLED" : "DISABLED")}");
+#endif
+    }
+
+    /// <summary>
+    /// Mark every NPC and instruction trigger as already triggered so their
+    /// cutscene / panel will not replay when the player resumes.
+    /// </summary>
+    private void MarkAllTriggersAsTriggered()
+    {
+        if (cachedNPCs != null)
+        {
+            for (int i = 0; i < cachedNPCs.Length; i++)
+            {
+                if (cachedNPCs[i] != null)
+                    cachedNPCs[i].MarkAsTriggered();
+            }
+        }
+
+#if UNITY_EDITOR
+        Debug.Log("K2_ResumeGameCanvas: All NPC triggers marked as already triggered.");
+#endif
     }
 
     // ============================================================
