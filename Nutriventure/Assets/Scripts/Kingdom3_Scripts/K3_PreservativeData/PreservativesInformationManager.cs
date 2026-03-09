@@ -9,12 +9,12 @@ public class PreservativesInformationManager : MonoBehaviour
 {
     [Header("Data Reference")]
     public K3_PreservativeData preservativeDatabase;
-    
+
     [Header("UI References")]
     public GameObject infoPanel; // Main popup panel
     public Transform preservativeDisplaySpawnPoint; // Where to spawn preservative for showcase
     public Image preservativeIconDisplay; // Display for the preservative icon
-    
+
     [Header("Text Fields - Popup Panel")]
     public TextMeshProUGUI preservativeNameText;
     public TextMeshProUGUI preservativeIDText;
@@ -23,19 +23,19 @@ public class PreservativesInformationManager : MonoBehaviour
     public TextMeshProUGUI foundInText;
     public TextMeshProUGUI funFactText;
     public TextMeshProUGUI collectionCountText; // For panel: "X/Y"
-    
+
     [Header("Text Fields - In-Game Display")]
     public TextMeshProUGUI inGameCollectionText; // For in-game display: "Preservatives Collected: X/Y"
-    
+
     [Header("Buttons")]
     public Button confirmButton;
-    
+
     [Header("Animation")]
     public Animator panelAnimator;
     public string showAnimationTrigger = "Show";
     public string hideAnimationTrigger = "Hide";
     public float panelShowDelay = 0.5f;
-    
+
     [Header("In-Game Display Settings")]
     public bool showInGameCounter = true;
     public bool autoUpdateInGameCounter = true;
@@ -45,11 +45,11 @@ public class PreservativesInformationManager : MonoBehaviour
     public Vector3 displayScale = Vector3.one * 1.5f; // Scale for displayed preservative
     public bool autoRotateDisplay = true;
     public float rotationSpeed = 30f;
-    
+
     // Events for pausing game systems
     public static event Action OnPreservativePanelShown;
     public static event Action OnPreservativePanelHidden;
-    
+
     // Session-based collection tracking
     private List<string> collectedPreservativeIDs = new List<string>();
     private GameObject currentDisplayedPreservative;
@@ -58,7 +58,7 @@ public class PreservativesInformationManager : MonoBehaviour
     void Start()
     {
         InitializeUI();
-        
+
         // Hide panel at start
         if (infoPanel != null)
             infoPanel.SetActive(false);
@@ -66,7 +66,7 @@ public class PreservativesInformationManager : MonoBehaviour
         // Reset collection at start of each session
         ResetSessionCollection();
     }
-    
+
     private void InitializeUI()
     {
         // Set up button listeners
@@ -78,18 +78,18 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.LogWarning("Confirm button not assigned in inspector!");
         }
-        
+
         // Initialize preservative database if needed
         if (preservativeDatabase == null)
         {
             Debug.LogError("Preservative database not assigned! Please assign in inspector.");
             preservativeDatabase = Resources.Load<K3_PreservativeData>("K3_PreservativeData");
         }
-        
+
         // Initialize in-game counter display
         UpdateInGameCollectionDisplay();
     }
-    
+
     // Reset collection for new session
     public void ResetSessionCollection()
     {
@@ -97,14 +97,14 @@ public class PreservativesInformationManager : MonoBehaviour
         UpdateAllCollectionDisplays();
         Debug.Log("Preservative collection reset. Starting fresh.");
     }
-    
+
     private IEnumerator ShowPanelWithDelay()
     {
         yield return new WaitForSeconds(panelShowDelay);
-        
+
         // Trigger panel shown event
         OnPreservativePanelShown?.Invoke();
-        
+
         if (infoPanel != null)
         {
             infoPanel.SetActive(true);
@@ -114,18 +114,18 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.LogError("Info panel not assigned!");
         }
-        
+
         if (panelAnimator != null)
         {
             panelAnimator.SetTrigger(showAnimationTrigger);
         }
-        
+
         // Disable player movement
         DisablePlayerMovement();
-        
+
         Debug.Log($"Showing preservative info for: {currentPreservativeInfo.displayName}");
     }
-    
+
     private void UpdatePreservativeUI(K3_PreservativeData.PreservativeInfo preservativeInfo)
     {
         // Basic information
@@ -137,25 +137,25 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.LogWarning("Preservative name text not assigned!");
         }
-        
+
         if (preservativeIDText != null)
         {
             preservativeIDText.text = $"ID: {preservativeInfo.preservativeID}";
         }
-        
+
         // Detailed information
         if (descriptionText != null)
             descriptionText.text = preservativeInfo.preservDesc;
-        
+
         if (strengthsLimitsText != null)
             strengthsLimitsText.text = preservativeInfo.strengthsLimits;
-        
+
         if (foundInText != null)
             foundInText.text = preservativeInfo.foundIn;
-        
+
         if (funFactText != null)
             funFactText.text = preservativeInfo.funFact;
-        
+
         // Update preservative icon
         if (preservativeIconDisplay != null)
         {
@@ -170,36 +170,36 @@ public class PreservativesInformationManager : MonoBehaviour
                 Debug.LogWarning($"No icon for preservative: {preservativeInfo.displayName}");
             }
         }
-        
+
         // Update collection count
         UpdateAllCollectionDisplays();
     }
-    
+
     private void SpawnPreservativeForDisplay(GameObject preservativePrefab)
     {
         // Clean up previously displayed preservative
         if (currentDisplayedPreservative != null)
             Destroy(currentDisplayedPreservative);
-        
+
         if (preservativeDisplaySpawnPoint != null && preservativePrefab != null)
         {
             // Spawn the preservative at the display location
             currentDisplayedPreservative = Instantiate(
-                preservativePrefab, 
-                preservativeDisplaySpawnPoint.position, 
+                preservativePrefab,
+                preservativeDisplaySpawnPoint.position,
                 preservativeDisplaySpawnPoint.rotation
             );
-            
+
             // Adjust scale
             currentDisplayedPreservative.transform.localScale = displayScale;
-            
+
             // Add rotation script for visual appeal
             if (autoRotateDisplay)
             {
                 PreservativeDisplayRotator rotator = currentDisplayedPreservative.AddComponent<PreservativeDisplayRotator>();
                 rotator.rotationSpeed = rotationSpeed;
             }
-            
+
             Debug.Log($"Spawned {preservativePrefab.name} for display");
         }
         else
@@ -207,11 +207,11 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.LogWarning("Cannot spawn preservative for display: spawn point or prefab is null");
         }
     }
-    
+
     public void HidePreservativeInfo()
     {
         Debug.Log("Hiding preservative info panel");
-        
+
         if (panelAnimator != null)
         {
             panelAnimator.SetTrigger(hideAnimationTrigger);
@@ -221,10 +221,10 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             if (infoPanel != null)
                 infoPanel.SetActive(false);
-            
+
             OnPanelHidden();
         }
-        
+
         // Clean up displayed preservative
         if (currentDisplayedPreservative != null)
         {
@@ -232,33 +232,33 @@ public class PreservativesInformationManager : MonoBehaviour
             currentDisplayedPreservative = null;
         }
     }
-    
+
     private IEnumerator HidePanelAfterAnimation()
     {
         // Wait for animation to complete
         yield return new WaitForSeconds(0.5f);
-        
+
         if (infoPanel != null)
             infoPanel.SetActive(false);
-        
+
         OnPanelHidden();
     }
-    
+
     private void OnPanelHidden()
     {
         // Trigger panel hidden event - this will re-enable player movement
         OnPreservativePanelHidden?.Invoke();
-        
+
         // Re-enable player movement
         EnablePlayerMovement();
-        
+
         Debug.Log("Preservative info panel hidden");
     }
-    
+
     private void DisablePlayerMovement()
     {
         Debug.Log("Disabling player movement");
-        
+
         // Find and disable player movement
         MonoBehaviour movementScript = FindObjectOfType<StarterAssets.ThirdPersonController>();
         if (movementScript != null)
@@ -270,7 +270,7 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.LogWarning("Could not find ThirdPersonController to disable!");
         }
-        
+
         // Also disable any input
         UnityEngine.InputSystem.PlayerInput playerInput = FindObjectOfType<UnityEngine.InputSystem.PlayerInput>();
         if (playerInput != null)
@@ -279,11 +279,11 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.Log("Player input disabled");
         }
     }
-    
+
     private void EnablePlayerMovement()
     {
         Debug.Log("Enabling player movement");
-        
+
         // Re-enable player movement
         MonoBehaviour movementScript = FindObjectOfType<StarterAssets.ThirdPersonController>();
         if (movementScript != null)
@@ -291,20 +291,20 @@ public class PreservativesInformationManager : MonoBehaviour
             movementScript.enabled = true;
             Debug.Log("Player movement enabled");
         }
-        
+
         // Re-enable input
         UnityEngine.InputSystem.PlayerInput playerInput = FindObjectOfType<UnityEngine.InputSystem.PlayerInput>();
         if (playerInput != null)
             playerInput.enabled = true;
     }
-    
+
     // Update all collection displays
     private void UpdateAllCollectionDisplays()
     {
         UpdatePanelCollectionDisplay();
         UpdateInGameCollectionDisplay();
     }
-    
+
     private void UpdatePanelCollectionDisplay()
     {
         if (collectionCountText != null && preservativeDatabase != null)
@@ -314,7 +314,7 @@ public class PreservativesInformationManager : MonoBehaviour
             collectionCountText.text = $"{collected}/{total}";
         }
     }
-    
+
     private void UpdateInGameCollectionDisplay()
     {
         if (inGameCollectionText != null && showInGameCounter && preservativeDatabase != null)
@@ -324,39 +324,39 @@ public class PreservativesInformationManager : MonoBehaviour
             inGameCollectionText.text = $"{inGameCounterPrefix}{collected}/{total}";
         }
     }
-    
+
     // Public methods for external access
     public bool IsPanelVisible()
     {
         return infoPanel != null && infoPanel.activeInHierarchy;
     }
-    
+
     public int GetCollectedCount()
     {
         return collectedPreservativeIDs.Count;
     }
-    
+
     public bool IsAllCollected()
     {
-        return preservativeDatabase != null && 
+        return preservativeDatabase != null &&
                collectedPreservativeIDs.Count >= preservativeDatabase.GetTotalCount();
     }
-    
+
     public List<string> GetCollectedPreservativeIDs()
     {
         return new List<string>(collectedPreservativeIDs);
     }
-    
+
     public bool IsPreservativeCollected(string preservativeID)
     {
         return collectedPreservativeIDs.Contains(preservativeID);
     }
-    
+
     // Show preservative info when collected - CALLED BY COLLECTION SCRIPT
     public void ShowPreservativeInfo(string preservativeID)
     {
         Debug.Log($"ShowPreservativeInfo called with ID: {preservativeID}");
-        
+
         if (preservativeDatabase == null)
         {
             Debug.LogError("No preservative database assigned!");
@@ -364,22 +364,22 @@ public class PreservativesInformationManager : MonoBehaviour
             OnPreservativePanelHidden?.Invoke();
             return;
         }
-        
+
         // Get preservative information
         currentPreservativeInfo = preservativeDatabase.GetPreservativeInfo(preservativeID);
-        
+
         // Try to find the preservative if not found with exact ID
         if (currentPreservativeInfo == null)
         {
             Debug.LogWarning($"Preservative '{preservativeID}' not found. Searching...");
-            
+
             // Try to find by partial match
             foreach (var preservative in preservativeDatabase.allPreservatives)
             {
                 if (preservative == null) continue;
-                
+
                 // Check if the ID contains part of what we're looking for
-                if (preservative.preservativeID.ToUpper().Contains(preservativeID.ToUpper()) || 
+                if (preservative.preservativeID.ToUpper().Contains(preservativeID.ToUpper()) ||
                     preservative.displayName.ToUpper().Contains(preservativeID.ToUpper()))
                 {
                     currentPreservativeInfo = preservative;
@@ -388,7 +388,7 @@ public class PreservativesInformationManager : MonoBehaviour
                 }
             }
         }
-        
+
         if (currentPreservativeInfo == null)
         {
             Debug.LogError($"Preservative with ID '{preservativeID}' not found in database!");
@@ -396,14 +396,14 @@ public class PreservativesInformationManager : MonoBehaviour
             OnPreservativePanelHidden?.Invoke();
             return;
         }
-        
+
         // Add to session collection if not already collected
         string actualID = currentPreservativeInfo.preservativeID;
         if (!collectedPreservativeIDs.Contains(actualID))
         {
             collectedPreservativeIDs.Add(actualID);
             Debug.Log($"Added {actualID} to session collection. Total: {collectedPreservativeIDs.Count}");
-            
+
             // Check if this was the last preservative
             if (IsAllCollected())
             {
@@ -415,10 +415,10 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.Log($"Preservative {actualID} already collected. Not adding to collection.");
         }
-        
+
         // Update UI with preservative information
         UpdatePreservativeUI(currentPreservativeInfo);
-        
+
         // Spawn preservative for display
         if (currentPreservativeInfo.preservativePrefab != null)
         {
@@ -428,11 +428,11 @@ public class PreservativesInformationManager : MonoBehaviour
         {
             Debug.LogWarning($"No prefab assigned for preservative: {currentPreservativeInfo.displayName}");
         }
-        
+
         // Show the panel
         StartCoroutine(ShowPanelWithDelay());
     }
-    
+
     // Show preservative info without adding to collection (for preview/UI)
     public void PreviewPreservativeInfo(string preservativeID)
     {
@@ -441,7 +441,7 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.LogError("No preservative database assigned!");
             return;
         }
-        
+
         // Get preservative information
         currentPreservativeInfo = preservativeDatabase.GetPreservativeInfo(preservativeID);
         if (currentPreservativeInfo == null)
@@ -449,30 +449,30 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.LogError($"Preservative with ID '{preservativeID}' not found in database!");
             return;
         }
-        
+
         // Update UI with preservative information
         UpdatePreservativeUI(currentPreservativeInfo);
-        
+
         // Spawn preservative for display
         SpawnPreservativeForDisplay(currentPreservativeInfo.preservativePrefab);
-        
+
         // Show the panel
         StartCoroutine(ShowPanelWithDelay());
     }
-    
+
     // Reset for new game session
     public void ResetForNewSession()
     {
         ResetSessionCollection();
         Debug.Log("Preservative collection reset for new session");
     }
-    
+
     // Manually update the in-game counter (call this if auto-update is disabled)
     public void ManualUpdateInGameCounter()
     {
         UpdateInGameCollectionDisplay();
     }
-    
+
     // Set the in-game counter visibility
     public void SetInGameCounterVisible(bool visible)
     {
@@ -483,25 +483,25 @@ public class PreservativesInformationManager : MonoBehaviour
         }
         UpdateInGameCollectionDisplay();
     }
-    
+
     // Change the counter prefix text
     public void SetCounterPrefix(string newPrefix)
     {
         inGameCounterPrefix = newPrefix;
         UpdateInGameCollectionDisplay();
     }
-    
+
     // Show/Hide just the in-game counter (keeping panel counter visible)
     public void ShowInGameCounter()
     {
         SetInGameCounterVisible(true);
     }
-    
+
     public void HideInGameCounter()
     {
         SetInGameCounterVisible(false);
     }
-    
+
     // Get preservative info by ID
     public K3_PreservativeData.PreservativeInfo GetPreservativeInfo(string preservativeID)
     {
@@ -511,7 +511,7 @@ public class PreservativesInformationManager : MonoBehaviour
         }
         return null;
     }
-    
+
     // Get total count from database
     public int GetTotalPreservativeCount()
     {
@@ -521,7 +521,7 @@ public class PreservativesInformationManager : MonoBehaviour
         }
         return 0;
     }
-    
+
     // Context menu for testing
     [ContextMenu("Test Show First Preservative")]
     public void TestShowFirstPreservative()
@@ -535,7 +535,7 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.LogError("Cannot test: database is null or empty!");
         }
     }
-    
+
     [ContextMenu("Test Preview First Preservative")]
     public void TestPreviewFirstPreservative()
     {
@@ -544,13 +544,13 @@ public class PreservativesInformationManager : MonoBehaviour
             PreviewPreservativeInfo(preservativeDatabase.allPreservatives[0].preservativeID);
         }
     }
-    
+
     [ContextMenu("Reset Session Collection")]
     public void ResetCurrentSession()
     {
         ResetSessionCollection();
     }
-    
+
     [ContextMenu("Debug Collection Status")]
     public void DebugCollectionStatus()
     {
@@ -565,7 +565,7 @@ public class PreservativesInformationManager : MonoBehaviour
         Debug.Log($"In-Game Counter Visible: {showInGameCounter}");
         Debug.Log($"In-Game Text Assigned: {inGameCollectionText != null}");
     }
-    
+
     [ContextMenu("Test Add Collection")]
     public void TestAddCollection()
     {
@@ -578,7 +578,7 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.Log($"Added test collection: {testID}");
         }
     }
-    
+
     [ContextMenu("Collect All Preservatives")]
     public void CollectAllPreservatives()
     {
@@ -596,7 +596,7 @@ public class PreservativesInformationManager : MonoBehaviour
             Debug.Log($"Collected all {collectedPreservativeIDs.Count} preservatives");
         }
     }
-    
+
     [ContextMenu("Check UI References")]
     public void CheckUIReferences()
     {
@@ -607,13 +607,13 @@ public class PreservativesInformationManager : MonoBehaviour
         Debug.Log($"Confirm Button: {(confirmButton != null ? "✓" : "✗")}");
         Debug.Log($"Panel Animator: {(panelAnimator != null ? "✓" : "✗")}");
     }
-    
+
     // Simple rotator script for displayed preservatives
     public class PreservativeDisplayRotator : MonoBehaviour
     {
         public float rotationSpeed = 30f;
         public Vector3 rotationAxis = Vector3.up;
-        
+
         void Update()
         {
             transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
