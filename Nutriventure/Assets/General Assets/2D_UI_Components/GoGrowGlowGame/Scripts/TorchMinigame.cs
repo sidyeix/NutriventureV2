@@ -19,7 +19,7 @@ public class TorchMinigame : MonoBehaviour
     [Header("Torch Components")]
     [SerializeField] private CinemachineVirtualCamera torchVirtualCamera;
     [SerializeField] private int activeCameraPriority = 30;
-    [SerializeField] private int inactiveCameraPriority = 10;
+    [SerializeField] private int inactiveCameraPriority = 0;
     [SerializeField] private GameObject fireObject;
     [SerializeField] private GameObject wrongFlameObject;
     [SerializeField] private Transform flameFoodSpawn;
