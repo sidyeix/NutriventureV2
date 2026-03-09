@@ -51387,10 +51387,14 @@ MonoBehaviour:
   captureCooldownDuration: 1
   audioSource: {fileID: 917810639}
   scanSound: {fileID: 8300000, guid: 4ec83098589182740bec6f2c63083569, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: b7da48c15e710a741842583fac3307c7, type: 3}
   heartContainer: {fileID: 1211531518}
   fullHeartSprite: {fileID: 21300000, guid: 1b70546f0ceb62c46a9ffe7d25b291d2, type: 3}
   emptyHeartSprite: {fileID: 21300000, guid: 77cc114089eb299468c8621d99945165, type: 3}
   heartSize: {x: 100, y: 100}
+  energyText: {fileID: 1462589335}
+  lifeRegenTimerText: {fileID: 323285929}
+  energyRegenTimerText: {fileID: 557004755}
 --- !u!1 &746799597
 GameObject:
   m_ObjectHideFlags: 0
@@ -51518,7 +51522,7 @@ GameObject:
   - component: {fileID: 778602499}
   - component: {fileID: 778602498}
   m_Layer: 0
-  m_Name: LifeEnergyStats (1)
+  m_Name: EnergyStats
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -52640,7 +52644,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: b7da48c15e710a741842583fac3307c7, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -53263,6 +53267,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1331133353}
+  - {fileID: 1469672346}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1038721060
@@ -75656,6 +75661,57 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1462589333}
   m_CullTransparentMesh: 1
+--- !u!1 &1469672345
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1469672346}
+  - component: {fileID: 1469672347}
+  m_Layer: 0
+  m_Name: GameDataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1469672346
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1469672345}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1026112364}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1469672347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1469672345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d0e0e2bccde7924da70d4b486ad2a26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameDataManager
+  characterDatabase: {fileID: 11400000, guid: 17f8a3484f981124aa653a58e39e3a91, type: 2}
+  iconDatabase: {fileID: 11400000, guid: c898052628d1cd942af77c0897e18ead, type: 2}
+  frameDatabase: {fileID: 11400000, guid: 1a54455482b95d242b73521dbb5e24e2, type: 2}
+  achievementDatabase: {fileID: 11400000, guid: 8cdb5b4c0496eac45865ebf5ee526122, type: 2}
+  ingredientDatabase: {fileID: 11400000, guid: c2f108fb99d8ab045b9076b3f1f7d000, type: 2}
+  enableDebugLogs: 1
+  autoSaveOnQuit: 1
 --- !u!1 &1472844265
 GameObject:
   m_ObjectHideFlags: 0

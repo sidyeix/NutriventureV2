@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class PersistentDataManager : MonoBehaviour
 {
@@ -7,6 +8,11 @@ public class PersistentDataManager : MonoBehaviour
 
     [Header("References")]
     public IngredientDatabase ingredientDatabase;
+
+    // Regen durations (0→max) per rarity in minutes
+    private const float COMMON_FULL_REGEN_MINUTES = 10f;
+    private const float RARE_FULL_REGEN_MINUTES = 15f;
+    private const float ULTRA_RARE_FULL_REGEN_MINUTES = 20f;
 
     // Saved data
     private string selectedEnerlingName = "";
@@ -23,6 +29,9 @@ public class PersistentDataManager : MonoBehaviour
 
             // Load saved data first
             LoadAllData();
+
+            // Process offline health regen before anything reads life values
+            ProcessAllEnerlingHealthRegen();
 
             // Then apply unlocks to database
             ApplyUnlocksToDatabase();
@@ -126,8 +135,43 @@ public class PersistentDataManager : MonoBehaviour
             enerlingCurrentLife.Add(enerlingName, currentLife);
         }
 
+        // Also sync to the IngredientInfo on the ScriptableObject
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                ingredient.currentLife = currentLife;
+            }
+        }
+
         PlayerPrefs.SetInt(enerlingName + "_CurrentLife", currentLife);
         PlayerPrefs.Save();
+
+        // Auto-start regen if below max and not already regenerating
+        if (ingredientDatabase != null)
+        {
+            var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (info != null)
+            {
+                if (currentLife < info.baseLife)
+                {
+                    // Only begin regen if not already running
+                    string regenKey = enerlingName + "_RegenStartTime";
+                    if (!PlayerPrefs.HasKey(regenKey))
+                    {
+                        BeginEnerlingRegen(enerlingName, currentLife);
+                    }
+                }
+                else
+                {
+                    ClearEnerlingHealthRegen(enerlingName);
+                    // Also clear snapshot
+                    PlayerPrefs.DeleteKey(enerlingName + "_RegenStartLife");
+                    PlayerPrefs.Save();
+                }
+            }
+        }
     }
 
     // Get enerling current life
@@ -275,11 +319,277 @@ public class PersistentDataManager : MonoBehaviour
                     {
                         enerlingCurrentLife[ingredient.ingredientName] = life;
                     }
+
+                    // Sync saved life back to the IngredientInfo on the ScriptableObject
+                    ingredient.currentLife = life;
                 }
             }
         }
 
         Debug.Log($"Loaded {unlockedEnerlings.Count} unlocked enerlings");
+    }
+
+    // ==================== ENERLING HEALTH REGEN ====================
+
+    /// <summary>
+    /// Returns full regen duration (0→max) in minutes for the given rarity.
+    /// </summary>
+    public static float GetFullRegenMinutes(IngredientDatabase.Rarity rarity)
+    {
+        switch (rarity)
+        {
+            case IngredientDatabase.Rarity.Common: return COMMON_FULL_REGEN_MINUTES;
+            case IngredientDatabase.Rarity.Rare: return RARE_FULL_REGEN_MINUTES;
+            case IngredientDatabase.Rarity.UltraRare: return ULTRA_RARE_FULL_REGEN_MINUTES;
+            default: return COMMON_FULL_REGEN_MINUTES;
+        }
+    }
+
+    /// <summary>
+    /// Start health regen timer for an enerling. Call after battle damage.
+    /// The timestamp records when regen started; the life at that moment is already saved.
+    /// </summary>
+    public void StartEnerlingHealthRegen(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName) || ingredientDatabase == null) return;
+
+        var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+        if (info == null) return;
+
+        // Only start regen if not already at full health
+        if (info.currentLife >= info.baseLife) return;
+
+        string key = enerlingName + "_RegenStartTime";
+        // Don't overwrite an existing regen timestamp — regen is already running
+        if (!PlayerPrefs.HasKey(key))
+        {
+            PlayerPrefs.SetString(key, DateTime.Now.ToString("o"));
+            PlayerPrefs.Save();
+        }
+    }
+
+    /// <summary>
+    /// Clear the regen timer (enerling reached full health).
+    /// </summary>
+    public void ClearEnerlingHealthRegen(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+        string key = enerlingName + "_RegenStartTime";
+        if (PlayerPrefs.HasKey(key))
+        {
+            PlayerPrefs.DeleteKey(key);
+            PlayerPrefs.Save();
+        }
+    }
+
+    /// <summary>
+    /// Check if an enerling is currently regenerating health.
+    /// </summary>
+    public bool IsEnerlingRegenerating(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName) || ingredientDatabase == null) return false;
+
+        var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+        if (info == null) return false;
+
+        // Use the authoritative dictionary value instead of the SO field
+        // (SO field may not be synced yet on restart)
+        int life = GetEnerlingCurrentLife(enerlingName);
+        if (life < 0) life = info.currentLife; // fallback
+        if (life >= info.baseLife) return false;
+
+        string key = enerlingName + "_RegenStartTime";
+        return PlayerPrefs.HasKey(key);
+    }
+
+    /// <summary>
+    /// Get remaining seconds until this enerling is fully healed.
+    /// Returns 0 if not regenerating or already full.
+    /// </summary>
+    public float GetEnerlingRegenRemainingSeconds(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName) || ingredientDatabase == null) return 0f;
+
+        var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+        if (info == null || info.currentLife >= info.baseLife) return 0f;
+
+        string key = enerlingName + "_RegenStartTime";
+        if (!PlayerPrefs.HasKey(key)) return 0f;
+
+        string iso = PlayerPrefs.GetString(key, "");
+        if (!DateTime.TryParse(iso, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime startTime))
+            return 0f;
+
+        // Calculate total regen time based on how much life was missing when regen started
+        int lifeAtStart = GetLifeAtRegenStart(enerlingName, info);
+        int missingAtStart = info.baseLife - lifeAtStart;
+        if (missingAtStart <= 0) return 0f;
+
+        float fullRegenSec = GetFullRegenMinutes(info.rarity) * 60f;
+        float totalRegenSec = (fullRegenSec * missingAtStart) / info.baseLife;
+
+        double elapsed = (DateTime.Now - startTime).TotalSeconds;
+        float remaining = totalRegenSec - (float)elapsed;
+        return Mathf.Max(0f, remaining);
+    }
+
+    /// <summary>
+    /// Process health regen for all enerlings based on elapsed real time.
+    /// Call on startup to handle offline regen, and periodically during gameplay.
+    /// </summary>
+    public void ProcessAllEnerlingHealthRegen()
+    {
+        if (ingredientDatabase == null) return;
+
+        foreach (var info in ingredientDatabase.ingredients)
+        {
+            ProcessSingleEnerlingRegen(info);
+        }
+    }
+
+    private void ProcessSingleEnerlingRegen(IngredientDatabase.IngredientInfo info)
+    {
+        if (info == null) return;
+
+        string key = info.ingredientName + "_RegenStartTime";
+
+        // Auto-start regen if life < baseLife but no regen timestamp exists
+        if (!PlayerPrefs.HasKey(key))
+        {
+            int life = GetEnerlingCurrentLife(info.ingredientName);
+            if (life < 0) life = info.currentLife;
+            if (life > 0 && life < info.baseLife)
+            {
+                Debug.Log($"[Regen] Auto-starting regen for {info.ingredientName}: {life}/{info.baseLife}");
+                BeginEnerlingRegen(info.ingredientName, life);
+            }
+            return;
+        }
+
+        string iso = PlayerPrefs.GetString(key, "");
+        if (!DateTime.TryParse(iso, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime startTime))
+            return;
+
+        // Life when regen started
+        int lifeAtStart = GetLifeAtRegenStart(info.ingredientName, info);
+        int missingAtStart = info.baseLife - lifeAtStart;
+        if (missingAtStart <= 0)
+        {
+            ClearEnerlingHealthRegen(info.ingredientName);
+            return;
+        }
+
+        // Full regen (0→max) duration in seconds
+        float fullRegenSec = GetFullRegenMinutes(info.rarity) * 60f;
+        // Proportional regen time for the missing amount
+        float totalRegenSec = (fullRegenSec * missingAtStart) / info.baseLife;
+        // HP per second
+        float hpPerSecond = (float)missingAtStart / totalRegenSec;
+
+        double elapsed = (DateTime.Now - startTime).TotalSeconds;
+        int hpRecovered = Mathf.FloorToInt((float)(elapsed * hpPerSecond));
+
+        int newLife = Mathf.Min(lifeAtStart + hpRecovered, info.baseLife);
+
+        if (newLife != info.currentLife)
+        {
+            Debug.Log($"[Regen] {info.ingredientName}: {info.currentLife} → {newLife} (start={lifeAtStart}, elapsed={elapsed:F1}s, +{hpRecovered}HP)");
+            info.currentLife = newLife;
+            SaveEnerlingCurrentLife(info.ingredientName, newLife);
+        }
+
+        if (info.currentLife >= info.baseLife)
+        {
+            Debug.Log($"[Regen] {info.ingredientName}: Fully healed!");
+            info.currentLife = info.baseLife;
+            SaveEnerlingCurrentLife(info.ingredientName, info.baseLife);
+            ClearEnerlingHealthRegen(info.ingredientName);
+        }
+    }
+
+    /// <summary>
+    /// Save the life snapshot when regen starts, so we can calculate HP recovered.
+    /// </summary>
+    private int GetLifeAtRegenStart(string enerlingName, IngredientDatabase.IngredientInfo info)
+    {
+        string lifeKey = enerlingName + "_RegenStartLife";
+        if (PlayerPrefs.HasKey(lifeKey))
+            return PlayerPrefs.GetInt(lifeKey, info.currentLife);
+        return info.currentLife;
+    }
+
+    /// <summary>
+    /// Call this after saving life from battle damage to begin regen.
+    /// Saves the snapshot life and starts the regen timer.
+    /// </summary>
+    public void BeginEnerlingRegen(string enerlingName, int currentLife)
+    {
+        if (string.IsNullOrEmpty(enerlingName) || ingredientDatabase == null) return;
+
+        var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+        if (info == null || currentLife >= info.baseLife) return;
+
+        // Save snapshot of life when regen starts
+        PlayerPrefs.SetInt(enerlingName + "_RegenStartLife", currentLife);
+        // Save the regen start timestamp
+        PlayerPrefs.SetString(enerlingName + "_RegenStartTime", DateTime.Now.ToString("o"));
+        PlayerPrefs.Save();
+
+        float regenMinutes = GetFullRegenMinutes(info.rarity);
+        int missing = info.baseLife - currentLife;
+        float totalSec = (regenMinutes * 60f * missing) / info.baseLife;
+        Debug.Log($"[Regen] Started for {enerlingName}: {currentLife}/{info.baseLife}, full heal in {totalSec:F0}s");
+    }
+
+    /// <summary>
+    /// Pause regen for an enerling entering battle.
+    /// Applies any HP recovered so far, saves the updated life, then clears the timer.
+    /// Regen will resume automatically via SaveEnerlingCurrentLife when the battle ends.
+    /// </summary>
+    public void PauseEnerlingRegen(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName) || ingredientDatabase == null) return;
+
+        var info = ingredientDatabase.GetIngredientInfo(enerlingName);
+        if (info == null) return;
+
+        string key = enerlingName + "_RegenStartTime";
+        if (!PlayerPrefs.HasKey(key)) return;
+
+        // Process any HP recovered up to this moment
+        ProcessSingleEnerlingRegen(info);
+
+        // Now clear the regen timer so it stops during battle
+        ClearEnerlingHealthRegen(enerlingName);
+        PlayerPrefs.DeleteKey(enerlingName + "_RegenStartLife");
+        PlayerPrefs.Save();
+
+        Debug.Log($"[Regen] Paused regen for {enerlingName} (entering battle) — life now {info.currentLife}/{info.baseLife}");
+    }
+
+    /// <summary>
+    /// Ensure every damaged enerling has a regen timer running.
+    /// Call at the start of key scenes (BattlePlay, EnerlingSelection, etc.).
+    /// </summary>
+    public void EnsureAllDamagedEnerlingsRegenerating()
+    {
+        if (ingredientDatabase == null) return;
+
+        foreach (var info in ingredientDatabase.ingredients)
+        {
+            if (info == null) continue;
+            int life = GetEnerlingCurrentLife(info.ingredientName);
+            if (life < 0) life = info.currentLife;
+            if (life > 0 && life < info.baseLife)
+            {
+                string key = info.ingredientName + "_RegenStartTime";
+                if (!PlayerPrefs.HasKey(key))
+                {
+                    Debug.Log($"[Regen] EnsureRegen: starting for {info.ingredientName} ({life}/{info.baseLife})");
+                    BeginEnerlingRegen(info.ingredientName, life);
+                }
+            }
+        }
     }
 
     // Reset all progress (for testing)
@@ -298,6 +608,7 @@ public class PersistentDataManager : MonoBehaviour
             {
                 ingredient.isUnlocked = false;
                 ingredient.currentLife = ingredient.baseLife;
+                ClearEnerlingHealthRegen(ingredient.ingredientName);
             }
         }
 

@@ -910,8 +910,8 @@ public class GameDataManager : MonoBehaviour
 
     #region OCR Battle Life & Energy
 
-    private const float LIFE_REGEN_MINUTES = 60f;    // 1 hour per life
-    private const float ENERGY_REGEN_MINUTES = 30f;   // 30 min per energy
+    private const float LIFE_REGEN_MINUTES = 30f;    // 30 min per life
+    private const float ENERGY_REGEN_MINUTES = 15f;   // 15 min per energy
 
     // ── helpers to convert ISO-8601 strings ↔ DateTime ──
     private static DateTime ParseOCRTime(string iso)
