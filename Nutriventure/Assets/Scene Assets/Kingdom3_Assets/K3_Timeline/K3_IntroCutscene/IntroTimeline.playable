@@ -1092,7 +1092,7 @@ MonoBehaviour:
     m_Start: 0
     m_ClipIn: 0
     m_Asset: {fileID: -7492736969535077164}
-    m_Duration: 25.833333333333332
+    m_Duration: 24.898314047252143
     m_TimeScale: 1
     m_ParentTrack: {fileID: -1295825587149892582}
     m_EaseInDuration: 0
@@ -1608,7 +1608,7 @@ MonoBehaviour:
     m_Start: 0
     m_ClipIn: 0
     m_Asset: {fileID: -7965831588960084104}
-    m_Duration: 25.833333333333332
+    m_Duration: 24.898314047252143
     m_TimeScale: 1
     m_ParentTrack: {fileID: 240320156856386549}
     m_EaseInDuration: 0
@@ -1698,7 +1698,7 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 25.049999999999997
+    m_Start: 24.114980713918808
     m_ClipIn: 0
     m_Asset: {fileID: -3232128161112857027}
     m_Duration: 0.783333333333335
@@ -2020,7 +2020,7 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 25.049999999999997
+    m_Start: 24.114980713918808
     m_ClipIn: 0
     m_Asset: {fileID: 9147410513292063660}
     m_Duration: 0.783333333333335
@@ -2192,7 +2192,7 @@ MonoBehaviour:
     m_Start: 18.069647380585476
     m_ClipIn: 0
     m_Asset: {fileID: -4413221672006846799}
-    m_Duration: 6.113685952747858
+    m_Duration: 6.828666666666667
     m_TimeScale: 1
     m_ParentTrack: {fileID: 6582231487060162379}
     m_EaseInDuration: 0
@@ -2828,25 +2828,7 @@ MonoBehaviour:
       m_RotationOrder: 4
     m_MixOutCurve:
       serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
+      m_Curve: []
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -2873,25 +2855,7 @@ MonoBehaviour:
     m_BlendOutDuration: -1
     m_MixInCurve:
       serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
+      m_Curve: []
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -2999,25 +2963,7 @@ MonoBehaviour:
       m_RotationOrder: 4
     m_MixOutCurve:
       serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
+      m_Curve: []
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -3035,7 +2981,7 @@ MonoBehaviour:
     m_Start: 23.166666666666668
     m_ClipIn: 0
     m_Asset: {fileID: -3096100585270970772}
-    m_Duration: 2.6666666666666643
+    m_Duration: 1.7316473805854748
     m_TimeScale: 1
     m_ParentTrack: {fileID: 9140780153446383969}
     m_EaseInDuration: 0
@@ -3044,25 +2990,7 @@ MonoBehaviour:
     m_BlendOutDuration: -1
     m_MixInCurve:
       serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
+      m_Curve: []
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
