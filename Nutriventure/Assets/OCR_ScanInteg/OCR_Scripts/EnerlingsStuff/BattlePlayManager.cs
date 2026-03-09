@@ -146,6 +146,10 @@ public class BattlePlayManager : MonoBehaviour
         if (GameDataManager.Instance != null)
             GameDataManager.Instance.ProcessOCRBattleRegen();
 
+        // Ensure all damaged enerlings have regen running
+        if (PersistentDataManager.Instance != null)
+            PersistentDataManager.Instance.EnsureAllDamagedEnerlingsRegenerating();
+
         // Spawn the player's equipped character/skin at the spawn point
         SpawnPlayerCharacterModel();
 
@@ -194,14 +198,19 @@ public class BattlePlayManager : MonoBehaviour
         if (heartImages.Count == 0 && heartContainer != null)
             BuildHeartImages();
 
-        // Tick regen and refresh UI every frame
-        GameDataManager.Instance.ProcessOCRBattleRegen();
-        RefreshLifeEnergyUI();
+        // Tick regen once per second (avoids SaveGameData every frame)
+        regenTickTimer += Time.deltaTime;
+        if (regenTickTimer >= REGEN_TICK_INTERVAL)
+        {
+            regenTickTimer = 0f;
+            GameDataManager.Instance.ProcessOCRBattleRegen();
+        }
 
-        bool lifeFull = GameDataManager.Instance.GetOCRBattleLives() >= GameDataManager.Instance.GetOCRBattleMaxLives();
-        bool energyFull = GameDataManager.Instance.GetOCRBattleEnergy() >= GameDataManager.Instance.GetOCRBattleMaxEnergy();
-        UpdateRegenTimerTexts(lifeFull, energyFull);
+        RefreshLifeEnergyUI();
     }
+
+    private float regenTickTimer = 0f;
+    private const float REGEN_TICK_INTERVAL = 1f;
 
     void StopAllOtherPlayableDirectors()
     {
@@ -990,12 +999,17 @@ public class BattlePlayManager : MonoBehaviour
 
         UpdateHeartUI();
 
+        int curEnergy = GameDataManager.Instance.GetOCRBattleEnergy();
+        int maxEnergy = GameDataManager.Instance.GetOCRBattleMaxEnergy();
+        int curLives = GameDataManager.Instance.GetOCRBattleLives();
+        int maxLives = GameDataManager.Instance.GetOCRBattleMaxLives();
+        bool lifeFull = curLives >= maxLives;
+        bool energyFull = curEnergy >= maxEnergy;
+
         if (energyText != null)
-        {
-            int cur = GameDataManager.Instance.GetOCRBattleEnergy();
-            int max = GameDataManager.Instance.GetOCRBattleMaxEnergy();
-            energyText.text = $"{cur}/{max}";
-        }
+            energyText.text = $"{curEnergy}/{maxEnergy}";
+
+        UpdateRegenTimerTexts(lifeFull, energyFull);
     }
 
     void UpdateRegenTimerTexts(bool lifeFull, bool energyFull)

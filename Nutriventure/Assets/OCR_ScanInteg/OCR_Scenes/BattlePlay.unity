@@ -2250,6 +2250,8 @@ MonoBehaviour:
   pancreasSprite: {fileID: 21300000, guid: 74d7af3bfd49ccc468d4e485886d0ca7, type: 3}
   brainSprite: {fileID: 21300000, guid: 5655aa3f186584b4da552ffeed2dfa4c, type: 3}
   defaultSkillIcon: {fileID: 0}
+  healingFillSprite: {fileID: 21300000, guid: 17f659ee08f99d544a3df7e4d8998e22, type: 3}
+  normalFillSprite: {fileID: 21300000, guid: da72f25464794b94187e246bc34beade, type: 3}
 --- !u!1 &77915604
 GameObject:
   m_ObjectHideFlags: 0
@@ -15827,7 +15829,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60.000004
+  field of view: 34.7
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -15853,8 +15855,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 451682057}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.086725965, y: -0.3926707, z: 0.037225466, w: 0.91482383}
-  m_LocalPosition: {x: 119.32088, y: -4.511074, z: 308.40808}
+  m_LocalRotation: {x: -0.032011572, y: 0.36554548, z: -0.016957408, w: -0.9300883}
+  m_LocalPosition: {x: 9.4652, y: 1.62515, z: 45.5671}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -69004,7 +69006,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 14461337}
-  m_PathPosition: 27.5
+  m_PathPosition: 0
   m_PositionUnits: 1
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0
@@ -71590,7 +71592,7 @@ MonoBehaviour:
   sugariaStartPosition: 0
   preserviaStartPosition: 0
   battleCameraPosition: 0
-  catchEnerlingCanvas: {fileID: 424841631}
+  catchEnerlingCanvas: {fileID: 1256667830}
   enerlingInfoCanvas: {fileID: 1130397659}
   enerlingPickingCanvas: {fileID: 502827659}
   enerlingNameText: {fileID: 807018894}
