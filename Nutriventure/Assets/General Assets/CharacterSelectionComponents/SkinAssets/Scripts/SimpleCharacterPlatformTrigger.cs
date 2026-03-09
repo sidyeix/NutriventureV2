@@ -416,8 +416,11 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     {
         if (characterChangeCamera != null)
         {
+            // Ensure the camera is active and enabled so Cinemachine picks it up
+            characterChangeCamera.gameObject.SetActive(true);
+            characterChangeCamera.enabled = true;
             characterChangeCamera.Priority = 30;
-            Debug.Log("Character Change Camera priority set to 30");
+            Debug.Log("Character Change Camera activated and priority set to 30");
         }
     }
 
