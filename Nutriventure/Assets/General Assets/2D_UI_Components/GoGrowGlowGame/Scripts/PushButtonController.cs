@@ -11,8 +11,9 @@ public class PushButtonController : MonoBehaviour, IPointerDownHandler, IPointer
     public PushInteractionManager pushManager;
 
     [Header("Button Settings")]
+    [Tooltip("Match this to Sprint button's pressed color for uniformity")]
     public Color normalColor = Color.white;
-    public Color pushingColor = Color.green;
+    public Color pushingColor = new Color(0.78f, 0.78f, 0.78f, 1f);
     public Color disabledColor = Color.gray;
     public float buttonHoldThreshold = 0.1f;
 

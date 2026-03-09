@@ -12,7 +12,8 @@ public class PushController : MonoBehaviour
     [SerializeField] private GameObject pushButtonUI;
     [SerializeField] private Image buttonImage;
     [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color activeColor = Color.green;
+    [Tooltip("Match this to Sprint button's pressed color for uniformity")]
+    [SerializeField] private Color activeColor = new Color(0.78f, 0.78f, 0.78f, 1f);
 
     [Header("Animation")]
     [SerializeField] private string pushingBoolName = "isPushing";
