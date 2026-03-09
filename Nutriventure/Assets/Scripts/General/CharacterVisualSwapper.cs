@@ -20,6 +20,8 @@ public class CharacterVisualSwapper : MonoBehaviour
     private GameObject currentCharacterModel;
     private GameObject currentSkinModel;
     private Coroutine swapCoroutine;
+    private Coroutine lookAroundCoroutine;
+    private bool lookAroundSuppressed = false;
     private Renderer[] currentRenderers;
     private int currentCharacterID = -1;
     private int currentSkinID = -1;
@@ -66,6 +68,7 @@ public class CharacterVisualSwapper : MonoBehaviour
 
     private IEnumerator SwapCharacterAndTriggerLookAround(CharacterDatabase.CharacterData characterData)
     {
+        lookAroundSuppressed = false;
         Debug.Log($"SwapCharacterAndTriggerLookAround: {characterData.characterName}");
 
         // PHASE 1: HIDE CURRENT
@@ -328,6 +331,7 @@ public class CharacterVisualSwapper : MonoBehaviour
 
     private IEnumerator ApplySkinAndTriggerLookAround(CharacterDatabase.CharacterData characterData, CharacterDatabase.SkinData skinData)
     {
+        lookAroundSuppressed = false;
         Debug.Log($"Applying skin: {skinData.skinName}");
 
         // Hide current character
@@ -378,9 +382,17 @@ public class CharacterVisualSwapper : MonoBehaviour
     // Trigger LookAround animation
     public void TriggerLookAroundAnimation()
     {
+        if (lookAroundSuppressed)
+        {
+            Debug.Log("LookAround is suppressed, not triggering");
+            return;
+        }
+
         if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter) && playerAnimator.enabled)
         {
-            StartCoroutine(TriggerLookAroundSmoothly());
+            if (lookAroundCoroutine != null)
+                StopCoroutine(lookAroundCoroutine);
+            lookAroundCoroutine = StartCoroutine(TriggerLookAroundSmoothly());
         }
     }
 
@@ -394,6 +406,13 @@ public class CharacterVisualSwapper : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
 
+        if (lookAroundSuppressed)
+        {
+            Debug.Log("LookAround suppressed before trigger, aborting");
+            lookAroundCoroutine = null;
+            yield break;
+        }
+
         if (playerAnimator != null && playerAnimator.enabled)
         {
             // Reset animation state
@@ -406,22 +425,40 @@ public class CharacterVisualSwapper : MonoBehaviour
 
             yield return new WaitForEndOfFrame();
 
+            // Check again after yield in case suppression happened during the wait
+            if (lookAroundSuppressed)
+            {
+                Debug.Log("LookAround suppressed during trigger, aborting");
+                lookAroundCoroutine = null;
+                yield break;
+            }
+
             // Set LookAround parameter to true to trigger animation
             playerAnimator.SetBool(lookAroundParameter, true);
             playerAnimator.Update(0.1f);
 
             Debug.Log($"LookAround animation triggered! Parameter '{lookAroundParameter}' set to TRUE");
         }
+
+        lookAroundCoroutine = null;
     }
 
-    // Stop LookAround animation (set bool to false)
+    // Stop LookAround animation (set bool to false) and suppress any pending triggers
     public void StopLookAroundAnimation()
     {
+        lookAroundSuppressed = true;
+
+        if (lookAroundCoroutine != null)
+        {
+            StopCoroutine(lookAroundCoroutine);
+            lookAroundCoroutine = null;
+        }
+
         if (playerAnimator != null && !string.IsNullOrEmpty(lookAroundParameter))
         {
             playerAnimator.SetBool(lookAroundParameter, false);
             playerAnimator.Update(0f);
-            Debug.Log($"LookAround animation stopped! Parameter '{lookAroundParameter}' set to FALSE");
+            Debug.Log($"LookAround animation stopped and suppressed! Parameter '{lookAroundParameter}' set to FALSE");
         }
     }
 

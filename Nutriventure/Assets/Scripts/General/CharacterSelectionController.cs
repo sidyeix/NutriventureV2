@@ -256,6 +256,11 @@ public class CharacterSelectionController : MonoBehaviour
         // Revert to saved character/skin (discard any pending changes)
         RevertToSavedCharacter();
 
+        // Immediately suppress LookAround after revert to prevent the revert's
+        // swap coroutine from triggering LookAround during exit
+        if (characterVisualSwapper != null)
+            characterVisualSwapper.StopLookAroundAnimation();
+
         // Exit without saving
         StartCoroutine(ExitWithoutSaving());
     }
@@ -284,7 +289,12 @@ public class CharacterSelectionController : MonoBehaviour
         // Small delay to ensure camera switches
         yield return null;
 
-        if (playerArmatureAnimator != null)
+        // Stop LookAround and suppress any pending triggers from swap coroutines
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.StopLookAroundAnimation();
+        }
+        else if (playerArmatureAnimator != null)
         {
             playerArmatureAnimator.SetBool("LookAround", false);
         }
@@ -551,7 +561,12 @@ public class CharacterSelectionController : MonoBehaviour
         // Small delay to ensure camera switches
         yield return null;
 
-        if (playerArmatureAnimator != null)
+        // Stop LookAround and suppress any pending triggers from swap coroutines
+        if (characterVisualSwapper != null)
+        {
+            characterVisualSwapper.StopLookAroundAnimation();
+        }
+        else if (playerArmatureAnimator != null)
         {
             playerArmatureAnimator.SetBool("LookAround", false);
         }
@@ -577,6 +592,10 @@ public class CharacterSelectionController : MonoBehaviour
 
     private IEnumerator ExitCharacterSelectionRoutine()
     {
+        // Suppress any pending LookAround from the initial character load
+        if (characterVisualSwapper != null)
+            characterVisualSwapper.StopLookAroundAnimation();
+
         if (isInSkinSelection && skinSelectionCanvas != null && skinSelectionCanvas.gameObject.activeSelf)
         {
             HideSkinSelectionUI();
