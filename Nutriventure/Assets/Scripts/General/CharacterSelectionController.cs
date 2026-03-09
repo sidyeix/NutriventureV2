@@ -69,11 +69,15 @@ public class CharacterSelectionController : MonoBehaviour
         // Initialize camera priorities to 0
         if (characterChangeCamera != null)
         {
+            characterChangeCamera.gameObject.SetActive(true);
+            characterChangeCamera.enabled = true;
             characterChangeCamera.Priority = 0;
         }
 
         if (skinSelectionCamera != null)
         {
+            skinSelectionCamera.gameObject.SetActive(true);
+            skinSelectionCamera.enabled = true;
             skinSelectionCamera.Priority = 0;
         }
 
@@ -180,6 +184,15 @@ public class CharacterSelectionController : MonoBehaviour
 
         isInCharacterSelection = true;
         Debug.Log("CharacterSelectionController: Entering character selection mode");
+
+        // Ensure character change camera is active and has high priority
+        if (characterChangeCamera != null)
+        {
+            characterChangeCamera.gameObject.SetActive(true);
+            characterChangeCamera.enabled = true;
+            characterChangeCamera.Priority = 30;
+            Debug.Log("CharacterSelectionController: Character camera activated with priority 30");
+        }
 
         // Refresh the character panel data
         if (characterSelectionPanel != null)
@@ -439,11 +452,13 @@ public class CharacterSelectionController : MonoBehaviour
     {
         Debug.Log("Showing Skin Selection UI");
 
-        // Set skin camera priority to 30
+        // Ensure skin camera is active and set priority
         if (skinSelectionCamera != null)
         {
+            skinSelectionCamera.gameObject.SetActive(true);
+            skinSelectionCamera.enabled = true;
             skinSelectionCamera.Priority = 30;
-            Debug.Log("Skin camera priority set to 30");
+            Debug.Log("Skin camera activated with priority 30");
         }
 
         // Lower character camera priority
@@ -472,15 +487,18 @@ public class CharacterSelectionController : MonoBehaviour
     {
         Debug.Log("Hiding Skin Selection UI");
 
-        // Reset camera priorities
+        // Reset skin camera priority
         if (skinSelectionCamera != null)
         {
             skinSelectionCamera.Priority = 0;
             Debug.Log("Skin camera priority set to 0");
         }
 
+        // Restore character change camera
         if (characterChangeCamera != null)
         {
+            characterChangeCamera.gameObject.SetActive(true);
+            characterChangeCamera.enabled = true;
             characterChangeCamera.Priority = 30;
         }
 
