@@ -115,6 +115,9 @@ public class GameData
     public int ocrLivesRegening = 0;             // How many lives are currently regenerating
     public int ocrEnergyRegening = 0;            // How many energy units are currently regenerating
 
+    // Kingdom Instruction Tracking (first-visit timeline played)
+    public bool hasPlayedK1Instruction = false;
+
     // Enerling catch counts (enerlingName -> catchCount)
     [System.Serializable]
     public class StringIntDictionary3 : SerializableDictionary<string, int> { }

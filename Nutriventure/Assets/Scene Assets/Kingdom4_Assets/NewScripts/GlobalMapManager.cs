@@ -94,9 +94,9 @@ public class GlobalMapManager : MonoBehaviour
             return;
 
         kingdom1Button.interactable = true;
-        kingdom2Button.interactable = GameDataManager.Instance.HasSugariaKey();
-        kingdom3Button.interactable = GameDataManager.Instance.HasPreserviaKey();
-        kingdom4Button.interactable = GameDataManager.Instance.HasAllerthiaKey();
+        kingdom2Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasSugariaKey()
+        kingdom3Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasPreserviaKey()
+        kingdom4Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasAllerthiaKey()
 
         Debug.Log($"Kingdom Buttons Updated - Kingdom2 (Sugaria): {kingdom2Button.interactable}");
     }
