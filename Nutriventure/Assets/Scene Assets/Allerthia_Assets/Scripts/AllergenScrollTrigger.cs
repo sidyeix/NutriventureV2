@@ -8,19 +8,19 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class AllergenScrollTrigger : MonoBehaviour
 {
-    void OnTriggerEnter(Collider other)
-    {
-        if (!other.CompareTag("Player")) return;
+  void OnTriggerEnter(Collider other)
+  {
+    if (!other.CompareTag("Player")) return;
 
-        if (AllergenGameManager.Instance != null)
-            AllergenGameManager.Instance.ShowGrabCanvas();
-    }
+    if (AllergenGameManager.Instance != null)
+      AllergenGameManager.Instance.ShowGrabCanvas();
+  }
 
-    void OnTriggerExit(Collider other)
-    {
-        if (!other.CompareTag("Player")) return;
+  void OnTriggerExit(Collider other)
+  {
+    if (!other.CompareTag("Player")) return;
 
-        if (AllergenGameManager.Instance != null)
-            AllergenGameManager.Instance.HideGrabCanvas();
-    }
+    if (AllergenGameManager.Instance != null)
+      AllergenGameManager.Instance.HideGrabCanvas();
+  }
 }
