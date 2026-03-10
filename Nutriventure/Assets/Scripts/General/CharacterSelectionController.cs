@@ -10,6 +10,7 @@ public class CharacterSelectionController : MonoBehaviour
     [Header("Camera References")]
     public CinemachineVirtualCamera characterChangeCamera;
     public CinemachineVirtualCamera skinSelectionCamera;
+    public CinemachineVirtualCamera playerFollowCamera;
 
     [Header("UI References")]
     public CanvasGroup characterSelectionCanvas;
@@ -61,6 +62,7 @@ public class CharacterSelectionController : MonoBehaviour
     private int lastSavedSkinID = -1;
     private GameDataManager gameDataManager;
     private int previousCharacterID = -1; // Track previous character for reverting
+    private int savedPlayerCameraPriority = 10; // Store original player camera priority
 
     void Start()
     {
@@ -184,6 +186,14 @@ public class CharacterSelectionController : MonoBehaviour
 
         isInCharacterSelection = true;
         Debug.Log("CharacterSelectionController: Entering character selection mode");
+
+        // Lower the player follow camera priority so it doesn't compete
+        if (playerFollowCamera != null)
+        {
+            savedPlayerCameraPriority = playerFollowCamera.Priority;
+            playerFollowCamera.Priority = 0;
+            Debug.Log("CharacterSelectionController: Player follow camera priority lowered to 0");
+        }
 
         // Ensure character change camera is active and has high priority
         if (characterChangeCamera != null)
@@ -632,11 +642,18 @@ public class CharacterSelectionController : MonoBehaviour
         isInCharacterSelection = false;
         isInSkinSelection = false;
 
-        // Ensure all cameras are set to 0
+        // Ensure all selection cameras are set to 0
         if (characterChangeCamera != null)
             characterChangeCamera.Priority = 0;
         if (skinSelectionCamera != null)
             skinSelectionCamera.Priority = 0;
+
+        // Restore the player follow camera priority
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = savedPlayerCameraPriority;
+            Debug.Log($"Player follow camera priority restored to {savedPlayerCameraPriority}");
+        }
 
         Debug.Log("Character selection complete");
     }

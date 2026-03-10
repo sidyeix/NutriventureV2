@@ -342,20 +342,60 @@ public class CharacterSelectionManager : MonoBehaviour
     {
         if (GameDataManager.Instance == null) return;
 
+        var gameData = GameDataManager.Instance.CurrentGameData;
+
         // Save character selection
-        GameDataManager.Instance.CurrentGameData.selectedCharacterID = selectedCharacterID;
+        gameData.selectedCharacterID = selectedCharacterID;
 
         // Unlock character in GameData if not already
-        if (!GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs.Contains(selectedCharacterID))
+        if (!gameData.unlockedCharacterIDs.Contains(selectedCharacterID))
         {
-            GameDataManager.Instance.CurrentGameData.unlockedCharacterIDs.Add(selectedCharacterID);
+            gameData.unlockedCharacterIDs.Add(selectedCharacterID);
         }
 
         // Save nickname
         if (nicknameInputField != null)
         {
             string nickname = nicknameInputField.text.Trim();
-            GameDataManager.Instance.CurrentGameData.playerName = nickname;
+            gameData.playerName = nickname;
+        }
+
+        // Equip the first default-unlocked icon from the database
+        var iconDb = GameDataManager.Instance.iconDatabase;
+        if (iconDb != null)
+        {
+            foreach (var icon in iconDb.icons)
+            {
+                if (icon.unlockedByDefault)
+                {
+                    gameData.equippedIconId = icon.id;
+                    if (gameData.unlockedIconIds == null)
+                        gameData.unlockedIconIds = new List<string>();
+                    if (!gameData.unlockedIconIds.Contains(icon.id))
+                        gameData.unlockedIconIds.Add(icon.id);
+                    Debug.Log($"Equipped default icon: {icon.id} ({icon.iconName})");
+                    break;
+                }
+            }
+        }
+
+        // Equip the first default-unlocked frame from the database
+        var frameDb = GameDataManager.Instance.frameDatabase;
+        if (frameDb != null)
+        {
+            foreach (var frame in frameDb.frames)
+            {
+                if (frame.unlockedByDefault)
+                {
+                    gameData.equippedFrameId = frame.id;
+                    if (gameData.unlockedFrameIds == null)
+                        gameData.unlockedFrameIds = new List<string>();
+                    if (!gameData.unlockedFrameIds.Contains(frame.id))
+                        gameData.unlockedFrameIds.Add(frame.id);
+                    Debug.Log($"Equipped default frame: {frame.id} ({frame.frameName})");
+                    break;
+                }
+            }
         }
 
         // Save to disk
