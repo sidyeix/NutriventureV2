@@ -24522,7 +24522,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &339275595
 RectTransform:
   m_ObjectHideFlags: 0
@@ -62531,7 +62531,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &825729223
 RectTransform:
   m_ObjectHideFlags: 0
@@ -140625,6 +140625,7 @@ MonoBehaviour:
   kingdom3Scene: 5_Kingdom3
   kingdom4Scene: 6_Kingdom4
   ocrScannerObject: {fileID: 1404928592}
+  bookOfEnerlingObject: {fileID: 0}
 --- !u!4 &1814711581
 Transform:
   m_ObjectHideFlags: 0
