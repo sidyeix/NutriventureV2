@@ -24,6 +24,9 @@ public class GameData
     public bool allerthiaKeyCollected = false;
     public bool ocrScannerKeyCollected = false;
 
+    // Allerthia Game State
+    public bool allerthiaScrollGrabbed = false;
+
     // Character System
     public int selectedCharacterID = 0;
     public List<int> unlockedCharacterIDs = new List<int>();
