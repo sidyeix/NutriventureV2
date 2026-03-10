@@ -26,6 +26,7 @@ public class GameData
 
     // Allerthia Game State
     public bool allerthiaScrollGrabbed = false;
+    public List<string> collectedAllerthiaProducts = new List<string>();
 
     // Character System
     public int selectedCharacterID = 0;
@@ -94,6 +95,7 @@ public class GameData
     // Settings
     public float musicVolume = 1f;
     public float soundVolume = 1f;
+    public float lookSensitivity = 0.2f;
     public string language = "English";
 
     // Profile Icon System
@@ -147,6 +149,10 @@ public class GameData
         nutriKingdomKeyCollected = true;
         allerthiaKeyCollected = false;
         ocrScannerKeyCollected = false;
+
+        // Allerthia products
+        allerthiaScrollGrabbed = false;
+        collectedAllerthiaProducts = new List<string>();
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -532,6 +538,16 @@ public class GameData
     public bool HasAllerthiaKey() => allerthiaKeyCollected;
     public void CollectAllerthiaKey() => allerthiaKeyCollected = true;
     public void ResetAllerthiaKey() => allerthiaKeyCollected = false;
+
+    // Allerthia Product Collection Methods
+    public bool IsAllerthiaProductCollected(string productID) => collectedAllerthiaProducts.Contains(productID);
+    public void CollectAllerthiaProduct(string productID)
+    {
+        if (!collectedAllerthiaProducts.Contains(productID))
+            collectedAllerthiaProducts.Add(productID);
+    }
+    public int GetCollectedAllerthiaProductCount() => collectedAllerthiaProducts.Count;
+    public void ResetAllerthiaProducts() => collectedAllerthiaProducts.Clear();
 
     // OCR SCANNER KEY METHODS
     public bool HasOCRScannerKey() => ocrScannerKeyCollected;

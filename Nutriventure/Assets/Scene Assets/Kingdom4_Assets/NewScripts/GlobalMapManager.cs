@@ -25,6 +25,9 @@ public class GlobalMapManager : MonoBehaviour
     [Header("OCR Scanner Object")]
     [SerializeField] private GameObject ocrScannerObject;
 
+    [Header("Book of Enerling")]
+    [SerializeField] private GameObject bookOfEnerlingObject;
+
     public void Start()
     {
         if (loadingPanel != null)
@@ -34,6 +37,7 @@ public class GlobalMapManager : MonoBehaviour
         UpdateKingdomButtons();
 
         UpdateOCRScannerObjectVisibility();
+        UpdateBookOfEnerlingVisibility();
     }
 
     public void UpdateOCRScannerObjectVisibility()
@@ -46,6 +50,15 @@ public class GlobalMapManager : MonoBehaviour
 
         // Scanning is always available regardless of kingdom progress
         ocrScannerObject.SetActive(true);
+    }
+
+    public void UpdateBookOfEnerlingVisibility()
+    {
+        if (bookOfEnerlingObject == null)
+            return;
+
+        // Book of Enerling is always active during playtime
+        bookOfEnerlingObject.SetActive(true);
     }
 
     public void OnEnable()
@@ -72,6 +85,7 @@ public class GlobalMapManager : MonoBehaviour
     {
         UpdateKingdomButtons();
         UpdateOCRScannerObjectVisibility();
+        UpdateBookOfEnerlingVisibility();
     }
 
     void SetupButtons()
@@ -93,12 +107,12 @@ public class GlobalMapManager : MonoBehaviour
         if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
             return;
 
-        kingdom1Button.interactable = true;
-        kingdom2Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasSugariaKey()
-        kingdom3Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasPreserviaKey()
-        kingdom4Button.interactable = true; // TODO: restore to GameDataManager.Instance.HasAllerthiaKey()
+        kingdom1Button.interactable = true; // Kingdom 1 is always accessible
+        kingdom2Button.interactable = GameDataManager.Instance.HasSugariaKey();
+        kingdom3Button.interactable = GameDataManager.Instance.HasPreserviaKey();
+        kingdom4Button.interactable = GameDataManager.Instance.HasAllerthiaKey();
 
-        Debug.Log($"Kingdom Buttons Updated - Kingdom2 (Sugaria): {kingdom2Button.interactable}");
+        Debug.Log($"Kingdom Buttons Updated - K1: true, K2 (Sugaria): {kingdom2Button.interactable}, K3 (Preservia): {kingdom3Button.interactable}, K4 (Allerthia): {kingdom4Button.interactable}");
     }
 
     public void TryLoad(string sceneName, bool canLoad)

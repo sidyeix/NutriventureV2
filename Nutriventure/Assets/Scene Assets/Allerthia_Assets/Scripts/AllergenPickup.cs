@@ -8,31 +8,31 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class AllergenPickup : MonoBehaviour
 {
-    [Header("Allergen Identity")]
-    [Tooltip("Set automatically by AllergenGameManager.SpawnAllergens, or manually if pre-placed")]
-    [SerializeField] private string allergenID;
+  [Header("Allergen Identity")]
+  [Tooltip("Set automatically by AllergenGameManager.SpawnAllergens, or manually if pre-placed")]
+  [SerializeField] private string allergenID;
 
-    public string AllergenID => allergenID;
+  public string AllergenID => allergenID;
 
-    /// <summary>Called by AllergenGameManager after spawning to set the ID.</summary>
-    public void Initialize(string id)
-    {
-        allergenID = id;
-    }
+  /// <summary>Called by AllergenGameManager after spawning to set the ID.</summary>
+  public void Initialize(string id)
+  {
+    allergenID = id;
+  }
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (!other.CompareTag("Player")) return;
+  void OnTriggerEnter(Collider other)
+  {
+    if (!other.CompareTag("Player")) return;
 
-        if (AllergenGameManager.Instance != null)
-            AllergenGameManager.Instance.OnPlayerNearAllergen(this);
-    }
+    if (AllergenGameManager.Instance != null)
+      AllergenGameManager.Instance.OnPlayerNearAllergen(this);
+  }
 
-    void OnTriggerExit(Collider other)
-    {
-        if (!other.CompareTag("Player")) return;
+  void OnTriggerExit(Collider other)
+  {
+    if (!other.CompareTag("Player")) return;
 
-        if (AllergenGameManager.Instance != null)
-            AllergenGameManager.Instance.OnPlayerLeftAllergen(this);
-    }
+    if (AllergenGameManager.Instance != null)
+      AllergenGameManager.Instance.OnPlayerLeftAllergen(this);
+  }
 }

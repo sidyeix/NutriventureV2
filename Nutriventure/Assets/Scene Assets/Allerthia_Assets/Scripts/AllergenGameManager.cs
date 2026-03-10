@@ -22,7 +22,7 @@ public class AllergenGameManager : MonoBehaviour
     }
 
     [Header("Database")]
-    public AllergenDatabase allergenDatabase;
+    public AllergenProductData allergenProductData;
 
     [Header("Game State")]
     [SerializeField] private GameState currentState = GameState.Idle;
@@ -33,9 +33,7 @@ public class AllergenGameManager : MonoBehaviour
     [Header("Scroll Grab")]
     [Tooltip("The Allerthia scroll 3D object in the scene")]
     public GameObject allerthiaScrollObject;
-    [Tooltip("Canvas containing the Grab button (shown when player enters collider)")]
-    public GameObject grabCanvas;
-    [Tooltip("The Grab button inside grabCanvas")]
+    [Tooltip("The Grab button (shown/hidden when player enters/exits scroll collider)")]
     public Button grabButton;
 
     // ─── INSTRUCTION / MECHANICS BOARD ─────────────────────────
@@ -94,15 +92,14 @@ public class AllergenGameManager : MonoBehaviour
     public Image allergenInfoImage;
     public TMP_Text allergenInfoName;
     public TMP_Text allergenInfoDescription;
-    public TMP_Text allergenInfoFact;
-    public TMP_Text allergenInfoFoodExamples;
+    public TMP_Text allergenInfoLabelTip;
+    public TMP_Text allergenInfoFunFact;
+    public TMP_Text allergenInfoAllergenWarning;
     public Button allergenInfoCloseButton;
 
     // ─── PLAYER GRAB BUTTON (for allergen pickups) ─────────────
     [Header("Player Allergen Grab")]
-    [Tooltip("Canvas with the grab button shown when near an allergen")]
-    public GameObject allergenGrabCanvas;
-    [Tooltip("The grab button inside allergenGrabCanvas")]
+    [Tooltip("The grab button shown when near an allergen")]
     public Button allergenGrabButton;
 
     // ─── GAME COMPLETE ─────────────────────────────────────────
@@ -131,13 +128,20 @@ public class AllergenGameManager : MonoBehaviour
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             scrollAlreadyGrabbed = GameDataManager.Instance.CurrentGameData.allerthiaScrollGrabbed;
+
+            // Restore previously collected products
+            var savedProducts = GameDataManager.Instance.CurrentGameData.collectedAllerthiaProducts;
+            if (savedProducts != null && savedProducts.Count > 0)
+            {
+                collectedAllergenIDs = new List<string>(savedProducts);
+            }
         }
 
         // Initial UI state
-        SetCanvasActive(grabCanvas, false);
+        SetButtonActive(grabButton, false);
         SetCanvasActive(instructionPanel, false);
         SetCanvasActive(allergenInfoPanel, false);
-        SetCanvasActive(allergenGrabCanvas, false);
+        SetButtonActive(allergenGrabButton, false);
         SetCanvasActive(gameCompletePanel, false);
 
         if (readyButton != null) readyButton.gameObject.SetActive(false);
@@ -154,6 +158,12 @@ public class AllergenGameManager : MonoBehaviour
         UpdateCollectionUI();
         UpdateScoreUI();
         UpdateTimerUI();
+
+        // If scroll was already grabbed in a prior session, jump straight to playing
+        if (scrollAlreadyGrabbed)
+        {
+            StartGame();
+        }
     }
 
     void Update()
@@ -221,13 +231,13 @@ public class AllergenGameManager : MonoBehaviour
     public void ShowGrabCanvas()
     {
         if (scrollAlreadyGrabbed || currentState != GameState.Idle) return;
-        SetCanvasActive(grabCanvas, true);
+        SetButtonActive(grabButton, true);
     }
 
     /// <summary>Called by the collider trigger when player exits the scroll zone.</summary>
     public void HideGrabCanvas()
     {
-        SetCanvasActive(grabCanvas, false);
+        SetButtonActive(grabButton, false);
     }
 
     private void OnGrabScrollClicked()
@@ -244,9 +254,9 @@ public class AllergenGameManager : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
         }
 
-        // Hide scroll object and grab canvas
+        // Hide scroll object and grab button
         if (allerthiaScrollObject != null) allerthiaScrollObject.SetActive(false);
-        SetCanvasActive(grabCanvas, false);
+        SetButtonActive(grabButton, false);
 
         // Show instruction panel with Ready button visible, Close button hidden
         ShowInstructionForFirstTime();
@@ -338,13 +348,12 @@ public class AllergenGameManager : MonoBehaviour
         elapsedTime = 0f;
         isTimerRunning = true;
 
-        // Reset score
+        // Reset session score (collection persists from GameData)
         currentScore = 0;
-        collectedAllergenIDs.Clear();
         UpdateScoreUI();
         UpdateCollectionUI();
 
-        // Spawn allergens at spawn points
+        // Spawn allergens at spawn points (already-collected ones are skipped)
         SpawnAllergens();
     }
 
@@ -354,9 +363,9 @@ public class AllergenGameManager : MonoBehaviour
 
     private void SpawnAllergens()
     {
-        if (allergenDatabase == null || allergenDatabase.allergens.Count == 0)
+        if (allergenProductData == null || allergenProductData.allProducts.Length == 0)
         {
-            Debug.LogError("AllergenGameManager: No allergen database or no allergens defined!");
+            Debug.LogError("AllergenGameManager: No allergen product data or no products defined!");
             return;
         }
 
@@ -373,35 +382,42 @@ public class AllergenGameManager : MonoBehaviour
         List<Transform> shuffledPoints = new List<Transform>(spawnPoints);
         ShuffleList(shuffledPoints);
 
-        // Spawn one of each allergen at random spawn points
-        int allergenCount = allergenDatabase.allergens.Count;
+        // Spawn one of each product at random spawn points
+        int productCount = allergenProductData.allProducts.Length;
         int pointCount = shuffledPoints.Count;
 
-        for (int i = 0; i < allergenCount; i++)
+        for (int i = 0; i < productCount; i++)
         {
-            var allergenData = allergenDatabase.allergens[i];
+            var productInfo = allergenProductData.allProducts[i];
 
-            if (allergenData.allergenPrefab == null)
+            // Skip already collected products
+            if (collectedAllergenIDs.Contains(productInfo.productID))
             {
-                Debug.LogWarning($"AllergenGameManager: No prefab for allergen '{allergenData.allergenName}', skipping");
+                Debug.Log($"AllergenGameManager: Product '{productInfo.displayName}' already collected, skipping");
                 continue;
             }
 
-            // Wrap around spawn points if there are more allergens than points
+            if (productInfo.productPrefab == null)
+            {
+                Debug.LogWarning($"AllergenGameManager: No prefab for product '{productInfo.displayName}', skipping");
+                continue;
+            }
+
+            // Wrap around spawn points if there are more products than points
             Transform spawnPoint = shuffledPoints[i % pointCount];
             Vector3 spawnPos = spawnPoint.position + Vector3.up * spawnHeightOffset;
 
-            GameObject spawned = Instantiate(allergenData.allergenPrefab, spawnPos, spawnPoint.rotation);
+            GameObject spawned = Instantiate(productInfo.productPrefab, spawnPos, spawnPoint.rotation);
 
             // Attach or configure the AllergenPickup component
             AllergenPickup pickup = spawned.GetComponent<AllergenPickup>();
             if (pickup == null)
                 pickup = spawned.AddComponent<AllergenPickup>();
 
-            pickup.Initialize(allergenData.allergenID);
+            pickup.Initialize(productInfo.productID);
 
             spawnedAllergens.Add(spawned);
-            Debug.Log($"AllergenGameManager: Spawned '{allergenData.allergenName}' at {spawnPoint.name}");
+            Debug.Log($"AllergenGameManager: Spawned '{productInfo.displayName}' at {spawnPoint.name}");
         }
     }
 
@@ -423,7 +439,7 @@ public class AllergenGameManager : MonoBehaviour
     {
         if (currentState != GameState.Playing) return;
         currentNearbyAllergen = pickup;
-        SetCanvasActive(allergenGrabCanvas, true);
+        SetButtonActive(allergenGrabButton, true);
     }
 
     /// <summary>Called by AllergenPickup when the player exits its trigger zone.</summary>
@@ -432,7 +448,7 @@ public class AllergenGameManager : MonoBehaviour
         if (currentNearbyAllergen == pickup)
         {
             currentNearbyAllergen = null;
-            SetCanvasActive(allergenGrabCanvas, false);
+            SetButtonActive(allergenGrabButton, false);
         }
     }
 
@@ -454,13 +470,20 @@ public class AllergenGameManager : MonoBehaviour
         // Add to collected
         collectedAllergenIDs.Add(allergenID);
 
+        // Save to GameData
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            GameDataManager.Instance.CurrentGameData.CollectAllerthiaProduct(allergenID);
+            GameDataManager.Instance.SaveGameData();
+        }
+
         // Add score
         currentScore += pointsPerAllergen;
 
         // Destroy the pickup object
         GameObject pickupObj = currentNearbyAllergen.gameObject;
         currentNearbyAllergen = null;
-        SetCanvasActive(allergenGrabCanvas, false);
+        SetButtonActive(allergenGrabButton, false);
         Destroy(pickupObj);
 
         // Show allergen info
@@ -471,7 +494,7 @@ public class AllergenGameManager : MonoBehaviour
         UpdateCollectionUI();
 
         // Check if all collected
-        if (collectedAllergenIDs.Count >= allergenDatabase.TotalAllergenCount)
+        if (allergenProductData != null && collectedAllergenIDs.Count >= allergenProductData.allProducts.Length)
         {
             OnAllAllergensCollected();
         }
@@ -483,14 +506,21 @@ public class AllergenGameManager : MonoBehaviour
 
     private void ShowAllergenInfo(string allergenID)
     {
-        var data = allergenDatabase.GetAllergenByID(allergenID);
+        if (allergenProductData == null) return;
+        var data = allergenProductData.GetProductInfo(allergenID);
         if (data == null) return;
 
-        if (allergenInfoImage != null) allergenInfoImage.sprite = data.allergenImage;
-        if (allergenInfoName != null) allergenInfoName.text = data.allergenName;
+        if (allergenInfoImage != null) allergenInfoImage.sprite = data.productIcon;
+        if (allergenInfoName != null) allergenInfoName.text = data.displayName;
         if (allergenInfoDescription != null) allergenInfoDescription.text = data.description;
-        if (allergenInfoFact != null) allergenInfoFact.text = data.fact;
-        if (allergenInfoFoodExamples != null) allergenInfoFoodExamples.text = data.foodExamples;
+        if (allergenInfoLabelTip != null) allergenInfoLabelTip.text = data.labelTip;
+        if (allergenInfoFunFact != null) allergenInfoFunFact.text = data.funFact;
+        if (allergenInfoAllergenWarning != null)
+        {
+            allergenInfoAllergenWarning.text = data.containsAllergen
+                ? data.allergenWarning
+                : "This food does not contain any of the Big Nine Allergens.";
+        }
 
         SetCanvasActive(allergenInfoPanel, true);
 
@@ -532,7 +562,7 @@ public class AllergenGameManager : MonoBehaviour
 
         SetCanvasActive(gameCompletePanel, true);
 
-        Debug.Log($"AllergenGameManager: Game finished! Score: {currentScore}, Collected: {collectedAllergenIDs.Count}/{allergenDatabase.TotalAllergenCount}, Time: {FormatTime(elapsedTime)}");
+        Debug.Log($"AllergenGameManager: Game finished! Score: {currentScore}, Collected: {collectedAllergenIDs.Count}/{(allergenProductData != null ? allergenProductData.allProducts.Length : 0)}, Time: {FormatTime(elapsedTime)}");
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -549,7 +579,7 @@ public class AllergenGameManager : MonoBehaviour
     {
         if (collectionCountText != null)
         {
-            int total = allergenDatabase != null ? allergenDatabase.TotalAllergenCount : 0;
+            int total = allergenProductData != null ? allergenProductData.allProducts.Length : 0;
             collectionCountText.text = $"{collectedAllergenIDs.Count}/{total}";
         }
     }
@@ -574,6 +604,11 @@ public class AllergenGameManager : MonoBehaviour
     private void SetCanvasActive(GameObject canvas, bool active)
     {
         if (canvas != null) canvas.SetActive(active);
+    }
+
+    private void SetButtonActive(Button button, bool active)
+    {
+        if (button != null) button.gameObject.SetActive(active);
     }
 
     private void ShuffleList<T>(List<T> list)

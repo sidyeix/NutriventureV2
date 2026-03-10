@@ -87,6 +87,7 @@ public class ProfileSettings : MonoBehaviour
     public GameObject settingsPanel;
     public Slider musicSlider;
     public Slider sfxSlider;
+    public Slider sensitivitySlider;
     public List<AudioSource> backgroundMusicSources = new List<AudioSource>();
     public List<AudioSource> soundEffectSources = new List<AudioSource>();
 
@@ -427,10 +428,21 @@ public class ProfileSettings : MonoBehaviour
 
             lastMusicVolume = gameData.musicVolume;
             lastSFXVolume = gameData.soundVolume;
+
+            // Sensitivity slider: range 0.1 to 2.0, stored as raw float
+            if (sensitivitySlider != null)
+            {
+                sensitivitySlider.minValue = 0.1f;
+                sensitivitySlider.maxValue = 2f;
+                sensitivitySlider.value = gameData.lookSensitivity;
+            }
         }
 
         musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
         sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
+
+        if (sensitivitySlider != null)
+            sensitivitySlider.onValueChanged.AddListener(OnSensitivitySliderChanged);
 
         UpdateMuteButtonTexts();
 
@@ -872,6 +884,9 @@ public class ProfileSettings : MonoBehaviour
 
             lastMusicVolume = gameData.musicVolume;
             lastSFXVolume = gameData.soundVolume;
+
+            if (sensitivitySlider != null)
+                sensitivitySlider.value = gameData.lookSensitivity;
         }
 
         isBGMusicMuted = false;
@@ -1443,6 +1458,22 @@ public class ProfileSettings : MonoBehaviour
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.CurrentGameData.soundVolume = volume;
+            GameDataManager.Instance.SaveGameData();
+        }
+    }
+
+    private void OnSensitivitySliderChanged(float value)
+    {
+        // Update all active UI_SwipeLook instances in the scene
+        foreach (var swipeLook in FindObjectsByType<UI_SwipeLook>(FindObjectsSortMode.None))
+        {
+            swipeLook.SetSensitivity(value);
+        }
+
+        // Save to GameData
+        if (GameDataManager.Instance != null)
+        {
+            GameDataManager.Instance.CurrentGameData.lookSensitivity = value;
             GameDataManager.Instance.SaveGameData();
         }
     }
