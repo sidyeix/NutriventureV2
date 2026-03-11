@@ -71,13 +71,10 @@ public class AllergenGameManager : MonoBehaviour
     public TMP_Text collectionCountText;
     private List<string> collectedAllergenIDs = new List<string>();
 
-    // ─── SPAWNING ──────────────────────────────────────────────
-    [Header("Spawning")]
-    [Tooltip("Transform points where allergen prefabs can spawn")]
-    public List<Transform> spawnPoints = new List<Transform>();
-    [Tooltip("Height offset above spawn point")]
-    public float spawnHeightOffset = 0.5f;
-    private List<GameObject> spawnedAllergens = new List<GameObject>();
+    // ─── SPAWN MANAGER ────────────────────────────────────────
+    [Header("Spawn Manager")]
+    [Tooltip("Reference to the AllergenSpawnManager that handles prefab spawning")]
+    public AllergenSpawnManager allergenSpawnManager;
 
     // ─── GAME START/END OBJECT MANAGEMENT ──────────────────────
     [Header("Objects to Disable When Game Starts")]
@@ -353,81 +350,15 @@ public class AllergenGameManager : MonoBehaviour
         UpdateScoreUI();
         UpdateCollectionUI();
 
-        // Spawn allergens at spawn points (already-collected ones are skipped)
-        SpawnAllergens();
-    }
-
-    // ══════════════════════════════════════════════════════════════
-    //  SPAWNING
-    // ══════════════════════════════════════════════════════════════
-
-    private void SpawnAllergens()
-    {
-        if (allergenProductData == null || allergenProductData.allProducts.Length == 0)
+        // Spawn allergens via the spawn manager
+        if (allergenSpawnManager != null)
         {
-            Debug.LogError("AllergenGameManager: No allergen product data or no products defined!");
-            return;
+            allergenSpawnManager.SpawnAllergens();
         }
-
-        if (spawnPoints.Count == 0)
+        else
         {
-            Debug.LogError("AllergenGameManager: No spawn points assigned!");
-            return;
+            Debug.LogWarning("AllergenGameManager: No AllergenSpawnManager assigned!");
         }
-
-        // Clear any previously spawned allergens
-        ClearSpawnedAllergens();
-
-        // Build a shuffled list of spawn points
-        List<Transform> shuffledPoints = new List<Transform>(spawnPoints);
-        ShuffleList(shuffledPoints);
-
-        // Spawn one of each product at random spawn points
-        int productCount = allergenProductData.allProducts.Length;
-        int pointCount = shuffledPoints.Count;
-
-        for (int i = 0; i < productCount; i++)
-        {
-            var productInfo = allergenProductData.allProducts[i];
-
-            // Skip already collected products
-            if (collectedAllergenIDs.Contains(productInfo.productID))
-            {
-                Debug.Log($"AllergenGameManager: Product '{productInfo.displayName}' already collected, skipping");
-                continue;
-            }
-
-            if (productInfo.productPrefab == null)
-            {
-                Debug.LogWarning($"AllergenGameManager: No prefab for product '{productInfo.displayName}', skipping");
-                continue;
-            }
-
-            // Wrap around spawn points if there are more products than points
-            Transform spawnPoint = shuffledPoints[i % pointCount];
-            Vector3 spawnPos = spawnPoint.position + Vector3.up * spawnHeightOffset;
-
-            GameObject spawned = Instantiate(productInfo.productPrefab, spawnPos, spawnPoint.rotation);
-
-            // Attach or configure the AllergenPickup component
-            AllergenPickup pickup = spawned.GetComponent<AllergenPickup>();
-            if (pickup == null)
-                pickup = spawned.AddComponent<AllergenPickup>();
-
-            pickup.Initialize(productInfo.productID);
-
-            spawnedAllergens.Add(spawned);
-            Debug.Log($"AllergenGameManager: Spawned '{productInfo.displayName}' at {spawnPoint.name}");
-        }
-    }
-
-    private void ClearSpawnedAllergens()
-    {
-        foreach (var obj in spawnedAllergens)
-        {
-            if (obj != null) Destroy(obj);
-        }
-        spawnedAllergens.Clear();
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -609,17 +540,6 @@ public class AllergenGameManager : MonoBehaviour
     private void SetButtonActive(Button button, bool active)
     {
         if (button != null) button.gameObject.SetActive(active);
-    }
-
-    private void ShuffleList<T>(List<T> list)
-    {
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            T temp = list[i];
-            list[i] = list[j];
-            list[j] = temp;
-        }
     }
 
     // ══════════════════════════════════════════════════════════════

@@ -18,8 +18,10 @@ public class TorchMinigame : MonoBehaviour
 {
     [Header("Torch Components")]
     [SerializeField] private CinemachineVirtualCamera torchVirtualCamera;
+    [SerializeField] private CinemachineVirtualCamera playerFollowCamera;
     [SerializeField] private int activeCameraPriority = 30;
     [SerializeField] private int inactiveCameraPriority = 0;
+    [SerializeField] private int followCameraDefaultPriority = 20;
     [SerializeField] private GameObject fireObject;
     [SerializeField] private GameObject wrongFlameObject;
     [SerializeField] private Transform flameFoodSpawn;
@@ -358,6 +360,9 @@ public class TorchMinigame : MonoBehaviour
         // Switch camera
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = activeCameraPriority;
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = inactiveCameraPriority;
 
         // Hide UI elements
         foreach (GameObject uiElement in uiElementsToDisable)
@@ -922,6 +927,9 @@ public class TorchMinigame : MonoBehaviour
 
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = inactiveCameraPriority;
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = followCameraDefaultPriority;
 
         foreach (GameObject button in currentButtons)
             Destroy(button);
