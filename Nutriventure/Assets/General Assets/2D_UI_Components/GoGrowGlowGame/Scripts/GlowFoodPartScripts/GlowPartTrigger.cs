@@ -18,7 +18,9 @@ public class GlowPartTrigger : MonoBehaviour
 
         if (glowPartManager == null)
         {
+            #if UNITY_EDITOR
             Debug.LogError($"GlowPartTrigger on {gameObject.name}: No GlowPartManager found!");
+            #endif
         }
     }
 
@@ -26,7 +28,9 @@ public class GlowPartTrigger : MonoBehaviour
     {
         if (!hasBeenTriggered && other.CompareTag("Player"))
         {
+            #if UNITY_EDITOR
             Debug.Log("Player entered Glow Part trigger");
+            #endif
 
             hasBeenTriggered = true;
 
@@ -37,7 +41,9 @@ public class GlowPartTrigger : MonoBehaviour
             }
             else
             {
+                #if UNITY_EDITOR
                 Debug.LogError("GlowPartManager not found!");
+                #endif
             }
 
             // Disable trigger if configured
@@ -90,6 +96,8 @@ public class GlowPartTrigger : MonoBehaviour
             collider.enabled = true;
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"GlowPartTrigger {gameObject.name} reset");
+        #endif
     }
 }

@@ -35,7 +35,7 @@ public class DelayedButtonEnable : MonoBehaviour
 
   private IEnumerator EnableAfterDelay()
   {
-    yield return new WaitForSecondsRealtime(delay);
+    yield return CoroutineYieldCache.WaitForSecondsRealtime(delay);
     if (button != null)
       button.interactable = true;
   }

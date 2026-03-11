@@ -47,7 +47,9 @@ public class ObjectGroupManager : MonoBehaviour
         groupAnimator = GetComponent<Animator>();
         if (groupAnimator == null)
         {
+            #if UNITY_EDITOR
             Debug.LogError($"No Animator component found on ObjectGroupManager: {gameObject.name}");
+            #endif
         }
 
         // Hide all options initially
@@ -74,7 +76,9 @@ public class ObjectGroupManager : MonoBehaviour
         if (GrowAssessmentManager.Instance != null)
         {
             GrowAssessmentManager.Instance.RegisterGroupManager(this);
+            #if UNITY_EDITOR
             Debug.Log($"Registered {gameObject.name} with GrowAssessmentManager");
+            #endif
         }
     }
 
@@ -118,7 +122,9 @@ public class ObjectGroupManager : MonoBehaviour
         // Spawn food for all objects
         SpawnFoodForAllObjects();
 
+        #if UNITY_EDITOR
         Debug.Log($"Group {gameObject.name} activated. Grow food at index: {assignedGrowFoodIndex}");
+        #endif
     }
 
     private void SpawnFoodForAllObjects()
@@ -142,7 +148,9 @@ public class ObjectGroupManager : MonoBehaviour
             }
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"Spawned food for {optionObjects.Length} objects in group: {gameObject.name}");
+        #endif
     }
 
     public void DeactivateGroup()
@@ -159,7 +167,9 @@ public class ObjectGroupManager : MonoBehaviour
         // Destroy all spawned food when deactivating
         DestroyAllSpawnedFood();
 
+        #if UNITY_EDITOR
         Debug.Log($"Group {gameObject.name} deactivated");
+        #endif
     }
 
     // Properly destroy all spawned food
@@ -188,14 +198,18 @@ public class ObjectGroupManager : MonoBehaviour
             }
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"Destroyed all spawned food for group: {gameObject.name}");
+        #endif
     }
 
     private void AssignFoodTypes()
     {
         if (optionObjects.Length != 3)
         {
+            #if UNITY_EDITOR
             Debug.LogError("Group must have exactly 3 options!");
+            #endif
             return;
         }
 
@@ -217,7 +231,9 @@ public class ObjectGroupManager : MonoBehaviour
                     {
                         GameObject selectedPrefab = growFoodPrefabs[Random.Range(0, growFoodPrefabs.Length)];
                         assignedFoodPrefabs[option] = selectedPrefab;
+                        #if UNITY_EDITOR
                         Debug.Log($"Assigned grow food to option {i}: {selectedPrefab.name}");
+                        #endif
                     }
                 }
                 else
@@ -228,7 +244,9 @@ public class ObjectGroupManager : MonoBehaviour
                     {
                         GameObject selectedPrefab = junkFoodPrefabs[Random.Range(0, junkFoodPrefabs.Length)];
                         assignedFoodPrefabs[option] = selectedPrefab;
+                        #if UNITY_EDITOR
                         Debug.Log($"Assigned junk food to option {i}: {selectedPrefab.name}");
+                        #endif
                     }
                 }
 
@@ -280,7 +298,9 @@ public class ObjectGroupManager : MonoBehaviour
     // Reset this group for new game
     public void ResetGroupForNewGame()
     {
+        #if UNITY_EDITOR
         Debug.Log($"Resetting group: {gameObject.name}");
+        #endif
 
         // Deactivate group
         DeactivateGroup();
@@ -297,7 +317,9 @@ public class ObjectGroupManager : MonoBehaviour
         // Clear food assignments
         assignedFoodPrefabs.Clear();
 
+        #if UNITY_EDITOR
         Debug.Log($"Group {gameObject.name} reset for new game");
+        #endif
     }
 
     public void SetGroupEntryAnimation(bool isEntry)

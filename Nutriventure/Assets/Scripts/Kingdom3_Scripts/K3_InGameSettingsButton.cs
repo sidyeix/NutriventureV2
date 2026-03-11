@@ -45,6 +45,9 @@ public class K3_InGameSettingsButton : MonoBehaviour
   private float originalTimeScale;
   private Coroutine countdownCoroutine;
   private AudioSource audioSource;
+  private bool isCountdownRunning = false;
+  private float frozenSafetyTimer = 0f;
+  private const float FROZEN_SAFETY_TIMEOUT = 6f;
 
   private void Start()
   {
@@ -114,10 +117,6 @@ public class K3_InGameSettingsButton : MonoBehaviour
       resumeGameButton.onClick.AddListener(OnResumeGameClicked);
     }
 
-    if (profileSettings != null)
-    {
-      profileSettings.OnClosed += OnProfileSettingsClosed;
-    }
   }
 
   private void InitializeUI()
@@ -134,6 +133,7 @@ public class K3_InGameSettingsButton : MonoBehaviour
   private void Update()
   {
     CheckGameState();
+    CheckFrozenSafety();
   }
 
   private void CheckGameState()
@@ -216,22 +216,71 @@ public class K3_InGameSettingsButton : MonoBehaviour
     }
     else if (isPaused)
     {
-      Time.timeScale = originalTimeScale > 0f ? originalTimeScale : 1f;
-      isPaused = false;
-      wasGameActiveWhenPaused = false;
+      ResumeImmediately();
 #if UNITY_EDITOR
             Debug.Log("K3: Settings closed while roaming — resumed immediately.");
 #endif
     }
     else
     {
-      if (Time.timeScale == 0f)
-      {
+      // Safety: force-restore timeScale if it's stuck at 0
+      EnsureTimeScaleRestored();
+    }
+  }
+
+  /// <summary>Immediately restores timeScale and clears paused state.</summary>
+  private void ResumeImmediately()
+  {
+    Time.timeScale = originalTimeScale > 0f ? originalTimeScale : 1f;
+    isPaused = false;
+    wasGameActiveWhenPaused = false;
+    isCountdownRunning = false;
+    frozenSafetyTimer = 0f;
+  }
+
+  /// <summary>Safety net — force timeScale to 1 if it's stuck at 0 when it shouldn't be.</summary>
+  private void EnsureTimeScaleRestored()
+  {
+    if (Time.timeScale == 0f)
+    {
 #if UNITY_EDITOR
-                Debug.LogWarning("K3: OnProfileSettingsClosed — isPaused was false but timeScale is 0! Force restoring.");
+            Debug.LogWarning("K3: EnsureTimeScaleRestored — timeScale was 0 when not paused! Forcing to 1.");
 #endif
-        Time.timeScale = 1f;
-      }
+      Time.timeScale = 1f;
+      isPaused = false;
+      wasGameActiveWhenPaused = false;
+      isCountdownRunning = false;
+      frozenSafetyTimer = 0f;
+    }
+  }
+
+  /// <summary>
+  /// Frame-based safety check: if the game appears frozen for too long
+  /// (timeScale=0, no active countdown, profile settings closed), force resume.
+  /// This prevents permanent freezes on Android and other edge cases.
+  /// </summary>
+  private void CheckFrozenSafety()
+  {
+    if (Time.timeScale != 0f)
+    {
+      frozenSafetyTimer = 0f;
+      return;
+    }
+
+    // Don't interfere while countdown is legitimately running
+    if (isCountdownRunning) return;
+
+    // Don't interfere while profile settings is still open
+    if (profileSettings != null && profileSettings.IsProfileSettingsOpen()) return;
+
+    // timeScale is 0 but nothing is actively managing it — start counting
+    frozenSafetyTimer += Time.unscaledDeltaTime;
+
+    if (frozenSafetyTimer >= FROZEN_SAFETY_TIMEOUT)
+    {
+      Debug.LogWarning("K3: Frozen safety triggered — timeScale stuck at 0 for too long. Forcing resume.");
+      ForceResume();
+      frozenSafetyTimer = 0f;
     }
   }
 
@@ -261,8 +310,11 @@ public class K3_InGameSettingsButton : MonoBehaviour
     if (countdownCoroutine != null)
     {
       StopCoroutine(countdownCoroutine);
+      countdownCoroutine = null;
     }
 
+    isCountdownRunning = true;
+    frozenSafetyTimer = 0f;
     countdownCoroutine = StartCoroutine(CountdownBeforeResume());
   }
 
@@ -309,9 +361,12 @@ public class K3_InGameSettingsButton : MonoBehaviour
     if (countdownPanel != null)
       countdownPanel.SetActive(false);
 
-    Time.timeScale = originalTimeScale;
+    Time.timeScale = originalTimeScale > 0f ? originalTimeScale : 1f;
     isPaused = false;
     wasGameActiveWhenPaused = false;
+    isCountdownRunning = false;
+    frozenSafetyTimer = 0f;
+    countdownCoroutine = null;
 
     if (gameplayProgression != null)
     {
@@ -373,6 +428,8 @@ public class K3_InGameSettingsButton : MonoBehaviour
 
     Time.timeScale = 1f;
     isPaused = false;
+    isCountdownRunning = false;
+    frozenSafetyTimer = 0f;
 
     if (settingsButton != null)
       settingsButton.gameObject.SetActive(true);
@@ -478,6 +535,8 @@ public class K3_InGameSettingsButton : MonoBehaviour
 
     Time.timeScale = 1f;
     isPaused = false;
+    isCountdownRunning = false;
+    frozenSafetyTimer = 0f;
 
     if (settingsButton != null)
       settingsButton.gameObject.SetActive(true);
@@ -610,6 +669,29 @@ public class K3_InGameSettingsButton : MonoBehaviour
     K3_Phase1Functions phase1 = FindObjectOfType<K3_Phase1Functions>();
     if (phase1 != null)
       phase1.ResetAllSystems();
+
+    // Reset preservative collection
+    PreservativesInformationManager infoManager = FindObjectOfType<PreservativesInformationManager>();
+    if (infoManager != null)
+      infoManager.ResetForNewSession();
+
+    // Reset food assessment state (particles, UI counters)
+    K3_KingAssessment kingAssessment = FindObjectOfType<K3_KingAssessment>();
+    if (kingAssessment != null)
+      kingAssessment.ResetForNewSession();
+
+    // Reset preservation system (food tracking dictionaries)
+    K3_KingAS2 preservationSystem = FindObjectOfType<K3_KingAS2>();
+    if (preservationSystem != null)
+      preservationSystem.ResetForNewSession();
+
+    // Respawn preservative potions in the world
+    K3_PreservativeSpawner spawner = FindObjectOfType<K3_PreservativeSpawner>();
+    if (spawner != null)
+    {
+      spawner.ResetSpawner();
+      spawner.InitializeAndSpawn();
+    }
 
     // Reset DYK popup system
     K3_Dyk dyk = FindObjectOfType<K3_Dyk>();
@@ -763,8 +845,19 @@ public class K3_InGameSettingsButton : MonoBehaviour
 
   private void ForceResume()
   {
+    if (countdownCoroutine != null)
+    {
+      StopCoroutine(countdownCoroutine);
+      countdownCoroutine = null;
+    }
+
     if (settingsButton != null)
       settingsButton.gameObject.SetActive(true);
+
+    if (countdownCanvas != null)
+      countdownCanvas.SetActive(false);
+    if (countdownPanel != null)
+      countdownPanel.SetActive(false);
 
     Time.timeScale = 1f;
 
@@ -775,10 +868,10 @@ public class K3_InGameSettingsButton : MonoBehaviour
 
     isPaused = false;
     wasGameActiveWhenPaused = false;
+    isCountdownRunning = false;
+    frozenSafetyTimer = 0f;
 
-#if UNITY_EDITOR
-        Debug.Log("K3: ForceResume executed — timeScale restored to 1.");
-#endif
+    Debug.Log("K3: ForceResume executed — timeScale restored to 1.");
   }
 
   public bool IsGamePaused()
@@ -817,11 +910,12 @@ public class K3_InGameSettingsButton : MonoBehaviour
 
   private void OnDisable()
   {
-    if (isPaused)
+    if (isPaused || Time.timeScale == 0f)
     {
       Time.timeScale = 1f;
       isPaused = false;
       wasGameActiveWhenPaused = false;
+      isCountdownRunning = false;
     }
 
     if (countdownCoroutine != null)

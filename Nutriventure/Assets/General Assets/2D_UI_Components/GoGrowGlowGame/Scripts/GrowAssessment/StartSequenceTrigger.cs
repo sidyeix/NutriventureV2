@@ -16,7 +16,9 @@ public class StartSequenceTrigger : MonoBehaviour
         // Check if it's the player
         if (other.CompareTag("Player"))
         {
+            #if UNITY_EDITOR
             Debug.Log("Player entered start trigger");
+            #endif
 
             if (sequenceManager != null)
             {
@@ -24,7 +26,9 @@ public class StartSequenceTrigger : MonoBehaviour
             }
             else
             {
+                #if UNITY_EDITOR
                 Debug.LogError("StartingSequenceManager not assigned!");
+                #endif
             }
 
             // Optional: Disable trigger after use

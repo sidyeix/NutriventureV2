@@ -102,12 +102,16 @@ public class GrowAssessmentManager : MonoBehaviour
         CollectAllInteractiveObjects();
 
         // Debug initial setup
+#if UNITY_EDITOR
         Debug.Log("=== GROW ASSESSMENT MANAGER STARTED ===");
+#endif
         if (trackerPanel != null)
         {
+#if UNITY_EDITOR
             Debug.Log($"Panel Position After Start: {trackerPanel.transform.localPosition}");
             Debug.Log($"Target Visible Position: {trackerPanelVisiblePosition}");
             Debug.Log($"Target Hidden Position: {trackerPanelHiddenPosition}");
+#endif
         }
     }
 
@@ -120,11 +124,15 @@ public class GrowAssessmentManager : MonoBehaviour
             if (manager != null)
             {
                 groupManagers.Add(manager);
+#if UNITY_EDITOR
                 Debug.Log($"Found Group Manager: {manager.gameObject.name}");
+#endif
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Found {groupManagers.Count} group managers in scene");
+#endif
     }
 
     private void CollectAllInteractiveObjects()
@@ -155,7 +163,9 @@ public class GrowAssessmentManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Collected {allInteractiveObjects.Count} interactive objects from all groups");
+#endif
     }
 
     private void InitializeTracker()
@@ -170,14 +180,18 @@ public class GrowAssessmentManager : MonoBehaviour
             trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
             trackerPanel.SetActive(false);
 
+#if UNITY_EDITOR
             Debug.Log($"=== TRACKER SETUP ===");
             Debug.Log($"Visible Position (END): {trackerPanelVisiblePosition}");
             Debug.Log($"Hidden Position (START): {trackerPanelHiddenPosition}");
             Debug.Log($"Slide Distance: {panelSlideDistance}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("Tracker Panel is null in InitializeTracker!");
+#endif
         }
 
         UpdateTrackerText();
@@ -187,11 +201,15 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (isAssessmentActive)
         {
+#if UNITY_EDITOR
             Debug.Log("Assessment already active!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("=== STARTING GROW ASSESSMENT ===");
+#endif
 
         // COMPLETE RESET FOR NEW GAME
         ResetForNewAssessment();
@@ -201,7 +219,9 @@ public class GrowAssessmentManager : MonoBehaviour
         {
             latestRespawnPoint = playerController.transform.position;
             shouldRespawnAtLatestPoint = true;
+#if UNITY_EDITOR
             Debug.Log($"Stored latest respawn point: {latestRespawnPoint}");
+#endif
         }
 
         // Enable canvas
@@ -219,7 +239,9 @@ public class GrowAssessmentManager : MonoBehaviour
             if (groupManager != null)
             {
                 groupManager.ActivateGroup();
+#if UNITY_EDITOR
                 Debug.Log($"Activated group: {groupManager.gameObject.name}");
+#endif
             }
         }
 
@@ -235,13 +257,17 @@ public class GrowAssessmentManager : MonoBehaviour
             GoGrowGlowGameManager.Instance.StartOneLifeCheck();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Grow Assessment started with all groups activated");
+#endif
     }
 
     // NEW: Complete reset method for new assessment
     private void ResetForNewAssessment()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING FOR NEW ASSESSMENT ===");
+#endif
 
         // Reset completion flags
         hasCompletedAllQuestions = false;
@@ -264,7 +290,9 @@ public class GrowAssessmentManager : MonoBehaviour
             trackerPanel.SetActive(false);
             isTrackerVisible = false;
 
+#if UNITY_EDITOR
             Debug.Log($"Tracker reset to hidden position: {trackerPanelHiddenPosition}");
+#endif
         }
 
         // Stop any ongoing animations
@@ -274,12 +302,16 @@ public class GrowAssessmentManager : MonoBehaviour
             panelSlideCoroutine = null;
         }
 
+#if UNITY_EDITOR
         Debug.Log("Assessment completely reset for new game");
+#endif
     }
 
     private void ResetAllGroupsAndObjects()
     {
+#if UNITY_EDITOR
         Debug.Log("Resetting all groups and objects...");
+#endif
 
         // Deactivate all groups
         foreach (ObjectGroupManager groupManager in groupManagers)
@@ -288,7 +320,9 @@ public class GrowAssessmentManager : MonoBehaviour
             {
                 groupManager.DeactivateGroup();
                 groupManager.SetGroupEntryAnimation(false);
+#if UNITY_EDITOR
                 Debug.Log($"Deactivated and reset group: {groupManager.gameObject.name}");
+#endif
             }
         }
 
@@ -301,14 +335,18 @@ public class GrowAssessmentManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log("All groups and objects reset");
+#endif
     }
 
     public void EndGrowAssessment()
     {
         if (!isAssessmentActive && !isWaitingForEndTrigger) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== ENDING GROW ASSESSMENT ===");
+#endif
 
         // Hide tracker panel
         HideTrackerPanel();
@@ -346,13 +384,17 @@ public class GrowAssessmentManager : MonoBehaviour
             assessmentTrigger.OnAssessmentComplete();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Grow Assessment ended - Ready for next playthrough");
+#endif
     }
 
     // Complete reset for new game (called from GameEndManager)
     public void CompleteResetForNewGame()
     {
+#if UNITY_EDITOR
         Debug.Log("=== COMPLETE RESET FOR NEW GAME ===");
+#endif
 
         // End current assessment if active
         if (isAssessmentActive || isWaitingForEndTrigger)
@@ -369,12 +411,14 @@ public class GrowAssessmentManager : MonoBehaviour
             assessmentTrigger.ResetTrigger();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Grow Assessment completely reset for new game");
+#endif
     }
 
     private IEnumerator DisableCanvasAfterDelay()
     {
-        yield return new WaitForSeconds(panelSlideDuration + 0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(panelSlideDuration + 0.3f);
 
         if (growAssessCanvas != null)
         {
@@ -405,7 +449,9 @@ public class GrowAssessmentManager : MonoBehaviour
         if (!isAssessmentActive) return;
 
         correctAnswersCount++;
+#if UNITY_EDITOR
         Debug.Log($"Correct answer! Total: {correctAnswersCount}/{totalQuestions}");
+#endif
 
         // Add points and energy
         if (GoGrowGlowGameManager.Instance != null)
@@ -434,7 +480,9 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (!isAssessmentActive) return;
 
+#if UNITY_EDITOR
         Debug.Log("Wrong answer selected!");
+#endif
 
         // Deduct points and energy
         if (GoGrowGlowGameManager.Instance != null)
@@ -452,7 +500,9 @@ public class GrowAssessmentManager : MonoBehaviour
 
     private void HandleEnergyZero()
     {
+#if UNITY_EDITOR
         Debug.Log("Energy reached zero! Respawning at latest point...");
+#endif
         RespawnAtLatestPoint();
     }
 
@@ -467,20 +517,26 @@ public class GrowAssessmentManager : MonoBehaviour
                 GoGrowGlowGameManager.Instance.SetEnergy(50f);
             }
 
+#if UNITY_EDITOR
             Debug.Log($"Respawned at latest point: {latestRespawnPoint}");
+#endif
             ShowRespawnEffect();
         }
     }
 
     private void ShowRespawnEffect()
     {
+#if UNITY_EDITOR
         Debug.Log("Respawn effect triggered");
+#endif
         PlaySound(completeSound);
     }
 
     private void AssessmentComplete()
     {
+#if UNITY_EDITOR
         Debug.Log("=== ASSESSMENT COMPLETE! ===");
+#endif
 
         // Play complete sound
         PlaySound(completeSound);
@@ -497,7 +553,9 @@ public class GrowAssessmentManager : MonoBehaviour
         isWaitingForEndTrigger = true;
 
         // Keep assessment active but mark as waiting for end trigger
+#if UNITY_EDITOR
         Debug.Log("Assessment completed! Waiting for EndGameTrigger...");
+#endif
     }
 
     private IEnumerator FlashCompleteText()
@@ -545,7 +603,7 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         while (isAssessmentActive)
         {
-            yield return new WaitForSeconds(0.5f);
+            yield return CoroutineYieldCache.WaitForSeconds(0.5f);
 
             if (GoGrowGlowGameManager.Instance != null &&
                 GoGrowGlowGameManager.Instance.GetCurrentEnergy() <= 0f)
@@ -614,9 +672,11 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (isTrackerVisible || trackerPanel == null) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== SHOWING TRACKER PANEL ===");
         Debug.Log($"Starting from: {trackerPanelHiddenPosition}");
         Debug.Log($"Sliding to: {trackerPanelVisiblePosition}");
+#endif
 
         // Force panel to hidden position before animating
         trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
@@ -635,7 +695,9 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (!isTrackerVisible || trackerPanel == null) return;
 
+#if UNITY_EDITOR
         Debug.Log("Hiding tracker panel...");
+#endif
 
         if (panelSlideCoroutine != null)
             StopCoroutine(panelSlideCoroutine);
@@ -653,10 +715,12 @@ public class GrowAssessmentManager : MonoBehaviour
         Vector3 targetPos = slideIn ? trackerPanelVisiblePosition : trackerPanelHiddenPosition;
 
         // VERIFY POSITIONS
+#if UNITY_EDITOR
         Debug.Log($"=== SLIDE PANEL ===");
         Debug.Log($"Slide Direction: {(slideIn ? "IN" : "OUT")}");
         Debug.Log($"Start: X={startPos.x:F0}");
         Debug.Log($"Target: X={targetPos.x:F0}");
+#endif
 
         float elapsedTime = 0f;
 
@@ -673,7 +737,7 @@ public class GrowAssessmentManager : MonoBehaviour
         // IDENTICAL DELAY LOGIC
         if (slideIn)
         {
-            yield return new WaitForSeconds(panelShowDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(panelShowDelay);
         }
 
         // IDENTICAL ANIMATION LOGIC
@@ -701,7 +765,9 @@ public class GrowAssessmentManager : MonoBehaviour
         trackerPanel.transform.localPosition = targetPos;
 
         // VERIFY FINAL POSITION
+#if UNITY_EDITOR
         Debug.Log($"Slide complete. Final X={trackerPanel.transform.localPosition.x:F0}");
+#endif
 
         panelSlideCoroutine = null;
     }
@@ -709,7 +775,7 @@ public class GrowAssessmentManager : MonoBehaviour
     // IDENTICAL TO GLOWPARTMANAGER'S DisablePanelAfterSlide
     private IEnumerator DisablePanelAfterSlide()
     {
-        yield return new WaitForSeconds(panelSlideDuration + 0.1f);
+        yield return CoroutineYieldCache.WaitForSeconds(panelSlideDuration + 0.1f);
         trackerPanel.SetActive(false);
         isTrackerVisible = false;
     }
@@ -724,7 +790,7 @@ public class GrowAssessmentManager : MonoBehaviour
 
     private IEnumerator PlaySoundDelayed(AudioClip clip, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return CoroutineYieldCache.WaitForSeconds(delay);
         PlaySound(clip);
     }
 
@@ -733,7 +799,9 @@ public class GrowAssessmentManager : MonoBehaviour
         if (!allInteractiveObjects.Contains(obj))
         {
             allInteractiveObjects.Add(obj);
+#if UNITY_EDITOR
             Debug.Log($"Registered assessment object: {obj.gameObject.name}");
+#endif
         }
     }
 
@@ -743,7 +811,9 @@ public class GrowAssessmentManager : MonoBehaviour
         if (!groupManagers.Contains(manager))
         {
             groupManagers.Add(manager);
+#if UNITY_EDITOR
             Debug.Log($"Registered group manager: {manager.gameObject.name}");
+#endif
         }
     }
 
@@ -757,7 +827,9 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         latestRespawnPoint = newPoint;
         shouldRespawnAtLatestPoint = true;
+#if UNITY_EDITOR
         Debug.Log($"Updated respawn point to: {newPoint}");
+#endif
     }
 
     // NEW: Getter for completion status (used by EndGameTrigger)
@@ -772,16 +844,20 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (trackerPanel == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Tracker Panel is null!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("=== TRACKER POSITION DEBUG ===");
         Debug.Log($"Current Panel Position: {trackerPanel.transform.localPosition}");
         Debug.Log($"Stored Visible Position: {trackerPanelVisiblePosition}");
         Debug.Log($"Stored Hidden Position: {trackerPanelHiddenPosition}");
         Debug.Log($"Panel Slide Distance: {panelSlideDistance}");
         Debug.Log($"Is Tracker Visible: {isTrackerVisible}");
+#endif
     }
 
     [ContextMenu("Test Tracker Animation")]
@@ -789,11 +865,15 @@ public class GrowAssessmentManager : MonoBehaviour
     {
         if (trackerPanel == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("No tracker panel assigned!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("Testing tracker animation...");
+#endif
 
         // Reset to hidden
         trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
@@ -809,16 +889,18 @@ public class GrowAssessmentManager : MonoBehaviour
 
     private IEnumerator TestAnimationSequence()
     {
-        yield return new WaitForSeconds(2f);
+        yield return CoroutineYieldCache.WaitForSeconds(2f);
         HideTrackerPanel();
-        yield return new WaitForSeconds(2f);
+        yield return CoroutineYieldCache.WaitForSeconds(2f);
         ShowTrackerPanel();
     }
 
     // NEW: Reset without moving panel (for GameManager)
     public void ResetForNewAssessmentWithoutMovingPanel()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING WITHOUT MOVING PANEL ===");
+#endif
 
         // Reset completion flags
         hasCompletedAllQuestions = false;
@@ -840,7 +922,9 @@ public class GrowAssessmentManager : MonoBehaviour
             // Just update the internal state
             isTrackerVisible = false;
 
+#if UNITY_EDITOR
             Debug.Log($"Panel position preserved at: {trackerPanel.transform.localPosition}");
+#endif
         }
 
         // Stop any ongoing animations
@@ -850,7 +934,9 @@ public class GrowAssessmentManager : MonoBehaviour
             panelSlideCoroutine = null;
         }
 
+#if UNITY_EDITOR
         Debug.Log("Assessment state reset (panel position preserved)");
+#endif
     }
 
     // ====== SAVE / RESTORE HELPERS ======
@@ -867,7 +953,9 @@ public class GrowAssessmentManager : MonoBehaviour
 
         UpdateTrackerText();
 
+#if UNITY_EDITOR
         Debug.Log($"GrowAssessmentManager: Restored progress – {correctAnswersCount}/{totalQuestions} correct, " +
                   $"Completed: {hasCompletedAllQuestions}, WaitingForEnd: {isWaitingForEndTrigger}");
+#endif
     }
 }

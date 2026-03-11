@@ -35,7 +35,9 @@ public class AssessmentTrigger : MonoBehaviour
         // Just check if it's the player
         if (other.CompareTag("Player"))
         {
+            #if UNITY_EDITOR
             Debug.Log("Player entered assessment trigger - Starting new playthrough");
+            #endif
 
             // Store this as triggered
             hasBeenTriggered = true;
@@ -47,7 +49,9 @@ public class AssessmentTrigger : MonoBehaviour
             }
             else
             {
+                #if UNITY_EDITOR
                 Debug.LogWarning("No TimelineSequenceManager found!");
+                #endif
                 // If no timeline, start assessment directly
                 if (assessmentManager != null)
                 {
@@ -65,7 +69,9 @@ public class AssessmentTrigger : MonoBehaviour
             if (GoGrowGlowGameManager.Instance != null)
             {
                 GoGrowGlowGameManager.Instance.SetEnergy(100f);
+                #if UNITY_EDITOR
                 Debug.Log("Energy set to 100 for assessment");
+                #endif
             }
 
             // NEW: Enable the collider just in case
@@ -78,7 +84,9 @@ public class AssessmentTrigger : MonoBehaviour
             if (disableAfterTrigger && triggerCollider != null)
             {
                 triggerCollider.enabled = false;
+                #if UNITY_EDITOR
                 Debug.Log("Trigger collider disabled after use");
+                #endif
             }
         }
     }
@@ -101,11 +109,15 @@ public class AssessmentTrigger : MonoBehaviour
         if (triggerCollider != null && !triggerCollider.enabled)
         {
             triggerCollider.enabled = true;
+            #if UNITY_EDITOR
             Debug.Log($"AssessmentTrigger {gameObject.name} reset - collider re-enabled");
+            #endif
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.Log($"AssessmentTrigger {gameObject.name} reset");
+            #endif
         }
     }
 
@@ -117,7 +129,9 @@ public class AssessmentTrigger : MonoBehaviour
         {
             triggerCollider.enabled = true;
         }
+        #if UNITY_EDITOR
         Debug.Log("Assessment trigger force reset for new game");
+        #endif
     }
 
     // Call this when assessment completes to prepare for next run

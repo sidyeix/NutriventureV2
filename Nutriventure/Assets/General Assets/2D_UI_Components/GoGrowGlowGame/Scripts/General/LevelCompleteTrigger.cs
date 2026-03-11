@@ -39,7 +39,9 @@ public class LevelCompleteTrigger : MonoBehaviour
     {
         if (gameEndManager != null)
         {
+            #if UNITY_EDITOR
             Debug.Log("Level Complete Trigger Activated!");
+            #endif
             gameEndManager.TriggerLevelComplete();
         }
     }
@@ -69,7 +71,9 @@ public class LevelCompleteTrigger : MonoBehaviour
 
         if (hasKey)
         {
+            #if UNITY_EDITOR
             Debug.Log($"{keyName} Key already owned.");
+            #endif
             // Still show game summary
             gameEndManager.ShowGameEndScreen(true);
             return;
@@ -77,7 +81,9 @@ public class LevelCompleteTrigger : MonoBehaviour
 
         // Wait for GameEndManager to calculate stars
         // The key collection will be handled after the game summary
+        #if UNITY_EDITOR
         Debug.Log($"Key trigger activated for {keyName} - waiting for star calculation");
+        #endif
         
         // Destroy the key object so it can't be collected again
         Destroy(gameObject);

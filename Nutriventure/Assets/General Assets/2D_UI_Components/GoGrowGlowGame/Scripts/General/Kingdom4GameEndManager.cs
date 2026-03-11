@@ -221,11 +221,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
             if (gameTimer != null)
             {
+#if UNITY_EDITOR
                 Debug.Log($"Found GameTimer: {gameTimer.gameObject.name}");
+#endif
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("GameTimer not found! Time-based scoring may not work properly.");
+#endif
             }
         }
 
@@ -309,7 +313,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         if (backgroundMusicSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("BackgroundMusicSource is not assigned in the Inspector!");
+#endif
         }
     }
 
@@ -339,7 +345,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (KeyImageunlocking != null)
         {
             KeyImageunlocking.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log("KeyImageunlocking initialized as DISABLED");
+#endif
         }
 
         if (starsContainer != null)
@@ -361,11 +369,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (starsAnimator != null)
         {
+#if UNITY_EDITOR
             Debug.Log("Resetting star animator...");
+#endif
             starsAnimator.SetInteger(starParameter, 0);
             starsAnimator.updateMode = AnimatorUpdateMode.Normal;
             starsAnimator.Update(0f);
+#if UNITY_EDITOR
             Debug.Log("Star animator reset to default state");
+#endif
         }
     }
 
@@ -391,7 +403,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     public void ShowGameEndScreen(bool playerWon)
     {
+#if UNITY_EDITOR
         Debug.Log($"=== SHOWING KINGDOM 4 END SCREEN - {(playerWon ? "WIN" : "LOSE")} ===");
+#endif
 
         this.playerWon = playerWon;
         isCountingAnimationComplete = false;
@@ -419,7 +433,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (gameSummaryParent != null)
         {
             gameSummaryParent.SetActive(true);
+#if UNITY_EDITOR
             Debug.Log("Game summary parent activated");
+#endif
 
             if (panelCanvasGroup != null)
             {
@@ -429,7 +445,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("gameSummaryParent is null! Cannot show game summary.");
+#endif
             return;
         }
 
@@ -449,11 +467,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             keyWasCollected = collectKeyScript.HasKey();
             healthAtKeyCollection = collectKeyScript.GetHealthAtKeyCollection();
+#if UNITY_EDITOR
             Debug.Log($"Key collection status - Collected: {keyWasCollected}, Health: {healthAtKeyCollection}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.Log("CollectKeyScript not found");
+#endif
         }
     }
 
@@ -468,20 +490,26 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("ScoreManager not found!");
+#endif
             scoreManager = FindObjectOfType<Kingdom4ScoreManager>();
         }
 
         if (gameTimer != null)
         {
             completionTime = gameTimer.ElapsedTime;
+#if UNITY_EDITOR
             Debug.Log($"Timer elapsed time: {completionTime}s");
+#endif
             gameTimer.StopTimer();
         }
         else
         {
             completionTime = Time.time - gameStartTime;
+#if UNITY_EDITOR
             Debug.LogWarning("GameTimer not found, using system time");
+#endif
         }
 
         if (gameManager != null)
@@ -490,13 +518,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GameManager not found!");
+#endif
             gameManager = FindObjectOfType<AllerthriaGameManager>();
         }
 
         GetRemainingHealth();
 
+#if UNITY_EDITOR
         Debug.Log($"Game Data Collected: Time={completionTime}s, Hearts={remainingHearts}, Allergens={allergensCollected}, WagonHits={wagonHits}, MaxCombo={maxComboAchieved}");
+#endif
     }
 
     private void GetRemainingHealth()
@@ -535,7 +567,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         else
             maxStarsByTime = 1;
 
+#if UNITY_EDITOR
         Debug.Log($"Max stars by time ({FormatTime(completionTime)}): {maxStarsByTime}");
+#endif
 
         int starsByHearts;
         if (remainingHearts >= 4)
@@ -547,11 +581,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
         else
             starsByHearts = 0;
 
+#if UNITY_EDITOR
         Debug.Log($"Stars by hearts ({remainingHearts} hearts): {starsByHearts}");
+#endif
 
         int finalStars = Mathf.Min(maxStarsByTime, starsByHearts);
 
+#if UNITY_EDITOR
         Debug.Log($"Final stars: {finalStars}");
+#endif
         return finalStars;
     }
 
@@ -581,96 +619,132 @@ public class Kingdom4GameEndManager : MonoBehaviour
         {
             baseCoins += 500;
             baseExp += 500;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Perfect allergen collection +500");
+#endif
         }
         else if (allergensCollected >= 7)
         {
             baseCoins += 300;
             baseExp += 300;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Good allergen collection +300");
+#endif
         }
         else if (allergensCollected >= 5)
         {
             baseCoins += 150;
             baseExp += 150;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Fair allergen collection +150");
+#endif
         }
 
         if (wagonHits == 0)
         {
             baseCoins += 300;
             baseExp += 300;
+#if UNITY_EDITOR
             Debug.Log("Bonus: No wagon hits +300");
+#endif
         }
         else if (wagonHits <= 2)
         {
             baseCoins += 150;
             baseExp += 150;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Few wagon hits +150");
+#endif
         }
 
         if (maxComboAchieved >= 8)
         {
             baseCoins += 400;
             baseExp += 400;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Excellent combo +400");
+#endif
         }
         else if (maxComboAchieved >= 5)
         {
             baseCoins += 200;
             baseExp += 200;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Good combo +200");
+#endif
         }
         else if (maxComboAchieved >= 3)
         {
             baseCoins += 100;
             baseExp += 100;
+#if UNITY_EDITOR
             Debug.Log("Bonus: Fair combo +100");
+#endif
         }
 
         int heartBonus = (remainingHearts - 1) * 100;
         baseCoins += heartBonus;
         baseExp += heartBonus;
+#if UNITY_EDITOR
         Debug.Log($"Bonus: {remainingHearts} hearts remaining +{heartBonus}");
+#endif
 
         int scoreBonus = Mathf.FloorToInt(finalScore * 0.1f);
+#if UNITY_EDITOR
         Debug.Log($"Bonus: Score bonus (10% of {finalScore}) +{scoreBonus}");
+#endif
 
         totalCoins = baseCoins + scoreBonus;
         totalExp = baseExp + scoreBonus;
 
+#if UNITY_EDITOR
         Debug.Log($"Final Rewards: Coins={totalCoins}, Exp={totalExp}, Stars={starsEarned}");
+#endif
     }
 
     private IEnumerator GameEndSequence()
     {
+#if UNITY_EDITOR
         Debug.Log("Starting game end sequence...");
+#endif
 
-        yield return new WaitForSecondsRealtime(0.5f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.5f);
 
+#if UNITY_EDITOR
         Debug.Log("Animating stars...");
+#endif
         yield return StartCoroutine(PlayStarAnimationWithDelay());
 
+#if UNITY_EDITOR
         Debug.Log("Animating counting numbers...");
+#endif
         yield return StartCoroutine(AnimateCountingNumbers());
 
         isCountingAnimationComplete = true;
+#if UNITY_EDITOR
         Debug.Log("Counting animation complete, showing buttons...");
+#endif
 
         if (buttonContainer != null)
         {
             buttonContainer.SetActive(true);
+#if UNITY_EDITOR
             Debug.Log("Button container activated");
+#endif
 
             if (!playerWon && homeButton != null)
             {
                 homeButton.interactable = false;
+#if UNITY_EDITOR
                 Debug.Log("Home button disabled on lose");
+#endif
             }
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("buttonContainer is null!");
+#endif
         }
 
         countAnimationCoroutine = null;
@@ -678,26 +752,32 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private IEnumerator PlayStarAnimationWithDelay()
     {
-        yield return new WaitForSecondsRealtime(0.3f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.3f);
         PlayStarAnimationDirect();
-        yield return new WaitForSecondsRealtime(1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(1f);
     }
 
     private void PlayStarAnimationDirect()
     {
         if (starsAnimator != null)
         {
+#if UNITY_EDITOR
             Debug.Log($"=== PLAYING STAR ANIMATION DIRECT: {currentStars} stars ===");
+#endif
 
             if (!starsAnimator.gameObject.activeSelf)
             {
+#if UNITY_EDITOR
                 Debug.Log("Activating star animator GameObject");
+#endif
                 starsAnimator.gameObject.SetActive(true);
             }
 
             if (!starsAnimator.enabled)
             {
+#if UNITY_EDITOR
                 Debug.Log("Enabling star animator component");
+#endif
                 starsAnimator.enabled = true;
             }
 
@@ -710,34 +790,44 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("Star animator is null! Cannot play animation.");
+#endif
         }
     }
 
     private IEnumerator PlayStarAnimationAfterReset()
     {
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         starsAnimator.SetInteger(starParameter, currentStars);
         starsAnimator.Update(0f);
 
         int currentValue = starsAnimator.GetInteger(starParameter);
+#if UNITY_EDITOR
         Debug.Log($"Star parameter set to: {currentValue} (requested: {currentStars})");
+#endif
 
         AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+#if UNITY_EDITOR
         Debug.Log($"Current animation state: {stateInfo.fullPathHash}");
         Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
         Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
+#endif
 
         if (stateInfo.normalizedTime == 0 && currentStars > 0)
         {
+#if UNITY_EDITOR
             Debug.Log("Attempting to play animation directly...");
+#endif
             ForcePlayStarAnimation(currentStars);
         }
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
         stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+#if UNITY_EDITOR
         Debug.Log($"After 0.1s - State normalized time: {stateInfo.normalizedTime}");
+#endif
     }
 
     private void ForcePlayStarAnimation(int stars)
@@ -745,7 +835,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (starsAnimator != null && stars > 0 && stars <= 3)
         {
             string stateName = starStateNames[stars];
+#if UNITY_EDITOR
             Debug.Log($"Force playing animation state: {stateName}");
+#endif
 
             starsAnimator.Play(stateName, 0, 0f);
             starsAnimator.Update(0f);
@@ -754,11 +846,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private IEnumerator AnimateCountingNumbers()
     {
+#if UNITY_EDITOR
         Debug.Log("Starting counting animation...");
+#endif
 
         if (pointsText == null || coinsText == null || expText == null || timeText == null || starsEarnedText == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("One or more UI text references are null!");
+#endif
             yield break;
         }
 
@@ -778,13 +874,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
         expText.text = "0";
         starsEarnedText.text = "0/3";
 
-        yield return new WaitForSecondsRealtime(0.3f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.3f);
 
         int numberOfTicks = Mathf.Clamp(targetGameScore / 50, 10, 30);
         float tickInterval = countAnimationDuration / numberOfTicks;
         float nextTickTime = 0f;
 
+#if UNITY_EDITOR
         Debug.Log($"Audio: Will play {numberOfTicks} ticks every {tickInterval:F2} seconds");
+#endif
 
         while (elapsedAnimationTime < countAnimationDuration)
         {
@@ -804,11 +902,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 {
                     countAudioSource.Stop();
                     countAudioSource.PlayOneShot(countTickSound, 0.5f);
+#if UNITY_EDITOR
                     Debug.Log($"✓ Tick sound played at {elapsedAnimationTime:F2}s - Score: {currentInteger}");
+#endif
                 }
                 else
                 {
+#if UNITY_EDITOR
                     Debug.LogWarning("Count tick sound or audio source is null!");
+#endif
                 }
 
                 nextTickTime += tickInterval;
@@ -834,7 +936,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         expText.text = totalExp.ToString("N0");
         starsEarnedText.text = $"{currentStars}/3";
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         if (countCompleteSound != null && countAudioSource != null)
         {
@@ -844,14 +946,20 @@ public class Kingdom4GameEndManager : MonoBehaviour
             }
 
             countAudioSource.PlayOneShot(countCompleteSound, 0.7f);
+#if UNITY_EDITOR
             Debug.Log("✓ Completion sound played");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Count complete sound or audio source is null!");
+#endif
         }
 
+#if UNITY_EDITOR
         Debug.Log("Counting animation complete!");
+#endif
     }
 
     private string FormatTime(float timeInSeconds)
@@ -886,7 +994,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("resultBackground is null!");
+#endif
         }
 
         HandleCharacterAnimation(playerWon, starsEarned);
@@ -916,9 +1026,11 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
             KeyImageunlocking.SetActive(shouldShowKeyImage);
 
+#if UNITY_EDITOR
             Debug.Log($"KeyImageunlocking: {(shouldShowKeyImage ? "SHOWN" : "HIDDEN")} " +
                      $"- Stars: {starsEarned} (need 2+) " +
                      $"- KeyCollected: {keyWasCollected}");
+#endif
         }
     }
 
@@ -950,7 +1062,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
                     keyWasCollected = true;
+#if UNITY_EDITOR
                     Debug.Log("Showing key unlocked object - first time completion with 2+ stars!");
+#endif
                 }
             }
         }
@@ -962,7 +1076,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (characterAnimator == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("CharacterAnimator is null! Cannot play animation.");
+#endif
             return;
         }
 
@@ -973,25 +1089,33 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         characterAnimator.Update(0f);
 
+#if UNITY_EDITOR
         Debug.Log($"=== SETTING CHARACTER ANIMATION ===");
         Debug.Log($"playerWon: {playerWon}, stars: {stars}");
+#endif
 
         if (playerWon && stars > 0)
         {
             characterAnimator.SetBool(danceParameter, true);
+#if UNITY_EDITOR
             Debug.Log($"Set {danceParameter} = TRUE (WIN with {stars} stars)");
+#endif
         }
         else
         {
             characterAnimator.SetBool(thinkParameter, true);
+#if UNITY_EDITOR
             Debug.Log($"Set {thinkParameter} = TRUE (LOSE or 0 stars)");
+#endif
         }
 
         characterAnimator.Update(0f);
 
         bool danceValue = characterAnimator.GetBool(danceParameter);
         bool thinkValue = characterAnimator.GetBool(thinkParameter);
+#if UNITY_EDITOR
         Debug.Log($"After setting - Dance: {danceValue}, Think: {thinkValue}");
+#endif
     }
 
     private void ResetCharacterAnimation()
@@ -1004,7 +1128,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             characterAnimator.updateMode = AnimatorUpdateMode.Normal;
             characterAnimator.Update(0f);
 
+#if UNITY_EDITOR
             Debug.Log("Character animation reset to normal");
+#endif
         }
     }
 
@@ -1016,7 +1142,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             {
                 if (backgroundMusicSource != null && obj == backgroundMusicSource.gameObject)
                 {
+#if UNITY_EDITOR
                     Debug.Log($"Skipping disable of background music: {obj.name}");
+#endif
                     continue;
                 }
 
@@ -1050,11 +1178,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (gameEndVirtualCamera == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Game end virtual camera is null!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("=== FORCE SWITCHING TO GAME END CAMERA ===");
+#endif
 
         SetCameraBlendToCut();
 
@@ -1064,7 +1196,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             playerFollowCamera.Priority = 0;
             playerFollowCamera.gameObject.SetActive(false);
 
+#if UNITY_EDITOR
             Debug.Log($"Player camera DISABLED, GameObject deactivated, and priority set to 0");
+#endif
         }
 
         if (!gameEndVirtualCamera.gameObject.activeSelf)
@@ -1080,23 +1214,29 @@ public class Kingdom4GameEndManager : MonoBehaviour
             cinemachineBrain.ManualUpdate();
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Game end camera ENABLED with priority: {gameEndCameraPriority}");
+#endif
 
         StartCoroutine(VerifyForcedCameraSwitch());
     }
 
     private IEnumerator VerifyForcedCameraSwitch()
     {
-        yield return new WaitForSecondsRealtime(0.2f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.2f);
 
         if (cinemachineBrain != null)
         {
             var activeCam = cinemachineBrain.ActiveVirtualCamera;
+#if UNITY_EDITOR
             Debug.Log($"Active Virtual Camera after force switch: {(activeCam != null ? activeCam.Name : "None")}");
+#endif
 
             if (activeCam == null || activeCam.VirtualCameraGameObject != gameEndVirtualCamera.gameObject)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("Game end camera not active! Forcing again...");
+#endif
 
                 if (playerFollowCamera != null)
                 {
@@ -1119,7 +1259,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     public void OnAcceptTimelineEndedAndGameStarting()
     {
+#if UNITY_EDITOR
         Debug.Log("Accept timeline ended - preparing for game to start");
+#endif
 
         if (playerFollowCamera != null)
         {
@@ -1127,13 +1269,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
             playerFollowCamera.enabled = true;
             playerFollowCamera.Priority = playerCameraPriority;
 
+#if UNITY_EDITOR
             Debug.Log("Player camera prepared for gameplay");
+#endif
         }
     }
 
     public void ForceResetCamera()
     {
+#if UNITY_EDITOR
         Debug.Log("Force reset camera called on Kingdom4GameEndManager");
+#endif
 
         if (playerFollowCamera != null)
         {
@@ -1156,7 +1302,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private void HardResetCamera()
     {
+#if UNITY_EDITOR
         Debug.Log("Hard resetting camera...");
+#endif
 
         if (cinemachineBrain == null)
         {
@@ -1191,7 +1339,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private void SwitchToPlayerCameraWithBlend()
     {
+#if UNITY_EDITOR
         Debug.Log("=== SWITCHING TO PLAYER CAMERA ===");
+#endif
 
         if (playerFollowCamera != null)
         {
@@ -1200,7 +1350,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             if (gameEndVirtualCamera != null)
             {
                 gameEndVirtualCamera.Priority = 0;
+#if UNITY_EDITOR
                 Debug.Log("Game end camera priority set to 0");
+#endif
             }
 
             playerFollowCamera.gameObject.SetActive(true);
@@ -1212,29 +1364,37 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 cinemachineBrain.ManualUpdate();
             }
 
+#if UNITY_EDITOR
             Debug.Log($"Player camera re-enabled with priority: {playerCameraPriority}");
+#endif
 
             StartCoroutine(DelayedCameraHardReset());
             StartCoroutine(VerifyPlayerCameraSwitch());
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Player follow camera is null!");
+#endif
         }
     }
 
     private IEnumerator VerifyPlayerCameraSwitch()
     {
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         if (cinemachineBrain != null)
         {
             var activeCam = cinemachineBrain.ActiveVirtualCamera;
+#if UNITY_EDITOR
             Debug.Log($"Active Virtual Camera after player switch: {(activeCam != null ? activeCam.Name : "None")}");
+#endif
 
             if (activeCam != null && activeCam.VirtualCameraGameObject == playerFollowCamera.gameObject)
             {
+#if UNITY_EDITOR
                 Debug.Log("✓ Player camera is now active");
+#endif
             }
         }
     }
@@ -1242,29 +1402,39 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [ContextMenu("Debug Camera State")]
     public void DebugCameraState()
     {
+#if UNITY_EDITOR
         Debug.Log("=== CAMERA STATE DEBUG ===");
         Debug.Log($"GameEnd Camera: {(gameEndVirtualCamera != null ? gameEndVirtualCamera.gameObject.name : "NULL")}");
+#endif
         if (gameEndVirtualCamera != null)
         {
+#if UNITY_EDITOR
             Debug.Log($"- Active: {gameEndVirtualCamera.gameObject.activeSelf}");
             Debug.Log($"- Priority: {gameEndVirtualCamera.Priority}");
             Debug.Log($"- Enabled: {gameEndVirtualCamera.enabled}");
+#endif
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Player Camera: {(playerFollowCamera != null ? playerFollowCamera.gameObject.name : "NULL")}");
+#endif
         if (playerFollowCamera != null)
         {
+#if UNITY_EDITOR
             Debug.Log($"- Active: {playerFollowCamera.gameObject.activeSelf}");
             Debug.Log($"- Priority: {playerFollowCamera.Priority}");
             Debug.Log($"- Enabled: {playerFollowCamera.enabled}");
+#endif
         }
 
         if (cinemachineBrain != null)
         {
             var activeCam = cinemachineBrain.ActiveVirtualCamera;
+#if UNITY_EDITOR
             Debug.Log($"Active Virtual Camera: {(activeCam != null ? activeCam.Name : "None")}");
             Debug.Log($"Current Blend: {cinemachineBrain.ActiveBlend}");
             Debug.Log($"Default Blend Style: {cinemachineBrain.m_DefaultBlend.m_Style}");
+#endif
         }
     }
 
@@ -1286,11 +1456,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 charController.enabled = true;
             }
 
+#if UNITY_EDITOR
             Debug.Log($"Player teleported to result point: {resultCharacterSpawnPoint.position}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Player controller or result spawn point not found!");
+#endif
         }
     }
 
@@ -1312,7 +1486,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 charController.enabled = true;
             }
 
+#if UNITY_EDITOR
             Debug.Log($"Player teleported to starting point: {startingPoint.position}");
+#endif
         }
     }
 
@@ -1383,7 +1559,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
 
         RestoreOriginalCameraBlend();
+#if UNITY_EDITOR
         Debug.Log("Game end state reset");
+#endif
     }
 
     private void DisableWinLoseObjects()
@@ -1404,7 +1582,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (playerController != null)
         {
             playerController.enabled = true;
+#if UNITY_EDITOR
             Debug.Log("Player control enabled");
+#endif
         }
     }
 
@@ -1475,18 +1655,24 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (GameDataManager.Instance == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GameDataManager.Instance is null!");
+#endif
             return false;
         }
 
         if (GameDataManager.Instance.CurrentGameData == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("CurrentGameData is null!");
+#endif
             return false;
         }
 
         bool hasKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+#if UNITY_EDITOR
         Debug.Log($"CheckIfPlayerHasOCRScannerKey: {hasKey}");
+#endif
         return hasKey;
     }
 
@@ -1495,13 +1681,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (GameDataManager.Instance == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("GameDataManager.Instance is null! Cannot save key.");
+#endif
             return;
         }
 
         if (GameDataManager.Instance.CurrentGameData == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("CurrentGameData is null! Cannot save key.");
+#endif
             return;
         }
 
@@ -1509,13 +1699,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
         GameDataManager.Instance.CurrentGameData.CollectKingdomKey("ocr");
         GameDataManager.Instance.SaveGameData();
 
+#if UNITY_EDITOR
         Debug.Log("✓ OCR Scanner key successfully saved to GameData! HasOCRScannerKey is now TRUE");
+#endif
 
         keySavedToDatabase = true;
 
         // 🔥 TRIGGER THE KEY COLLECTION EVENT
         KeyCollectionEvents.TriggerKeyCollected("OCR");
+#if UNITY_EDITOR
         Debug.Log("🔥 Key Collection Event Triggered: OCR");
+#endif
     }
 
     private void AddCoinsToDatabase()
@@ -1526,7 +1720,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
         GameDataManager.Instance.SaveGameData();
         coinsAddedToDatabase = true;
 
+#if UNITY_EDITOR
         Debug.Log($"Added {totalCoins} coins to database");
+#endif
     }
 
     // ==================== HOME BUTTON HANDLER ====================
@@ -1535,13 +1731,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (!isCountingAnimationComplete || isProcessingButton)
         {
+#if UNITY_EDITOR
             Debug.Log("Counting animation not complete yet or button already processing, ignoring click");
+#endif
             return;
         }
 
         if (!playerWon)
         {
+#if UNITY_EDITOR
             Debug.Log("Home button is disabled on lose screen");
+#endif
             return;
         }
 
@@ -1559,30 +1759,40 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
 
         bool hasOCRScannerKey = CheckIfPlayerHasOCRScannerKey();
+#if UNITY_EDITOR
         Debug.Log($"OCR Scanner Key status from GameData: {(hasOCRScannerKey ? "TRUE" : "FALSE")}");
+#endif
 
         bool keyCollectedThisSession = keyWasCollected && !keySavedToDatabase && starsEarned >= starsRequiredForKey;
 
         if (keyCollectedThisSession && !hasOCRScannerKey)
         {
+#if UNITY_EDITOR
             Debug.Log("Key collected this session with 2+ stars and not in GameData - showing KeyUnlockedCanvas");
+#endif
             StartCoroutine(ReturnToPreSummaryStateAndShowKeyUnlockCanvas());
         }
         else if (hasOCRScannerKey)
         {
+#if UNITY_EDITOR
             Debug.Log("Player already has OCR Scanner Key in GameData - returning to game (no canvas)");
+#endif
             StartCoroutine(ReturnToPreSummaryStateOnly());
         }
         else
         {
+#if UNITY_EDITOR
             Debug.Log("No key or less than 2 stars - returning to game fully");
+#endif
             StartCoroutine(ReturnToGameFully());
         }
     }
 
     private IEnumerator ReturnToPreSummaryStateAndShowKeyUnlockCanvas()
     {
+#if UNITY_EDITOR
         Debug.Log("Returning to pre-summary state and showing key unlock canvas");
+#endif
 
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
@@ -1603,23 +1813,29 @@ public class Kingdom4GameEndManager : MonoBehaviour
         ResetKingdom4Game();
         TeleportPlayerToStartingPoint();
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         isGameOver = false;
         isSummaryActive = false;
 
+#if UNITY_EDITOR
         Debug.Log($"Player at start position, input enabled");
+#endif
 
-        yield return new WaitForSecondsRealtime(0.5f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.5f);
 
         if (keyUnlockedController != null)
         {
+#if UNITY_EDITOR
             Debug.Log("Showing KeyUnlockedCanvas via controller");
+#endif
             keyUnlockedController.ShowKeyUnlockedCanvas(OnKeyUnlockCanvasContinue);
         }
         else if (keyUnlockedCanvas != null)
         {
+#if UNITY_EDITOR
             Debug.Log("Activating KeyUnlockedCanvas GameObject directly");
+#endif
             keyUnlockedCanvas.SetActive(true);
 
             if (continueKeyButton != null)
@@ -1630,14 +1846,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("KeyUnlockedCanvas GameObject is not assigned!");
+#endif
             FinishHomeButtonSequence();
         }
     }
 
     private void OnKeyUnlockCanvasContinue()
     {
+#if UNITY_EDITOR
         Debug.Log("Key unlock canvas continue callback received - SAVING OCR SCANNER KEY TO GAMEDATA");
+#endif
 
         SaveOCRScannerKeyToGameData();
 
@@ -1655,7 +1875,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     public void OnContinueKeyButtonClicked()
     {
+#if UNITY_EDITOR
         Debug.Log("ContinueKeyButton clicked directly - SAVING OCR SCANNER KEY TO GAMEDATA");
+#endif
 
         SaveOCRScannerKeyToGameData();
 
@@ -1676,7 +1898,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private IEnumerator ReturnToPreSummaryStateOnly()
     {
+#if UNITY_EDITOR
         Debug.Log("Returning to pre-summary state only (no animation)");
+#endif
 
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
@@ -1697,7 +1921,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         ResetKingdom4Game();
         TeleportPlayerToStartingPoint();
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         isGameOver = false;
         isSummaryActive = false;
@@ -1706,14 +1930,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (homeButton != null)
             homeButton.interactable = true;
 
+#if UNITY_EDITOR
         Debug.Log($"Player at start position, input enabled");
+#endif
 
         FinishHomeButtonSequence();
     }
 
     private IEnumerator ReturnToGameFully()
     {
+#if UNITY_EDITOR
         Debug.Log("Returning to game fully");
+#endif
 
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
@@ -1734,7 +1962,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         ResetKingdom4Game();
         TeleportPlayerToStartingPoint();
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         isGameOver = false;
         isSummaryActive = false;
@@ -1743,14 +1971,18 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (homeButton != null)
             homeButton.interactable = true;
 
+#if UNITY_EDITOR
         Debug.Log($"Player at start position, input enabled");
+#endif
 
         FinishHomeButtonSequence();
     }
 
     private void FinishHomeButtonSequence()
     {
+#if UNITY_EDITOR
         Debug.Log("Home button sequence complete");
+#endif
 
         isProcessingButton = false;
 
@@ -1765,7 +1997,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (!isCountingAnimationComplete || isProcessingButton)
         {
+#if UNITY_EDITOR
             Debug.Log("Counting animation not complete yet or button already processing, ignoring click");
+#endif
             return;
         }
 
@@ -1783,7 +2017,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         if (completeRestartOnConfirm)
         {
+#if UNITY_EDITOR
             Debug.Log("Complete restart requested - reloading scene");
+#endif
             StartCoroutine(CompleteRestartGame());
         }
         else
@@ -1794,7 +2030,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private IEnumerator SoftRestartGame()
     {
+#if UNITY_EDITOR
         Debug.Log("Starting soft restart...");
+#endif
 
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
@@ -1821,12 +2059,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (restartButton != null)
             restartButton.interactable = true;
 
+#if UNITY_EDITOR
         Debug.Log("Game soft restarted");
+#endif
     }
 
     private IEnumerator CompleteRestartGame()
     {
+#if UNITY_EDITOR
         Debug.Log("Starting complete game restart...");
+#endif
 
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
@@ -1838,14 +2080,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         Time.timeScale = originalTimeScale;
 
-        yield return new WaitForSecondsRealtime(0.1f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.1f);
 
         ReloadCurrentScene();
     }
 
     private void ResetPersistentData()
     {
+#if UNITY_EDITOR
         Debug.Log("Resetting persistent data...");
+#endif
 
         if (collectKeyScript != null)
         {
@@ -1860,12 +2104,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
         keySavedToDatabase = false;
         coinsAddedToDatabase = false;
 
+#if UNITY_EDITOR
         Debug.Log("Persistent data reset complete");
+#endif
     }
 
     private void ReloadCurrentScene()
     {
+#if UNITY_EDITOR
         Debug.Log("Reloading scene for complete restart...");
+#endif
 
         string sceneName = string.IsNullOrEmpty(sceneToReload) ?
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name : sceneToReload;
@@ -1877,7 +2125,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (backgroundMusicSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("BackgroundMusicSource is null. Cannot play lobby music.");
+#endif
             return;
         }
 
@@ -1888,11 +2138,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
             backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
 
+#if UNITY_EDITOR
             Debug.Log($"Changed to lobby music: {lobbyMusicClip.name}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Lobby music clip not assigned!");
+#endif
         }
     }
 
@@ -1900,7 +2154,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (backgroundMusicSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("BackgroundMusicSource is null. Cannot play restart music.");
+#endif
             return;
         }
 
@@ -1911,7 +2167,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             backgroundMusicSource.loop = false;
             backgroundMusicSource.Play();
 
+#if UNITY_EDITOR
             Debug.Log($"Changed to restart music: {restartMusicClip.name}");
+#endif
         }
     }
 
@@ -1919,7 +2177,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (backgroundMusicSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Background music source is null. Skipping music change.");
+#endif
             return;
         }
 
@@ -1932,11 +2192,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
             backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
 
+#if UNITY_EDITOR
             Debug.Log($"Changed background music to: {(isWin ? "WIN" : "LOSE")} music");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isWin ? "win" : "lose")} music clip assigned!");
+#endif
         }
     }
 
@@ -1972,12 +2236,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         try
         {
+#if UNITY_EDITOR
             Debug.Log("=== HANDLE KINGDOM 4 COMPLETE ===");
+#endif
             ShowGameEndScreen(true);
         }
         catch (System.Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogError($"Error in HandleKingdom4Complete: {e.Message}\n{e.StackTrace}");
+#endif
         }
     }
 
@@ -1985,12 +2253,16 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         try
         {
+#if UNITY_EDITOR
             Debug.Log("=== HANDLE KINGDOM 4 GAME OVER ===");
+#endif
             ShowGameEndScreen(false);
         }
         catch (System.Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogError($"Error in HandleKingdom4GameOver: {e.Message}\n{e.StackTrace}");
+#endif
         }
     }
 
@@ -1999,7 +2271,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     public void OnGameStarted()
     {
+#if UNITY_EDITOR
         Debug.Log("Game started notification received in GameEndManager");
+#endif
         gameStartTime = Time.time;
     }
 
@@ -2023,48 +2297,76 @@ public class Kingdom4GameEndManager : MonoBehaviour
     [ContextMenu("Test Star Logic")]
     public void TestStarLogic()
     {
+#if UNITY_EDITOR
         Debug.Log("=== TESTING STAR LOGIC ===");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 1: 5 hearts, 9 minutes");
+#endif
         completionTime = 540f;
         remainingHearts = 5;
         int stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 3)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 2: 5 hearts, 11 minutes");
+#endif
         completionTime = 660f;
         remainingHearts = 5;
         stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 2)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 3: 3 hearts, 9 minutes");
+#endif
         completionTime = 540f;
         remainingHearts = 3;
         stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 2)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 4: 2 hearts, 9 minutes");
+#endif
         completionTime = 540f;
         remainingHearts = 2;
         stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 1)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 5: 5 hearts, 16 minutes");
+#endif
         completionTime = 960f;
         remainingHearts = 5;
         stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 1)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest 6: 0 hearts");
+#endif
         remainingHearts = 0;
         stars = CalculateStarRating(true);
+#if UNITY_EDITOR
         Debug.Log($"Result: {stars} stars (Expected: 0)");
+#endif
     }
 
     [ContextMenu("Test Show Game Summary")]
     public void TestShowGameSummary()
     {
+#if UNITY_EDITOR
         Debug.Log("=== TESTING GAME SUMMARY ===");
+#endif
 
         completionTime = 540f;
         remainingHearts = 5;
@@ -2083,7 +2385,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (starsAnimator != null)
         {
+#if UNITY_EDITOR
             Debug.Log("Testing star animations...");
+#endif
 
             if (!starsAnimator.gameObject.activeSelf)
                 starsAnimator.gameObject.SetActive(true);
@@ -2095,7 +2399,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
             for (int i = 0; i <= 3; i++)
             {
+#if UNITY_EDITOR
                 Debug.Log($"\n=== Testing star value: {i} ===");
+#endif
 
                 starsAnimator.SetInteger(starParameter, 0);
                 starsAnimator.Update(0f);
@@ -2106,13 +2412,17 @@ public class Kingdom4GameEndManager : MonoBehaviour
                 starsAnimator.Update(0f);
 
                 AnimatorStateInfo stateInfo = starsAnimator.GetCurrentAnimatorStateInfo(0);
+#if UNITY_EDITOR
                 Debug.Log($"Current state: {stateInfo.fullPathHash}");
                 Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
                 Debug.Log($"Is in transition: {starsAnimator.IsInTransition(0)}");
+#endif
 
                 if (stateInfo.normalizedTime == 0 && i > 0)
                 {
+#if UNITY_EDITOR
                     Debug.Log("Animation not playing, trying direct play...");
+#endif
                     ForcePlayStarAnimation(i);
                 }
 
@@ -2121,58 +2431,86 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Star animator is null!");
+#endif
         }
     }
 
     [ContextMenu("Test Key Award Logic")]
     public void TestKeyAwardLogic()
     {
+#if UNITY_EDITOR
         Debug.Log("=== TESTING KEY AWARD LOGIC ===");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest: 3 stars, key collected");
+#endif
         starsEarned = 3;
         keyWasCollected = true;
+#if UNITY_EDITOR
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest: 2 stars, key collected");
+#endif
         starsEarned = 2;
         keyWasCollected = true;
+#if UNITY_EDITOR
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: true)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest: 1 star, key collected");
+#endif
         starsEarned = 1;
         keyWasCollected = true;
+#if UNITY_EDITOR
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: false)");
+#endif
 
+#if UNITY_EDITOR
         Debug.Log("\nTest: 3 stars, no key");
+#endif
         starsEarned = 3;
         keyWasCollected = false;
+#if UNITY_EDITOR
         Debug.Log($"Key awarded: {(starsEarned >= 2 && keyWasCollected)} (Expected: false)");
+#endif
     }
 
     [ContextMenu("Test OCR Scanner Key Saving")]
     public void TestOCRScannerKeySaving()
     {
+#if UNITY_EDITOR
         Debug.Log("=== TESTING OCR SCANNER KEY SAVING ===");
+#endif
         isFirstTimeCompletion = true;
         SaveOCRScannerKeyToGameData();
 
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             bool hasKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+#if UNITY_EDITOR
             Debug.Log($"After save - HasOCRScannerKey: {hasKey}");
+#endif
         }
     }
 
     [ContextMenu("Test Key Collection Flow")]
     public void TestKeyCollectionFlow()
     {
+#if UNITY_EDITOR
         Debug.Log("=== TESTING KEY COLLECTION FLOW ===");
+#endif
         keyWasCollected = true;
         keySavedToDatabase = false;
         starsEarned = 3;
+#if UNITY_EDITOR
         Debug.Log($"Set keyWasCollected=true, starsEarned=3, keySavedToDatabase={keySavedToDatabase}");
+#endif
     }
 
     [ContextMenu("Test Win with Key (3 stars)")]
@@ -2237,15 +2575,19 @@ public class Kingdom4GameEndManager : MonoBehaviour
     {
         if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("GameDataManager or CurrentGameData is null!");
+#endif
             return;
         }
 
         bool hasKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
+#if UNITY_EDITOR
         Debug.Log($"OCR Scanner Key status: {(hasKey ? "COLLECTED" : "NOT COLLECTED")}");
         Debug.Log($"Key collected this session: {keyWasCollected}");
         Debug.Log($"Key saved to database: {keySavedToDatabase}");
         Debug.Log($"Current stars earned: {starsEarned}");
+#endif
     }
 
     [ContextMenu("Collect OCR Scanner Key (Test)")]
@@ -2256,7 +2598,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             GameDataManager.Instance.CurrentGameData.CollectOCRScannerKey();
             GameDataManager.Instance.SaveGameData();
             keySavedToDatabase = true;
+#if UNITY_EDITOR
             Debug.Log("OCR Scanner Key collected and saved to GameData");
+#endif
 
             // 🔥 TRIGGER EVENT FOR TEST
             KeyCollectionEvents.TriggerKeyCollected("OCR");
@@ -2272,7 +2616,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
             GameDataManager.Instance.SaveGameData();
             keySavedToDatabase = false;
             keyWasCollected = false;
+#if UNITY_EDITOR
             Debug.Log("OCR Scanner Key reset in GameData");
+#endif
         }
     }
 

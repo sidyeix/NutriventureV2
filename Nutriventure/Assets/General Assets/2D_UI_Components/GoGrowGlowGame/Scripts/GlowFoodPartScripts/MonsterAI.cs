@@ -69,6 +69,10 @@ public class MonsterAI : MonoBehaviour
     private Coroutine attackCoroutine;
     private GoGrowGlowGameManager gameManager;
     private AudioClip currentLoopAudio;
+    private float detectionRangeSqr;
+    private float centerRangeSqr;
+    private float stoppingDistanceSqr;
+    private float attackTriggerDistanceSqr;
 
     private void Start()
     {
@@ -87,21 +91,33 @@ public class MonsterAI : MonoBehaviour
         if (player != null)
         {
             playerTransform = player.transform;
+#if UNITY_EDITOR
             Debug.Log($"MonsterAI: Found player at position {playerTransform.position}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("MonsterAI: No player found with tag 'Player'!");
+#endif
         }
 
         // Store center position
         centerPosition = transform.position;
 
+        // Cache squared range values for sqrMagnitude comparisons
+        detectionRangeSqr = detectionRange * detectionRange;
+        centerRangeSqr = centerRange * centerRange;
+        stoppingDistanceSqr = stoppingDistance * stoppingDistance;
+        attackTriggerDistanceSqr = attackTriggerDistance * attackTriggerDistance;
+
         // Cache references
         gameManager = GoGrowGlowGameManager.Instance;
         if (gameManager == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("MonsterAI: GoGrowGlowGameManager.Instance is null!");
+#endif
         }
 
         // Initialize audio source with fixed volume
@@ -122,7 +138,9 @@ public class MonsterAI : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("MonsterAI: Damage panel is NOT assigned in the Inspector!");
+#endif
         }
 
         // Initialize state
@@ -132,7 +150,9 @@ public class MonsterAI : MonoBehaviour
         if (playerTransform != null)
         {
             detectionCoroutine = StartCoroutine(DetectionRoutine());
+#if UNITY_EDITOR
             Debug.Log("MonsterAI: Started detection routine");
+#endif
         }
 
         // Initialize effects - Sleeping effect should be enabled by default
@@ -146,7 +166,9 @@ public class MonsterAI : MonoBehaviour
         // Debug warning if stealing animator is not assigned
         if (stealingAnimator == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("MonsterAI: Stealing Animator is not assigned in the Inspector! Stealing animations won't play.");
+#endif
         }
 
         // Initialize detection collider
@@ -160,7 +182,7 @@ public class MonsterAI : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(checkInterval);
+            yield return CoroutineYieldCache.WaitForSeconds(checkInterval);
 
             if (playerTransform == null) continue;
 
@@ -199,7 +221,9 @@ public class MonsterAI : MonoBehaviour
     {
         if (isWarningPhase || isAttacking || isReturningToCenter) return;
 
+#if UNITY_EDITOR
         Debug.Log($"MonsterAI: Player entered detection range at distance: {Vector3.Distance(transform.position, playerTransform.position)}");
+#endif
         isPlayerInDetectionRange = true;
         isWarningPhase = true;
 
@@ -223,7 +247,9 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator ShowWarningAndMove()
     {
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Starting warning phase");
+#endif
         // Show warning effect
         if (warningEffect != null)
         {
@@ -236,9 +262,11 @@ public class MonsterAI : MonoBehaviour
             PlayOneShotSound(warningSound);
         }
 
-        yield return new WaitForSeconds(warningDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(warningDuration);
 
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Warning phase ended, starting movement");
+#endif
         // Hide warning effect
         if (warningEffect != null)
         {
@@ -260,14 +288,18 @@ public class MonsterAI : MonoBehaviour
             if (distanceToPlayer <= detectionRange)
             {
                 SetMovingState(true);
+#if UNITY_EDITOR
                 Debug.Log("MonsterAI: Started moving towards player");
+#endif
             }
         }
     }
 
     private void PlayerExitedDetectionRange()
     {
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Player exited detection range");
+#endif
         isPlayerInDetectionRange = false;
 
         // If player is still in center range, stop chasing but don't return yet
@@ -290,7 +322,9 @@ public class MonsterAI : MonoBehaviour
     {
         if (isAttacking || isWarningPhase) return;
 
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Player exited center range, returning to center");
+#endif
         isReturningToCenter = true;
         SetMovingState(true);
 
@@ -304,7 +338,9 @@ public class MonsterAI : MonoBehaviour
 
     private void ReachedCenter()
     {
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Reached center position");
+#endif
         isReturningToCenter = false;
         SetMovingState(false);
         SetIdleState(true);
@@ -323,8 +359,10 @@ public class MonsterAI : MonoBehaviour
     {
         if (playerTransform == null || gameManager == null) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-        bool playerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
+        Vector3 toPlayer = playerTransform.position - transform.position;
+        float distToPlayerSqr = toPlayer.x * toPlayer.x + toPlayer.y * toPlayer.y + toPlayer.z * toPlayer.z;
+        Vector3 playerToCenter = playerTransform.position - centerPosition;
+        bool playerInCenterRange = (playerToCenter.x * playerToCenter.x + playerToCenter.y * playerToCenter.y + playerToCenter.z * playerToCenter.z) <= centerRangeSqr;
 
         // If moving towards player and not in warning phase or returning to center
         if (monsterAnimator != null && monsterAnimator.GetBool(movingParam) && !isReturningToCenter && !isWarningPhase && isPlayerInDetectionRange)
@@ -343,14 +381,16 @@ public class MonsterAI : MonoBehaviour
             if (playerInCenterRange)
             {
                 // Check distance for attack
-                if (distanceToPlayer <= attackTriggerDistance && canAttack && !isAttacking)
+                if (distToPlayerSqr <= attackTriggerDistanceSqr && canAttack && !isAttacking)
                 {
-                    Debug.Log($"MonsterAI: Player in attack range! Distance: {distanceToPlayer}");
+#if UNITY_EDITOR
+                    Debug.Log($"MonsterAI: Player in attack range! SqrDist: {distToPlayerSqr}");
+#endif
                     // Stop moving and attack
                     SetMovingState(false);
                     StartAttack();
                 }
-                else if (distanceToPlayer > attackTriggerDistance)
+                else if (distToPlayerSqr > attackTriggerDistanceSqr)
                 {
                     // Keep moving towards player
                     transform.position += directionToPlayer * movementSpeed * Time.deltaTime;
@@ -374,9 +414,10 @@ public class MonsterAI : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
 
-            float distanceToCenter = Vector3.Distance(transform.position, centerPosition);
+            Vector3 toCenter = centerPosition - transform.position;
+            float distToCenterSqr = toCenter.x * toCenter.x + toCenter.y * toCenter.y + toCenter.z * toCenter.z;
 
-            if (distanceToCenter > stoppingDistance)
+            if (distToCenterSqr > stoppingDistanceSqr)
             {
                 transform.position += directionToCenter * movementSpeed * Time.deltaTime;
             }
@@ -391,9 +432,11 @@ public class MonsterAI : MonoBehaviour
                  isPlayerInDetectionRange && !isWarningPhase && !isReturningToCenter && playerInCenterRange)
         {
             // Check if we should start moving towards player
-            if (distanceToPlayer > attackTriggerDistance && distanceToPlayer <= detectionRange)
+            if (distToPlayerSqr > attackTriggerDistanceSqr && distToPlayerSqr <= detectionRangeSqr)
             {
+#if UNITY_EDITOR
                 Debug.Log("MonsterAI: Idle but player in range, starting movement");
+#endif
                 SetMovingState(true);
             }
         }
@@ -406,8 +449,8 @@ public class MonsterAI : MonoBehaviour
     {
         if (sleepingEffect == null) return;
 
-        float distanceToCenter = Vector3.Distance(transform.position, centerPosition);
-        bool isAtCenter = distanceToCenter <= stoppingDistance;
+        Vector3 toCenterVec = centerPosition - transform.position;
+        bool isAtCenter = (toCenterVec.x * toCenterVec.x + toCenterVec.y * toCenterVec.y + toCenterVec.z * toCenterVec.z) <= stoppingDistanceSqr;
         bool isIdle = monsterAnimator != null && monsterAnimator.GetBool(idleParam);
 
         // Enable sleeping effect if:
@@ -434,11 +477,15 @@ public class MonsterAI : MonoBehaviour
     {
         if (!canAttack || isAttacking || isReturningToCenter || isWarningPhase)
         {
+#if UNITY_EDITOR
             Debug.Log($"MonsterAI: Cannot attack - canAttack={canAttack}, isAttacking={isAttacking}, isReturningToCenter={isReturningToCenter}, isWarningPhase={isWarningPhase}");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Starting attack sequence");
+#endif
         SetAttackingState(true);
         isAttacking = true;
 
@@ -456,22 +503,28 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator AttackSequence()
     {
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Attack sequence started");
+#endif
         // Wait for attack animation to reach hitting point
-        yield return new WaitForSeconds(attackAnimationDelay);
+        yield return CoroutineYieldCache.WaitForSeconds(attackAnimationDelay);
 
         // Activate damage panel
         if (damagePanel != null)
         {
             damagePanel.SetActive(true);
+#if UNITY_EDITOR
             Debug.Log("MonsterAI: DAMAGE PANEL ACTIVATED!");
+#endif
 
             // Auto-hide after 1 second (damage panel animation duration)
             StartCoroutine(HideDamagePanelAfterDelay());
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("MonsterAI: Damage panel is null! Did you assign it in the Inspector?");
+#endif
         }
 
         // Apply damage to player
@@ -482,16 +535,18 @@ public class MonsterAI : MonoBehaviour
             attackTriggerCollider.enabled = true;
 
         // Keep collider enabled briefly for knockback
-        yield return new WaitForSeconds(0.2f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.2f);
 
         // Disable attack collider
         if (attackTriggerCollider != null)
             attackTriggerCollider.enabled = false;
 
         // Wait for attack animation to finish
-        yield return new WaitForSeconds(0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
 
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Attack sequence finished, starting cooldown");
+#endif
         // After attack, start cooldown
         SetAttackingState(false);
         isAttacking = false;
@@ -500,18 +555,22 @@ public class MonsterAI : MonoBehaviour
 
     private IEnumerator HideDamagePanelAfterDelay()
     {
-        yield return new WaitForSeconds(1f);
+        yield return CoroutineYieldCache.WaitForSeconds(1f);
 
         if (damagePanel != null)
         {
             damagePanel.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log("MonsterAI: Damage panel deactivated.");
+#endif
         }
     }
 
     private IEnumerator AttackCooldownRoutine()
     {
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Attack cooldown started");
+#endif
         canAttack = false;
 
         // Set stealing animation to TRUE during cooldown (using separate animator)
@@ -520,13 +579,15 @@ public class MonsterAI : MonoBehaviour
         // Go to idle during cooldown
         SetIdleState(true);
 
-        yield return new WaitForSeconds(attackCooldown);
+        yield return CoroutineYieldCache.WaitForSeconds(attackCooldown);
 
         // Set stealing animation to FALSE after cooldown
         SetStealingState(false);
 
         canAttack = true;
+#if UNITY_EDITOR
         Debug.Log("MonsterAI: Attack cooldown finished");
+#endif
 
         // After cooldown, check what to do next
         if (playerTransform != null)
@@ -535,24 +596,32 @@ public class MonsterAI : MonoBehaviour
             bool playerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
             bool playerInDetectionRange = distanceToPlayer <= detectionRange;
 
+#if UNITY_EDITOR
             Debug.Log($"MonsterAI: After cooldown - Distance to player: {distanceToPlayer}, Player in center: {playerInCenterRange}, Player in detection: {playerInDetectionRange}");
+#endif
 
             if (distanceToPlayer <= attackTriggerDistance && playerInCenterRange)
             {
                 // Player is still in attack range, attack again
+#if UNITY_EDITOR
                 Debug.Log("MonsterAI: Player still in attack range, attacking again");
+#endif
                 StartAttack();
             }
             else if (playerInDetectionRange && playerInCenterRange)
             {
                 // Player is in detection range but not attack range, move towards them
+#if UNITY_EDITOR
                 Debug.Log("MonsterAI: Player in detection range, moving towards player");
+#endif
                 SetMovingState(true);
             }
             else
             {
                 // Player left range, start returning to center
+#if UNITY_EDITOR
                 Debug.Log("MonsterAI: Player left range, returning to center");
+#endif
                 PlayerExitedDetectionRange();
                 PlayerExitedCenterRange();
             }
@@ -563,7 +632,9 @@ public class MonsterAI : MonoBehaviour
     {
         if (other.CompareTag("Player") && isAttacking)
         {
+#if UNITY_EDITOR
             Debug.Log("MonsterAI: Attack trigger collider hit player");
+#endif
             ApplyKnockbackToPlayer();
         }
     }
@@ -572,12 +643,16 @@ public class MonsterAI : MonoBehaviour
     {
         if (gameManager == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("MonsterAI: GoGrowGlowGameManager.Instance is null!");
+#endif
             return;
         }
 
         gameManager.RemoveEnergy(attackDamage);
+#if UNITY_EDITOR
         Debug.Log($"MonsterAI: Applied {attackDamage} damage to player's energy!");
+#endif
 
         // Play player hurt sound at player position
         if (playerHurtSound != null && playerTransform != null)
@@ -595,7 +670,9 @@ public class MonsterAI : MonoBehaviour
             knockbackDirection.Normalize();
 
             gameManager.ApplyKnockback(knockbackDirection, knockbackForce, knockbackDuration);
+#if UNITY_EDITOR
             Debug.Log("MonsterAI: Applied knockback to player!");
+#endif
         }
     }
 
@@ -711,11 +788,15 @@ public class MonsterAI : MonoBehaviour
                 PlayOneShotSound(stealingSound);
             }
 
+#if UNITY_EDITOR
             Debug.Log($"MonsterAI: Stealing animation set to: {state}");
+#endif
         }
         else if (state)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"MonsterAI: Cannot set stealing animation: Animator={(stealingAnimator != null)}, Param={stealingParam}");
+#endif
         }
     }
 

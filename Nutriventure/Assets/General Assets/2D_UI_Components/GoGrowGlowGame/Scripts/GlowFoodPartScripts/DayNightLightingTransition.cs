@@ -152,7 +152,9 @@ public class DayNightLightingTransition : MonoBehaviour
         }
 
         isDayTime = true;
+        #if UNITY_EDITOR
         Debug.Log("Initialized to Daytime - Day lights at explicit intensity");
+        #endif
     }
 
     private void ValidateSetup()
@@ -189,7 +191,9 @@ public class DayNightLightingTransition : MonoBehaviour
 
         if (isDayTime)
         {
+            #if UNITY_EDITOR
             Debug.Log("Starting transition: Day ? Night");
+            #endif
 
             // Activate night lights GameObject (ENABLE GAMEOBJECT)
             ActivateAndInitializeNightLights();
@@ -220,7 +224,9 @@ public class DayNightLightingTransition : MonoBehaviour
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.Log("Starting transition: Night ? Day");
+            #endif
 
             // Enable day lights but set intensity to 0 for fade in
             if (dayLight1 != null)
@@ -282,7 +288,9 @@ public class DayNightLightingTransition : MonoBehaviour
                 SetToNightInstantly();
             }
 
+            #if UNITY_EDITOR
             Debug.Log($"Transition complete: {(isDayTime ? "Day" : "Night")}");
+            #endif
         }
     }
 
@@ -448,14 +456,18 @@ public class DayNightLightingTransition : MonoBehaviour
     {
         StopTransition();
         SetToDayInstantly();
+        #if UNITY_EDITOR
         Debug.Log("Set to Day (instant)");
+        #endif
     }
 
     public void SetToNight()
     {
         StopTransition();
         SetToNightInstantly();
+        #if UNITY_EDITOR
         Debug.Log("Set to Night (instant)");
+        #endif
     }
 
     public void ToggleDayNight()
@@ -494,7 +506,9 @@ public class DayNightLightingTransition : MonoBehaviour
     public void SetTransitionTime(float time)
     {
         transitionTime = Mathf.Max(0.1f, time);
+        #if UNITY_EDITOR
         Debug.Log($"Transition time set to: {transitionTime} seconds");
+        #endif
     }
 
     void OnDestroy()
@@ -504,7 +518,9 @@ public class DayNightLightingTransition : MonoBehaviour
 
     public void ResetTransition()
     {
+        #if UNITY_EDITOR
         Debug.Log($"Resetting DayNightLightingTransition on {gameObject.name}");
+        #endif
 
         // Stop any active transition
         isTransitioning = false;
@@ -523,6 +539,8 @@ public class DayNightLightingTransition : MonoBehaviour
             collider.enabled = true;
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"DayNightLightingTransition reset to Daytime");
+        #endif
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
+using System.Collections;
 
 public class TimelineSkipButton : MonoBehaviour
 {
@@ -78,10 +79,35 @@ public class TimelineSkipButton : MonoBehaviour
 
         Debug.Log($"Timeline skipped to {skipToTime} seconds");
 
+        // If a pause signal sits exactly at the skip time, the timeline gets paused immediately.
+        // Force-resume after one frame so the skip actually plays, while leaving all
+        // future pause signals (after the skip point) fully functional.
+        if (playAfterSkip)
+        {
+            StartCoroutine(ForceResumeAfterSkip());
+        }
+
         // Disable button if specified
         if (disableAfterSkip && skipButton != null)
         {
             skipButton.interactable = false;
+        }
+    }
+
+    private IEnumerator ForceResumeAfterSkip()
+    {
+        // Wait one frame for signals at the skip point to fire
+        yield return null;
+
+        // If a signal at the skip point paused the timeline, resume it
+        if (timelineDirector != null && timelineDirector.state != PlayState.Playing)
+        {
+            timelineDirector.Play();
+            if (TimelinePauseManager.Instance != null && TimelinePauseManager.Instance.IsTimelinePaused())
+            {
+                TimelinePauseManager.Instance.ResumeTimeline();
+            }
+            Debug.Log("Timeline force-resumed after skip (signal at skip point was overridden)");
         }
     }
 

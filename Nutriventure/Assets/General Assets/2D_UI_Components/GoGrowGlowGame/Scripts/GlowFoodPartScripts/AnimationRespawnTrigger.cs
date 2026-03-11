@@ -98,7 +98,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
 
             // Set the trigger
             targetAnimator.SetTrigger(triggerParameter);
+            #if UNITY_EDITOR
             Debug.Log($"Trigger '{triggerParameter}' set on {targetAnimator.name}");
+            #endif
 
             // If we need to disable animator after animation
             if (disableAnimatorAfterAnimation)
@@ -109,7 +111,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Target Animator not assigned!");
+            #endif
         }
     }
 
@@ -131,12 +135,14 @@ public class AnimationRespawnTrigger : MonoBehaviour
                 }
 
                 obj.SetActive(false);
+                #if UNITY_EDITOR
                 Debug.Log($"Disabled: {obj.name}");
+                #endif
             }
         }
 
         // Wait
-        yield return new WaitForSeconds(disableTime);
+        yield return CoroutineYieldCache.WaitForSeconds(disableTime);
 
         // Re-enable all objects
         foreach (var obj in objectsToRespawn)
@@ -152,7 +158,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
                 // Reset animator if needed
                 ResetObjectAnimator(obj);
 
+                #if UNITY_EDITOR
                 Debug.Log($"Enabled: {obj.name}");
+                #endif
             }
         }
     }
@@ -164,7 +172,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
             obj.transform.localPosition = originalPositions[obj];
             obj.transform.localScale = originalScales[obj];
             obj.transform.localRotation = originalRotations[obj];
+            #if UNITY_EDITOR
             Debug.Log($"Reset transform for {obj.name}");
+            #endif
         }
     }
 
@@ -209,7 +219,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
                 }
             }
 
+            #if UNITY_EDITOR
             Debug.Log($"Reset animator for {obj.name}");
+            #endif
 
             // Re-trigger animation if needed
             if (replayAnimationOnEnable && obj == targetAnimator?.gameObject)
@@ -224,7 +236,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
         if (targetAnimator != null)
         {
             targetAnimator.SetTrigger(triggerParameter);
+            #if UNITY_EDITOR
             Debug.Log($"Re-triggered animation for {targetAnimator.name}");
+            #endif
         }
     }
 
@@ -233,7 +247,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
         if (targetAnimator != null && targetAnimator.enabled)
         {
             targetAnimator.enabled = false;
+            #if UNITY_EDITOR
             Debug.Log($"Disabled animator on {targetAnimator.name} after {disableAfterSeconds} seconds");
+            #endif
         }
     }
 
@@ -254,7 +270,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
                 targetAnimator.Play(defaultStateName, 0, 0f);
             }
 
+            #if UNITY_EDITOR
             Debug.Log($"Reset trigger and re-enabled animator on {targetAnimator.name}");
+            #endif
         }
 
         CancelInvoke(nameof(DisableTargetAnimator)); // Cancel any pending disable
@@ -267,7 +285,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
         {
             objectsToRespawn.Add(obj);
             StoreOriginalTransform(obj);
+            #if UNITY_EDITOR
             Debug.Log($"Added {obj.name} to respawn list");
+            #endif
         }
     }
 
@@ -289,7 +309,9 @@ public class AnimationRespawnTrigger : MonoBehaviour
             originalPositions.Remove(obj);
             originalScales.Remove(obj);
             originalRotations.Remove(obj);
+            #if UNITY_EDITOR
             Debug.Log($"Removed {obj.name} from respawn list");
+            #endif
         }
     }
 

@@ -27,13 +27,11 @@ public class DamagePanelController : MonoBehaviour
     {
         // Make sure panel is hidden at start
         gameObject.SetActive(false);
-        Debug.Log("Damage Panel Controller started - panel is hidden");
     }
 
     // Call this method to show the panel
     public void ShowDamagePanel()
     {
-        Debug.Log("=== SHOWING DAMAGE PANEL ===");
 
         // Stop any existing hide coroutine
         if (hideCoroutine != null)
@@ -50,11 +48,10 @@ public class DamagePanelController : MonoBehaviour
 
     private IEnumerator HidePanelAfterDelay()
     {
-        yield return new WaitForSeconds(showDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(showDuration);
 
         // Hide the panel
         gameObject.SetActive(false);
-        Debug.Log("Damage panel hidden after " + showDuration + " seconds");
 
         hideCoroutine = null;
     }
@@ -69,6 +66,5 @@ public class DamagePanelController : MonoBehaviour
         }
 
         gameObject.SetActive(false);
-        Debug.Log("Damage panel force hidden");
     }
 }

@@ -115,7 +115,9 @@ public class HealingZone : MonoBehaviour
             }
             else
             {
+                #if UNITY_EDITOR
                 Debug.Log($"Player entered Healing Zone (game not active). Healing disabled.");
+                #endif
             }
         }
     }
@@ -161,7 +163,9 @@ public class HealingZone : MonoBehaviour
                 healingAnimator.Play(0, 0, animationNormalizedTime);
             }
 
+            #if UNITY_EDITOR
             Debug.Log($"Started healing animation at normalized time: {animationNormalizedTime:F2}");
+            #endif
         }
 
         // Start audio
@@ -182,7 +186,9 @@ public class HealingZone : MonoBehaviour
             healingCoroutine = StartCoroutine(HealingProcess());
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"Player entered Healing Zone. Energy: {currentEnergy}, Animation start time: {animationNormalizedTime:F2}");
+        #endif
     }
 
     // Stop all healing activities
@@ -219,7 +225,9 @@ public class HealingZone : MonoBehaviour
             healingEffect.SetActive(false);
         }
 
+        #if UNITY_EDITOR
         Debug.Log("Healing activities stopped");
+        #endif
     }
 
     private System.Collections.IEnumerator HealingProcess()

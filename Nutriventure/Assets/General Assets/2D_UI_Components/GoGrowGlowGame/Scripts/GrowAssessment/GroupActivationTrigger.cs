@@ -17,7 +17,9 @@ public class GroupActivationTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player") && groupManager != null)
         {
+            #if UNITY_EDITOR
             Debug.Log($"Player entered group: {groupManager.gameObject.name}");
+            #endif
 
             // Activate the group FIRST
             groupManager.OnPlayerEnterGroup();
@@ -37,7 +39,9 @@ public class GroupActivationTrigger : MonoBehaviour
 
         // NEW: Set isEntry to true on the ObjectGroupManager's animator
         groupManager.SetGroupEntryAnimation(true);
+        #if UNITY_EDITOR
         Debug.Log($"Set isEntry = true on ObjectGroupManager: {groupManager.gameObject.name}");
+        #endif
     }
 
     void OnDrawGizmos()

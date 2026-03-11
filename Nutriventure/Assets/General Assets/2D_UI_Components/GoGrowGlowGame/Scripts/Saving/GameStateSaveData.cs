@@ -64,6 +64,10 @@ public class GameStateSaveData
     public List<string> litTowerNames = new List<string>();
     public bool glowPartCompleted;
 
+    // Per-tower energy levels (parallel lists since JsonUtility doesn't support Dictionary)
+    public List<string> towerEnergyNames = new List<string>();
+    public List<float> towerEnergyValues = new List<float>();
+
     // Checkpoint system
     public string currentCheckpointName;
     public bool hasCheckpoint;
@@ -96,6 +100,8 @@ public class GameStateSaveData
     {
         litTorchIDs = new List<string>();
         litTowerNames = new List<string>();
+        towerEnergyNames = new List<string>();
+        towerEnergyValues = new List<float>();
         activatedCheckpointNames = new List<string>();
         saveTime = DateTime.Now;
         playerArmatureScale = Vector3.one;
