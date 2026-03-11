@@ -378,9 +378,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
         {
             currentEnergy = Mathf.Lerp(currentEnergy, targetEnergy, energyTransitionSpeed * Time.deltaTime);
-            if (energySlider != null) energySlider.value = currentEnergy;
         }
-        else currentEnergy = targetEnergy;
+        else
+        {
+            currentEnergy = targetEnergy;
+        }
+
+        if (energySlider != null) energySlider.value = currentEnergy;
 
         if (currentEnergy <= 0f) LoseLife();
 
@@ -844,7 +848,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         StopLowEnergySound();
 
         if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
-        gameIsActive = true;
+        SetGameActive(true);
         isStartingGame = false;
         isEnergyDecreasePaused = false;
         isGameTimerPaused = false;
@@ -937,9 +941,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     public void EndGame()
     {
-        gameIsActive = false;
+        SetGameActive(false);
         isEnergyDecreasePaused = false;
         isGameTimerPaused = false;
+        isStartingGame = false;
         StopOneLifeCheck();
         StopKnockback();
 

@@ -27,18 +27,12 @@ public class AllergenSpawnManager : MonoBehaviour
 
     // ================= UNITY =================
     void Start()
-{
-    InitializeAllergenMap(); // ✅ ALWAYS DO THIS
-
-    if (BookInteractable.Instance == null || !BookInteractable.Instance.IsClaimed)
     {
-        if (showDebugInfo)
-            Debug.Log("🚫 Allergens not spawned: Scroll not claimed yet.");
-        return;
-    }
+        InitializeAllergenMap();
 
-    SpawnAllergens();
-}
+        if (showDebugInfo)
+            Debug.Log("AllergenSpawnManager: Initialized. Waiting for game manager to trigger spawn.");
+    }
 
 
 
@@ -79,8 +73,8 @@ public class AllergenSpawnManager : MonoBehaviour
     }
 
     // ================= SPAWNING =================
-    private void SpawnAllergens()
-{
+    public void SpawnAllergens()
+    {
     if (hasSpawned) return;
 
     if (spawnPoints.Count == 0 || allergenPrefabMap.Count == 0)
@@ -221,17 +215,10 @@ private void ClearAllAllergens()
     }
 
     [ContextMenu("Spawn Allergens Now")]
-public void SpawnNow()
-{
-    if (BookInteractable.Instance == null || !BookInteractable.Instance.IsClaimed)
+    public void SpawnNow()
     {
-        if (showDebugInfo)
-            Debug.Log("🚫 SpawnNow blocked: Scroll not claimed.");
-        return;
+        SpawnAllergens();
     }
-
-    SpawnAllergens();
-}
 
 
     [ContextMenu("Clear Allergens")]

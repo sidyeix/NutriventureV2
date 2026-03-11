@@ -222,6 +222,13 @@ public class InGameSettingsButton : MonoBehaviour
             Debug.Log("Settings closed while roaming — resumed immediately.");
 #endif
         }
+
+        // Safety net: if for any reason timeScale is still 0 after handling, restore it
+        if (!isPaused && Time.timeScale == 0f)
+        {
+            Time.timeScale = 1f;
+            Debug.LogWarning("InGameSettingsButton: Safety net restored Time.timeScale to 1");
+        }
     }
 
     private void OnResumeGameClicked()
