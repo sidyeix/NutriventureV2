@@ -1084,12 +1084,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
-        foreach (GameObject uiElement in uiElementsToEnable)
-            if (uiElement != null) uiElement.SetActive(false);
-
-        // Hide sprint button when game ends
-        if (sprintButton != null) sprintButton.SetActive(false);
-
         if (startButton != null)
             startButton.gameObject.SetActive(true);
 
