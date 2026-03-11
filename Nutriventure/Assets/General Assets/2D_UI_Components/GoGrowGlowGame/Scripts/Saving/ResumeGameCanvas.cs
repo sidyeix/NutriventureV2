@@ -82,7 +82,7 @@ public class ResumeGameCanvas : MonoBehaviour
         // Wait 2 frames + a small delay to let GameStateManager finish its Awake/Start
         yield return null;
         yield return null;
-        yield return new WaitForSecondsRealtime(0.15f);
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(0.15f);
 
         gameStateManager = GameStateManager.Instance;
         CheckForResumeData();
@@ -102,7 +102,9 @@ public class ResumeGameCanvas : MonoBehaviour
 
         if (gameStateManager == null)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("ResumeGameCanvas: GameStateManager not found – cannot check for resume data.");
+            #endif
             return;
         }
 
@@ -110,7 +112,9 @@ public class ResumeGameCanvas : MonoBehaviour
         // don't show the panel again – the state is being applied automatically.
         if (gameStateManager.IsResumeInProgress)
         {
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: Resume already in progress – skipping panel.");
+            #endif
             return;
         }
 
@@ -124,18 +128,24 @@ public class ResumeGameCanvas : MonoBehaviour
             if (saveData != null && !saveData.isGameActive)
             {
                 // Game was NOT active (roaming) – just start at spawn point, no position restore.
+                #if UNITY_EDITOR
                 Debug.Log("ResumeGameCanvas: Game was NOT active – starting at spawn point.");
+                #endif
                 gameStateManager.ClearSavedGameState(kingdomSceneName);
                 return;
             }
 
             // Game WAS active – show Resume / Restart panel
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: Game was ACTIVE – showing resume panel.");
+            #endif
             ShowResumeCanvas();
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: No saved game state – starting fresh.");
+            #endif
         }
     }
 
@@ -209,7 +219,9 @@ public class ResumeGameCanvas : MonoBehaviour
 
     private void OnResumeClicked()
     {
+        #if UNITY_EDITOR
         Debug.Log("ResumeGameCanvas: RESUME clicked – restoring saved game state.");
+        #endif
 
         HideResumeCanvas();
 
@@ -223,7 +235,9 @@ public class ResumeGameCanvas : MonoBehaviour
 
     private void OnRestartClicked()
     {
+        #if UNITY_EDITOR
         Debug.Log("ResumeGameCanvas: RESTART clicked – clearing save and resetting.");
+        #endif
 
         HideResumeCanvas();
 
@@ -271,12 +285,16 @@ public class ResumeGameCanvas : MonoBehaviour
         // If we're on the main menu (not in the kingdom scene), load the scene fresh
         if (gameStateManager != null && !gameStateManager.IsInKingdomScene())
         {
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: Restart from main menu – loading kingdom scene fresh.");
+            #endif
             UnityEngine.SceneManagement.SceneManager.LoadScene(kingdomSceneName);
             return;
         }
 
+        #if UNITY_EDITOR
         Debug.Log("ResumeGameCanvas: Restart complete – player at lobby with fresh state.");
+        #endif
     }
 
     // ============================================================
@@ -301,19 +319,25 @@ public class ResumeGameCanvas : MonoBehaviour
             if (saveData != null && !saveData.isGameActive)
             {
                 // Game was NOT active (roaming) – just load the scene fresh, no position restore.
+                #if UNITY_EDITOR
                 Debug.Log("ResumeGameCanvas: Game was NOT active – loading scene fresh (no position restore).");
+                #endif
                 gameStateManager.ClearSavedGameState(kingdomSceneName);
                 UnityEngine.SceneManagement.SceneManager.LoadScene(kingdomSceneName);
                 return;
             }
 
             // Game WAS active – show Resume/Restart panel
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: Game was ACTIVE – showing resume panel from main menu.");
+            #endif
             ShowResumeCanvas();
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.Log("ResumeGameCanvas: No save data – loading kingdom scene directly.");
+            #endif
             UnityEngine.SceneManagement.SceneManager.LoadScene(kingdomSceneName);
         }
     }

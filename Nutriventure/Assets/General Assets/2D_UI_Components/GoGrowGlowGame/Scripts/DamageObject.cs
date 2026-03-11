@@ -41,7 +41,9 @@ public class DamageObject : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("=== PLAYER TOUCHED DAMAGE OBJECT ===");
+#endif
             ApplyDamage(other.transform);
         }
     }
@@ -50,7 +52,9 @@ public class DamageObject : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("=== PLAYER COLLIDED WITH DAMAGE OBJECT ===");
+#endif
             ApplyDamage(collision.transform);
         }
     }
@@ -66,13 +70,14 @@ public class DamageObject : MonoBehaviour
         // 2. Check if GameManager exists
         if (GoGrowGlowGameManager.Instance == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("GameManager is NULL!");
+#endif
             return;
         }
 
         if (GoGrowGlowGameManager.Instance.IsRespawning())
         {
-            Debug.Log("Player is respawning, ignoring damage");
             return;
         }
 
@@ -96,7 +101,9 @@ public class DamageObject : MonoBehaviour
         {
             // Reduce energy instead of life
             GoGrowGlowGameManager.Instance.RemoveEnergy(energyReductionAmount);
+#if UNITY_EDITOR
             Debug.Log($"Energy reduced by: {energyReductionAmount}");
+#endif
         }
         else
         {
@@ -109,7 +116,9 @@ public class DamageObject : MonoBehaviour
             {
                 GoGrowGlowGameManager.Instance.LoseLifeAmount(damageAmount, false);
             }
+#if UNITY_EDITOR
             Debug.Log($"Life damage applied: {damageAmount}");
+#endif
         }
 
         // 6. Visual effect
@@ -140,7 +149,7 @@ public class DamageObject : MonoBehaviour
 
         // Wait for display time
         float displayTime = useCustomDisplayTime ? panelDisplayTime : 1f;
-        yield return new WaitForSeconds(displayTime);
+        yield return CoroutineYieldCache.WaitForSeconds(displayTime);
 
         // Hide the panel
         damagePanel.SetActive(false);
@@ -152,7 +161,9 @@ public class DamageObject : MonoBehaviour
         if (damagePanel != null)
         {
             StartCoroutine(ShowDamagePanel());
+#if UNITY_EDITOR
             Debug.Log($"Testing damage panel for {panelDisplayTime} seconds");
+#endif
         }
     }
 }

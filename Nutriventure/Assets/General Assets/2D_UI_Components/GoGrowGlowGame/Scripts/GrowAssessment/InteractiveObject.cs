@@ -106,14 +106,24 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         if (assessmentManager != null && isGrowFood)
         {
             assessmentManager.RegisterAssessmentObject(this);
+#if UNITY_EDITOR
             Debug.Log($"Registered {objectName} with Assessment Manager (Correct Answer)");
+#endif
         }
 
         // Validate
         if (animationPoint == null)
+        {
+#if UNITY_EDITOR
             Debug.LogError($"Animation Point not set on {objectName}");
+#endif
+        }
         if (movePoint == null && isGrowFood)
+        {
+#if UNITY_EDITOR
             Debug.LogWarning($"Move Point not set on {objectName} (needed for correct choices)");
+#endif
+        }
 
         // NEW: Spawn food immediately when the game starts
         if (foodPrefab != null && foodSpawnPoint != null && !isGrowFood) // Spawn junk food immediately
@@ -132,7 +142,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
         // Spawn new food
         spawnedFood = Instantiate(prefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
+#if UNITY_EDITOR
         Debug.Log($"Spawned assigned food for {objectName}: {prefab.name}");
+#endif
     }
 
     private void AddPhysicsRaycasterToCamera()
@@ -157,7 +169,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         if (!isInteractable || !sequenceManager.CanInteractWithObjects() || isProcessingInteraction)
             return;
 
+#if UNITY_EDITOR
         Debug.Log($"Clicked {objectName} (Grow Food: {isGrowFood})");
+#endif
 
         // Store current position as latest position BEFORE moving
         if (playerController != null)
@@ -195,15 +209,17 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         // 2. Optional: Delay before smash animation
         if (beforeSmashDelay > 0)
         {
+#if UNITY_EDITOR
             Debug.Log($"Waiting {beforeSmashDelay}s before smash animation");
-            yield return new WaitForSeconds(beforeSmashDelay);
+#endif
+            yield return CoroutineYieldCache.WaitForSeconds(beforeSmashDelay);
         }
 
         // 3. Play smash animations
         PlaySmashAnimations();
 
         // 4. Wait for player's smash animation length (1.5s)
-        yield return new WaitForSeconds(smashAnimationLength);
+        yield return CoroutineYieldCache.WaitForSeconds(smashAnimationLength);
 
         // 5. Reset player smash animation
         if (playerAnimator != null)
@@ -224,10 +240,10 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             HandleCorrectAnswer();
 
             // Wait after smash delay
-            yield return new WaitForSeconds(afterSmashDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(afterSmashDelay);
 
             // Wait before move delay
-            yield return new WaitForSeconds(beforeMoveDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(beforeMoveDelay);
 
             // NEW: Do NOT destroy food yet! Keep it visible while moving
 
@@ -235,7 +251,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             if (currentGroupManager != null)
             {
                 currentGroupManager.SetGroupEntryAnimation(false);
+#if UNITY_EDITOR
                 Debug.Log("Set isEntry to false for all objects in group");
+#endif
             }
 
             // Handle correct choice - THIS is where food will be destroyed
@@ -253,7 +271,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             HandleWrongAnswer();
 
             // Play dizzy animation during afterSmashDelay
+#if UNITY_EDITOR
             Debug.Log("Wrong object: Playing dizzy animation");
+#endif
             if (playerAnimator != null)
             {
                 playerAnimator.SetBool(playerDizzyBool, true);
@@ -272,7 +292,7 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             }
 
             // Wait for dizzy animation (afterSmashDelay)
-            yield return new WaitForSeconds(afterSmashDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(afterSmashDelay);
 
             // Stop dizzy animation
             if (playerAnimator != null)
@@ -293,10 +313,10 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             }
 
             // Wait for object animation to complete (animationExitTime)
-            yield return new WaitForSeconds(animationExitTime);
+            yield return CoroutineYieldCache.WaitForSeconds(animationExitTime);
 
             // Wait before move delay
-            yield return new WaitForSeconds(beforeMoveDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(beforeMoveDelay);
 
             // NEW: Do NOT destroy food for wrong answer - keep it for retry
 
@@ -306,7 +326,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
         // 7. Cleanup
         isProcessingInteraction = false;
+#if UNITY_EDITOR
         Debug.Log($"{objectName} interaction complete");
+#endif
     }
 
     // ====== MOVEMENT AND ANIMATION METHODS ======
@@ -429,14 +451,18 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
                 // Set isCorrect to true (stays true)
                 objectAnimator.SetBool(objectCorrectBool, true);
                 objectAnimator.SetBool(objectWrongBool, false);
+#if UNITY_EDITOR
                 Debug.Log($"Set {objectCorrectBool} = true (will stay true)");
+#endif
             }
             else
             {
                 // Set isWrong to true
                 objectAnimator.SetBool(objectWrongBool, true);
                 objectAnimator.SetBool(objectCorrectBool, false);
+#if UNITY_EDITOR
                 Debug.Log($"Set {objectWrongBool} = true");
+#endif
 
                 // Start coroutine to reset isWrong after the animation's natural exit time
                 wrongAnimationResetCoroutine = StartCoroutine(ResetWrongAnimationWithExitTime());
@@ -447,14 +473,18 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     private IEnumerator ResetWrongAnimationWithExitTime()
     {
         // Wait for the animation to play through its natural exit time
+#if UNITY_EDITOR
         Debug.Log($"Waiting {animationExitTime}s for wrong animation to complete naturally");
-        yield return new WaitForSeconds(animationExitTime);
+#endif
+        yield return CoroutineYieldCache.WaitForSeconds(animationExitTime);
 
         // Now reset the animation
         if (objectAnimator != null)
         {
             objectAnimator.SetBool(objectWrongBool, false);
+#if UNITY_EDITOR
             Debug.Log($"Reset {objectWrongBool} = false (after natural exit)");
+#endif
         }
 
         wrongAnimationResetCoroutine = null;
@@ -462,10 +492,14 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
     private IEnumerator HandleCorrectChoice()
     {
+#if UNITY_EDITOR
         Debug.Log($"{objectName} was the CORRECT choice!");
+#endif
 
         // NEW: Food is already spawned, just keep it visible
+#if UNITY_EDITOR
         Debug.Log($"Food already visible for {objectName}, keeping it for player to see");
+#endif
 
         // Move to move point
         if (movePoint != null)
@@ -481,24 +515,32 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
 
             // NEW: NOW destroy the food when player reaches move point
             DestroySpawnedFood();
+#if UNITY_EDITOR
             Debug.Log($"Destroyed food for {objectName} after reaching move point");
+#endif
         }
     }
 
     private IEnumerator HandleWrongChoice()
     {
+#if UNITY_EDITOR
         Debug.Log($"{objectName} was the WRONG choice!");
+#endif
 
         // Safety check: Stop dizzy audio and disable dizzy effect through group manager
         if (currentGroupManager != null)
         {
             currentGroupManager.StopDizzyAudio();
             currentGroupManager.DisableDizzyEffect();
+#if UNITY_EDITOR
             Debug.Log("Safety stop: Stopped dizzy audio and disabled effect in HandleWrongChoice");
+#endif
         }
 
         // NEW: Food stays visible for retry
+#if UNITY_EDITOR
         Debug.Log($"Food stays visible for {objectName} for retry");
+#endif
 
         // Return to group starting point instead of latest position
         if (playerController != null)
@@ -516,7 +558,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     {
         if (playerController == null || movePoint == null) yield break;
 
+#if UNITY_EDITOR
         Debug.Log($"Moving character to {objectName}'s move point");
+#endif
 
         Transform player = playerController.transform;
         Vector3 targetPos = movePoint.position;
@@ -612,7 +656,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         player.rotation = finalTargetRotation;
 
         UpdatePlayerAnimatorSpeed(0f);
+#if UNITY_EDITOR
         Debug.Log($"Character reached and properly facing at {objectName}'s move point");
+#endif
     }
 
     private IEnumerator MoveCharacterBackwardToGroupStart()
@@ -630,20 +676,26 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             {
                 targetPosition = groupStart.position;
                 targetRotation = groupStart.rotation;
+#if UNITY_EDITOR
                 Debug.Log($"Moving to group starting point at {targetPosition}");
+#endif
             }
             else
             {
                 targetPosition = latestPosition;
                 targetRotation = playerController.transform.rotation;
+#if UNITY_EDITOR
                 Debug.LogWarning("Group starting point not found, using latest position");
+#endif
             }
         }
         else
         {
             targetPosition = latestPosition;
             targetRotation = playerController.transform.rotation;
+#if UNITY_EDITOR
             Debug.LogWarning("Group manager not found, using latest position");
+#endif
         }
 
         Transform player = playerController.transform;
@@ -665,7 +717,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         if (playerAnimator != null)
         {
             playerAnimator.SetBool(playerWalkingBackBool, true);
+#if UNITY_EDITOR
             Debug.Log("Starting backward walking animation");
+#endif
         }
 
         // Move directly backward
@@ -704,7 +758,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         if (playerAnimator != null)
         {
             playerAnimator.SetBool(playerWalkingBackBool, false);
+#if UNITY_EDITOR
             Debug.Log("Stopped backward walking animation");
+#endif
         }
 
         UpdatePlayerAnimatorSpeed(0f);
@@ -842,7 +898,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         {
             Destroy(spawnedFood);
             spawnedFood = null;
+#if UNITY_EDITOR
             Debug.Log($"Destroyed spawned food for {objectName}");
+#endif
         }
 
         // Also destroy any child food objects at the spawn point (safety cleanup)
@@ -869,7 +927,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             if (spawnedFood == null)
             {
                 spawnedFood = Instantiate(foodPrefab, foodSpawnPoint.position, Quaternion.identity, foodSpawnPoint);
+#if UNITY_EDITOR
                 Debug.Log($"Spawned food immediately for {objectName}");
+#endif
             }
         }
     }
@@ -877,7 +937,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     // Updated ResetObject method - destroys food ONLY when game resets
     public void ResetObject()
     {
+#if UNITY_EDITOR
         Debug.Log($"Resetting object: {objectName}");
+#endif
 
         // Reset all state variables
         isInteractable = true;
@@ -909,14 +971,18 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
             wrongAnimationResetCoroutine = null;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Object reset complete: {objectName}");
+#endif
     }
 
     // ====== ANSWER HANDLING METHODS ======
 
     private void HandleCorrectAnswer()
     {
+#if UNITY_EDITOR
         Debug.Log($"Correct answer! Awarding {correctAnswerPoints} points and {correctEnergyGain} energy");
+#endif
 
         if (assessmentManager != null)
         {
@@ -927,17 +993,23 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         {
             GoGrowGlowGameManager.Instance.AddPoints(correctAnswerPoints);
             GoGrowGlowGameManager.Instance.AddEnergy(correctEnergyGain);
+#if UNITY_EDITOR
             Debug.Log($"DIRECT ENERGY UPDATE: Added {correctEnergyGain} energy via Game Manager");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("Game Manager Instance is also NULL!");
+#endif
         }
     }
 
     private void HandleWrongAnswer()
     {
+#if UNITY_EDITOR
         Debug.Log($"Wrong answer! Deducting {wrongAnswerPoints} points and {wrongEnergyDeduction} energy");
+#endif
 
         if (assessmentManager != null)
         {
@@ -948,11 +1020,15 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         {
             GoGrowGlowGameManager.Instance.AddPoints(-wrongAnswerPoints);
             GoGrowGlowGameManager.Instance.RemoveEnergy(wrongEnergyDeduction);
+#if UNITY_EDITOR
             Debug.Log($"DIRECT ENERGY UPDATE: Removed {wrongEnergyDeduction} energy via Game Manager");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("Game Manager Instance is also NULL!");
+#endif
         }
     }
 
@@ -972,7 +1048,9 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
         if (assessmentManager != null && isGrowFood && !assessmentManager.IsAssessmentActive())
         {
             assessmentManager.RegisterAssessmentObject(this);
+#if UNITY_EDITOR
             Debug.Log($"Updated {objectName} as correct answer with Assessment Manager");
+#endif
         }
     }
 
@@ -1014,14 +1092,18 @@ public class InteractiveObject : MonoBehaviour, IPointerClickHandler
     {
         correctAnswerPoints = correctPoints;
         wrongAnswerPoints = wrongPoints;
+#if UNITY_EDITOR
         Debug.Log($"Set points: Correct={correctPoints}, Wrong={wrongPoints}");
+#endif
     }
 
     public void SetEnergyValues(float correctEnergy, float wrongEnergy)
     {
         correctEnergyGain = correctEnergy;
         wrongEnergyDeduction = wrongEnergy;
+#if UNITY_EDITOR
         Debug.Log($"Set energy: Correct=+{correctEnergy}, Wrong=-{wrongEnergy}");
+#endif
     }
 
     public bool IsGrowFood() => isGrowFood;

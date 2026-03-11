@@ -173,14 +173,16 @@ public class GameStateManager : MonoBehaviour
 
         if (enableDebugLogs)
         {
+#if UNITY_EDITOR
             Debug.Log("=== GAME STATE SAVED ===");
             Debug.Log($"Scene: {saveData.currentSceneName}");
             Debug.Log($"Position: {saveData.playerPosition}");
             Debug.Log($"Energy: {saveData.currentEnergy}, Score: {saveData.currentScore}, Lives: {saveData.currentLifeAmount}");
             Debug.Log($"Timer: {saveData.gameTimer}s, Zone: {saveData.currentFoodZone}, Active: {saveData.isGameActive}");
-            Debug.Log($"Torches: {saveData.litTorchesCount}, Grow: {saveData.growCorrectAnswers}, Towers: {saveData.litTowersCount}");
+            Debug.Log($"Torches: {saveData.litTorchesCount}, Grow: {saveData.growCorrectAnswers}, Towers: {saveData.litTowersCount} (partial: {saveData.towerEnergyNames.Count})");
             Debug.Log($"Checkpoints activated: {saveData.activatedCheckpointNames.Count}");
             Debug.Log($"Save Time: {saveData.GetFormattedSaveTime()}");
+#endif
         }
     }
 
@@ -256,6 +258,11 @@ public class GameStateManager : MonoBehaviour
         saveData.litTowersCount = glowManager.GetLitTowersCount();
         saveData.litTowerNames = glowManager.GetLitTowerNames();
         saveData.glowPartCompleted = (glowManager.GetLitTowersCount() >= glowManager.GetTotalTowers());
+
+        // Save partial tower energy for towers that are mid-transfer
+        glowManager.GetTowerEnergyLevels(out List<string> energyNames, out List<float> energyValues);
+        saveData.towerEnergyNames = energyNames;
+        saveData.towerEnergyValues = energyValues;
     }
 
     private void SaveCheckpointInfo(GameStateSaveData saveData)
@@ -301,7 +308,9 @@ public class GameStateManager : MonoBehaviour
         GameStateSaveData loaded = LoadFromFile();
         if (loaded == null || !loaded.hasSavedGameState)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GameStateManager: No valid saved game state to load.");
+#endif
             return;
         }
 
@@ -325,7 +334,7 @@ public class GameStateManager : MonoBehaviour
     {
         // Wait for scene objects to initialize
         yield return null;
-        yield return new WaitForSeconds(0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
 
         FindManagerReferences();
 
@@ -447,9 +456,11 @@ public class GameStateManager : MonoBehaviour
         // This starts the game in a "resumed" state without the normal start sequence.
         gameManager.ResumeFromSavedState(currentGameState);
 
+#if UNITY_EDITOR
         if (enableDebugLogs)
-            Debug.Log($"GameManager restored – Energy:{currentGameState.currentEnergy} Score:{currentGameState.currentScore} " +
+            Debug.Log($"GameManager restored \u2013 Energy:{currentGameState.currentEnergy} Score:{currentGameState.currentScore} " +
                       $"Lives:{currentGameState.currentLifeAmount} Timer:{currentGameState.gameTimer}s Zone:{currentGameState.currentFoodZone}");
+#endif
     }
 
     private void RestoreTorchProgress()
@@ -487,6 +498,13 @@ public class GameStateManager : MonoBehaviour
             glowManager.RestoreTowerStates(currentGameState.litTowerNames);
             if (enableDebugLogs) Debug.Log($"Glow towers restored: {currentGameState.litTowerNames.Count} lit");
         }
+
+        // Restore partial tower energy for towers that were mid-transfer
+        if (currentGameState.towerEnergyNames != null && currentGameState.towerEnergyNames.Count > 0)
+        {
+            glowManager.RestoreTowerEnergyLevels(currentGameState.towerEnergyNames, currentGameState.towerEnergyValues);
+            if (enableDebugLogs) Debug.Log($"Partial tower energy restored for {currentGameState.towerEnergyNames.Count} towers");
+        }
     }
 
     // ============================================================
@@ -502,7 +520,9 @@ public class GameStateManager : MonoBehaviour
         }
         catch (Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogError($"GameStateManager: Save failed – {e.Message}");
+#endif
         }
     }
 
@@ -516,7 +536,9 @@ public class GameStateManager : MonoBehaviour
         }
         catch (Exception e)
         {
+#if UNITY_EDITOR
             Debug.LogError($"GameStateManager: Load failed – {e.Message}");
+#endif
             return null;
         }
     }
@@ -574,7 +596,7 @@ public class GameStateManager : MonoBehaviour
     private IEnumerator ApplySilentRestoreAfterLoad()
     {
         yield return null;
-        yield return new WaitForSeconds(0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
 
         FindManagerReferences();
 
@@ -588,8 +610,10 @@ public class GameStateManager : MonoBehaviour
             RestoreGrowProgress();
             RestoreGlowProgress();
 
+#if UNITY_EDITOR
             if (enableDebugLogs)
-                Debug.Log($"Silent restore complete – player at {currentGameState.playerPosition}. Game was not active, just roaming.");
+                Debug.Log($"Silent restore complete \u2013 player at {currentGameState.playerPosition}. Game was not active, just roaming.");
+#endif
         }
 
         pendingSilentRestore = false;
@@ -614,7 +638,9 @@ public class GameStateManager : MonoBehaviour
             }
             catch (Exception e)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"GameStateManager: Failed to clear saved state – {e.Message}");
+#endif
             }
         }
     }

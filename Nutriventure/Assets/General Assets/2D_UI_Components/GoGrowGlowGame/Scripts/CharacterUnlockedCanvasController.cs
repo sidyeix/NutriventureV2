@@ -27,7 +27,9 @@ public class CharacterUnlockedCanvasController : MonoBehaviour
   {
     if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
     {
+#if UNITY_EDITOR
       Debug.LogError("CharacterUnlockedCanvasController: GameDataManager not available!");
+#endif
       return;
     }
 
@@ -37,11 +39,6 @@ public class CharacterUnlockedCanvasController : MonoBehaviour
     {
       gameData.unlockedCharacterIDs.Add(characterIDToUnlock);
       GameDataManager.Instance.SaveGameData();
-      Debug.Log($"CharacterUnlockedCanvasController: Character {characterIDToUnlock} unlocked and saved");
-    }
-    else
-    {
-      Debug.Log($"CharacterUnlockedCanvasController: Character {characterIDToUnlock} was already unlocked");
     }
   }
 
@@ -50,7 +47,6 @@ public class CharacterUnlockedCanvasController : MonoBehaviour
     if (characterUnlockedCanvas != null)
     {
       characterUnlockedCanvas.SetActive(false);
-      Debug.Log("CharacterUnlockedCanvasController: Canvas closed");
     }
   }
 }

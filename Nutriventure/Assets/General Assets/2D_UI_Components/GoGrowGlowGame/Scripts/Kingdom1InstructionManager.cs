@@ -51,7 +51,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
 
     if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
     {
+      #if UNITY_EDITOR
       Debug.LogError("Kingdom1InstructionManager: GameDataManager not available!");
+      #endif
       // Fallback — skip timeline, spawn at lobby
       SpawnAtLobby();
       yield break;
@@ -61,12 +63,16 @@ public class Kingdom1InstructionManager : MonoBehaviour
 
     if (!hasPlayed)
     {
+      #if UNITY_EDITOR
       Debug.Log("Kingdom1InstructionManager: First visit — playing instruction timeline");
+      #endif
       PlayInstructionTimeline();
     }
     else
     {
+      #if UNITY_EDITOR
       Debug.Log("Kingdom1InstructionManager: Returning visit — spawning at lobby");
+      #endif
       SkipTimeline();
       SpawnAtLobby();
     }
@@ -93,11 +99,15 @@ public class Kingdom1InstructionManager : MonoBehaviour
       instructionDirector.gameObject.SetActive(true);
       instructionDirector.stopped += OnTimelineFinished;
       instructionDirector.Play();
+      #if UNITY_EDITOR
       Debug.Log("Kingdom1InstructionManager: Timeline started");
+      #endif
     }
     else
     {
+      #if UNITY_EDITOR
       Debug.LogError("Kingdom1InstructionManager: No PlayableDirector assigned! Completing immediately.");
+      #endif
       OnInstructionComplete();
     }
   }
@@ -105,7 +115,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
   private void OnTimelineFinished(PlayableDirector director)
   {
     director.stopped -= OnTimelineFinished;
+    #if UNITY_EDITOR
     Debug.Log("Kingdom1InstructionManager: Timeline finished");
+    #endif
     OnInstructionComplete();
   }
 
@@ -118,7 +130,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
     {
       GameDataManager.Instance.CurrentGameData.hasPlayedK1Instruction = true;
       GameDataManager.Instance.SaveGameData();
+      #if UNITY_EDITOR
       Debug.Log("Kingdom1InstructionManager: Instruction flag saved");
+      #endif
     }
 
     // Deactivate instruction-only objects
@@ -154,7 +168,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
   {
     if (lobbySpawnPoint == null || playerTransform == null)
     {
+      #if UNITY_EDITOR
       Debug.LogWarning("Kingdom1InstructionManager: Missing lobbySpawnPoint or playerTransform!");
+      #endif
       return;
     }
 
@@ -168,7 +184,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
     if (characterController != null)
       characterController.enabled = true;
 
+    #if UNITY_EDITOR
     Debug.Log($"Kingdom1InstructionManager: Player spawned at lobby ({lobbySpawnPoint.position})");
+    #endif
   }
 
   private void SetObjectsActive(GameObject[] objects, bool active)
@@ -188,7 +206,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
   {
     if (!isPlayingTimeline) return;
 
+    #if UNITY_EDITOR
     Debug.Log("Kingdom1InstructionManager: Player skipped instruction timeline");
+    #endif
 
     if (instructionDirector != null)
     {
@@ -208,7 +228,9 @@ public class Kingdom1InstructionManager : MonoBehaviour
     {
       GameDataManager.Instance.CurrentGameData.hasPlayedK1Instruction = false;
       GameDataManager.Instance.SaveGameData();
+      #if UNITY_EDITOR
       Debug.Log("Kingdom1InstructionManager: Instruction flag reset — will play again on next visit");
+      #endif
     }
   }
 }

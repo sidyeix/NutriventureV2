@@ -59,12 +59,12 @@ public class ButtonPressHandler : MonoBehaviour, IPointerDownHandler, IPointerUp
 
     private IEnumerator HoldDetectionRoutine()
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.1f);
 
         while (isPressed)
         {
             onButtonHeld?.Invoke();
-            yield return new WaitForSeconds(0.05f);
+            yield return CoroutineYieldCache.WaitForSeconds(0.05f);
         }
     }
 
@@ -78,7 +78,9 @@ public class ButtonPressHandler : MonoBehaviour, IPointerDownHandler, IPointerUp
 
         isPressed = false;
 
+        #if UNITY_EDITOR
         Debug.Log("ButtonPressHandler reset");
+        #endif
     }
 
     private void OnDisable()

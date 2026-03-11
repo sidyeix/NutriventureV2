@@ -58,7 +58,6 @@ public class FoodFeedbackUI : MonoBehaviour
         // If already showing or animating, ignore new feedback
         if (isShowing || isAnimating)
         {
-            Debug.Log("Food feedback already showing, ignoring new food");
             return;
         }
 
@@ -113,7 +112,7 @@ public class FoodFeedbackUI : MonoBehaviour
         isAnimating = false;
 
         // Wait for display duration
-        yield return new WaitForSeconds(displayDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(displayDuration);
 
         // Start hide animation
         StartCoroutine(HideAnimationCoroutine());
@@ -191,7 +190,9 @@ public class FoodFeedbackUI : MonoBehaviour
         // When enabled, make sure we're in a clean state
         if (isShowing || isAnimating)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("FoodFeedbackUI was enabled while showing/animating. Resetting.");
+#endif
             HideImmediate();
         }
     }

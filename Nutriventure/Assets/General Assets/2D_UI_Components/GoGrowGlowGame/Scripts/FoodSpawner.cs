@@ -25,6 +25,8 @@ public class FoodSpawner : MonoBehaviour
     private Dictionary<Transform, float> respawnTimers = new Dictionary<Transform, float>();
     private bool isSpawningEnabled = false;
     private List<Transform> allSpawnPoints = new List<Transform>();
+    private List<Transform> spawnPointsToRespawn = new List<Transform>();
+    private Dictionary<Transform, GameObject[]> spawnPointToPrefabs = new Dictionary<Transform, GameObject[]>();
 
     // Store original active state of food objects
     private Dictionary<GameObject, bool> originalFoodStates = new Dictionary<GameObject, bool>();
@@ -47,23 +49,26 @@ public class FoodSpawner : MonoBehaviour
     private void InitializeSpawnSystem()
     {
         allSpawnPoints.Clear();
+        spawnPointToPrefabs.Clear();
 
-        // Initialize all spawn points
-        AddSpawnPointsToArray(goFoodSpawnPoints);
-        AddSpawnPointsToArray(growFoodSpawnPoints);
-        AddSpawnPointsToArray(glowFoodSpawnPoints);
-        AddSpawnPointsToArray(junkFoodSpawnPoints);
+        // Initialize all spawn points and cache their prefab mappings
+        AddSpawnPointsToArray(goFoodSpawnPoints, goFoodPrefabs);
+        AddSpawnPointsToArray(growFoodSpawnPoints, growFoodPrefabs);
+        AddSpawnPointsToArray(glowFoodSpawnPoints, glowFoodPrefabs);
+        AddSpawnPointsToArray(junkFoodSpawnPoints, junkFoodPrefabs);
     }
 
-    private void AddSpawnPointsToArray(Transform[] spawnPoints)
+    private void AddSpawnPointsToArray(Transform[] spawnPoints, GameObject[] prefabs)
     {
-        foreach (Transform spawnPoint in spawnPoints)
+        for (int i = 0; i < spawnPoints.Length; i++)
         {
+            Transform spawnPoint = spawnPoints[i];
             if (spawnPoint != null && !allSpawnPoints.Contains(spawnPoint))
             {
                 allSpawnPoints.Add(spawnPoint);
                 spawnPointOccupied[spawnPoint] = false;
                 respawnTimers[spawnPoint] = 0f;
+                spawnPointToPrefabs[spawnPoint] = prefabs;
             }
         }
     }
@@ -72,14 +77,18 @@ public class FoodSpawner : MonoBehaviour
     {
         isSpawningEnabled = true;
         SpawnInitialFood();
+#if UNITY_EDITOR
         Debug.Log("Food Spawning Started!");
+#endif
     }
 
     public void StopSpawning()
     {
         isSpawningEnabled = false;
         ClearAllFood();
+#if UNITY_EDITOR
         Debug.Log("Food Spawning Stopped!");
+#endif
     }
 
     public void SpawnInitialFood()
@@ -101,8 +110,9 @@ public class FoodSpawner : MonoBehaviour
 
     private void SpawnFoodAtPoints(Transform[] spawnPoints, GameObject[] prefabs)
     {
-        foreach (Transform spawnPoint in spawnPoints)
+        for (int i = 0; i < spawnPoints.Length; i++)
         {
+            Transform spawnPoint = spawnPoints[i];
             if (spawnPoint != null && !spawnPointOccupied[spawnPoint])
             {
                 SpawnFoodAtPoint(spawnPoint, prefabs);
@@ -114,7 +124,9 @@ public class FoodSpawner : MonoBehaviour
     {
         if (prefabs.Length == 0)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No food prefabs assigned for spawn point: {spawnPoint.name}!");
+#endif
             return;
         }
 
@@ -138,7 +150,9 @@ public class FoodSpawner : MonoBehaviour
             FoodCollectionNotifier notifier = food.AddComponent<FoodCollectionNotifier>();
             notifier.Initialize(this, spawnPoint);
 
+#if UNITY_EDITOR
             Debug.Log($"Spawned food at {spawnPoint.name}: {foodPrefab.name}");
+#endif
         }
     }
 
@@ -159,12 +173,13 @@ public class FoodSpawner : MonoBehaviour
 
     private void UpdateRespawnTimers()
     {
-        // Create a list of spawn points that need respawning
-        List<Transform> spawnPointsToRespawn = new List<Transform>();
+        // Reuse pre-allocated list to avoid GC allocation every frame
+        spawnPointsToRespawn.Clear();
 
         // First pass: update timers and collect points that need respawning
-        foreach (Transform spawnPoint in allSpawnPoints)
+        for (int i = 0; i < allSpawnPoints.Count; i++)
         {
+            Transform spawnPoint = allSpawnPoints[i];
             if (respawnTimers.ContainsKey(spawnPoint) && respawnTimers[spawnPoint] > 0f)
             {
                 respawnTimers[spawnPoint] -= Time.deltaTime;
@@ -177,30 +192,29 @@ public class FoodSpawner : MonoBehaviour
         }
 
         // Second pass: respawn collected points
-        foreach (Transform spawnPoint in spawnPointsToRespawn)
+        for (int i = 0; i < spawnPointsToRespawn.Count; i++)
         {
-            // Determine which prefab array to use based on spawn point
-            GameObject[] prefabs = GetPrefabsForSpawnPoint(spawnPoint);
-
-            // Respawn food at this point
-            SpawnFoodAtPoint(spawnPoint, prefabs);
+            Transform spawnPoint = spawnPointsToRespawn[i];
+            // Use cached prefab mapping instead of searching arrays
+            GameObject[] prefabs;
+            if (spawnPointToPrefabs.TryGetValue(spawnPoint, out prefabs))
+            {
+                SpawnFoodAtPoint(spawnPoint, prefabs);
+            }
         }
     }
 
     private GameObject[] GetPrefabsForSpawnPoint(Transform spawnPoint)
     {
-        // Check which array this spawn point belongs to
-        if (System.Array.Exists(goFoodSpawnPoints, point => point == spawnPoint))
-            return goFoodPrefabs;
-        else if (System.Array.Exists(growFoodSpawnPoints, point => point == spawnPoint))
-            return growFoodPrefabs;
-        else if (System.Array.Exists(glowFoodSpawnPoints, point => point == spawnPoint))
-            return glowFoodPrefabs;
-        else if (System.Array.Exists(junkFoodSpawnPoints, point => point == spawnPoint))
-            return junkFoodPrefabs;
+        // Use cached mapping first
+        GameObject[] prefabs;
+        if (spawnPointToPrefabs.TryGetValue(spawnPoint, out prefabs))
+            return prefabs;
 
-        Debug.LogWarning($"Spawn point {spawnPoint.name} not found in any spawn point array!");
-        return new GameObject[0];
+#if UNITY_EDITOR
+        Debug.LogWarning($"Spawn point {spawnPoint.name} not found in prefab cache!");
+#endif
+        return System.Array.Empty<GameObject>();
     }
 
     public void ClearAllFood()
@@ -231,47 +245,51 @@ public class FoodSpawner : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log("All food cleared!");
+#endif
     }
 
     // NEW METHOD: Hide all spawned food without destroying them
     public void HideAllFood()
     {
-        foreach (GameObject food in activeFood)
+        for (int i = 0; i < activeFood.Count; i++)
         {
-            if (food != null)
+            if (activeFood[i] != null)
             {
                 // Store current active state before hiding
-                if (!originalFoodStates.ContainsKey(food))
+                if (!originalFoodStates.ContainsKey(activeFood[i]))
                 {
-                    originalFoodStates[food] = food.activeSelf;
+                    originalFoodStates[activeFood[i]] = activeFood[i].activeSelf;
                 }
 
-                food.SetActive(false);
+                activeFood[i].SetActive(false);
             }
         }
 
         // Also pause respawn timers
         PauseAllRespawnTimers();
 
+#if UNITY_EDITOR
         Debug.Log($"Hid {activeFood.Count} food objects");
+#endif
     }
 
     // NEW METHOD: Show all previously hidden food
     public void ShowAllFood()
     {
-        foreach (GameObject food in activeFood)
+        for (int i = 0; i < activeFood.Count; i++)
         {
-            if (food != null)
+            if (activeFood[i] != null)
             {
                 // Restore to original state or default to active
-                if (originalFoodStates.ContainsKey(food))
+                if (originalFoodStates.ContainsKey(activeFood[i]))
                 {
-                    food.SetActive(originalFoodStates[food]);
+                    activeFood[i].SetActive(originalFoodStates[activeFood[i]]);
                 }
                 else
                 {
-                    food.SetActive(true);
+                    activeFood[i].SetActive(true);
                 }
             }
         }
@@ -279,7 +297,9 @@ public class FoodSpawner : MonoBehaviour
         // Resume respawn timers
         ResumeAllRespawnTimers();
 
+#if UNITY_EDITOR
         Debug.Log($"Showed {activeFood.Count} food objects");
+#endif
     }
 
     // NEW METHOD: Pause all respawn timers
@@ -319,7 +339,9 @@ public class FoodSpawner : MonoBehaviour
     {
         isSpawningEnabled = false;
         PauseAllRespawnTimers();
+#if UNITY_EDITOR
         Debug.Log("Food spawning paused");
+#endif
     }
 
     // NEW METHOD: Resume food spawning
@@ -327,7 +349,9 @@ public class FoodSpawner : MonoBehaviour
     {
         isSpawningEnabled = true;
         ResumeAllRespawnTimers();
+#if UNITY_EDITOR
         Debug.Log("Food spawning resumed");
+#endif
     }
 
     public void RespawnAllFood()
@@ -336,7 +360,9 @@ public class FoodSpawner : MonoBehaviour
 
         ClearAllFood();
         SpawnInitialFood();
+#if UNITY_EDITOR
         Debug.Log("All food respawned!");
+#endif
     }
 
     public bool IsSpawningEnabled()

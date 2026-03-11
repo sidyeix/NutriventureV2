@@ -117,7 +117,9 @@ public class GlowTower : MonoBehaviour
             StopCoroutine(updateTextCoroutine);
         updateTextCoroutine = StartCoroutine(UpdateTextIndicatorsRoutine());
 
+        #if UNITY_EDITOR
         Debug.Log($"Tower {gameObject.name} activated");
+        #endif
     }
 
     public void DeactivateTower()
@@ -143,7 +145,9 @@ public class GlowTower : MonoBehaviour
             updateTextCoroutine = null;
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"Tower {gameObject.name} deactivated");
+        #endif
     }
 
     public void AddEnergy(float amount)
@@ -164,7 +168,9 @@ public class GlowTower : MonoBehaviour
         if (currentEnergy >= maxEnergy && !isFullyLit)
         {
             isFullyLit = true;
+            #if UNITY_EDITOR
             Debug.Log($"Tower {gameObject.name} reached maximum energy!");
+            #endif
             StartLightingToLitSequence();
         }
     }
@@ -196,7 +202,7 @@ public class GlowTower : MonoBehaviour
             fullyLitEffect.SetActive(true);
         }
 
-        yield return new WaitForSeconds(lightingToLitDelay);
+        yield return CoroutineYieldCache.WaitForSeconds(lightingToLitDelay);
 
         SetLightingAnimation(false);
 
@@ -310,7 +316,7 @@ public class GlowTower : MonoBehaviour
     {
         while (isActive)
         {
-            yield return new WaitForSeconds(textUpdateInterval);
+            yield return CoroutineYieldCache.WaitForSeconds(textUpdateInterval);
             UpdateEnergyTextIndicators();
         }
     }
@@ -367,7 +373,9 @@ public class GlowTower : MonoBehaviour
     // NEW: COMPLETE RESET METHOD
     public void ResetTower()
     {
+        #if UNITY_EDITOR
         Debug.Log($"Resetting tower: {gameObject.name}");
+        #endif
 
         // Reset energy
         currentEnergy = 0f;
@@ -408,7 +416,9 @@ public class GlowTower : MonoBehaviour
         ResetTextScales();
         UpdateEnergyTextIndicators();
 
+        #if UNITY_EDITOR
         Debug.Log($"Tower {gameObject.name} reset complete - Energy: {currentEnergy}, FullyLit: {isFullyLit}, Lighting: {isLighting}");
+        #endif
     }
 
     private void ResetTextScales()

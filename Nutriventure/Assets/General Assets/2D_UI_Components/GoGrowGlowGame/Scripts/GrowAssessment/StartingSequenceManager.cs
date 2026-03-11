@@ -60,7 +60,9 @@ public class StartingSequenceManager : MonoBehaviour
         cinemachineBrain = FindObjectOfType<CinemachineBrain>();
         if (cinemachineBrain == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("No CinemachineBrain found in scene! Camera transitions won't be smooth.");
+#endif
         }
 
         // Store original camera priority
@@ -85,7 +87,9 @@ public class StartingSequenceManager : MonoBehaviour
             cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
             cinemachineBrain.m_DefaultBlend.m_Time = cameraBlendTime;
 
+#if UNITY_EDITOR
             Debug.Log("Cinemachine Brain configured for smooth blends");
+#endif
         }
     }
 
@@ -105,10 +109,18 @@ public class StartingSequenceManager : MonoBehaviour
 
         // Log warnings for missing cameras
         if (sequenceFollowCamera == null)
+        {
+#if UNITY_EDITOR
             Debug.LogWarning("Sequence Follow Camera not assigned - camera switching won't work!");
+#endif
+        }
 
         if (normalFollowCamera == null)
+        {
+#if UNITY_EDITOR
             Debug.LogWarning("Normal Follow Camera not assigned - camera switching won't work!");
+#endif
+        }
     }
 
     // This will be called by the trigger
@@ -116,7 +128,9 @@ public class StartingSequenceManager : MonoBehaviour
     {
         if (isInStartingSequence || hasReachedStartPoint) return;
 
+#if UNITY_EDITOR
         Debug.Log("Starting sequence triggered");
+#endif
 
         // Store original position for potential reset
         originalPlayerPosition = playerController.transform.position;
@@ -163,7 +177,9 @@ public class StartingSequenceManager : MonoBehaviour
         isInStartingSequence = false;
         currentSequenceCoroutine = null;
 
+#if UNITY_EDITOR
         Debug.Log("Starting sequence completed - Player is now idle at starting point");
+#endif
     }
 
     // Method to enable all controls when game ends (called by end trigger)
@@ -171,7 +187,9 @@ public class StartingSequenceManager : MonoBehaviour
     {
         if (!hasReachedStartPoint) return;
 
+#if UNITY_EDITOR
         Debug.Log("Enabling all controls and UI (game end)");
+#endif
 
         // Use specified blend time or default
         if (blendTime >= 0)
@@ -191,7 +209,9 @@ public class StartingSequenceManager : MonoBehaviour
         // Step 4: Reset sequence state
         hasReachedStartPoint = false;
 
+#if UNITY_EDITOR
         Debug.Log($"Game ended - All controls and UI restored, smooth camera transition ({cameraBlendTime}s)");
+#endif
     }
 
     // Separate method for ending just the assessment (without resetting everything)
@@ -199,7 +219,9 @@ public class StartingSequenceManager : MonoBehaviour
     {
         if (!hasReachedStartPoint) return;
 
+#if UNITY_EDITOR
         Debug.Log("Ending assessment only");
+#endif
 
         // Use specified blend time or default
         if (blendTime >= 0)
@@ -235,7 +257,9 @@ public class StartingSequenceManager : MonoBehaviour
                 cameraBlendTime
             ));
 
+#if UNITY_EDITOR
             Debug.Log($"Smooth transition to sequence camera (Priority: {sequenceCameraPriority}) over {cameraBlendTime}s");
+#endif
         }
     }
 
@@ -257,7 +281,9 @@ public class StartingSequenceManager : MonoBehaviour
                 cameraBlendTime
             ));
 
+#if UNITY_EDITOR
             Debug.Log($"Smooth transition to normal camera (Priority: {normalCameraPriority}) over {cameraBlendTime}s");
+#endif
         }
     }
 
@@ -332,7 +358,9 @@ public class StartingSequenceManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+#if UNITY_EDITOR
         Debug.Log("Player input disabled (controller still active for animation)");
+#endif
     }
 
     public void EnablePlayerInput()
@@ -344,40 +372,52 @@ public class StartingSequenceManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+#if UNITY_EDITOR
         Debug.Log("Player input enabled");
+#endif
     }
 
     private void DisableUIElements()
     {
+#if UNITY_EDITOR
         Debug.Log($"Disabling {uiElementsToDisable.Count} UI elements (they stay disabled until game ends)");
+#endif
 
         foreach (GameObject uiElement in uiElementsToDisable)
         {
             if (uiElement != null)
             {
                 uiElement.SetActive(false);
+#if UNITY_EDITOR
                 Debug.Log($"Disabled: {uiElement.name}");
+#endif
             }
         }
     }
 
     private void EnableUIElements()
     {
+#if UNITY_EDITOR
         Debug.Log($"Enabling {uiElementsToEnable.Count} UI elements for object interaction");
+#endif
 
         foreach (GameObject uiElement in uiElementsToEnable)
         {
             if (uiElement != null)
             {
                 uiElement.SetActive(true);
+#if UNITY_EDITOR
                 Debug.Log($"Enabled: {uiElement.name}");
+#endif
             }
         }
     }
 
     private void ReEnableAllUI()
     {
+#if UNITY_EDITOR
         Debug.Log("Re-enabling all UI elements (game ended)");
+#endif
 
         // Re-enable all elements that were disabled
         foreach (GameObject uiElement in uiElementsToDisable)
@@ -385,7 +425,9 @@ public class StartingSequenceManager : MonoBehaviour
             if (uiElement != null)
             {
                 uiElement.SetActive(true);
+#if UNITY_EDITOR
                 Debug.Log($"Re-enabled: {uiElement.name}");
+#endif
             }
         }
 
@@ -395,14 +437,18 @@ public class StartingSequenceManager : MonoBehaviour
             if (uiElement != null)
             {
                 uiElement.SetActive(false);
+#if UNITY_EDITOR
                 Debug.Log($"Disabled sequence UI: {uiElement.name}");
+#endif
             }
         }
     }
 
     private IEnumerator MoveToStartingPointSmooth()
     {
+#if UNITY_EDITOR
         Debug.Log("Moving to starting point with smooth stop...");
+#endif
 
         while (Vector3.Distance(playerController.transform.position, startingPoint.position) > arrivalDistance)
         {
@@ -434,7 +480,9 @@ public class StartingSequenceManager : MonoBehaviour
             yield return null;
         }
 
+#if UNITY_EDITOR
         Debug.Log("Reached starting point proximity");
+#endif
     }
 
     private float CalculateSpeedBasedOnDistance(float distance)
@@ -456,7 +504,9 @@ public class StartingSequenceManager : MonoBehaviour
 
     private IEnumerator RotateToStartingOrientation()
     {
+#if UNITY_EDITOR
         Debug.Log("Rotating to starting orientation...");
+#endif
 
         Quaternion targetRotation = startingPoint.rotation;
         float angleDifference;
@@ -475,7 +525,9 @@ public class StartingSequenceManager : MonoBehaviour
         } while (angleDifference > arrivalAngleThreshold);
 
         playerController.transform.rotation = targetRotation;
+#if UNITY_EDITOR
         Debug.Log("Rotation completed");
+#endif
     }
 
     private void SnapToStartingPoint()
@@ -488,7 +540,9 @@ public class StartingSequenceManager : MonoBehaviour
             playerAnimator.SetFloat(animIDMotionSpeed, 0f);
         }
 
+#if UNITY_EDITOR
         Debug.Log("Snapped to starting point - animator will handle idle transition");
+#endif
     }
 
     private void UpdateAnimatorSpeed(float currentSpeed)
@@ -503,7 +557,9 @@ public class StartingSequenceManager : MonoBehaviour
 
     private void EnableObjectInteraction()
     {
+#if UNITY_EDITOR
         Debug.Log("Object interaction enabled - ready for tapping");
+#endif
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -525,14 +581,18 @@ public class StartingSequenceManager : MonoBehaviour
     {
         cameraBlendTime = blendTime;
         SwitchToNormalCamera();
+#if UNITY_EDITOR
         Debug.Log($"Forced camera reset to normal priority with {blendTime}s blend");
+#endif
     }
 
     // Set custom blend time
     public void SetCameraBlendTime(float blendTime)
     {
         cameraBlendTime = Mathf.Max(0.1f, blendTime);
+#if UNITY_EDITOR
         Debug.Log($"Camera blend time set to {cameraBlendTime}s");
+#endif
     }
 
     // For debugging in the inspector

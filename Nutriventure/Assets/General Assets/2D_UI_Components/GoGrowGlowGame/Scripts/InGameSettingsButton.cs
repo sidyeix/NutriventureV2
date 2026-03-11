@@ -86,7 +86,11 @@ public class InGameSettingsButton : MonoBehaviour
             settingsButton = GetComponent<Button>();
 
         if (profileSettings == null)
+        {
+#if UNITY_EDITOR
             Debug.LogError("ProfileSettings reference is missing! Please assign in inspector.");
+#endif
+        }
 
         if (gameManager == null)
             gameManager = FindObjectOfType<GoGrowGlowGameManager>();
@@ -252,7 +256,9 @@ public class InGameSettingsButton : MonoBehaviour
     {
         if (Time.timeScale == 0f)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("K1: EnsureTimeScaleRestored — timeScale was 0 when not paused! Forcing to 1.");
+#endif
             Time.timeScale = 1f;
             isPaused = false;
             wasGameActiveWhenPaused = false;
@@ -276,7 +282,9 @@ public class InGameSettingsButton : MonoBehaviour
 
         if (frozenSafetyTimer >= FROZEN_SAFETY_TIMEOUT)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("K1: Frozen safety triggered — timeScale stuck at 0 for too long. Forcing resume.");
+#endif
             ForceResume();
             frozenSafetyTimer = 0f;
         }
@@ -571,7 +579,9 @@ public class InGameSettingsButton : MonoBehaviour
 
         if (playerTransform == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Player transform is null in GameManager!");
+#endif
             return;
         }
 
@@ -699,12 +709,16 @@ public class InGameSettingsButton : MonoBehaviour
         isCountdownRunning = false;
         frozenSafetyTimer = 0f;
 
+#if UNITY_EDITOR
         Debug.Log("K1: ForceResume executed — timeScale restored to 1.");
+#endif
     }
 
     public void ShowResumeCountdown()
     {
+#if UNITY_EDITOR
         Debug.Log("K1: ShowResumeCountdown called — starting countdown for save resume");
+#endif
 
         // Freeze time so the game waits during countdown
         originalTimeScale = 1f;

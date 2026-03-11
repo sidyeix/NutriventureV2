@@ -16,6 +16,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
     [SerializeField] private Color initialSliderFillColor = Color.red;
     [SerializeField] private Sprite initialSliderHandleSprite;
 
+    [Header("Zone Slider Appearances (for Resume)")]
+    [SerializeField] private Color goSliderFillColor = Color.red;
+    [SerializeField] private Sprite goSliderHandleSprite;
+    [SerializeField] private Color growSliderFillColor = Color.green;
+    [SerializeField] private Sprite growSliderHandleSprite;
+    [SerializeField] private Color glowSliderFillColor = new Color(0.5f, 0f, 1f);
+    [SerializeField] private Sprite glowSliderHandleSprite;
+
     [Header("Player Settings")]
     public ThirdPersonController playerController;
     public Transform playerTransform;
@@ -331,14 +339,18 @@ public class GoGrowGlowGameManager : MonoBehaviour
             maxLives = baseMaxLives + heartBonus;
             currentLifeAmount = maxLives; // Start with full lives
             currentLives = maxLives;
+#if UNITY_EDITOR
             Debug.Log($"Heart power-up applied: +{heartBonus} lives. Total max lives: {maxLives}");
+#endif
         }
 
         // Apply time reduction
         timeReductionSeconds = PowerUpManager.Instance.GetStartGameTimeReduction();
         if (timeReductionSeconds > 0)
         {
+#if UNITY_EDITOR
             Debug.Log($"Time reduction power-up applied: -{timeReductionSeconds} seconds from timer");
+#endif
         }
 
         // Reinitialize heart UI with new max lives
@@ -358,7 +370,32 @@ public class GoGrowGlowGameManager : MonoBehaviour
             sliderHandleImage.sprite = handleSprite;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Set initial slider appearance: {zoneType} zone, Color: {fillColor}");
+#endif
+    }
+
+    /// <summary>
+    /// Returns the correct slider fill color and handle sprite for the given zone.
+    /// Used by ResumeFromSavedState to restore the correct zone appearance.
+    /// </summary>
+    private void GetSliderAppearanceForZone(FoodType zone, out Color fillColor, out Sprite handleSprite)
+    {
+        switch (zone)
+        {
+            case FoodType.Grow:
+                fillColor = growSliderFillColor;
+                handleSprite = growSliderHandleSprite;
+                break;
+            case FoodType.Glow:
+                fillColor = glowSliderFillColor;
+                handleSprite = glowSliderHandleSprite;
+                break;
+            default: // FoodType.Go
+                fillColor = goSliderFillColor;
+                handleSprite = goSliderHandleSprite;
+                break;
+        }
     }
 
     private void Update()
@@ -428,11 +465,15 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             characterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+#if UNITY_EDITOR
             Debug.Log($"Character gender check - ID: {characterID}, Is Male: {characterID == 0 || characterID == 4 || characterID == 6}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GameDataManager not found, using default male character");
+#endif
         }
 
         // Male characters: Eyron (0), Kaya (4), Albert (6)
@@ -448,7 +489,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== RESET METHODS ======
     public void ResetGameState()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING GAME STATE ===");
+#endif
 
         // Reset all tracking variables
         currentEnergy = 0f;
@@ -506,12 +549,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
             foodSpawner.HideAllFood();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Game state reset complete");
+#endif
     }
 
     public void FullGameReset()
     {
+#if UNITY_EDITOR
         Debug.Log("=== FULL GAME RESET ===");
+#endif
 
         // IMPORTANT: Reset these BEFORE EndGame()
         gameIsActive = false;
@@ -604,20 +651,26 @@ public class GoGrowGlowGameManager : MonoBehaviour
             backgroundMusicSource.Play();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Full game reset complete");
+#endif
     }
 
     // ====== ENERGY SLIDER PAUSE/RESUME LOGIC ======
     public void PauseEnergyDecrease()
     {
         isEnergyDecreasePaused = true;
+#if UNITY_EDITOR
         Debug.Log("Energy decrease paused");
+#endif
     }
 
     public void ResumeEnergyDecrease()
     {
         isEnergyDecreasePaused = false;
+#if UNITY_EDITOR
         Debug.Log("Energy decrease resumed");
+#endif
     }
 
     public bool IsEnergyDecreasePaused()
@@ -722,7 +775,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         while (gameIsActive)
         {
             CheckAndUpdateOneLifeUI();
-            yield return new WaitForSeconds(oneLifeCheckInterval);
+            yield return CoroutineYieldCache.WaitForSeconds(oneLifeCheckInterval);
         }
     }
 
@@ -751,7 +804,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator ResetDamageAnimation(string triggerName, float duration)
     {
-        yield return new WaitForSeconds(duration);
+        yield return CoroutineYieldCache.WaitForSeconds(duration);
         if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
         resetDamageCoroutine = null;
     }
@@ -817,7 +870,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== GAME FLOW ======
     public void StartGame()
     {
+#if UNITY_EDITOR
         Debug.Log($"StartGame called! isStartingGame={isStartingGame}, gameIsActive={gameIsActive}, timeScale={Time.timeScale}");
+#endif
 
         if (isStartingGame) return;
 
@@ -829,8 +884,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator DelayedGameStart()
     {
+#if UNITY_EDITOR
         Debug.Log($"Game starting in {startDelay} seconds...");
-        yield return new WaitForSecondsRealtime(startDelay);
+#endif
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(startDelay);
         ActualGameStart();
     }
 
@@ -948,7 +1005,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         UpdateUI();
         RespawnPlayer();
+#if UNITY_EDITOR
         Debug.Log($"Game Started! Starting energy: {currentEnergy}, Max lives: {maxLives}, Time reduction: {timeReductionSeconds}s");
+#endif
     }
 
     public void EndGame()
@@ -1019,7 +1078,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (startButton != null)
             startButton.gameObject.SetActive(true);
 
+#if UNITY_EDITOR
         Debug.Log("Game Ended!");
+#endif
     }
 
     // ====== PLAYER MECHANICS ======
@@ -1079,7 +1140,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             targetSize = initialPlayerSize;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Switched to {zoneType} zone, feedback sprite updated");
+#endif
     }
 
     // Helper method to update feedback sprite for zone
@@ -1108,7 +1171,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = feedbackSprite;
+#if UNITY_EDITOR
                 Debug.Log($"Feedback sprite updated to {zoneType} sprite");
+#endif
             }
             else
             {
@@ -1116,7 +1181,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
                 if (image != null)
                 {
                     image.sprite = feedbackSprite;
+#if UNITY_EDITOR
                     Debug.Log($"Feedback image updated to {zoneType} sprite");
+#endif
                 }
             }
         }
@@ -1321,9 +1388,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(loseLifeSound);
 
         TriggerDeathAnimation();
-        yield return new WaitForSeconds(deathAnimationDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(deathAnimationDuration);
         ResetDeathAnimation();
-        yield return new WaitForSeconds(respawnDelay);
+        yield return CoroutineYieldCache.WaitForSeconds(respawnDelay);
 
         RespawnPlayer();
         currentEnergy = 50f;
@@ -1373,7 +1440,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         sizeBoostTimer = 0f;
 
         isRespawning = false;
+#if UNITY_EDITOR
         Debug.Log("Respawn complete!");
+#endif
     }
 
     // ====== VISUAL EFFECTS ======
@@ -1445,7 +1514,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator HideRespawnEffectAfterDelay()
     {
-        yield return new WaitForSeconds(respawnEffectDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(respawnEffectDuration);
         HideRespawnEffect();
         respawnEffectCoroutine = null;
     }
@@ -1493,7 +1562,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator ResetAnimation(string triggerName)
     {
-        yield return new WaitForSeconds(1f);
+        yield return CoroutineYieldCache.WaitForSeconds(1f);
         if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
 
         switch (triggerName)
@@ -1527,7 +1596,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator HideEffectAfterTime(GameObject effect, float duration)
     {
-        yield return new WaitForSeconds(duration);
+        yield return CoroutineYieldCache.WaitForSeconds(duration);
         if (effect != null) effect.SetActive(false);
     }
 
@@ -1559,7 +1628,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator HideFeedbackSprite()
     {
-        yield return new WaitForSeconds(spriteDisplayTime);
+        yield return CoroutineYieldCache.WaitForSeconds(spriteDisplayTime);
         if (feedbackSpriteObject != null) feedbackSpriteObject.SetActive(false);
         spriteDisplayCoroutine = null;
     }
@@ -1578,7 +1647,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Go food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1595,7 +1666,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Grow food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1612,7 +1685,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Glow food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1629,7 +1704,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Junk food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1644,7 +1721,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} speed boost sound found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1711,7 +1790,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (checkpoint == null || !checkpoint.IsActivated()) return;
         currentCheckpoint = checkpoint;
+#if UNITY_EDITOR
         Debug.Log($"Checkpoint set to: {checkpoint.gameObject.name}");
+#endif
     }
 
     private void RespawnPlayer()
@@ -1728,7 +1809,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             playerArmature.rotation = spawnRotation;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Respawned at: {currentCheckpoint.gameObject.name}");
+#endif
     }
 
     public void RespawnAllFood()
@@ -1756,26 +1839,34 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (!gameIsActive)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"AddEnergy called but game is not active! Amount: {amount}");
+#endif
             return;
         }
 
         targetEnergy += amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+#if UNITY_EDITOR
         Debug.Log($"Energy added: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
+#endif
     }
 
     public void RemoveEnergy(float amount)
     {
         if (!gameIsActive)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"RemoveEnergy called but game is not active! Amount: {amount}");
+#endif
             return;
         }
 
         targetEnergy -= amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+#if UNITY_EDITOR
         Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
+#endif
     }
 
     public void SetEnergy(float amount)
@@ -1788,7 +1879,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (energySlider != null)
             energySlider.value = currentEnergy;
 
+#if UNITY_EDITOR
         Debug.Log($"Energy set to: {targetEnergy}");
+#endif
     }
 
     // ====== BOOST METHODS ======
@@ -1804,7 +1897,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Go);
 
+#if UNITY_EDITOR
         Debug.Log($"Speed boost activated for {duration} seconds");
+#endif
     }
 
     public void TriggerSizeBoost(float duration = 10f)
@@ -1821,7 +1916,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Grow);
 
+#if UNITY_EDITOR
         Debug.Log($"Size boost activated for {duration} seconds");
+#endif
     }
 
     public void TriggerGlowBoost(float duration = 10f)
@@ -1835,7 +1932,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (glowBoostEffect != null) glowBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Glow);
 
+#if UNITY_EDITOR
         Debug.Log($"Glow boost activated for {duration} seconds");
+#endif
     }
 
     public void PauseGameTimer()
@@ -1844,7 +1943,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         isGameTimerPaused = true;
         pausedTimerValue = gameTimer;
+#if UNITY_EDITOR
         Debug.Log("Game timer paused");
+#endif
     }
 
     public void ResumeGameTimer()
@@ -1852,7 +1953,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (!gameIsActive) return;
 
         isGameTimerPaused = false;
+#if UNITY_EDITOR
         Debug.Log("Game timer resumed");
+#endif
     }
 
     public bool IsGameTimerPaused()
@@ -1874,12 +1977,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
             // Handle low energy audio
             if (isLowEnergyNow)
             {
+#if UNITY_EDITOR
                 Debug.Log($"Low energy warning shown! Energy: {currentEnergy}");
+#endif
                 PlayLowEnergySound();
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.Log($"Low energy warning hidden. Energy: {currentEnergy}");
+#endif
                 StopLowEnergySound();
             }
         }
@@ -1897,16 +2004,22 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (!lowEnergyAudioSource.isPlaying)
             {
                 lowEnergyAudioSource.Play();
+#if UNITY_EDITOR
                 Debug.Log("Started low energy warning sound");
+#endif
             }
         }
         else if (lowEnergyAudioSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Low energy audio source not assigned!");
+#endif
         }
         else if (lowEnergySound == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Low energy sound clip not assigned!");
+#endif
         }
     }
 
@@ -1916,13 +2029,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (lowEnergyAudioSource != null && lowEnergyAudioSource.isPlaying)
         {
             lowEnergyAudioSource.Stop();
+#if UNITY_EDITOR
             Debug.Log("Stopped low energy warning sound");
+#endif
         }
     }
 
     private void ResetAssessmentSystem()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING ASSESSMENT SYSTEM ===");
+#endif
 
         // Reset Grow Assessment Manager
         GrowAssessmentManager assessmentManager = FindObjectOfType<GrowAssessmentManager>();
@@ -1933,18 +2050,24 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (assessmentManager.IsAssessmentActive() || assessmentManager.IsWaitingForEndTrigger())
             {
                 assessmentManager.EndGrowAssessment();
+#if UNITY_EDITOR
                 Debug.Log("Ended active assessment at game start");
+#endif
             }
             else
             {
                 // Just reset the state without moving the panel
                 assessmentManager.ResetForNewAssessmentWithoutMovingPanel();
+#if UNITY_EDITOR
                 Debug.Log("Reset assessment state without moving panel");
+#endif
             }
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("No GrowAssessmentManager found in scene");
+#endif
         }
 
         // Reset all Object Group Managers
@@ -1967,7 +2090,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Assessment System reset: {groupManagers.Length} groups, {triggers.Length} triggers");
+#endif
     }
 
     private void ResetAllTriggersAndColliders()
@@ -2036,11 +2161,15 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (saveData == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("ResumeFromSavedState: saveData is null!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("=== RESUMING FROM SAVED STATE ===");
+#endif
 
         // --- Stop any ongoing processes ---
         StopAllCoroutines();
@@ -2104,8 +2233,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             energySlider.value = currentEnergy;
         }
 
-        // Re-apply slider appearance (use initial as base; zone triggers will update if needed)
-        SetSliderAppearance(initialZoneType, initialSliderFillColor, initialSliderHandleSprite);
+        // Re-apply slider appearance for the SAVED zone (not initial)
+        GetSliderAppearanceForZone(currentFoodZone, out Color resumeFillColor, out Sprite resumeHandleSprite);
+        SetSliderAppearance(currentFoodZone, resumeFillColor, resumeHandleSprite);
         UpdateFeedbackSpriteForZone(currentFoodZone);
 
         // --- Heart UI ---
@@ -2169,8 +2299,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
             characterAnimator.SetBool(deathTrigger, false);
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Resume complete. Energy:{currentEnergy} Score:{score} Lives:{currentLifeAmount} " +
                   $"Timer:{gameTimer}s Zone:{currentFoodZone} SpeedBoosted:{isSpeedBoosted} SizeBoosted:{isSizeBoosted}");
+#endif
     }
 
     // ====== ADDITIONAL SETTERS (for save/restore) ======

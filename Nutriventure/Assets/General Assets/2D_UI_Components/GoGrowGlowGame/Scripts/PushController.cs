@@ -69,8 +69,10 @@ public class PushController : MonoBehaviour
         Vector3 raycastOrigin = transform.position + Vector3.up * raycastHeight;
         Vector3 raycastDirection = transform.forward;
 
+#if UNITY_EDITOR
         // Draw debug ray
         Debug.DrawRay(raycastOrigin, raycastDirection * raycastDistance, Color.red);
+#endif
 
         // Perform raycast
         RaycastHit hit;
@@ -79,7 +81,6 @@ public class PushController : MonoBehaviour
         if (isFacingPushable)
         {
             currentPushableObject = hit.collider.gameObject;
-            Debug.Log($"Facing pushable object: {currentPushableObject.name}");
         }
         else
         {
@@ -92,7 +93,9 @@ public class PushController : MonoBehaviour
         // Check if inputs is null
         if (inputs == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("StarterAssetsInputs not found on player!");
+#endif
             return;
         }
 
@@ -119,7 +122,9 @@ public class PushController : MonoBehaviour
     private void StartPushing()
     {
         isPushing = true;
+#if UNITY_EDITOR
         Debug.Log("Started pushing");
+#endif
 
         // Here you would add logic to actually push the object
         if (currentPushableObject != null)
@@ -137,7 +142,9 @@ public class PushController : MonoBehaviour
     private void StopPushing()
     {
         isPushing = false;
+#if UNITY_EDITOR
         Debug.Log("Stopped pushing");
+#endif
     }
 
     private void UpdateAnimator()
