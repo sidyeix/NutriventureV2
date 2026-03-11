@@ -47,6 +47,9 @@ public class InGameSettingsButton : MonoBehaviour
     private float originalTimeScale;
     private Coroutine countdownCoroutine;
     private AudioSource audioSource; // For playing countdown sounds
+    private bool isCountdownRunning = false;
+    private float frozenSafetyTimer = 0f;
+    private const float FROZEN_SAFETY_TIMEOUT = 6f;
 
     private void Start()
     {
@@ -66,6 +69,15 @@ public class InGameSettingsButton : MonoBehaviour
         ValidateReferences();
         SetupButtonListeners();
         InitializeUI();
+    }
+
+    private void OnEnable()
+    {
+        if (profileSettings != null)
+        {
+            profileSettings.OnClosed -= OnProfileSettingsClosed;
+            profileSettings.OnClosed += OnProfileSettingsClosed;
+        }
     }
 
     private void ValidateReferences()
@@ -109,12 +121,7 @@ public class InGameSettingsButton : MonoBehaviour
             resumeGameButton.onClick.AddListener(OnResumeGameClicked);
         }
 
-        // Subscribe to ProfileSettings close event so we know when the panel closes
-        // (covers the X/close button, save button, dialog yes/no — any close path)
-        if (profileSettings != null)
-        {
-            profileSettings.OnClosed += OnProfileSettingsClosed;
-        }
+        // Subscription is now handled by OnEnable/OnDisable to survive GO toggles
     }
 
     private void InitializeUI()
@@ -131,6 +138,7 @@ public class InGameSettingsButton : MonoBehaviour
     private void Update()
     {
         CheckGameState();
+        CheckFrozenSafety();
     }
 
     private void CheckGameState()
@@ -183,7 +191,7 @@ public class InGameSettingsButton : MonoBehaviour
         {
             isPaused = true;
             wasGameActiveWhenPaused = isGameActive;
-            originalTimeScale = Time.timeScale;
+            originalTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
             Time.timeScale = 0f;
 
             if (wasGameActiveWhenPaused && gameManager != null)
@@ -203,6 +211,10 @@ public class InGameSettingsButton : MonoBehaviour
     /// </summary>
     private void OnProfileSettingsClosed()
     {
+#if UNITY_EDITOR
+        Debug.Log($"K1: OnProfileSettingsClosed — isPaused={isPaused}, wasGameActive={wasGameActiveWhenPaused}, originalTimeScale={originalTimeScale}");
+#endif
+
         // Always re-show the settings button
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(true);
@@ -215,19 +227,58 @@ public class InGameSettingsButton : MonoBehaviour
         else if (isPaused)
         {
             // Game wasn't active (just roaming) — resume immediately, no countdown
-            Time.timeScale = originalTimeScale;
-            isPaused = false;
-            wasGameActiveWhenPaused = false;
+            ResumeImmediately();
 #if UNITY_EDITOR
-            Debug.Log("Settings closed while roaming — resumed immediately.");
+            Debug.Log("K1: Settings closed while roaming — resumed immediately.");
 #endif
         }
-
-        // Safety net: if for any reason timeScale is still 0 after handling, restore it
-        if (!isPaused && Time.timeScale == 0f)
+        else
         {
+            // Safety: force-restore timeScale if it's stuck at 0
+            EnsureTimeScaleRestored();
+        }
+    }
+
+    private void ResumeImmediately()
+    {
+        Time.timeScale = originalTimeScale > 0f ? originalTimeScale : 1f;
+        isPaused = false;
+        wasGameActiveWhenPaused = false;
+        isCountdownRunning = false;
+        frozenSafetyTimer = 0f;
+    }
+
+    private void EnsureTimeScaleRestored()
+    {
+        if (Time.timeScale == 0f)
+        {
+            Debug.LogWarning("K1: EnsureTimeScaleRestored — timeScale was 0 when not paused! Forcing to 1.");
             Time.timeScale = 1f;
-            Debug.LogWarning("InGameSettingsButton: Safety net restored Time.timeScale to 1");
+            isPaused = false;
+            wasGameActiveWhenPaused = false;
+            isCountdownRunning = false;
+            frozenSafetyTimer = 0f;
+        }
+    }
+
+    private void CheckFrozenSafety()
+    {
+        if (Time.timeScale != 0f)
+        {
+            frozenSafetyTimer = 0f;
+            return;
+        }
+
+        if (isCountdownRunning) return;
+        if (profileSettings != null && profileSettings.IsProfileSettingsOpen()) return;
+
+        frozenSafetyTimer += Time.unscaledDeltaTime;
+
+        if (frozenSafetyTimer >= FROZEN_SAFETY_TIMEOUT)
+        {
+            Debug.LogWarning("K1: Frozen safety triggered — timeScale stuck at 0 for too long. Forcing resume.");
+            ForceResume();
+            frozenSafetyTimer = 0f;
         }
     }
 
@@ -247,6 +298,10 @@ public class InGameSettingsButton : MonoBehaviour
         {
             profileSettings.CloseProfileSettingsDirect();
         }
+        else
+        {
+            ForceResume();
+        }
     }
 
     private void StartCountdownCoroutine()
@@ -254,8 +309,11 @@ public class InGameSettingsButton : MonoBehaviour
         if (countdownCoroutine != null)
         {
             StopCoroutine(countdownCoroutine);
+            countdownCoroutine = null;
         }
 
+        isCountdownRunning = true;
+        frozenSafetyTimer = 0f;
         countdownCoroutine = StartCoroutine(CountdownBeforeResume());
     }
 
@@ -308,9 +366,12 @@ public class InGameSettingsButton : MonoBehaviour
             countdownPanel.SetActive(false);
 
         // Resume game
-        Time.timeScale = originalTimeScale;
+        Time.timeScale = originalTimeScale > 0f ? originalTimeScale : 1f;
         isPaused = false;
         wasGameActiveWhenPaused = false;
+        isCountdownRunning = false;
+        frozenSafetyTimer = 0f;
+        countdownCoroutine = null;
 
         // Resume game manager timers
         if (gameManager != null)
@@ -323,7 +384,7 @@ public class InGameSettingsButton : MonoBehaviour
             settingsButton.gameObject.SetActive(true);
 
 #if UNITY_EDITOR
-        Debug.Log("Game resumed");
+        Debug.Log("K1: Game resumed");
 #endif
     }
 
@@ -375,6 +436,8 @@ public class InGameSettingsButton : MonoBehaviour
         // Resume time immediately before restarting
         Time.timeScale = 1f;
         isPaused = false;
+        isCountdownRunning = false;
+        frozenSafetyTimer = 0f;
 
         // Show settings button again
         if (settingsButton != null)
@@ -439,6 +502,8 @@ public class InGameSettingsButton : MonoBehaviour
         // Resume time
         Time.timeScale = 1f;
         isPaused = false;
+        isCountdownRunning = false;
+        frozenSafetyTimer = 0f;
 
         // Show settings button again
         if (settingsButton != null)
@@ -606,9 +671,40 @@ public class InGameSettingsButton : MonoBehaviour
     /// Called externally (e.g. by GameStateManager) to show the 3-2-1 countdown
     /// before the player regains control after resuming from a saved state.
     /// </summary>
+    private void ForceResume()
+    {
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+            countdownCoroutine = null;
+        }
+
+        if (settingsButton != null)
+            settingsButton.gameObject.SetActive(true);
+
+        if (countdownCanvas != null)
+            countdownCanvas.SetActive(false);
+        if (countdownPanel != null)
+            countdownPanel.SetActive(false);
+
+        Time.timeScale = 1f;
+
+        if (isPaused && wasGameActiveWhenPaused && gameManager != null)
+        {
+            gameManager.ResumeGameTimer();
+        }
+
+        isPaused = false;
+        wasGameActiveWhenPaused = false;
+        isCountdownRunning = false;
+        frozenSafetyTimer = 0f;
+
+        Debug.Log("K1: ForceResume executed — timeScale restored to 1.");
+    }
+
     public void ShowResumeCountdown()
     {
-        Debug.Log("ShowResumeCountdown called — starting countdown for save resume");
+        Debug.Log("K1: ShowResumeCountdown called — starting countdown for save resume");
 
         // Freeze time so the game waits during countdown
         originalTimeScale = 1f;
@@ -625,11 +721,12 @@ public class InGameSettingsButton : MonoBehaviour
 
     private void OnDisable()
     {
-        if (isPaused)
+        if (isPaused || Time.timeScale == 0f)
         {
             Time.timeScale = 1f;
             isPaused = false;
             wasGameActiveWhenPaused = false;
+            isCountdownRunning = false;
         }
 
         if (countdownCoroutine != null)
