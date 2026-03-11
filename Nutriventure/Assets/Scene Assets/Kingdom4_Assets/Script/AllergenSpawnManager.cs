@@ -75,27 +75,27 @@ public class AllergenSpawnManager : MonoBehaviour
     // ================= SPAWNING =================
     public void SpawnAllergens()
     {
-    if (hasSpawned) return;
+        if (hasSpawned) return;
 
-    if (spawnPoints.Count == 0 || allergenPrefabMap.Count == 0)
-    {
-        Debug.LogError("Cannot spawn allergens: missing prefabs or spawn points.");
-        return;
+        if (spawnPoints.Count == 0 || allergenPrefabMap.Count == 0)
+        {
+            Debug.LogError("Cannot spawn allergens: missing prefabs or spawn points.");
+            return;
+        }
+
+        if (spawnedAllergens.Count > 0)
+            ClearAllAllergens();
+
+        if (spawnOneOfEachAllergen)
+            SpawnOneOfEach();
+        else
+            SpawnRandom();
+
+        hasSpawned = true;
+
+        if (showDebugInfo)
+            Debug.Log($"Spawned {spawnedAllergens.Count} allergens.");
     }
-
-    if (spawnedAllergens.Count > 0)
-        ClearAllAllergens();
-
-    if (spawnOneOfEachAllergen)
-        SpawnOneOfEach();
-    else
-        SpawnRandom();
-
-    hasSpawned = true;
-
-    if (showDebugInfo)
-        Debug.Log($"Spawned {spawnedAllergens.Count} allergens.");
-}
 
     private void SpawnOneOfEach()
     {
@@ -112,7 +112,7 @@ public class AllergenSpawnManager : MonoBehaviour
             TrySpawn(allergenIds[i], points[i]);
         }
     }
-    
+
 
     private void SpawnRandom()
     {
@@ -165,33 +165,33 @@ public class AllergenSpawnManager : MonoBehaviour
 
     // ================= COLLECTION =================
     public void OnAllergenCollected(GameObject allergen)
-{
-    if (spawnedAllergens.Remove(allergen))
     {
-        IngredientInteractable i = allergen.GetComponent<IngredientInteractable>();
-
-        if (showDebugInfo)
-            Debug.Log($"Collected allergen: {i?.ingredientId}");
-
-        // ✅ SCORING HOOK (PHASE 1)
-        if (Kingdom4ScoreManager.Instance != null)
+        if (spawnedAllergens.Remove(allergen))
         {
-            Kingdom4ScoreManager.Instance.AddAllergenFound();
+            IngredientInteractable i = allergen.GetComponent<IngredientInteractable>();
+
+            if (showDebugInfo)
+                Debug.Log($"Collected allergen: {i?.ingredientId}");
+
+            // ✅ SCORING HOOK (PHASE 1)
+            if (Kingdom4ScoreManager.Instance != null)
+            {
+                Kingdom4ScoreManager.Instance.AddAllergenFound();
+            }
         }
     }
-}
 
 
     // ================= UTILITIES =================
-private void ClearAllAllergens()
-{
-    foreach (GameObject a in spawnedAllergens)
-        if (a != null)
-            Destroy(a);
+    private void ClearAllAllergens()
+    {
+        foreach (GameObject a in spawnedAllergens)
+            if (a != null)
+                Destroy(a);
 
-    spawnedAllergens.Clear();
-    hasSpawned = false;
-}
+        spawnedAllergens.Clear();
+        hasSpawned = false;
+    }
 
 
     private void Shuffle<T>(List<T> list)

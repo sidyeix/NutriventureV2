@@ -6,10 +6,10 @@ using UnityEngine.EventSystems;
 public class IngredientInteractable : Interactable
 {
     [Header("Pickup Distance")]
-[SerializeField] private float maxPickupDistance = 8f;
-private Transform playerTransform;
+    [SerializeField] private float maxPickupDistance = 8f;
+    private Transform playerTransform;
 
-private bool hasRequestedTouch = false;
+    private bool hasRequestedTouch = false;
 
     protected virtual void OnCollected() { }
 
@@ -33,24 +33,24 @@ private bool hasRequestedTouch = false;
     private AllergenProductData.ProductInfo productInfo;
     private Camera mainCamera;
 
-private bool isCollected = false;
+    private bool isCollected = false;
 
-private bool IsPlayerInRangeByDistance()
-{
-    if (playerTransform == null)
-        return false;
+    private bool IsPlayerInRangeByDistance()
+    {
+        if (playerTransform == null)
+            return false;
 
-    return Vector3.Distance(transform.position, playerTransform.position) <= maxPickupDistance;
-}
+        return Vector3.Distance(transform.position, playerTransform.position) <= maxPickupDistance;
+    }
 
 
     private void Awake()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-if (player != null)
-{
-    playerTransform = player.transform;
-}
+        if (player != null)
+        {
+            playerTransform = player.transform;
+        }
 
         mainCamera = Camera.main;
 
@@ -78,47 +78,47 @@ if (player != null)
         if (pickupPrompt != null) pickupPrompt.SetActive(false);
     }
 
-   private void Update()
-{
-    CheckMobileTap();
-}
-
-
-
-
-  private void CheckMobileTap()
-{
-    if (Touchscreen.current == null || mainCamera == null)
-        return;
-
-    var touch = Touchscreen.current.primaryTouch;
-
-    if (!touch.press.wasPressedThisFrame)
-        return;
-
-    Vector2 touchPos = touch.position.ReadValue();
-
-    Ray ray = mainCamera.ScreenPointToRay(touchPos);
-    RaycastHit hit;
-
-    if (Physics.Raycast(ray, out hit, 1000f))
+    private void Update()
     {
-        if (hit.collider != null && hit.collider.gameObject == gameObject)
+        CheckMobileTap();
+    }
+
+
+
+
+    private void CheckMobileTap()
+    {
+        if (Touchscreen.current == null || mainCamera == null)
+            return;
+
+        var touch = Touchscreen.current.primaryTouch;
+
+        if (!touch.press.wasPressedThisFrame)
+            return;
+
+        Vector2 touchPos = touch.position.ReadValue();
+
+        Ray ray = mainCamera.ScreenPointToRay(touchPos);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 1000f))
         {
-            Pickup();
+            if (hit.collider != null && hit.collider.gameObject == gameObject)
+            {
+                Pickup();
+            }
         }
     }
-}
 
 
     public override void Pickup()
     {
-   if (productInfo == null)
-    return;
+        if (productInfo == null)
+            return;
 
 
-    if (isCollected) return;
-    isCollected = true;
+        if (isCollected) return;
+        isCollected = true;
 
         // 🔊 Play pickup sound
         if (pickupSFX != null)
@@ -129,7 +129,7 @@ if (player != null)
                 pickupVolume
             );
         }
-        
+
         // Notify game manager about allergen collection
         if (!string.IsNullOrEmpty(ingredientId))
         {
@@ -166,7 +166,7 @@ if (player != null)
 
         // ❗ Destroy / disable ingredient
         base.Pickup();
-        
+
         // Disable the trigger after pickup
         GetComponent<Collider>().enabled = false;
         OnCollected();
@@ -180,7 +180,7 @@ if (player != null)
         if (collider != null)
         {
             Gizmos.color = Color.green;
-            
+
             if (collider is BoxCollider boxCollider)
             {
                 Gizmos.DrawWireCube(
@@ -200,10 +200,10 @@ if (player != null)
                 // Draw capsule outline
                 Vector3 top = transform.position + capsuleCollider.center + Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
                 Vector3 bottom = transform.position + capsuleCollider.center - Vector3.up * (capsuleCollider.height / 2 - capsuleCollider.radius);
-                
+
                 Gizmos.DrawWireSphere(top, capsuleCollider.radius);
                 Gizmos.DrawWireSphere(bottom, capsuleCollider.radius);
-                
+
                 // Draw connecting lines
                 Gizmos.DrawLine(top + Vector3.right * capsuleCollider.radius, bottom + Vector3.right * capsuleCollider.radius);
                 Gizmos.DrawLine(top - Vector3.right * capsuleCollider.radius, bottom - Vector3.right * capsuleCollider.radius);

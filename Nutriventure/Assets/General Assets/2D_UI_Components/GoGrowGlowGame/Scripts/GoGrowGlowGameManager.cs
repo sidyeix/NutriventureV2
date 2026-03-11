@@ -267,6 +267,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
         targetSpeed = initialPlayerSpeed;
         targetSize = initialPlayerSize;
 
+        // Hook up start button programmatically
+        // DelayedButtonEnable component on the button handles the 1.5s interactable delay via OnEnable
+        if (startButton != null)
+        {
+            startButton.onClick.AddListener(StartGame);
+        }
+
         if (startCheckpoint != null)
         {
             currentCheckpoint = startCheckpoint;
@@ -472,7 +479,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
         isRespawning = false;
         inHealingZone = false;
         wasLowEnergyLastFrame = false;
-        isStartingGame = false;
 
         // Reset UI
         if (energySlider != null) energySlider.value = 0f;
@@ -811,6 +817,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== GAME FLOW ======
     public void StartGame()
     {
+        Debug.Log($"StartGame called! isStartingGame={isStartingGame}, gameIsActive={gameIsActive}, timeScale={Time.timeScale}");
+
         if (isStartingGame) return;
 
         isStartingGame = true;
@@ -822,12 +830,22 @@ public class GoGrowGlowGameManager : MonoBehaviour
     private IEnumerator DelayedGameStart()
     {
         Debug.Log($"Game starting in {startDelay} seconds...");
-        yield return new WaitForSeconds(startDelay);
+        yield return new WaitForSecondsRealtime(startDelay);
         ActualGameStart();
     }
 
     private void ActualGameStart()
     {
+        // Ensure time is running (safeguard against stuck timeScale from settings/pause)
+        Time.timeScale = 1f;
+
+        // Clear the starting flag and activate game FIRST so these always execute
+        isStartingGame = false;
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
+        SetGameActive(true);
+        isEnergyDecreasePaused = false;
+        isGameTimerPaused = false;
+
         // Apply power-up bonuses before starting
         ApplyEquippedPetPowerUps();
 
@@ -846,12 +864,6 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         // Ensure low energy sound is stopped at game start
         StopLowEnergySound();
-
-        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
-        SetGameActive(true);
-        isStartingGame = false;
-        isEnergyDecreasePaused = false;
-        isGameTimerPaused = false;
 
         // Set starting energy to 100
         currentEnergy = startEnergy;
@@ -1005,10 +1017,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (uiElement != null) uiElement.SetActive(true);
 
         if (startButton != null)
-        {
             startButton.gameObject.SetActive(true);
-            startButton.interactable = true;
-        }
+
         Debug.Log("Game Ended!");
     }
 

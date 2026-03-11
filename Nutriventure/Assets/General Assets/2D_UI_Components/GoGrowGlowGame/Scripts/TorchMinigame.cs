@@ -22,6 +22,8 @@ public class TorchMinigame : MonoBehaviour
     [SerializeField] private int activeCameraPriority = 30;
     [SerializeField] private int inactiveCameraPriority = 0;
     [SerializeField] private int followCameraDefaultPriority = 20;
+    [SerializeField] private float cameraBlendTime = 1f;
+    [SerializeField] private CinemachineBlendDefinition.Style cameraBlendStyle = CinemachineBlendDefinition.Style.EaseInOut;
     [SerializeField] private GameObject fireObject;
     [SerializeField] private GameObject wrongFlameObject;
     [SerializeField] private Transform flameFoodSpawn;
@@ -357,7 +359,8 @@ public class TorchMinigame : MonoBehaviour
         currentCorrectAnswers = 0;
         currentFlameScale = 0f;
 
-        // Switch camera
+        // Switch camera with smooth blend
+        SetCameraBlend();
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = activeCameraPriority;
 
@@ -925,6 +928,7 @@ public class TorchMinigame : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
+        SetCameraBlend();
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = inactiveCameraPriority;
 
@@ -1068,6 +1072,15 @@ public class TorchMinigame : MonoBehaviour
         if (isInTorchMode)
         {
             EndTorchMinigame(false);
+        }
+    }
+
+    private void SetCameraBlend()
+    {
+        CinemachineBrain brain = Camera.main != null ? Camera.main.GetComponent<CinemachineBrain>() : null;
+        if (brain != null)
+        {
+            brain.m_DefaultBlend = new CinemachineBlendDefinition(cameraBlendStyle, cameraBlendTime);
         }
     }
 }
