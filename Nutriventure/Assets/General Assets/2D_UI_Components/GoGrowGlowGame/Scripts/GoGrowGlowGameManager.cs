@@ -90,6 +90,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
     [Header("UI Elements")]
     public List<GameObject> uiElementsToDisable = new List<GameObject>();
     public List<GameObject> uiElementsToEnable = new List<GameObject>();
+    [Tooltip("Sprint button: disabled during Go zone, enabled during Grow/Glow zones")]
+    public GameObject sprintButton;
     public TMP_Text timerText;
     public TMP_Text scoreText;
     public TMP_Text livesText;
@@ -989,6 +991,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToEnable)
             if (uiElement != null) uiElement.SetActive(true);
 
+        // Sprint button depends on starting zone
+        UpdateSprintButtonForZone(currentFoodZone);
+
         if (startButton != null) startButton.gameObject.SetActive(false);
 
         // Reset food spawner before starting
@@ -1082,6 +1087,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToEnable)
             if (uiElement != null) uiElement.SetActive(false);
 
+        // Hide sprint button when game ends
+        if (sprintButton != null) sprintButton.SetActive(false);
+
         if (startButton != null)
             startButton.gameObject.SetActive(true);
 
@@ -1138,6 +1146,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Update feedback sprite based on zone
         UpdateFeedbackSpriteForZone(zoneType);
 
+        // Sprint button: disabled during Go, enabled during Grow/Glow
+        UpdateSprintButtonForZone(zoneType);
+
         if (zoneType == FoodType.Grow && playerArmature != null)
         {
             UpdatePlayerSize();
@@ -1150,6 +1161,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log($"Switched to {zoneType} zone, feedback sprite updated");
 #endif
+    }
+
+    // Sprint button: disabled during Go zone, enabled during Grow/Glow
+    private void UpdateSprintButtonForZone(FoodType zoneType)
+    {
+        if (sprintButton == null) return;
+        sprintButton.SetActive(zoneType != FoodType.Go);
     }
 
     // Helper method to update feedback sprite for zone
@@ -2235,6 +2253,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Enable gameplay UI elements
         foreach (GameObject uiElement in uiElementsToEnable)
             if (uiElement != null) uiElement.SetActive(true);
+
+        // Sprint button depends on the restored zone
+        UpdateSprintButtonForZone(currentFoodZone);
 
         // --- Slider / UI (must be set AFTER canvas is active for proper layout rebuild) ---
         if (energySlider != null)
