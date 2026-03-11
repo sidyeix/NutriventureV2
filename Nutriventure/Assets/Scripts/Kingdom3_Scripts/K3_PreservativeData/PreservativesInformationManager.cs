@@ -619,4 +619,27 @@ public class PreservativesInformationManager : MonoBehaviour
             transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);
         }
     }
+
+    // ============================================================
+    //  SAVE / RESTORE HELPERS
+    // ============================================================
+
+    /// <summary>
+    /// Restores the collected preservative IDs from saved state and updates UI.
+    /// Does NOT show the info panel or spawn display models.
+    /// </summary>
+    public void RestoreCollectedPreservatives(List<string> savedIDs)
+    {
+        if (savedIDs == null) return;
+
+        collectedPreservativeIDs.Clear();
+        foreach (string id in savedIDs)
+        {
+            if (!collectedPreservativeIDs.Contains(id))
+                collectedPreservativeIDs.Add(id);
+        }
+
+        UpdateAllCollectionDisplays();
+        Debug.Log($"[PreservativesInfoManager] Restored {collectedPreservativeIDs.Count} collected preservatives.");
+    }
 }

@@ -349,6 +349,29 @@ public class K3_ResumeGameCanvas : MonoBehaviour
     if (phase1 != null)
       phase1.ResetAllSystems();
 
+    // Reset preservative collection
+    PreservativesInformationManager infoManager = FindObjectOfType<PreservativesInformationManager>();
+    if (infoManager != null)
+      infoManager.ResetForNewSession();
+
+    // Reset food assessment state (particles, UI counters)
+    K3_KingAssessment kingAssessment = FindObjectOfType<K3_KingAssessment>();
+    if (kingAssessment != null)
+      kingAssessment.ResetForNewSession();
+
+    // Reset preservation system (food tracking dictionaries)
+    K3_KingAS2 preservationSystem = FindObjectOfType<K3_KingAS2>();
+    if (preservationSystem != null)
+      preservationSystem.ResetForNewSession();
+
+    // Respawn preservative potions in the world
+    K3_PreservativeSpawner spawner = FindObjectOfType<K3_PreservativeSpawner>();
+    if (spawner != null)
+    {
+      spawner.ResetSpawner();
+      spawner.InitializeAndSpawn();
+    }
+
     // Reset DYK popup system
     K3_Dyk dyk = FindObjectOfType<K3_Dyk>();
     if (dyk != null)

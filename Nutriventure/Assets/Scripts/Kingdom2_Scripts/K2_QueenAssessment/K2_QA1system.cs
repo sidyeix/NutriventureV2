@@ -1474,7 +1474,7 @@ public class K2_QA1system : MonoBehaviour
             return button;
         }
 
-        public GameObject gameObject
+        public new GameObject gameObject
         {
             get { return base.gameObject; }
         }

@@ -17,45 +17,45 @@ public class PreserviaScoringSystem : MonoBehaviour
     [Header("Scoring Configuration")]
     [Tooltip("Base points for collecting a preservative potion")]
     public int basePreservativePoints = 100;
-    
+
     [Tooltip("Base points for completing GEM interaction")]
     public int gemCompletionPoints = 500;
-    
+
     [Tooltip("Points for each correct food preservation")]
     public int foodPreservationPoints = 300;
-    
+
     [Tooltip("Bonus for completing all foods")]
     public int fullCompletionBonus = 1500;
-    
+
     [Tooltip("Bonus for perfect slider placement (within optimal range)")]
     public int perfectPlacementBonus = 200;
 
     [Header("Progressive Multiplier Settings")]
     [Tooltip("Multiplier increase per successful preservative application")]
     public float multiplierIncrement = 0.25f;
-    
+
     [Tooltip("Maximum achievable multiplier")]
     public float maxMultiplier = 3.0f;
-    
+
     [Tooltip("Starting multiplier value")]
     public float startingMultiplier = 1.0f;
 
     [Header("Bonus Settings")]
     [Tooltip("Bonus for consecutive preservative collections")]
     public int comboBonus = 50;
-    
+
     [Tooltip("Time window for combos (seconds)")]
     public float comboTimeWindow = 15f;
-    
+
     [Tooltip("Maximum combo multiplier")]
     public int maxComboMultiplier = 5;
-    
+
     [Tooltip("Anti-Oxidant GEM bonus")]
     public int antiOxidantBonus = 75;
-    
+
     [Tooltip("Anti-Microbe GEM bonus")]
     public int antiMicrobeBonus = 75;
-    
+
     [Tooltip("Bonus for using correct preservative type")]
     public int correctTypeBonus = 100;
 
@@ -85,7 +85,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     public float popupFloatSpeed = 50f;
     public bool enableScorePopups = true;
     public float popupSpacing = 30f;
-    
+
     [Header("Popup Colors")]
     public Color preservativeScoreColor = new Color(0.2f, 0.8f, 0.2f); // Green
     public Color gemScoreColor = new Color(1f, 0.8f, 0f); // Gold
@@ -100,12 +100,12 @@ public class PreserviaScoringSystem : MonoBehaviour
     private int _gemScore = 0;
     private int _foodScore = 0;
     private int _bonusScore = 0;
-    
+
     // Progressive multiplier system
     private float _progressiveMultiplier = 1.0f;
     private int _multiplierStreak = 0;
     private bool _isMultiplierLocked = false;
-    
+
     // Session stats
     private int _preservativesCollected = 0;
     private int _gemsCompleted = 0;
@@ -114,30 +114,30 @@ public class PreserviaScoringSystem : MonoBehaviour
     private float _lastCollectionTime = 0f;
     private float _sessionStartTime = 0f;
     private int _perfectPreservations = 0;
-    
+
     // References (found dynamically)
     private K3_CollectPreservatives _collectionSystem;
     private K3_Phase1Functions _gemSystem;
     private K3_KingAssessment _assessmentSystem;
     private GameplayProgression _gameplayProgression;
-    
+
     // State tracking
     private bool _isMonitoring = false;
-    
+
     // GEM tracking
     private bool _oxidantGEMScored = false;
     private bool _microbeGEMScored = false;
-    
+
     // Food tracking
     private Dictionary<int, bool> _foodPreservedThisSession = new Dictionary<int, bool>();
-    
+
     // Queue for score popups
     private Queue<ScorePopupData> _scorePopupQueue = new Queue<ScorePopupData>();
     private bool _isProcessingPopup = false;
-    
+
     // Track active popups for positioning
     private List<GameObject> _activePopups = new List<GameObject>();
-    
+
     // Preservative type tracking
     private Dictionary<string, int> _preservativeTypeCount = new Dictionary<string, int>();
 
@@ -161,7 +161,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         InitializeSystem();
         StartMonitoring();
-        
+
 #if UNITY_EDITOR
         Debug.Log("Preservia Scoring System initialized");
 #endif
@@ -172,25 +172,25 @@ public class PreserviaScoringSystem : MonoBehaviour
         _sessionStartTime = Time.time;
         _progressiveMultiplier = startingMultiplier;
 
-            // Initialize mistake tracking for 8 foods
+        // Initialize mistake tracking for 8 foods
         for (int i = 0; i < 8; i++)
         {
             _foodMistakeMade[i] = false;
         }
-        
+
         // Find all necessary components dynamically
         FindAllReferences();
-        
+
         // Subscribe to events
         SubscribeToEvents();
-        
+
         // Initialize displays
         UpdateMultiplierDisplay();
         UpdateScoreDisplay();
-        
+
         // Initialize food tracking
         InitializeFoodTracking();
-        
+
         // Validate score popup parent
         if (scorePopupParent == null && scorePopupPrefab != null)
         {
@@ -201,7 +201,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             }
         }
     }
-    
+
     void InitializeFoodTracking()
     {
         // Initialize tracking for up to 8 foods
@@ -217,7 +217,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         _gemSystem = FindObjectOfType<K3_Phase1Functions>();
         _assessmentSystem = FindObjectOfType<K3_KingAssessment>();
         _gameplayProgression = FindObjectOfType<GameplayProgression>();
-        
+
 #if UNITY_EDITOR
         if (_collectionSystem != null) Debug.Log("Found collection system");
         if (_gemSystem != null) Debug.Log("Found GEM system");
@@ -225,7 +225,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         if (_gameplayProgression != null) Debug.Log("Found gameplay progression");
 #endif
     }
-    
+
     void SubscribeToEvents()
     {
         // Subscribe to preservative collection events
@@ -234,7 +234,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             _collectionSystem.OnPotionCollected += HandlePreservativeCollected;
         }
     }
-    
+
     void HandlePreservativeCollected(GameObject potion, string preservativeID)
     {
         AwardPreservativePoints(preservativeID);
@@ -245,7 +245,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     void StartMonitoring()
     {
         _isMonitoring = true;
-        
+
         // Start checking for scoring events
         InvokeRepeating("CheckForScoringEvents", 0.5f, 0.5f);
     }
@@ -259,16 +259,16 @@ public class PreserviaScoringSystem : MonoBehaviour
     void CheckForScoringEvents()
     {
         if (!_isMonitoring) return;
-        
+
         // Monitor GEM completion
         MonitorGEMCompletion();
-        
+
         // Monitor food preservation
         MonitorFoodPreservation();
-        
+
         // Update display
         UpdateScoreDisplay();
-        
+
         // Process score popup queue
         ProcessPopupQueue();
     }
@@ -276,12 +276,12 @@ public class PreserviaScoringSystem : MonoBehaviour
     void MonitorGEMCompletion()
     {
         if (_gemSystem == null) return;
-        
+
         try
         {
             // Use reflection to check if panels are active
             var gemType = _gemSystem.GetType();
-            
+
             // Check Antioxidant panel
             var antioxidantPanelField = gemType.GetField("antioxidantInfo");
             if (antioxidantPanelField != null)
@@ -295,7 +295,7 @@ public class PreserviaScoringSystem : MonoBehaviour
                     _gemsCompleted++;
                 }
             }
-            
+
             // Check Antimicrobe panel
             var antimicrobePanelField = gemType.GetField("antimicrobeInfo");
             if (antimicrobePanelField != null)
@@ -321,13 +321,13 @@ public class PreserviaScoringSystem : MonoBehaviour
     void MonitorFoodPreservation()
     {
         if (_assessmentSystem == null) return;
-        
+
         try
         {
             // Use reflection to check food completion dictionary
             var assessmentType = _assessmentSystem.GetType();
             var foodCompletedField = assessmentType.GetField("foodCompleted");
-            
+
             if (foodCompletedField != null)
             {
                 Dictionary<int, bool> foodCompleted = foodCompletedField.GetValue(_assessmentSystem) as Dictionary<int, bool>;
@@ -338,18 +338,18 @@ public class PreserviaScoringSystem : MonoBehaviour
                     {
                         int foodIndex = kvp.Key;
                         bool isCompleted = kvp.Value;
-                        
+
                         // If food is completed AND hasn't been scored this session
                         if (isCompleted && !_foodPreservedThisSession[foodIndex])
                         {
                             // Get food name from database if possible
                             string foodName = GetFoodName(foodIndex);
-                            
+
                             // Award points for food preservation
                             AwardFoodPreservationPoints(foodName, false, true);
                             _foodPreservedThisSession[foodIndex] = true;
                             _foodsPreserved++;
-                            
+
                             // Check for full completion bonus
                             int completedCount = foodCompleted.Count(kvp => kvp.Value);
                             if (completedCount >= 8 && !_bonusAwarded)
@@ -369,7 +369,7 @@ public class PreserviaScoringSystem : MonoBehaviour
 #endif
         }
     }
-    
+
     // Helper method to get food name
     private string GetFoodName(int foodIndex)
     {
@@ -379,7 +379,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             {
                 var assessmentType = _assessmentSystem.GetType();
                 var databaseField = assessmentType.GetField("foodDatabase");
-                
+
                 if (databaseField != null)
                 {
                     K3_FoodDatabase foodDatabase = databaseField.GetValue(_assessmentSystem) as K3_FoodDatabase;
@@ -395,10 +395,10 @@ public class PreserviaScoringSystem : MonoBehaviour
             }
             catch { }
         }
-        
+
         return $"Food_{foodIndex}";
     }
-    
+
     private bool _bonusAwarded = false;
     #endregion
 
@@ -406,45 +406,45 @@ public class PreserviaScoringSystem : MonoBehaviour
     void IncreaseMultiplier()
     {
         if (_isMultiplierLocked) return;
-        
+
         // Increase streak
         _multiplierStreak++;
-        
+
         // Calculate new multiplier
         float newMultiplier = _progressiveMultiplier + multiplierIncrement;
-        
+
         // Cap at maximum
         if (newMultiplier > maxMultiplier)
         {
             newMultiplier = maxMultiplier;
             OnBonusEarned?.Invoke($"Max Multiplier Reached! {maxMultiplier:F1}x");
         }
-        
+
         // Apply new multiplier
         _progressiveMultiplier = newMultiplier;
-        
+
         // Trigger events
         OnMultiplierChanged?.Invoke(_progressiveMultiplier);
         OnMultiplierIncreased?.Invoke();
-        
+
         UpdateMultiplierDisplay();
     }
 
     void ResetMultiplier()
     {
         if (_isMultiplierLocked) return;
-        
+
         // Store old multiplier for feedback
         float oldMultiplier = _progressiveMultiplier;
-        
+
         // Reset to starting value
         _progressiveMultiplier = startingMultiplier;
         _multiplierStreak = 0;
-        
+
         // Trigger events
         OnMultiplierChanged?.Invoke(_progressiveMultiplier);
         OnMultiplierReset?.Invoke();
-        
+
         UpdateMultiplierDisplay();
     }
 
@@ -469,7 +469,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         // CHECK FOR COMBO
         float timeSinceLast = Time.time - _lastCollectionTime;
-        
+
         // If this is the first product OR time window expired, start new combo
         if (_lastCollectionTime == 0f || timeSinceLast > comboTimeWindow)
         {
@@ -479,20 +479,20 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             _comboCount = Mathf.Min(_comboCount + 1, maxComboMultiplier);
         }
-        
+
         _lastCollectionTime = Time.time;
-        
+
         // Calculate combo bonus
         int comboPoints = 0;
         if (_comboCount > 1)
         {
             comboPoints = comboBonus * (_comboCount - 1);
         }
-        
+
         // Type bonus based on preservative ID
         int typeBonus = 0;
         string preservativeType = GetPreservativeTypeFromID(preservativeID);
-        
+
         switch (preservativeType)
         {
             case "AscorbicAcid":
@@ -503,52 +503,52 @@ public class PreserviaScoringSystem : MonoBehaviour
                 typeBonus = antiMicrobeBonus;
                 break;
         }
-        
+
         // Track preservative type count
         if (!_preservativeTypeCount.ContainsKey(preservativeType))
         {
             _preservativeTypeCount[preservativeType] = 0;
         }
         _preservativeTypeCount[preservativeType]++;
-        
+
         // Calculate raw score
         int rawScore = basePreservativePoints + comboPoints + typeBonus;
-        
+
         // Apply PROGRESSIVE multiplier
         float multiplier = GetCurrentMultiplier();
         int finalScore = Mathf.RoundToInt(rawScore * multiplier);
-        
+
         // Update scores
         _preservativeScore += finalScore;
         _currentScore += finalScore;
         _preservativesCollected++;
-        
+
         // INCREASE MULTIPLIER for next collection
         IncreaseMultiplier();
-        
+
         // Trigger events
         OnPreservativeCollected?.Invoke(finalScore);
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show score popup
         if (enableScorePopups && finalScore > 0)
         {
             ShowScorePopup(finalScore, preservativeScoreColor, "Preservative");
-            
+
             // Show combo popup separately if we have combo
             if (_comboCount > 1 && comboPoints > 0)
             {
                 ShowComboPopup(_comboCount, comboPoints);
             }
         }
-        
+
         // Show combo message if applicable
         if (_comboCount > 1)
         {
             string comboMessage = $"Combo x{_comboCount}! +{comboPoints}";
             OnBonusEarned?.Invoke(comboMessage);
         }
-        
+
         // Update UI
         UpdateScoreDisplay();
     }
@@ -557,7 +557,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         // Base points
         int basePoints = gemCompletionPoints;
-        
+
         // Type bonus
         int typeBonus = 0;
         if (gemType.Contains("Oxidant") || gemType.Contains("Antioxidant"))
@@ -568,28 +568,28 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             typeBonus = antiMicrobeBonus;
         }
-        
+
         // Calculate total
         int rawScore = basePoints + typeBonus;
-        
+
         // Apply progressive multiplier
         float multiplier = GetCurrentMultiplier();
         int finalScore = Mathf.RoundToInt(rawScore * multiplier);
-        
+
         // Update scores
         _gemScore += finalScore;
         _currentScore += finalScore;
-        
+
         // Trigger events
         OnGEMCompleted?.Invoke(finalScore);
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show score popup
         if (enableScorePopups && finalScore > 0)
         {
             ShowScorePopup(finalScore, gemScoreColor, "GEM");
         }
-        
+
         // Update UI
         UpdateScoreDisplay();
     }
@@ -598,37 +598,37 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         // Base points
         int basePoints = foodPreservationPoints;
-        
+
         // Accuracy bonus (perfect placement)
         int accuracyBonus = isPerfect ? perfectPlacementBonus : 50;
-        
+
         // Correct type bonus
         int typeBonus = correctType ? correctTypeBonus : 0;
-        
+
         // Time bonus (if we tracked completion time)
         int timeBonus = 0; // Could be implemented based on completion time
-        
+
         // Calculate total
         int rawScore = basePoints + accuracyBonus + typeBonus + timeBonus;
-        
+
         // Apply progressive multiplier
         float multiplier = GetCurrentMultiplier();
         int finalScore = Mathf.RoundToInt(rawScore * multiplier);
-        
+
         // Track perfect preservations
         if (isPerfect)
         {
             _perfectPreservations++;
         }
-        
+
         // Update scores
         _foodScore += finalScore;
         _currentScore += finalScore;
-        
+
         // Trigger events
         OnFoodPreserved?.Invoke(finalScore);
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show score popup
         if (enableScorePopups && finalScore > 0)
         {
@@ -636,10 +636,10 @@ public class PreserviaScoringSystem : MonoBehaviour
             string label = isPerfect ? "Perfect!" : "Food";
             ShowScorePopup(finalScore, popupColor, label);
         }
-        
+
         // INCREASE MULTIPLIER for successful preservation
         IncreaseMultiplier();
-        
+
         // Update UI
         UpdateScoreDisplay();
     }
@@ -649,49 +649,49 @@ public class PreserviaScoringSystem : MonoBehaviour
         int bonus = fullCompletionBonus;
         float multiplier = GetCurrentMultiplier();
         int finalBonus = Mathf.RoundToInt(bonus * multiplier);
-        
+
         _bonusScore += finalBonus;
         _currentScore += finalBonus;
-        
+
         OnBonusEarned?.Invoke($"All Foods Preserved! +{finalBonus}");
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show score popup
         if (enableScorePopups && finalBonus > 0)
         {
             ShowScorePopup(finalBonus, bonusScoreColor, "Completion Bonus");
         }
-        
+
         // Update UI
         UpdateScoreDisplay();
     }
 
-        public void DeductPointsForMistake(int foodIndex, int points = 300)
+    public void DeductPointsForMistake(int foodIndex, int points = 300)
     {
         if (_foodMistakeMade.ContainsKey(foodIndex) && _foodMistakeMade[foodIndex])
         {
             return;
         }
-        
+
         // Deduct the points
         _currentScore -= points;
         _totalNegativeScore += points;
-        
+
         // Mark this food as having a mistake
         _foodMistakeMade[foodIndex] = true;
-        
+
         // Trigger events
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show negative score popup
         if (enableScorePopups && scorePopupPrefab != null)
         {
             ShowScorePopup(-points, Color.red, "Mistake");
         }
-        
+
         // Check if we need to deduct a heart (every 500 negative points)
         CheckForHeartDeduction();
-        
+
         // Update UI
         UpdateScoreDisplay();
     }
@@ -703,7 +703,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             // Calculate how many hearts to deduct
             int heartsToDeduct = Mathf.FloorToInt(_totalNegativeScore / 500f);
-            
+
             // Find the health system
             PreserviaPlayerStat healthSystem = FindObjectOfType<PreserviaPlayerStat>();
             if (healthSystem != null)
@@ -712,14 +712,14 @@ public class PreserviaScoringSystem : MonoBehaviour
                 {
                     healthSystem.TakeDamage(1);
                 }
-                
+
                 _totalNegativeScore -= heartsToDeduct * 500;
-                
+
                 OnBonusEarned?.Invoke($"Lost {heartsToDeduct} heart(s)!");
             }
         }
     }
-    
+
     string GetPreservativeTypeFromID(string preservativeID)
     {
         // Map preservative IDs to types based on your game's implementation
@@ -731,44 +731,44 @@ public class PreserviaScoringSystem : MonoBehaviour
             default: return "Unknown";
         }
     }
-    
+
     // FIXED: Updated method signature to match what's called in K3_KingAssessment
     public void ManualFoodPreserved(string foodName, float sliderValue, float targetMin, float targetMax, bool correctType, bool isPerfect = false)
     {
         // Base points
         int basePoints = foodPreservationPoints;
-        
+
         // Accuracy bonus (perfect placement)
         int accuracyBonus = isPerfect ? perfectPlacementBonus : 50;
-        
+
         // Correct type bonus
         int typeBonus = correctType ? correctTypeBonus : 0;
-        
+
         // Time bonus (if we tracked completion time)
         int timeBonus = 0;
-        
+
         // Calculate total
         int rawScore = basePoints + accuracyBonus + typeBonus + timeBonus;
-        
+
         // Apply progressive multiplier
         float multiplier = GetCurrentMultiplier();
         int finalScore = Mathf.RoundToInt(rawScore * multiplier);
-        
+
         // Track perfect preservations
         if (isPerfect)
         {
             _perfectPreservations++;
         }
-        
+
         // Update scores
         _foodScore += finalScore;
         _currentScore += finalScore;
         _foodsPreserved++;
-        
+
         // Trigger events
         OnFoodPreserved?.Invoke(finalScore);
         OnScoreChanged?.Invoke(_currentScore);
-        
+
         // Show score popup
         if (enableScorePopups && finalScore > 0)
         {
@@ -776,13 +776,13 @@ public class PreserviaScoringSystem : MonoBehaviour
             string label = isPerfect ? "Perfect!" : "Food";
             ShowScorePopup(finalScore, popupColor, label);
         }
-        
+
         // INCREASE MULTIPLIER for successful preservation
         IncreaseMultiplier();
-        
+
         UpdateScoreDisplay();
     }
-    
+
     // FIXED: Direct scoring method that works even when text is disabled
     public void ScoreFoodPreservationDirectly(string foodName, float sliderValue, float targetMin, float targetMax, bool correctType)
     {
@@ -792,9 +792,9 @@ public class PreserviaScoringSystem : MonoBehaviour
         float distanceFromCenter = Mathf.Abs(sliderValue - targetCenter);
         float rangeWidth = targetMax - targetMin;
         float accuracyPercent = Mathf.Clamp01(1f - (distanceFromCenter / (rangeWidth / 2f))) * 100f;
-        
+
         bool isPerfect = accuracyPercent >= 90f || isInRange;
-        
+
         // Award points using the updated method
         ManualFoodPreserved(foodName, sliderValue, targetMin, targetMax, correctType, isPerfect);
     }
@@ -807,25 +807,25 @@ public class PreserviaScoringSystem : MonoBehaviour
         {
             scoreText.text = $"Score: {_currentScore}";
         }
-        
+
         UpdateMultiplierDisplay();
-        
+
         if (preservativesText != null)
         {
             preservativesText.text = $"Preservatives: {_preservativesCollected}";
         }
-        
+
         if (foodsPreservedText != null)
         {
             foodsPreservedText.text = $"Foods Preserved: {_foodsPreserved}/8";
         }
-        
+
         if (gemsCompletedText != null)
         {
             gemsCompletedText.text = $"GEMs: {_gemsCompleted}/2";
         }
     }
-    
+
     void UpdateMultiplierDisplay()
     {
         if (multiplierText != null)
@@ -835,7 +835,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             multiplierText.color = GetMultiplierColor(multiplier);
         }
     }
-    
+
     Color GetMultiplierColor(float multiplier)
     {
         if (multiplier >= 2.5f) return new Color(1f, 0.5f, 0f); // Orange
@@ -855,13 +855,13 @@ public class PreserviaScoringSystem : MonoBehaviour
         public string label;
         public Vector3? worldPosition;
     }
-    
+
     // Show score popup
     private void ShowScorePopup(int score, Color color, string label = "", Vector3? worldPosition = null)
     {
         if (!enableScorePopups || scorePopupPrefab == null || scorePopupParent == null)
             return;
-        
+
         // Add to queue
         _scorePopupQueue.Enqueue(new ScorePopupData
         {
@@ -871,7 +871,7 @@ public class PreserviaScoringSystem : MonoBehaviour
             worldPosition = worldPosition
         });
     }
-    
+
     // Process popup queue
     private void ProcessPopupQueue()
     {
@@ -880,23 +880,23 @@ public class PreserviaScoringSystem : MonoBehaviour
             StartCoroutine(ProcessPopupCoroutine());
         }
     }
-    
+
     private IEnumerator ProcessPopupCoroutine()
     {
         _isProcessingPopup = true;
-        
+
         while (_scorePopupQueue.Count > 0)
         {
             ScorePopupData popupData = _scorePopupQueue.Dequeue();
             CreateScorePopup(popupData);
-            
+
             // Small delay between popups to prevent overlap
             yield return CoroutineYieldCache.WaitForSeconds(0.05f);
         }
-        
+
         _isProcessingPopup = false;
     }
-    
+
     private void CreateScorePopup(ScorePopupData data)
     {
         try
@@ -904,14 +904,14 @@ public class PreserviaScoringSystem : MonoBehaviour
             // Instantiate the popup
             GameObject popupObj = Instantiate(scorePopupPrefab, scorePopupParent);
             popupObj.name = $"ScorePopup_{data.scoreAmount}";
-            
+
             // Get the TextMeshPro component
             TMP_Text popupText = popupObj.GetComponent<TMP_Text>();
             if (popupText == null)
             {
                 popupText = popupObj.GetComponentInChildren<TMP_Text>();
             }
-            
+
             if (popupText != null)
             {
                 // Format the text
@@ -920,16 +920,16 @@ public class PreserviaScoringSystem : MonoBehaviour
                 {
                     formattedText += $" {data.label}";
                 }
-                
+
                 popupText.text = formattedText;
                 popupText.color = data.color;
-                
+
                 // Keep consistent scale
                 popupText.transform.localScale = Vector3.one;
-                
+
                 // Calculate position
                 Vector3 popupPosition;
-                
+
                 if (data.worldPosition.HasValue)
                 {
                     // Convert world position to screen position
@@ -942,10 +942,10 @@ public class PreserviaScoringSystem : MonoBehaviour
                     if (scoreText != null)
                     {
                         Vector3 scorePos = scoreText.transform.position;
-                        
+
                         // Calculate vertical offset based on active popups
                         float verticalOffset = _activePopups.Count * popupSpacing;
-                        
+
                         popupPosition = new Vector3(
                             scorePos.x + popupSpawnOffset.x,
                             scorePos.y + popupSpawnOffset.y + verticalOffset,
@@ -957,12 +957,12 @@ public class PreserviaScoringSystem : MonoBehaviour
                         popupPosition = new Vector3(Screen.width / 2, Screen.height / 2, 0);
                     }
                 }
-                
+
                 popupObj.transform.position = popupPosition;
-                
+
                 // Add to active popups list
                 _activePopups.Add(popupObj);
-                
+
                 // Start the popup animation
                 StartCoroutine(AnimateScorePopup(popupObj, popupText, popupPosition));
             }
@@ -977,70 +977,70 @@ public class PreserviaScoringSystem : MonoBehaviour
             Debug.LogError($"Error creating score popup: {e.Message}");
         }
     }
-    
+
     private IEnumerator AnimateScorePopup(GameObject popupObj, TMP_Text popupText, Vector3 startPosition)
     {
         float elapsedTime = 0f;
         Color startColor = popupText.color;
-        
+
         while (elapsedTime < popupLifetime)
         {
             elapsedTime += Time.deltaTime;
             float normalizedTime = elapsedTime / popupLifetime;
-            
+
             // Float upward with easing
             float floatAmount = Mathf.Lerp(0, popupFloatSpeed, EaseOutQuad(normalizedTime));
             popupObj.transform.position = startPosition + Vector3.up * floatAmount;
-            
+
             // Fade out near the end
             if (normalizedTime > (1f - (popupFadeDuration / popupLifetime)))
             {
-                float fadeProgress = (normalizedTime - (1f - (popupFadeDuration / popupLifetime))) * 
+                float fadeProgress = (normalizedTime - (1f - (popupFadeDuration / popupLifetime))) *
                     (popupLifetime / popupFadeDuration);
                 Color fadedColor = startColor;
                 fadedColor.a = Mathf.Lerp(startColor.a, 0f, fadeProgress);
                 popupText.color = fadedColor;
             }
-            
+
             yield return null;
         }
-        
+
         // Remove from active popups and destroy
         _activePopups.Remove(popupObj);
         Destroy(popupObj);
     }
-    
+
     private void ShowComboPopup(int comboLevel, int comboBonusPoints)
     {
         if (!enableScorePopups || scorePopupPrefab == null || scorePopupParent == null)
             return;
-        
+
         // Create combo popup with different style
         GameObject comboPopup = Instantiate(scorePopupPrefab, scorePopupParent);
         comboPopup.name = $"ComboPopup_x{comboLevel}";
-        
+
         TMP_Text comboText = comboPopup.GetComponent<TMP_Text>();
         if (comboText == null)
         {
             comboText = comboPopup.GetComponentInChildren<TMP_Text>();
         }
-        
+
         if (comboText != null)
         {
             comboText.text = $"COMBOx{comboLevel}! +{comboBonusPoints}";
             comboText.color = comboScoreColor;
             comboText.enableAutoSizing = false;
             comboText.fontSize = 60f;
-            
+
             // Position near but offset from regular score popup
             Vector3 position = new Vector3(
                 Screen.width / 2 + 50,
                 Screen.height * 0.3f + (_activePopups.Count * popupSpacing * 2),
                 0
             );
-            
+
             comboPopup.transform.position = position;
-            
+
             // Special animation for combo popup
             StartCoroutine(AnimateComboPopup(comboPopup, comboText, position));
         }
@@ -1049,57 +1049,57 @@ public class PreserviaScoringSystem : MonoBehaviour
             Destroy(comboPopup);
         }
     }
-    
+
     private IEnumerator AnimateComboPopup(GameObject popupObj, TMP_Text popupText, Vector3 startPosition)
     {
         float elapsedTime = 0f;
         Color startColor = popupText.color;
         Vector3 startScale = popupText.transform.localScale;
-        
+
         // First, grow animation
         while (elapsedTime < 0.2f)
         {
             elapsedTime += Time.deltaTime;
             float t = elapsedTime / 0.2f;
-            
+
             // Pulse effect
             float pulse = Mathf.Sin(t * Mathf.PI) * 0.3f + 1f;
             popupText.transform.localScale = startScale * pulse;
-            
+
             yield return null;
         }
-        
+
         // Reset scale
         popupText.transform.localScale = startScale;
-        
+
         // Then float upward like regular popup
         elapsedTime = 0f;
-        
+
         while (elapsedTime < popupLifetime)
         {
             elapsedTime += Time.deltaTime;
             float normalizedTime = elapsedTime / popupLifetime;
-            
+
             // Float upward
             float floatAmount = Mathf.Lerp(0, popupFloatSpeed * 1.5f, EaseOutQuad(normalizedTime));
             popupObj.transform.position = startPosition + Vector3.up * floatAmount;
-            
+
             // Fade out near the end
             if (normalizedTime > (1f - (popupFadeDuration / popupLifetime)))
             {
-                float fadeProgress = (normalizedTime - (1f - (popupFadeDuration / popupLifetime))) * 
+                float fadeProgress = (normalizedTime - (1f - (popupFadeDuration / popupLifetime))) *
                     (popupLifetime / popupFadeDuration);
                 Color fadedColor = startColor;
                 fadedColor.a = Mathf.Lerp(startColor.a, 0f, fadeProgress);
                 popupText.color = fadedColor;
             }
-            
+
             yield return null;
         }
-        
+
         Destroy(popupObj);
     }
-    
+
     // Easing function for smooth animation
     private float EaseOutQuad(float t)
     {
@@ -1113,7 +1113,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         AwardPreservativePoints(preservativeID);
     }
-    
+
     public void ManualGEMCompleted(string gemType)
     {
         if (gemType.Contains("Oxidant") && !_oxidantGEMScored)
@@ -1129,24 +1129,24 @@ public class PreserviaScoringSystem : MonoBehaviour
             _gemsCompleted++;
         }
     }
-    
+
     // Backward compatibility method (6 parameters)
     public void ManualFoodPreserved(string foodName, float sliderValue, float targetMin, float targetMax, bool correctType)
     {
         ManualFoodPreserved(foodName, sliderValue, targetMin, targetMax, correctType, false);
     }
-    
+
     public void ManualResetMultiplier()
     {
         ResetMultiplier();
     }
-    
+
     public void ManualGameStarted()
     {
         ResetSessionStats();
         StartMonitoring();
     }
-    
+
     // Getters for other systems
     public int GetCurrentScore() => _currentScore;
     public float GetCurrentMultiplierValue() => GetCurrentMultiplier();
@@ -1155,7 +1155,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     public int GetGemsCompleted() => _gemsCompleted;
     public int GetFoodsPreserved() => _foodsPreserved;
     public int GetPerfectPreservations() => _perfectPreservations;
-    
+
     // Check if specific GEM has been scored
     public bool IsGEMScored(string gemType)
     {
@@ -1163,7 +1163,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         if (gemType.Contains("Microbe")) return _microbeGEMScored;
         return false;
     }
-    
+
     // Check if specific food has been preserved this session
     public bool IsFoodPreservedThisSession(int foodIndex)
     {
@@ -1179,7 +1179,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         _gemScore = 0;
         _foodScore = 0;
         _bonusScore = 0;
-        
+
         _preservativesCollected = 0;
         _gemsCompleted = 0;
         _foodsPreserved = 0;
@@ -1191,35 +1191,35 @@ public class PreserviaScoringSystem : MonoBehaviour
 
         _totalNegativeScore = 0;
         ResetMistakes();
-        
+
         // Reset GEM tracking
         _oxidantGEMScored = false;
         _microbeGEMScored = false;
-        
+
         // Reset food tracking
         foreach (var key in _foodPreservedThisSession.Keys.ToList())
         {
             _foodPreservedThisSession[key] = false;
         }
-        
+
         _preservativeTypeCount.Clear();
         _bonusAwarded = false;
-        
+
         _progressiveMultiplier = startingMultiplier;
-        
+
         UpdateScoreDisplay();
-        
+
 #if UNITY_EDITOR
         Debug.Log("Scoring session reset");
 #endif
     }
-    
+
     public void EndSession()
     {
         StopMonitoring();
         PrintSessionSummary();
     }
-    
+
     void PrintSessionSummary()
     {
 #if UNITY_EDITOR
@@ -1248,7 +1248,7 @@ public class PreserviaScoringSystem : MonoBehaviour
         Debug.Log("==================");
 #endif
     }
-    
+
     string FormatTime(float seconds)
     {
         int minutes = Mathf.FloorToInt(seconds / 60f);
@@ -1263,19 +1263,19 @@ public class PreserviaScoringSystem : MonoBehaviour
     {
         AwardPreservativePoints("0"); // Ascorbic Acid
     }
-    
+
     [ContextMenu("Test GEM Completion")]
     public void DebugTestGEMCompletion()
     {
         ManualGEMCompleted("Anti-Oxidant_GEM");
     }
-    
+
     [ContextMenu("Test Food Preservation")]
     public void DebugTestFoodPreservation()
     {
         ScoreFoodPreservationDirectly("TEST_FOOD", 75f, 70f, 80f, true);
     }
-    
+
     [ContextMenu("Debug Scoring State")]
     public void DebugScoringState()
     {
@@ -1289,17 +1289,17 @@ public class PreserviaScoringSystem : MonoBehaviour
         Debug.Log($"Foods: {_foodsPreserved}/8 preserved");
         Debug.Log($"Perfect Preservations: {_perfectPreservations}");
         Debug.Log($"Combo: x{_comboCount}");
-        
+
         if (_collectionSystem != null)
         {
             Debug.Log($"Collection System Found: {_collectionSystem.gameObject.name}");
         }
-        
+
         if (_gemSystem != null)
         {
             Debug.Log($"GEM System Found: {_gemSystem.gameObject.name}");
         }
-        
+
         if (_assessmentSystem != null)
         {
             Debug.Log($"Assessment System Found: {_assessmentSystem.gameObject.name}");
@@ -1310,7 +1310,7 @@ public class PreserviaScoringSystem : MonoBehaviour
     void OnDestroy()
     {
         StopMonitoring();
-        
+
         // Unsubscribe from events
         if (_collectionSystem != null)
         {
@@ -1336,5 +1336,52 @@ public class PreserviaScoringSystem : MonoBehaviour
             _foodMistakeMade[i] = false;
         }
         _totalNegativeScore = 0;
+    }
+
+    // ============================================================
+    //  SAVE / RESTORE HELPERS
+    // ============================================================
+
+    public bool IsOxidantGEMScored() => _oxidantGEMScored;
+    public bool IsMicrobeGEMScored() => _microbeGEMScored;
+
+    public List<int> GetFoodsScoredIndices()
+    {
+        var result = new List<int>();
+        foreach (var kvp in _foodPreservedThisSession)
+            if (kvp.Value) result.Add(kvp.Key);
+        return result;
+    }
+
+    /// <summary>
+    /// Restores scoring state from saved data without triggering popups or sounds.
+    /// Called by K3_GameStateManager on resume.
+    /// </summary>
+    public void RestoreScore(
+      int score,
+      int preservativesCollected,
+      int gemsCompleted,
+      int foodsPreserved,
+      int perfectPreservations,
+      bool oxidantGEMScored,
+      bool microbeGEMScored,
+      List<int> foodsScoredIndices)
+    {
+        _currentScore = score;
+        _preservativesCollected = preservativesCollected;
+        _gemsCompleted = gemsCompleted;
+        _foodsPreserved = foodsPreserved;
+        _perfectPreservations = perfectPreservations;
+        _oxidantGEMScored = oxidantGEMScored;
+        _microbeGEMScored = microbeGEMScored;
+
+        if (foodsScoredIndices != null)
+        {
+            foreach (int idx in foodsScoredIndices)
+                _foodPreservedThisSession[idx] = true;
+        }
+
+        UpdateScoreDisplay();
+        Debug.Log($"[PreserviaScoringSystem] Score restored: {_currentScore}, Preservatives: {_preservativesCollected}, Foods: {_foodsPreserved}");
     }
 }

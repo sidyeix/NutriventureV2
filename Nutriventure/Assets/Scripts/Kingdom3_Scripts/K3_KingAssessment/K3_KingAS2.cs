@@ -1651,4 +1651,84 @@ public class K3_KingAS2 : MonoBehaviour
             }
         }
     }
+
+    // ============================================================
+    //  SAVE / RESTORE HELPERS
+    // ============================================================
+
+    /// <summary>
+    /// Restores food completion, preservatives used, and preservation values.
+    /// Called by K3_GameStateManager on resume.
+    /// </summary>
+    public void RestoreFoodState(
+      List<int> completedIndices,
+      Dictionary<int, List<PreservativeType>> usedPreservatives,
+      Dictionary<int, Dictionary<PreservativeType, float>> preservationVals)
+    {
+        if (usedPreservatives != null)
+        {
+            foreach (var kvp in usedPreservatives)
+            {
+                if (!foodPreservativesUsed.ContainsKey(kvp.Key))
+                    foodPreservativesUsed[kvp.Key] = new List<PreservativeType>();
+                foodPreservativesUsed[kvp.Key] = new List<PreservativeType>(kvp.Value);
+            }
+        }
+
+        if (preservationVals != null)
+        {
+            foreach (var kvp in preservationVals)
+            {
+                if (!foodPreservationValues.ContainsKey(kvp.Key))
+                    foodPreservationValues[kvp.Key] = new Dictionary<PreservativeType, float>();
+                foodPreservationValues[kvp.Key] = new Dictionary<PreservativeType, float>(kvp.Value);
+
+                // Also restore slider values
+                if (!foodSliderValues.ContainsKey(kvp.Key))
+                    foodSliderValues[kvp.Key] = new Dictionary<PreservativeType, float>();
+                foreach (var presKvp in kvp.Value)
+                    foodSliderValues[kvp.Key][presKvp.Key] = presKvp.Value;
+            }
+        }
+
+        if (completedIndices != null)
+        {
+            foreach (int idx in completedIndices)
+            {
+                if (!foodCompleted.ContainsKey(idx))
+                    foodCompleted[idx] = false;
+                foodCompleted[idx] = true;
+            }
+        }
+
+        UpdateCollectionStatus();
+        Debug.Log($"[K3_KingAS2] Food state restored: {completedIndices?.Count ?? 0} foods completed.");
+    }
+
+    /// <summary>
+    /// Resets all food tracking dictionaries for a fresh game.
+    /// Called by restart / home button flows.
+    /// </summary>
+    public void ResetForNewSession()
+    {
+        foreach (var key in new List<int>(foodCompleted.Keys))
+            foodCompleted[key] = false;
+        foreach (var key in foodPreservativesUsed.Keys)
+            foodPreservativesUsed[key].Clear();
+        foreach (var key in foodPreservationValues.Keys)
+            foodPreservationValues[key].Clear();
+        foreach (var key in foodSliderValues.Keys)
+            foreach (var type in new List<PreservativeType>(foodSliderValues[key].Keys))
+                foodSliderValues[key][type] = 0f;
+        foreach (var key in foodButtonRetryModes.Keys)
+            foreach (var type in new List<PreservativeType>(foodButtonRetryModes[key].Keys))
+                foodButtonRetryModes[key][type] = false;
+
+        hasCollectedAscorbicAcid = false;
+        hasCollectedPotassiumSorbate = false;
+        hasCollectedSodiumBenzoate = false;
+
+        UpdateCollectionStatus();
+        Debug.Log("[K3_KingAS2] Reset for new session.");
+    }
 }

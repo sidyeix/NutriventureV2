@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -34,6 +35,14 @@ public class K3_GameStateManager : MonoBehaviour
   private K3_NPCinstructions1 npcInstructions;
   private Transform _cachedPlayer;
   private CharacterController _cachedPlayerCC;
+
+  // Additional references for full state save/restore
+  private K3_Phase1Functions gemSystem;
+  private K3_KingAssessment kingAssessment;
+  private K3_KingAS2 preservationSystem;
+  private PreservativesInformationManager preservativeInfoManager;
+  private K3_CollectPreservatives collectPreservatives;
+  private K3_PreservativeSpawner preservativeSpawner;
 
   // ============================================================
   //  LIFECYCLE
@@ -115,6 +124,13 @@ public class K3_GameStateManager : MonoBehaviour
     inGameSettings = FindObjectOfType<K3_InGameSettingsButton>();
     npcInstructions = FindObjectOfType<K3_NPCinstructions1>();
 
+    gemSystem = FindObjectOfType<K3_Phase1Functions>();
+    kingAssessment = FindObjectOfType<K3_KingAssessment>();
+    preservationSystem = FindObjectOfType<K3_KingAS2>();
+    preservativeInfoManager = FindObjectOfType<PreservativesInformationManager>();
+    collectPreservatives = FindObjectOfType<K3_CollectPreservatives>();
+    preservativeSpawner = FindObjectOfType<K3_PreservativeSpawner>();
+
     // Cache player reference to avoid repeated Find calls
     if (_cachedPlayer == null)
     {
@@ -162,6 +178,63 @@ public class K3_GameStateManager : MonoBehaviour
     // Game mode state
     saveData.isInGameMode = saveData.isGameActive;
 
+    // --- Preservative collection ---
+    if (preservativeInfoManager != null)
+    {
+      saveData.collectedPreservativeIDs = preservativeInfoManager.GetCollectedPreservativeIDs();
+    }
+
+    // --- GEM stone activation ---
+    if (gemSystem != null)
+    {
+      saveData.oxidantGEMActivated = gemSystem.IsOxidantActivated();
+      saveData.microbeGEMActivated = gemSystem.IsMicrobeActivated();
+      saveData.newRespawnPointSet = gemSystem.IsNewRespawnPointSet();
+    }
+
+    // --- Food preservation state ---
+    if (kingAssessment != null)
+    {
+      saveData.completedFoodIndices = kingAssessment.GetCompletedFoodIndices();
+
+      var usedPreservatives = kingAssessment.GetAllFoodPreservativesUsed();
+      saveData.foodPreservativesUsed = new List<FoodPreservativeEntry>();
+      foreach (var kvp in usedPreservatives)
+      {
+        var entry = new FoodPreservativeEntry();
+        entry.foodIndex = kvp.Key;
+        entry.preservativeTypes = new List<int>();
+        foreach (var pt in kvp.Value) entry.preservativeTypes.Add((int)pt);
+        saveData.foodPreservativesUsed.Add(entry);
+      }
+
+      var preservationVals = kingAssessment.GetAllFoodPreservationValues();
+      saveData.foodPreservationValues = new List<FoodPreservationValueEntry>();
+      foreach (var foodKvp in preservationVals)
+      {
+        foreach (var presKvp in foodKvp.Value)
+        {
+          var entry = new FoodPreservationValueEntry();
+          entry.foodIndex = foodKvp.Key;
+          entry.preservativeType = (int)presKvp.Key;
+          entry.value = presKvp.Value;
+          saveData.foodPreservationValues.Add(entry);
+        }
+      }
+    }
+
+    // --- Scoring breakdown ---
+    if (scoringSystem != null)
+    {
+      saveData.preservativesCollectedCount = scoringSystem.GetPreservativesCollected();
+      saveData.gemsCompletedCount = scoringSystem.GetGemsCompleted();
+      saveData.foodsPreservedCount = scoringSystem.GetFoodsPreserved();
+      saveData.perfectPreservationsCount = scoringSystem.GetPerfectPreservations();
+      saveData.oxidantGEMScored = scoringSystem.IsOxidantGEMScored();
+      saveData.microbeGEMScored = scoringSystem.IsMicrobeGEMScored();
+      saveData.foodsScoredIndices = scoringSystem.GetFoodsScoredIndices();
+    }
+
     saveData.hasSavedGameState = true;
     currentGameState = saveData;
     SaveToFile(saveData);
@@ -173,6 +246,8 @@ public class K3_GameStateManager : MonoBehaviour
             Debug.Log($"Scene: {saveData.currentSceneName}, Active: {saveData.isGameActive}");
             Debug.Log($"Position: {saveData.playerPosition}, Timer: {saveData.gameTimer}s");
             Debug.Log($"Health: {saveData.currentHealth}/{saveData.maxHealth}, Score: {saveData.currentScore}");
+            Debug.Log($"Preservatives: {saveData.collectedPreservativeIDs.Count}, Foods: {saveData.completedFoodIndices.Count}");
+            Debug.Log($"GEMs: Oxidant={saveData.oxidantGEMActivated}, Microbe={saveData.microbeGEMActivated}");
         }
 #endif
   }
@@ -277,6 +352,108 @@ public class K3_GameStateManager : MonoBehaviour
       // Mark NPC as already triggered so the intro cutscene is skipped
       npcInstructions.MarkAsTriggered();
       npcInstructions.HandlePostCutscene2DynamicUI();
+    }
+
+    // 5. Restore collected preservatives
+    if (preservativeInfoManager != null && currentGameState.collectedPreservativeIDs != null)
+    {
+      preservativeInfoManager.RestoreCollectedPreservatives(currentGameState.collectedPreservativeIDs);
+    }
+
+    // 6. Restore GEM stone activation (visual only – no sounds)
+    if (gemSystem != null)
+    {
+      gemSystem.RestoreGEMState(
+        currentGameState.oxidantGEMActivated,
+        currentGameState.microbeGEMActivated,
+        currentGameState.newRespawnPointSet
+      );
+    }
+
+    // 7. Restore food preservation state
+    if (kingAssessment != null)
+    {
+      // Rebuild dictionaries from saved data
+      var usedPreservatives = new Dictionary<int, List<PreservativeType>>();
+      if (currentGameState.foodPreservativesUsed != null)
+      {
+        foreach (var entry in currentGameState.foodPreservativesUsed)
+        {
+          var list = new List<PreservativeType>();
+          foreach (int pt in entry.preservativeTypes) list.Add((PreservativeType)pt);
+          usedPreservatives[entry.foodIndex] = list;
+        }
+      }
+
+      var preservationVals = new Dictionary<int, Dictionary<PreservativeType, float>>();
+      if (currentGameState.foodPreservationValues != null)
+      {
+        foreach (var entry in currentGameState.foodPreservationValues)
+        {
+          if (!preservationVals.ContainsKey(entry.foodIndex))
+            preservationVals[entry.foodIndex] = new Dictionary<PreservativeType, float>();
+          preservationVals[entry.foodIndex][(PreservativeType)entry.preservativeType] = entry.value;
+        }
+      }
+
+      kingAssessment.RestoreFoodState(
+        currentGameState.completedFoodIndices,
+        usedPreservatives,
+        preservationVals
+      );
+    }
+
+    // 8. Restore preservation system (K3_KingAS2) food tracking
+    if (preservationSystem != null)
+    {
+      var usedPreservatives = new Dictionary<int, List<PreservativeType>>();
+      if (currentGameState.foodPreservativesUsed != null)
+      {
+        foreach (var entry in currentGameState.foodPreservativesUsed)
+        {
+          var list = new List<PreservativeType>();
+          foreach (int pt in entry.preservativeTypes) list.Add((PreservativeType)pt);
+          usedPreservatives[entry.foodIndex] = list;
+        }
+      }
+
+      var preservationVals = new Dictionary<int, Dictionary<PreservativeType, float>>();
+      if (currentGameState.foodPreservationValues != null)
+      {
+        foreach (var entry in currentGameState.foodPreservationValues)
+        {
+          if (!preservationVals.ContainsKey(entry.foodIndex))
+            preservationVals[entry.foodIndex] = new Dictionary<PreservativeType, float>();
+          preservationVals[entry.foodIndex][(PreservativeType)entry.preservativeType] = entry.value;
+        }
+      }
+
+      preservationSystem.RestoreFoodState(
+        currentGameState.completedFoodIndices,
+        usedPreservatives,
+        preservationVals
+      );
+    }
+
+    // 9. Restore scoring state
+    if (scoringSystem != null)
+    {
+      scoringSystem.RestoreScore(
+        currentGameState.currentScore,
+        currentGameState.preservativesCollectedCount,
+        currentGameState.gemsCompletedCount,
+        currentGameState.foodsPreservedCount,
+        currentGameState.perfectPreservationsCount,
+        currentGameState.oxidantGEMScored,
+        currentGameState.microbeGEMScored,
+        currentGameState.foodsScoredIndices
+      );
+    }
+
+    // 10. Prevent spawner from respawning already-collected preservatives
+    if (preservativeSpawner != null && currentGameState.collectedPreservativeIDs != null)
+    {
+      preservativeSpawner.RemoveCollectedPreservatives(currentGameState.collectedPreservativeIDs);
     }
 
 #if UNITY_EDITOR
@@ -470,4 +647,43 @@ public class K3_GameStateSaveData
   public int currentHealth;
   public int maxHealth;
   public int currentScore;
+
+  // --- Preservative collection ---
+  public List<string> collectedPreservativeIDs = new List<string>();
+
+  // --- GEM stone activation ---
+  public bool oxidantGEMActivated;
+  public bool microbeGEMActivated;
+  public bool newRespawnPointSet;
+
+  // --- Food preservation ---
+  public List<int> completedFoodIndices = new List<int>();
+  public List<FoodPreservativeEntry> foodPreservativesUsed = new List<FoodPreservativeEntry>();
+  public List<FoodPreservationValueEntry> foodPreservationValues = new List<FoodPreservationValueEntry>();
+
+  // --- Scoring breakdown ---
+  public int preservativesCollectedCount;
+  public int gemsCompletedCount;
+  public int foodsPreservedCount;
+  public int perfectPreservationsCount;
+  public bool oxidantGEMScored;
+  public bool microbeGEMScored;
+  public List<int> foodsScoredIndices = new List<int>();
+}
+
+/// <summary>Helper for serializing which preservatives were applied to each food.</summary>
+[Serializable]
+public class FoodPreservativeEntry
+{
+  public int foodIndex;
+  public List<int> preservativeTypes = new List<int>(); // cast from PreservativeType
+}
+
+/// <summary>Helper for serializing slider values per food per preservative.</summary>
+[Serializable]
+public class FoodPreservationValueEntry
+{
+  public int foodIndex;
+  public int preservativeType; // cast from PreservativeType
+  public float value;
 }
