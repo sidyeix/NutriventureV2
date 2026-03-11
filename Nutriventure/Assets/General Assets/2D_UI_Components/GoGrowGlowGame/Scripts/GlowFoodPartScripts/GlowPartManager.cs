@@ -1706,6 +1706,7 @@ public class GlowPartManager : MonoBehaviour
     }
 
     public bool IsGlowPartActive() => isGlowPartActive;
+    public bool IsTrackerVisible() => isTrackerVisible;
     public int GetLitTowersCount() => litTowersCount;
     public int GetTotalTowers() => glowTowers.Count;
     public float GetTransferRate() => transferRate;

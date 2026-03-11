@@ -818,6 +818,7 @@ public class GrowAssessmentManager : MonoBehaviour
     }
 
     public bool IsAssessmentActive() => isAssessmentActive;
+    public bool IsTrackerVisible() => isTrackerVisible;
     public int GetCorrectAnswersCount() => correctAnswersCount;
     public int GetTotalQuestions() => totalQuestions;
     public float GetCorrectEnergyGain() => correctAnswerEnergyGain;

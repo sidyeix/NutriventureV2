@@ -63,6 +63,13 @@ public class TimelineSkipButton : MonoBehaviour
         // Play skip sound if available
         PlaySkipSound();
 
+        // Tell the pause manager to ignore every pause signal whose
+        // timeline.time is at or before the skip destination.
+        if (TimelinePauseManager.Instance != null)
+        {
+            TimelinePauseManager.Instance.SetIgnoreSignalsUpToTime(skipToTime);
+        }
+
         // Skip to the specified time
         timelineDirector.time = skipToTime;
 
@@ -79,9 +86,8 @@ public class TimelineSkipButton : MonoBehaviour
 
         Debug.Log($"Timeline skipped to {skipToTime} seconds");
 
-        // If a pause signal sits exactly at the skip time, the timeline gets paused immediately.
-        // Force-resume after one frame so the skip actually plays, while leaving all
-        // future pause signals (after the skip point) fully functional.
+        // Safety net: force-resume after a couple of frames in case
+        // a crossed signal still managed to pause the director.
         if (playAfterSkip)
         {
             StartCoroutine(ForceResumeAfterSkip());
@@ -96,18 +102,22 @@ public class TimelineSkipButton : MonoBehaviour
 
     private IEnumerator ForceResumeAfterSkip()
     {
-        // Wait one frame for signals at the skip point to fire
+        // Wait a few frames for any deferred signal processing to finish
+        yield return null;
+        yield return null;
         yield return null;
 
-        // If a signal at the skip point paused the timeline, resume it
+        // If the director is somehow not playing, force it
         if (timelineDirector != null && timelineDirector.state != PlayState.Playing)
         {
-            timelineDirector.Play();
+            // Force-clear any pause state the manager might hold
             if (TimelinePauseManager.Instance != null && TimelinePauseManager.Instance.IsTimelinePaused())
             {
                 TimelinePauseManager.Instance.ResumeTimeline();
             }
-            Debug.Log("Timeline force-resumed after skip (signal at skip point was overridden)");
+
+            timelineDirector.Play();
+            Debug.Log("Timeline force-resumed after skip (safety net triggered)");
         }
     }
 

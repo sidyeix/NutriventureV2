@@ -242,6 +242,7 @@ public class GameStateManager : MonoBehaviour
         saveData.litTorchesCount = torchManager.GetLitTorchesCount();
         saveData.litTorchIDs = torchManager.GetLitTorchIDs();
         saveData.torchMinigameCompleted = torchManager.HasCompleted();
+        saveData.isTorchTrackerVisible = torchManager.IsTrackerVisible();
     }
 
     private void SaveGrowProgress(GameStateSaveData saveData)
@@ -250,6 +251,8 @@ public class GameStateManager : MonoBehaviour
         saveData.growCorrectAnswers = growManager.GetCorrectAnswersCount();
         saveData.growAssessmentCompleted = growManager.HasCompletedAllQuestions();
         saveData.isWaitingForEndTrigger = growManager.IsWaitingForEndTrigger();
+        saveData.isGrowAssessmentActive = growManager.IsAssessmentActive();
+        saveData.isGrowTrackerVisible = growManager.IsTrackerVisible();
     }
 
     private void SaveGlowProgress(GameStateSaveData saveData)
@@ -258,6 +261,8 @@ public class GameStateManager : MonoBehaviour
         saveData.litTowersCount = glowManager.GetLitTowersCount();
         saveData.litTowerNames = glowManager.GetLitTowerNames();
         saveData.glowPartCompleted = (glowManager.GetLitTowersCount() >= glowManager.GetTotalTowers());
+        saveData.isGlowPartActive = glowManager.IsGlowPartActive();
+        saveData.isGlowTrackerVisible = glowManager.IsTrackerVisible();
 
         // Save partial tower energy for towers that are mid-transfer
         glowManager.GetTowerEnergyLevels(out List<string> energyNames, out List<float> energyValues);
@@ -472,6 +477,13 @@ public class GameStateManager : MonoBehaviour
             torchManager.RestoreTorchStates(currentGameState.litTorchIDs);
             if (enableDebugLogs) Debug.Log($"Torches restored: {currentGameState.litTorchIDs.Count} lit");
         }
+
+        // Restore tracker visibility if it was showing (remaining torches to light)
+        if (currentGameState.isTorchTrackerVisible && !torchManager.HasCompleted())
+        {
+            torchManager.ShowTrackerPanel();
+            if (enableDebugLogs) Debug.Log("Torch tracker panel restored to visible");
+        }
     }
 
     private void RestoreGrowProgress()
@@ -486,6 +498,13 @@ public class GameStateManager : MonoBehaviour
                 currentGameState.isWaitingForEndTrigger
             );
             if (enableDebugLogs) Debug.Log($"Grow assessment restored: {currentGameState.growCorrectAnswers} correct");
+        }
+
+        // Restore tracker visibility if it was showing (remaining objects to smash)
+        if (currentGameState.isGrowTrackerVisible && !growManager.HasCompletedAllQuestions())
+        {
+            growManager.ShowTrackerPanel();
+            if (enableDebugLogs) Debug.Log("Grow assessment tracker panel restored to visible");
         }
     }
 
@@ -504,6 +523,13 @@ public class GameStateManager : MonoBehaviour
         {
             glowManager.RestoreTowerEnergyLevels(currentGameState.towerEnergyNames, currentGameState.towerEnergyValues);
             if (enableDebugLogs) Debug.Log($"Partial tower energy restored for {currentGameState.towerEnergyNames.Count} towers");
+        }
+
+        // Restore tracker visibility if it was showing (remaining towers to fill)
+        if (currentGameState.isGlowTrackerVisible && !currentGameState.glowPartCompleted)
+        {
+            glowManager.ShowTrackerPanel();
+            if (enableDebugLogs) Debug.Log("Glow tower tracker panel restored to visible");
         }
     }
 

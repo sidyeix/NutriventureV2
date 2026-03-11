@@ -58,11 +58,18 @@ public class GameStateSaveData
     public int growCorrectAnswers;
     public bool growAssessmentCompleted;
     public bool isWaitingForEndTrigger;
+    public bool isGrowAssessmentActive;
+    public bool isGrowTrackerVisible;
+
+    // Torch Minigame active state
+    public bool isTorchTrackerVisible;
 
     // Glow Part progress
     public int litTowersCount;
     public List<string> litTowerNames = new List<string>();
     public bool glowPartCompleted;
+    public bool isGlowPartActive;
+    public bool isGlowTrackerVisible;
 
     // Per-tower energy levels (parallel lists since JsonUtility doesn't support Dictionary)
     public List<string> towerEnergyNames = new List<string>();
