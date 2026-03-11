@@ -89,6 +89,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("UI Elements")]
     public List<GameObject> uiElementsToDisable = new List<GameObject>();
+    public List<GameObject> uiElementsToEnable = new List<GameObject>();
     public TMP_Text timerText;
     public TMP_Text scoreText;
     public TMP_Text livesText;
@@ -985,6 +986,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(false);
 
+        foreach (GameObject uiElement in uiElementsToEnable)
+            if (uiElement != null) uiElement.SetActive(true);
+
         if (startButton != null) startButton.gameObject.SetActive(false);
 
         // Reset food spawner before starting
@@ -1074,6 +1078,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
+
+        foreach (GameObject uiElement in uiElementsToEnable)
+            if (uiElement != null) uiElement.SetActive(false);
 
         if (startButton != null)
             startButton.gameObject.SetActive(true);
@@ -2224,6 +2231,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Disable lobby UI elements
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(false);
+
+        // Enable gameplay UI elements
+        foreach (GameObject uiElement in uiElementsToEnable)
+            if (uiElement != null) uiElement.SetActive(true);
 
         // --- Slider / UI (must be set AFTER canvas is active for proper layout rebuild) ---
         if (energySlider != null)

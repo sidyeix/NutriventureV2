@@ -13,6 +13,11 @@ public class TimelinePauseManager : MonoBehaviour
     // State
     private bool isPaused = false;
 
+    // Skip protection: any PauseTimeline call while timeline.time <= this value
+    // is silently ignored.  Set by TimelineSkipButton, auto-cleared in Update()
+    // once the director advances past the threshold.
+    private double ignoreSignalsUpToTime = -1;
+
     void Awake()
     {
         if (Instance == null)
@@ -27,11 +32,15 @@ public class TimelinePauseManager : MonoBehaviour
 
     void Update()
     {
-        // Mobile touch input option (if you want touch anywhere to continue)
-        // if (isPaused && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        // {
-        //     ResumeTimeline();
-        // }
+        // Auto-clear the ignore threshold once the timeline has moved past it.
+        // The 0.05 buffer accounts for floating-point jitter.
+        if (ignoreSignalsUpToTime >= 0 && timeline != null &&
+            timeline.state == PlayState.Playing &&
+            timeline.time > ignoreSignalsUpToTime + 0.05)
+        {
+            Debug.Log($"Skip protection cleared — timeline advanced to {timeline.time:F2} (threshold was {ignoreSignalsUpToTime:F2})");
+            ignoreSignalsUpToTime = -1;
+        }
     }
 
     // **CALL THIS FROM TIMELINE SIGNAL** 
@@ -43,10 +52,47 @@ public class TimelinePauseManager : MonoBehaviour
             return;
         }
 
+        // --- Skip protection ---
+        // If we recently skipped, ignore any pause signal that fires while the
+        // timeline hasn't yet advanced past the skip destination.
+        if (ignoreSignalsUpToTime >= 0)
+        {
+            if (timeline.time <= ignoreSignalsUpToTime + 0.05)
+            {
+                Debug.Log($"PauseTimeline IGNORED (skip protection active) at: {timeline.time:F2}  threshold: {ignoreSignalsUpToTime:F2}");
+                return;
+            }
+            else
+            {
+                // Timeline has moved past the skip point — clear protection
+                // and fall through to pause normally.
+                ignoreSignalsUpToTime = -1;
+            }
+        }
+
         timeline.Pause();
         isPaused = true;
 
         Debug.Log("Timeline paused at: " + timeline.time);
+    }
+
+    /// <summary>
+    /// Called by TimelineSkipButton.  Any PauseTimeline() call whose
+    /// timeline.time &lt;= <paramref name="time"/> + tiny buffer will be ignored.
+    /// Automatically cleared in Update() once the director advances past it.
+    /// </summary>
+    public void SetIgnoreSignalsUpToTime(double time)
+    {
+        ignoreSignalsUpToTime = time;
+        Debug.Log($"Skip protection SET — ignore pause signals up to {time:F2}s");
+    }
+
+    /// <summary>
+    /// Force-clear the skip protection (safety net).
+    /// </summary>
+    public void ClearSkipProtection()
+    {
+        ignoreSignalsUpToTime = -1;
     }
 
     // **CALL THIS TO CONTINUE (from button or trigger)**

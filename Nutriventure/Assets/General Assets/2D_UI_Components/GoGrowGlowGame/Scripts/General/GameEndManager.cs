@@ -542,6 +542,11 @@ public class GameEndManager : MonoBehaviour
 
         ResetAnimatorBeforeTeleport();
 
+        // Disable CharacterController before moving — otherwise Unity's CC
+        // prevents the position change and the player snaps back / drifts.
+        CharacterController cc = playerController.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+
         if (playerArmature != null && playerController.transform != null)
         {
             if (playerArmature.parent != playerController.transform)
@@ -560,6 +565,9 @@ public class GameEndManager : MonoBehaviour
         {
             characterAnimator.Update(0f);
         }
+
+        // Re-enable CharacterController after position is set
+        if (cc != null) cc.enabled = true;
     }
 
     private void TeleportPlayerToResultPoint()
