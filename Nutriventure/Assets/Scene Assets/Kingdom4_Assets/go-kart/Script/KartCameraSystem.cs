@@ -1,63 +1,60 @@
 using UnityEngine;
 using Cinemachine;
+using System.Collections;
 
 public class KartCameraSystem : MonoBehaviour
 {
     [Header("Camera References")]
     public CinemachineVirtualCamera kartFollowCamera;
-    
+
     [Header("Kart Reference")]
     public KartController kartController;
-    
+
     private CinemachineVirtualCamera playerFollowCamera;
     private GameObject mainCamera;
+    private bool isFindingCameras = false;
 
     private void Start()
     {
         // Find main camera by tag
         FindMainCamera();
-        
+
         // Find player follow camera automatically
         FindPlayerFollowCamera();
-        
+
         // Ensure kart camera is disabled initially
         if (kartFollowCamera != null)
             kartFollowCamera.gameObject.SetActive(false);
-            
+
         // Ensure player camera is enabled initially
         if (playerFollowCamera != null)
             playerFollowCamera.gameObject.SetActive(true);
     }
-    
+
     private void Update()
     {
-        // Try to find cameras if they're null
-        if (playerFollowCamera == null)
+        // Retry finding cameras via coroutine instead of per-frame Find calls
+        if ((playerFollowCamera == null || mainCamera == null) && !isFindingCameras)
         {
-            FindPlayerFollowCamera();
-        }
-        
-        if (mainCamera == null)
-        {
-            FindMainCamera();
+            StartCoroutine(RetryFindCameras());
         }
 
         if (kartController == null) return;
-        
+
         bool isDriving = kartController.enabled;
-        
+
         // Switch cameras based on driving state
         if (kartFollowCamera != null && kartFollowCamera.gameObject.activeSelf != isDriving)
         {
             kartFollowCamera.gameObject.SetActive(isDriving);
         }
-        
+
         if (playerFollowCamera != null && playerFollowCamera.gameObject.activeSelf == isDriving)
         {
             playerFollowCamera.gameObject.SetActive(!isDriving);
         }
     }
-    
+
     private void FindMainCamera()
     {
         mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -70,24 +67,24 @@ public class KartCameraSystem : MonoBehaviour
             Debug.LogWarning("⚠️ No GameObject with 'MainCamera' tag found!");
         }
     }
-    
+
     private void FindPlayerFollowCamera()
     {
         // Use the new FindAnyObjectByType method
         CinemachineVirtualCamera cam = FindAnyObjectByType<CinemachineVirtualCamera>();
-        
+
         if (cam != null && cam != kartFollowCamera)
         {
             playerFollowCamera = cam;
             Debug.Log("✅ Player follow camera found automatically!");
             return;
         }
-        
+
         // Method 2: If still not found, try to find by common naming patterns
-        GameObject playerCamObj = GameObject.Find("PlayerFollowCamera") 
+        GameObject playerCamObj = GameObject.Find("PlayerFollowCamera")
                                 ?? GameObject.Find("ThirdPersonCamera")
                                 ?? GameObject.Find("Player Camera");
-        
+
         if (playerCamObj != null)
         {
             playerFollowCamera = playerCamObj.GetComponent<CinemachineVirtualCamera>();
@@ -97,10 +94,23 @@ public class KartCameraSystem : MonoBehaviour
                 return;
             }
         }
-        
+
         Debug.LogWarning("⚠️ Could not automatically find player follow camera!");
     }
-    
+
+    private IEnumerator RetryFindCameras()
+    {
+        isFindingCameras = true;
+        yield return new WaitForSeconds(1f);
+
+        if (playerFollowCamera == null)
+            FindPlayerFollowCamera();
+        if (mainCamera == null)
+            FindMainCamera();
+
+        isFindingCameras = false;
+    }
+
     public void SetKartCameraTarget(Transform target)
     {
         if (kartFollowCamera != null)
@@ -109,7 +119,7 @@ public class KartCameraSystem : MonoBehaviour
             kartFollowCamera.LookAt = target;
         }
     }
-    
+
     // Optional: Manual assignment if auto-find fails
     public void SetPlayerFollowCamera(CinemachineVirtualCamera playerCam)
     {

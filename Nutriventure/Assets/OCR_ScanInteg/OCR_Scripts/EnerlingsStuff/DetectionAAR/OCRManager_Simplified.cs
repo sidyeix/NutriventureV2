@@ -838,6 +838,24 @@ public class OCRManager_Simplified : MonoBehaviour
 
     void ProcessSuccessfulScan(IngredientData ingredientData)
     {
+        // CHECK: Player must have at least one unlocked enerling to proceed to battle
+        bool hasUnlockedEnerling = false;
+        if (PersistentDataManager.Instance != null)
+        {
+            hasUnlockedEnerling = PersistentDataManager.Instance.GetTotalUnlockedCount() > 0;
+        }
+        else if (ingredientDatabase != null)
+        {
+            hasUnlockedEnerling = ingredientDatabase.GetUnlockedIngredients().Count > 0;
+        }
+
+        if (!hasUnlockedEnerling)
+        {
+            Debug.Log("[Scan] Player has no unlocked enerlings — cannot proceed to battle.");
+            ShowNoUnlockedEnerlingWarning();
+            return;
+        }
+
         // Deduct energy on every successful scan (single deduction point)
         if (GameDataManager.Instance != null)
         {
@@ -1072,6 +1090,22 @@ public class OCRManager_Simplified : MonoBehaviour
             noIngredientText.gameObject.SetActive(true);
         }
         ShowWarning("No ingredient detected — 1 energy was used.");
+
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(true);
+
+        ResetProcessingState();
+    }
+
+    void ShowNoUnlockedEnerlingWarning()
+    {
+        // Scan was valid, but player has no unlocked enerlings to fight with — no energy deducted
+        if (noIngredientText != null)
+        {
+            noIngredientText.text = "You don't have any Enerlings yet!\nCatch your first Enerling through the story before you can battle.";
+            noIngredientText.gameObject.SetActive(true);
+        }
+        ShowWarning("No Enerlings unlocked — scan was not used.");
 
         if (retryButton != null)
             retryButton.gameObject.SetActive(true);

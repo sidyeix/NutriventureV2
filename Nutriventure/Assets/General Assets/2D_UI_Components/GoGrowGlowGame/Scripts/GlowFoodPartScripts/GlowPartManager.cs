@@ -715,6 +715,14 @@ public class GlowPartManager : MonoBehaviour
         UpdateLitTowersCount();
         isGlowPartActive = true;
 
+        // Reset all proximity detectors so they re-fire enter events
+        // This handles the case where the player is already near a tower when glow starts
+        foreach (TowerProximityDetector detector in proximityDetectors)
+        {
+            if (detector != null)
+                detector.ForceRecheck();
+        }
+
         EnableObjectsOnGlowPartStart();
 
         if (GoGrowGlowGameManager.Instance != null)
@@ -1702,6 +1710,61 @@ public class GlowPartManager : MonoBehaviour
 
 #if UNITY_EDITOR
         Debug.Log("Glow Part Manager completely reset for new game");
+#endif
+    }
+
+    /// <summary>
+    /// Resumes the glow part after a save/restore without resetting tower energy.
+    /// Unlike StartGlowPart(), this does NOT zero out tower energy.
+    /// </summary>
+    public void ResumeGlowPart()
+    {
+        if (isGlowPartActive) return;
+
+#if UNITY_EDITOR
+        Debug.Log("=== RESUMING GLOW PART (from saved state) ===");
+#endif
+
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+        }
+
+        if (glowCanvas != null)
+            glowCanvas.SetActive(true);
+
+        ShowTrackerPanel();
+
+        // Activate non-fully-lit towers (do NOT reset energy)
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && !tower.IsFullyLit())
+            {
+                tower.ActivateTower();
+            }
+        }
+
+        UpdateLitTowersCount();
+        isGlowPartActive = true;
+
+        // Re-setup proximity detectors so events are wired
+        SetupProximityDetectors();
+
+        // Force recheck so transfer button appears if player is already near a tower
+        foreach (TowerProximityDetector detector in proximityDetectors)
+        {
+            if (detector != null)
+                detector.ForceRecheck();
+        }
+
+        EnableObjectsOnGlowPartStart();
+
+        if (GoGrowGlowGameManager.Instance != null)
+            GoGrowGlowGameManager.Instance.StartOneLifeCheck();
+
+#if UNITY_EDITOR
+        Debug.Log($"Glow part resumed: {litTowersCount}/{glowTowers.Count} towers lit");
 #endif
     }
 

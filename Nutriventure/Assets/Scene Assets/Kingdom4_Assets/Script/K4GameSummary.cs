@@ -37,7 +37,7 @@ public class K4GameSummary : MonoBehaviour
     public GameObject failGameObject1;
     public GameObject failGameObject2;
     public GameObject failGameObject3;
-    
+
     [Header("Buttons")]
     public Button confirmButton;
     public Button restartButton; // Add a dedicated restart button if needed
@@ -82,7 +82,7 @@ public class K4GameSummary : MonoBehaviour
 
     [Header("Timeline Settings")]
     public GameObject timelineController; // Reference to timeline controller GameObject
-public string timelineObjectName = "K4_KeyTimeline";
+    public string timelineObjectName = "K4_KeyTimeline";
 
     [Header("Complete Restart Settings")]
     public bool completeRestartOnConfirm = true; // NEW: Toggle for complete restart
@@ -109,6 +109,7 @@ public string timelineObjectName = "K4_KeyTimeline";
     private bool isSummaryActive = false;
     private float originalTimeScale;
     private int calculatedCoinsEarned = 0;
+    private int calculatedExpEarned = 0;
     private bool coinsAddedToDatabase = false;
     private int healthBeforeDeath = 0;
     private bool isProcessingConfirm = false;
@@ -234,9 +235,9 @@ public string timelineObjectName = "K4_KeyTimeline";
 
     private void CheckAndDisableTimelineOnStart()
     {
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+        bool keyAlreadyCollected = GameDataManager.Instance != null &&
                                 GameDataManager.Instance.CurrentGameData.HasSugariaKey();
-        
+
         if (keyAlreadyCollected && !string.IsNullOrEmpty(timelineObjectName))
         {
             DisableTimelineIfExists();
@@ -251,7 +252,7 @@ public string timelineObjectName = "K4_KeyTimeline";
     private void CheckGameConditions()
     {
         if (summaryLocked) return;
-        
+
         // Check for lose condition (health reaches 0) - 0 STARS
         if (!isGameOver && !isSummaryActive && playerHealth != null && playerHealth.currentHealth <= 0)
         {
@@ -270,17 +271,17 @@ public string timelineObjectName = "K4_KeyTimeline";
         if (playerHealth == null || isSummaryActive || isGameOver) return;
 
         int currentHealth = playerHealth.currentHealth;
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+        bool keyAlreadyCollected = GameDataManager.Instance != null &&
                                 GameDataManager.Instance.CurrentGameData.HasSugariaKey();
-        
+
         // NEW: Also check if key was just collected in this session
         if (!keyAlreadyCollected && collectKeyScript != null)
         {
             keyAlreadyCollected = collectKeyScript.HasTriggeredSummary();
         }
-        
+
         Debug.Log($"Health: {currentHealth}, Key Collected: {keyAlreadyCollected}");
-        
+
         // Heart = 0: Lose Summary (only at 0 hearts) - 0 STARS
         if (currentHealth <= 0)
         {
@@ -291,32 +292,32 @@ public string timelineObjectName = "K4_KeyTimeline";
             return;
         }
         // Heart 1–2: Player continues playing, no summary, no timeline
-if (currentHealth > 0 && currentHealth < 3)
-{
-    return;
-}// Heart ≥ 3: Allow timeline for key collection
-if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
-{
-    timelineTriggered = true;
-    TryActivateTimeline();
-}
+        if (currentHealth > 0 && currentHealth < 3)
+        {
+            return;
+        }// Heart ≥ 3: Allow timeline for key collection
+        if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
+        {
+            timelineTriggered = true;
+            TryActivateTimeline();
+        }
 
 
 
     }
-    
+
 
     // Add this new method to disable timeline:
     private void DisableTimelineIfExists()
     {
         if (string.IsNullOrEmpty(timelineObjectName)) return;
-        
+
         GameObject timelineObj = GameObject.Find(timelineObjectName);
         if (timelineObj != null && timelineObj.activeInHierarchy)
         {
             timelineObj.SetActive(false);
             Debug.Log($"Disabled timeline (key already collected): {timelineObjectName}");
-            
+
             // Also disable K2_QueenACS2 component
             K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
             if (queenCutscene != null)
@@ -330,18 +331,18 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private void TryActivateTimeline()
     {
         if (string.IsNullOrEmpty(timelineObjectName)) return;
-        
+
         // Check if key is already collected
-        bool keyAlreadyCollected = GameDataManager.Instance != null && 
+        bool keyAlreadyCollected = GameDataManager.Instance != null &&
                                 GameDataManager.Instance.CurrentGameData.HasSugariaKey();
-        
+
         if (keyAlreadyCollected)
         {
             Debug.Log("Key already collected. Timeline will not play.");
             DisableTimelineIfExists();
             return;
         }
-        
+
         GameObject timelineObj = GameObject.Find(timelineObjectName);
         if (timelineObj != null)
         {
@@ -350,7 +351,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             {
                 Debug.Log($"Activating timeline: {timelineObjectName}");
                 timelineObj.SetActive(true);
-                
+
                 // Make sure K2_QueenACS2 is enabled
                 K2_QueenACS2 queenCutscene = timelineObj.GetComponent<K2_QueenACS2>();
                 if (queenCutscene != null && !queenCutscene.enabled)
@@ -358,7 +359,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
                     queenCutscene.enabled = true;
                     Debug.Log("Enabled K2_QueenACS2 component for timeline");
                 }
-                
+
                 // Get timeline controller component if exists
                 if (timelineController != null)
                 {
@@ -414,7 +415,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         ShowPanelWithAnimation();
 
         Debug.Log($"Game {(isVictory ? "won" : "lost")} - Summary panel shown");
-        
+
         // Wait a moment then play star animation
         yield return new WaitForSecondsRealtime(0.5f);
         PlayStarAnimationDirect();
@@ -710,21 +711,21 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         UpdateCoinsEarned();
         UpdateStarsEarnedText();
         UpdateKeyImageDisplay();
-        
+
         // NEW: Disable fail game objects only when losing
         if (!isVictory)
         {
             // This is a lose summary, disable the fail game objects
             if (failGameObject1 != null && failGameObject1.activeSelf)
                 failGameObject1.SetActive(false);
-            
+
             if (failGameObject2 != null && failGameObject2.activeSelf)
                 failGameObject2.SetActive(false);
-            
+
             if (failGameObject3 != null && failGameObject3.activeSelf)
                 failGameObject3.SetActive(false);
         }
-        
+
         Debug.Log($"=== UPDATE SUMMARY DATA ===");
         Debug.Log($"Current stars calculated: {currentStars}");
         Debug.Log($"Stars earned text will show: {currentStars}/3");
@@ -740,13 +741,13 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             // 1. Summary is active
             // 2. Summary was triggered by key collection (not by other means like QA2 completion or losing)
             // 3. AND player has at least 2 stars (3+ hearts)
-            
-            bool shouldShowKeyImage = isSummaryActive && 
-                                     summaryTriggeredByKeyCollection && 
+
+            bool shouldShowKeyImage = isSummaryActive &&
+                                     summaryTriggeredByKeyCollection &&
                                      currentStars >= 2;
-            
+
             KeyImageunlocking.SetActive(shouldShowKeyImage);
-            
+
             Debug.Log($"KeyImageunlocking: {(shouldShowKeyImage ? "SHOWN" : "HIDDEN")} " +
                      $"- SummaryActive: {isSummaryActive} " +
                      $"- TriggeredByKey: {summaryTriggeredByKeyCollection} " +
@@ -800,7 +801,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private int CalculateStars()
     {
         int health = 0;
-        
+
         if (isVictory)
         {
             // For victory, use current health
@@ -813,19 +814,19 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             health = Mathf.Max(0, healthBeforeDeath);
             Debug.Log($"Using health before death for lose: {health}");
         }
-        
+
         int stars = 0;
-        
+
         if (health >= 5) stars = 3;
         else if (health >= 3) stars = 2;
         else if (health >= 1) stars = 1;
         // 0 hearts = 0 stars (already 0)
-        
+
         Debug.Log($"=== CALCULATE STARS ===");
         Debug.Log($"Health: {health}");
         Debug.Log($"Calculated stars: {stars}");
         Debug.Log($"Stars text will show: {stars}/3");
-        
+
         return Mathf.Clamp(stars, 0, 3);
     }
 
@@ -834,28 +835,28 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         if (starAnimator != null)
         {
             Debug.Log($"=== PLAYING STAR ANIMATION DIRECT: {currentStars} stars ===");
-            
+
             // Ensure GameObject is active
             if (!starAnimator.gameObject.activeSelf)
             {
                 Debug.Log("Activating star animator GameObject");
                 starAnimator.gameObject.SetActive(true);
             }
-            
+
             // Ensure Animator is enabled
             if (!starAnimator.enabled)
             {
                 Debug.Log("Enabling star animator component");
                 starAnimator.enabled = true;
             }
-            
+
             // Set to UnscaledTime since game is paused
             starAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            
+
             // FIRST: Reset to 0 to ensure clean transition
             starAnimator.SetInteger(starParameterName, 0);
             starAnimator.Update(0f);
-            
+
             // Wait a tiny moment for the reset to take effect
             StartCoroutine(PlayStarAnimationAfterReset());
         }
@@ -868,28 +869,28 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private IEnumerator PlayStarAnimationAfterReset()
     {
         yield return new WaitForSecondsRealtime(0.1f);
-        
+
         // Now set to the final value
         starAnimator.SetInteger(starParameterName, currentStars);
         starAnimator.Update(0f);
-        
+
         // Double-check the value was set
         int currentValue = starAnimator.GetInteger(starParameterName);
         Debug.Log($"Star parameter set to: {currentValue} (requested: {currentStars})");
-        
+
         // Get current state info
         AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
         Debug.Log($"Current animation state: {stateInfo.fullPathHash}");
         Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
         Debug.Log($"Is in transition: {starAnimator.IsInTransition(0)}");
-        
+
         // If still in default state, try to play the animation directly
         if (stateInfo.normalizedTime == 0 && currentStars > 0)
         {
             Debug.Log("Attempting to play animation directly...");
             ForcePlayStarAnimation(currentStars);
         }
-        
+
         // Verify the animation is playing
         yield return new WaitForSecondsRealtime(0.1f);
         stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
@@ -902,10 +903,10 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         {
             string stateName = starStateNames[stars];
             Debug.Log($"Force playing animation state: {stateName}");
-            
+
             // Play the state directly at the beginning
             starAnimator.Play(stateName, 0, 0f);
-            
+
             // Force update
             starAnimator.Update(0f);
         }
@@ -916,16 +917,16 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         if (starAnimator != null)
         {
             Debug.Log("Resetting star animator...");
-            
+
             // Reset to default state
             starAnimator.SetInteger(starParameterName, 0);
-            
+
             // Set to normal update mode
             starAnimator.updateMode = AnimatorUpdateMode.Normal;
-            
+
             // Force update
             starAnimator.Update(0f);
-            
+
             Debug.Log("Star animator reset to default state");
         }
     }
@@ -944,27 +945,53 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private void CalculateCoinReward()
     {
         int stars = CalculateStars();
-        int score = scoringSystem != null ? scoringSystem.GetCurrentScore() : 0;
 
-        int starCoins = stars * coinsPerStar;
-        int scoreCoins = Mathf.Max(0, (score / 300) * baseCoinsPerScore);
-        int totalBaseCoins = starCoins + scoreCoins;
+        switch (stars)
+        {
+            case 3:
+                calculatedCoinsEarned = 1000;
+                calculatedExpEarned = 500;
+                break;
+            case 2:
+                calculatedCoinsEarned = 700;
+                calculatedExpEarned = 300;
+                break;
+            case 1:
+                calculatedCoinsEarned = 400;
+                calculatedExpEarned = 150;
+                break;
+            default:
+                calculatedCoinsEarned = 100;
+                calculatedExpEarned = 50;
+                break;
+        }
 
-        float multiplier = isVictory ? winMultiplier : loseMultiplier;
-        calculatedCoinsEarned = Mathf.Max(1, Mathf.RoundToInt(totalBaseCoins * multiplier));
-        
-        Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, Total={calculatedCoinsEarned}");
+        Debug.Log($"K4 rewards set by stars: Stars={stars}, Coins={calculatedCoinsEarned}, Exp={calculatedExpEarned}");
     }
 
     private void AddCoinsToDatabase()
     {
         if (coinsAddedToDatabase || GameDataManager.Instance == null) return;
 
-        GameDataManager.Instance.CurrentGameData.nutriCoins += calculatedCoinsEarned;
-        GameDataManager.Instance.SaveGameData();
-        coinsAddedToDatabase = true;
+        if (GameDataManager.Instance.CurrentGameData != null)
+        {
+            int oldCoins = GameDataManager.Instance.CurrentGameData.nutriCoins;
+            GameDataManager.Instance.CurrentGameData.nutriCoins += calculatedCoinsEarned;
 
-        Debug.Log($"Added {calculatedCoinsEarned} coins to database");
+            // Add XP and handle level-up.
+            GameDataManager.Instance.CurrentGameData.currentXP += calculatedExpEarned;
+            while (GameDataManager.Instance.CurrentGameData.currentXP >= GameDataManager.Instance.CurrentGameData.xpToNextLevel)
+            {
+                GameDataManager.Instance.CurrentGameData.playerLevel++;
+                GameDataManager.Instance.CurrentGameData.currentXP -= GameDataManager.Instance.CurrentGameData.xpToNextLevel;
+                GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f;
+            }
+
+            GameDataManager.Instance.SaveGameData();
+            coinsAddedToDatabase = true;
+
+            Debug.Log($"K4 rewards added: +{calculatedCoinsEarned} Coins (was {oldCoins}, now {GameDataManager.Instance.CurrentGameData.nutriCoins}), +{calculatedExpEarned} EXP");
+        }
     }
 
     #endregion
@@ -974,7 +1001,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     public void OnConfirmButtonClicked()
     {
         if (!isSummaryActive || !isGameOver || isProcessingConfirm) return;
-        
+
         isProcessingConfirm = true;
 
         PlayButtonClickSound();
@@ -1009,7 +1036,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         Time.timeScale = originalTimeScale;
 
         RestartGame();
-        
+
         // Reset the processing flag
         isProcessingConfirm = false;
 
@@ -1021,21 +1048,21 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private IEnumerator CompleteRestartGame()
     {
         Debug.Log("Starting complete game restart...");
-        
+
         // Fade out panel if available
         if (panelCanvasGroup != null)
             yield return FadePanel(1f, 0f, fadeOutDuration);
-        
+
         // Hide the summary panel
         if (gameSummaryPanel != null)
             gameSummaryPanel.SetActive(false);
-        
+
         // Reset time scale
         Time.timeScale = originalTimeScale;
-        
+
         // Add a small delay to ensure UI is hidden
         yield return new WaitForSecondsRealtime(0.1f);
-        
+
         // Reload the scene
         ReloadCurrentScene();
     }
@@ -1200,14 +1227,14 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private void ReloadCurrentScene()
     {
         Debug.Log("Reloading scene for complete restart...");
-        
+
         // Get the current scene name
-        string sceneName = string.IsNullOrEmpty(sceneToReload) ? 
+        string sceneName = string.IsNullOrEmpty(sceneToReload) ?
             SceneManager.GetActiveScene().name : sceneToReload;
-        
+
         // Reset all static flags and persistent data if needed
         ResetPersistentData();
-        
+
         // Load the scene
         SceneManager.LoadScene(sceneName);
     }
@@ -1216,17 +1243,17 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private void ResetPersistentData()
     {
         Debug.Log("Resetting persistent data...");
-        
+
         // Reset global key flags
         K2_CollectKey.GlobalResetAllKeys();
-        
+
         // Optionally reset SugariaKey if you want fresh start
         // Uncomment the next line if you want to reset the key on complete restart
         // if (GameDataManager.Instance != null) ResetSugariaKey();
-        
+
         // Clear any static variables or flags
         // Add any other static resets here
-        
+
         Debug.Log("Persistent data reset complete");
     }
 
@@ -1239,51 +1266,51 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
 
     // Add this method to make it easier for key collection to trigger summary
     public void TriggerSummaryFromKey()
-{
-    if (!isGameOver && !isSummaryActive)
     {
-        Debug.Log("Key collected → Triggering Game Summary");
-        isVictory = true;
-        summaryTriggeredByKeyCollection = true;
-        StartCoroutine(ShowSummaryPanel());
+        if (!isGameOver && !isSummaryActive)
+        {
+            Debug.Log("Key collected → Triggering Game Summary");
+            isVictory = true;
+            summaryTriggeredByKeyCollection = true;
+            StartCoroutine(ShowSummaryPanel());
+        }
     }
-}
 
     // Method to show summary panel directly
     public IEnumerator ShowSummaryPanelDirectly(bool isWin)
     {
-        if (isGameOver || isSummaryActive) 
+        if (isGameOver || isSummaryActive)
         {
             Debug.LogWarning("Summary panel already active, cannot show directly");
             yield break;
         }
-        
+
         summaryLocked = true;
         isGameOver = true;
         isSummaryActive = true;
         isVictory = isWin;
-        
+
         // If calling directly, assume not triggered by key collection unless specified
         summaryTriggeredByKeyCollection = false;
-        
+
         Debug.Log($"Starting ShowSummaryPanelDirectly() - Victory: {isVictory}, TriggeredByKey: {summaryTriggeredByKeyCollection}");
-        
+
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-        
+
         PrepareGameForSummary();
         yield return null;
-        
+
         yield return TriggerLookAroundAnimationDuringPause();
         PlayResultSound();
-        
+
         CalculateCoinReward();
         UpdateSummaryData();
-        
+
         ShowPanelWithAnimation();
-        
+
         Debug.Log($"Summary panel shown directly");
-        
+
         // Wait a moment then play star animation
         yield return new WaitForSecondsRealtime(0.5f);
         PlayStarAnimationDirect();
@@ -1374,7 +1401,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         {
             isVictory = true;
             if (playerHealth != null) playerHealth.currentHealth = 6;
-            
+
             // Start the summary
             StartCoroutine(TestStarsDirectCoroutine());
         }
@@ -1383,25 +1410,25 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
     private IEnumerator TestStarsDirectCoroutine()
     {
         Debug.Log($"=== TESTING DIRECT STAR ANIMATION ===");
-        
+
         isGameOver = true;
         isSummaryActive = true;
         summaryLocked = true;
-        
+
         originalTimeScale = Time.timeScale;
         Time.timeScale = 0f;
-        
+
         // Calculate stars
         currentStars = CalculateStars();
         UpdateStarsEarnedText();
-        
+
         Debug.Log($"Stars calculated: {currentStars}");
-        
+
         // Play animation directly
         PlayStarAnimationDirect();
-        
+
         yield return new WaitForSecondsRealtime(2f);
-        
+
         Time.timeScale = originalTimeScale;
         isGameOver = false;
         isSummaryActive = false;
@@ -1414,43 +1441,43 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         if (starAnimator != null)
         {
             Debug.Log("Testing star animations...");
-            
+
             // Make sure everything is set up
             if (!starAnimator.gameObject.activeSelf)
                 starAnimator.gameObject.SetActive(true);
-            
+
             if (!starAnimator.enabled)
                 starAnimator.enabled = true;
-            
+
             starAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
-            
+
             for (int i = 0; i <= 3; i++)
             {
                 Debug.Log($"\n=== Testing star value: {i} ===");
-                
+
                 // Reset first
                 starAnimator.SetInteger(starParameterName, 0);
                 starAnimator.Update(0f);
-                
+
                 System.Threading.Thread.Sleep(100);
-                
+
                 // Set to value
                 starAnimator.SetInteger(starParameterName, i);
                 starAnimator.Update(0f);
-                
+
                 // Check current state
                 AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
                 Debug.Log($"Current state: {stateInfo.fullPathHash}");
                 Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
                 Debug.Log($"Is in transition: {starAnimator.IsInTransition(0)}");
-                
+
                 // If not playing, try direct play
                 if (stateInfo.normalizedTime == 0 && i > 0)
                 {
                     Debug.Log("Animation not playing, trying direct play...");
                     ForcePlayStarAnimation(i);
                 }
-                
+
                 // Wait to see animation
                 System.Threading.Thread.Sleep(500);
             }
@@ -1469,21 +1496,21 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             Debug.LogError("Star animator is null!");
             return;
         }
-        
+
         Debug.Log("=== STAR ANIMATOR DEBUG ===");
-        
+
         // Basic info
         Debug.Log($"GameObject: {starAnimator.gameObject.name}");
         Debug.Log($"GameObject active: {starAnimator.gameObject.activeSelf}");
         Debug.Log($"Animator enabled: {starAnimator.enabled}");
         Debug.Log($"Update mode: {starAnimator.updateMode}");
-        
+
         // Controller info
         Debug.Log($"Controller: {starAnimator.runtimeAnimatorController?.name}");
-        
+
         // Parameter info
         Debug.Log($"Current '{starParameterName}' value: {starAnimator.GetInteger(starParameterName)}");
-        
+
         // List all parameters
         Debug.Log("All parameters:");
         foreach (var param in starAnimator.parameters)
@@ -1506,7 +1533,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             }
             Debug.Log($"- {param.name} (Type: {param.type}, Value: {value})");
         }
-        
+
         // Current state info
         AnimatorStateInfo stateInfo = starAnimator.GetCurrentAnimatorStateInfo(0);
         Debug.Log($"Current state hash: {stateInfo.fullPathHash}");
@@ -1514,7 +1541,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
         Debug.Log($"Normalized time: {stateInfo.normalizedTime}");
         Debug.Log($"Length: {stateInfo.length}");
         Debug.Log($"Is in transition: {starAnimator.IsInTransition(0)}");
-        
+
         if (starAnimator.IsInTransition(0))
         {
             AnimatorTransitionInfo transInfo = starAnimator.GetAnimatorTransitionInfo(0);
@@ -1556,7 +1583,7 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
             summaryTriggeredByKeyCollection = true;
             if (playerHealth != null) playerHealth.currentHealth = 6;
             StartCoroutine(ShowSummaryPanel());
-            
+
             // After showing summary, trigger complete restart
             StartCoroutine(TestCompleteRestartCoroutine());
         }
@@ -1580,10 +1607,10 @@ if (currentHealth >= 3 && !keyAlreadyCollected && !timelineTriggered)
 
         if (confirmButton != null)
             confirmButton.onClick.RemoveListener(OnConfirmButtonClicked);
-        
+
         if (restartButton != null)
             restartButton.onClick.RemoveListener(OnConfirmButtonClicked);
-        
+
         // Ensure KeyImageunlocking is not left active
         if (KeyImageunlocking != null && KeyImageunlocking.activeSelf)
         {

@@ -1,8 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Debug-only tool. Entirely disabled in production builds.
+/// </summary>
 public class ClickDebugger : MonoBehaviour
 {
+#if UNITY_EDITOR
     private Camera cachedCamera;
 
     void Update()
@@ -39,4 +43,5 @@ public class ClickDebugger : MonoBehaviour
             }
         }
     }
+#endif
 }

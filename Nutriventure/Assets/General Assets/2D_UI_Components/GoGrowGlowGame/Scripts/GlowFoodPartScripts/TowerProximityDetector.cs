@@ -49,9 +49,10 @@ public class TowerProximityDetector : MonoBehaviour
 
             if (playerTransform == null || glowTower == null) continue;
 
+            // Use horizontal (XZ) distance only — ignoring Y so tall towers still detect the player at ground level
             Vector3 diff = playerTransform.position - glowTower.GetCenterPointPosition();
             float rangeSqr = glowTower.GetRange() * glowTower.GetRange();
-            bool isInRange = (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z) <= rangeSqr;
+            bool isInRange = (diff.x * diff.x + diff.z * diff.z) <= rangeSqr;
 
             if (isInRange && !wasPlayerInRange)
             {
@@ -72,6 +73,15 @@ public class TowerProximityDetector : MonoBehaviour
 #endif
             }
         }
+    }
+
+    /// <summary>
+    /// Force an immediate re-check of player proximity. Resets wasPlayerInRange so
+    /// the enter event fires again if the player is currently within range.
+    /// </summary>
+    public void ForceRecheck()
+    {
+        wasPlayerInRange = false;
     }
 
     public void ResetDetector()

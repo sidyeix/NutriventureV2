@@ -3,33 +3,38 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.VFX;
 
-namespace VFXSelfDestroy 
+namespace VFXSelfDestroy
 {
 
-public class SelfDestroyEffect : MonoBehaviour
-{
-    private VisualEffect effect;
-    private bool effectPlayed = false;
-    // Start is called before the first frame update
-    void Start()
+    public class SelfDestroyEffect : MonoBehaviour
     {
-        effect = gameObject.GetComponent<VisualEffect>();
-        effect.Play();
-    }
+        private VisualEffect effect;
+        private bool effectPlayed = false;
 
-    // Update is called once per frame
-    void Update()
-    {
-        if(effect.aliveParticleCount > 0 && !effectPlayed)
+        void Start()
         {
-            effectPlayed = true;
+            effect = gameObject.GetComponent<VisualEffect>();
+            effect.Play();
+            StartCoroutine(CheckEffectFinished());
         }
 
-        if(effect.aliveParticleCount == 0 && effectPlayed)
+        private IEnumerator CheckEffectFinished()
         {
+            // Wait until the effect has started emitting
+            while (!effectPlayed)
+            {
+                if (effect.aliveParticleCount > 0)
+                    effectPlayed = true;
+                yield return new WaitForSeconds(0.25f);
+            }
+
+            // Wait until all particles are dead
+            while (effect.aliveParticleCount > 0)
+            {
+                yield return new WaitForSeconds(0.25f);
+            }
+
             Destroy(gameObject);
         }
-        
     }
-}
 }

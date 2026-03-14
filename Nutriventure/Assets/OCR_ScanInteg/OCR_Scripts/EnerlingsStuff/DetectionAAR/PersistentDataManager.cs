@@ -20,6 +20,10 @@ public class PersistentDataManager : MonoBehaviour
     private Dictionary<string, int> enerlingCurrentLife = new Dictionary<string, int>();
     private HashSet<string> unlockedEnerlings = new HashSet<string>();
 
+    // Enerlings marked as unlocked by default in the ScriptableObject (e.g. Stevia Extract)
+    // Captured once at startup so we can re-apply them after a reset.
+    private HashSet<string> defaultUnlockedEnerlings = new HashSet<string>();
+
     void Awake()
     {
         if (Instance == null)
@@ -36,8 +40,11 @@ public class PersistentDataManager : MonoBehaviour
             // Then apply unlocks to database
             ApplyUnlocksToDatabase();
 
-            // Sync catch counts from persistent save
+            // Sync catch counts from PlayerPrefs (primary) or GameData (fallback)
             SyncCatchCountsFromGameData();
+
+            // Keep GameData.unlockedEnerlings in sync as backup
+            SyncUnlocksToGameData();
         }
         else
         {
@@ -202,6 +209,13 @@ public class PersistentDataManager : MonoBehaviour
         {
             unlockedEnerlings.Add(enerlingName);
             PlayerPrefs.SetInt(enerlingName + "_Unlocked", 1);
+
+            // Initialize catch count in PlayerPrefs if not already set
+            if (!PlayerPrefs.HasKey(enerlingName + "_CatchCount"))
+            {
+                PlayerPrefs.SetInt(enerlingName + "_CatchCount", 0);
+            }
+
             PlayerPrefs.Save();
 
             // Also update the database immediately
@@ -214,16 +228,21 @@ public class PersistentDataManager : MonoBehaviour
                 }
             }
 
-            Debug.Log($"Unlocked enerling: {enerlingName}");
+            // Sync to GameData as backup
+            SyncUnlocksToGameData();
+
+            Debug.Log($"Unlocked enerling: {enerlingName} (Total unlocked: {unlockedEnerlings.Count})");
         }
     }
 
     /// <summary>
-    /// Increment the catch count for a specific enerling in the database and in GameData.
+    /// Increment the catch count for a specific enerling in the database, PlayerPrefs, and GameData.
     /// </summary>
     public void IncrementCatchCount(string enerlingName)
     {
         if (string.IsNullOrEmpty(enerlingName)) return;
+
+        int newCount = 0;
 
         // Update runtime database
         if (ingredientDatabase != null)
@@ -234,16 +253,22 @@ public class PersistentDataManager : MonoBehaviour
                 if (ingredient.currentCatchCount < ingredient.maxCatch)
                 {
                     ingredient.currentCatchCount++;
+                    newCount = ingredient.currentCatchCount;
                     Debug.Log($"Catch count for {enerlingName}: {ingredient.currentCatchCount}/{ingredient.maxCatch}");
                 }
                 else
                 {
                     Debug.Log($"{enerlingName} already at max catch ({ingredient.maxCatch})");
+                    return;
                 }
             }
         }
 
-        // Also save to GameDataManager for persistence
+        // Save to PlayerPrefs (primary persistence)
+        PlayerPrefs.SetInt(enerlingName + "_CatchCount", newCount);
+        PlayerPrefs.Save();
+
+        // Also save to GameDataManager for backup persistence
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.IncrementEnerlingCatchCount(enerlingName);
@@ -251,19 +276,61 @@ public class PersistentDataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Syncs catch counts from GameData back into the runtime IngredientDatabase.
+    /// Get the catch count for a specific enerling from PlayerPrefs.
+    /// Returns 0 if not found or if the enerling is not unlocked.
+    /// </summary>
+    public int GetCatchCount(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return 0;
+        if (!IsEnerlingUnlocked(enerlingName)) return 0;
+        return PlayerPrefs.GetInt(enerlingName + "_CatchCount", 0);
+    }
+
+    /// <summary>
+    /// Syncs catch counts from PlayerPrefs (primary) or GameData (fallback) into the runtime IngredientDatabase.
+    /// Also ensures locked enerlings always have a catch count of 0.
     /// Call this on startup / scene load.
     /// </summary>
     public void SyncCatchCountsFromGameData()
     {
-        if (ingredientDatabase == null || GameDataManager.Instance == null) return;
+        if (ingredientDatabase == null) return;
 
         foreach (var ingredient in ingredientDatabase.ingredients)
         {
-            int savedCount = GameDataManager.Instance.GetEnerlingCatchCount(ingredient.ingredientName);
-            ingredient.currentCatchCount = Mathf.Min(savedCount, ingredient.maxCatch);
+            // Locked enerlings always have 0 catch count
+            if (!IsEnerlingUnlocked(ingredient.ingredientName))
+            {
+                ingredient.currentCatchCount = 0;
+                continue;
+            }
+
+            // Try PlayerPrefs first (primary source of truth)
+            string prefsKey = ingredient.ingredientName + "_CatchCount";
+            if (PlayerPrefs.HasKey(prefsKey))
+            {
+                int savedCount = PlayerPrefs.GetInt(prefsKey, 0);
+                ingredient.currentCatchCount = Mathf.Min(savedCount, ingredient.maxCatch);
+            }
+            else if (GameDataManager.Instance != null)
+            {
+                // Fallback to GameData JSON
+                int savedCount = GameDataManager.Instance.GetEnerlingCatchCount(ingredient.ingredientName);
+                ingredient.currentCatchCount = Mathf.Min(savedCount, ingredient.maxCatch);
+
+                // Migrate to PlayerPrefs for future loads
+                if (savedCount > 0)
+                {
+                    PlayerPrefs.SetInt(prefsKey, ingredient.currentCatchCount);
+                }
+            }
+            else
+            {
+                ingredient.currentCatchCount = 0;
+            }
         }
-        Debug.Log("Synced catch counts from GameData to IngredientDatabase");
+
+        PlayerPrefs.Save();
+        Debug.Log("Synced catch counts from PlayerPrefs/GameData to IngredientDatabase");
     }
 
     // Check if enerling is unlocked
@@ -277,6 +344,44 @@ public class PersistentDataManager : MonoBehaviour
     public List<string> GetAllUnlockedEnerlings()
     {
         return new List<string>(unlockedEnerlings);
+    }
+
+    /// <summary>
+    /// Get the total number of unlocked enerlings.
+    /// </summary>
+    public int GetTotalUnlockedCount()
+    {
+        return unlockedEnerlings.Count;
+    }
+
+    /// <summary>
+    /// Get the total number of enerlings in the database.
+    /// </summary>
+    public int GetTotalEnerlingCount()
+    {
+        if (ingredientDatabase == null) return 0;
+        return ingredientDatabase.ingredients.Count;
+    }
+
+    /// <summary>
+    /// Syncs the unlock list from PlayerPrefs into GameData.unlockedEnerlings
+    /// so the JSON save file stays consistent as a backup.
+    /// </summary>
+    public void SyncUnlocksToGameData()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        var gameData = GameDataManager.Instance.CurrentGameData;
+        if (gameData == null) return;
+
+        if (gameData.unlockedEnerlings == null)
+            gameData.unlockedEnerlings = new List<string>();
+
+        gameData.unlockedEnerlings.Clear();
+        gameData.unlockedEnerlings.AddRange(unlockedEnerlings);
+
+        GameDataManager.Instance.SaveGameData();
+        Debug.Log($"Synced {unlockedEnerlings.Count} unlocked enerlings to GameData");
     }
 
     // Load all data
@@ -326,7 +431,38 @@ public class PersistentDataManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"Loaded {unlockedEnerlings.Count} unlocked enerlings");
+        // --- Default unlock initialization ---
+        // Check the ScriptableObject's editor defaults BEFORE ApplyUnlocksToDatabase overwrites them.
+        // Any enerling marked isUnlocked = true in the SO is a "starter" enerling (e.g. Stevia Extract).
+        // If this is the first time the game runs (no PlayerPrefs key for that enerling), auto-unlock it.
+        defaultUnlockedEnerlings.Clear();
+        foreach (var ingredient in ingredientDatabase.ingredients)
+        {
+            if (ingredient.isUnlocked)
+            {
+                // Remember SO defaults for use in ResetAllProgress
+                defaultUnlockedEnerlings.Add(ingredient.ingredientName);
+
+                string key = ingredient.ingredientName + "_Unlocked";
+                if (!PlayerPrefs.HasKey(key))
+                {
+                    // First-time player: no saved state for this enerling, use SO default
+                    unlockedEnerlings.Add(ingredient.ingredientName);
+                    PlayerPrefs.SetInt(key, 1);
+
+                    // Initialize catch count
+                    if (!PlayerPrefs.HasKey(ingredient.ingredientName + "_CatchCount"))
+                    {
+                        PlayerPrefs.SetInt(ingredient.ingredientName + "_CatchCount", 0);
+                    }
+
+                    Debug.Log($"Default unlock from database: {ingredient.ingredientName}");
+                }
+            }
+        }
+        PlayerPrefs.Save();
+
+        Debug.Log($"Loaded {unlockedEnerlings.Count} unlocked enerlings (including {defaultUnlockedEnerlings.Count} SO defaults)");
     }
 
     // ==================== ENERLING HEALTH REGEN ====================
@@ -608,11 +744,36 @@ public class PersistentDataManager : MonoBehaviour
             {
                 ingredient.isUnlocked = false;
                 ingredient.currentLife = ingredient.baseLife;
+                ingredient.currentCatchCount = 0;
                 ClearEnerlingHealthRegen(ingredient.ingredientName);
             }
         }
 
-        Debug.Log("All progress reset!");
+        // Re-apply default unlocks from the ScriptableObject (e.g. Stevia Extract)
+        // so the player has their starter enerling(s) immediately after reset.
+        foreach (string defaultName in defaultUnlockedEnerlings)
+        {
+            unlockedEnerlings.Add(defaultName);
+            PlayerPrefs.SetInt(defaultName + "_Unlocked", 1);
+            PlayerPrefs.SetInt(defaultName + "_CatchCount", 0);
+
+            if (ingredientDatabase != null)
+            {
+                var ingredient = ingredientDatabase.GetIngredientInfo(defaultName);
+                if (ingredient != null)
+                {
+                    ingredient.isUnlocked = true;
+                }
+            }
+
+            Debug.Log($"Re-applied default unlock after reset: {defaultName}");
+        }
+        PlayerPrefs.Save();
+
+        // Sync defaults to GameData backup
+        SyncUnlocksToGameData();
+
+        Debug.Log($"All enerling progress reset! ({defaultUnlockedEnerlings.Count} default enerlings re-applied)");
     }
 
     void OnApplicationQuit()

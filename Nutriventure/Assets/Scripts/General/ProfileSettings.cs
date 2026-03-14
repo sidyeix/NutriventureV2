@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -402,10 +403,21 @@ public class ProfileSettings : MonoBehaviour
 
     private void UpdateEnerlingsCounter()
     {
-        if (enerlingsCountText == null || gameDataManager?.CurrentGameData == null)
+        if (enerlingsCountText == null)
             return;
 
-        int unlockedCount = gameDataManager.CurrentGameData.unlockedEnerlings?.Count ?? 0;
+        // Use PersistentDataManager (PlayerPrefs) as the primary source of truth
+        int unlockedCount = 0;
+        if (PersistentDataManager.Instance != null)
+        {
+            unlockedCount = PersistentDataManager.Instance.GetTotalUnlockedCount();
+        }
+        else if (gameDataManager?.CurrentGameData != null)
+        {
+            // Fallback to GameData if PersistentDataManager not loaded
+            unlockedCount = gameDataManager.CurrentGameData.unlockedEnerlings?.Count ?? 0;
+        }
+
         enerlingsCountText.text = string.Format(enerlingsFormat, unlockedCount);
     }
 
@@ -1662,22 +1674,56 @@ public class ProfileSettings : MonoBehaviour
     {
         PlayButtonSound();
 
-        // 1. Reset the main game data (profile, characters, resources, etc.)
+        // 1. Reset the main game data file (nutriventure_save.json)
         if (GameDataManager.Instance != null)
         {
             GameDataManager.Instance.ResetGameData();
         }
 
-        // 2. Clear the kingdom game-state save file (game_state.json)
+        // 2. Clear Kingdom 1 game-state save file (game_state.json)
         if (GameStateManager.Instance != null)
         {
             GameStateManager.Instance.ClearSavedGameState();
         }
 
-        // 3. Clear PlayerPrefs keys so the loading screen treats this as a first-time player
-        PlayerPrefs.DeleteKey("ProfileCompleted");
-        PlayerPrefs.DeleteKey("LastScene");
-        PlayerPrefs.DeleteKey("NextScene");
+        // 3. Clear Kingdom 2 game-state save file (k2_game_state.json)
+        if (K2_GameStateManager.Instance != null)
+        {
+            K2_GameStateManager.Instance.ClearSavedGameState();
+        }
+        else
+        {
+            DeletePersistentFile("k2_game_state.json");
+        }
+
+        // 4. Clear Kingdom 3 game-state save file (k3_game_state.json)
+        if (K3_GameStateManager.Instance != null)
+        {
+            K3_GameStateManager.Instance.ClearSavedGameState();
+        }
+        else
+        {
+            DeletePersistentFile("k3_game_state.json");
+        }
+
+        // 5. Clear Kingdom 4 (Allerthia) save file (gameData.save)
+        if (GameDataManager1.Instance != null)
+        {
+            GameDataManager1.Instance.DeleteSaveFile();
+        }
+        else
+        {
+            DeletePersistentFile("gameData.save");
+        }
+
+        // 6. Reset Enerling / OCR data (PersistentDataManager)
+        if (PersistentDataManager.Instance != null)
+        {
+            PersistentDataManager.Instance.ResetAllProgress();
+        }
+
+        // 7. Clear ALL PlayerPrefs (covers every key across the whole game)
+        PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
 
         Debug.Log("ProfileSettings: Full data reset complete — returning to LogoScreen as new player.");
@@ -1686,6 +1732,27 @@ public class ProfileSettings : MonoBehaviour
             resetDataDialog.SetActive(false);
 
         SceneManager.LoadScene("LogoScreen");
+    }
+
+    /// <summary>
+    /// Safely deletes a file in Application.persistentDataPath if it exists.
+    /// Used as a fallback when a manager singleton is not loaded.
+    /// </summary>
+    private void DeletePersistentFile(string fileName)
+    {
+        string path = Path.Combine(Application.persistentDataPath, fileName);
+        if (File.Exists(path))
+        {
+            try
+            {
+                File.Delete(path);
+                Debug.Log($"ProfileSettings: Deleted persistent file: {fileName}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"ProfileSettings: Failed to delete {fileName} — {e.Message}");
+            }
+        }
     }
 
     private void OnCancelResetClicked()

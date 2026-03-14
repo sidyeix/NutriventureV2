@@ -2237,6 +2237,8 @@ MonoBehaviour:
   skillDescriptionText: {fileID: 1389316020}
   selectButton: {fileID: 658656659}
   selectButtonText: {fileID: 520239760}
+  skipButton: {fileID: 1325826818}
+  scanOCRSceneName: ScanOCR
   timelineDirector: {fileID: 1668061642}
   selectionTimelineAsset: {fileID: 11400000, guid: 0f0fea5fc31a6274c9e42d018c9fe146, type: 2}
   playerSpawnPoint: {fileID: 2040517775}
@@ -15829,7 +15831,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 34.7
+  field of view: 60.000004
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -15855,8 +15857,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 451682057}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.032011572, y: 0.36554548, z: -0.016957408, w: -0.9300883}
-  m_LocalPosition: {x: 9.4652, y: 1.62515, z: 45.5671}
+  m_LocalRotation: {x: 0.086725965, y: -0.3926707, z: 0.037225466, w: 0.91482383}
+  m_LocalPosition: {x: 139.29549, y: -4.90917, z: 290.2778}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

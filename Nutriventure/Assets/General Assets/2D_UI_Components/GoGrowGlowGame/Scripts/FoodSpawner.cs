@@ -136,8 +136,8 @@ public class FoodSpawner : MonoBehaviour
 
         if (foodPrefab != null)
         {
-            // Spawn the food and make spawn point its parent
-            GameObject food = Instantiate(foodPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+            // Use object pool instead of Instantiate
+            GameObject food = SimpleObjectPool.Get(foodPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
             activeFood.Add(food);
 
             // Store original active state
@@ -146,8 +146,10 @@ public class FoodSpawner : MonoBehaviour
             // Mark spawn point as occupied
             spawnPointOccupied[spawnPoint] = true;
 
-            // Add a script to notify when food is collected
-            FoodCollectionNotifier notifier = food.AddComponent<FoodCollectionNotifier>();
+            // Reuse or add FoodCollectionNotifier
+            FoodCollectionNotifier notifier = food.GetComponent<FoodCollectionNotifier>();
+            if (notifier == null)
+                notifier = food.AddComponent<FoodCollectionNotifier>();
             notifier.Initialize(this, spawnPoint);
 
 #if UNITY_EDITOR
@@ -222,12 +224,12 @@ public class FoodSpawner : MonoBehaviour
         // Clear original states dictionary
         originalFoodStates.Clear();
 
-        // Destroy all active food
+        // Return all active food to pool instead of destroying
         for (int i = activeFood.Count - 1; i >= 0; i--)
         {
             if (activeFood[i] != null)
             {
-                Destroy(activeFood[i]);
+                SimpleObjectPool.Return(activeFood[i]);
             }
         }
         activeFood.Clear();
@@ -395,8 +397,21 @@ public class FoodCollectionNotifier : MonoBehaviour
         this.spawnPoint = spawnPoint;
     }
 
+    /// <summary>
+    /// Call this when food is collected to return it to the pool.
+    /// </summary>
+    public void Collect()
+    {
+        if (spawner != null && spawnPoint != null)
+        {
+            spawner.OnFoodCollected(spawnPoint);
+        }
+        SimpleObjectPool.Return(gameObject);
+    }
+
     private void OnDestroy()
     {
+        // Fallback: if truly destroyed (scene unload etc), still notify spawner
         if (spawner != null && spawnPoint != null)
         {
             spawner.OnFoodCollected(spawnPoint);

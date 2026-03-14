@@ -422,7 +422,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
             targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         }
 
-        if (Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
+        // Smooth transition towards target energy
+        if (energyTransitionSpeed > 0f && Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
         {
             currentEnergy = Mathf.Lerp(currentEnergy, targetEnergy, energyTransitionSpeed * Time.deltaTime);
         }
@@ -524,6 +525,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Reset flags
         isRespawning = false;
         inHealingZone = false;
+        isEnergyDecreasePaused = false;
         wasLowEnergyLastFrame = false;
 
         // Reset UI
@@ -879,6 +881,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         if (isStartingGame) return;
 
+        // Ensure time is running — a stuck timeScale of 0 would prevent WaitForSeconds coroutines
+        Time.timeScale = 1f;
+
         isStartingGame = true;
         if (startButton != null) startButton.interactable = false;
 
@@ -928,7 +933,19 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Set starting energy to 100
         currentEnergy = startEnergy;
         targetEnergy = startEnergy;
-        if (energySlider != null) energySlider.value = currentEnergy;
+        if (energySlider != null)
+        {
+            // Re-set max/min after canvas re-enable to ensure slider layout is valid
+            energySlider.maxValue = 100f;
+            energySlider.minValue = 0f;
+            energySlider.value = currentEnergy;
+
+            // Force UI layout rebuild — slider fill may not update after canvas toggle
+            Canvas.ForceUpdateCanvases();
+            var sliderRect = energySlider.GetComponent<RectTransform>();
+            if (sliderRect != null)
+                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(sliderRect);
+        }
 
         currentLives = maxLives;
         currentLifeAmount = maxLives;
@@ -1016,6 +1033,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
         RespawnPlayer();
 #if UNITY_EDITOR
         Debug.Log($"Game Started! Starting energy: {currentEnergy}, Max lives: {maxLives}, Time reduction: {timeReductionSeconds}s");
+        Debug.Log($"Energy state: current={currentEnergy}, target={targetEnergy}, startEnergy={startEnergy}, decreaseRate={energyDecreaseRate}");
+        Debug.Log($"Energy flags: paused={isEnergyDecreasePaused}, healing={inHealingZone}, speedBoosted={isSpeedBoosted}, sizeBoosted={isSizeBoosted}");
+        Debug.Log($"Food gains: go={goFoodEnergyGain}, grow={growFoodEnergyGain}, glow={glowFoodEnergyGain}, junkLoss={junkFoodEnergyDeduction}");
+        Debug.Log($"Slider valid: {energySlider != null}, Slider value: {(energySlider != null ? energySlider.value : -1f)}");
 #endif
     }
 
@@ -1085,7 +1106,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (uiElement != null) uiElement.SetActive(true);
 
         if (startButton != null)
+        {
             startButton.gameObject.SetActive(true);
+            startButton.interactable = true;
+        }
 
 #if UNITY_EDITOR
         Debug.Log("Game Ended!");
