@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3886959719949014027}
   - component: {fileID: 3140071577638476465}
   m_Layer: 0
-  m_Name: Emulsifier
+  m_Name: polysorbate 80
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

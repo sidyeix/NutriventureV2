@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7956464274260525376}
   - component: {fileID: 4107401207270032166}
   m_Layer: 5
-  m_Name: QuestButton
+  m_Name: ViewButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 02c246e6554ed6149bf438a10fdb724c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c46d018de800bb547b41e7ed1c947460, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -821,6 +821,7 @@ MonoBehaviour:
   warningSfx: {fileID: 0}
   successSfxSource: {fileID: 0}
   successSfx: {fileID: 8300000, guid: d6945231be24c7240a281458fc849e1f, type: 3}
+  disableOnPanelOpen: []
   playerTag: Player
   canvasFadeDuration: 0.2
   buttonSlideCurve:
@@ -1222,14 +1223,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4058165813409361653}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.9989906, z: -0, w: -0.04492007}
-  m_LocalPosition: {x: -0.05, y: 0.014, z: 0.398}
+  m_LocalRotation: {x: -0, y: -0.99650997, z: -0, w: 0.083474904}
+  m_LocalPosition: {x: -0.0375, y: 0.014, z: 0.2891}
   m_LocalScale: {x: 0.13473906, y: 0.13473907, z: 0.13473906}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6389088841718777243}
   m_Father: {fileID: 7844909145296094405}
-  m_LocalEulerAnglesHint: {x: 0, y: -185.149, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -170.423, z: 0}
 --- !u!114 &2619656057258631349
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1652,7 +1653,7 @@ GameObject:
   - component: {fileID: 4065455652466251306}
   - component: {fileID: 8937646358894700435}
   m_Layer: 5
-  m_Name: Talk
+  m_Name: SpeedUpButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1705,7 +1706,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e2265bdc3ca104740a6566446d7ffe35, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cd04bf582d3686f49bc55966bca75ddd, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
