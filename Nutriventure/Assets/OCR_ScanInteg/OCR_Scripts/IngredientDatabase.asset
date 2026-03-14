@@ -27,7 +27,7 @@ MonoBehaviour:
   - ingredientName: Calcium
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -106,7 +106,7 @@ MonoBehaviour:
   - ingredientName: Milk
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     powerUps:
     - powerUpType: 0
       amount: 10
@@ -190,7 +190,7 @@ MonoBehaviour:
   - ingredientName: Vitamin C
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     powerUps:
     - powerUpType: 2
       amount: 1

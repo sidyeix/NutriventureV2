@@ -26236,7 +26236,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 374179022}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.014746881, y: 0.905433, z: -0.03156148, w: 0.4230574}
+  m_LocalRotation: {x: 0.017673906, y: 0.9026786, z: -0.037246127, w: 0.42833608}
   m_LocalPosition: {x: -28.673466, y: 17.889801, z: 32.63915}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -52134,7 +52134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineTrackedDolly
   m_Path: {fileID: 224816107}
-  m_PathPosition: 0.1321414
+  m_PathPosition: 0.3195269
   m_PositionUnits: 0
   m_PathOffset: {x: 0, y: 0, z: 0}
   m_XDamping: 0

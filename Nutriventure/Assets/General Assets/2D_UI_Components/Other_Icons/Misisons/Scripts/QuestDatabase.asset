@@ -401,7 +401,7 @@ MonoBehaviour:
         type: 0
         targetID: 
         requiredAmount: 8
-        currentAmount: 0
+        currentAmount: 2
         isOptional: 0
         isCompleted: 0
       rewards:
