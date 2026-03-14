@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityEngine.SceneManagement;
 using System.Linq;
 
 public class EnerlingSelectionManager : MonoBehaviour
@@ -59,6 +60,10 @@ public class EnerlingSelectionManager : MonoBehaviour
     [Header("UI References - Selection")]
     public Button selectButton;
     public TextMeshProUGUI selectButtonText;
+
+    [Header("Skip Button")]
+    public Button skipButton;
+    public string scanOCRSceneName = "ScanOCR";
 
     [Header("Timeline System")]
     public PlayableDirector timelineDirector;
@@ -169,9 +174,36 @@ public class EnerlingSelectionManager : MonoBehaviour
         InitializeDatabase();
         SetupFilterButtons();
         SetupKingdomButtons();
+        SetupSkipButton();
         DisplayAllUnlockedEnerlings();
         UpdateSelectButton();
         LoadSelectedEnerling();
+    }
+
+    void SetupSkipButton()
+    {
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveAllListeners();
+            skipButton.onClick.AddListener(OnSkipButtonClicked);
+            Debug.Log("Skip button initialized in EnerlingSelectionManager");
+        }
+    }
+
+    void OnSkipButtonClicked()
+    {
+        if (isTimelinePlaying) return;
+
+        Debug.Log($"Skip button clicked — loading {scanOCRSceneName} scene");
+
+        if (!string.IsNullOrEmpty(scanOCRSceneName))
+        {
+            SceneManager.LoadScene(scanOCRSceneName);
+        }
+        else
+        {
+            Debug.LogError("ScanOCR scene name not set in EnerlingSelectionManager!");
+        }
     }
 
     // SIMPLE FIX: Stop other PlayableDirectors

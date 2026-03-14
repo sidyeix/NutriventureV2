@@ -598,104 +598,25 @@ public class Kingdom4GameEndManager : MonoBehaviour
         switch (starsEarned)
         {
             case 3:
-                baseCoins = 2000;
-                baseExp = 2000;
+                baseCoins = 1000;
+                baseExp = 500;
                 break;
             case 2:
-                baseCoins = 1200;
-                baseExp = 1200;
+                baseCoins = 700;
+                baseExp = 300;
                 break;
             case 1:
-                baseCoins = 600;
-                baseExp = 600;
+                baseCoins = 400;
+                baseExp = 150;
                 break;
             default:
                 baseCoins = 100;
-                baseExp = 100;
+                baseExp = 50;
                 break;
         }
 
-        if (allergensCollected == 9)
-        {
-            baseCoins += 500;
-            baseExp += 500;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Perfect allergen collection +500");
-#endif
-        }
-        else if (allergensCollected >= 7)
-        {
-            baseCoins += 300;
-            baseExp += 300;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Good allergen collection +300");
-#endif
-        }
-        else if (allergensCollected >= 5)
-        {
-            baseCoins += 150;
-            baseExp += 150;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Fair allergen collection +150");
-#endif
-        }
-
-        if (wagonHits == 0)
-        {
-            baseCoins += 300;
-            baseExp += 300;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: No wagon hits +300");
-#endif
-        }
-        else if (wagonHits <= 2)
-        {
-            baseCoins += 150;
-            baseExp += 150;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Few wagon hits +150");
-#endif
-        }
-
-        if (maxComboAchieved >= 8)
-        {
-            baseCoins += 400;
-            baseExp += 400;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Excellent combo +400");
-#endif
-        }
-        else if (maxComboAchieved >= 5)
-        {
-            baseCoins += 200;
-            baseExp += 200;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Good combo +200");
-#endif
-        }
-        else if (maxComboAchieved >= 3)
-        {
-            baseCoins += 100;
-            baseExp += 100;
-#if UNITY_EDITOR
-            Debug.Log("Bonus: Fair combo +100");
-#endif
-        }
-
-        int heartBonus = (remainingHearts - 1) * 100;
-        baseCoins += heartBonus;
-        baseExp += heartBonus;
-#if UNITY_EDITOR
-        Debug.Log($"Bonus: {remainingHearts} hearts remaining +{heartBonus}");
-#endif
-
-        int scoreBonus = Mathf.FloorToInt(finalScore * 0.1f);
-#if UNITY_EDITOR
-        Debug.Log($"Bonus: Score bonus (10% of {finalScore}) +{scoreBonus}");
-#endif
-
-        totalCoins = baseCoins + scoreBonus;
-        totalExp = baseExp + scoreBonus;
+        totalCoins = baseCoins;
+        totalExp = baseExp;
 
 #if UNITY_EDITOR
         Debug.Log($"Final Rewards: Coins={totalCoins}, Exp={totalExp}, Stars={starsEarned}");

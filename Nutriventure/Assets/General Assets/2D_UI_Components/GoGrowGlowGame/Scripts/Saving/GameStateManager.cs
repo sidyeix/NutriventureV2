@@ -525,8 +525,14 @@ public class GameStateManager : MonoBehaviour
             if (enableDebugLogs) Debug.Log($"Partial tower energy restored for {currentGameState.towerEnergyNames.Count} towers");
         }
 
-        // Restore tracker visibility if it was showing (remaining towers to fill)
-        if (currentGameState.isGlowTrackerVisible && !currentGameState.glowPartCompleted)
+        // If glow part was active when saved, resume it (activates towers, canvas, proximity detectors)
+        if (currentGameState.isGlowPartActive && !currentGameState.glowPartCompleted)
+        {
+            glowManager.ResumeGlowPart();
+            if (enableDebugLogs) Debug.Log("Glow part resumed from saved state");
+        }
+        // Otherwise just restore tracker visibility if it was showing
+        else if (currentGameState.isGlowTrackerVisible && !currentGameState.glowPartCompleted)
         {
             glowManager.ShowTrackerPanel();
             if (enableDebugLogs) Debug.Log("Glow tower tracker panel restored to visible");

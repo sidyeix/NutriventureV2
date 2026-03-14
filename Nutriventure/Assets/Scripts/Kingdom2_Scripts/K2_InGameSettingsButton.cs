@@ -156,13 +156,19 @@ public class K2_InGameSettingsButton : MonoBehaviour
         CheckFrozenSafety();
     }
 
+    private bool lastGameActiveState = false;
+
     private void CheckGameState()
     {
         if (gameplayProgression != null)
         {
-            isGameActive = gameplayProgression.IsGameStarted2();
-            // Enforce every frame so Animators / Canvas rebuilds can't override
-            SetGameButtonsInteractable(isGameActive);
+            bool newState = gameplayProgression.IsGameStarted2();
+            if (newState != lastGameActiveState)
+            {
+                lastGameActiveState = newState;
+                isGameActive = newState;
+                SetGameButtonsInteractable(isGameActive);
+            }
         }
     }
 

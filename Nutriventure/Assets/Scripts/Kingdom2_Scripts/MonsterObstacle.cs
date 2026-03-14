@@ -38,6 +38,14 @@ public class MonsterObstacle : MonoBehaviour
     [Range(0f, 1f)]
     public float collisionSoundVolume = 1f;
 
+    [Header("Proximity Optimization")]
+    [Tooltip("Distance at which the monster wakes up and starts patrolling/animating")]
+    public float sleepDistance = 40f;
+    [Tooltip("Extra buffer before going back to sleep")]
+    public float sleepBuffer = 5f;
+    [Tooltip("How often to check player distance while sleeping")]
+    public float sleepCheckInterval = 0.5f;
+
     [Header("Audio")]
     public AudioClip collisionSound;
     public AudioClip monsterSound;
@@ -76,6 +84,23 @@ public class MonsterObstacle : MonoBehaviour
     private bool isPaused = false;
     private MonsterState stateBeforePause = MonsterState.Patrolling;
     private bool wasInAttackAnimation = false;
+
+    // Throttle timers for expensive checks
+    private float detectionCheckTimer = 0f;
+    private const float DETECTION_CHECK_INTERVAL = 0.15f;
+    private float stuckCheckTimer = 0f;
+    private const float STUCK_CHECK_INTERVAL = 0.2f;
+    private float soundCheckTimer = 0f;
+    private const float SOUND_CHECK_INTERVAL = 0.25f;
+
+    // Cached squared ranges
+    private float monsterSoundRangeSqr;
+
+    // Proximity sleep state
+    private bool isAsleep = true; // Start asleep — wake when player is near
+    private float sleepDistSqr;
+    private float sleepDeactivateDistSqr;
+    private float nextSleepCheckTime;
 
     // Animation parameters
     private readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
@@ -120,6 +145,17 @@ public class MonsterObstacle : MonoBehaviour
         lastPosition = transform.position;
         lastMovementTime = Time.time;
 
+        // Cache squared ranges
+        monsterSoundRangeSqr = monsterSoundRange * monsterSoundRange;
+        sleepDistSqr = sleepDistance * sleepDistance;
+        float totalSleepDist = sleepDistance + sleepBuffer;
+        sleepDeactivateDistSqr = totalSleepDist * totalSleepDist;
+
+        // Start asleep — disable animator until player is near
+        isAsleep = true;
+        nextSleepCheckTime = Time.time + UnityEngine.Random.Range(0f, sleepCheckInterval);
+        if (animator != null) animator.enabled = false;
+
         // Subscribe to product panel events
         ProductInformationManager.OnProductPanelShown += PauseMonster;
         ProductInformationManager.OnProductPanelHidden += ResumeMonster;
@@ -131,11 +167,66 @@ public class MonsterObstacle : MonoBehaviour
     {
         if (isPaused) return; // Don't update if paused
 
+        // --- Proximity sleep/wake ---
+        if (player != null)
+        {
+            float sqrDistToPlayer = (transform.position - player.transform.position).sqrMagnitude;
+
+            if (isAsleep)
+            {
+                if (Time.time < nextSleepCheckTime) return;
+                nextSleepCheckTime = Time.time + sleepCheckInterval;
+
+                if (sqrDistToPlayer <= sleepDistSqr)
+                {
+                    // Wake up
+                    isAsleep = false;
+                    if (animator != null) animator.enabled = true;
+                }
+                else
+                {
+                    return; // Stay asleep
+                }
+            }
+            else if (currentState != MonsterState.Hunting && currentState != MonsterState.Attacking)
+            {
+                // Only go to sleep if not actively engaged with the player
+                if (sqrDistToPlayer > sleepDeactivateDistSqr)
+                {
+                    isAsleep = true;
+                    nextSleepCheckTime = Time.time + sleepCheckInterval;
+                    if (animator != null)
+                    {
+                        animator.SetBool(IsAttackingHash, false);
+                        animator.enabled = false;
+                    }
+                    currentState = MonsterState.Patrolling;
+                    return;
+                }
+            }
+        }
+        else if (isAsleep)
+        {
+            return; // No player — stay asleep
+        }
+
         // Don't update movement if currently attacking
         if (currentState != MonsterState.Attacking)
         {
-            CheckPlayerDetection();
-            CheckIfStuck();
+            // Throttle expensive detection checks
+            detectionCheckTimer += Time.deltaTime;
+            if (detectionCheckTimer >= DETECTION_CHECK_INTERVAL)
+            {
+                detectionCheckTimer = 0f;
+                CheckPlayerDetection();
+            }
+
+            stuckCheckTimer += Time.deltaTime;
+            if (stuckCheckTimer >= STUCK_CHECK_INTERVAL)
+            {
+                stuckCheckTimer = 0f;
+                CheckIfStuck();
+            }
 
             switch (currentState)
             {
@@ -157,7 +248,13 @@ public class MonsterObstacle : MonoBehaviour
                     break;
             }
 
-            CheckMonsterSound();
+            soundCheckTimer += Time.deltaTime;
+            if (soundCheckTimer >= SOUND_CHECK_INTERVAL)
+            {
+                soundCheckTimer = 0f;
+                CheckMonsterSound();
+            }
+
             UpdateMovementDetection();
         }
     }
@@ -165,7 +262,7 @@ public class MonsterObstacle : MonoBehaviour
     private void UpdateMovementDetection()
     {
         // Check if monster is actually moving
-        if (Vector3.Distance(transform.position, lastPosition) > 0.01f)
+        if ((transform.position - lastPosition).sqrMagnitude > 0.0001f)
         {
             lastMovementTime = Time.time;
             lastPosition = transform.position;
@@ -213,10 +310,10 @@ public class MonsterObstacle : MonoBehaviour
     {
         if (player == null) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        float sqrDistanceToPlayer = (transform.position - player.transform.position).sqrMagnitude;
 
         // Use monsterSoundRange as hunting radius for consistency
-        if (distanceToPlayer <= monsterSoundRange && currentState != MonsterState.Attacking)
+        if (sqrDistanceToPlayer <= monsterSoundRangeSqr && currentState != MonsterState.Attacking)
         {
             // Player detected in hunting radius
             if (currentState != MonsterState.Hunting && !isStuck)
@@ -439,9 +536,9 @@ public class MonsterObstacle : MonoBehaviour
         // Check if it's time to play monster sound and player is nearby
         if (player != null && monsterSound != null)
         {
-            float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+            float sqrDistanceToPlayer = (transform.position - player.transform.position).sqrMagnitude;
 
-            if (distanceToPlayer <= monsterSoundRange && Time.time >= lastMonsterSoundTime + monsterSoundInterval)
+            if (sqrDistanceToPlayer <= monsterSoundRangeSqr && Time.time >= lastMonsterSoundTime + monsterSoundInterval)
             {
                 PlayMonsterSound();
                 lastMonsterSoundTime = Time.time;
@@ -884,8 +981,10 @@ public class MonsterObstacle : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool(IsAttackingHash, false);
+            animator.enabled = true;
         }
         enabled = true;
+        isAsleep = false;
         currentState = MonsterState.Patrolling;
         Debug.Log("Monster patrol started");
     }

@@ -1212,23 +1212,14 @@ public class GameEndManager : MonoBehaviour
     {
         switch (starsEarned)
         {
-            case 3: baseCoins = 1000; baseExp = 1000; break;
-            case 2: baseCoins = 500; baseExp = 500; break;
-            case 1: baseCoins = 100; baseExp = 100; break;
-            default: baseCoins = 0; baseExp = 0; break;
+            case 3: baseCoins = 1000; baseExp = 500; break;
+            case 2: baseCoins = 700; baseExp = 300; break;
+            case 1: baseCoins = 400; baseExp = 150; break;
+            default: baseCoins = 100; baseExp = 50; break;
         }
 
-        int bonusExpFromPoints = Mathf.FloorToInt(playerPoints / 7f);
-        int bonusCoinsFromPoints = Mathf.FloorToInt(playerPoints / 10f);
-
-        int lifeBonusCoins = 0;
-        if (remainingHearts >= 5) lifeBonusCoins = 300;
-        else if (remainingHearts == 4) lifeBonusCoins = 200;
-        else if (remainingHearts == 3) lifeBonusCoins = 100;
-        else if (remainingHearts == 2) lifeBonusCoins = 50;
-
-        totalExp = baseExp + bonusExpFromPoints;
-        totalCoins = baseCoins + bonusCoinsFromPoints + lifeBonusCoins;
+        totalExp = baseExp;
+        totalCoins = baseCoins;
     }
 
     // ========== BUTTON HANDLERS ==========

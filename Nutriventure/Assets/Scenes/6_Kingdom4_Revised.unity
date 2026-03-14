@@ -49276,6 +49276,7 @@ MonoBehaviour:
   showInGameCounter: 1
   autoUpdateInGameCounter: 1
   inGameCounterPrefix: 'Collected Product: '
+  confirmButtonDelay: 0.6
   collectedProductIDs: []
 --- !u!1 &450520344
 GameObject:
@@ -50734,7 +50735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e446c4b027114394684646d452045d29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_SwipeLook
-  sensitivity: 0.1
+  sensitivity: 0.05
   invertX: 0
   invertY: 1
   uiInput: {fileID: 624284576}

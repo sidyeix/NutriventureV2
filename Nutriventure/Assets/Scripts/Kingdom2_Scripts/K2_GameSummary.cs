@@ -1401,28 +1401,28 @@ public class K2_GameSummary : MonoBehaviour
     private void CalculateCoinReward()
     {
         int stars = CalculateStars();
-        int score = scoringSystem != null ? scoringSystem.GetCurrentScore() : 0;
 
-        int starCoins = stars * coinsPerStar;
-        int scoreCoins = Mathf.Max(0, (score / 300) * baseCoinsPerScore);
-        int totalBaseCoins = starCoins + scoreCoins;
-
-        float multiplier = isVictory ? winMultiplier : loseMultiplier;
-        calculatedCoinsEarned = Mathf.Max(1, Mathf.RoundToInt(totalBaseCoins * multiplier));
-
-        // Calculate EXP reward (same formula as K1)
-        int baseExp;
         switch (stars)
         {
-            case 3: baseExp = 1000; break;
-            case 2: baseExp = 500; break;
-            case 1: baseExp = 100; break;
-            default: baseExp = 0; break;
+            case 3:
+                calculatedCoinsEarned = 1000;
+                calculatedExpEarned = 500;
+                break;
+            case 2:
+                calculatedCoinsEarned = 700;
+                calculatedExpEarned = 300;
+                break;
+            case 1:
+                calculatedCoinsEarned = 400;
+                calculatedExpEarned = 150;
+                break;
+            default:
+                calculatedCoinsEarned = 100;
+                calculatedExpEarned = 50;
+                break;
         }
-        int bonusExpFromScore = Mathf.FloorToInt(score / 7f);
-        calculatedExpEarned = baseExp + bonusExpFromScore;
 
-        Debug.Log($"Coin calculation: Stars={stars}, Score={score}, StarCoins={starCoins}, ScoreCoins={scoreCoins}, Multiplier={multiplier}, TotalCoins={calculatedCoinsEarned}, TotalExp={calculatedExpEarned}");
+        Debug.Log($"K2 rewards set by stars: Stars={stars}, Coins={calculatedCoinsEarned}, Exp={calculatedExpEarned}");
     }
 
     // Save key to database only when continue button is clicked

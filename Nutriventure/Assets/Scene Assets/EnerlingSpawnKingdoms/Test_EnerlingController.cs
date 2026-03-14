@@ -41,6 +41,14 @@ public class Test_EnerlingController : MonoBehaviour
     public string[] interactionIdleAnimations = { "Idle1", "Idle2", "LookAround", "Stretch" };
     public float interactionAnimationInterval = 3f;
 
+    [Header("Proximity Optimization")]
+    [Tooltip("Distance at which the enerling wakes up and starts moving/animating")]
+    public float activationDistance = 30f;
+    [Tooltip("Extra buffer before going back to sleep (prevents flickering)")]
+    public float deactivationBuffer = 5f;
+    [Tooltip("How often to check player distance while sleeping")]
+    public float sleepCheckInterval = 0.5f;
+
     [HideInInspector] public NavMeshAgent navAgent;
     private Animator animator;
     private Vector3 spawnPosition;
@@ -83,6 +91,14 @@ public class Test_EnerlingController : MonoBehaviour
     // Stagger offset for coroutine starts (avoid all ticking same frame)
     private static int spawnIndex = 0;
 
+    // Proximity sleep state
+    private static Transform cachedPlayerTransform;
+    private static bool playerCacheDirty = true;
+    private bool isSleeping = true; // Start asleep — wake when player is near
+    private float activationDistSqr;
+    private float deactivationDistSqr;
+    private float nextSleepCheckTime;
+
     void Awake()
     {
         if (allEnerlingsSet.Add(this))
@@ -101,6 +117,9 @@ public class Test_EnerlingController : MonoBehaviour
         // Pre-compute squared distances
         minDistSqr = minDistanceBetweenEnerlings * minDistanceBetweenEnerlings;
         socialDistSqr = socialDistance * socialDistance;
+        activationDistSqr = activationDistance * activationDistance;
+        float totalDist = activationDistance + deactivationBuffer;
+        deactivationDistSqr = totalDist * totalDist;
 
         // Disable NavMeshAgent rotation — we handle facing direction manually
         if (navAgent != null)
@@ -115,17 +134,19 @@ public class Test_EnerlingController : MonoBehaviour
             animator.applyRootMotion = false;
         }
 
-        // DO NOT create virtual camera on start — defer until interaction (saves memory + CPU)
-
-        // Stagger coroutine starts so enerlings don't all tick on the same frame
-        float stagger = (spawnIndex++) * 0.05f;
-        StartCoroutine(StartBehaviorCoroutinesStaggered(stagger));
-
-        // Ensure animator starts in idle state
-        if (animator != null)
+        // Cache player transform once (shared across all enerlings)
+        if (playerCacheDirty || cachedPlayerTransform == null)
         {
-            animator.SetBool(isWalkingHash, false);
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null) cachedPlayerTransform = player.transform;
+            playerCacheDirty = false;
         }
+
+        // Start asleep — disable animator and agent until player is near
+        isSleeping = true;
+        nextSleepCheckTime = Time.time + Random.Range(0f, sleepCheckInterval);
+        if (animator != null) animator.enabled = false;
+        if (navAgent != null) navAgent.isStopped = true;
 
         // Pre-calculate first idle threshold
         nextIdleThreshold = Random.Range(minIdleTime, maxIdleTime);
@@ -140,11 +161,48 @@ public class Test_EnerlingController : MonoBehaviour
 
     void Update()
     {
+        // --- Proximity sleep/wake check ---
+        if (cachedPlayerTransform != null && !isInteracting)
+        {
+            float sqrDist = (transform.position - cachedPlayerTransform.position).sqrMagnitude;
+
+            if (isSleeping)
+            {
+                // Only check at throttled interval while sleeping
+                if (Time.time < nextSleepCheckTime) return;
+                nextSleepCheckTime = Time.time + sleepCheckInterval;
+
+                if (sqrDist <= activationDistSqr)
+                {
+                    WakeUp();
+                }
+                else
+                {
+                    return; // Stay asleep — skip all Update logic
+                }
+            }
+            else
+            {
+                // Check if player moved far enough to go back to sleep
+                if (sqrDist > deactivationDistSqr)
+                {
+                    GoToSleep();
+                    return;
+                }
+            }
+        }
+        else if (isSleeping)
+        {
+            return; // No player ref yet — stay asleep
+        }
+
+        // --- Original Update logic (only runs when awake) ---
+
         // Only look at camera if interacting with an external camera
         if (isInteracting && currentVirtualCamera != null && currentVirtualCamera != virtualCamera)
         {
             LookAtCamera(currentVirtualCamera.transform.position);
-            return; // Skip roaming logic while interacting
+            return;
         }
 
         if (navAgent == null || !navAgent.isOnNavMesh) return;
@@ -205,6 +263,56 @@ public class Test_EnerlingController : MonoBehaviour
         virtualCamera.m_Lens.FieldOfView = 60f;
         virtualCamera.LookAt = null;
         virtualCamera.Follow = null;
+    }
+
+    // --- Proximity Sleep / Wake ---
+
+    private void WakeUp()
+    {
+        if (!isSleeping) return;
+        isSleeping = false;
+
+        // Re-enable animator
+        if (animator != null)
+        {
+            animator.enabled = true;
+            animator.SetBool(isWalkingHash, false);
+        }
+        wasMoving = false;
+
+        // Re-enable NavMeshAgent
+        if (navAgent != null && navAgent.isOnNavMesh)
+            navAgent.isStopped = false;
+
+        // Staggered start for behavior coroutines
+        float stagger = (spawnIndex++) * 0.05f;
+        StartCoroutine(StartBehaviorCoroutinesStaggered(stagger));
+    }
+
+    private void GoToSleep()
+    {
+        if (isSleeping) return;
+        isSleeping = true;
+
+        // Stop all behavior coroutines
+        StopBehaviorCoroutines();
+
+        // Stop NavMeshAgent
+        if (navAgent != null && navAgent.isOnNavMesh)
+        {
+            navAgent.isStopped = true;
+            navAgent.ResetPath();
+        }
+
+        // Disable animator to save CPU
+        if (animator != null)
+        {
+            animator.SetBool(isWalkingHash, false);
+            animator.enabled = false;
+        }
+        wasMoving = false;
+
+        followingTarget = null;
     }
 
     private void LookAtCamera(Vector3 cameraPosition)
@@ -561,7 +669,7 @@ public class Test_EnerlingController : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             var enerling = list[i];
-            if (enerling != null && !enerling.isInteracting)
+            if (enerling != null && !enerling.isInteracting && !enerling.isSleeping)
             {
                 enerling.navAgent.isStopped = true;
                 enerling.navAgent.ResetPath();
@@ -583,7 +691,7 @@ public class Test_EnerlingController : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             var enerling = list[i];
-            if (enerling != null && !enerling.isInteracting)
+            if (enerling != null && !enerling.isInteracting && !enerling.isSleeping)
             {
                 enerling.navAgent.isStopped = false;
                 enerling.StartBehaviorCoroutines();

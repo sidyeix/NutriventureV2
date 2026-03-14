@@ -46,6 +46,11 @@ public class CollectProducts : MonoBehaviour
     public enum ProductType { Regular, Dummy }
     private ProductType currentProductType = ProductType.Regular;
 
+    // Throttle product proximity checks
+    private const float PRODUCT_CHECK_INTERVAL = 0.15f;
+    private float nextProductCheckTime;
+    private float pickupRangeSqr;
+
     // Events for other systems
     public System.Action<GameObject> OnPickupStart;
     public System.Action<GameObject> OnPickupComplete;
@@ -68,6 +73,7 @@ public class CollectProducts : MonoBehaviour
 
         // Convert parameter name to hash for better performance
         pickupHash = Animator.StringToHash(pickupParameterName);
+        pickupRangeSqr = pickupRange * pickupRange;
 
         // Set up the regular pickup button
         if (pickupButton != null)
@@ -178,8 +184,12 @@ public class CollectProducts : MonoBehaviour
         }
         else
         {
-            // Only check for nearby products when not picking up
-            CheckForNearbyProducts();
+            // Throttle proximity checks instead of running every frame
+            if (Time.time >= nextProductCheckTime)
+            {
+                nextProductCheckTime = Time.time + PRODUCT_CHECK_INTERVAL;
+                CheckForNearbyProducts();
+            }
         }
     }
 
@@ -192,19 +202,21 @@ public class CollectProducts : MonoBehaviour
 
         GameObject closestRegularProduct = null;
         GameObject closestDummyProduct = null;
-        float closestRegularDistance = float.MaxValue;
-        float closestDummyDistance = float.MaxValue;
+        float closestRegularDistSqr = float.MaxValue;
+        float closestDummyDistSqr = float.MaxValue;
+
+        Vector3 myPos = transform.position;
 
         // Check NaturalSugar products
         foreach (GameObject product in naturalSugarProducts)
         {
             if (product == null) continue;
 
-            float distance = Vector3.Distance(transform.position, product.transform.position);
-            if (distance < pickupRange && distance < closestRegularDistance)
+            float distSqr = (myPos - product.transform.position).sqrMagnitude;
+            if (distSqr < pickupRangeSqr && distSqr < closestRegularDistSqr)
             {
                 closestRegularProduct = product;
-                closestRegularDistance = distance;
+                closestRegularDistSqr = distSqr;
             }
         }
 
@@ -213,11 +225,11 @@ public class CollectProducts : MonoBehaviour
         {
             if (product == null) continue;
 
-            float distance = Vector3.Distance(transform.position, product.transform.position);
-            if (distance < pickupRange && distance < closestRegularDistance)
+            float distSqr = (myPos - product.transform.position).sqrMagnitude;
+            if (distSqr < pickupRangeSqr && distSqr < closestRegularDistSqr)
             {
                 closestRegularProduct = product;
-                closestRegularDistance = distance;
+                closestRegularDistSqr = distSqr;
             }
         }
 
@@ -228,11 +240,11 @@ public class CollectProducts : MonoBehaviour
             {
                 if (product == null) continue;
 
-                float distance = Vector3.Distance(transform.position, product.transform.position);
-                if (distance < pickupRange && distance < closestDummyDistance)
+                float distSqr = (myPos - product.transform.position).sqrMagnitude;
+                if (distSqr < pickupRangeSqr && distSqr < closestDummyDistSqr)
                 {
                     closestDummyProduct = product;
-                    closestDummyDistance = distance;
+                    closestDummyDistSqr = distSqr;
                 }
             }
         }
@@ -241,10 +253,10 @@ public class CollectProducts : MonoBehaviour
         bool showDummyButton = false;
         bool showRegularButton = false;
 
-        if (closestDummyProduct != null && closestDummyDistance <= pickupRange)
+        if (closestDummyProduct != null && closestDummyDistSqr <= pickupRangeSqr)
         {
             // Dummy product is closer or only dummy available
-            if (closestRegularProduct == null || closestDummyDistance <= closestRegularDistance)
+            if (closestRegularProduct == null || closestDummyDistSqr <= closestRegularDistSqr)
             {
                 currentNearbyProduct = closestDummyProduct;
                 currentProductType = ProductType.Dummy;
@@ -259,7 +271,7 @@ public class CollectProducts : MonoBehaviour
                 showRegularButton = true;
             }
         }
-        else if (closestRegularProduct != null && closestRegularDistance <= pickupRange)
+        else if (closestRegularProduct != null && closestRegularDistSqr <= pickupRangeSqr)
         {
             currentNearbyProduct = closestRegularProduct;
             currentProductType = ProductType.Regular;

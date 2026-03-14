@@ -97,9 +97,9 @@ public class GlobalMapManager : MonoBehaviour
         kingdom4Button.onClick.RemoveAllListeners();
 
         kingdom1Button.onClick.AddListener(() => TryLoad(kingdom1Scene, true));
-        kingdom2Button.onClick.AddListener(() => TryLoad(kingdom2Scene, GameDataManager.Instance.HasSugariaKey()));
-        kingdom3Button.onClick.AddListener(() => TryLoad(kingdom3Scene, GameDataManager.Instance.HasPreserviaKey()));
-        kingdom4Button.onClick.AddListener(() => TryLoad(kingdom4Scene, GameDataManager.Instance.HasAllerthiaKey()));
+        kingdom2Button.onClick.AddListener(() => TryLoad(kingdom2Scene, IsKingdomUnlocked(2)));
+        kingdom3Button.onClick.AddListener(() => TryLoad(kingdom3Scene, IsKingdomUnlocked(3)));
+        kingdom4Button.onClick.AddListener(() => TryLoad(kingdom4Scene, IsKingdomUnlocked(4)));
     }
 
     public void UpdateKingdomButtons()
@@ -107,12 +107,32 @@ public class GlobalMapManager : MonoBehaviour
         if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
             return;
 
-        kingdom1Button.interactable = true; // Kingdom 1 is always accessible
-        kingdom2Button.interactable = GameDataManager.Instance.HasSugariaKey();
-        kingdom3Button.interactable = GameDataManager.Instance.HasPreserviaKey();
-        kingdom4Button.interactable = GameDataManager.Instance.HasAllerthiaKey();
+        kingdom1Button.interactable = true;
+        kingdom2Button.interactable = IsKingdomUnlocked(2);
+        kingdom3Button.interactable = IsKingdomUnlocked(3);
+        kingdom4Button.interactable = IsKingdomUnlocked(4);
 
         Debug.Log($"Kingdom Buttons Updated - K1: true, K2 (Sugaria): {kingdom2Button.interactable}, K3 (Preservia): {kingdom3Button.interactable}, K4 (Allerthia): {kingdom4Button.interactable}");
+    }
+
+    /// <summary>
+    /// Checks if a kingdom is unlocked based on collected keys in GameData.
+    /// Kingdom 1 = always unlocked, 2 = Sugaria key, 3 = Preservia key, 4 = Allerthia key.
+    /// </summary>
+    private bool IsKingdomUnlocked(int kingdomNumber)
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return false;
+
+        var gd = GameDataManager.Instance.CurrentGameData;
+        switch (kingdomNumber)
+        {
+            case 1: return true;
+            case 2: return gd.HasSugariaKey();
+            case 3: return gd.HasPreserviaKey();
+            case 4: return gd.HasAllerthiaKey();
+            default: return false;
+        }
     }
 
     public void TryLoad(string sceneName, bool canLoad)
