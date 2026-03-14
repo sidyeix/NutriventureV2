@@ -125,6 +125,7 @@ public class IngredientDatabase : ScriptableObject
         public Rarity rarity = Rarity.Common;
         public KingdomOrigin kingdom = KingdomOrigin.NutriKingdom;
         public bool isUnlocked = false; // This will be set by PersistentDataManager at runtime
+        public bool isEmulsifier = false; // New checkbox for emulsifier flag
 
         [Header("PowerUps")]
         public List<PowerUpInfo> powerUps = new List<PowerUpInfo>();
@@ -515,6 +516,18 @@ public class IngredientDatabase : ScriptableObject
         return filtered;
     }
 
+    // Get ingredients that are emulsifiers
+    public List<IngredientInfo> GetEmulsifierIngredients()
+    {
+        return ingredients.FindAll(i => i.isEmulsifier && i.isUnlocked);
+    }
+
+    // Get ingredients that are not emulsifiers
+    public List<IngredientInfo> GetNonEmulsifierIngredients()
+    {
+        return ingredients.FindAll(i => !i.isEmulsifier && i.isUnlocked);
+    }
+
     // Get organ sprite by name
     public Sprite GetOrganSprite(string organName)
     {
@@ -643,6 +656,7 @@ public class IngredientDatabase : ScriptableObject
             rarity = original.rarity,
             kingdom = original.kingdom,
             isUnlocked = original.isUnlocked,
+            isEmulsifier = original.isEmulsifier, // Copy the emulsifier flag
             enerlingSprite = original.enerlingSprite,
             modelPrefab = original.modelPrefab,
             animatorController = original.animatorController,
