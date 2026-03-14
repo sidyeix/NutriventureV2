@@ -28,6 +28,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -107,6 +108,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 0
       amount: 10
@@ -191,6 +193,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 2
       amount: 1
@@ -270,6 +273,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 2
       amount: 2
@@ -348,6 +352,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 10
@@ -428,6 +433,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 1
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 4
       amount: 50
@@ -505,6 +511,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 1
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 1
@@ -584,6 +591,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 2
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 5
@@ -664,6 +672,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 2
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 0
       amount: 20
@@ -744,6 +753,7 @@ MonoBehaviour:
     rarity: 1
     kingdom: 3
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 1
       amount: 2
@@ -823,6 +833,7 @@ MonoBehaviour:
     rarity: 1
     kingdom: 2
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 20
@@ -902,6 +913,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 3
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 100
@@ -980,6 +992,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 2
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 4
       amount: 200
@@ -1057,6 +1070,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 2
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 50
@@ -1134,6 +1148,7 @@ MonoBehaviour:
     rarity: 1
     kingdom: 2
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 200
@@ -1212,6 +1227,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 50
@@ -1288,3 +1304,91 @@ MonoBehaviour:
       I work best as part of a team!"
     audioClip: {fileID: 8300000, guid: 3146485e5cd693343b2f994f8863a9dc, type: 3}
     endingCutscene: {fileID: 32900000, guid: c2bee708e262f5847b55c1944604197e, type: 3}
+  - ingredientName: Xanthan
+    rarity: 1
+    kingdom: 0
+    isUnlocked: 0
+    isEmulsifier: 1
+    powerUps:
+    - powerUpType: 3
+      amount: 50
+      powerUpIcon: {fileID: 21300000, guid: e43d86d6599418b4cb5bcd5c98f96dde, type: 3}
+      cooldownMinutes: 5
+      description: Earn 50 coins every 5 minutes while playing when this Enerling
+        is equipped.
+    enerlingSprite: {fileID: 21300000, guid: cac53f36d9bb82b4a8947b8362e84b4e, type: 3}
+    modelPrefab: {fileID: 7204146015282184607, guid: a326ba94d937de44abd4196785c4bd08, type: 3}
+    maxCatch: 20
+    currentCatchCount: 0
+    animatorController: {fileID: 9100000, guid: 80a07111e409922478dde27e7a64d44f, type: 2}
+    baseLife: 120
+    currentLife: 120
+    armorPercent: 25
+    baseDamage: 18
+    immuneToOrganDamage: 0
+    beneficialOrgans:
+    - Stomach
+    - Intestine
+    targetOrgans:
+    - Pancreas
+    skill1:
+      skillName: Gel Dash
+      type: 1
+      baseValue: 18
+      minValue: 15
+      maxValue: 22
+      useRandomRange: 1
+      additionalEffectPerOrgan: 5
+      cooldownTurns: 0
+      skillSprite: {fileID: 21300000, guid: 096186633042b59449e86c0b8406a68d, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 91098868fd7d4524c910f318a3b4302e, type: 3}
+      skillDescription: Xanthan dashes forward with a bouncy gel body and slams into
+        the enemy, dealing damage.
+    skill2:
+      skillName: Gel Guard
+      type: 2
+      baseValue: 50
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 3
+      skillSprite: {fileID: 21300000, guid: 6afba315e0c048c4a9202db6d162266a, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 3b1a77b6fcbbf0c43807db0a18aded48, type: 3}
+      skillDescription: Xanthan thickens its gel body into a protective shield, blocking
+        50% of incoming damage for one turn.
+    skill3:
+      skillName: Thickening Recovery
+      type: 0
+      baseValue: 30
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 3
+      skillSprite: {fileID: 21300000, guid: e45f4ad52232c044ba74aeda25690da4, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 0dbbe1112e5274448972aff99d9e14a9, type: 3}
+      skillDescription: Xanthan releases stabilizing gel energy that restores health
+        to itself or an ally.
+    skill4:
+      skillName: Viscous Burst
+      type: 1
+      baseValue: 25
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 4
+      cooldownTurns: 6
+      skillSprite: {fileID: 21300000, guid: 1c2ab22859f046b4c9986bcbf3e84578, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: fa1eabdc7d610a448a41ff11e1733c40, type: 3}
+      skillDescription: Xanthan expands and releases a sticky burst that damages
+        all enemies nearby.
+    enerlingDescription: Xanthan is a bouncy gel-like Enerling formed from stabilizing
+      emulsifiers. Known for its thick and protective body, it can shield allies,
+      heal wounds, and burst with sticky energy to stop enemies.
+    enerlingStory: "Call me Xanthan! I help keep foods smooth and stable by holding
+      ingredients together. I make sauces thick and creamy so they don\u2019t separate.
+      But remember\u2014too much processed food with additives like me isn\u2019t
+      always the healthiest choice. Balance is the key to a strong body!"
+    audioClip: {fileID: 8300000, guid: 8e879087aadbdf14a8a8b902d3aee258, type: 3}
+    endingCutscene: {fileID: 0}
