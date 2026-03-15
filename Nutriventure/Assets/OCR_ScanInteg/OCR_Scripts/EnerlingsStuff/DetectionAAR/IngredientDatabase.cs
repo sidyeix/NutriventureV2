@@ -133,6 +133,9 @@ public class IngredientDatabase : ScriptableObject
         [Header("Visuals")]
         public Sprite enerlingSprite;
         public GameObject modelPrefab;
+        public GameObject skinPrefab;
+        public Sprite skinSprite;
+        public bool isSkinEquipped = false;
 
         [Header("Catch Mechanics")]
         [Tooltip("Maximum times this enerling can be caught")]
@@ -528,6 +531,12 @@ public class IngredientDatabase : ScriptableObject
         return ingredients.FindAll(i => !i.isEmulsifier && i.isUnlocked);
     }
 
+    // Get enerlings that have a skin prefab available
+    public List<IngredientInfo> GetEnerlingsWithSkin()
+    {
+        return ingredients.FindAll(i => i.isUnlocked && i.skinPrefab != null);
+    }
+
     // Get organ sprite by name
     public Sprite GetOrganSprite(string organName)
     {
@@ -659,6 +668,9 @@ public class IngredientDatabase : ScriptableObject
             isEmulsifier = original.isEmulsifier, // Copy the emulsifier flag
             enerlingSprite = original.enerlingSprite,
             modelPrefab = original.modelPrefab,
+                skinPrefab = original.skinPrefab,
+                skinSprite = original.skinSprite,
+                isSkinEquipped = original.isSkinEquipped,
             animatorController = original.animatorController,
             baseLife = original.baseLife,
             currentLife = original.baseLife, // Start with full life
