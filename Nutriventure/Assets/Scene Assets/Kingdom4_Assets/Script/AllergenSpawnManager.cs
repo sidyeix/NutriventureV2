@@ -75,7 +75,13 @@ public class AllergenSpawnManager : MonoBehaviour
     // ================= SPAWNING =================
     public void SpawnAllergens()
     {
-        if (hasSpawned) return;
+        EnsureInitialized();
+
+        if (hasSpawned && spawnedAllergens.Count > 0) return;
+        if (hasSpawned && spawnedAllergens.Count == 0)
+        {
+            hasSpawned = false;
+        }
 
         if (spawnPoints.Count == 0 || allergenPrefabMap.Count == 0)
         {
@@ -95,6 +101,26 @@ public class AllergenSpawnManager : MonoBehaviour
 
         if (showDebugInfo)
             Debug.Log($"Spawned {spawnedAllergens.Count} allergens.");
+    }
+
+    public void ForceRespawnAllergens()
+    {
+        EnsureInitialized();
+        ClearAllAllergens();
+        SpawnAllergens();
+    }
+
+    private void EnsureInitialized()
+    {
+        if (spawnPoints.Count == 0)
+        {
+            CollectChildSpawnPoints();
+        }
+
+        if (allergenPrefabMap.Count == 0)
+        {
+            InitializeAllergenMap();
+        }
     }
 
     private void SpawnOneOfEach()
