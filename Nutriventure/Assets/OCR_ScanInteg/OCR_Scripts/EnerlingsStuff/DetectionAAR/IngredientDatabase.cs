@@ -668,9 +668,9 @@ public class IngredientDatabase : ScriptableObject
             isEmulsifier = original.isEmulsifier, // Copy the emulsifier flag
             enerlingSprite = original.enerlingSprite,
             modelPrefab = original.modelPrefab,
-                skinPrefab = original.skinPrefab,
-                skinSprite = original.skinSprite,
-                isSkinEquipped = original.isSkinEquipped,
+            skinPrefab = original.skinPrefab,
+            skinSprite = original.skinSprite,
+            isSkinEquipped = original.isSkinEquipped,
             animatorController = original.animatorController,
             baseLife = original.baseLife,
             currentLife = original.baseLife, // Start with full life
