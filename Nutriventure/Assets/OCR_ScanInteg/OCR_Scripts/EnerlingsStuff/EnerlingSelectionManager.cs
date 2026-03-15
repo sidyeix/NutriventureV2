@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using UnityEngine.SceneManagement;
 using System.Linq;
 
 public class EnerlingSelectionManager : MonoBehaviour
@@ -60,6 +61,10 @@ public class EnerlingSelectionManager : MonoBehaviour
     public Button selectButton;
     public TextMeshProUGUI selectButtonText;
 
+    [Header("Skip Button")]
+    public Button skipButton;
+    public string scanOCRSceneName = "ScanOCR";
+
     [Header("Timeline System")]
     public PlayableDirector timelineDirector;
     public PlayableAsset selectionTimelineAsset;
@@ -83,6 +88,12 @@ public class EnerlingSelectionManager : MonoBehaviour
     [Header("Skill Button Settings")]
     public Sprite defaultSkillIcon;
 
+    [Header("Health Regen UI")]
+    [Tooltip("Sprite to use for slider fill when enerling is regenerating health")]
+    public Sprite healingFillSprite;
+    [Tooltip("Default sprite for slider fill (normal state)")]
+    public Sprite normalFillSprite;
+
     // Current filters
     private IngredientDatabase.Rarity currentRarityFilter = IngredientDatabase.Rarity.Common;
     private IngredientDatabase.KingdomOrigin currentKingdomFilter = IngredientDatabase.KingdomOrigin.NutriKingdom;
@@ -102,9 +113,51 @@ public class EnerlingSelectionManager : MonoBehaviour
     private GameObject spawnedPlayerEnerling;
     private GameObject spawnedOpponentEnerling;
 
+    // Regen text oscillation state
+    private Coroutine regenTextCoroutine;
+    private bool isShowingRegenText = false;
+    private float regenTickTimer = 0f;
+    private const float REGEN_TICK_INTERVAL = 1f;
+
     void Start()
     {
         StartCoroutine(InitializeAfterDelay());
+    }
+
+    void Update()
+    {
+        // Tick enerling health regen once per second
+        if (PersistentDataManager.Instance != null)
+        {
+            regenTickTimer += Time.deltaTime;
+            if (regenTickTimer >= REGEN_TICK_INTERVAL)
+            {
+                regenTickTimer = 0f;
+                PersistentDataManager.Instance.ProcessAllEnerlingHealthRegen();
+
+                // Update slider value live if selected enerling is regenerating
+                if (!string.IsNullOrEmpty(selectedEnerlingName) && ingredientDatabase != null)
+                {
+                    var enerling = ingredientDatabase.GetIngredientInfo(selectedEnerlingName);
+                    if (enerling != null && lifeSlider != null)
+                    {
+                        lifeSlider.value = enerling.currentLife;
+
+                        // If fully healed, reset UI to normal
+                        if (enerling.currentLife >= enerling.baseLife)
+                        {
+                            StopRegenTextLoop();
+                            SetSliderFillSprite(false);
+                            if (currentLifeText != null)
+                            {
+                                currentLifeText.text = enerling.LifeText;
+                                currentLifeText.color = enerling.LifeTextColor;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     IEnumerator InitializeAfterDelay()
@@ -114,12 +167,43 @@ public class EnerlingSelectionManager : MonoBehaviour
         // STOP OTHER PLAYABLE DIRECTORS FIRST
         StopOtherPlayableDirectors();
 
+        // Ensure all damaged enerlings have regen running
+        if (PersistentDataManager.Instance != null)
+            PersistentDataManager.Instance.EnsureAllDamagedEnerlingsRegenerating();
+
         InitializeDatabase();
         SetupFilterButtons();
         SetupKingdomButtons();
+        SetupSkipButton();
         DisplayAllUnlockedEnerlings();
         UpdateSelectButton();
         LoadSelectedEnerling();
+    }
+
+    void SetupSkipButton()
+    {
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveAllListeners();
+            skipButton.onClick.AddListener(OnSkipButtonClicked);
+            Debug.Log("Skip button initialized in EnerlingSelectionManager");
+        }
+    }
+
+    void OnSkipButtonClicked()
+    {
+        if (isTimelinePlaying) return;
+
+        Debug.Log($"Skip button clicked — loading {scanOCRSceneName} scene");
+
+        if (!string.IsNullOrEmpty(scanOCRSceneName))
+        {
+            SceneManager.LoadScene(scanOCRSceneName);
+        }
+        else
+        {
+            Debug.LogError("ScanOCR scene name not set in EnerlingSelectionManager!");
+        }
     }
 
     // SIMPLE FIX: Stop other PlayableDirectors
@@ -540,10 +624,27 @@ public class EnerlingSelectionManager : MonoBehaviour
         enerlingInfoPanel.SetActive(true);
         enerlingNameText.text = enerling.ingredientName;
         rarityIconImage.sprite = ingredientDatabase.GetRarityIcon(enerling.rarity);
-        currentLifeText.text = enerling.LifeText;
-        currentLifeText.color = enerling.LifeTextColor;
         lifeSlider.maxValue = enerling.baseLife;
         lifeSlider.value = enerling.currentLife;
+
+        // Check if this enerling is regenerating health
+        bool isRegenerating = PersistentDataManager.Instance != null
+            && PersistentDataManager.Instance.IsEnerlingRegenerating(enerling.ingredientName);
+
+        Debug.Log($"[RegenUI] DisplayEnerlingInfo: {enerling.ingredientName} life={enerling.currentLife}/{enerling.baseLife} regen={isRegenerating}");
+
+        if (isRegenerating)
+        {
+            SetSliderFillSprite(true);
+            StartRegenTextLoop(enerling);
+        }
+        else
+        {
+            SetSliderFillSprite(false);
+            StopRegenTextLoop();
+            currentLifeText.text = enerling.LifeText;
+            currentLifeText.color = enerling.LifeTextColor;
+        }
 
         int armorValue = CalculateArmorValue(enerling);
         armorText.text = $"{armorValue}/{armorValue}";
@@ -1243,5 +1344,95 @@ public class EnerlingSelectionManager : MonoBehaviour
         {
             DisplayEnerlingInfo(selectedEnerlingName);
         }
+    }
+
+    // ==================== HEALTH REGEN UI ====================
+
+    void SetSliderFillSprite(bool healing)
+    {
+        if (lifeSlider == null) return;
+
+        if (lifeSlider.fillRect == null)
+        {
+            Debug.LogWarning("[RegenUI] lifeSlider.fillRect is null — assign Fill Rect on the Slider component.");
+            return;
+        }
+
+        Image fillImage = lifeSlider.fillRect.GetComponent<Image>();
+        if (fillImage == null)
+        {
+            Debug.LogWarning("[RegenUI] No Image component on lifeSlider.fillRect.");
+            return;
+        }
+
+        if (healing)
+        {
+            if (healingFillSprite == null)
+            {
+                Debug.LogWarning("[RegenUI] healingFillSprite is not assigned in Inspector!");
+                return;
+            }
+            fillImage.sprite = healingFillSprite;
+            fillImage.type = Image.Type.Sliced;
+        }
+        else
+        {
+            if (normalFillSprite == null)
+            {
+                Debug.LogWarning("[RegenUI] normalFillSprite is not assigned in Inspector!");
+                return;
+            }
+            fillImage.sprite = normalFillSprite;
+            fillImage.type = Image.Type.Sliced;
+        }
+    }
+
+    void StartRegenTextLoop(IngredientDatabase.IngredientInfo enerling)
+    {
+        StopRegenTextLoop();
+        regenTextCoroutine = StartCoroutine(RegenTextLoopCoroutine(enerling));
+    }
+
+    void StopRegenTextLoop()
+    {
+        if (regenTextCoroutine != null)
+        {
+            StopCoroutine(regenTextCoroutine);
+            regenTextCoroutine = null;
+        }
+        isShowingRegenText = false;
+    }
+
+    IEnumerator RegenTextLoopCoroutine(IngredientDatabase.IngredientInfo enerling)
+    {
+        while (enerling != null && enerling.currentLife < enerling.baseLife)
+        {
+            // Show "Regenerating..." for 3 seconds
+            if (currentLifeText != null)
+            {
+                currentLifeText.text = "Regenerating...";
+                currentLifeText.color = new Color(0.3f, 1f, 0.3f); // Green
+            }
+            isShowingRegenText = true;
+            yield return new WaitForSeconds(3f);
+
+            // Show actual life text for 5 seconds
+            if (currentLifeText != null)
+            {
+                currentLifeText.text = enerling.LifeText;
+                currentLifeText.color = enerling.LifeTextColor;
+            }
+            isShowingRegenText = false;
+            yield return new WaitForSeconds(5f);
+        }
+
+        // Regen complete — show final life
+        if (currentLifeText != null)
+        {
+            currentLifeText.text = enerling.LifeText;
+            currentLifeText.color = enerling.LifeTextColor;
+        }
+        SetSliderFillSprite(false);
+        regenTextCoroutine = null;
     }
 }

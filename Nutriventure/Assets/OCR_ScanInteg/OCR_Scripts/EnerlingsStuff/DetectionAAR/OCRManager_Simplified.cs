@@ -41,10 +41,26 @@ public class OCRManager_Simplified : MonoBehaviour
     [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip scanSound;
+    [Tooltip("Background music to play while in the scan scene")]
+    public AudioClip backgroundMusic;
 
-    [Header("Product Manager UI")]
-    public TMP_Text productStatusText; // Optional: Display product scan status
-    public Button viewScannedProductsButton; // Optional: Button to view scanned products
+    [Header("Heart Panel (Life System)")]
+    [Tooltip("Parent transform inside the heart panel to hold heart images (add HorizontalLayoutGroup)")]
+    public Transform heartContainer;
+    [Tooltip("Sprite for a full heart")]
+    public Sprite fullHeartSprite;
+    [Tooltip("Sprite for an empty heart")]
+    public Sprite emptyHeartSprite;
+    [Tooltip("Size of each heart image (width x height)")]
+    public Vector2 heartSize = new Vector2(64f, 64f);
+
+    [Header("Energy & Regen UI")]
+    [Tooltip("Energy text with format '15/15'")]
+    public TextMeshProUGUI energyText;
+    [Tooltip("Text that shows remaining regen time for life (hidden when full)")]
+    public TextMeshProUGUI lifeRegenTimerText;
+    [Tooltip("Text that shows remaining regen time for energy (hidden when full)")]
+    public TextMeshProUGUI energyRegenTimerText;
 
     // State
     private bool isProcessing = false;
@@ -55,6 +71,9 @@ public class OCRManager_Simplified : MonoBehaviour
     private bool waitingForPluginResponse = false;
     private float maxProcessingTime = 10f;
     private string currentProductFingerprint = ""; // Track current product being scanned
+    private System.Collections.Generic.List<Image> heartImages = new System.Collections.Generic.List<Image>();
+
+    private const string PREVIOUS_SCENE_KEY = "ScanOCR_PreviousScene";
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     private WebCamTexture liveCameraTexture;
@@ -62,8 +81,18 @@ public class OCRManager_Simplified : MonoBehaviour
 
     void Start()
     {
+        // Process any offline regen before UI setup
+        if (GameDataManager.Instance != null)
+            GameDataManager.Instance.ProcessOCRBattleRegen();
+
         SetupUI();
+        BuildHeartImages();
+        RefreshLifeEnergyUI();
         InitializeCameraPreview();
+
+        // Play background music
+        if (backgroundMusic != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.PlayMusic(backgroundMusic);
 
         // Button listeners
         if (captureButton != null)
@@ -84,14 +113,33 @@ public class OCRManager_Simplified : MonoBehaviour
         if (exitButton != null)
             exitButton.onClick.AddListener(OnExitButtonClicked);
 
-        if (viewScannedProductsButton != null)
-            viewScannedProductsButton.onClick.AddListener(OnViewScannedProductsClicked);
-
         UpdateStatus("Ready to scan ingredient list");
         UpdateButtonStates();
-        
+
         // Clean up any expired products on start
         ProductManager.CleanupExpiredProducts();
+    }
+
+    private float regenTickTimer = 0f;
+    private const float REGEN_TICK_INTERVAL = 1f;
+
+    void Update()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        // Lazy-build hearts if they weren't created yet
+        if (heartImages.Count == 0 && heartContainer != null)
+            BuildHeartImages();
+
+        // Tick regen once per second (avoids SaveGameData every frame)
+        regenTickTimer += Time.deltaTime;
+        if (regenTickTimer >= REGEN_TICK_INTERVAL)
+        {
+            regenTickTimer = 0f;
+            GameDataManager.Instance.ProcessOCRBattleRegen();
+        }
+
+        RefreshLifeEnergyUI();
     }
 
     void SetupUI()
@@ -110,29 +158,26 @@ public class OCRManager_Simplified : MonoBehaviour
 
         if (noIngredientText != null)
             noIngredientText.gameObject.SetActive(false);
-            
-        if (productStatusText != null)
-            productStatusText.gameObject.SetActive(false);
+
+        if (warningText != null)
+            warningText.gameObject.SetActive(false);
     }
 
     void UpdateButtonStates()
     {
         bool canInteract = !isProcessing && !isCaptureOnCooldown && !waitingForPluginResponse;
-        
+
         if (captureButton != null)
             captureButton.interactable = canInteract;
-        
+
         if (galleryButton != null)
             galleryButton.interactable = !isProcessing && !waitingForPluginResponse;
-        
+
         if (instructionsButton != null)
             instructionsButton.interactable = !isProcessing && !waitingForPluginResponse;
-        
+
         if (exitButton != null)
             exitButton.interactable = !isProcessing && !waitingForPluginResponse;
-            
-        if (viewScannedProductsButton != null)
-            viewScannedProductsButton.interactable = !isProcessing && !waitingForPluginResponse;
     }
 
     void UpdateStatus(string message)
@@ -467,6 +512,13 @@ public class OCRManager_Simplified : MonoBehaviour
             return;
         }
 
+        // Check if player has energy before allowing scan
+        if (GameDataManager.Instance != null && GameDataManager.Instance.GetOCRBattleEnergy() <= 0)
+        {
+            ShowError("No energy remaining! Wait for regeneration.");
+            return;
+        }
+
         isProcessing = true;
         UpdateButtonStates();
         StartCaptureCooldown();
@@ -503,6 +555,13 @@ public class OCRManager_Simplified : MonoBehaviour
             return;
         }
 
+        // Check if player has energy before allowing scan
+        if (GameDataManager.Instance != null && GameDataManager.Instance.GetOCRBattleEnergy() <= 0)
+        {
+            ShowError("No energy remaining! Wait for regeneration.");
+            return;
+        }
+
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!useMockScan)
         {
@@ -521,7 +580,7 @@ public class OCRManager_Simplified : MonoBehaviour
     {
         ResetScanState();
         ClearError();
-        
+
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!useMockScan)
         {
@@ -543,62 +602,20 @@ public class OCRManager_Simplified : MonoBehaviour
 
     public void OnExitButtonClicked()
     {
-        if (!string.IsNullOrEmpty(mainMenuScene))
+        string previousScene = PlayerPrefs.GetString(PREVIOUS_SCENE_KEY, "");
+        if (!string.IsNullOrEmpty(previousScene))
+        {
+            PlayerPrefs.DeleteKey(PREVIOUS_SCENE_KEY);
+            PlayerPrefs.Save();
+            SceneManager.LoadScene(previousScene);
+        }
+        else if (!string.IsNullOrEmpty(mainMenuScene))
         {
             SceneManager.LoadScene(mainMenuScene);
         }
     }
-    
-    public void OnViewScannedProductsClicked()
-    {
-        // Show product scan status
-        DisplayProductStatus();
-    }
 
     // ==================== PRODUCT MANAGER INTEGRATION ====================
-
-    void DisplayProductStatus()
-    {
-        if (productStatusText == null) return;
-        
-        int totalProducts = ProductManager.GetTotalScannedProducts();
-        
-        if (totalProducts == 0)
-        {
-            productStatusText.text = "No products scanned yet.";
-        }
-        else
-        {
-            string status = $"Scanned Products: {totalProducts}\n";
-            
-            if (ProductManager.AnyProductsOnCooldown())
-            {
-                status += "\nProducts on cooldown:";
-                var cooldownProducts = ProductManager.GetAllProductsOnCooldown();
-                foreach (var product in cooldownProducts)
-                {
-                    status += $"\n• Product ID: {product.Key.Substring(0, 8)}...";
-                    status += $" (reset in {FormatTimeSpan(product.Value)})";
-                }
-            }
-            else
-            {
-                status += "\nNo products on cooldown.";
-            }
-            
-            productStatusText.text = status;
-        }
-        
-        productStatusText.gameObject.SetActive(true);
-        StartCoroutine(HideProductStatusAfterDelay(5f));
-    }
-    
-    IEnumerator HideProductStatusAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (productStatusText != null)
-            productStatusText.gameObject.SetActive(false);
-    }
 
     // ==================== CAPTURE COOLDOWN ====================
 
@@ -606,7 +623,7 @@ public class OCRManager_Simplified : MonoBehaviour
     {
         if (captureCooldownCoroutine != null)
             StopCoroutine(captureCooldownCoroutine);
-        
+
         captureCooldownCoroutine = StartCoroutine(CaptureCooldownCoroutine());
     }
 
@@ -614,7 +631,7 @@ public class OCRManager_Simplified : MonoBehaviour
     {
         isCaptureOnCooldown = true;
         UpdateButtonStates();
-        
+
         if (captureButton != null)
         {
             Image buttonImage = captureButton.GetComponent<Image>();
@@ -626,11 +643,11 @@ public class OCRManager_Simplified : MonoBehaviour
         }
 
         float cooldownTimer = captureCooldownDuration;
-        
+
         while (cooldownTimer > 0)
         {
             cooldownTimer -= Time.deltaTime;
-            
+
             if (captureButton != null)
             {
                 TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
@@ -639,7 +656,7 @@ public class OCRManager_Simplified : MonoBehaviour
                     buttonText.text = $"Wait {cooldownTimer:F1}s";
                 }
             }
-            
+
             yield return null;
         }
 
@@ -651,7 +668,7 @@ public class OCRManager_Simplified : MonoBehaviour
                 Color originalColor = buttonImage.color;
                 buttonImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 1f);
             }
-            
+
             TMP_Text buttonText = captureButton.GetComponentInChildren<TMP_Text>();
             if (buttonText != null)
             {
@@ -661,7 +678,7 @@ public class OCRManager_Simplified : MonoBehaviour
 
         isCaptureOnCooldown = false;
         UpdateButtonStates();
-        
+
         captureCooldownCoroutine = null;
     }
 
@@ -676,7 +693,7 @@ public class OCRManager_Simplified : MonoBehaviour
             yield break;
         }
 
-    #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
         UpdateStatus("Processing with ML Kit...");
         
         // Convert image to Base64 for the plugin
@@ -728,10 +745,10 @@ public class OCRManager_Simplified : MonoBehaviour
                 ResetProcessingState();
             }
         }
-    #else
+#else
         // In Unity Editor, use mock scan
         yield return StartCoroutine(MockScanCoroutine());
-    #endif
+#endif
     }
 
     // ==================== OCR RESULT HANDLING ====================
@@ -745,28 +762,39 @@ public class OCRManager_Simplified : MonoBehaviour
     IEnumerator HandleOCRResultCoroutine(string jsonResult)
     {
         waitingForPluginResponse = false;
-        
+
         yield return null;
 
         // Parse the JSON result
         IngredientData ingredientData = JsonParser.ParseIngredientResponse(jsonResult);
-        
+
+        // Case 1: Complete parse failure — no text extracted at all (accidental scan)
         if (ingredientData == null)
         {
             Debug.LogError("Failed to parse OCR result");
-            ShowError("Failed to process scan results");
-            yield break;
-        }
-        
-        if (!ingredientData.IsValid())
-        {
-            ShowError("No ingredient detected");
+            ShowNoTextScanned();
             yield break;
         }
 
+        // Case 2: Plugin returned an error / no text found (accidental scan)
+        if (ingredientData.mode == "error" || ingredientData.status.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase))
+        {
+            Debug.Log("OCR returned error/no text — no energy deducted");
+            ShowNoTextScanned();
+            yield break;
+        }
+
+        // Case 3: Text extracted but no ingredient matched the database
+        if (!ingredientData.IsValid())
+        {
+            ShowNoIngredientFound();
+            yield break;
+        }
+
+        // Case 4: Text extracted but scan failed for other reasons
         if (ingredientData.status != "success")
         {
-            ShowError("Scan failed: " + ingredientData.status);
+            ShowNoIngredientFound();
             yield break;
         }
 
@@ -780,7 +808,7 @@ public class OCRManager_Simplified : MonoBehaviour
             TimeSpan cooldown = ProductManager.GetProductCooldown(ingredientData.fingerprint);
             int remainingScans = ProductManager.GetRemainingScans(ingredientData.fingerprint);
             string timeString = FormatTimeSpan(cooldown);
-            
+
             string errorMessage;
             if (remainingScans == 0)
             {
@@ -790,17 +818,9 @@ public class OCRManager_Simplified : MonoBehaviour
             {
                 errorMessage = $"Product limit reached. {remainingScans} scans remaining after cooldown.\nTry again in {timeString}.";
             }
-            
+
             ShowError(errorMessage);
-            
-            // Update product status if available
-            if (productStatusText != null)
-            {
-                productStatusText.text = $"Product Status:\n{ProductManager.GetProductStatus(ingredientData.fingerprint)}";
-                productStatusText.gameObject.SetActive(true);
-                StartCoroutine(HideProductStatusAfterDelay(5f));
-            }
-            
+
             yield break;
         }
 
@@ -818,33 +838,71 @@ public class OCRManager_Simplified : MonoBehaviour
 
     void ProcessSuccessfulScan(IngredientData ingredientData)
     {
+        // CHECK: Player must have at least one unlocked enerling to proceed to battle
+        bool hasUnlockedEnerling = false;
+        if (PersistentDataManager.Instance != null)
+        {
+            hasUnlockedEnerling = PersistentDataManager.Instance.GetTotalUnlockedCount() > 0;
+        }
+        else if (ingredientDatabase != null)
+        {
+            hasUnlockedEnerling = ingredientDatabase.GetUnlockedIngredients().Count > 0;
+        }
+
+        if (!hasUnlockedEnerling)
+        {
+            Debug.Log("[Scan] Player has no unlocked enerlings — cannot proceed to battle.");
+            ShowNoUnlockedEnerlingWarning();
+            return;
+        }
+
+        // Deduct energy on every successful scan (single deduction point)
+        if (GameDataManager.Instance != null)
+        {
+            int before = GameDataManager.Instance.GetOCRBattleEnergy();
+            bool success = GameDataManager.Instance.UseOCRBattleEnergy();
+            int after = GameDataManager.Instance.GetOCRBattleEnergy();
+            Debug.Log($"[Scan] UseOCRBattleEnergy returned {success}. Energy: {before} → {after}");
+        }
+        else
+        {
+            Debug.LogError("[Scan] GameDataManager.Instance is NULL — cannot deduct energy!");
+        }
+        RefreshLifeEnergyUI();
+
         // Record in systems
         CooldownSystem.RecordScan(ingredientData.ingredient);
         ProductManager.RecordProductScan(ingredientData.fingerprint, ingredientData.ingredient);
-        
+
         // Get the selected ingredient name
         selectedEnerlingName = ingredientData.ingredient;
-        
+
         // Show scanning animation/effect
         StartCoroutine(ShowScanSuccessEffect());
-        
+
         // Save to persistent data
         SaveScannedEnerling(selectedEnerlingName);
-        
-        // Update status
+
+        // Build scan info for display
         string category = IngredientCategory.GetCategory(selectedEnerlingName);
-        string scanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint).ToString();
-        UpdateStatus($"Found: {selectedEnerlingName} ({category}) - Scan {scanCount}/3");
-        
-        // Show product status
-        if (productStatusText != null)
+        int scanCount = ProductManager.GetProductScanCount(ingredientData.fingerprint);
+        int remaining = ProductManager.GetRemainingScans(ingredientData.fingerprint);
+
+        UpdateStatus($"Found: {selectedEnerlingName} ({category})");
+
+        // Show scan count info on warningText
+        string scanInfo;
+        if (remaining > 0)
         {
-            productStatusText.text = $"Product scan {scanCount}/3 completed!\n{ProductManager.GetProductStatus(ingredientData.fingerprint)}";
-            productStatusText.gameObject.SetActive(true);
-            StartCoroutine(HideProductStatusAfterDelay(3f));
+            scanInfo = $"Scan {scanCount}/3 completed!\nYou can scan this ingredient list {remaining} more time{(remaining > 1 ? "s" : "")}.";
         }
-        
-        // Transition to next scene
+        else
+        {
+            scanInfo = $"Scan limit reached! (3/3)\nThis ingredient list will reset after 24 hours.";
+        }
+        ShowWarning(scanInfo);
+
+        // Transition to next scene (with delay so player reads the info)
         StartCoroutine(TransitionToNextScene());
     }
 
@@ -855,10 +913,10 @@ public class OCRManager_Simplified : MonoBehaviour
         // Simulate scanning delay
         UpdateStatus("Analyzing image...");
         yield return new WaitForSeconds(0.5f);
-        
+
         UpdateStatus("Detecting text...");
         yield return new WaitForSeconds(0.5f);
-        
+
         UpdateStatus("Matching ingredients...");
         yield return new WaitForSeconds(0.5f);
 
@@ -875,16 +933,7 @@ public class OCRManager_Simplified : MonoBehaviour
             string mockFingerprint = "MOCK_" + selectedEnerlingName.GetHashCode().ToString();
             currentProductFingerprint = mockFingerprint;
 
-            // ===== PRODUCT MANAGER INTEGRATION FOR MOCK =====
-            // Check if this mock product has been scanned too many times
-            if (!ProductManager.CanScanProduct(mockFingerprint))
-            {
-                TimeSpan cooldown = ProductManager.GetProductCooldown(mockFingerprint);
-                string timeString = FormatTimeSpan(cooldown);
-                ShowError($"Mock product limit reached.\nTry again in {timeString}.");
-                ResetProcessingState();
-                yield break;
-            }
+            // ===== MOCK SCAN: Skip product scan limit (only enforced on mobile builds) =====
 
             // Check global cooldown
             if (!CooldownSystem.CanScanAnyIngredient())
@@ -904,6 +953,9 @@ public class OCRManager_Simplified : MonoBehaviour
                 mode = "mock",
                 all_ingredients = new string[] { selectedEnerlingName }
             };
+
+            // Update scan count display for mock
+            UpdateScanCountDisplay(mockFingerprint);
 
             // Process as if real scan
             ProcessSuccessfulScan(mockData);
@@ -951,11 +1003,14 @@ public class OCRManager_Simplified : MonoBehaviour
 
     IEnumerator TransitionToNextScene()
     {
-        // Show final success message
-        UpdateStatus($"Ingredient scanned! Preparing battle...");
+        // Let the player read the scan info shown on warningText
+        yield return new WaitForSeconds(2.5f);
 
-        // Wait a moment
-        yield return new WaitForSeconds(1f);
+        // Show transition message on statusText
+        UpdateStatus($"Preparing battle...");
+
+        // Brief pause before fade
+        yield return new WaitForSeconds(0.5f);
 
         // Fade out
         if (fadePanel != null)
@@ -997,14 +1052,64 @@ public class OCRManager_Simplified : MonoBehaviour
             noIngredientText.text = message;
             noIngredientText.gameObject.SetActive(true);
         }
-        
-        // Also show in product status if available
-        if (productStatusText != null && !string.IsNullOrEmpty(currentProductFingerprint))
+
+        ResetProcessingState();
+    }
+
+    void ShowWarning(string message)
+    {
+        if (warningText != null)
         {
-            productStatusText.text = $"Error: {message}\n{ProductManager.GetProductStatus(currentProductFingerprint)}";
-            productStatusText.gameObject.SetActive(true);
+            warningText.text = message;
+            warningText.gameObject.SetActive(true);
         }
-        
+    }
+
+    void ShowNoTextScanned()
+    {
+        // No text extracted at all — accidental scan, no energy deducted
+        if (noIngredientText != null)
+        {
+            noIngredientText.text = "No text was detected from the scan.\nMake sure the camera is pointed at an ingredient list and try again.";
+            noIngredientText.gameObject.SetActive(true);
+        }
+        ShowWarning("No text scanned — no energy was used.");
+
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(true);
+
+        ResetProcessingState();
+    }
+
+    void ShowNoIngredientFound()
+    {
+        // Text was extracted but no ingredient matched the database — energy was deducted
+        if (noIngredientText != null)
+        {
+            noIngredientText.text = "No ingredient found from our database.\nTry scanning a different product with a visible ingredient list.";
+            noIngredientText.gameObject.SetActive(true);
+        }
+        ShowWarning("No ingredient detected — 1 energy was used.");
+
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(true);
+
+        ResetProcessingState();
+    }
+
+    void ShowNoUnlockedEnerlingWarning()
+    {
+        // Scan was valid, but player has no unlocked enerlings to fight with — no energy deducted
+        if (noIngredientText != null)
+        {
+            noIngredientText.text = "You don't have any Enerlings yet!\nCatch your first Enerling through the story before you can battle.";
+            noIngredientText.gameObject.SetActive(true);
+        }
+        ShowWarning("No Enerlings unlocked — scan was not used.");
+
+        if (retryButton != null)
+            retryButton.gameObject.SetActive(true);
+
         ResetProcessingState();
     }
 
@@ -1038,13 +1143,13 @@ public class OCRManager_Simplified : MonoBehaviour
         currentProductFingerprint = "";
         ClearError();
         UpdateButtonStates();
-        
+
         if (cameraPreview != null && currentImage != null)
         {
             cameraPreview.texture = null;
             cameraPreview.color = new Color(0.2f, 0.2f, 0.2f);
         }
-        
+
         // Clean up expired products
         ProductManager.CleanupExpiredProducts();
     }
@@ -1149,5 +1254,159 @@ public class OCRManager_Simplified : MonoBehaviour
             StartCoroutine(StartCameraPreview());
         }
 #endif
+    }
+
+    // ========================================================================
+    //  SCAN COUNT DISPLAY (uses warningText)
+    // ========================================================================
+
+    void UpdateScanCountDisplay(string fingerprint)
+    {
+        if (warningText == null) return;
+        if (string.IsNullOrEmpty(fingerprint)) return;
+
+        int scanCount = ProductManager.GetProductScanCount(fingerprint);
+        int remaining = ProductManager.GetRemainingScans(fingerprint);
+
+        if (scanCount == 0)
+        {
+            ShowWarning("First time scanning this ingredient list!\nYou have 3 scans available.");
+        }
+        else if (remaining > 0)
+        {
+            ShowWarning($"Scan {scanCount}/3 completed!\nYou can scan this ingredient list {remaining} more time{(remaining > 1 ? "s" : "")}.");
+        }
+        else
+        {
+            TimeSpan cooldown = ProductManager.GetProductCooldown(fingerprint);
+            string timeStr = FormatTimeSpan(cooldown);
+            ShowWarning($"Scan limit reached! (3/3)\nThis ingredient list resets in {timeStr}.");
+        }
+    }
+
+    // ========================================================================
+    //  HEART (LIFE) UI
+    // ========================================================================
+
+    void BuildHeartImages()
+    {
+        if (heartContainer == null) return;
+
+        heartImages.Clear();
+
+        // Remove any existing children
+        for (int i = heartContainer.childCount - 1; i >= 0; i--)
+            Destroy(heartContainer.GetChild(i).gameObject);
+
+        int maxLives = GameDataManager.Instance != null ? GameDataManager.Instance.GetOCRBattleMaxLives() : 5;
+
+        for (int i = 0; i < maxLives; i++)
+        {
+            GameObject heartGO = new GameObject($"Heart_{i}", typeof(RectTransform), typeof(Image));
+            heartGO.transform.SetParent(heartContainer, false);
+
+            RectTransform rt = heartGO.GetComponent<RectTransform>();
+            rt.sizeDelta = heartSize;
+
+            Image img = heartGO.GetComponent<Image>();
+            img.sprite = fullHeartSprite;
+            img.preserveAspect = true;
+
+            heartImages.Add(img);
+        }
+    }
+
+    void UpdateHeartUI()
+    {
+        if (heartImages == null || heartImages.Count == 0) return;
+        if (GameDataManager.Instance == null) return;
+
+        int currentLives = GameDataManager.Instance.GetOCRBattleLives();
+
+        for (int i = 0; i < heartImages.Count; i++)
+        {
+            if (heartImages[i] == null) continue;
+            heartImages[i].sprite = (i < currentLives) ? fullHeartSprite : emptyHeartSprite;
+        }
+    }
+
+    // ========================================================================
+    //  ENERGY & REGEN UI (uses statusText)
+    // ========================================================================
+
+    void RefreshLifeEnergyUI()
+    {
+        if (GameDataManager.Instance == null) return;
+
+        UpdateHeartUI();
+
+        int curEnergy = GameDataManager.Instance.GetOCRBattleEnergy();
+        int maxEnergy = GameDataManager.Instance.GetOCRBattleMaxEnergy();
+        int curLives = GameDataManager.Instance.GetOCRBattleLives();
+        int maxLives = GameDataManager.Instance.GetOCRBattleMaxLives();
+
+        bool lifeFull = curLives >= maxLives;
+        bool energyFull = curEnergy >= maxEnergy;
+
+        // Update dedicated energy text if available
+        if (energyText != null)
+        {
+            energyText.text = $"{curEnergy}/{maxEnergy}";
+        }
+
+        // Update regen timer texts
+        if (lifeRegenTimerText != null)
+        {
+            if (lifeFull)
+            {
+                lifeRegenTimerText.gameObject.SetActive(false);
+            }
+            else
+            {
+                lifeRegenTimerText.gameObject.SetActive(true);
+                float lifeRemain = GameDataManager.Instance.GetOCRLifeRegenRemainingSeconds();
+                lifeRegenTimerText.text = $"Regen in: {FormatRegenTime(lifeRemain)}";
+            }
+        }
+
+        if (energyRegenTimerText != null)
+        {
+            if (energyFull)
+            {
+                energyRegenTimerText.gameObject.SetActive(false);
+            }
+            else
+            {
+                energyRegenTimerText.gameObject.SetActive(true);
+                float energyRemain = GameDataManager.Instance.GetOCREnergyRegenRemainingSeconds();
+                energyRegenTimerText.text = $"Regen in: {FormatRegenTime(energyRemain)}";
+            }
+        }
+
+        // Fallback: show compact info in statusText if no dedicated energy UI field
+        // Only update statusText when idle (not during active scan messages)
+        if (energyText == null && !isProcessing && !waitingForPluginResponse)
+        {
+            string info = $"Energy: {curEnergy}/{maxEnergy}";
+            if (!lifeFull)
+            {
+                float lifeRemain = GameDataManager.Instance.GetOCRLifeRegenRemainingSeconds();
+                info += $"  |  Heart regen: {FormatRegenTime(lifeRemain)}";
+            }
+            if (!energyFull)
+            {
+                float energyRemain = GameDataManager.Instance.GetOCREnergyRegenRemainingSeconds();
+                info += $"  |  Energy regen: {FormatRegenTime(energyRemain)}";
+            }
+            UpdateStatus(info);
+        }
+    }
+
+    static string FormatRegenTime(float totalSeconds)
+    {
+        if (totalSeconds <= 0f) return "00:00";
+        int minutes = Mathf.FloorToInt(totalSeconds / 60f);
+        int seconds = Mathf.FloorToInt(totalSeconds % 60f);
+        return $"{minutes:00}:{seconds:00}";
     }
 }

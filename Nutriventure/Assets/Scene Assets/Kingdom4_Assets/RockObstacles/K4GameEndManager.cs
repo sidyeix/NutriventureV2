@@ -304,14 +304,14 @@ public class K4GameEndManager : MonoBehaviour
         // Collect game data
         completionTime = gameManager.GetGameTimer();
         if (Kingdom4ScoreManager.Instance != null)
-{
-    Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
-    playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
-}
-else
-{
-    playerPoints = 0;
-}
+        {
+            Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
+            playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
+        }
+        else
+        {
+            playerPoints = 0;
+        }
 
 
 
@@ -675,26 +675,17 @@ else
         switch (starsEarned)
         {
             case 3:
-                baseCoins = 1000; baseExp = 1000; break;
+                baseCoins = 1000; baseExp = 500; break;
             case 2:
-                baseCoins = 500; baseExp = 500; break;
+                baseCoins = 700; baseExp = 300; break;
             case 1:
-                baseCoins = 100; baseExp = 100; break;
+                baseCoins = 400; baseExp = 150; break;
             default:
-                baseCoins = 0; baseExp = 0; break;
+                baseCoins = 100; baseExp = 50; break;
         }
 
-        int bonusExpFromPoints = Mathf.FloorToInt(playerPoints / 7f);
-        int bonusCoinsFromPoints = Mathf.FloorToInt(playerPoints / 10f);
-
-        int lifeBonusCoins = 0;
-        if (remainingHearts >= 5) lifeBonusCoins = 300;
-        else if (remainingHearts == 4) lifeBonusCoins = 200;
-        else if (remainingHearts == 3) lifeBonusCoins = 100;
-        else if (remainingHearts == 2) lifeBonusCoins = 50;
-
-        totalExp = baseExp + bonusExpFromPoints;
-        totalCoins = baseCoins + bonusCoinsFromPoints + lifeBonusCoins;
+        totalExp = baseExp;
+        totalCoins = baseCoins;
     }
 
     private void OnButtonClicked()
@@ -982,14 +973,14 @@ else
 
         completionTime = gameManager.GetGameTimer();
         if (Kingdom4ScoreManager.Instance != null)
-{
-    Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
-    playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
-}
-else
-{
-    playerPoints = 0;
-}
+        {
+            Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
+            playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
+        }
+        else
+        {
+            playerPoints = 0;
+        }
 
         remainingHearts = 0;
         starsEarned = 0;
@@ -1004,14 +995,14 @@ else
 
         completionTime = gameManager.GetGameTimer();
         if (Kingdom4ScoreManager.Instance != null)
-{
-    Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
-    playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
-}
-else
-{
-    playerPoints = 0;
-}
+        {
+            Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
+            playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
+        }
+        else
+        {
+            playerPoints = 0;
+        }
 
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
@@ -1059,14 +1050,14 @@ else
         {
             completionTime = GoGrowGlowGameManager.Instance.GetGameTimer();
             if (Kingdom4ScoreManager.Instance != null)
-{
-    Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
-    playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
-}
-else
-{
-    playerPoints = 0;
-}
+            {
+                Kingdom4ScoreManager.Instance?.CalculateTimeBonus(completionTime);
+                playerPoints = Kingdom4ScoreManager.Instance.GetFinalScore();
+            }
+            else
+            {
+                playerPoints = 0;
+            }
 
             remainingHearts = Mathf.CeilToInt(GoGrowGlowGameManager.Instance.GetCurrentLifeAmount());
         }

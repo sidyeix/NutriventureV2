@@ -70,7 +70,9 @@ public class Checkpoint : MonoBehaviour
 
         UpdateVisuals();
 
+#if UNITY_EDITOR
         Debug.Log($"Checkpoint activated: {gameObject.name}");
+#endif
     }
 
     private void UpdateVisuals()

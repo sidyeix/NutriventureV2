@@ -33,25 +33,39 @@ public class SimpleStoreItem : MonoBehaviour
         CheckVisibility();
     }
 
+    private Camera cachedCamera;
+
     void Update()
     {
-        // Handle click with New Input System
-        if (Mouse.current.leftButton.wasPressedThisFrame ||
-            (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame))
+        // Determine if a press happened and get the input position
+        bool pressed = false;
+        Vector2 inputPos = Vector2.zero;
+
+        // Check touch first (mobile), then mouse (editor/desktop)
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
         {
-            Vector2 inputPos = Mouse.current.leftButton.wasPressedThisFrame ?
-                Mouse.current.position.ReadValue() :
-                Touchscreen.current.primaryTouch.position.ReadValue();
+            pressed = true;
+            inputPos = Touchscreen.current.primaryTouch.position.ReadValue();
+        }
+        else if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            pressed = true;
+            inputPos = Mouse.current.position.ReadValue();
+        }
 
-            Ray ray = Camera.main.ScreenPointToRay(inputPos);
-            RaycastHit hit;
+        if (!pressed) return;
 
-            if (Physics.Raycast(ray, out hit, 100f))
+        if (cachedCamera == null) cachedCamera = Camera.main;
+        if (cachedCamera == null) return;
+
+        Ray ray = cachedCamera.ScreenPointToRay(inputPos);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 100f))
+        {
+            if (hit.collider.gameObject == this.gameObject && isVisible)
             {
-                if (hit.collider.gameObject == this.gameObject && isVisible)
-                {
-                    OnItemClicked();
-                }
+                OnItemClicked();
             }
         }
     }

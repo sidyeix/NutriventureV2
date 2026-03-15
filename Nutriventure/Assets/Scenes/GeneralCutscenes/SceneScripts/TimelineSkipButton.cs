@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
+using System.Collections;
 
 public class TimelineSkipButton : MonoBehaviour
 {
@@ -62,6 +63,13 @@ public class TimelineSkipButton : MonoBehaviour
         // Play skip sound if available
         PlaySkipSound();
 
+        // Tell the pause manager to ignore every pause signal whose
+        // timeline.time is at or before the skip destination.
+        if (TimelinePauseManager.Instance != null)
+        {
+            TimelinePauseManager.Instance.SetIgnoreSignalsUpToTime(skipToTime);
+        }
+
         // Skip to the specified time
         timelineDirector.time = skipToTime;
 
@@ -78,10 +86,38 @@ public class TimelineSkipButton : MonoBehaviour
 
         Debug.Log($"Timeline skipped to {skipToTime} seconds");
 
+        // Safety net: force-resume after a couple of frames in case
+        // a crossed signal still managed to pause the director.
+        if (playAfterSkip)
+        {
+            StartCoroutine(ForceResumeAfterSkip());
+        }
+
         // Disable button if specified
         if (disableAfterSkip && skipButton != null)
         {
             skipButton.interactable = false;
+        }
+    }
+
+    private IEnumerator ForceResumeAfterSkip()
+    {
+        // Wait a few frames for any deferred signal processing to finish
+        yield return null;
+        yield return null;
+        yield return null;
+
+        // If the director is somehow not playing, force it
+        if (timelineDirector != null && timelineDirector.state != PlayState.Playing)
+        {
+            // Force-clear any pause state the manager might hold
+            if (TimelinePauseManager.Instance != null && TimelinePauseManager.Instance.IsTimelinePaused())
+            {
+                TimelinePauseManager.Instance.ResumeTimeline();
+            }
+
+            timelineDirector.Play();
+            Debug.Log("Timeline force-resumed after skip (safety net triggered)");
         }
     }
 

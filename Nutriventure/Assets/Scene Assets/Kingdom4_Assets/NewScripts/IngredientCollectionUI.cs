@@ -53,7 +53,7 @@ public class IngredientCollectionUI : MonoBehaviour
     // =========================
     private List<IngredientDatabase.IngredientInfo> allIngredients;
     private List<GameObject> currentCards = new();
-    
+
     // Separate lists for display and navigation
     private List<IngredientDatabase.IngredientInfo> currentDisplayList; // All items (including locked)
     private List<IngredientDatabase.IngredientInfo> currentNavigationList; // Only unlocked items
@@ -76,6 +76,23 @@ public class IngredientCollectionUI : MonoBehaviour
         SetupRarityDropdown();
 
         ApplyCombinedFilter();
+    }
+
+    // =========================
+    // ON ENABLE — Refresh grid with latest unlock/catch data from PlayerPrefs
+    // =========================
+    void OnEnable()
+    {
+        if (allIngredients != null && allIngredients.Count > 0)
+        {
+            // Re-sync catch counts and unlock states from PlayerPrefs
+            if (PersistentDataManager.Instance != null)
+            {
+                PersistentDataManager.Instance.SyncCatchCountsFromGameData();
+            }
+
+            ApplyCombinedFilter();
+        }
     }
 
     // =========================
@@ -233,14 +250,14 @@ public class IngredientCollectionUI : MonoBehaviour
 
         // Store ALL filtered items for display (including locked)
         currentDisplayList = filtered;
-        
+
         // Store ONLY unlocked items for navigation
         currentNavigationList = filtered
             .Where(i => i.isUnlocked)
             .ToList();
 
         Debug.Log($"Display: {currentDisplayList.Count} items (including locked), Navigation: {currentNavigationList.Count} unlocked items");
-        
+
         // Populate the grid with ALL items (locked and unlocked)
         Populate(currentDisplayList);
     }

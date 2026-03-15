@@ -14,6 +14,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
 
     [Header("Camera Control")]
     public CinemachineVirtualCamera characterChangeCamera;
+    public CinemachineVirtualCamera playerFollowCamera;
 
     [Header("Player Movement")]
     public Transform playerTransform;
@@ -36,6 +37,7 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
     private CanvasGroup inputCanvasGroup;
     private bool playerInRange = false;
     private bool isActive = false;
+    private int savedPlayerCameraPriority = 10;
 
     void Start()
     {
@@ -414,10 +416,21 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
 
     private void SetCharacterChangeCameraActive()
     {
+        // Lower the player follow camera priority first
+        if (playerFollowCamera != null)
+        {
+            savedPlayerCameraPriority = playerFollowCamera.Priority;
+            playerFollowCamera.Priority = 0;
+            Debug.Log("Player Follow Camera priority lowered to 0");
+        }
+
         if (characterChangeCamera != null)
         {
+            // Ensure the camera is active and enabled so Cinemachine picks it up
+            characterChangeCamera.gameObject.SetActive(true);
+            characterChangeCamera.enabled = true;
             characterChangeCamera.Priority = 30;
-            Debug.Log("Character Change Camera priority set to 30");
+            Debug.Log("Character Change Camera activated and priority set to 30");
         }
     }
 
@@ -427,6 +440,13 @@ public class SimpleCharacterPlatformTrigger : MonoBehaviour
         {
             characterChangeCamera.Priority = 0;
             Debug.Log("Character Change Camera priority reset to 0");
+        }
+
+        // Restore the player follow camera priority
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = savedPlayerCameraPriority;
+            Debug.Log($"Player Follow Camera priority restored to {savedPlayerCameraPriority}");
         }
     }
 }

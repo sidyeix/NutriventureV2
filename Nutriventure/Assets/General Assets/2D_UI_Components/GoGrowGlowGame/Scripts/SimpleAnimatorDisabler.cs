@@ -30,7 +30,7 @@ public class SimpleAnimatorDisabler : MonoBehaviour
         }
 
         // 2. Wait for disableTime seconds
-        yield return new WaitForSeconds(disableTime);
+        yield return CoroutineYieldCache.WaitForSeconds(disableTime);
 
         // 3. Enable all animators
         foreach (Animator animator in animators)

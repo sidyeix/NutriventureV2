@@ -28,6 +28,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -37,11 +38,14 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 38b806056b196a4489d40cc5ac171274, type: 3}
     modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 2
+    currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
-    currentLife: 95
+    currentLife: 108
     armorPercent: 25
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -107,6 +111,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 0
       amount: 10
@@ -115,11 +120,14 @@ MonoBehaviour:
       description: -10 seconds at the start of each journey (when equipped).
     enerlingSprite: {fileID: 21300000, guid: 98cfdc2f2f1441b48ac307d43f68265e, type: 3}
     modelPrefab: {fileID: 57221022565497146, guid: 7c809fe56dd518a4c897bfe374f529b4, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 1
+    currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 577aa91963a22364fb2bca5608c03f9f, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 108
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -191,6 +199,7 @@ MonoBehaviour:
     rarity: 0
     kingdom: 0
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 2
       amount: 1
@@ -199,11 +208,14 @@ MonoBehaviour:
       description: Gain +1 Speed while sprinting in any kingdom.
     enerlingSprite: {fileID: 21300000, guid: eba0a1b3a78943a4cb6c136b5b9b0651, type: 3}
     modelPrefab: {fileID: 2427407394295479639, guid: 46dd489de903f3a42a4fc3c68fae7ace, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 108
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -269,7 +281,8 @@ MonoBehaviour:
   - ingredientName: Vitamin A
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 2
       amount: 2
@@ -278,6 +291,9 @@ MonoBehaviour:
       description: Gain +2 Speed while sprinting in any kingdom.
     enerlingSprite: {fileID: 21300000, guid: 414c4fc7e8324964cab3cfcfe069db2c, type: 3}
     modelPrefab: {fileID: 1545884430150599015, guid: 4a61aa487d5cf1644a71cc35c23f0f22, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 407649418f9798f4bb04cb92e3d2eb86, type: 2}
@@ -347,7 +363,8 @@ MonoBehaviour:
   - ingredientName: Egg
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 10
@@ -357,11 +374,14 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 0752cf7d150e0184c8ec9d724cbaf960, type: 3}
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 4
+    currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 02dc7b7ef256ad84b963b90a4af33f4c, type: 2}
     baseLife: 120
-    currentLife: 65
+    currentLife: 120
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -427,7 +447,8 @@ MonoBehaviour:
   - ingredientName: Peanuts
     rarity: 0
     kingdom: 1
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 4
       amount: 50
@@ -436,6 +457,9 @@ MonoBehaviour:
       description: Earn 50 EXP every 10 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 055b7ba359b2db145b32d735ba9e2c5a, type: 3}
     modelPrefab: {fileID: 5545957314174723285, guid: cf46ddbcd33ac4544a75969cb9acee8e, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 2c4b5c08b462af14db3f0fd170d598bf, type: 2}
@@ -504,7 +528,8 @@ MonoBehaviour:
   - ingredientName: Shrimp
     rarity: 0
     kingdom: 1
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 1
@@ -513,6 +538,9 @@ MonoBehaviour:
       description: Earn 1 gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 42a6d7f3379380f40ad011459f320edb, type: 3}
     modelPrefab: {fileID: 1440148696383731439, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea9070045de99a4499761ccb9ab8419f, type: 2}
@@ -583,7 +611,8 @@ MonoBehaviour:
   - ingredientName: Sugar
     rarity: 0
     kingdom: 2
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 5
@@ -592,8 +621,11 @@ MonoBehaviour:
       description: Earn 5 gems every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 5ede0c78e43ca574890e1fd95a9b0354, type: 3}
     modelPrefab: {fileID: 2931095760934502716, guid: f7f927a7861dde347b58ca1add59efd4, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 20
+    currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 462826e67baf7fe40b34fd0239a13fce, type: 2}
     baseLife: 160
     currentLife: 160
@@ -663,7 +695,8 @@ MonoBehaviour:
   - ingredientName: Corn Syrup
     rarity: 0
     kingdom: 2
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 0
       amount: 20
@@ -672,11 +705,14 @@ MonoBehaviour:
       description: -20 seconds at the start of each journey (when equipped).
     enerlingSprite: {fileID: 21300000, guid: c4db3cdb92323484e991c3d164aa4764, type: 3}
     modelPrefab: {fileID: 5268653089127011796, guid: 5290cb8080660db409317e782cce03e8, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 76cb72a83a88f8444a718b3ba95ad686, type: 2}
     baseLife: 160
-    currentLife: 99
+    currentLife: 160
     armorPercent: 20
     baseDamage: 15
     immuneToOrganDamage: 0
@@ -743,7 +779,8 @@ MonoBehaviour:
   - ingredientName: Sodium Nitrite
     rarity: 1
     kingdom: 3
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 1
       amount: 2
@@ -753,11 +790,14 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: c661b0465b76163489077aa16c88baf2, type: 3}
     modelPrefab: {fileID: 1482330113961061079, guid: aaeec4b6b30ccca47b946d2df3db01c9, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: fa54f501130bb794fbb46e29f05f6e08, type: 2}
     baseLife: 160
-    currentLife: 111
+    currentLife: 160
     armorPercent: 15
     baseDamage: 20
     immuneToOrganDamage: 0
@@ -822,7 +862,8 @@ MonoBehaviour:
   - ingredientName: Aspartame
     rarity: 1
     kingdom: 2
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 20
@@ -831,11 +872,14 @@ MonoBehaviour:
       description: Earn 20  gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 285dab36aa1d68d479d8be5d5c9a533c, type: 3}
     modelPrefab: {fileID: 8608059987361140176, guid: b47ee876fdee7f04aac83106c980b371, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 87145e9cf25700144b03f9702f78b2f7, type: 2}
     baseLife: 160
-    currentLife: 110
+    currentLife: 160
     armorPercent: 20
     baseDamage: 22
     immuneToOrganDamage: 0
@@ -901,7 +945,8 @@ MonoBehaviour:
   - ingredientName: Sodium Benzoate
     rarity: 2
     kingdom: 3
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 100
@@ -911,6 +956,9 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: d3bf2388c4b43254b9d4d9563cc043db, type: 3}
     modelPrefab: {fileID: 375772980708063953, guid: 979b2d05f62b5d44b92e49fc6be9b641, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: aee6249c44d87704397621a3cff4012f, type: 2}
@@ -980,6 +1028,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 2
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 4
       amount: 200
@@ -988,11 +1037,14 @@ MonoBehaviour:
       description: Earn 200 EXP every 2 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 17227884efa25094383e47ccbac6cb34, type: 3}
     modelPrefab: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
     baseLife: 200
-    currentLife: 174
+    currentLife: 170
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1057,6 +1109,7 @@ MonoBehaviour:
     rarity: 2
     kingdom: 2
     isUnlocked: 1
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 5
       amount: 50
@@ -1065,11 +1118,14 @@ MonoBehaviour:
       description: Earn 50 gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
     modelPrefab: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
+    skinPrefab: {fileID: 919132149155446097, guid: bd2adc6dd7300c0448afe9984df79456, type: 3}
+    skinSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
+    isSkinEquipped: 1
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 1d621b960f8110d43b81403c8c87affc, type: 2}
     baseLife: 200
-    currentLife: 200
+    currentLife: 170
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1133,7 +1189,8 @@ MonoBehaviour:
   - ingredientName: Sucralose
     rarity: 1
     kingdom: 2
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 200
@@ -1143,11 +1200,14 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 2916aedebc6892f4b8dadced0610dd4a, type: 3}
     modelPrefab: {fileID: 2699505879788354491, guid: 0000f02088e410e488597b7f3df02a80, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 839ea9275a237e348bf398b3de21dbe7, type: 2}
     baseLife: 160
-    currentLife: 136
+    currentLife: 160
     armorPercent: 20
     baseDamage: 15
     immuneToOrganDamage: 0
@@ -1211,7 +1271,8 @@ MonoBehaviour:
   - ingredientName: Folic Acid
     rarity: 0
     kingdom: 0
-    isUnlocked: 1
+    isUnlocked: 0
+    isEmulsifier: 0
     powerUps:
     - powerUpType: 3
       amount: 50
@@ -1221,11 +1282,14 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: c39a57c2002861e458546203f742cee1, type: 3}
     modelPrefab: {fileID: 6023607372359657904, guid: dcbcd625aa8be004f889c08f71bdf2a0, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 130f5ae0b85b3a44c907d79199dfc3a8, type: 2}
     baseLife: 120
-    currentLife: 96
+    currentLife: 120
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -1288,3 +1352,94 @@ MonoBehaviour:
       I work best as part of a team!"
     audioClip: {fileID: 8300000, guid: 3146485e5cd693343b2f994f8863a9dc, type: 3}
     endingCutscene: {fileID: 32900000, guid: c2bee708e262f5847b55c1944604197e, type: 3}
+  - ingredientName: Xanthan
+    rarity: 1
+    kingdom: 0
+    isUnlocked: 1
+    isEmulsifier: 1
+    powerUps:
+    - powerUpType: 3
+      amount: 50
+      powerUpIcon: {fileID: 21300000, guid: e43d86d6599418b4cb5bcd5c98f96dde, type: 3}
+      cooldownMinutes: 5
+      description: Earn 50 coins every 5 minutes while playing when this Enerling
+        is equipped.
+    enerlingSprite: {fileID: 21300000, guid: cac53f36d9bb82b4a8947b8362e84b4e, type: 3}
+    modelPrefab: {fileID: 7204146015282184607, guid: a326ba94d937de44abd4196785c4bd08, type: 3}
+    skinPrefab: {fileID: 0}
+    skinSprite: {fileID: 0}
+    isSkinEquipped: 0
+    maxCatch: 20
+    currentCatchCount: 0
+    animatorController: {fileID: 9100000, guid: 80a07111e409922478dde27e7a64d44f, type: 2}
+    baseLife: 120
+    currentLife: 120
+    armorPercent: 25
+    baseDamage: 18
+    immuneToOrganDamage: 0
+    beneficialOrgans:
+    - Stomach
+    - Intestine
+    targetOrgans:
+    - Pancreas
+    skill1:
+      skillName: Gel Dash
+      type: 1
+      baseValue: 18
+      minValue: 15
+      maxValue: 22
+      useRandomRange: 1
+      additionalEffectPerOrgan: 5
+      cooldownTurns: 0
+      skillSprite: {fileID: 21300000, guid: 096186633042b59449e86c0b8406a68d, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 91098868fd7d4524c910f318a3b4302e, type: 3}
+      skillDescription: Xanthan dashes forward with a bouncy gel body and slams into
+        the enemy, dealing damage.
+    skill2:
+      skillName: Gel Guard
+      type: 2
+      baseValue: 50
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 3
+      skillSprite: {fileID: 21300000, guid: 6afba315e0c048c4a9202db6d162266a, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 3b1a77b6fcbbf0c43807db0a18aded48, type: 3}
+      skillDescription: Xanthan thickens its gel body into a protective shield, blocking
+        50% of incoming damage for one turn.
+    skill3:
+      skillName: Thickening Recovery
+      type: 0
+      baseValue: 30
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 0
+      cooldownTurns: 3
+      skillSprite: {fileID: 21300000, guid: e45f4ad52232c044ba74aeda25690da4, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: 0dbbe1112e5274448972aff99d9e14a9, type: 3}
+      skillDescription: Xanthan releases stabilizing gel energy that restores health
+        to itself or an ally.
+    skill4:
+      skillName: Viscous Burst
+      type: 1
+      baseValue: 25
+      minValue: 0
+      maxValue: 0
+      useRandomRange: 0
+      additionalEffectPerOrgan: 4
+      cooldownTurns: 6
+      skillSprite: {fileID: 21300000, guid: 1c2ab22859f046b4c9986bcbf3e84578, type: 3}
+      skillCircleIcon: {fileID: 21300000, guid: fa1eabdc7d610a448a41ff11e1733c40, type: 3}
+      skillDescription: Xanthan expands and releases a sticky burst that damages
+        all enemies nearby.
+    enerlingDescription: Xanthan is a bouncy gel-like Enerling formed from stabilizing
+      emulsifiers. Known for its thick and protective body, it can shield allies,
+      heal wounds, and burst with sticky energy to stop enemies.
+    enerlingStory: "Call me Xanthan! I help keep foods smooth and stable by holding
+      ingredients together. I make sauces thick and creamy so they don\u2019t separate.
+      But remember\u2014too much processed food with additives like me isn\u2019t
+      always the healthiest choice. Balance is the key to a strong body!"
+    audioClip: {fileID: 8300000, guid: 8e879087aadbdf14a8a8b902d3aee258, type: 3}
+    endingCutscene: {fileID: 0}

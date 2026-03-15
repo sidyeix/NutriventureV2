@@ -18,6 +18,7 @@ public class PushableObject : MonoBehaviour
     private bool playerInRange = false;
     private ThirdPersonController playerController;
     private bool isBeingPushed = false;
+    private float uiActivationRangeSqr;
 
     void Start()
     {
@@ -32,6 +33,9 @@ public class PushableObject : MonoBehaviour
         }
 
         ConfigureRigidbody();
+
+        // Cache squared range for cheaper distance checks
+        uiActivationRangeSqr = uiActivationRange * uiActivationRange;
 
         // Find player
         playerController = FindObjectOfType<ThirdPersonController>();
@@ -69,9 +73,10 @@ public class PushableObject : MonoBehaviour
 
     void UpdateUIState()
     {
-        float distance = Vector3.Distance(transform.position, playerController.transform.position);
+        Vector3 diff = transform.position - playerController.transform.position;
+        float distanceSqr = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
         bool isFacingObject = IsPlayerFacingObject();
-        bool canShowUI = distance <= uiActivationRange && isFacingObject && !playerController.IsCrawling();
+        bool canShowUI = distanceSqr <= uiActivationRangeSqr && isFacingObject && !playerController.IsCrawling();
 
         if (canShowUI != playerInRange)
         {

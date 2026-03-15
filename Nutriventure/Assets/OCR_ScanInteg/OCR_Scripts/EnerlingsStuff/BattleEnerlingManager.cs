@@ -607,6 +607,9 @@ public class BattleEnerlingManager : MonoBehaviour
 
         if (PersistentDataManager.Instance != null)
         {
+            // Pause regen — apply any HP recovered so far, then stop the timer
+            PersistentDataManager.Instance.PauseEnerlingRegen(enerlingName);
+
             int savedLife = PersistentDataManager.Instance.GetEnerlingCurrentLife(enerlingName);
             if (savedLife > 0)
             {

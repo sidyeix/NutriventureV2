@@ -53,7 +53,7 @@ public class GameDataManager : MonoBehaviour
         {
             string jsonData = JsonUtility.ToJson(CurrentGameData, true);
             File.WriteAllText(saveFilePath, jsonData);
-            
+
             if (enableDebugLogs)
             {
                 Debug.Log("=== GAME DATA SAVED ===");
@@ -139,11 +139,49 @@ public class GameDataManager : MonoBehaviour
             CreateNewGameData();
         }
 
+        MigrateOCRBattleDefaults();
         InitializeDefaultIconsAndFrames();
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
         UpdateEnergyBasedOnTime();
         UpdateChestAvailability();
+    }
+
+    /// <summary>
+    /// Ensures OCR battle fields have valid defaults when loading a save
+    /// created before these fields existed (JsonUtility sets missing ints to 0).
+    /// </summary>
+    private void MigrateOCRBattleDefaults()
+    {
+        if (CurrentGameData == null) return;
+
+        bool migrated = false;
+
+        if (CurrentGameData.ocrBattleMaxLives <= 0)
+        {
+            CurrentGameData.ocrBattleMaxLives = 5;
+            CurrentGameData.ocrBattleLives = 5;
+            migrated = true;
+        }
+
+        if (CurrentGameData.ocrBattleMaxEnergy <= 0)
+        {
+            CurrentGameData.ocrBattleMaxEnergy = 15;
+            CurrentGameData.ocrBattleEnergy = 15;
+            migrated = true;
+        }
+
+        if (CurrentGameData.enerlingCatchCounts == null)
+        {
+            CurrentGameData.enerlingCatchCounts = new GameData.StringIntDictionary3();
+            migrated = true;
+        }
+
+        if (migrated)
+        {
+            Debug.Log("GameDataManager: Migrated OCR battle defaults for older save file.");
+            SaveGameData();
+        }
     }
 
     private void CreateNewGameData()
@@ -594,7 +632,7 @@ public class GameDataManager : MonoBehaviour
 
         if (enableDebugLogs)
             Debug.Log($"Setting selected skin {skinID} for character {characterID}");
-        
+
         CurrentGameData.SetSelectedSkinForCharacter(characterID, skinID);
         SaveGameData();
     }
@@ -784,37 +822,37 @@ public class GameDataManager : MonoBehaviour
     public bool HasAllerthiaKey() => CurrentGameData?.HasAllerthiaKey() ?? false;
     public bool HasOCRScannerKey() => CurrentGameData?.HasOCRScannerKey() ?? false;
 
-    public void CollectSugariaKey() 
-    { 
-        CurrentGameData?.CollectSugariaKey(); 
+    public void CollectSugariaKey()
+    {
+        CurrentGameData?.CollectSugariaKey();
         SaveGameData();
         if (enableDebugLogs) Debug.Log("Sugaria Key collected!");
     }
-    
-    public void CollectPreserviaKey() 
-    { 
-        CurrentGameData?.CollectPreserviaKey(); 
+
+    public void CollectPreserviaKey()
+    {
+        CurrentGameData?.CollectPreserviaKey();
         SaveGameData();
         if (enableDebugLogs) Debug.Log("Preservia Key collected!");
     }
-    
-    public void CollectNutriKingdomKey() 
-    { 
-        CurrentGameData?.CollectNutriKingdomKey(); 
+
+    public void CollectNutriKingdomKey()
+    {
+        CurrentGameData?.CollectNutriKingdomKey();
         SaveGameData();
         if (enableDebugLogs) Debug.Log("Nutri Kingdom Key collected!");
     }
-    
-    public void CollectAllerthiaKey() 
-    { 
-        CurrentGameData?.CollectAllerthiaKey(); 
+
+    public void CollectAllerthiaKey()
+    {
+        CurrentGameData?.CollectAllerthiaKey();
         SaveGameData();
         if (enableDebugLogs) Debug.Log("Allerthia Key collected!");
     }
 
-    public void CollectOCRScannerKey() 
-    { 
-        CurrentGameData?.CollectOCRScannerKey(); 
+    public void CollectOCRScannerKey()
+    {
+        CurrentGameData?.CollectOCRScannerKey();
         SaveGameData();
         if (enableDebugLogs) Debug.Log("OCR Scanner Key collected!");
     }
@@ -856,7 +894,7 @@ public class GameDataManager : MonoBehaviour
     public bool SpendNutriGems(int amount)
     {
         if (CurrentGameData == null) return false;
-        
+
         bool success = CurrentGameData.SpendNutriGems(amount);
         if (success)
         {
@@ -867,6 +905,227 @@ public class GameDataManager : MonoBehaviour
     }
 
     public int GetNutriGems() => CurrentGameData?.GetNutriGems() ?? 0;
+
+    #endregion
+
+    #region OCR Battle Life & Energy
+
+    private const float LIFE_REGEN_MINUTES = 30f;    // 30 min per life
+    private const float ENERGY_REGEN_MINUTES = 15f;   // 15 min per energy
+
+    // ── helpers to convert ISO-8601 strings ↔ DateTime ──
+    private static DateTime ParseOCRTime(string iso)
+    {
+        if (string.IsNullOrEmpty(iso)) return DateTime.MinValue;
+        if (DateTime.TryParse(iso, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dt))
+            return dt;
+        return DateTime.MinValue;
+    }
+    private static string ToOCRTimeString(DateTime dt)
+    {
+        if (dt <= DateTime.MinValue) return "";
+        return dt.ToString("o"); // ISO 8601 round-trip
+    }
+
+    /// <summary>
+    /// Call this every time the OCR BattlePlay scene opens.
+    /// Calculates how many lives/energy have regenerated since last session.
+    /// </summary>
+    public void ProcessOCRBattleRegen()
+    {
+        if (CurrentGameData == null) return;
+
+        DateTime now = DateTime.Now;
+
+        // --- Life regen ---
+        DateTime lifeLossTime = ParseOCRTime(CurrentGameData.ocrLastLifeLossTime);
+        if (CurrentGameData.ocrBattleLives < CurrentGameData.ocrBattleMaxLives &&
+            lifeLossTime > DateTime.MinValue)
+        {
+            int missing = CurrentGameData.ocrBattleMaxLives - CurrentGameData.ocrBattleLives;
+            double minutesPassed = (now - lifeLossTime).TotalMinutes;
+            int livesRegened = Mathf.Min(missing, Mathf.FloorToInt((float)(minutesPassed / LIFE_REGEN_MINUTES)));
+
+            if (livesRegened > 0)
+            {
+                CurrentGameData.ocrBattleLives += livesRegened;
+                // Advance the timestamp by the lives we regenerated
+                lifeLossTime = lifeLossTime.AddMinutes(livesRegened * LIFE_REGEN_MINUTES);
+
+                if (CurrentGameData.ocrBattleLives >= CurrentGameData.ocrBattleMaxLives)
+                {
+                    CurrentGameData.ocrBattleLives = CurrentGameData.ocrBattleMaxLives;
+                    CurrentGameData.ocrLastLifeLossTime = "";
+                    CurrentGameData.ocrLivesRegening = 0;
+                }
+                else
+                {
+                    CurrentGameData.ocrLastLifeLossTime = ToOCRTimeString(lifeLossTime);
+                    CurrentGameData.ocrLivesRegening = CurrentGameData.ocrBattleMaxLives - CurrentGameData.ocrBattleLives;
+                }
+
+                if (enableDebugLogs) Debug.Log($"OCR Life regen: +{livesRegened} → {CurrentGameData.ocrBattleLives}/{CurrentGameData.ocrBattleMaxLives}");
+            }
+        }
+
+        // --- Energy regen ---
+        DateTime energyUseTime = ParseOCRTime(CurrentGameData.ocrLastEnergyUseTime);
+        if (CurrentGameData.ocrBattleEnergy < CurrentGameData.ocrBattleMaxEnergy &&
+            energyUseTime > DateTime.MinValue)
+        {
+            int missing = CurrentGameData.ocrBattleMaxEnergy - CurrentGameData.ocrBattleEnergy;
+            double minutesPassed = (now - energyUseTime).TotalMinutes;
+            int energyRegened = Mathf.Min(missing, Mathf.FloorToInt((float)(minutesPassed / ENERGY_REGEN_MINUTES)));
+
+            if (energyRegened > 0)
+            {
+                CurrentGameData.ocrBattleEnergy += energyRegened;
+                energyUseTime = energyUseTime.AddMinutes(energyRegened * ENERGY_REGEN_MINUTES);
+
+                if (CurrentGameData.ocrBattleEnergy >= CurrentGameData.ocrBattleMaxEnergy)
+                {
+                    CurrentGameData.ocrBattleEnergy = CurrentGameData.ocrBattleMaxEnergy;
+                    CurrentGameData.ocrLastEnergyUseTime = "";
+                    CurrentGameData.ocrEnergyRegening = 0;
+                }
+                else
+                {
+                    CurrentGameData.ocrLastEnergyUseTime = ToOCRTimeString(energyUseTime);
+                    CurrentGameData.ocrEnergyRegening = CurrentGameData.ocrBattleMaxEnergy - CurrentGameData.ocrBattleEnergy;
+                }
+
+                if (enableDebugLogs) Debug.Log($"OCR Energy regen: +{energyRegened} → {CurrentGameData.ocrBattleEnergy}/{CurrentGameData.ocrBattleMaxEnergy}");
+            }
+        }
+
+        SaveGameData();
+    }
+
+    /// <summary>Returns remaining seconds until the next single life regenerates.</summary>
+    public float GetOCRLifeRegenRemainingSeconds()
+    {
+        if (CurrentGameData == null) return 0f;
+        if (CurrentGameData.ocrBattleLives >= CurrentGameData.ocrBattleMaxLives) return 0f;
+
+        DateTime lifeLossTime = ParseOCRTime(CurrentGameData.ocrLastLifeLossTime);
+        if (lifeLossTime <= DateTime.MinValue) return 0f;
+
+        double elapsed = (DateTime.Now - lifeLossTime).TotalSeconds;
+        float regenSec = LIFE_REGEN_MINUTES * 60f;
+        float remaining = regenSec - (float)elapsed;
+        return Mathf.Max(0f, remaining);
+    }
+
+    /// <summary>Returns remaining seconds until the next single energy regenerates.</summary>
+    public float GetOCREnergyRegenRemainingSeconds()
+    {
+        if (CurrentGameData == null) return 0f;
+        if (CurrentGameData.ocrBattleEnergy >= CurrentGameData.ocrBattleMaxEnergy) return 0f;
+
+        DateTime energyUseTime = ParseOCRTime(CurrentGameData.ocrLastEnergyUseTime);
+        if (energyUseTime <= DateTime.MinValue) return 0f;
+
+        double elapsed = (DateTime.Now - energyUseTime).TotalSeconds;
+        float regenSec = ENERGY_REGEN_MINUTES * 60f;
+        float remaining = regenSec - (float)elapsed;
+        return Mathf.Max(0f, remaining);
+    }
+
+    /// <summary>Deduct one life. Returns false if no lives left.</summary>
+    public bool UseOCRBattleLife()
+    {
+        if (CurrentGameData == null || CurrentGameData.ocrBattleLives <= 0) return false;
+
+        CurrentGameData.ocrBattleLives--;
+        CurrentGameData.ocrLivesRegening = CurrentGameData.ocrBattleMaxLives - CurrentGameData.ocrBattleLives;
+
+        // Set timestamp if there isn't one yet (first loss from full, or previously missing)
+        if (string.IsNullOrEmpty(CurrentGameData.ocrLastLifeLossTime))
+            CurrentGameData.ocrLastLifeLossTime = ToOCRTimeString(DateTime.Now);
+
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log($"OCR Life used → {CurrentGameData.ocrBattleLives}/{CurrentGameData.ocrBattleMaxLives}");
+        return true;
+    }
+
+    /// <summary>Deduct one energy. Returns false if no energy left.</summary>
+    public bool UseOCRBattleEnergy()
+    {
+        if (CurrentGameData == null || CurrentGameData.ocrBattleEnergy <= 0) return false;
+
+        CurrentGameData.ocrBattleEnergy--;
+        CurrentGameData.ocrEnergyRegening = CurrentGameData.ocrBattleMaxEnergy - CurrentGameData.ocrBattleEnergy;
+
+        // Set timestamp if there isn't one yet (first use from full, or previously missing)
+        if (string.IsNullOrEmpty(CurrentGameData.ocrLastEnergyUseTime))
+            CurrentGameData.ocrLastEnergyUseTime = ToOCRTimeString(DateTime.Now);
+
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log($"OCR Energy used → {CurrentGameData.ocrBattleEnergy}/{CurrentGameData.ocrBattleMaxEnergy}");
+        return true;
+    }
+
+    public int GetOCRBattleLives() => CurrentGameData?.ocrBattleLives ?? 0;
+    public int GetOCRBattleMaxLives() => CurrentGameData?.ocrBattleMaxLives ?? 5;
+    public int GetOCRBattleEnergy() => CurrentGameData?.ocrBattleEnergy ?? 0;
+    public int GetOCRBattleMaxEnergy() => CurrentGameData?.ocrBattleMaxEnergy ?? 15;
+
+    /// <summary>Increment catch count for a specific enerling.</summary>
+    public void IncrementEnerlingCatchCount(string enerlingName)
+    {
+        if (CurrentGameData == null || string.IsNullOrEmpty(enerlingName)) return;
+
+        if (CurrentGameData.enerlingCatchCounts == null)
+            CurrentGameData.enerlingCatchCounts = new GameData.StringIntDictionary3();
+
+        if (CurrentGameData.enerlingCatchCounts.ContainsKey(enerlingName))
+            CurrentGameData.enerlingCatchCounts[enerlingName]++;
+        else
+            CurrentGameData.enerlingCatchCounts[enerlingName] = 1;
+
+        SaveGameData();
+        if (enableDebugLogs) Debug.Log($"Enerling '{enerlingName}' catch count → {CurrentGameData.enerlingCatchCounts[enerlingName]}");
+    }
+
+    public int GetEnerlingCatchCount(string enerlingName)
+    {
+        if (CurrentGameData?.enerlingCatchCounts == null || string.IsNullOrEmpty(enerlingName)) return 0;
+        return CurrentGameData.enerlingCatchCounts.ContainsKey(enerlingName) ? CurrentGameData.enerlingCatchCounts[enerlingName] : 0;
+    }
+
+    /// <summary>
+    /// Gets the prefab for the player's currently equipped character or skin.
+    /// Returns the skin prefab if a skin is equipped, otherwise the base character prefab.
+    /// </summary>
+    public GameObject GetEquippedCharacterOrSkinPrefab()
+    {
+        if (CurrentGameData == null || characterDatabase == null) return null;
+
+        int charID = CurrentGameData.selectedCharacterID;
+        int skinID = CurrentGameData.GetSelectedSkinForCharacter(charID);
+
+        // If a skin is equipped (skinID != -1), use the skin prefab
+        if (skinID >= 0)
+        {
+            var skin = characterDatabase.GetSkinByID(charID, skinID);
+            if (skin != null && skin.skinPrefab != null)
+            {
+                if (enableDebugLogs) Debug.Log($"Using skin prefab: {skin.skinName} for character {charID}");
+                return skin.skinPrefab;
+            }
+        }
+
+        // Otherwise fall back to the base character prefab
+        var character = characterDatabase.GetCharacterByID(charID);
+        if (character != null && character.characterPrefab != null)
+        {
+            if (enableDebugLogs) Debug.Log($"Using base character prefab: {character.characterName}");
+            return character.characterPrefab;
+        }
+
+        if (enableDebugLogs) Debug.LogWarning($"No prefab found for charID={charID}, skinID={skinID}");
+        return null;
+    }
 
     #endregion
 
@@ -1029,7 +1288,7 @@ public class GameDataManager : MonoBehaviour
         Debug.Log($"Passive Power-ups (Heart/Time): {CurrentGameData.passivePowerUps?.Count ?? 0}");
         Debug.Log($"Total Heart Bonus: {CurrentGameData.GetTotalHeartBonus()}");
         Debug.Log($"Total Time Reduction: {CurrentGameData.GetTotalTimeReductionFormatted()}");
-        
+
         Debug.Log($"Kingdom Keys - Sugaria: {CurrentGameData.HasSugariaKey()}, Preservia: {CurrentGameData.HasPreserviaKey()}, Nutri: {CurrentGameData.HasNutriKingdomKey()}, Allerthia: {CurrentGameData.HasAllerthiaKey()}, OCR Scanner: {CurrentGameData.HasOCRScannerKey()}");
 
         if (CurrentGameData.skinData != null)
@@ -1128,9 +1387,9 @@ public class GameDataManager : MonoBehaviour
     private void DebugResetEverything()
     {
         Debug.LogWarning("========== RESETTING EVERYTHING TO DEFAULT ==========");
-        
+
         ResetGameData();
-        
+
         Debug.LogWarning("========== EVERYTHING RESET COMPLETE ==========");
     }
 
@@ -1138,14 +1397,14 @@ public class GameDataManager : MonoBehaviour
     private void DebugResetAllSystems()
     {
         Debug.LogWarning("========== RESETTING ALL SYSTEMS INDIVIDUALLY ==========");
-        
+
         ResetIconsAndFrames();
         ResetAchievements();
         ResetCharactersAndSkins();
         ResetEnerlings();
         ResetResources();
         ResetKingdomKeys();
-        
+
         Debug.LogWarning("========== ALL SYSTEMS RESET COMPLETE ==========");
     }
 
@@ -1153,28 +1412,28 @@ public class GameDataManager : MonoBehaviour
     private void DebugResetToNewGame()
     {
         Debug.LogWarning("========== RESETTING TO NEW GAME STATE ==========");
-        
+
         if (File.Exists(saveFilePath))
         {
             File.Delete(saveFilePath);
             Debug.Log($"Deleted save file: {saveFilePath}");
         }
-        
+
         CurrentGameData = new GameData();
         hasInitializedDefaults = false;
-        
+
         InitializeDefaultIconsAndFrames();
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
-        
+
         if (AudioHandler.Instance != null)
         {
             AudioHandler.Instance.SetMusicVolume(CurrentGameData.musicVolume);
             AudioHandler.Instance.SetSoundVolume(CurrentGameData.soundVolume);
         }
-        
+
         SaveGameData();
-        
+
         Debug.LogWarning("========== NEW GAME STATE CREATED ==========");
         Debug.Log("Player has: 0 coins, 0 gems, 10 energy, Character 0 unlocked, Default icons/frames");
     }
@@ -1183,17 +1442,17 @@ public class GameDataManager : MonoBehaviour
     private void DebugResetProgressOnly()
     {
         Debug.LogWarning("========== RESETTING PROGRESS ONLY ==========");
-        
+
         int currentCoins = CurrentGameData?.nutriCoins ?? 0;
         int currentGems = CurrentGameData?.nutriGems ?? 0;
         int currentEnergy = CurrentGameData?.currentEnergy ?? 10;
-        
+
         ResetIconsAndFrames();
         ResetAchievements();
         ResetCharactersAndSkins();
         ResetEnerlings();
         ResetKingdomKeys();
-        
+
         if (CurrentGameData != null)
         {
             CurrentGameData.nutriCoins = currentCoins;
@@ -1201,9 +1460,9 @@ public class GameDataManager : MonoBehaviour
             CurrentGameData.currentEnergy = currentEnergy;
             CurrentGameData.lastEnergyUpdateTime = DateTime.Now;
         }
-        
+
         SaveGameData();
-        
+
         Debug.LogWarning("========== PROGRESS RESET COMPLETE ==========");
         Debug.Log($"Resources preserved: {currentCoins} coins, {currentGems} gems, {currentEnergy} energy");
     }
@@ -1212,39 +1471,39 @@ public class GameDataManager : MonoBehaviour
     private void DebugResetCollectionsOnly()
     {
         Debug.LogWarning("========== RESETTING COLLECTIONS ONLY ==========");
-        
+
         if (CurrentGameData == null) return;
-        
+
         CurrentGameData.unlockedIconIds = new List<string>();
         CurrentGameData.unlockedFrameIds = new List<string>();
         CurrentGameData.equippedIconId = "";
         CurrentGameData.equippedFrameId = "";
-        
+
         CurrentGameData.completedAchievementIds = new List<string>();
         CurrentGameData.claimedAchievementIds = new List<string>();
-        
+
         CurrentGameData.unlockedCharacterIDs = new List<int>() { 0 };
         CurrentGameData.selectedCharacterID = 0;
         CurrentGameData.skinData = new List<GameData.SkinSaveData>();
-        
+
         CurrentGameData.unlockedEnerlings = new List<string>();
         CurrentGameData.equippedPetSlot1 = "";
         CurrentGameData.equippedPetSlot2 = "";
         CurrentGameData.activePowerUps = new List<GameData.PowerUpSaveData>();
         CurrentGameData.passivePowerUps = new List<GameData.PassivePowerUpData>();
-        
+
         CurrentGameData.ResetSugariaKey();
         CurrentGameData.ResetPreserviaKey();
         CurrentGameData.ResetAllerthiaKey();
         CurrentGameData.ResetOCRScannerKey();
-        
+
         hasInitializedDefaults = false;
         InitializeDefaultIconsAndFrames();
         InitializeDefaultCharacters();
         InitializeDefaultSkins();
-        
+
         SaveGameData();
-        
+
         Debug.LogWarning("========== COLLECTIONS RESET COMPLETE ==========");
         Debug.Log("All collection items reset to defaults");
     }

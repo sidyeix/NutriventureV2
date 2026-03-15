@@ -23,9 +23,12 @@ public class GlobalMapManager : MonoBehaviour
     [SerializeField] private string kingdom4Scene = "6_kingdom4";
 
     [Header("OCR Scanner Object")]
-[SerializeField] private GameObject ocrScannerObject;
+    [SerializeField] private GameObject ocrScannerObject;
 
-    private void Start()
+    [Header("Book of Enerling")]
+    [SerializeField] private GameObject bookOfEnerlingObject;
+
+    public void Start()
     {
         if (loadingPanel != null)
             loadingPanel.SetActive(false);
@@ -34,68 +37,105 @@ public class GlobalMapManager : MonoBehaviour
         UpdateKingdomButtons();
 
         UpdateOCRScannerObjectVisibility();
+        UpdateBookOfEnerlingVisibility();
     }
 
-    private void UpdateOCRScannerObjectVisibility()
-{
-    if (ocrScannerObject == null)
+    public void UpdateOCRScannerObjectVisibility()
     {
-        Debug.LogWarning("OCR Scanner Object not assigned!");
-        return;
+        if (ocrScannerObject == null)
+        {
+            Debug.LogWarning("OCR Scanner Object not assigned!");
+            return;
+        }
+
+        // Scanning is always available regardless of kingdom progress
+        ocrScannerObject.SetActive(true);
     }
 
-    if (GameDataManager.Instance == null || 
-        GameDataManager.Instance.CurrentGameData == null)
+    public void UpdateBookOfEnerlingVisibility()
     {
-        Debug.LogWarning("GameDataManager not ready.");
-        ocrScannerObject.SetActive(false);
-        return;
+        if (bookOfEnerlingObject == null)
+            return;
+
+        // Book of Enerling is always active during playtime
+        bookOfEnerlingObject.SetActive(true);
     }
 
-    bool hasOCRKey = GameDataManager.Instance.CurrentGameData.HasOCRScannerKey();
-
-    ocrScannerObject.SetActive(hasOCRKey);
-
-    Debug.Log("Global Map - OCR Scanner Object is now: " + 
-              (hasOCRKey ? "ACTIVE" : "INACTIVE"));
-}
-
-private void OnEnable()
-{
-    KeyCollectionEvents.OnKeyCollected += OnKeyCollected;
-    UpdateOCRScannerObjectVisibility();
-}
-
-private void OnDisable()
-{
-    KeyCollectionEvents.OnKeyCollected -= OnKeyCollected;
-}
-
-private void OnKeyCollected(string keyName)
-{
-    if (keyName == "OCR")
+    public void OnEnable()
     {
+        // Listen for ALL key collection events
+        KeyCollectionEvents.OnKeyCollected += OnKeyCollected;
+        UpdateAllUI();
+    }
+
+    public void OnDisable()
+    {
+        KeyCollectionEvents.OnKeyCollected -= OnKeyCollected;
+    }
+
+    public void OnKeyCollected(string keyName)
+    {
+        Debug.Log($"GlobalMapManager received key collection event: {keyName}");
+
+        // Update ALL UI elements when ANY key is collected
+        UpdateAllUI();
+    }
+
+    public void UpdateAllUI()
+    {
+        UpdateKingdomButtons();
         UpdateOCRScannerObjectVisibility();
+        UpdateBookOfEnerlingVisibility();
     }
-}
 
     void SetupButtons()
     {
+        // Clear existing listeners to prevent duplicates
+        kingdom1Button.onClick.RemoveAllListeners();
+        kingdom2Button.onClick.RemoveAllListeners();
+        kingdom3Button.onClick.RemoveAllListeners();
+        kingdom4Button.onClick.RemoveAllListeners();
+
         kingdom1Button.onClick.AddListener(() => TryLoad(kingdom1Scene, true));
-        kingdom2Button.onClick.AddListener(() => TryLoad(kingdom2Scene, GameDataManager.Instance.HasSugariaKey()));
-        kingdom3Button.onClick.AddListener(() => TryLoad(kingdom3Scene, GameDataManager.Instance.HasPreserviaKey()));
-        kingdom4Button.onClick.AddListener(() => TryLoad(kingdom4Scene, GameDataManager.Instance.HasAllerthiaKey()));
+        kingdom2Button.onClick.AddListener(() => TryLoad(kingdom2Scene, IsKingdomUnlocked(2)));
+        kingdom3Button.onClick.AddListener(() => TryLoad(kingdom3Scene, IsKingdomUnlocked(3)));
+        kingdom4Button.onClick.AddListener(() => TryLoad(kingdom4Scene, IsKingdomUnlocked(4)));
     }
 
-    void UpdateKingdomButtons()
+    public void UpdateKingdomButtons()
     {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return;
+
         kingdom1Button.interactable = true;
-        kingdom2Button.interactable = GameDataManager.Instance.HasSugariaKey();
-        kingdom3Button.interactable = GameDataManager.Instance.HasPreserviaKey();
-        kingdom4Button.interactable = GameDataManager.Instance.HasAllerthiaKey();
+        kingdom2Button.interactable = IsKingdomUnlocked(2);
+        kingdom3Button.interactable = IsKingdomUnlocked(3);
+        kingdom4Button.interactable = IsKingdomUnlocked(4);
+
+        Debug.Log($"Kingdom Buttons Updated - K1: true, K2 (Sugaria): {kingdom2Button.interactable}, K3 (Preservia): {kingdom3Button.interactable}, K4 (Allerthia): {kingdom4Button.interactable}");
     }
 
-    void TryLoad(string sceneName, bool canLoad)
+    /// <summary>
+    /// Checks if a kingdom is unlocked based on collected keys in GameData.
+    /// Kingdom 1 = always unlocked, 2 = Sugaria key, 3 = Preservia key, 4 = Allerthia key.
+    /// </summary>
+    private bool IsKingdomUnlocked(int kingdomNumber)
+    {
+        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return false;
+
+        var gd = GameDataManager.Instance.CurrentGameData;
+        switch (kingdomNumber)
+        {
+            case 1: return true;
+            case 2: return gd.HasSugariaKey();
+            case 3: return gd.HasPreserviaKey();
+            case 4: return gd.HasAllerthiaKey();
+            default: return false;
+        }
+    }
+
+    public void TryLoad(string sceneName, bool canLoad)
     {
         if (!canLoad)
         {

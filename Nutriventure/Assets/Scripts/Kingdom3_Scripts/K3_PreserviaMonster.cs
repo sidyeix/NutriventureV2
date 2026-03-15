@@ -38,7 +38,7 @@ public class K3_PreserviaMonster : MonoBehaviour
     [Tooltip("Show debug messages in console")]
     public bool showDebugMessages = true;
     
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private float lastAttackTime;
     private bool canAttack = true;
     
@@ -49,14 +49,7 @@ public class K3_PreserviaMonster : MonoBehaviour
     
     private void InitializeMonster()
     {
-        // Get or create AudioSource
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-            audioSource.playOnAwake = false;
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Validate attack collider
         if (attackCollider == null)
@@ -94,6 +87,12 @@ public class K3_PreserviaMonster : MonoBehaviour
             Debug.Log($"Attack collider: {(attackCollider != null ? attackCollider.name : "Not found")}");
             Debug.Log($"Particle prefab: {(attackParticlePrefab != null ? attackParticlePrefab.name : "Not assigned")}");
             Debug.Log($"Damage: {damageAmount}, Cooldown: {attackCooldown}s");
+        }
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
         }
     }
     
@@ -157,7 +156,7 @@ public class K3_PreserviaMonster : MonoBehaviour
         // Spawn particles at collision point
         SpawnAttackParticles(collisionPoint);
         
-        // Play attack sound
+        // CHANGED: Play attack sound through AudioHandler
         PlayAttackSound();
         
         // Update attack cooldown
@@ -202,18 +201,19 @@ public class K3_PreserviaMonster : MonoBehaviour
         Destroy(particleInstance, particleDuration);
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayAttackSound()
     {
-        if (attackSound != null && audioSource != null)
+        if (attackSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(attackSound, soundVolume);
+            AudioHandler.Instance.PlayCharacterSelectionSound(attackSound);
             
-            if (showDebugMessages) Debug.Log("Attack sound played");
+            if (showDebugMessages) Debug.Log("Attack sound played through AudioHandler");
         }
         else if (showDebugMessages)
         {
             if (attackSound == null) Debug.LogWarning("No attack sound assigned!");
-            if (audioSource == null) Debug.LogWarning("No audio source available!");
+            if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance is null!");
         }
     }
     
@@ -267,6 +267,8 @@ public class K3_PreserviaMonster : MonoBehaviour
         {
             Vector3 spawnPosition = attackCollider.transform.TransformPoint(attackCollider.center);
             SpawnAttackParticles(spawnPosition);
+            
+            // CHANGED: Test sound through AudioHandler
             PlayAttackSound();
             Debug.Log("Test attack particles spawned");
         }
@@ -314,7 +316,7 @@ public class K3_PreserviaMonster : MonoBehaviour
         Debug.Log($"Particle Prefab: {(attackParticlePrefab != null ? attackParticlePrefab.name : "Not assigned")}");
         Debug.Log($"Particle Duration: {particleDuration}s");
         Debug.Log($"Particle Offset: {particleOffset}");
-        Debug.Log($"Audio Source: {(audioSource != null ? "Ready" : "Missing")}");
+        Debug.Log($"AudioHandler.Instance: {(AudioHandler.Instance != null ? "Ready" : "Missing")}");
         Debug.Log($"Attack Sound: {(attackSound != null ? "Assigned" : "Not assigned")}");
     }
     

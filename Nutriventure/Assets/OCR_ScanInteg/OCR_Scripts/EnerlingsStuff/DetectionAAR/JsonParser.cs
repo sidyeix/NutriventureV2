@@ -25,7 +25,13 @@ public static class JsonParser
                 status = jsonData.status,
                 fingerprint = jsonData.fingerprint,
                 total_detected = jsonData.total_detected,
-                mode = jsonData.mode
+                mode = jsonData.mode,
+                // TIMING METRICS - NEW
+                ocr_time_ms = jsonData.ocr_time_ms,
+                decode_time_ms = jsonData.decode_time_ms,
+                bitmap_time_ms = jsonData.bitmap_time_ms,
+                match_time_ms = jsonData.match_time_ms,
+                total_time_ms = jsonData.total_time_ms
             };
             
             // Validate the parsed data
@@ -34,6 +40,7 @@ public static class JsonParser
                 Debug.Log($"Successfully parsed ingredient: {data.ingredient} " +
                          $"(Total detected: {data.total_detected}, Fingerprint: {data.fingerprint}, " +
                          $"Mode: {data.mode})");
+                Debug.Log($"[OCR TIMING] {data.GetTimingSummary()}");
                 return data;
             }
             else
@@ -58,11 +65,16 @@ public static class JsonParser
             status = errorMessage,
             fingerprint = "",
             total_detected = 0,
-            mode = "error"
+            mode = "error",
+            ocr_time_ms = 0,
+            decode_time_ms = 0,
+            bitmap_time_ms = 0,
+            match_time_ms = 0,
+            total_time_ms = 0
         };
     }
     
-    // Simple class for JSON parsing
+    // Simple class for JSON parsing - UPDATED with timing fields
     [System.Serializable]
     private class SimpleJsonData
     {
@@ -72,5 +84,12 @@ public static class JsonParser
         public int total_detected;
         public string mode;
         public string all_ingredients; // This might be an array string, we'll handle separately if needed
+        
+        // TIMING METRICS - NEW
+        public int ocr_time_ms;
+        public int decode_time_ms;
+        public int bitmap_time_ms;
+        public int match_time_ms;
+        public int total_time_ms;
     }
 }

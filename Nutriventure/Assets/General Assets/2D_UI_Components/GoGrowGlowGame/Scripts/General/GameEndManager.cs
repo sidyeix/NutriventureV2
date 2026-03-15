@@ -44,6 +44,12 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private List<GameObject> objectsToEnableOnHomeButton = new List<GameObject>();
     [SerializeField] private GameObject keyUnlockedObject;
 
+    [Header("🔑 KEY UNLOCKED CANVAS")]
+    [SerializeField] private GameObject keyUnlockedCanvas;
+    [SerializeField] private Button keyUnlockedContinueButton;
+    [SerializeField] private TMP_Text keyUnlockedTitleText;
+    [SerializeField] private TMP_Text keyUnlockedDescriptionText;
+
     [Header("Objects to Disable on Home/Restart")]
     [SerializeField] private List<GameObject> objectsToDisableOnHomeOrRestart = new List<GameObject>();
 
@@ -123,9 +129,9 @@ public class GameEndManager : MonoBehaviour
     [SerializeField] private string coinFeedbackSuffix = "";
 
     [Header("🔑 KEY COLLECTION SETTINGS")]
-    [SerializeField] private bool isKeyKingdom = true; // Set to true for Sugar Kingdom
-    [SerializeField] private string keyName = "Sugaria"; // "Sugaria", "Preservia", "Allerthia", "OCR"
-    [SerializeField] private int starsRequiredForKey = 2; // Minimum stars needed to get the key
+    [SerializeField] private bool isKeyKingdom = true;
+    [SerializeField] private string keyName = "Sugaria";
+    [SerializeField] private int starsRequiredForKey = 2;
 
     // Game end calculations
     private int starsEarned = 0;
@@ -148,9 +154,9 @@ public class GameEndManager : MonoBehaviour
     // Reward tracking
     private bool hasAddedRewards = false;
 
-    // 🔥 KEY COLLECTION TRACKING
-    private bool keyWasCollected = false;
-    private bool keySavedToDatabase = false;
+    // 🔑 KEY UNLOCK TRACKING
+    private bool pendingKeyUnlock = false;
+    private string pendingKeyName = "";
 
     private Dictionary<GameObject, TransformData> initialTransformData = new Dictionary<GameObject, TransformData>();
 
@@ -223,7 +229,9 @@ public class GameEndManager : MonoBehaviour
             parentCanvas = FindObjectOfType<Canvas>();
             if (parentCanvas == null)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("No Canvas found in scene! Coin feedback will not display correctly.");
+#endif
             }
         }
 
@@ -234,11 +242,15 @@ public class GameEndManager : MonoBehaviour
             if (coinTextObj != null)
             {
                 coinRewardSpawnPoint = coinTextObj.GetComponent<RectTransform>();
+#if UNITY_EDITOR
                 Debug.Log("CoinRewardSpawnPoint automatically set to CoinText");
+#endif
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("CoinRewardSpawnPoint is not assigned! Please drag the CoinText RectTransform to the field.");
+#endif
             }
         }
 
@@ -261,25 +273,33 @@ public class GameEndManager : MonoBehaviour
             {
                 backgroundMusicObject = foundMusic;
                 backgroundMusicSource = foundMusic.GetComponent<AudioSource>();
+#if UNITY_EDITOR
                 Debug.Log("BackgroundMusic automatically found by name");
+#endif
             }
         }
 
         // Warn if playable director object is not assigned
         if (playableDirectorObject == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Playable Director Object is not assigned in the Inspector! Home button timeline control will not work.");
+#endif
         }
 
         // Validate Playable Director setup
         if (restartPlayableDirector == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Restart Playable Director is not assigned! Timeline will not play on restart.");
+#endif
         }
 
         if (restartPlayableAsset == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Restart Playable Asset is not assigned! Timeline will not play on restart.");
+#endif
         }
     }
 
@@ -290,6 +310,10 @@ public class GameEndManager : MonoBehaviour
 
         if (gameSummaryParent != null)
             gameSummaryParent.SetActive(false);
+
+        // Hide key unlocked canvas
+        if (keyUnlockedCanvas != null)
+            keyUnlockedCanvas.SetActive(false);
 
         // Disable next button as requested
         if (nextButton != null)
@@ -303,6 +327,10 @@ public class GameEndManager : MonoBehaviour
 
         if (nextButton != null)
             nextButton.onClick.AddListener(OnNextClicked);
+
+        // Add listener to key unlocked continue button
+        if (keyUnlockedContinueButton != null)
+            keyUnlockedContinueButton.onClick.AddListener(OnKeyUnlockedContinueClicked);
 
         // Make sure stars container is hidden initially
         if (starsContainer != null)
@@ -326,13 +354,14 @@ public class GameEndManager : MonoBehaviour
 
         if (backgroundMusicSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("BackgroundMusicSource is not assigned in the Inspector!");
+#endif
         }
 
         // Reset flags on start
         hasAddedRewards = false;
-        keyWasCollected = false;
-        keySavedToDatabase = false;
+        pendingKeyUnlock = false;
     }
 
     // ========== PLAYABLE DIRECTOR OBJECT CONTROL - HOME BUTTON ==========
@@ -342,7 +371,9 @@ public class GameEndManager : MonoBehaviour
         if (playableDirectorObject != null)
         {
             playableDirectorObject.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log("Playable Director Object DISABLED - Home button clicked");
+#endif
         }
     }
 
@@ -352,13 +383,17 @@ public class GameEndManager : MonoBehaviour
     {
         if (restartPlayableDirector == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Cannot play restart timeline - Playable Director is not assigned!");
+#endif
             return;
         }
 
         if (restartPlayableAsset == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Cannot play restart timeline - Playable Asset is not assigned!");
+#endif
             return;
         }
 
@@ -372,7 +407,9 @@ public class GameEndManager : MonoBehaviour
         restartPlayableDirector.playableAsset = restartPlayableAsset;
         restartPlayableDirector.Play();
 
+#if UNITY_EDITOR
         Debug.Log("Restart timeline STARTED");
+#endif
     }
 
     // ========== OBJECT DISABLE ON HOME/RESTART ==========
@@ -384,7 +421,9 @@ public class GameEndManager : MonoBehaviour
             if (obj != null && obj.activeSelf)
             {
                 obj.SetActive(false);
+#if UNITY_EDITOR
                 Debug.Log($"Disabled object: {obj.name} on Home/Restart button click");
+#endif
             }
         }
     }
@@ -398,7 +437,9 @@ public class GameEndManager : MonoBehaviour
             if (!backgroundMusicObject.activeSelf)
             {
                 backgroundMusicObject.SetActive(true);
+#if UNITY_EDITOR
                 Debug.Log("BackgroundMusic GameObject ENABLED");
+#endif
             }
 
             if (backgroundMusicSource != null)
@@ -486,16 +527,25 @@ public class GameEndManager : MonoBehaviour
     {
         if (playerController == null || targetTransform == null)
         {
+#if UNITY_EDITOR
             Debug.LogError($"Cannot teleport player - PlayerController or {locationName} Transform is null!");
+#endif
             return;
         }
 
         Vector3 targetPosition = targetTransform.position;
         Quaternion targetRotation = targetTransform.rotation;
 
+#if UNITY_EDITOR
         Debug.Log($"Teleporting player to {locationName}: {targetPosition}");
+#endif
 
         ResetAnimatorBeforeTeleport();
+
+        // Disable CharacterController before moving — otherwise Unity's CC
+        // prevents the position change and the player snaps back / drifts.
+        CharacterController cc = playerController.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
 
         if (playerArmature != null && playerController.transform != null)
         {
@@ -515,6 +565,9 @@ public class GameEndManager : MonoBehaviour
         {
             characterAnimator.Update(0f);
         }
+
+        // Re-enable CharacterController after position is set
+        if (cc != null) cc.enabled = true;
     }
 
     private void TeleportPlayerToResultPoint()
@@ -525,6 +578,22 @@ public class GameEndManager : MonoBehaviour
     private void TeleportPlayerToLobbyPoint()
     {
         TeleportPlayerToTransform(lobbyPoint, "Lobby Point");
+
+        // Play respawn sound & effect at the lobby arrival point
+        if (gameManager != null)
+        {
+            gameManager.PlayRespawnSound();
+            gameManager.ShowRespawnEffect();
+        }
+    }
+
+    /// <summary>
+    /// Public accessor for teleporting the player to the lobby point.
+    /// Used by ResumeGameCanvas when the player clicks "No" (Restart).
+    /// </summary>
+    public void TeleportToLobbyPoint()
+    {
+        TeleportPlayerToLobbyPoint();
     }
 
     // ========== AUDIO METHODS ==========
@@ -553,7 +622,9 @@ public class GameEndManager : MonoBehaviour
         if (countCompleteSound != null && countAudioSource != null)
         {
             countAudioSource.PlayOneShot(countCompleteSound);
+#if UNITY_EDITOR
             Debug.Log("Count Complete Sound played");
+#endif
         }
     }
 
@@ -645,13 +716,17 @@ public class GameEndManager : MonoBehaviour
     {
         if (coinRewardFeedbackPrefab == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Coin Reward Feedback Prefab is not assigned!");
+#endif
             return;
         }
 
         if (parentCanvas == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Parent Canvas is not assigned! Cannot show coin feedback.");
+#endif
             return;
         }
 
@@ -744,12 +819,16 @@ public class GameEndManager : MonoBehaviour
                 GameDataManager.Instance.CurrentGameData.playerLevel++;
                 GameDataManager.Instance.CurrentGameData.currentXP -= GameDataManager.Instance.CurrentGameData.xpToNextLevel;
                 GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f;
+#if UNITY_EDITOR
                 Debug.Log($"Level Up! New Level: {GameDataManager.Instance.CurrentGameData.playerLevel}");
+#endif
             }
 
             GameDataManager.Instance.SaveGameData();
 
+#if UNITY_EDITOR
             Debug.Log($"Rewards added to GameData: +{totalCoins} Coins (was {oldCoins}, now {GameDataManager.Instance.CurrentGameData.nutriCoins}), +{totalExp} EXP");
+#endif
 
             Player_Data playerData = FindObjectOfType<Player_Data>();
             if (playerData != null)
@@ -762,51 +841,13 @@ public class GameEndManager : MonoBehaviour
         }
     }
 
-    // 🔥 KEY COLLECTION METHOD - SAVES THE KEY AND TRIGGERS EVENT
-    private void SaveKeyToDatabase()
-    {
-        if (keySavedToDatabase || GameDataManager.Instance == null || !isKeyKingdom) return;
-        
-        if (keyWasCollected && starsEarned >= starsRequiredForKey)
-        {
-            // Save the appropriate key based on keyName
-            switch (keyName.ToLower())
-            {
-                case "sugaria":
-                    GameDataManager.Instance.CurrentGameData.CollectSugariaKey();
-                    Debug.Log("✅ Sugaria Key saved to GameData!");
-                    break;
-                case "preservia":
-                    GameDataManager.Instance.CurrentGameData.CollectPreserviaKey();
-                    Debug.Log("✅ Preservia Key saved to GameData!");
-                    break;
-                case "allerthia":
-                    GameDataManager.Instance.CurrentGameData.CollectAllerthiaKey();
-                    Debug.Log("✅ Allerthia Key saved to GameData!");
-                    break;
-                case "ocr":
-                    GameDataManager.Instance.CurrentGameData.CollectOCRScannerKey();
-                    Debug.Log("✅ OCR Scanner Key saved to GameData!");
-                    break;
-                default:
-                    Debug.LogWarning($"Unknown key name: {keyName}");
-                    return;
-            }
-            
-            GameDataManager.Instance.SaveGameData();
-            keySavedToDatabase = true;
-            
-            // 🔥 TRIGGER THE KEY COLLECTION EVENT - THIS UPDATES THE GLOBAL MAP
-            KeyCollectionEvents.TriggerKeyCollected(keyName);
-            Debug.Log($"🔥 Key Collection Event Triggered: {keyName}");
-        }
-    }
-
     // ========== GAME END SCREEN ==========
 
     public void ShowGameEndScreen(bool playerWon)
     {
+#if UNITY_EDITOR
         Debug.Log($"=== SHOWING GAME END SCREEN - {(playerWon ? "WIN" : "LOSE")} ===");
+#endif
 
         HideStarsWhenShowingSummary();
         DisableObjectsOnGameEnd();
@@ -818,11 +859,39 @@ public class GameEndManager : MonoBehaviour
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        
-        // Check if key should be awarded (player won and enough stars)
-        keyWasCollected = playerWon && starsEarned >= starsRequiredForKey;
-        
+
         CalculateRewards();
+
+        // 🔑 Check if this is a key kingdom and conditions are met
+        if (isKeyKingdom && playerWon && starsEarned >= starsRequiredForKey)
+        {
+            // Check if key hasn't been collected yet
+            bool hasKey = false;
+            switch (keyName.ToLower())
+            {
+                case "sugaria":
+                    hasKey = GameDataManager.Instance.HasSugariaKey();
+                    break;
+                case "preservia":
+                    hasKey = GameDataManager.Instance.HasPreserviaKey();
+                    break;
+                case "allerthia":
+                    hasKey = GameDataManager.Instance.HasAllerthiaKey();
+                    break;
+                case "ocr":
+                    hasKey = GameDataManager.Instance.HasOCRScannerKey();
+                    break;
+            }
+
+            if (!hasKey)
+            {
+                pendingKeyUnlock = true;
+                pendingKeyName = keyName;
+#if UNITY_EDITOR
+                Debug.Log($"🔑 Key unlock pending for {keyName} with {starsEarned} stars!");
+#endif
+            }
+        }
 
         if (resultBackground != null)
         {
@@ -842,7 +911,6 @@ public class GameEndManager : MonoBehaviour
 
         isCountingAnimationComplete = false;
         hasAddedRewards = false;
-        keySavedToDatabase = false; // Reset for new game
         StartCoroutine(GameEndSequence());
     }
 
@@ -872,8 +940,9 @@ public class GameEndManager : MonoBehaviour
                 {
                     shouldShowKey = true;
                     isFirstTimeCompletion = true;
-                    keyWasCollected = true;
+#if UNITY_EDITOR
                     Debug.Log($"Showing key unlocked object for {keyName} - first time completion with {starsEarned} stars!");
+#endif
                 }
             }
         }
@@ -1030,7 +1099,7 @@ public class GameEndManager : MonoBehaviour
 
     private IEnumerator GameEndSequence()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.5f);
         yield return StartCoroutine(AnimateStars());
         yield return StartCoroutine(AnimateCountingNumbers());
 
@@ -1046,7 +1115,7 @@ public class GameEndManager : MonoBehaviour
             yield break;
 
         starsContainer.SetActive(true);
-        yield return new WaitForSeconds(0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
 
         starsAnimator.SetInteger(starParameter, 0);
         starsAnimator.Play("Default", -1, 0f);
@@ -1061,7 +1130,7 @@ public class GameEndManager : MonoBehaviour
             starsAnimator.SetTrigger(triggerName);
         }
 
-        yield return new WaitForSeconds(1f);
+        yield return CoroutineYieldCache.WaitForSeconds(1f);
     }
 
     private IEnumerator AnimateCountingNumbers()
@@ -1076,7 +1145,7 @@ public class GameEndManager : MonoBehaviour
         coinsText.text = "0";
         expText.text = "0";
 
-        yield return new WaitForSeconds(0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.3f);
 
         float elapsedTime = 0f;
         int lastIntegerValue = 0;
@@ -1143,23 +1212,14 @@ public class GameEndManager : MonoBehaviour
     {
         switch (starsEarned)
         {
-            case 3: baseCoins = 1000; baseExp = 1000; break;
-            case 2: baseCoins = 500; baseExp = 500; break;
-            case 1: baseCoins = 100; baseExp = 100; break;
-            default: baseCoins = 0; baseExp = 0; break;
+            case 3: baseCoins = 1000; baseExp = 500; break;
+            case 2: baseCoins = 700; baseExp = 300; break;
+            case 1: baseCoins = 400; baseExp = 150; break;
+            default: baseCoins = 100; baseExp = 50; break;
         }
 
-        int bonusExpFromPoints = Mathf.FloorToInt(playerPoints / 7f);
-        int bonusCoinsFromPoints = Mathf.FloorToInt(playerPoints / 10f);
-
-        int lifeBonusCoins = 0;
-        if (remainingHearts >= 5) lifeBonusCoins = 300;
-        else if (remainingHearts == 4) lifeBonusCoins = 200;
-        else if (remainingHearts == 3) lifeBonusCoins = 100;
-        else if (remainingHearts == 2) lifeBonusCoins = 50;
-
-        totalExp = baseExp + bonusExpFromPoints;
-        totalCoins = baseCoins + bonusCoinsFromPoints + lifeBonusCoins;
+        totalExp = baseExp;
+        totalCoins = baseCoins;
     }
 
     // ========== BUTTON HANDLERS ==========
@@ -1181,7 +1241,9 @@ public class GameEndManager : MonoBehaviour
     {
         if (!isCountingAnimationComplete) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== HOME BUTTON CLICKED ===");
+#endif
 
         StopCountAudio();
         OnButtonClicked();
@@ -1189,13 +1251,136 @@ public class GameEndManager : MonoBehaviour
         ForceEnableBackgroundMusic();
         AddRewardsToGameData();
 
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
+        // 🔑 Check if we have a pending key unlock
+        if (pendingKeyUnlock)
         {
-            SaveKeyToDatabase();
+            // Show the Key Unlocked Canvas instead of saving immediately
+            ShowKeyUnlockedCanvas();
+        }
+        else
+        {
+            // No key to unlock, proceed with normal home button behavior
+            ReturnToLobby();
+        }
+    }
+
+    // 🔑 Show Key Unlocked Canvas
+    private void ShowKeyUnlockedCanvas()
+    {
+#if UNITY_EDITOR
+        Debug.Log($"🔑 Showing Key Unlocked Canvas for {pendingKeyName}");
+#endif
+
+        // Hide the game summary
+        if (gameSummaryParent != null)
+            gameSummaryParent.SetActive(false);
+
+        // Show the key unlocked canvas
+        if (keyUnlockedCanvas != null)
+        {
+            keyUnlockedCanvas.SetActive(true);
+
+            // Update text in the canvas
+            if (keyUnlockedTitleText != null)
+            {
+                keyUnlockedTitleText.text = $"{pendingKeyName} Key Unlocked!";
+            }
+
+            if (keyUnlockedDescriptionText != null)
+            {
+                keyUnlockedDescriptionText.text = $"You've earned the {pendingKeyName} Key with {starsEarned} stars!";
+            }
+        }
+        else
+        {
+#if UNITY_EDITOR
+            Debug.LogWarning("🔑 Key Unlocked Canvas is not assigned! Saving key immediately.");
+#endif
+            ActuallySaveKey();
+            ReturnToLobby();
+        }
+    }
+
+    // 🔑 Handle Continue Button Click
+    private void OnKeyUnlockedContinueClicked()
+    {
+#if UNITY_EDITOR
+        Debug.Log($"🔑 Continue button clicked - saving {pendingKeyName} key now");
+#endif
+
+        // Save the key
+        ActuallySaveKey();
+
+        // Hide the key unlocked canvas
+        if (keyUnlockedCanvas != null)
+            keyUnlockedCanvas.SetActive(false);
+
+        // Small delay to ensure event is processed before returning to lobby
+        StartCoroutine(DelayedReturnToLobby());
+    }
+
+    private IEnumerator DelayedReturnToLobby()
+    {
+        // Wait a frame to ensure the KeyCollectionEvents are processed
+        yield return null;
+        ReturnToLobby();
+    }
+
+    // 🔑 Actually save the key to GameData and update UI
+    private void ActuallySaveKey()
+    {
+        if (!pendingKeyUnlock || string.IsNullOrEmpty(pendingKeyName))
+        {
+#if UNITY_EDITOR
+            Debug.LogWarning("🔑 No pending key to save!");
+#endif
+            return;
         }
 
-        CheckForKingKeyUnlock();
+#if UNITY_EDITOR
+        Debug.Log($"🔑 Saving {pendingKeyName} key to GameData...");
+#endif
+
+        // Save the key based on the key name
+        switch (pendingKeyName.ToLower())
+        {
+            case "sugaria":
+                GameDataManager.Instance.CollectSugariaKey();
+                break;
+            case "preservia":
+                GameDataManager.Instance.CollectPreserviaKey();
+                break;
+            case "allerthia":
+                GameDataManager.Instance.CollectAllerthiaKey();
+                break;
+            case "ocr":
+                GameDataManager.Instance.CollectOCRScannerKey();
+                break;
+            default:
+#if UNITY_EDITOR
+                Debug.LogWarning($"🔑 Unknown key name: {pendingKeyName}");
+#endif
+                break;
+        }
+
+        // Trigger the event for UI updates (this will update Global Map)
+        KeyCollectionEvents.TriggerKeyCollected(pendingKeyName);
+
+#if UNITY_EDITOR
+        Debug.Log($"🔑 Key '{pendingKeyName}' saved successfully! Global Map button should now be enabled.");
+#endif
+
+        // Reset pending flag
+        pendingKeyUnlock = false;
+        pendingKeyName = "";
+    }
+
+    // 🔑 Return to lobby
+    private void ReturnToLobby()
+    {
+#if UNITY_EDITOR
+        Debug.Log("Returning to lobby...");
+#endif
 
         PlayLobbyMusic();
         ResetGameEndState();
@@ -1229,7 +1414,9 @@ public class GameEndManager : MonoBehaviour
         StartCoroutine(RestoreCameraBlendAfterTeleport());
         ForceEnableBackgroundMusic();
 
+#if UNITY_EDITOR
         Debug.Log("=== HOME BUTTON COMPLETE ===");
+#endif
     }
 
     // ========== RESTART BUTTON ==========
@@ -1237,7 +1424,9 @@ public class GameEndManager : MonoBehaviour
     {
         if (!isCountingAnimationComplete) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== RESTART BUTTON CLICKED ===");
+#endif
 
         StopCountAudio();
         OnButtonClicked();
@@ -1246,28 +1435,28 @@ public class GameEndManager : MonoBehaviour
 
         AddRewardsToGameData();
 
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
-        {
-            SaveKeyToDatabase();
-        }
-
         PlayRestartMusic();
         ResetGameEndState();
 
         DisableObjectsOnHomeOrRestart();
 
+#if UNITY_EDITOR
         Debug.Log("STEP 1: Performing complete game reset...");
+#endif
         ResetMinigames();
         ResetAllContinueButtons();
 
         if (gameManager != null)
         {
             gameManager.FullGameReset();
+#if UNITY_EDITOR
             Debug.Log("GameManager fully reset");
+#endif
         }
 
+#if UNITY_EDITOR
         Debug.Log("STEP 2: Teleporting to lobby point...");
+#endif
         TeleportPlayerToLobbyPoint();
 
         if (playerFollowCamera != null)
@@ -1278,15 +1467,19 @@ public class GameEndManager : MonoBehaviour
 
         EnableObjectsOnHomeButton();
 
+#if UNITY_EDITOR
         Debug.Log("STEP 3: Playing restart timeline...");
+#endif
         StartCoroutine(PlayRestartTimeline());
 
         StartCoroutine(RestoreCameraBlendAfterTeleport());
 
         ForceEnableBackgroundMusic();
 
+#if UNITY_EDITOR
         Debug.Log("=== RESTART BUTTON COMPLETE ===");
         Debug.Log($"Rewards added: +{totalCoins} Coins, +{totalExp} EXP");
+#endif
     }
 
     // Coroutine to play restart timeline
@@ -1294,23 +1487,31 @@ public class GameEndManager : MonoBehaviour
     {
         if (restartPlayableDirector == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Cannot play restart timeline - Playable Director is not assigned!");
+#endif
             yield break;
         }
 
         if (restartPlayableAsset == null)
         {
+#if UNITY_EDITOR
             Debug.LogError("Cannot play restart timeline - Playable Asset is not assigned!");
+#endif
             yield break;
         }
 
         if (restartTimelineDelay > 0)
         {
+#if UNITY_EDITOR
             Debug.Log($"Waiting {restartTimelineDelay}s before playing restart timeline...");
-            yield return new WaitForSeconds(restartTimelineDelay);
+#endif
+            yield return CoroutineYieldCache.WaitForSeconds(restartTimelineDelay);
         }
 
+#if UNITY_EDITOR
         Debug.Log("Playing restart timeline...");
+#endif
 
         if (restartPlayableDirector.state == PlayState.Playing)
         {
@@ -1331,7 +1532,9 @@ public class GameEndManager : MonoBehaviour
             yield return null;
         }
 
+#if UNITY_EDITOR
         Debug.Log("Restart timeline finished - Game is now ready to play");
+#endif
 
         if (playerController != null)
         {
@@ -1343,7 +1546,9 @@ public class GameEndManager : MonoBehaviour
     {
         if (!isCountingAnimationComplete) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== NEXT BUTTON CLICKED ===");
+#endif
 
         StopCountAudio();
         OnButtonClicked();
@@ -1351,12 +1556,6 @@ public class GameEndManager : MonoBehaviour
         ForceEnableBackgroundMusic();
 
         AddRewardsToGameData();
-
-        // 🔥 SAVE KEY TO DATABASE AND TRIGGER EVENT
-        if (keyWasCollected && !keySavedToDatabase)
-        {
-            SaveKeyToDatabase();
-        }
 
         PlayLobbyMusic();
         ResetGameEndState();
@@ -1382,7 +1581,9 @@ public class GameEndManager : MonoBehaviour
 
     public void ResetMinigamesForHomeButton()
     {
+#if UNITY_EDITOR
         Debug.Log("=== COMPLETE MINIGAMES RESET (HOME BUTTON - NO STARTING SEQUENCE) ===");
+#endif
 
         if (growAssessmentManager != null)
         {
@@ -1404,12 +1605,16 @@ public class GameEndManager : MonoBehaviour
         ResetObjectsToInitialState();
         ResetOneTimeAnimations();
 
+#if UNITY_EDITOR
         Debug.Log("=== MINIGAMES COMPLETELY RESET (HOME BUTTON) ===");
+#endif
     }
 
     public void ResetMinigames()
     {
+#if UNITY_EDITOR
         Debug.Log("=== COMPLETE MINIGAMES RESET (RESTART BUTTON) ===");
+#endif
 
         if (growAssessmentManager != null)
         {
@@ -1427,7 +1632,9 @@ public class GameEndManager : MonoBehaviour
             if (resetMethod != null)
                 resetMethod.Invoke(startingSequenceManager, new object[] { 0f });
 
+#if UNITY_EDITOR
             Debug.Log("StartingSequenceManager reset for restart");
+#endif
         }
 
         ResetTorchMinigame();
@@ -1441,7 +1648,9 @@ public class GameEndManager : MonoBehaviour
         ResetObjectsToInitialState();
         ResetOneTimeAnimations();
 
+#if UNITY_EDITOR
         Debug.Log("=== MINIGAMES COMPLETELY RESET (RESTART BUTTON) ===");
+#endif
     }
 
     public void ResetGameEndState()
@@ -1454,6 +1663,7 @@ public class GameEndManager : MonoBehaviour
         if (starsAnimator != null) starsAnimator.SetInteger(starParameter, 0);
         if (starsContainer != null) starsContainer.SetActive(false);
         if (keyUnlockedObject != null && keyUnlockedObject.activeSelf) keyUnlockedObject.SetActive(false);
+        if (keyUnlockedCanvas != null && keyUnlockedCanvas.activeSelf) keyUnlockedCanvas.SetActive(false);
 
         if (pointsText != null) pointsText.text = "0";
         if (timeText != null) timeText.text = "00:00";
@@ -1462,6 +1672,10 @@ public class GameEndManager : MonoBehaviour
 
         if (buttonContainer != null) buttonContainer.SetActive(false);
         if (gameSummaryParent != null) gameSummaryParent.SetActive(false);
+
+        // Reset pending key flags
+        pendingKeyUnlock = false;
+        pendingKeyName = "";
     }
 
     private void ResetGlowTowers()
@@ -1553,7 +1767,6 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = 0;
         starsEarned = 0;
-        keyWasCollected = false; // No key on game over
         CalculateRewards();
         ShowGameEndScreen(false);
     }
@@ -1569,10 +1782,7 @@ public class GameEndManager : MonoBehaviour
         playerPoints = gameManager.GetCurrentScore();
         remainingHearts = Mathf.CeilToInt(gameManager.GetCurrentLifeAmount());
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        
-        // Check if key should be awarded (player won and enough stars)
-        keyWasCollected = starsEarned >= starsRequiredForKey;
-        
+
         ShowGameEndScreen(true);
     }
 
@@ -1609,7 +1819,6 @@ public class GameEndManager : MonoBehaviour
         }
 
         starsEarned = CalculateStarRating(remainingHearts, completionTime);
-        keyWasCollected = starsEarned >= starsRequiredForKey;
         CalculateRewards();
 
         if (resultBackground != null && winBackground != null)
@@ -1624,7 +1833,6 @@ public class GameEndManager : MonoBehaviour
 
         isCountingAnimationComplete = false;
         hasAddedRewards = false;
-        keySavedToDatabase = false;
         StartCoroutine(GameEndSequence());
     }
 
@@ -1652,6 +1860,8 @@ public class GameEndManager : MonoBehaviour
 
     private void CheckForKingKeyUnlock()
     {
+        // This method is now handled by the pending key system
+        // Keeping for compatibility
         KingVitronTimelineButton kingButton = FindObjectOfType<KingVitronTimelineButton>();
         if (kingButton != null)
         {
@@ -1666,20 +1876,127 @@ public class GameEndManager : MonoBehaviour
     public float GetCompletionTime() => completionTime;
     public int GetPlayerPoints() => playerPoints;
     public bool IsFirstTimeCompletion() => isFirstTimeCompletion;
-    public bool WasKeyCollected() => keyWasCollected;
+
+    public int GetRequiredStarsForKey()
+    {
+        return starsRequiredForKey;
+    }
 
     public void ForceStopCountAudio()
     {
         StopCountAudio();
     }
 
+    // ========== IN-GAME SETTINGS BUTTON SUPPORT ==========
+    // These public methods allow InGameSettingsButton to perform the same
+    // restart/home actions that the game-end buttons do.
+
+    /// <summary>
+    /// Full in-game restart: resets everything and plays the farmer NPC cutscene.
+    /// Call this from InGameSettingsButton instead of manually replicating logic.
+    /// </summary>
+    public void PerformInGameRestart()
+    {
+#if UNITY_EDITOR
+        Debug.Log("=== IN-GAME RESTART (via GameEndManager) ===");
+#endif
+
+        ForceEnableBackgroundMusic();
+        PlayRestartMusic();
+        ResetGameEndState();
+        DisableObjectsOnHomeOrRestart();
+
+        ResetMinigames();
+        ResetAllContinueButtons();
+
+        if (gameManager != null)
+        {
+            gameManager.FullGameReset();
+#if UNITY_EDITOR
+            Debug.Log("GameManager fully reset");
+#endif
+        }
+
+        TeleportPlayerToLobbyPoint();
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = playerCameraPriority;
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        // Play the restart timeline (farmer NPC cutscene)
+        StartCoroutine(PlayRestartTimeline());
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+        ForceEnableBackgroundMusic();
+
+#if UNITY_EDITOR
+        Debug.Log("=== IN-GAME RESTART COMPLETE ===");
+#endif
+    }
+
+    /// <summary>
+    /// Full in-game home: stops the game, resets everything, returns to lobby.
+    /// Call this from InGameSettingsButton instead of manually replicating logic.
+    /// </summary>
+    public void PerformInGameHome()
+    {
+#if UNITY_EDITOR
+        Debug.Log("=== IN-GAME HOME (via GameEndManager) ===");
+#endif
+
+        ForceEnableBackgroundMusic();
+
+        // End the active game first
+        if (gameManager != null && gameManager.IsGameActive())
+        {
+            gameManager.EndGame();
+        }
+
+        PlayLobbyMusic();
+        ResetGameEndState();
+        ResetMinigamesForHomeButton();
+        ResetAllContinueButtons();
+
+        DisableObjectsOnHomeOrRestart();
+        DisablePlayableDirectorObject();
+
+        SwitchToPlayerCameraWithCut();
+        TeleportPlayerToLobbyPoint();
+
+        if (playerController != null && !playerController.gameObject.activeSelf)
+            playerController.gameObject.SetActive(true);
+
+        if (playerController != null && !playerController.enabled)
+            playerController.enabled = true;
+
+        if (uiControlsCanvas != null && !uiControlsCanvas.activeSelf)
+            uiControlsCanvas.SetActive(true);
+
+        EnableObjectsOnHomeButton();
+
+        if (gameManager != null)
+        {
+            gameManager.FullGameReset();
+        }
+
+        StartCoroutine(RestoreCameraBlendAfterTeleport());
+        ForceEnableBackgroundMusic();
+
+#if UNITY_EDITOR
+        Debug.Log("=== IN-GAME HOME COMPLETE ===");
+#endif
+    }
+
     // ========== DEBUG METHODS ==========
-    
+
     [ContextMenu("Test Win with Key")]
     public void TestWinWithKey()
     {
         starsEarned = 3;
-        keyWasCollected = true;
         HandleLevelComplete();
     }
 
@@ -1687,15 +2004,12 @@ public class GameEndManager : MonoBehaviour
     public void TestWinWithoutKey()
     {
         starsEarned = 1;
-        keyWasCollected = false;
         HandleLevelComplete();
     }
 
     [ContextMenu("Test Force Save Sugaria Key")]
     public void TestForceSaveSugariaKey()
     {
-        keyWasCollected = true;
         starsEarned = 3;
-        SaveKeyToDatabase();
     }
 }

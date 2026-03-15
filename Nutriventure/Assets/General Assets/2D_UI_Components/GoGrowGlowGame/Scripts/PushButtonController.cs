@@ -11,8 +11,9 @@ public class PushButtonController : MonoBehaviour, IPointerDownHandler, IPointer
     public PushInteractionManager pushManager;
 
     [Header("Button Settings")]
+    [Tooltip("Match this to Sprint button's pressed color for uniformity")]
     public Color normalColor = Color.white;
-    public Color pushingColor = Color.green;
+    public Color pushingColor = new Color(0.78f, 0.78f, 0.78f, 1f);
     public Color disabledColor = Color.gray;
     public float buttonHoldThreshold = 0.1f;
 
@@ -82,7 +83,6 @@ public class PushButtonController : MonoBehaviour, IPointerDownHandler, IPointer
         {
             isHolding = true;
             holdTime = 0f;
-            Debug.Log("Push button pressed (starting hold)");
         }
     }
 
@@ -96,11 +96,6 @@ public class PushButtonController : MonoBehaviour, IPointerDownHandler, IPointer
             if (holdTime >= buttonHoldThreshold && uiInput != null)
             {
                 uiInput.VirtualPushInput(false);
-                Debug.Log("Push button released (was pushing)");
-            }
-            else
-            {
-                Debug.Log("Push button released (tap, not hold)");
             }
 
             holdTime = 0f;

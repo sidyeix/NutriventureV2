@@ -1,33 +1,39 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ContinueButton : MonoBehaviour
+public class ContinueButton : MonoBehaviour, IPointerDownHandler
 {
     [Header("Button Settings")]
     [SerializeField] private bool disableAfterUse = false; // Checkbox in Inspector
+
+    [Header("Audio Settings")]
+    [SerializeField] private bool playClickSound = true; // Option to enable/disable click sound
 
     private Button button;
     private bool isButtonEnabled = true;
 
     void Start()
     {
-        // Get button and add listener
         button = GetComponent<Button>();
 
-        if (button != null)
+        if (button == null)
         {
-            button.onClick.AddListener(OnButtonClick);
-        }
-        else
-        {
-            // RESTORED: Warning, not error (matches original)
             Debug.LogWarning($"ContinueButton script on {gameObject.name} needs a Button component!");
         }
     }
 
-    void OnButtonClick()
+    // Fires IMMEDIATELY on touch/press — no waiting for release
+    public void OnPointerDown(PointerEventData eventData)
     {
         if (!isButtonEnabled) return;
+        if (button != null && !button.interactable) return;
+
+        // Play click sound effect
+        if (playClickSound && AudioHandler.Instance != null)
+        {
+            AudioHandler.Instance.PlayButtonClick();
+        }
 
         if (TimelinePauseManager.Instance != null)
         {
@@ -81,14 +87,6 @@ public class ContinueButton : MonoBehaviour
     public void ResetButton()
     {
         EnableButton();
-
-        // Re-add listener
-        if (button != null)
-        {
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnButtonClick);
-        }
-
         Debug.Log($"ContinueButton on {gameObject.name} has been reset");
     }
 
@@ -102,14 +100,7 @@ public class ContinueButton : MonoBehaviour
         }
     }
 
-    // Clean up listeners when destroyed
-    void OnDestroy()
-    {
-        if (button != null)
-        {
-            button.onClick.RemoveListener(OnButtonClick);
-        }
-    }
+    void OnDestroy() { }
 
     // Public method to check if button is currently enabled
     public bool IsButtonEnabled()

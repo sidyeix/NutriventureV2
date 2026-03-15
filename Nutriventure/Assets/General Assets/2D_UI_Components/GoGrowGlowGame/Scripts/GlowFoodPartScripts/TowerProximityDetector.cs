@@ -35,7 +35,9 @@ public class TowerProximityDetector : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"TowerProximityDetector on {gameObject.name}: Player or GlowTower not found!");
+#endif
         }
     }
 
@@ -43,32 +45,50 @@ public class TowerProximityDetector : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(checkInterval);
+            yield return CoroutineYieldCache.WaitForSeconds(checkInterval);
 
             if (playerTransform == null || glowTower == null) continue;
 
-            bool isInRange = Vector3.Distance(playerTransform.position, glowTower.GetCenterPointPosition()) <= glowTower.GetRange();
+            // Use horizontal (XZ) distance only — ignoring Y so tall towers still detect the player at ground level
+            Vector3 diff = playerTransform.position - glowTower.GetCenterPointPosition();
+            float rangeSqr = glowTower.GetRange() * glowTower.GetRange();
+            bool isInRange = (diff.x * diff.x + diff.z * diff.z) <= rangeSqr;
 
             if (isInRange && !wasPlayerInRange)
             {
                 // Player entered range
                 wasPlayerInRange = true;
                 OnPlayerEnterRange?.Invoke(glowTower);
+#if UNITY_EDITOR
                 Debug.Log($"Player entered range of {glowTower.gameObject.name}");
+#endif
             }
             else if (!isInRange && wasPlayerInRange)
             {
                 // Player exited range
                 wasPlayerInRange = false;
                 OnPlayerExitRange?.Invoke(glowTower);
+#if UNITY_EDITOR
                 Debug.Log($"Player exited range of {glowTower.gameObject.name}");
+#endif
             }
         }
     }
 
+    /// <summary>
+    /// Force an immediate re-check of player proximity. Resets wasPlayerInRange so
+    /// the enter event fires again if the player is currently within range.
+    /// </summary>
+    public void ForceRecheck()
+    {
+        wasPlayerInRange = false;
+    }
+
     public void ResetDetector()
     {
+#if UNITY_EDITOR
         Debug.Log($"Resetting TowerProximityDetector on {gameObject.name}");
+#endif
 
         // Stop the detection coroutine
         if (detectionCoroutine != null)
@@ -93,7 +113,9 @@ public class TowerProximityDetector : MonoBehaviour
             detectionCoroutine = StartCoroutine(DetectionRoutine());
         }
 
+#if UNITY_EDITOR
         Debug.Log($"TowerProximityDetector reset complete for {gameObject.name}");
+#endif
     }
 
     private void OnDestroy()

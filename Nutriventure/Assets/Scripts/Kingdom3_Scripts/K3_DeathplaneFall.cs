@@ -8,7 +8,7 @@ public class K3_DeathplaneFall : MonoBehaviour
     public GameObject deathPlaneObject;
     [Tooltip("Make sure this matches your player's tag")]
     public string playerTag = "Player";
-    
+
     [Header("RESPAWN SETTINGS")]
     [Tooltip("Drag your respawn point GameObject here")]
     public GameObject respawnPointObject;
@@ -16,7 +16,7 @@ public class K3_DeathplaneFall : MonoBehaviour
     public int healthDamage = 1;
     [Tooltip("Time before respawn happens")]
     public float respawnDelay = 0.5f;
-    
+
     [Header("VISUAL FEEDBACK")]
     [Tooltip("Drag your DamagePanel UI Image here")]
     public Image damagePanel;
@@ -24,7 +24,7 @@ public class K3_DeathplaneFall : MonoBehaviour
     public float damagePanelDuration = 1f;
     [Tooltip("Color when damaged")]
     public Color damageColor = new Color(1f, 0f, 0f, 0.3f); // Semi-transparent red
-    
+
     [Header("RESPAWN VISUAL EFFECTS")]
     [Tooltip("Particle system at respawn point (initially disabled)")]
     public ParticleSystem respawnParticles;
@@ -32,7 +32,7 @@ public class K3_DeathplaneFall : MonoBehaviour
     public float particleDuration = 2f;
     [Tooltip("Particle outro animation duration")]
     public float particleOutroDuration = 0.5f;
-    
+
     [Header("AUDIO FEEDBACK")]
     [Tooltip("Sound when player drowns (plays with damage panel)")]
     public AudioClip drownedSFX;
@@ -45,33 +45,37 @@ public class K3_DeathplaneFall : MonoBehaviour
     [Range(0f, 2f)]
     public float respawnVolume = 2;
     public float soundVolume = 1f;
-    
+
     [Header("PLAYER REFERENCES")]
     [Tooltip("Drag your Player GameObject here")]
     public GameObject playerObject;
     [Tooltip("Player's health script - will auto-find if not assigned")]
     public PreserviaPlayerStat playerHealth;
-    
+
     [Header("DEBUG OPTIONS")]
     public bool showDebugMessages = true;
     public bool drawDebugGizmos = true;
     public Color gizmoColor = Color.red;
-    
+
     // Private variables
     private BoxCollider deathCollider;
     private AudioSource audioSource;
     private Color originalPanelColor;
     private bool isRespawning = false;
     private ParticleSystem activeRespawnParticles;
-    
+    private GameObject originalRespawnPointObject;
+
     void Start()
     {
+        // Store the original respawn point so we can restore it on restart
+        originalRespawnPointObject = respawnPointObject;
+
         SetupDeathPlane();
         SetupAudio();
         SetupDamagePanel();
         FindPlayerComponents();
         SetupParticles();
-        
+
         if (showDebugMessages)
         {
             Debug.Log("K3_DeathplaneFall initialized successfully!");
@@ -80,7 +84,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.Log($"Player: {playerObject?.name ?? "Not found"}");
         }
     }
-    
+
     void SetupDeathPlane()
     {
         // Make sure we have a death plane object
@@ -90,7 +94,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             this.enabled = false;
             return;
         }
-        
+
         // Get or add BoxCollider
         deathCollider = deathPlaneObject.GetComponent<BoxCollider>();
         if (deathCollider == null)
@@ -98,13 +102,13 @@ public class K3_DeathplaneFall : MonoBehaviour
             deathCollider = deathPlaneObject.AddComponent<BoxCollider>();
             if (showDebugMessages) Debug.Log("Added BoxCollider to DeathPlane");
         }
-        
+
         // Ensure it's a trigger
         deathCollider.isTrigger = true;
-        
+
         // Make sure the death plane object is active
         deathPlaneObject.SetActive(true);
-        
+
         // Add this script to the death plane if it's not already there
         if (deathPlaneObject.GetComponent<K3_DeathplaneFall>() == null && deathPlaneObject != this.gameObject)
         {
@@ -112,7 +116,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Added K3_DeathplaneFall script to DeathPlane object. You should remove this duplicate script.");
         }
     }
-    
+
     void SetupAudio()
     {
         // Create audio source on this object
@@ -120,7 +124,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 1f; // 3D sound
     }
-    
+
     void SetupDamagePanel()
     {
         if (damagePanel != null)
@@ -133,14 +137,14 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Damage panel not assigned. No visual feedback will appear.");
         }
     }
-    
+
     void SetupParticles()
     {
         if (respawnParticles != null)
         {
             // Make sure particle system is initially disabled
             respawnParticles.gameObject.SetActive(false);
-            
+
             if (showDebugMessages)
             {
                 Debug.Log("Respawn particles initialized (initially disabled)");
@@ -151,7 +155,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("No respawn particle system assigned.");
         }
     }
-    
+
     void FindPlayerComponents()
     {
         // Find player object if not assigned
@@ -163,7 +167,7 @@ public class K3_DeathplaneFall : MonoBehaviour
                 Debug.LogError($"No GameObject found with tag '{playerTag}'. Make sure your player is tagged correctly.");
             }
         }
-        
+
         // Find player health component
         if (playerHealth == null && playerObject != null)
         {
@@ -173,45 +177,45 @@ public class K3_DeathplaneFall : MonoBehaviour
                 // Try to find it in children
                 playerHealth = playerObject.GetComponentInChildren<PreserviaPlayerStat>();
             }
-            
+
             if (playerHealth == null && showDebugMessages)
             {
                 Debug.LogError("PreserviaPlayerStat not found on player! Make sure the health script is attached.");
             }
         }
     }
-    
+
     void OnTriggerEnter(Collider other)
     {
         // Check if we're already processing a respawn
         if (isRespawning) return;
-        
+
         // Check if it's the player
         if (other.CompareTag(playerTag))
         {
             if (showDebugMessages) Debug.Log($"PLAYER FELL INTO DEATH PLANE: {other.name}");
-            
+
             // Start the death sequence
             HandlePlayerDeath(other.gameObject);
         }
     }
-    
+
     void HandlePlayerDeath(GameObject player)
     {
         isRespawning = true;
-        
+
         // Step 1: Show damage panel and play drowned SFX
         ShowDamagePanel();
-        
+
         // Step 2: Apply damage to player
         ApplyDamage();
-        
+
         // Step 3: Wait and then respawn
         Invoke("RespawnPlayer", respawnDelay);
-        
+
         if (showDebugMessages) Debug.Log("Death sequence started...");
     }
-    
+
     void ShowDamagePanel()
     {
         if (damagePanel != null)
@@ -219,13 +223,13 @@ public class K3_DeathplaneFall : MonoBehaviour
             // Show the panel with damage color
             damagePanel.color = damageColor;
             damagePanel.gameObject.SetActive(true);
-            
+
             // Play drowned SFX
             PlayDrownedSFX();
-            
+
             // Hide it after duration
             Invoke("HideDamagePanel", damagePanelDuration);
-            
+
             if (showDebugMessages) Debug.Log("Damage panel activated");
         }
         else
@@ -234,18 +238,18 @@ public class K3_DeathplaneFall : MonoBehaviour
             PlayDrownedSFX();
         }
     }
-    
+
     void HideDamagePanel()
     {
         if (damagePanel != null)
         {
             damagePanel.gameObject.SetActive(false);
             damagePanel.color = originalPanelColor;
-            
+
             if (showDebugMessages) Debug.Log("Damage panel hidden");
         }
     }
-    
+
     void PlayDrownedSFX()
     {
         if (drownedSFX != null && audioSource != null)
@@ -253,8 +257,8 @@ public class K3_DeathplaneFall : MonoBehaviour
             // Clamp volume between 0 and 2 for safety
             float clampedVolume = Mathf.Clamp(drownedVolume, 0f, 2f);
             audioSource.PlayOneShot(drownedSFX, clampedVolume);
-            
-            if (showDebugMessages) 
+
+            if (showDebugMessages)
             {
                 Debug.Log($"Played drowned SFX at volume: {clampedVolume}");
             }
@@ -264,7 +268,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("No drowned SFX assigned or no audio source");
         }
     }
-    
+
     void PlayRespawnSFX()
     {
         if (respawnSFX != null && audioSource != null)
@@ -272,8 +276,8 @@ public class K3_DeathplaneFall : MonoBehaviour
             // Clamp volume between 0 and 2 for safety
             float clampedVolume = Mathf.Clamp(respawnVolume, 0f, 2f);
             audioSource.PlayOneShot(respawnSFX, clampedVolume);
-            
-            if (showDebugMessages) 
+
+            if (showDebugMessages)
             {
                 Debug.Log($"Played respawn SFX at volume: {clampedVolume}");
             }
@@ -283,14 +287,14 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("No respawn SFX assigned or no audio source");
         }
     }
-    
+
     void ApplyDamage()
     {
         if (playerHealth != null)
         {
             playerHealth.TakeDamage(healthDamage);
-            
-            if (showDebugMessages) 
+
+            if (showDebugMessages)
             {
                 Debug.Log($"Player took {healthDamage} damage. Health: {playerHealth.currentHealth}/{playerHealth.maxHealth}");
             }
@@ -300,11 +304,11 @@ public class K3_DeathplaneFall : MonoBehaviour
             if (showDebugMessages) Debug.LogError("Cannot apply damage - player health script not found!");
         }
     }
-    
+
     void RespawnPlayer()
     {
         if (showDebugMessages) Debug.Log("Respawning player...");
-        
+
         // Make sure we have a player
         if (playerObject == null)
         {
@@ -316,7 +320,7 @@ public class K3_DeathplaneFall : MonoBehaviour
                 return;
             }
         }
-        
+
         // Make sure we have a respawn point
         if (respawnPointObject == null)
         {
@@ -324,29 +328,29 @@ public class K3_DeathplaneFall : MonoBehaviour
             isRespawning = false;
             return;
         }
-        
+
         // Play respawn SFX
         PlayRespawnSFX();
-        
+
         // Play respawn particle effect
         PlayRespawnParticles();
-        
+
         // Teleport player to respawn point
         playerObject.transform.position = respawnPointObject.transform.position;
-        
+
         // Reset rotation
         playerObject.transform.rotation = respawnPointObject.transform.rotation;
-        
+
         // Reset respawn flag after particle outro
         Invoke("CompleteRespawn", particleDuration);
-        
-        if (showDebugMessages) 
+
+        if (showDebugMessages)
         {
             Debug.Log($"Player respawned at: {respawnPointObject.transform.position}");
             Debug.Log("Respawn sequence in progress...");
         }
     }
-    
+
     void PlayRespawnParticles()
     {
         if (respawnParticles != null && respawnPointObject != null)
@@ -354,17 +358,17 @@ public class K3_DeathplaneFall : MonoBehaviour
             // Create a copy of the particle system at respawn point
             activeRespawnParticles = Instantiate(respawnParticles, respawnPointObject.transform.position, Quaternion.identity);
             activeRespawnParticles.gameObject.SetActive(true);
-            
+
             // Play the particle system
             activeRespawnParticles.Play();
-            
+
             // Start outro animation after main duration
             Invoke("StartParticleOutro", particleDuration - particleOutroDuration);
-            
+
             // Destroy after complete duration
             Destroy(activeRespawnParticles.gameObject, particleDuration + 0.1f);
-            
-            if (showDebugMessages) 
+
+            if (showDebugMessages)
             {
                 Debug.Log($"Respawn particles started for {particleDuration} seconds");
             }
@@ -374,7 +378,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Cannot play respawn particles - system not assigned or no respawn point");
         }
     }
-    
+
     void StartParticleOutro()
     {
         if (activeRespawnParticles != null)
@@ -382,26 +386,26 @@ public class K3_DeathplaneFall : MonoBehaviour
             // Stop emitting new particles (start outro)
             var emission = activeRespawnParticles.emission;
             emission.enabled = false;
-            
-            if (showDebugMessages) 
+
+            if (showDebugMessages)
             {
                 Debug.Log("Particle outro animation started");
             }
         }
     }
-    
+
     void CompleteRespawn()
     {
         isRespawning = false;
-        
-        if (showDebugMessages) 
+
+        if (showDebugMessages)
         {
             Debug.Log("Respawn sequence complete!");
         }
     }
-    
+
     // ===== PUBLIC METHODS FOR TESTING AND CONTROL =====
-    
+
     [ContextMenu("Test Death Fall")]
     public void TestDeathFall()
     {
@@ -410,7 +414,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Test only works in Play Mode!");
             return;
         }
-        
+
         GameObject testPlayer = GameObject.FindGameObjectWithTag(playerTag);
         if (testPlayer != null)
         {
@@ -422,7 +426,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogError("No player found to test with!");
         }
     }
-    
+
     [ContextMenu("Test Respawn Only")]
     public void TestRespawnOnly()
     {
@@ -431,17 +435,17 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Test only works in Play Mode!");
             return;
         }
-        
+
         Debug.Log("=== TESTING RESPAWN ONLY ===");
         RespawnPlayer();
     }
-    
+
     [ContextMenu("Force Respawn")]
     public void ForceRespawn()
     {
         RespawnPlayer();
     }
-    
+
     [ContextMenu("Test Particle Effect")]
     public void TestParticleEffect()
     {
@@ -450,7 +454,7 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogWarning("Test only works in Play Mode!");
             return;
         }
-        
+
         if (respawnParticles != null && respawnPointObject != null)
         {
             Debug.Log("=== TESTING PARTICLE EFFECT ===");
@@ -461,25 +465,58 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogError("Cannot test particles - respawnParticles or respawnPointObject not assigned!");
         }
     }
-    
+
     public void SetNewRespawnPoint(GameObject newRespawnPoint)
     {
         respawnPointObject = newRespawnPoint;
-        
-        if (showDebugMessages) 
+
+        if (showDebugMessages)
         {
             Debug.Log($"Respawn point changed to: {newRespawnPoint.name}");
         }
     }
-    
+
+    /// <summary>
+    /// Resets the death plane to its initial state.
+    /// Restores the original respawn point, cancels pending invokes, and cleans up particles.
+    /// </summary>
+    public void ResetDeathPlane()
+    {
+        CancelInvoke();
+        isRespawning = false;
+
+        // Hide damage panel
+        if (damagePanel != null)
+        {
+            damagePanel.gameObject.SetActive(false);
+            damagePanel.color = originalPanelColor;
+        }
+
+        // Destroy any active respawn particles
+        if (activeRespawnParticles != null)
+        {
+            Destroy(activeRespawnParticles.gameObject);
+            activeRespawnParticles = null;
+        }
+
+        // Restore original respawn point
+        if (originalRespawnPointObject != null)
+        {
+            respawnPointObject = originalRespawnPointObject;
+        }
+
+        if (showDebugMessages)
+            Debug.Log("K3_DeathplaneFall: Reset to initial state.");
+    }
+
     // ===== DEBUG VISUALIZATION =====
-    
+
     void OnDrawGizmos()
     {
         if (!drawDebugGizmos || deathCollider == null) return;
-        
+
         Gizmos.color = gizmoColor;
-        
+
         // Draw the death plane collider
         if (deathCollider.enabled)
         {
@@ -489,31 +526,31 @@ public class K3_DeathplaneFall : MonoBehaviour
             Gizmos.matrix = oldMatrix;
         }
     }
-    
+
     void OnDrawGizmosSelected()
     {
         if (deathCollider != null)
         {
             Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 0.3f);
-            
+
             Matrix4x4 oldMatrix = Gizmos.matrix;
             Gizmos.matrix = deathCollider.transform.localToWorldMatrix;
             Gizmos.DrawCube(deathCollider.center, deathCollider.size);
             Gizmos.matrix = oldMatrix;
         }
-        
+
         // Draw line from death plane to respawn point
         if (deathPlaneObject != null && respawnPointObject != null)
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(deathPlaneObject.transform.position, respawnPointObject.transform.position);
-            
+
             // Draw respawn point
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(respawnPointObject.transform.position, 0.5f);
         }
     }
-    
+
     [ContextMenu("Debug System Status")]
     public void DebugSystemStatus()
     {
@@ -558,14 +595,14 @@ public class K3_DeathplaneFall : MonoBehaviour
         Debug.Log($"- Respawn SFX: {respawnSFX?.name ?? "NULL"}");
         Debug.Log($"================================");
     }
-    
+
     [ContextMenu("Quick Setup Check")]
     public void QuickSetupCheck()
     {
         Debug.Log("=== QUICK SETUP CHECK ===");
-        
+
         bool allGood = true;
-        
+
         // Check death plane
         if (deathPlaneObject == null)
         {
@@ -575,7 +612,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         else
         {
             Debug.Log("✅ Death Plane Object assigned");
-            
+
             BoxCollider collider = deathPlaneObject.GetComponent<BoxCollider>();
             if (collider == null)
             {
@@ -592,7 +629,7 @@ public class K3_DeathplaneFall : MonoBehaviour
                 Debug.Log("✅ Death Plane collider is properly set up");
             }
         }
-        
+
         // Check respawn point
         if (respawnPointObject == null)
         {
@@ -603,7 +640,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         {
             Debug.Log("✅ Respawn Point assigned");
         }
-        
+
         // Check player
         if (playerObject == null)
         {
@@ -623,7 +660,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         {
             Debug.Log("✅ Player Object assigned");
         }
-        
+
         // Check SFX
         if (drownedSFX == null)
         {
@@ -633,7 +670,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         {
             Debug.Log("✅ Drowned SFX assigned");
         }
-        
+
         if (respawnSFX == null)
         {
             Debug.LogWarning("⚠️ Respawn SFX not assigned");
@@ -642,7 +679,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         {
             Debug.Log("✅ Respawn SFX assigned");
         }
-        
+
         // Check particles
         if (respawnParticles == null)
         {
@@ -652,7 +689,7 @@ public class K3_DeathplaneFall : MonoBehaviour
         {
             Debug.Log("✅ Respawn Particles assigned");
         }
-        
+
         if (allGood)
         {
             Debug.Log("✅ All checks passed! System should work correctly.");
@@ -662,12 +699,12 @@ public class K3_DeathplaneFall : MonoBehaviour
             Debug.LogError("❌ Some issues found. Please fix them before testing.");
         }
     }
-    
+
     // Clean up when destroyed
     void OnDestroy()
     {
         CancelInvoke();
-        
+
         if (activeRespawnParticles != null)
         {
             Destroy(activeRespawnParticles.gameObject);

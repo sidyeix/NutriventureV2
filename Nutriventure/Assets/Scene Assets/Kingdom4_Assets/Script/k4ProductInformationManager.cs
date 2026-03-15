@@ -6,11 +6,11 @@ using System.Collections;
 using System;
 
 public class k4ProductInformationManager : MonoBehaviour
-{   
+{
     [Header("UI References")]
     public GameObject infoPanel;
     public Transform productDisplaySpawnPoint;
-    
+
     [Header("Text Fields")]
     public TextMeshProUGUI productNameText;
     public TextMeshProUGUI descriptionText;
@@ -20,88 +20,102 @@ public class k4ProductInformationManager : MonoBehaviour
     public TextMeshProUGUI inGameCollectionText;
     public TextMeshProUGUI allergenTypeText;
     public TextMeshProUGUI allergenWarningText;
-    
+
     [Header("Data")]
     public AllergenProductData allergenDatabase;
-    
+
     [Header("Colors")]
     public Color safeColor = Color.green;
     public Color dangerColor = Color.red;
-    
+
     [Header("Buttons")]
     public Button confirmButton;
-    
+
     [Header("Animation")]
     public Animator panelAnimator;
     public string showAnimationTrigger = "Show";
     public string hideAnimationTrigger = "Hide";
     public float panelShowDelay = 0.5f;
-    
+
     [Header("Settings")]
     public bool showInGameCounter = true;
     public bool autoUpdateInGameCounter = true;
     public string inGameCounterPrefix = "Collected: ";
-    
+
     // Events
     public static event Action OnProductPanelShown;
     public static event Action OnProductPanelHidden;
-    
+
+    [Header("Continue Button Safety")]
+    [Tooltip("Seconds after panel appears before the continue button becomes interactable")]
+    public float confirmButtonDelay = 0.6f;
+
     // Collection tracking
     public List<string> collectedProductIDs = new List<string>();
     private GameObject currentDisplayedProduct;
     private AllergenProductData.ProductInfo currentProductInfo;
     private bool isDummyProductDisplay = false;
-    
+    private Coroutine confirmButtonDelayCoroutine;
+
     void Start()
     {
         InitializeUI();
-        
+
         if (infoPanel != null)
             infoPanel.SetActive(false);
 
         ResetSessionCollection();
     }
-    
+
     private void InitializeUI()
     {
         if (confirmButton != null)
         {
             confirmButton.onClick.AddListener(HideProductInfo);
         }
-        
+
         if (allergenDatabase == null)
         {
             Debug.LogWarning("Product database not assigned!");
             allergenDatabase = Resources.Load<AllergenProductData>("Allergen_ProductData");
         }
-        
+
         UpdateInGameCollectionDisplay();
     }
-    
+
     public void ResetSessionCollection()
     {
         collectedProductIDs.Clear();
         UpdateAllCollectionDisplays();
         Debug.Log("Collection reset");
     }
-    
+
     private IEnumerator ShowPanelWithDelay()
     {
         yield return new WaitForSeconds(panelShowDelay);
-        
+
         OnProductPanelShown?.Invoke();
-        
+
+        // Disable confirm button before panel appears to prevent accidental taps
+        if (confirmButton != null)
+            confirmButton.interactable = false;
+
         if (infoPanel != null)
             infoPanel.SetActive(true);
-        
+
         if (panelAnimator != null)
             panelAnimator.SetTrigger(showAnimationTrigger);
-        
+
         DisablePlayerMovement();
-        
+
+        // Re-enable confirm button after a delay so the collecting tap can't hit it
+        if (confirmButtonDelayCoroutine != null)
+            StopCoroutine(confirmButtonDelayCoroutine);
+        confirmButtonDelayCoroutine = StartCoroutine(EnableConfirmButtonAfterDelay());
+
         Debug.Log($"Showing product info for: {currentProductInfo?.displayName}");
     }
-    
+
     private void UpdateProductUI(AllergenProductData.ProductInfo productInfo, bool isDummy = false)
     {
         if (productNameText != null)
@@ -139,64 +153,79 @@ public class k4ProductInformationManager : MonoBehaviour
             UpdateAllCollectionDisplays();
         }
     }
-    
+
     private void SpawnProductForDisplay(GameObject productPrefab)
-{
-    if (currentDisplayedProduct != null)
-        Destroy(currentDisplayedProduct);
-
-    if (productDisplaySpawnPoint == null || productPrefab == null)
     {
-        Debug.LogError("ProductSpawnPoint NOT assigned!");
-        return;
+        if (currentDisplayedProduct != null)
+            Destroy(currentDisplayedProduct);
+
+        if (productDisplaySpawnPoint == null || productPrefab == null)
+        {
+            Debug.LogError("ProductSpawnPoint NOT assigned!");
+            return;
+        }
+
+        currentDisplayedProduct = Instantiate(productPrefab);
+        currentDisplayedProduct.transform.SetParent(productDisplaySpawnPoint, false);
+
+        Vector3 rotation = new Vector3(0, 180, 0);
+        if (currentProductInfo != null && currentProductInfo.productID == "milk")
+        {
+            rotation = new Vector3(90, 0, 0);
+        }
+
+        currentDisplayedProduct.transform.localRotation = Quaternion.Euler(rotation);
+
+        // Add this check for peanut scaling
+        if (currentProductInfo != null && currentProductInfo.productID.ToLower() == "peanut")
+        {
+            currentDisplayedProduct.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+        }
+        else
+        {
+            currentDisplayedProduct.transform.localScale = Vector3.one * 0.6f;
+        }
+
+        // Disable physics
+        Rigidbody rb = currentDisplayedProduct.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+
+        Collider col = currentDisplayedProduct.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        // Add rotator
+        if (currentProductInfo != null && currentProductInfo.productID.Equals("MILK", StringComparison.OrdinalIgnoreCase))
+        {
+            Transform meshRoot = currentDisplayedProduct.transform.GetChild(0);
+            meshRoot.gameObject.AddComponent<ProductDisplayRotator>();
+        }
+        else
+        {
+            currentDisplayedProduct.AddComponent<ProductDisplayRotator>();
+        }
     }
 
-    currentDisplayedProduct = Instantiate(productPrefab);
-    currentDisplayedProduct.transform.SetParent(productDisplaySpawnPoint, false);
-
-    Vector3 rotation = new Vector3(0, 180, 0);
-    if (currentProductInfo != null && currentProductInfo.productID == "milk")
+    private IEnumerator EnableConfirmButtonAfterDelay()
     {
-        rotation = new Vector3(90, 0, 0);
+        yield return new WaitForSeconds(confirmButtonDelay);
+        if (confirmButton != null)
+            confirmButton.interactable = true;
+        confirmButtonDelayCoroutine = null;
     }
 
-    currentDisplayedProduct.transform.localRotation = Quaternion.Euler(rotation);
-    
-    // Add this check for peanut scaling
-    if (currentProductInfo != null && currentProductInfo.productID.ToLower() == "peanut")
-    {
-        currentDisplayedProduct.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
-    }
-    else
-    {
-        currentDisplayedProduct.transform.localScale = Vector3.one * 0.6f;
-    }
-
-    // Disable physics
-    Rigidbody rb = currentDisplayedProduct.GetComponent<Rigidbody>();
-    if (rb != null)
-    {
-        rb.isKinematic = true;
-        rb.useGravity = false;
-    }
-
-    Collider col = currentDisplayedProduct.GetComponent<Collider>();
-    if (col != null) col.enabled = false;
-
-    // Add rotator
-    if (currentProductInfo != null && currentProductInfo.productID.Equals("MILK", StringComparison.OrdinalIgnoreCase))
-    {
-        Transform meshRoot = currentDisplayedProduct.transform.GetChild(0);
-        meshRoot.gameObject.AddComponent<ProductDisplayRotator>();
-    }
-    else
-    {
-        currentDisplayedProduct.AddComponent<ProductDisplayRotator>();
-    }
-}
-    
     public void HideProductInfo()
     {
+        // Stop the enable-delay coroutine if still running
+        if (confirmButtonDelayCoroutine != null)
+        {
+            StopCoroutine(confirmButtonDelayCoroutine);
+            confirmButtonDelayCoroutine = null;
+        }
+
         if (panelAnimator != null)
         {
             panelAnimator.SetTrigger(hideAnimationTrigger);
@@ -206,69 +235,69 @@ public class k4ProductInformationManager : MonoBehaviour
         {
             if (infoPanel != null)
                 infoPanel.SetActive(false);
-            
+
             OnPanelHidden();
         }
-        
+
         if (currentDisplayedProduct != null)
         {
             Destroy(currentDisplayedProduct);
             currentDisplayedProduct = null;
         }
-        
+
         // Check if last product collected
-        if (!isDummyProductDisplay && allergenDatabase != null && 
+        if (!isDummyProductDisplay && allergenDatabase != null &&
             collectedProductIDs.Count >= allergenDatabase.GetAllergenCount())
         {
             Debug.Log("=== ALL PRODUCTS COLLECTED ===");
             // You can trigger your playable director here if you want
             // Example: FindObjectOfType<PlayableDirector>()?.Play();
         }
-        
+
         isDummyProductDisplay = false;
     }
-    
+
     private IEnumerator HidePanelAfterAnimation()
     {
         yield return new WaitForSeconds(0.5f);
-        
+
         if (infoPanel != null)
             infoPanel.SetActive(false);
-        
+
         OnPanelHidden();
     }
-    
+
     private void OnPanelHidden()
     {
         OnProductPanelHidden?.Invoke();
         EnablePlayerMovement();
         Debug.Log("Product info panel hidden");
     }
-    
+
     private void DisablePlayerMovement()
     {
         MonoBehaviour movementScript = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
         if (movementScript != null) movementScript.enabled = false;
-        
+
         UnityEngine.InputSystem.PlayerInput playerInput = FindAnyObjectByType<UnityEngine.InputSystem.PlayerInput>();
         if (playerInput != null) playerInput.enabled = false;
     }
-    
+
     private void EnablePlayerMovement()
     {
         MonoBehaviour movementScript = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
         if (movementScript != null) movementScript.enabled = true;
-        
+
         UnityEngine.InputSystem.PlayerInput playerInput = FindAnyObjectByType<UnityEngine.InputSystem.PlayerInput>();
         if (playerInput != null) playerInput.enabled = true;
     }
-    
+
     private void UpdateAllCollectionDisplays()
     {
         UpdatePanelCollectionDisplay();
         UpdateInGameCollectionDisplay();
     }
-    
+
     private void UpdatePanelCollectionDisplay()
     {
         if (collectionCountText != null && allergenDatabase != null)
@@ -278,7 +307,7 @@ public class k4ProductInformationManager : MonoBehaviour
             collectionCountText.text = $"{collected}/{total}";
         }
     }
-    
+
     private void UpdateInGameCollectionDisplay()
     {
         if (inGameCollectionText != null && showInGameCounter && allergenDatabase != null)
@@ -288,14 +317,14 @@ public class k4ProductInformationManager : MonoBehaviour
             inGameCollectionText.text = $"{inGameCounterPrefix}{collected}/{total}";
         }
     }
-    
+
     // Public methods
     public bool IsPanelVisible() => infoPanel != null && infoPanel.activeInHierarchy;
     public int GetCollectedCount() => collectedProductIDs.Count;
     public bool IsAllCollected() => allergenDatabase != null && collectedProductIDs.Count >= allergenDatabase.GetAllergenCount();
     public List<string> GetCollectedProductIDs() => new List<string>(collectedProductIDs);
     public bool IsProductCollected(string productID) => collectedProductIDs.Contains(productID);
-    
+
     public void ShowProductInfoForDummy(string productID)
     {
         if (allergenDatabase == null)
@@ -303,28 +332,28 @@ public class k4ProductInformationManager : MonoBehaviour
             Debug.LogError("No product database assigned!");
             return;
         }
-        
+
         currentProductInfo = allergenDatabase.GetProductInfo(productID);
         if (currentProductInfo == null)
         {
             string alternativeID = productID.Replace("_DUMMY", "").Replace("DUMMY_", "");
             currentProductInfo = allergenDatabase.GetProductInfo(alternativeID);
-            
+
             if (currentProductInfo == null)
             {
                 Debug.LogError($"Product with ID '{productID}' not found!");
                 return;
             }
         }
-        
+
         isDummyProductDisplay = true;
         UpdateProductUI(currentProductInfo, true);
         SpawnProductForDisplay(currentProductInfo.productPrefab);
         StartCoroutine(ShowPanelWithDelay());
-        
+
         Debug.Log($"Showing dummy product: {productID}");
     }
-    
+
     public void ShowProductInfo(string productID)
     {
         if (allergenDatabase == null)
@@ -332,22 +361,22 @@ public class k4ProductInformationManager : MonoBehaviour
             Debug.LogError("No product database assigned!");
             return;
         }
-        
+
         currentProductInfo = allergenDatabase.GetProductInfo(productID);
         if (currentProductInfo == null)
         {
             Debug.LogError($"Product with ID '{productID}' not found!");
             return;
         }
-        
+
         isDummyProductDisplay = false;
-        
+
         if (!collectedProductIDs.Contains(productID))
         {
             collectedProductIDs.Add(productID);
             UpdateAllCollectionDisplays();
             Debug.Log($"Added {productID}. Total: {collectedProductIDs.Count}");
-            
+
             if (IsAllCollected())
             {
                 Debug.Log("=== ALL PRODUCTS COLLECTED ===");
@@ -360,44 +389,44 @@ public class k4ProductInformationManager : MonoBehaviour
         {
             Debug.Log($"Product {productID} already collected.");
         }
-        
+
         UpdateProductUI(currentProductInfo, false);
         SpawnProductForDisplay(currentProductInfo.productPrefab);
         StartCoroutine(ShowPanelWithDelay());
     }
-    
+
     public void ResetForNewSession() => ResetSessionCollection();
     public void ManualUpdateInGameCounter() => UpdateInGameCollectionDisplay();
-    
+
     public void SetInGameCounterVisible(bool visible)
     {
         showInGameCounter = visible;
         if (inGameCollectionText != null) inGameCollectionText.gameObject.SetActive(visible);
         UpdateInGameCollectionDisplay();
     }
-    
+
     public void SetCounterPrefix(string newPrefix)
     {
         inGameCounterPrefix = newPrefix;
         UpdateInGameCollectionDisplay();
     }
-    
+
     public void ShowInGameCounter() => SetInGameCounterVisible(true);
     public void HideInGameCounter() => SetInGameCounterVisible(false);
-    
+
     // Debug/testing
     [ContextMenu("Test Show Banana Info")]
     public void TestShowBananaInfo() => ShowProductInfo("BANANA");
-    
+
     [ContextMenu("Test Show Cookies Info")]
     public void TestShowCookiesInfo() => ShowProductInfo("COOKIES");
-    
+
     [ContextMenu("Test Show Dummy Soda")]
     public void TestShowDummySoda() => ShowProductInfoForDummy("SODA");
-    
+
     [ContextMenu("Reset Session Collection")]
     public void ResetCurrentSession() => ResetSessionCollection();
-    
+
     [ContextMenu("Debug Collection Status")]
     public void DebugCollectionStatus()
     {
@@ -406,13 +435,13 @@ public class k4ProductInformationManager : MonoBehaviour
         Debug.Log($"Collected: {collectedProductIDs.Count}");
         Debug.Log($"All Collected: {IsAllCollected()}");
     }
-    
+
     // Simple rotator script
     public class ProductDisplayRotator : MonoBehaviour
     {
         public float rotationSpeed = 30f;
         public Vector3 rotationAxis = Vector3.up;
-        
+
         void Update()
         {
             transform.Rotate(rotationAxis, rotationSpeed * Time.deltaTime);

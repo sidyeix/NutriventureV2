@@ -14,15 +14,25 @@ public class KeyUnlockedCanvasController : MonoBehaviour
     public float fadeDuration = 0.5f;
     public float scaleDuration = 0.3f;
 
-    [Header("Optional Audio")]
+    [Header("Audio Settings")]
     public AudioClip keyUnlockedSound;
     public AudioClip buttonClickSound;
-    
-    [Header("Audio Settings")]
-    public AudioSource audioSource; // Add this for direct audio playback
+    public AudioSource audioSource;
 
+    [Header("Key Configuration")]
+    [SerializeField] private KeyType keyToUnlock = KeyType.Sugaria; // Default to Sugaria
+    
     private System.Action onContinueCallback;
     private bool isShowing = false;
+
+    public enum KeyType
+    {
+        Sugaria,
+        Preservia,
+        NutriKingdom,
+        Allerthia,
+        OCRScanner
+    }
 
     private void Awake()
     {
@@ -38,7 +48,7 @@ public class KeyUnlockedCanvasController : MonoBehaviour
         if (continueButton != null)
             continueButton.onClick.AddListener(OnContinueClicked);
 
-        // Create or get AudioSource
+        // Setup AudioSource
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
@@ -46,7 +56,7 @@ public class KeyUnlockedCanvasController : MonoBehaviour
             {
                 audioSource = gameObject.AddComponent<AudioSource>();
                 audioSource.playOnAwake = false;
-                audioSource.spatialBlend = 0f; // 2D sound
+                audioSource.spatialBlend = 0f;
             }
         }
 
@@ -58,21 +68,25 @@ public class KeyUnlockedCanvasController : MonoBehaviour
             canvasGroup.alpha = 0f;
     }
 
-    public void ShowKeyUnlockedCanvas(System.Action onContinue)
+    public void ShowKeyUnlockedCanvas(System.Action onContinue, KeyType? overrideKeyType = null)
     {
         if (isShowing) return;
 
+        // Use override key type if provided, but ensure it's Sugaria for King Vitron
+        if (overrideKeyType.HasValue)
+        {
+            // Force it to Sugaria for safety
+            keyToUnlock = KeyType.Sugaria;
+            Debug.Log("KeyUnlockedCanvas: Forcing key type to Sugaria");
+        }
+
         onContinueCallback = onContinue;
 
-        // Play key unlocked sound directly through AudioSource
+        // Play key unlocked sound
         if (keyUnlockedSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(keyUnlockedSound);
-            Debug.Log("Playing key unlocked sound: " + keyUnlockedSound.name);
-        }
-        else
-        {
-            Debug.LogWarning("Key unlocked sound or audio source is missing!");
+            Debug.Log($"Playing key unlocked sound for: {keyToUnlock}");
         }
 
         // Show and animate canvas
@@ -139,23 +153,23 @@ public class KeyUnlockedCanvasController : MonoBehaviour
     }
 
     private void OnContinueClicked()
+{
+    // Play button click sound
+    if (buttonClickSound != null && audioSource != null)
     {
-        // Play button click sound
-        if (buttonClickSound != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(buttonClickSound);
-        }
-        else if (AudioHandler.Instance != null)
-        {
-            AudioHandler.Instance.PlayButtonClick();
-        }
-
-        // Hide canvas
-        StartCoroutine(AnimateCanvasOut());
-
-        // Invoke callback
-        onContinueCallback?.Invoke();
+        audioSource.PlayOneShot(buttonClickSound);
     }
+    else if (AudioHandler.Instance != null)
+    {
+        AudioHandler.Instance.PlayButtonClick();
+    }
+
+    // Hide canvas
+    StartCoroutine(AnimateCanvasOut());
+
+    // Invoke callback
+    onContinueCallback?.Invoke();
+}
 
     public bool IsShowing()
     {
@@ -170,5 +184,13 @@ public class KeyUnlockedCanvasController : MonoBehaviour
         if (canvasGroup != null)
             canvasGroup.alpha = 0f;
         isShowing = false;
+    }
+
+    // Public method to set which key this canvas will unlock (for runtime configuration)
+    public void SetKeyToUnlock(KeyType keyType)
+    {
+        // Force it to Sugaria for King Vitron
+        keyToUnlock = KeyType.Sugaria;
+        Debug.Log($"KeyUnlockedCanvas configured to unlock: Sugaria (forced)");
     }
 }

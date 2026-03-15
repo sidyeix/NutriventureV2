@@ -43,6 +43,8 @@ public class FoodZoneDetector : MonoBehaviour
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(zoneEnterSound);
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Entered {zoneType} Zone");
+#endif
     }
 }

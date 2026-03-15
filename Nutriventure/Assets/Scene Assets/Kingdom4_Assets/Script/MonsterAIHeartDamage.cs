@@ -69,8 +69,29 @@ public class MonsterAIHeartDamage : MonoBehaviour
     // Audio state - Simplified
     private AudioClip currentLoopAudio;
 
+    // Cached squared ranges and hashed parameters
+    private float detectionRangeSqr;
+    private float centerRangeSqr;
+    private float stoppingDistanceSqr;
+    private float attackTriggerDistanceSqr;
+    private int idleHash;
+    private int movingHash;
+    private int attackingHash;
+    private int playerEnterHash;
+
     private void Start()
     {
+        // Cache squared ranges
+        detectionRangeSqr = detectionRange * detectionRange;
+        centerRangeSqr = centerRange * centerRange;
+        stoppingDistanceSqr = stoppingDistance * stoppingDistance;
+        attackTriggerDistanceSqr = attackTriggerDistance * attackTriggerDistance;
+
+        // Hash animator parameters
+        idleHash = Animator.StringToHash(idleParam);
+        movingHash = Animator.StringToHash(movingParam);
+        attackingHash = Animator.StringToHash(attackingParam);
+        playerEnterHash = Animator.StringToHash(playerEnterParam);
         // Get the main animator from TurtleShell
         if (monsterBody != null)
         {
@@ -86,16 +107,16 @@ public class MonsterAIHeartDamage : MonoBehaviour
         if (player != null)
         {
             playerTransform = player.transform;
-            
+
             // Try to get PlayerHealthManager from singleton first
             playerHealth = PlayerHealthManager.Instance;
-            
+
             // If singleton is null, try to get it from the player GameObject
             if (playerHealth == null)
             {
                 playerHealth = player.GetComponent<PlayerHealthManager>();
             }
-            
+
             if (playerHealth == null)
                 Debug.LogError("PlayerHealthManager NOT found on Player!");
         }
@@ -147,19 +168,19 @@ public class MonsterAIHeartDamage : MonoBehaviour
 
             if (playerTransform == null) continue;
 
-            float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-            float distanceToCenter = Vector3.Distance(transform.position, centerPosition);
+            float sqrDistToPlayer = (transform.position - playerTransform.position).sqrMagnitude;
+            float sqrDistToCenter = (transform.position - centerPosition).sqrMagnitude;
 
             // Check center range
-            isPlayerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
+            isPlayerInCenterRange = (playerTransform.position - centerPosition).sqrMagnitude <= centerRangeSqr;
 
             // Check if player entered detection range
-            if (distanceToPlayer <= detectionRange && !isPlayerInDetectionRange && !isWarningPhase && !isAttacking)
+            if (sqrDistToPlayer <= detectionRangeSqr && !isPlayerInDetectionRange && !isWarningPhase && !isAttacking)
             {
                 PlayerEnteredDetectionRange();
             }
             // Check if player exited detection range
-            else if (distanceToPlayer > detectionRange && isPlayerInDetectionRange && !isAttacking && !isWarningPhase)
+            else if (sqrDistToPlayer > detectionRangeSqr && isPlayerInDetectionRange && !isAttacking && !isWarningPhase)
             {
                 PlayerExitedDetectionRange();
             }
@@ -171,7 +192,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
             }
 
             // If returning to center and reached it
-            if (isReturningToCenter && distanceToCenter <= stoppingDistance)
+            if (isReturningToCenter && sqrDistToCenter <= stoppingDistanceSqr)
             {
                 ReachedCenter();
             }
@@ -194,7 +215,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
         // Trigger PlayerEnter animation parameter
         if (monsterAnimator != null)
         {
-            monsterAnimator.SetBool(playerEnterParam, true);
+            monsterAnimator.SetBool(playerEnterHash, true);
         }
 
         // Show warning effect and play warning sound
@@ -228,7 +249,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
         // Reset PlayerEnter parameter
         if (monsterAnimator != null)
         {
-            monsterAnimator.SetBool(playerEnterParam, false);
+            monsterAnimator.SetBool(playerEnterHash, false);
         }
 
         isWarningPhase = false;
@@ -290,11 +311,11 @@ public class MonsterAIHeartDamage : MonoBehaviour
     {
         if (playerTransform == null) return;
 
-        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
-        bool playerInCenterRange = Vector3.Distance(playerTransform.position, centerPosition) <= centerRange;
+        float sqrDistToPlayer = (transform.position - playerTransform.position).sqrMagnitude;
+        bool playerInCenterRange = (playerTransform.position - centerPosition).sqrMagnitude <= centerRangeSqr;
 
         // If moving towards player and not in warning phase
-        if (monsterAnimator != null && monsterAnimator.GetBool(movingParam) && !isReturningToCenter && !isWarningPhase)
+        if (monsterAnimator != null && monsterAnimator.GetBool(movingHash) && !isReturningToCenter && !isWarningPhase)
         {
             // Face and move towards player
             Vector3 directionToPlayer = (playerTransform.position - transform.position).normalized;
@@ -309,13 +330,13 @@ public class MonsterAIHeartDamage : MonoBehaviour
             if (playerInCenterRange)
             {
                 // If close enough to attack
-                if (distanceToPlayer <= attackTriggerDistance && canAttack && !isAttacking)
+                if (sqrDistToPlayer <= attackTriggerDistanceSqr && canAttack && !isAttacking)
                 {
                     // Stop moving and attack
                     SetMovingState(false);
                     StartAttack();
                 }
-                else if (distanceToPlayer > attackTriggerDistance)
+                else if (sqrDistToPlayer > attackTriggerDistanceSqr)
                 {
                     // Keep moving towards player
                     transform.position += directionToPlayer * movementSpeed * Time.deltaTime;
@@ -328,7 +349,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
             }
         }
         // If returning to center
-        else if (monsterAnimator != null && monsterAnimator.GetBool(movingParam) && isReturningToCenter)
+        else if (monsterAnimator != null && monsterAnimator.GetBool(movingHash) && isReturningToCenter)
         {
             Vector3 directionToCenter = (centerPosition - transform.position).normalized;
             directionToCenter.y = 0;
@@ -339,9 +360,9 @@ public class MonsterAIHeartDamage : MonoBehaviour
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
 
-            float distanceToCenter = Vector3.Distance(transform.position, centerPosition);
+            float sqrDistToCenter = (transform.position - centerPosition).sqrMagnitude;
 
-            if (distanceToCenter > stoppingDistance)
+            if (sqrDistToCenter > stoppingDistanceSqr)
             {
                 transform.position += directionToCenter * movementSpeed * Time.deltaTime;
             }
@@ -361,9 +382,9 @@ public class MonsterAIHeartDamage : MonoBehaviour
     {
         if (sleepingEffect == null) return;
 
-        float distanceToCenter = Vector3.Distance(transform.position, centerPosition);
-        bool isAtCenter = distanceToCenter <= stoppingDistance;
-        bool isIdle = monsterAnimator != null && monsterAnimator.GetBool(idleParam);
+        float sqrDistToCenter = (transform.position - centerPosition).sqrMagnitude;
+        bool isAtCenter = sqrDistToCenter <= stoppingDistanceSqr;
+        bool isIdle = monsterAnimator != null && monsterAnimator.GetBool(idleHash);
 
         // Enable sleeping effect if:
         // 1. Monster is at center position
@@ -484,7 +505,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
 
     private void ApplyDamageToPlayer()
     {
-        if (playerHealth == null) 
+        if (playerHealth == null)
         {
             // Try to get PlayerHealthManager from singleton
             playerHealth = PlayerHealthManager.Instance;
@@ -565,9 +586,9 @@ public class MonsterAIHeartDamage : MonoBehaviour
     {
         if (monsterAnimator != null)
         {
-            monsterAnimator.SetBool(idleParam, state);
-            monsterAnimator.SetBool(movingParam, !state);
-            monsterAnimator.SetBool(attackingParam, false);
+            monsterAnimator.SetBool(idleHash, state);
+            monsterAnimator.SetBool(movingHash, !state);
+            monsterAnimator.SetBool(attackingHash, false);
 
             // Audio management - fixed volume
             if (state && idleSound != null)
@@ -585,9 +606,9 @@ public class MonsterAIHeartDamage : MonoBehaviour
     {
         if (monsterAnimator != null)
         {
-            monsterAnimator.SetBool(movingParam, state);
-            monsterAnimator.SetBool(idleParam, !state);
-            monsterAnimator.SetBool(attackingParam, false);
+            monsterAnimator.SetBool(movingHash, state);
+            monsterAnimator.SetBool(idleHash, !state);
+            monsterAnimator.SetBool(attackingHash, false);
 
             // Ensure sleeping effect is disabled when moving
             if (state && sleepingEffect != null && sleepingEffect.activeSelf)
@@ -611,9 +632,9 @@ public class MonsterAIHeartDamage : MonoBehaviour
     {
         if (monsterAnimator != null)
         {
-            monsterAnimator.SetBool(attackingParam, state);
-            monsterAnimator.SetBool(movingParam, !state);
-            monsterAnimator.SetBool(idleParam, false);
+            monsterAnimator.SetBool(attackingHash, state);
+            monsterAnimator.SetBool(movingHash, !state);
+            monsterAnimator.SetBool(idleHash, false);
 
             // Ensure sleeping effect is disabled when attacking
             if (state && sleepingEffect != null && sleepingEffect.activeSelf)

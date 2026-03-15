@@ -7,24 +7,28 @@ public class NutriHeartCollector : MonoBehaviour
     public int healthRestoreAmount = 1;
     public float collectionRange = 2f;
     public LayerMask heartLayerMask = -1;
-    
+
     [Header("Particle System")]
     public ParticleSystem collectionParticleSystem;
     public bool attachParticlesToPlayer = true;
     public float particleDuration = 2f;
-    
+
     [Header("Audio")]
     public AudioClip collectionSound;
     public float soundVolume = 0.7f;
-    
+
     [Header("Debug")]
     public bool showDebugLogs = true;
     public bool showGizmos = true;
-    
+
     private SugariaPlayerStat playerHealth;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     private Transform playerTransform;
     private bool isInitialized = false;
+
+    // Throttle OverlapSphere
+    private const float HEART_CHECK_INTERVAL = 0.2f;
+    private float nextHeartCheckTime;
 
     void Start()
     {
@@ -35,7 +39,7 @@ public class NutriHeartCollector : MonoBehaviour
     {
         playerTransform = transform;
         playerHealth = GetComponent<SugariaPlayerStat>();
-        
+
         if (playerHealth == null)
         {
             playerHealth = GetComponentInParent<SugariaPlayerStat>();
@@ -46,22 +50,14 @@ public class NutriHeartCollector : MonoBehaviour
             }
         }
 
-        // Get or add AudioSource
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f;
-            audioSource.playOnAwake = false;
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
 
         isInitialized = true;
-        
+
         if (showDebugLogs)
         {
             Debug.Log("NutriHeart collector initialized successfully!");
             Debug.Log($"Player Health Found: {playerHealth != null}");
-            Debug.Log($"Audio Source Ready: {audioSource != null}");
             Debug.Log($"Particle System Assigned: {collectionParticleSystem != null}");
         }
     }
@@ -69,7 +65,11 @@ public class NutriHeartCollector : MonoBehaviour
     void Update()
     {
         if (!isInitialized) return;
-        
+
+        // Throttle expensive physics query
+        if (Time.time < nextHeartCheckTime) return;
+        nextHeartCheckTime = Time.time + HEART_CHECK_INTERVAL;
+
         // Auto-collect hearts when in range
         AutoCollectHeartsInRange();
     }
@@ -78,7 +78,7 @@ public class NutriHeartCollector : MonoBehaviour
     {
         // Find all hearts in range
         Collider[] heartsInRange = Physics.OverlapSphere(playerTransform.position, collectionRange, heartLayerMask);
-        
+
         if (showDebugLogs && heartsInRange.Length > 0)
         {
             Debug.Log($"Found {heartsInRange.Length} colliders in range");
@@ -97,9 +97,9 @@ public class NutriHeartCollector : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (!isInitialized) return;
-        
+
         if (showDebugLogs) Debug.Log($"Trigger entered with: {other.name} (Tag: {other.tag})");
-        
+
         if (other.CompareTag(heartTag))
         {
             if (showDebugLogs) Debug.Log($"Trigger collection with: {other.name}");
@@ -110,9 +110,9 @@ public class NutriHeartCollector : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         if (!isInitialized) return;
-        
+
         if (showDebugLogs) Debug.Log($"Collision with: {collision.gameObject.name} (Tag: {collision.gameObject.tag})");
-        
+
         if (collision.gameObject.CompareTag(heartTag))
         {
             if (showDebugLogs) Debug.Log($"Collision collection with: {collision.gameObject.name}");
@@ -122,12 +122,12 @@ public class NutriHeartCollector : MonoBehaviour
 
     public void CollectHeart(GameObject heartObject)
     {
-        if (heartObject == null) 
+        if (heartObject == null)
         {
             if (showDebugLogs) Debug.LogWarning("Tried to collect null heart object!");
             return;
         }
-        
+
         if (showDebugLogs) Debug.Log($"=== COLLECTING HEART: {heartObject.name} ===");
 
         // Check if we can heal (not at full health)
@@ -141,8 +141,8 @@ public class NutriHeartCollector : MonoBehaviour
 
             int oldHealth = playerHealth.currentHealth;
             playerHealth.Heal(healthRestoreAmount);
-            
-            if (showDebugLogs) 
+
+            if (showDebugLogs)
             {
                 Debug.Log($"Health restored: {oldHealth} -> {playerHealth.currentHealth}");
                 Debug.Log($"Healed {healthRestoreAmount} health points!");
@@ -153,17 +153,17 @@ public class NutriHeartCollector : MonoBehaviour
             if (showDebugLogs) Debug.LogError("No player health component found during collection!");
             return;
         }
-        
+
         // Play particle effect
         PlayCollectionParticles();
-        
-        // Play sound
+
+        // CHANGED: Play sound through AudioHandler
         PlayCollectionSound();
-        
+
         // Destroy the heart
         if (showDebugLogs) Debug.Log($"Destroying heart object: {heartObject.name}");
         Destroy(heartObject);
-        
+
         if (showDebugLogs) Debug.Log($"=== HEART COLLECTION COMPLETE ===");
     }
 
@@ -173,21 +173,21 @@ public class NutriHeartCollector : MonoBehaviour
         {
             // Get the position for particles (player's position)
             Vector3 particlePosition = playerTransform.position;
-            
+
             // Create the particle system
             ParticleSystem particles = Instantiate(collectionParticleSystem, particlePosition, Quaternion.identity);
-            
+
             if (attachParticlesToPlayer)
             {
                 particles.transform.SetParent(playerTransform);
             }
-            
+
             // Ensure it plays
             particles.Play();
-            
+
             // Destroy after duration
             Destroy(particles.gameObject, particleDuration);
-            
+
             if (showDebugLogs) Debug.Log("Collection particles instantiated and playing");
         }
         else
@@ -196,19 +196,20 @@ public class NutriHeartCollector : MonoBehaviour
         }
     }
 
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private void PlayCollectionSound()
     {
-        if (collectionSound != null && audioSource != null)
+        if (collectionSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(collectionSound, soundVolume);
-            if (showDebugLogs) Debug.Log("Collection sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(collectionSound);
+            if (showDebugLogs) Debug.Log("Collection sound played through AudioHandler");
         }
         else
         {
-            if (showDebugLogs) 
+            if (showDebugLogs)
             {
                 if (collectionSound == null) Debug.LogWarning("No collection sound assigned!");
-                if (audioSource == null) Debug.LogWarning("No audio source available!");
+                if (AudioHandler.Instance == null) Debug.LogWarning("AudioHandler.Instance is null!");
             }
         }
     }
@@ -216,7 +217,7 @@ public class NutriHeartCollector : MonoBehaviour
     // Manual collection method (can be called from other scripts)
     public void ManualCollectHeart(GameObject heartObject)
     {
-        if (!isInitialized) 
+        if (!isInitialized)
         {
             Debug.LogWarning("Collector not initialized!");
             return;
@@ -242,10 +243,10 @@ public class NutriHeartCollector : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         if (!showGizmos) return;
-        
+
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, collectionRange);
-        
+
         // Draw a small indicator at the player's position
         Gizmos.color = Color.blue;
         Gizmos.DrawCube(transform.position, Vector3.one * 0.3f);
@@ -254,7 +255,7 @@ public class NutriHeartCollector : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!showGizmos) return;
-        
+
         // Always show a small wire sphere for the collection range
         Gizmos.color = new Color(0, 1, 0, 0.3f);
         Gizmos.DrawWireSphere(transform.position, collectionRange);
@@ -263,28 +264,28 @@ public class NutriHeartCollector : MonoBehaviour
     [ContextMenu("Test Heart Collection")]
     public void TestHeartCollection()
     {
-        if (!isInitialized) 
+        if (!isInitialized)
         {
             Debug.LogError("Collector not initialized! Cannot test.");
             return;
         }
 
         Debug.Log("=== TESTING HEART COLLECTION ===");
-        
+
         // Create a test heart with proper collider
         GameObject testHeart = new GameObject("TestHeart");
         testHeart.tag = heartTag;
         testHeart.transform.position = transform.position + Vector3.forward * 1f;
-        
+
         // Add a collider (make it a trigger)
         SphereCollider collider = testHeart.AddComponent<SphereCollider>();
         collider.isTrigger = true;
         collider.radius = 0.5f;
-        
+
         // Add a visible component
         MeshFilter meshFilter = testHeart.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = testHeart.AddComponent<MeshRenderer>();
-        
+
         Debug.Log("Created test heart, attempting collection...");
         CollectHeart(testHeart);
     }
@@ -296,16 +297,16 @@ public class NutriHeartCollector : MonoBehaviour
         Debug.Log($"Initialized: {isInitialized}");
         Debug.Log($"Player Transform: {playerTransform}");
         Debug.Log($"Player Health: {playerHealth}");
-        Debug.Log($"Audio Source: {audioSource}");
         Debug.Log($"Particle System: {collectionParticleSystem}");
         Debug.Log($"Collection Range: {collectionRange}");
         Debug.Log($"Heart Tag: {heartTag}");
-        
+        Debug.Log($"AudioHandler.Instance exists: {AudioHandler.Instance != null}");
+
         if (playerHealth != null)
         {
             Debug.Log($"Current Health: {playerHealth.currentHealth}/{playerHealth.maxHealth}");
         }
-        
+
         // Check for hearts in scene
         GameObject[] hearts = GameObject.FindGameObjectsWithTag(heartTag);
         Debug.Log($"Hearts in scene: {hearts.Length}");

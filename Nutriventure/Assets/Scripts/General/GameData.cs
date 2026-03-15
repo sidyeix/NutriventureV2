@@ -24,6 +24,10 @@ public class GameData
     public bool allerthiaKeyCollected = false;
     public bool ocrScannerKeyCollected = false;
 
+    // Allerthia Game State
+    public bool allerthiaScrollGrabbed = false;
+    public List<string> collectedAllerthiaProducts = new List<string>();
+
     // Character System
     public int selectedCharacterID = 0;
     public List<int> unlockedCharacterIDs = new List<int>();
@@ -91,6 +95,7 @@ public class GameData
     // Settings
     public float musicVolume = 1f;
     public float soundVolume = 1f;
+    public float lookSensitivity = 0.2f;
     public string language = "English";
 
     // Profile Icon System
@@ -104,6 +109,24 @@ public class GameData
     // Achievement System
     public List<string> completedAchievementIds = new List<string>();
     public List<string> claimedAchievementIds = new List<string>();
+
+    // ===== OCR BATTLE LIFE & ENERGY SYSTEM =====
+    public int ocrBattleLives = 5;              // Current lives (max 5)
+    public int ocrBattleMaxLives = 5;
+    public int ocrBattleEnergy = 15;             // Current energy (max 15)
+    public int ocrBattleMaxEnergy = 15;
+    public string ocrLastLifeLossTime = "";      // ISO 8601 timestamp when the most recent life was lost
+    public string ocrLastEnergyUseTime = "";     // ISO 8601 timestamp when the most recent energy was used
+    public int ocrLivesRegening = 0;             // How many lives are currently regenerating
+    public int ocrEnergyRegening = 0;            // How many energy units are currently regenerating
+
+    // Kingdom Instruction Tracking (first-visit timeline played)
+    public bool hasPlayedK1Instruction = false;
+
+    // Enerling catch counts (enerlingName -> catchCount)
+    [System.Serializable]
+    public class StringIntDictionary3 : SerializableDictionary<string, int> { }
+    public StringIntDictionary3 enerlingCatchCounts = new StringIntDictionary3();
 
     public GameData()
     {
@@ -126,6 +149,10 @@ public class GameData
         nutriKingdomKeyCollected = true;
         allerthiaKeyCollected = false;
         ocrScannerKeyCollected = false;
+
+        // Allerthia products
+        allerthiaScrollGrabbed = false;
+        collectedAllerthiaProducts = new List<string>();
 
         // Initialize lists properly
         if (unlockedCharacterIDs == null)
@@ -180,6 +207,19 @@ public class GameData
         // Initialize pet slots
         equippedPetSlot1 = "";
         equippedPetSlot2 = "";
+
+        // Initialize OCR battle life & energy
+        ocrBattleLives = 5;
+        ocrBattleMaxLives = 5;
+        ocrBattleEnergy = 15;
+        ocrBattleMaxEnergy = 15;
+        ocrLastLifeLossTime = "";
+        ocrLastEnergyUseTime = "";
+        ocrLivesRegening = 0;
+        ocrEnergyRegening = 0;
+
+        if (enerlingCatchCounts == null)
+            enerlingCatchCounts = new StringIntDictionary3();
     }
 
     // Helper method to get or create skin data for a character
@@ -498,6 +538,16 @@ public class GameData
     public bool HasAllerthiaKey() => allerthiaKeyCollected;
     public void CollectAllerthiaKey() => allerthiaKeyCollected = true;
     public void ResetAllerthiaKey() => allerthiaKeyCollected = false;
+
+    // Allerthia Product Collection Methods
+    public bool IsAllerthiaProductCollected(string productID) => collectedAllerthiaProducts.Contains(productID);
+    public void CollectAllerthiaProduct(string productID)
+    {
+        if (!collectedAllerthiaProducts.Contains(productID))
+            collectedAllerthiaProducts.Add(productID);
+    }
+    public int GetCollectedAllerthiaProductCount() => collectedAllerthiaProducts.Count;
+    public void ResetAllerthiaProducts() => collectedAllerthiaProducts.Clear();
 
     // OCR SCANNER KEY METHODS
     public bool HasOCRScannerKey() => ocrScannerKeyCollected;

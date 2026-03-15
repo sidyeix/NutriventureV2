@@ -16,6 +16,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
     [SerializeField] private Color initialSliderFillColor = Color.red;
     [SerializeField] private Sprite initialSliderHandleSprite;
 
+    [Header("Zone Slider Appearances (for Resume)")]
+    [SerializeField] private Color goSliderFillColor = Color.red;
+    [SerializeField] private Sprite goSliderHandleSprite;
+    [SerializeField] private Color growSliderFillColor = Color.green;
+    [SerializeField] private Sprite growSliderHandleSprite;
+    [SerializeField] private Color glowSliderFillColor = new Color(0.5f, 0f, 1f);
+    [SerializeField] private Sprite glowSliderHandleSprite;
+
     [Header("Player Settings")]
     public ThirdPersonController playerController;
     public Transform playerTransform;
@@ -81,6 +89,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("UI Elements")]
     public List<GameObject> uiElementsToDisable = new List<GameObject>();
+    public List<GameObject> uiElementsToEnable = new List<GameObject>();
+    [Tooltip("Sprint button: disabled during Go zone, enabled during Grow/Glow zones")]
+    public GameObject sprintButton;
     public TMP_Text timerText;
     public TMP_Text scoreText;
     public TMP_Text livesText;
@@ -125,7 +136,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     [Header("Respawn Effect")]
     public GameObject respawnEffect;
-    public float respawnEffectDuration = 1f;
+    public float respawnEffectDuration = 2f;
     private Coroutine respawnEffectCoroutine;
 
     [Header("Food Settings")]
@@ -267,6 +278,13 @@ public class GoGrowGlowGameManager : MonoBehaviour
         targetSpeed = initialPlayerSpeed;
         targetSize = initialPlayerSize;
 
+        // Hook up start button programmatically
+        // DelayedButtonEnable component on the button handles the 1.5s interactable delay via OnEnable
+        if (startButton != null)
+        {
+            startButton.onClick.AddListener(StartGame);
+        }
+
         if (startCheckpoint != null)
         {
             currentCheckpoint = startCheckpoint;
@@ -279,10 +297,11 @@ public class GoGrowGlowGameManager : MonoBehaviour
         UpdateUI();
         SetGameActive(false);
 
-        // Set initial BGM to gameEndBGM
+        // Set initial BGM to gameEndBGM (looping)
         if (backgroundMusicSource != null && gameEndBGM != null)
         {
             backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
@@ -323,14 +342,18 @@ public class GoGrowGlowGameManager : MonoBehaviour
             maxLives = baseMaxLives + heartBonus;
             currentLifeAmount = maxLives; // Start with full lives
             currentLives = maxLives;
+#if UNITY_EDITOR
             Debug.Log($"Heart power-up applied: +{heartBonus} lives. Total max lives: {maxLives}");
+#endif
         }
 
         // Apply time reduction
         timeReductionSeconds = PowerUpManager.Instance.GetStartGameTimeReduction();
         if (timeReductionSeconds > 0)
         {
+#if UNITY_EDITOR
             Debug.Log($"Time reduction power-up applied: -{timeReductionSeconds} seconds from timer");
+#endif
         }
 
         // Reinitialize heart UI with new max lives
@@ -350,7 +373,32 @@ public class GoGrowGlowGameManager : MonoBehaviour
             sliderHandleImage.sprite = handleSprite;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Set initial slider appearance: {zoneType} zone, Color: {fillColor}");
+#endif
+    }
+
+    /// <summary>
+    /// Returns the correct slider fill color and handle sprite for the given zone.
+    /// Used by ResumeFromSavedState to restore the correct zone appearance.
+    /// </summary>
+    private void GetSliderAppearanceForZone(FoodType zone, out Color fillColor, out Sprite handleSprite)
+    {
+        switch (zone)
+        {
+            case FoodType.Grow:
+                fillColor = growSliderFillColor;
+                handleSprite = growSliderHandleSprite;
+                break;
+            case FoodType.Glow:
+                fillColor = glowSliderFillColor;
+                handleSprite = glowSliderHandleSprite;
+                break;
+            default: // FoodType.Go
+                fillColor = goSliderFillColor;
+                handleSprite = goSliderHandleSprite;
+                break;
+        }
     }
 
     private void Update()
@@ -374,12 +422,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
             targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
         }
 
-        if (Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
+        // Smooth transition towards target energy
+        if (energyTransitionSpeed > 0f && Mathf.Abs(currentEnergy - targetEnergy) > 0.01f)
         {
             currentEnergy = Mathf.Lerp(currentEnergy, targetEnergy, energyTransitionSpeed * Time.deltaTime);
-            if (energySlider != null) energySlider.value = currentEnergy;
         }
-        else currentEnergy = targetEnergy;
+        else
+        {
+            currentEnergy = targetEnergy;
+        }
+
+        if (energySlider != null) energySlider.value = currentEnergy;
 
         if (currentEnergy <= 0f) LoseLife();
 
@@ -416,11 +469,15 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
         {
             characterID = GameDataManager.Instance.CurrentGameData.selectedCharacterID;
+#if UNITY_EDITOR
             Debug.Log($"Character gender check - ID: {characterID}, Is Male: {characterID == 0 || characterID == 4 || characterID == 6}");
+#endif
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GameDataManager not found, using default male character");
+#endif
         }
 
         // Male characters: Eyron (0), Kaya (4), Albert (6)
@@ -436,7 +493,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== RESET METHODS ======
     public void ResetGameState()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING GAME STATE ===");
+#endif
 
         // Reset all tracking variables
         currentEnergy = 0f;
@@ -466,8 +525,8 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Reset flags
         isRespawning = false;
         inHealingZone = false;
+        isEnergyDecreasePaused = false;
         wasLowEnergyLastFrame = false;
-        isStartingGame = false;
 
         // Reset UI
         if (energySlider != null) energySlider.value = 0f;
@@ -495,12 +554,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
             foodSpawner.HideAllFood();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Game state reset complete");
+#endif
     }
 
     public void FullGameReset()
     {
+#if UNITY_EDITOR
         Debug.Log("=== FULL GAME RESET ===");
+#endif
 
         // IMPORTANT: Reset these BEFORE EndGame()
         gameIsActive = false;
@@ -515,6 +578,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         // Stop all coroutines first
         StopAllCoroutines();
+
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
 
         // Reset one life check
         StopOneLifeCheck();
@@ -582,27 +648,34 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
         StopLowEnergySound();
 
-        // Reset audio
+        // Reset audio (looping)
         if (backgroundMusicSource != null && gameEndBGM != null)
         {
             backgroundMusicSource.clip = gameEndBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Full game reset complete");
+#endif
     }
 
     // ====== ENERGY SLIDER PAUSE/RESUME LOGIC ======
     public void PauseEnergyDecrease()
     {
         isEnergyDecreasePaused = true;
+#if UNITY_EDITOR
         Debug.Log("Energy decrease paused");
+#endif
     }
 
     public void ResumeEnergyDecrease()
     {
         isEnergyDecreasePaused = false;
+#if UNITY_EDITOR
         Debug.Log("Energy decrease resumed");
+#endif
     }
 
     public bool IsEnergyDecreasePaused()
@@ -707,7 +780,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
         while (gameIsActive)
         {
             CheckAndUpdateOneLifeUI();
-            yield return new WaitForSeconds(oneLifeCheckInterval);
+            yield return CoroutineYieldCache.WaitForSeconds(oneLifeCheckInterval);
         }
     }
 
@@ -736,7 +809,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator ResetDamageAnimation(string triggerName, float duration)
     {
-        yield return new WaitForSeconds(duration);
+        yield return CoroutineYieldCache.WaitForSeconds(duration);
         if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
         resetDamageCoroutine = null;
     }
@@ -802,7 +875,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
     // ====== GAME FLOW ======
     public void StartGame()
     {
+#if UNITY_EDITOR
+        Debug.Log($"StartGame called! isStartingGame={isStartingGame}, gameIsActive={gameIsActive}, timeScale={Time.timeScale}");
+#endif
+
         if (isStartingGame) return;
+
+        // Ensure time is running — a stuck timeScale of 0 would prevent WaitForSeconds coroutines
+        Time.timeScale = 1f;
 
         isStartingGame = true;
         if (startButton != null) startButton.interactable = false;
@@ -812,13 +892,25 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator DelayedGameStart()
     {
+#if UNITY_EDITOR
         Debug.Log($"Game starting in {startDelay} seconds...");
-        yield return new WaitForSeconds(startDelay);
+#endif
+        yield return CoroutineYieldCache.WaitForSecondsRealtime(startDelay);
         ActualGameStart();
     }
 
     private void ActualGameStart()
     {
+        // Ensure time is running (safeguard against stuck timeScale from settings/pause)
+        Time.timeScale = 1f;
+
+        // Clear the starting flag and activate game FIRST so these always execute
+        isStartingGame = false;
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
+        SetGameActive(true);
+        isEnergyDecreasePaused = false;
+        isGameTimerPaused = false;
+
         // Apply power-up bonuses before starting
         ApplyEquippedPetPowerUps();
 
@@ -838,16 +930,22 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Ensure low energy sound is stopped at game start
         StopLowEnergySound();
 
-        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
-        gameIsActive = true;
-        isStartingGame = false;
-        isEnergyDecreasePaused = false;
-        isGameTimerPaused = false;
-
         // Set starting energy to 100
         currentEnergy = startEnergy;
         targetEnergy = startEnergy;
-        if (energySlider != null) energySlider.value = currentEnergy;
+        if (energySlider != null)
+        {
+            // Re-set max/min after canvas re-enable to ensure slider layout is valid
+            energySlider.maxValue = 100f;
+            energySlider.minValue = 0f;
+            energySlider.value = currentEnergy;
+
+            // Force UI layout rebuild — slider fill may not update after canvas toggle
+            Canvas.ForceUpdateCanvases();
+            var sliderRect = energySlider.GetComponent<RectTransform>();
+            if (sliderRect != null)
+                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(sliderRect);
+        }
 
         currentLives = maxLives;
         currentLifeAmount = maxLives;
@@ -907,6 +1005,12 @@ public class GoGrowGlowGameManager : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(false);
 
+        foreach (GameObject uiElement in uiElementsToEnable)
+            if (uiElement != null) uiElement.SetActive(true);
+
+        // Sprint button depends on starting zone
+        UpdateSprintButtonForZone(currentFoodZone);
+
         if (startButton != null) startButton.gameObject.SetActive(false);
 
         // Reset food spawner before starting
@@ -917,23 +1021,31 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else Debug.LogError("FoodSpawner not assigned to GameManager!");
 
-        // Change background music
+        // Change background music (looping)
         if (backgroundMusicSource != null && gameStartBGM != null)
         {
             backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.loop = true;
             backgroundMusicSource.Play();
         }
 
         UpdateUI();
         RespawnPlayer();
+#if UNITY_EDITOR
         Debug.Log($"Game Started! Starting energy: {currentEnergy}, Max lives: {maxLives}, Time reduction: {timeReductionSeconds}s");
+        Debug.Log($"Energy state: current={currentEnergy}, target={targetEnergy}, startEnergy={startEnergy}, decreaseRate={energyDecreaseRate}");
+        Debug.Log($"Energy flags: paused={isEnergyDecreasePaused}, healing={inHealingZone}, speedBoosted={isSpeedBoosted}, sizeBoosted={isSizeBoosted}");
+        Debug.Log($"Food gains: go={goFoodEnergyGain}, grow={growFoodEnergyGain}, glow={glowFoodEnergyGain}, junkLoss={junkFoodEnergyDeduction}");
+        Debug.Log($"Slider valid: {energySlider != null}, Slider value: {(energySlider != null ? energySlider.value : -1f)}");
+#endif
     }
 
     public void EndGame()
     {
-        gameIsActive = false;
+        SetGameActive(false);
         isEnergyDecreasePaused = false;
         isGameTimerPaused = false;
+        isStartingGame = false;
         StopOneLifeCheck();
         StopKnockback();
 
@@ -953,6 +1065,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         StopAllCoroutines();
         if (respawnCoroutine != null) StopCoroutine(respawnCoroutine);
         if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
+
+        // Explicitly hide respawn effect since StopAllCoroutines kills the timed hide coroutine
+        HideRespawnEffect();
 
         if (characterAnimator != null)
         {
@@ -995,7 +1110,10 @@ public class GoGrowGlowGameManager : MonoBehaviour
             startButton.gameObject.SetActive(true);
             startButton.interactable = true;
         }
+
+#if UNITY_EDITOR
         Debug.Log("Game Ended!");
+#endif
     }
 
     // ====== PLAYER MECHANICS ======
@@ -1046,6 +1164,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         // Update feedback sprite based on zone
         UpdateFeedbackSpriteForZone(zoneType);
 
+        // Sprint button: disabled during Go, enabled during Grow/Glow
+        UpdateSprintButtonForZone(zoneType);
+
         if (zoneType == FoodType.Grow && playerArmature != null)
         {
             UpdatePlayerSize();
@@ -1055,7 +1176,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
             targetSize = initialPlayerSize;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Switched to {zoneType} zone, feedback sprite updated");
+#endif
+    }
+
+    // Sprint button: disabled during Go zone, enabled during Grow/Glow
+    private void UpdateSprintButtonForZone(FoodType zoneType)
+    {
+        if (sprintButton == null) return;
+        sprintButton.SetActive(zoneType != FoodType.Go);
     }
 
     // Helper method to update feedback sprite for zone
@@ -1084,7 +1214,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = feedbackSprite;
+#if UNITY_EDITOR
                 Debug.Log($"Feedback sprite updated to {zoneType} sprite");
+#endif
             }
             else
             {
@@ -1092,7 +1224,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
                 if (image != null)
                 {
                     image.sprite = feedbackSprite;
+#if UNITY_EDITOR
                     Debug.Log($"Feedback image updated to {zoneType} sprite");
+#endif
                 }
             }
         }
@@ -1297,9 +1431,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             AudioHandler.Instance.soundEffectsSource.PlayOneShot(loseLifeSound);
 
         TriggerDeathAnimation();
-        yield return new WaitForSeconds(deathAnimationDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(deathAnimationDuration);
         ResetDeathAnimation();
-        yield return new WaitForSeconds(respawnDelay);
+        yield return CoroutineYieldCache.WaitForSeconds(respawnDelay);
 
         RespawnPlayer();
         currentEnergy = 50f;
@@ -1349,7 +1483,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         sizeBoostTimer = 0f;
 
         isRespawning = false;
+#if UNITY_EDITOR
         Debug.Log("Respawn complete!");
+#endif
     }
 
     // ====== VISUAL EFFECTS ======
@@ -1395,11 +1531,14 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
     }
 
-    private void ShowRespawnEffect()
+    /// <summary>
+    /// Shows the respawn VFX at its scene position and auto-hides it after respawnEffectDuration.
+    /// Called internally on checkpoint respawn, and externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void ShowRespawnEffect()
     {
         if (respawnEffect != null)
         {
-            respawnEffect.transform.position = playerTransform.position;
             respawnEffect.SetActive(true);
 
             if (respawnEffectCoroutine != null) StopCoroutine(respawnEffectCoroutine);
@@ -1407,9 +1546,18 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Plays the respawn sound effect. Called externally by GameEndManager on lobby teleport.
+    /// </summary>
+    public void PlayRespawnSound()
+    {
+        if (respawnSound != null && AudioHandler.Instance != null)
+            AudioHandler.Instance.soundEffectsSource.PlayOneShot(respawnSound);
+    }
+
     private IEnumerator HideRespawnEffectAfterDelay()
     {
-        yield return new WaitForSeconds(respawnEffectDuration);
+        yield return CoroutineYieldCache.WaitForSeconds(respawnEffectDuration);
         HideRespawnEffect();
         respawnEffectCoroutine = null;
     }
@@ -1457,7 +1605,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator ResetAnimation(string triggerName)
     {
-        yield return new WaitForSeconds(1f);
+        yield return CoroutineYieldCache.WaitForSeconds(1f);
         if (characterAnimator != null) characterAnimator.SetBool(triggerName, false);
 
         switch (triggerName)
@@ -1491,7 +1639,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator HideEffectAfterTime(GameObject effect, float duration)
     {
-        yield return new WaitForSeconds(duration);
+        yield return CoroutineYieldCache.WaitForSeconds(duration);
         if (effect != null) effect.SetActive(false);
     }
 
@@ -1523,7 +1671,7 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     private IEnumerator HideFeedbackSprite()
     {
-        yield return new WaitForSeconds(spriteDisplayTime);
+        yield return CoroutineYieldCache.WaitForSeconds(spriteDisplayTime);
         if (feedbackSpriteObject != null) feedbackSpriteObject.SetActive(false);
         spriteDisplayCoroutine = null;
     }
@@ -1542,7 +1690,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Go food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1559,7 +1709,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Grow food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1576,7 +1728,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Glow food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1593,7 +1747,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} Junk food sounds found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1608,7 +1764,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"No {(isMale ? "male" : "female")} speed boost sound found or AudioHandler not available");
+#endif
         }
     }
 
@@ -1675,7 +1833,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (checkpoint == null || !checkpoint.IsActivated()) return;
         currentCheckpoint = checkpoint;
+#if UNITY_EDITOR
         Debug.Log($"Checkpoint set to: {checkpoint.gameObject.name}");
+#endif
     }
 
     private void RespawnPlayer()
@@ -1692,7 +1852,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             playerArmature.rotation = spawnRotation;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Respawned at: {currentCheckpoint.gameObject.name}");
+#endif
     }
 
     public void RespawnAllFood()
@@ -1720,26 +1882,34 @@ public class GoGrowGlowGameManager : MonoBehaviour
     {
         if (!gameIsActive)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"AddEnergy called but game is not active! Amount: {amount}");
+#endif
             return;
         }
 
         targetEnergy += amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+#if UNITY_EDITOR
         Debug.Log($"Energy added: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
+#endif
     }
 
     public void RemoveEnergy(float amount)
     {
         if (!gameIsActive)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"RemoveEnergy called but game is not active! Amount: {amount}");
+#endif
             return;
         }
 
         targetEnergy -= amount;
         targetEnergy = Mathf.Clamp(targetEnergy, 0f, 100f);
+#if UNITY_EDITOR
         Debug.Log($"Energy removed: {amount}. New target: {targetEnergy}. Current: {currentEnergy}");
+#endif
     }
 
     public void SetEnergy(float amount)
@@ -1752,7 +1922,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (energySlider != null)
             energySlider.value = currentEnergy;
 
+#if UNITY_EDITOR
         Debug.Log($"Energy set to: {targetEnergy}");
+#endif
     }
 
     // ====== BOOST METHODS ======
@@ -1768,7 +1940,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Go);
 
+#if UNITY_EDITOR
         Debug.Log($"Speed boost activated for {duration} seconds");
+#endif
     }
 
     public void TriggerSizeBoost(float duration = 10f)
@@ -1785,7 +1959,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Grow);
 
+#if UNITY_EDITOR
         Debug.Log($"Size boost activated for {duration} seconds");
+#endif
     }
 
     public void TriggerGlowBoost(float duration = 10f)
@@ -1799,7 +1975,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (glowBoostEffect != null) glowBoostEffect.SetActive(true);
         ShowBoostUI(FoodType.Glow);
 
+#if UNITY_EDITOR
         Debug.Log($"Glow boost activated for {duration} seconds");
+#endif
     }
 
     public void PauseGameTimer()
@@ -1808,7 +1986,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
         isGameTimerPaused = true;
         pausedTimerValue = gameTimer;
+#if UNITY_EDITOR
         Debug.Log("Game timer paused");
+#endif
     }
 
     public void ResumeGameTimer()
@@ -1816,7 +1996,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (!gameIsActive) return;
 
         isGameTimerPaused = false;
+#if UNITY_EDITOR
         Debug.Log("Game timer resumed");
+#endif
     }
 
     public bool IsGameTimerPaused()
@@ -1838,12 +2020,16 @@ public class GoGrowGlowGameManager : MonoBehaviour
             // Handle low energy audio
             if (isLowEnergyNow)
             {
+#if UNITY_EDITOR
                 Debug.Log($"Low energy warning shown! Energy: {currentEnergy}");
+#endif
                 PlayLowEnergySound();
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.Log($"Low energy warning hidden. Energy: {currentEnergy}");
+#endif
                 StopLowEnergySound();
             }
         }
@@ -1861,16 +2047,22 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (!lowEnergyAudioSource.isPlaying)
             {
                 lowEnergyAudioSource.Play();
+#if UNITY_EDITOR
                 Debug.Log("Started low energy warning sound");
+#endif
             }
         }
         else if (lowEnergyAudioSource == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Low energy audio source not assigned!");
+#endif
         }
         else if (lowEnergySound == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Low energy sound clip not assigned!");
+#endif
         }
     }
 
@@ -1880,13 +2072,17 @@ public class GoGrowGlowGameManager : MonoBehaviour
         if (lowEnergyAudioSource != null && lowEnergyAudioSource.isPlaying)
         {
             lowEnergyAudioSource.Stop();
+#if UNITY_EDITOR
             Debug.Log("Stopped low energy warning sound");
+#endif
         }
     }
 
     private void ResetAssessmentSystem()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING ASSESSMENT SYSTEM ===");
+#endif
 
         // Reset Grow Assessment Manager
         GrowAssessmentManager assessmentManager = FindObjectOfType<GrowAssessmentManager>();
@@ -1897,18 +2093,24 @@ public class GoGrowGlowGameManager : MonoBehaviour
             if (assessmentManager.IsAssessmentActive() || assessmentManager.IsWaitingForEndTrigger())
             {
                 assessmentManager.EndGrowAssessment();
+#if UNITY_EDITOR
                 Debug.Log("Ended active assessment at game start");
+#endif
             }
             else
             {
                 // Just reset the state without moving the panel
                 assessmentManager.ResetForNewAssessmentWithoutMovingPanel();
+#if UNITY_EDITOR
                 Debug.Log("Reset assessment state without moving panel");
+#endif
             }
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("No GrowAssessmentManager found in scene");
+#endif
         }
 
         // Reset all Object Group Managers
@@ -1931,7 +2133,9 @@ public class GoGrowGlowGameManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Assessment System reset: {groupManagers.Length} groups, {triggers.Length} triggers");
+#endif
     }
 
     private void ResetAllTriggersAndColliders()
@@ -1987,4 +2191,191 @@ public class GoGrowGlowGameManager : MonoBehaviour
 
     // NEW: Get time reduction amount
     public float GetTimeReduction() => timeReductionSeconds;
+
+    // ====== RESUME FROM SAVED STATE ======
+
+    /// <summary>
+    /// Called by GameStateManager to restore the game from a previously saved state.
+    /// Sets all internal fields to match the snapshot, enables the game canvas,
+    /// starts the food spawner and UI, then un-pauses so gameplay continues exactly
+    /// where the player left off.
+    /// </summary>
+    public void ResumeFromSavedState(GameStateSaveData saveData)
+    {
+        if (saveData == null)
+        {
+#if UNITY_EDITOR
+            Debug.LogError("ResumeFromSavedState: saveData is null!");
+#endif
+            return;
+        }
+
+#if UNITY_EDITOR
+        Debug.Log("=== RESUMING FROM SAVED STATE ===");
+#endif
+
+        // --- Stop any ongoing processes ---
+        StopAllCoroutines();
+        HideRespawnEffect(); // Clean up in case respawn effect was active
+        StopKnockback();
+        isRespawning = false;
+        isStartingGame = false;
+
+        // --- Apply power-up bonuses ---
+        ApplyEquippedPetPowerUps();
+
+        // --- Core state ---
+        currentEnergy = saveData.currentEnergy;
+        targetEnergy = saveData.targetEnergy;
+        currentLifeAmount = saveData.currentLifeAmount;
+        currentLives = saveData.currentLives;
+        score = saveData.currentScore;
+        gameTimer = saveData.gameTimer;
+        currentFoodZone = saveData.currentFoodZone;
+        isEnergyDecreasePaused = saveData.isEnergyDecreasePaused;
+        isGameTimerPaused = saveData.isGameTimerPaused;
+
+        // --- Boost state ---
+        isSpeedBoosted = saveData.isSpeedBoosted;
+        speedBoostTimer = saveData.speedBoostTimer;
+        isSizeBoosted = saveData.isSizeBoosted;
+        sizeBoostTimer = saveData.sizeBoostTimer;
+
+        // --- Player speed / size ---
+        if (playerController != null)
+        {
+            playerController.MoveSpeed = saveData.playerSpeed > 0 ? saveData.playerSpeed : initialPlayerSpeed;
+            targetSpeed = playerController.MoveSpeed;
+            playerController.enabled = true;
+        }
+
+        if (playerArmature != null)
+        {
+            float size = saveData.playerSize > 0 ? saveData.playerSize : initialPlayerSize;
+            playerArmature.localScale = Vector3.one * size;
+            targetSize = size;
+        }
+
+        // --- Activate game canvas FIRST so UI elements rebuild properly ---
+        gameIsActive = true;
+
+        if (gameCanvas != null) gameCanvas.gameObject.SetActive(true);
+
+        // Hide start button
+        if (startButton != null) startButton.gameObject.SetActive(false);
+
+        // Disable lobby UI elements
+        foreach (GameObject uiElement in uiElementsToDisable)
+            if (uiElement != null) uiElement.SetActive(false);
+
+        // Enable gameplay UI elements
+        foreach (GameObject uiElement in uiElementsToEnable)
+            if (uiElement != null) uiElement.SetActive(true);
+
+        // Sprint button depends on the restored zone
+        UpdateSprintButtonForZone(currentFoodZone);
+
+        // --- Slider / UI (must be set AFTER canvas is active for proper layout rebuild) ---
+        if (energySlider != null)
+        {
+            energySlider.maxValue = 100f;
+            energySlider.minValue = 0f;
+            energySlider.value = currentEnergy;
+        }
+
+        // Re-apply slider appearance for the SAVED zone (not initial)
+        GetSliderAppearanceForZone(currentFoodZone, out Color resumeFillColor, out Sprite resumeHandleSprite);
+        SetSliderAppearance(currentFoodZone, resumeFillColor, resumeHandleSprite);
+        UpdateFeedbackSpriteForZone(currentFoodZone);
+
+        // --- Heart UI ---
+        InitializeHeartSystem(); // rebuilds heart images for maxLives
+        currentLifeAmount = saveData.currentLifeAmount;
+        currentLives = saveData.currentLives;
+        UpdateHeartUI();
+
+        // --- Boost visual indicators ---
+        HideAllBoostUI();
+        HideAllVisualEffects();
+
+        if (isSpeedBoosted)
+        {
+            if (speedBoostEffect != null) speedBoostEffect.SetActive(true);
+            ShowBoostUI(FoodType.Go);
+        }
+        if (isSizeBoosted)
+        {
+            if (sizeBoostEffect != null) sizeBoostEffect.SetActive(true);
+            ShowBoostUI(FoodType.Grow);
+        }
+
+        // --- Low-energy canvas ---
+        if (lowEnergyCanvas != null) lowEnergyCanvas.SetActive(false);
+        wasLowEnergyLastFrame = false;
+
+        // --- Timer display ---
+        UpdateTimerDisplay();
+        UpdateUI();
+
+        // --- Food spawner ---
+        if (foodSpawner != null)
+        {
+            foodSpawner.StopSpawning();
+            foodSpawner.StartSpawning();
+        }
+
+        // --- BGM (looping) ---
+        if (backgroundMusicSource != null && gameStartBGM != null)
+        {
+            backgroundMusicSource.clip = gameStartBGM;
+            backgroundMusicSource.loop = true;
+            backgroundMusicSource.Play();
+        }
+
+        // --- Pause timer initially; InGameSettingsButton will resume after countdown ---
+        isGameTimerPaused = true;
+
+        // --- One-life check ---
+        StartOneLifeCheck();
+
+        // --- Reset animations to clean state ---
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetBool(exciteTrigger, false);
+            characterAnimator.SetBool(stomachAcheTrigger, false);
+            characterAnimator.SetBool(strongTrigger, false);
+            characterAnimator.SetBool(glowTrigger, false);
+            characterAnimator.SetBool(damageTrigger, false);
+            characterAnimator.SetBool(deathTrigger, false);
+        }
+
+#if UNITY_EDITOR
+        Debug.Log($"Resume complete. Energy:{currentEnergy} Score:{score} Lives:{currentLifeAmount} " +
+                  $"Timer:{gameTimer}s Zone:{currentFoodZone} SpeedBoosted:{isSpeedBoosted} SizeBoosted:{isSizeBoosted}");
+#endif
+    }
+
+    // ====== ADDITIONAL SETTERS (for save/restore) ======
+
+    /// <summary>Sets the life amount + count and refreshes the heart UI.</summary>
+    public void SetLives(float lifeAmount)
+    {
+        currentLifeAmount = Mathf.Max(0f, lifeAmount);
+        currentLives = Mathf.CeilToInt(currentLifeAmount);
+        UpdateHeartUI();
+    }
+
+    /// <summary>Sets the game timer to an exact value.</summary>
+    public void SetGameTimer(float time)
+    {
+        gameTimer = Mathf.Max(0f, time);
+        UpdateTimerDisplay();
+    }
+
+    /// <summary>Sets the score to an exact value.</summary>
+    public void SetScore(int newScore)
+    {
+        score = Mathf.Max(0, newScore);
+        UpdateUI();
+    }
 }

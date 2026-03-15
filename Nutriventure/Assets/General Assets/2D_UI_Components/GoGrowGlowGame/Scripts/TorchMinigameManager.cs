@@ -80,7 +80,9 @@ public class TorchMinigameManager : MonoBehaviour
 
     private void Start()
     {
+        #if UNITY_EDITOR
         Debug.Log("=== TORCH MINIGAME MANAGER START ===");
+        #endif
 
         InitializeTracker();
 
@@ -89,16 +91,22 @@ public class TorchMinigameManager : MonoBehaviour
             ShowTrackerPanel();
         }
 
+        #if UNITY_EDITOR
         Debug.Log($"Total torches to track: {totalTorches}");
+        #endif
 
         // Validate Timeline Settings
         if (playableDirector == null)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Playable Director not assigned. Timeline won't play on completion.");
+            #endif
         }
         if (timelineToPlay == null && playTimelineOnCompletion)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Timeline asset not assigned. Please assign a timeline in the Inspector if you want it to play on completion.");
+            #endif
         }
     }
 
@@ -115,11 +123,15 @@ public class TorchMinigameManager : MonoBehaviour
             trackerPanel.transform.localPosition = trackerPanelHiddenPosition;
             trackerPanel.SetActive(false);
 
+            #if UNITY_EDITOR
             Debug.Log("Tracker panel initialized - starting hidden on LEFT side");
+            #endif
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.LogError("Tracker Panel is not assigned!");
+            #endif
         }
 
         // Initialize text
@@ -129,7 +141,9 @@ public class TorchMinigameManager : MonoBehaviour
         if (trackerTrigger != null && !trackerTrigger.isTrigger)
         {
             trackerTrigger.isTrigger = true;
+            #if UNITY_EDITOR
             Debug.Log("Tracker trigger set to isTrigger = true");
+            #endif
         }
     }
 
@@ -139,7 +153,9 @@ public class TorchMinigameManager : MonoBehaviour
         if (!allTorches.Contains(torch))
         {
             allTorches.Add(torch);
+            #if UNITY_EDITOR
             Debug.Log($"Registered torch: {torch.GetTorchID()}");
+            #endif
 
             // If torch is already lit (from save), update count
             if (torch.IsLit())
@@ -156,7 +172,9 @@ public class TorchMinigameManager : MonoBehaviour
         if (!torch.IsLit() || hasCompleted) return;
 
         litTorchesCount++;
+        #if UNITY_EDITOR
         Debug.Log($"Torch lit! Total: {litTorchesCount}/{totalTorches}");
+        #endif
 
         // Update UI
         UpdateTrackerText();
@@ -186,7 +204,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (plusOnePrefab == null || plusOneSpawnPoint == null)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("PlusOne prefab or spawn point not assigned!");
+            #endif
             return;
         }
 
@@ -245,7 +265,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            #if UNITY_EDITOR
             Debug.Log("Player passed through tracker trigger");
+            #endif
 
             // Only trigger once unless we want re-triggering
             if (!hasBeenTriggered || hideOnExit)
@@ -261,7 +283,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (other.CompareTag("Player") && hideOnExit)
         {
+            #if UNITY_EDITOR
             Debug.Log("Player left tracker trigger area - hiding panel");
+            #endif
             HideTrackerPanel();
         }
     }
@@ -270,7 +294,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (isTrackerVisible || trackerPanel == null) return;
 
+        #if UNITY_EDITOR
         Debug.Log("Showing tracker panel (sliding from LEFT)");
+        #endif
 
         isTrackerVisible = true;
         trackerPanel.SetActive(true);
@@ -285,7 +311,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (!isTrackerVisible || trackerPanel == null) return;
 
+        #if UNITY_EDITOR
         Debug.Log("Hiding tracker panel (sliding to LEFT)");
+        #endif
 
         if (panelSlideCoroutine != null)
             StopCoroutine(panelSlideCoroutine);
@@ -317,7 +345,7 @@ public class TorchMinigameManager : MonoBehaviour
         // Add slight delay when showing (for anticipation)
         if (slideIn)
         {
-            yield return new WaitForSeconds(panelShowDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(panelShowDelay);
         }
 
         while (elapsedTime < panelSlideDuration)
@@ -347,7 +375,7 @@ public class TorchMinigameManager : MonoBehaviour
 
     private IEnumerator DisablePanelAfterSlide()
     {
-        yield return new WaitForSeconds(panelSlideDuration + 0.1f);
+        yield return CoroutineYieldCache.WaitForSeconds(panelSlideDuration + 0.1f);
         trackerPanel.SetActive(false);
         isTrackerVisible = false;
     }
@@ -356,7 +384,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (hasCompleted) return; // Prevent multiple triggers
 
+        #if UNITY_EDITOR
         Debug.Log("=== ALL TORCHES ARE LIT! ===");
+        #endif
 
         hasCompleted = true;
 
@@ -386,10 +416,14 @@ public class TorchMinigameManager : MonoBehaviour
     // Coroutine to play timeline after delay
     private IEnumerator PlayTimelineAfterDelay()
     {
+        #if UNITY_EDITOR
         Debug.Log($"Waiting {timelineDelay} seconds before playing timeline...");
-        yield return new WaitForSeconds(timelineDelay);
+        #endif
+        yield return CoroutineYieldCache.WaitForSeconds(timelineDelay);
 
+        #if UNITY_EDITOR
         Debug.Log("Playing timeline...");
+        #endif
 
         // Check if game is active
         bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
@@ -406,7 +440,9 @@ public class TorchMinigameManager : MonoBehaviour
 
             isGameStatePaused = true;
 
+            #if UNITY_EDITOR
             Debug.Log($"Torch Minigame: Game state paused. Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+            #endif
         }
 
         if (playableDirector != null && timelineToPlay != null)
@@ -418,15 +454,21 @@ public class TorchMinigameManager : MonoBehaviour
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Play();
 
+            #if UNITY_EDITOR
             Debug.Log($"Playing timeline: {timelineToPlay.name}");
+            #endif
         }
         else if (playableDirector == null)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Playable Director not assigned. Cannot play timeline.");
+            #endif
         }
         else if (timelineToPlay == null)
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Timeline asset not assigned. Please assign a timeline in the Inspector.");
+            #endif
         }
 
         // Optional: Hide tracker panel when timeline starts
@@ -438,7 +480,9 @@ public class TorchMinigameManager : MonoBehaviour
         // Only handle our own director
         if (director != playableDirector) return;
 
+        #if UNITY_EDITOR
         Debug.Log($"Torch Minigame: Timeline stopped. Director: {director.name}");
+        #endif
 
         // Unsubscribe from the event
         if (playableDirector != null)
@@ -469,7 +513,9 @@ public class TorchMinigameManager : MonoBehaviour
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
             }
 
+            #if UNITY_EDITOR
             Debug.Log($"Torch Minigame: Game state resumed. Timer resumed: {!wasTimerPaused}, Energy resumed: {!wasEnergyPaused}");
+            #endif
         }
 
         isGameStatePaused = false;
@@ -493,7 +539,9 @@ public class TorchMinigameManager : MonoBehaviour
 
             isGameStatePaused = true;
 
+            #if UNITY_EDITOR
             Debug.Log($"Torch Minigame: Game state paused (manual). Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+            #endif
         }
 
         if (playableDirector != null && timelineToPlay != null)
@@ -501,13 +549,17 @@ public class TorchMinigameManager : MonoBehaviour
             // Subscribe to timeline stopped event to resume game state
             playableDirector.stopped += OnTimelineStopped;
 
+            #if UNITY_EDITOR
             Debug.Log($"Manually playing timeline: {timelineToPlay.name}");
+            #endif
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Play();
         }
         else
         {
+            #if UNITY_EDITOR
             Debug.LogWarning("Cannot play timeline: Playable Director or Timeline asset not assigned.");
+            #endif
         }
     }
 
@@ -516,7 +568,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (playableDirector != null && playableDirector.state == PlayState.Playing)
         {
+            #if UNITY_EDITOR
             Debug.Log("Stopping timeline");
+            #endif
             playableDirector.Stop();
 
             // Resume game state if it was paused
@@ -532,7 +586,9 @@ public class TorchMinigameManager : MonoBehaviour
     {
         if (playableDirector != null && timelineToPlay != null)
         {
+            #if UNITY_EDITOR
             Debug.Log("Restarting timeline");
+            #endif
             playableDirector.playableAsset = timelineToPlay;
             playableDirector.Stop();
             playableDirector.time = 0;
@@ -552,7 +608,9 @@ public class TorchMinigameManager : MonoBehaviour
 
                 isGameStatePaused = true;
 
+                #if UNITY_EDITOR
                 Debug.Log($"Torch Minigame: Game state paused (restart). Energy was paused: {wasEnergyPaused}, Timer was paused: {wasTimerPaused}");
+                #endif
             }
 
             // Subscribe to timeline stopped event
@@ -598,7 +656,7 @@ public class TorchMinigameManager : MonoBehaviour
 
     private IEnumerator PlaySoundDelayed(AudioClip clip, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return CoroutineYieldCache.WaitForSeconds(delay);
         PlaySound(clip);
     }
 
@@ -619,7 +677,9 @@ public class TorchMinigameManager : MonoBehaviour
     public void ResetTrigger()
     {
         hasBeenTriggered = false;
+        #if UNITY_EDITOR
         Debug.Log("Tracker trigger reset");
+        #endif
     }
 
     // Reset minigame completion state
@@ -628,42 +688,54 @@ public class TorchMinigameManager : MonoBehaviour
         hasCompleted = false;
         litTorchesCount = 0;
         UpdateTrackerText();
+        #if UNITY_EDITOR
         Debug.Log("Minigame reset");
+        #endif
     }
 
     // Force update tracker (useful for debugging)
     public void ForceUpdateTracker()
     {
         UpdateTrackerText();
+        #if UNITY_EDITOR
         Debug.Log($"Force updated tracker: {litTorchesCount}/{totalTorches}");
+        #endif
     }
 
     // Set Playable Director at runtime
     public void SetPlayableDirector(PlayableDirector director)
     {
         playableDirector = director;
+        #if UNITY_EDITOR
         Debug.Log($"Playable Director set to: {(director != null ? director.name : "null")}");
+        #endif
     }
 
     // Set Timeline asset at runtime
     public void SetTimelineToPlay(PlayableAsset timelineAsset)
     {
         timelineToPlay = timelineAsset;
+        #if UNITY_EDITOR
         Debug.Log($"Timeline asset set to: {(timelineAsset != null ? timelineAsset.name : "null")}");
+        #endif
     }
 
     // Set timeline delay at runtime
     public void SetTimelineDelay(float delay)
     {
         timelineDelay = Mathf.Max(0f, delay);
+        #if UNITY_EDITOR
         Debug.Log($"Timeline delay set to: {timelineDelay} seconds");
+        #endif
     }
 
     // Enable/disable timeline playback
     public void SetPlayTimelineOnCompletion(bool enabled)
     {
         playTimelineOnCompletion = enabled;
+        #if UNITY_EDITOR
         Debug.Log($"Timeline playback on completion: {enabled}");
+        #endif
     }
 
     // Public getters
@@ -711,7 +783,9 @@ public class TorchMinigameManager : MonoBehaviour
         }
 
         UpdateTrackerText();
+        #if UNITY_EDITOR
         Debug.Log($"Restored torch states: {litTorchesCount}/{totalTorches} lit");
+        #endif
 
         // Check if already completed
         if (litTorchesCount >= totalTorches)
@@ -722,7 +796,9 @@ public class TorchMinigameManager : MonoBehaviour
 
     public void ResetAllTorches()
     {
+        #if UNITY_EDITOR
         Debug.Log("=== RESETTING ALL TORCHES ===");
+        #endif
 
         // Reset manager state
         hasCompleted = false;
@@ -744,7 +820,9 @@ public class TorchMinigameManager : MonoBehaviour
         // Hide tracker panel
         HideTrackerPanel();
 
+        #if UNITY_EDITOR
         Debug.Log($"All torches reset. Total torches: {allTorches.Count}");
+        #endif
     }
 
     public void CompleteMinigameReset()
@@ -755,7 +833,9 @@ public class TorchMinigameManager : MonoBehaviour
         if (playableDirector != null && playableDirector.state == PlayState.Playing)
         {
             playableDirector.Stop();
+            #if UNITY_EDITOR
             Debug.Log("Stopped playing timeline");
+            #endif
         }
 
         // Make sure game state is resumed
@@ -764,7 +844,9 @@ public class TorchMinigameManager : MonoBehaviour
             ResumeGameState();
         }
 
+        #if UNITY_EDITOR
         Debug.Log("Minigame completely reset to initial state");
+        #endif
     }
 
 

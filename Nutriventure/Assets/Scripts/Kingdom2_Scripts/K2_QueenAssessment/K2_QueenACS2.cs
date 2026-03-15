@@ -1231,7 +1231,7 @@ public class K2_QueenACS2 : MonoBehaviour
         public void CheckKeyStatusAndDisable()
     {
         bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+                                GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
         
         if (keyAlreadyCollected)
         {
@@ -1256,7 +1256,7 @@ public class K2_QueenACS2 : MonoBehaviour
         if (!this.enabled && qa2System != null)
         {
             bool keyAlreadyCollected = GameDataManager.Instance != null && 
-                                    GameDataManager.Instance.CurrentGameData.HasSugariaKey();
+                                    GameDataManager.Instance.CurrentGameData.HasPreserviaKey();
             
             if (keyAlreadyCollected && qa2System.GetCorrectlyAnsweredCount() >= requiredCorrectAnswers)
             {

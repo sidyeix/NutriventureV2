@@ -1,27 +1,32 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using StarterAssets;
 
-public class CrawlButtonToggle : MonoBehaviour
+public class CrawlButtonToggle : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     [Header("References")]
     public ThirdPersonController playerController;
 
+    [Header("Color Settings")]
+    [Tooltip("Color when crouch is active (match this to Sprint button's pressed color for uniformity)")]
+    public Color activeColor = new Color(0.78f, 0.78f, 0.78f, 1f);
+    public Color normalColor = Color.white;
+
     private Button button;
+    private Image buttonImage;
     private bool isCrawling = false;
 
     void Start()
     {
-        // Get the button component
         button = GetComponent<Button>();
+        buttonImage = GetComponent<Image>();
 
-        // Find player controller if not assigned
         if (playerController == null)
         {
             playerController = FindObjectOfType<ThirdPersonController>();
         }
 
-        // Set up button click
         if (button != null && playerController != null)
         {
             button.onClick.AddListener(ToggleCrawl);
@@ -58,15 +63,22 @@ public class CrawlButtonToggle : MonoBehaviour
         }
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (buttonImage != null)
+            buttonImage.color = activeColor;
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        UpdateButtonAppearance();
+    }
+
     void UpdateButtonAppearance()
     {
-        // Optional: Change button color or text based on crawl state
-        if (button != null)
+        if (buttonImage != null)
         {
-            var colors = button.colors;
-            colors.normalColor = isCrawling ? Color.red : Color.white;
-            colors.selectedColor = isCrawling ? Color.red : Color.white;
-            button.colors = colors;
+            buttonImage.color = isCrawling ? activeColor : normalColor;
         }
     }
 

@@ -170,14 +170,18 @@ public class GlowPartManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogError("GlowPartManager: No player object found!");
+#endif
         }
 
         // Find Cinemachine Brain
         cinemachineBrain = FindObjectOfType<CinemachineBrain>();
         if (cinemachineBrain == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("No CinemachineBrain found! Camera transitions won't be smooth.");
+#endif
         }
 
         // Initialize tower camera with 0 priority (inactive)
@@ -254,13 +258,17 @@ public class GlowPartManager : MonoBehaviour
 
                 // Start smooth transition
                 cameraTransitionCoroutine = StartCoroutine(SmoothCameraTransition(priority, cameraBlendTime));
+#if UNITY_EDITOR
                 Debug.Log($"Smooth camera transition to priority {priority} over {cameraBlendTime}s");
+#endif
             }
             else
             {
                 // Instant priority change (fallback)
                 towerFocusVirtualCamera.Priority = priority;
+#if UNITY_EDITOR
                 Debug.Log($"Instant camera priority set to {priority}");
+#endif
             }
         }
     }
@@ -421,7 +429,9 @@ public class GlowPartManager : MonoBehaviour
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Setup {proximityDetectors.Count} proximity detectors");
+#endif
     }
 
     private void Update()
@@ -568,7 +578,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator DisableEnergyPanelAfterAnimation()
     {
-        yield return new WaitForSeconds(energyPanelSlideDuration + 0.1f);
+        yield return CoroutineYieldCache.WaitForSeconds(energyPanelSlideDuration + 0.1f);
         if (energySliderIndicator != null)
             energySliderIndicator.SetActive(false);
     }
@@ -595,7 +605,9 @@ public class GlowPartManager : MonoBehaviour
 
     private void OnPlayerLookingAtTower()
     {
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Player is now looking at the tower!");
+#endif
         StartLightsaberAndEffects();
     }
 
@@ -631,7 +643,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isGlowPartActive || tower.IsFullyLit()) return;
 
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Player entered range of tower: {tower.gameObject.name}");
+#endif
         currentActiveTower = tower;
 
         if (transferButton != null)
@@ -650,7 +664,9 @@ public class GlowPartManager : MonoBehaviour
 
         if (currentActiveTower == tower)
         {
+#if UNITY_EDITOR
             Debug.Log($"GlowPartManager: Player exited range of current tower: {tower.gameObject.name}");
+#endif
 
             if (isTransferring || isRotatingToTower)
                 StopTransfer();
@@ -669,13 +685,17 @@ public class GlowPartManager : MonoBehaviour
     {
         if (isGlowPartActive) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== STARTING GLOW PART ===");
+#endif
 
         if (GoGrowGlowGameManager.Instance != null)
         {
             wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
             GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+#if UNITY_EDITOR
             Debug.Log("GlowPartManager: Energy decrease paused for glow part");
+#endif
         }
 
         if (glowCanvas != null)
@@ -695,6 +715,14 @@ public class GlowPartManager : MonoBehaviour
         UpdateLitTowersCount();
         isGlowPartActive = true;
 
+        // Reset all proximity detectors so they re-fire enter events
+        // This handles the case where the player is already near a tower when glow starts
+        foreach (TowerProximityDetector detector in proximityDetectors)
+        {
+            if (detector != null)
+                detector.ForceRecheck();
+        }
+
         EnableObjectsOnGlowPartStart();
 
         if (GoGrowGlowGameManager.Instance != null)
@@ -703,13 +731,17 @@ public class GlowPartManager : MonoBehaviour
 
     private void EnableObjectsOnGlowPartStart()
     {
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Enabling {objectsToEnableOnStart.Count} objects on glow part start");
+#endif
         foreach (GameObject obj in objectsToEnableOnStart)
         {
             if (obj != null)
             {
                 obj.SetActive(true);
+#if UNITY_EDITOR
                 Debug.Log($"GlowPartManager: Enabled object: {obj.name}");
+#endif
             }
         }
     }
@@ -718,7 +750,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isGlowPartActive) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== ENDING GLOW PART ===");
+#endif
 
         HideTrackerPanel();
         StopTransfer();
@@ -745,7 +779,9 @@ public class GlowPartManager : MonoBehaviour
             GoGrowGlowGameManager.Instance.foodSpawner != null)
         {
             GoGrowGlowGameManager.Instance.foodSpawner.HideAllFood();
+#if UNITY_EDITOR
             Debug.Log("GlowPartManager: All food hidden after glow part completion");
+#endif
         }
 
         isGlowPartActive = false;
@@ -755,11 +791,15 @@ public class GlowPartManager : MonoBehaviour
             if (!wasEnergyPaused && !hasCompleted)
             {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
+#if UNITY_EDITOR
                 Debug.Log("GlowPartManager: Energy decrease resumed (wasn't paused before)");
+#endif
             }
             else if (hasCompleted)
             {
+#if UNITY_EDITOR
                 Debug.Log("GlowPartManager: Glow part completed - energy decrease remains paused");
+#endif
             }
 
             GoGrowGlowGameManager.Instance.StopOneLifeCheck();
@@ -773,23 +813,31 @@ public class GlowPartManager : MonoBehaviour
 
     private void DisableObjectsOnGlowPartEnd()
     {
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Disabling {objectsToDisableOnEnd.Count} objects on glow part end");
+#endif
         foreach (GameObject obj in objectsToDisableOnEnd)
         {
             if (obj != null)
             {
                 obj.SetActive(false);
+#if UNITY_EDITOR
                 Debug.Log($"GlowPartManager: Disabled object: {obj.name}");
+#endif
             }
         }
     }
 
     private IEnumerator PlayTimelineAfterDelay()
     {
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Waiting {timelineDelay} seconds before playing timeline...");
-        yield return new WaitForSeconds(timelineDelay);
+#endif
+        yield return CoroutineYieldCache.WaitForSeconds(timelineDelay);
 
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Playing timeline after glow part completion...");
+#endif
 
         bool isGameActive = GoGrowGlowGameManager.Instance != null && GoGrowGlowGameManager.Instance.IsGameActive();
 
@@ -812,11 +860,15 @@ public class GlowPartManager : MonoBehaviour
         }
         else if (playableDirector == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GlowPartManager: Playable Director not assigned.");
+#endif
         }
         else if (timelineToPlay == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GlowPartManager: Timeline asset not assigned.");
+#endif
         }
     }
 
@@ -824,7 +876,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (director != playableDirector) return;
 
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Timeline stopped.");
+#endif
 
         if (playableDirector != null)
         {
@@ -849,11 +903,15 @@ public class GlowPartManager : MonoBehaviour
             if (!wasEnergyPaused && !hasCompleted)
             {
                 GoGrowGlowGameManager.Instance.ResumeEnergyDecrease();
+#if UNITY_EDITOR
                 Debug.Log("GlowPartManager: Resuming energy decrease after timeline");
+#endif
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.Log("GlowPartManager: Keeping energy decrease paused (glow part completed)");
+#endif
             }
         }
 
@@ -862,7 +920,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator DisableCanvasAfterDelay()
     {
-        yield return new WaitForSeconds(panelSlideDuration + 0.3f);
+        yield return CoroutineYieldCache.WaitForSeconds(panelSlideDuration + 0.3f);
 
         if (glowCanvas != null)
             glowCanvas.SetActive(false);
@@ -884,13 +942,17 @@ public class GlowPartManager : MonoBehaviour
 
     private void HandleButtonPressed()
     {
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Transfer button PRESSED");
+#endif
         StartRotationToTower();
     }
 
     private void HandleButtonReleased()
     {
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Transfer button RELEASED");
+#endif
         StopTransfer();
     }
 
@@ -907,7 +969,9 @@ public class GlowPartManager : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Starting rotation to tower: {currentActiveTower.gameObject.name}");
+#endif
 
         isRotatingToTower = true;
         isLookingAtTower = false;
@@ -936,7 +1000,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isRotatingToTower || isTransferring) return;
 
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Starting lightsaber and energy transfer");
+#endif
 
         isTransferring = true;
 
@@ -959,7 +1025,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (!isRotatingToTower && !isTransferring) return;
 
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Stopping energy transfer and rotation");
+#endif
 
         StopLoopAudio();
 
@@ -1118,7 +1186,9 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator TransferEnergyRoutine()
     {
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Transfer Energy Routine Started");
+#endif
 
         while (isTransferring && currentActiveTower != null &&
                !currentActiveTower.IsFullyLit() &&
@@ -1128,7 +1198,9 @@ public class GlowPartManager : MonoBehaviour
 
             if (playerEnergy <= 0f)
             {
+#if UNITY_EDITOR
                 Debug.Log("GlowPartManager: Player has no energy to transfer");
+#endif
                 StopTransfer();
                 yield break;
             }
@@ -1158,13 +1230,17 @@ public class GlowPartManager : MonoBehaviour
             yield return null;
         }
 
+#if UNITY_EDITOR
         Debug.Log("GlowPartManager: Transfer Energy Routine Ended");
+#endif
     }
 
     // MODIFIED: On tower fully lit - smooth camera transition back to idle
     private void OnTowerFullyLit(GlowTower tower)
     {
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Tower {tower.gameObject.name} is fully lit!");
+#endif
 
         if (GoGrowGlowGameManager.Instance != null)
         {
@@ -1210,7 +1286,9 @@ public class GlowPartManager : MonoBehaviour
     {
         if (hasCompleted) return;
 
+#if UNITY_EDITOR
         Debug.Log("=== ALL TOWERS ARE LIT! ===");
+#endif
 
         hasCompleted = true;
 
@@ -1353,7 +1431,7 @@ public class GlowPartManager : MonoBehaviour
             StartCoroutine(PlaySoundDelayed(panelSlideOutSound, panelSlideSoundDelay));
 
         if (slideIn)
-            yield return new WaitForSeconds(panelShowDelay);
+            yield return CoroutineYieldCache.WaitForSeconds(panelShowDelay);
 
         while (elapsedTime < panelSlideDuration)
         {
@@ -1375,7 +1453,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator DisablePanelAfterSlide()
     {
-        yield return new WaitForSeconds(panelSlideDuration + 0.1f);
+        yield return CoroutineYieldCache.WaitForSeconds(panelSlideDuration + 0.1f);
         trackerPanel.SetActive(false);
         isTrackerVisible = false;
     }
@@ -1388,7 +1466,7 @@ public class GlowPartManager : MonoBehaviour
 
     private IEnumerator PlaySoundDelayed(AudioClip clip, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return CoroutineYieldCache.WaitForSeconds(delay);
         PlaySound(clip);
     }
 
@@ -1430,7 +1508,9 @@ public class GlowPartManager : MonoBehaviour
 
     public void CompleteReset()
     {
+#if UNITY_EDITOR
         Debug.Log("=== COMPLETE RESET OF GLOW PART MANAGER ===");
+#endif
 
         StopAllCoroutines();
 
@@ -1489,12 +1569,16 @@ public class GlowPartManager : MonoBehaviour
             ResumeGameState();
         }
 
+#if UNITY_EDITOR
         Debug.Log("Glow Part Manager completely reset - All towers back to default state");
+#endif
     }
 
     public void ResetAllTowers()
     {
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Resetting {glowTowers.Count} glow towers...");
+#endif
 
         foreach (GlowTower tower in glowTowers)
         {
@@ -1504,7 +1588,9 @@ public class GlowPartManager : MonoBehaviour
                 tower.ResetTower();
                 tower.DeactivateTower();
 
+#if UNITY_EDITOR
                 Debug.Log($"GlowPartManager: Reset tower: {tower.gameObject.name} - Energy: {tower.GetCurrentEnergy()}");
+#endif
             }
         }
 
@@ -1519,7 +1605,9 @@ public class GlowPartManager : MonoBehaviour
             tower.ResetTower();
             tower.DeactivateTower();
 
+#if UNITY_EDITOR
             Debug.Log($"GlowPartManager: Individual tower reset: {tower.gameObject.name}");
+#endif
         }
     }
 
@@ -1543,7 +1631,9 @@ public class GlowPartManager : MonoBehaviour
 
     public void ResetForNewGame()
     {
+#if UNITY_EDITOR
         Debug.Log("=== RESETTING GLOW PART FOR NEW GAME ===");
+#endif
 
         CompleteReset();
 
@@ -1553,12 +1643,16 @@ public class GlowPartManager : MonoBehaviour
         if (transferButton != null)
             transferButton.gameObject.SetActive(false);
 
+#if UNITY_EDITOR
         Debug.Log("Glow Part ready for new game");
+#endif
     }
 
     public void CompleteResetForNewGame()
     {
+#if UNITY_EDITOR
         Debug.Log("=== COMPLETE RESET FOR NEW GAME ===");
+#endif
 
         CompleteReset();
 
@@ -1581,7 +1675,9 @@ public class GlowPartManager : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("GlowPartManager: proximityDetectors list is null");
+#endif
         }
 
         if (buttonPressHandler != null)
@@ -1612,10 +1708,68 @@ public class GlowPartManager : MonoBehaviour
         if (audioSource != null && audioSource.isPlaying)
             audioSource.Stop();
 
+#if UNITY_EDITOR
         Debug.Log("Glow Part Manager completely reset for new game");
+#endif
+    }
+
+    /// <summary>
+    /// Resumes the glow part after a save/restore without resetting tower energy.
+    /// Unlike StartGlowPart(), this does NOT zero out tower energy.
+    /// </summary>
+    public void ResumeGlowPart()
+    {
+        if (isGlowPartActive) return;
+
+#if UNITY_EDITOR
+        Debug.Log("=== RESUMING GLOW PART (from saved state) ===");
+#endif
+
+        if (GoGrowGlowGameManager.Instance != null)
+        {
+            wasEnergyPaused = GoGrowGlowGameManager.Instance.IsEnergyDecreasePaused();
+            GoGrowGlowGameManager.Instance.PauseEnergyDecrease();
+        }
+
+        if (glowCanvas != null)
+            glowCanvas.SetActive(true);
+
+        ShowTrackerPanel();
+
+        // Activate non-fully-lit towers (do NOT reset energy)
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && !tower.IsFullyLit())
+            {
+                tower.ActivateTower();
+            }
+        }
+
+        UpdateLitTowersCount();
+        isGlowPartActive = true;
+
+        // Re-setup proximity detectors so events are wired
+        SetupProximityDetectors();
+
+        // Force recheck so transfer button appears if player is already near a tower
+        foreach (TowerProximityDetector detector in proximityDetectors)
+        {
+            if (detector != null)
+                detector.ForceRecheck();
+        }
+
+        EnableObjectsOnGlowPartStart();
+
+        if (GoGrowGlowGameManager.Instance != null)
+            GoGrowGlowGameManager.Instance.StartOneLifeCheck();
+
+#if UNITY_EDITOR
+        Debug.Log($"Glow part resumed: {litTowersCount}/{glowTowers.Count} towers lit");
+#endif
     }
 
     public bool IsGlowPartActive() => isGlowPartActive;
+    public bool IsTrackerVisible() => isTrackerVisible;
     public int GetLitTowersCount() => litTowersCount;
     public int GetTotalTowers() => glowTowers.Count;
     public float GetTransferRate() => transferRate;
@@ -1632,12 +1786,109 @@ public class GlowPartManager : MonoBehaviour
     public void SetCameraBlendTime(float blendTime)
     {
         cameraBlendTime = Mathf.Max(0.1f, blendTime);
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Camera blend time set to {cameraBlendTime}s");
+#endif
     }
 
     public void SetTowerCameraPriority(int priority)
     {
         towerCameraPriority = priority;
+#if UNITY_EDITOR
         Debug.Log($"GlowPartManager: Tower camera active priority set to {priority}");
+#endif
+    }
+
+    // ====== SAVE / RESTORE HELPERS ======
+
+    /// <summary>
+    /// Returns the names of all glow towers that are fully lit.
+    /// Used by GameStateManager to persist tower progress.
+    /// </summary>
+    public List<string> GetLitTowerNames()
+    {
+        List<string> names = new List<string>();
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && tower.IsFullyLit())
+            {
+                names.Add(tower.gameObject.name);
+            }
+        }
+        return names;
+    }
+
+    /// <summary>
+    /// Restores towers that were fully lit in a previous session.
+    /// Towers whose names appear in <paramref name="litNames"/> are set to fully lit.
+    /// </summary>
+    public void RestoreTowerStates(List<string> litNames)
+    {
+        if (litNames == null || litNames.Count == 0) return;
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower != null && litNames.Contains(tower.gameObject.name))
+            {
+                // Fill the tower to max so it counts as fully lit
+                tower.SetEnergy(tower.GetMaxEnergy());
+                tower.SetFullyLitAnimation(true);
+#if UNITY_EDITOR
+                Debug.Log($"GlowPartManager: Restored lit tower: {tower.gameObject.name}");
+#endif
+            }
+        }
+
+        UpdateLitTowersCount();
+#if UNITY_EDITOR
+        Debug.Log($"GlowPartManager: Restored tower states – {litTowersCount}/{glowTowers.Count} lit");
+#endif
+    }
+
+    /// <summary>
+    /// Returns per-tower energy as parallel name/value lists.
+    /// Includes towers with partial energy (not fully lit) so mid-transfer progress is saved.
+    /// </summary>
+    public void GetTowerEnergyLevels(out List<string> names, out List<float> energyValues)
+    {
+        names = new List<string>();
+        energyValues = new List<float>();
+
+        foreach (GlowTower tower in glowTowers)
+        {
+            if (tower == null) continue;
+            float energy = tower.GetCurrentEnergy();
+            // Save any tower that has non-zero energy but isn't fully lit
+            if (energy > 0f && !tower.IsFullyLit())
+            {
+                names.Add(tower.gameObject.name);
+                energyValues.Add(energy);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores partial tower energy for towers that were mid-transfer.
+    /// Called after RestoreTowerStates so fully-lit towers are already handled.
+    /// </summary>
+    public void RestoreTowerEnergyLevels(List<string> names, List<float> energyValues)
+    {
+        if (names == null || energyValues == null || names.Count == 0) return;
+        if (names.Count != energyValues.Count) return;
+
+        for (int i = 0; i < names.Count; i++)
+        {
+            foreach (GlowTower tower in glowTowers)
+            {
+                if (tower != null && tower.gameObject.name == names[i] && !tower.IsFullyLit())
+                {
+                    tower.SetEnergy(energyValues[i]);
+#if UNITY_EDITOR
+                    Debug.Log($"GlowPartManager: Restored partial energy for {names[i]}: {energyValues[i]:F1}");
+#endif
+                    break;
+                }
+            }
+        }
     }
 }

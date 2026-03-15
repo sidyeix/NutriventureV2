@@ -18,8 +18,12 @@ public class TorchMinigame : MonoBehaviour
 {
     [Header("Torch Components")]
     [SerializeField] private CinemachineVirtualCamera torchVirtualCamera;
+    [SerializeField] private CinemachineVirtualCamera playerFollowCamera;
     [SerializeField] private int activeCameraPriority = 30;
-    [SerializeField] private int inactiveCameraPriority = 10;
+    [SerializeField] private int inactiveCameraPriority = 0;
+    [SerializeField] private int followCameraDefaultPriority = 20;
+    [SerializeField] private float cameraBlendTime = 1f;
+    [SerializeField] private CinemachineBlendDefinition.Style cameraBlendStyle = CinemachineBlendDefinition.Style.EaseInOut;
     [SerializeField] private GameObject fireObject;
     [SerializeField] private GameObject wrongFlameObject;
     [SerializeField] private Transform flameFoodSpawn;
@@ -120,29 +124,39 @@ public class TorchMinigame : MonoBehaviour
 
     private void Awake()
     {
+#if UNITY_EDITOR
         Debug.Log($"=== TORCH MINIGAME AWAKE [{torchID}] ===");
+#endif
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
 
         triggerCollider = GetComponent<BoxCollider>();
+#if UNITY_EDITOR
         Debug.Log("BoxCollider found: " + (triggerCollider != null));
+#endif
     }
 
     private void Start()
     {
+#if UNITY_EDITOR
         Debug.Log($"=== TORCH MINIGAME START [{torchID}] ===");
+#endif
 
         isInTorchMode = false;
         isLit = false;
+#if UNITY_EDITOR
         Debug.Log($"isInTorchMode initialized to: {isInTorchMode}");
         Debug.Log($"isLit initialized to: {isLit}");
+#endif
 
         gameManager = GoGrowGlowGameManager.Instance;
         torchManager = TorchMinigameManager.Instance;
+#if UNITY_EDITOR
         Debug.Log("GameManager found: " + (gameManager != null));
         Debug.Log("TorchManager found: " + (torchManager != null));
+#endif
 
         // Initialize UI
         InitializeUI();
@@ -166,12 +180,15 @@ public class TorchMinigame : MonoBehaviour
             torchManager.RegisterTorch(this);
         }
 
+#if UNITY_EDITOR
         Debug.Log($"=== TORCH MINIGAME READY [{torchID}] ===");
+#endif
     }
 
     private void InitializeUI()
     {
         // Check if all UI elements are assigned
+#if UNITY_EDITOR
         if (torchCanvas == null)
             Debug.LogError($"TORCH CANVAS IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
 
@@ -183,6 +200,7 @@ public class TorchMinigame : MonoBehaviour
 
         if (damagePanel == null)
             Debug.LogError($"DAMAGE PANEL IS NULL FOR {torchID} - DRAG IT IN INSPECTOR!");
+#endif
 
         // Setup button panel positions
         if (buttonPanel != null)
@@ -208,7 +226,9 @@ public class TorchMinigame : MonoBehaviour
         if (torchCanvas != null)
         {
             torchCanvas.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log($"Canvas hidden at start for {torchID}");
+#endif
         }
 
         if (flameFoodSpawn != null)
@@ -217,7 +237,9 @@ public class TorchMinigame : MonoBehaviour
         if (litButton != null)
         {
             litButton.gameObject.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log($"Button hidden at start for {torchID}");
+#endif
         }
 
         if (damagePanel != null)
@@ -232,24 +254,30 @@ public class TorchMinigame : MonoBehaviour
         goFoodOptions.RemoveAll(food => food.foodPrefab == null || food.foodSprite == null);
         otherFoodOptions.RemoveAll(food => food.foodPrefab == null || food.foodSprite == null);
 
+#if UNITY_EDITOR
         if (goFoodOptions.Count == 0)
             Debug.LogWarning("No Go Food options assigned");
         if (otherFoodOptions.Count == 0)
             Debug.LogWarning("No Other Food options assigned");
+#endif
     }
 
     // CORRECTED TRIGGER LOGIC - Only show UI if torch is NOT lit
     private void OnTriggerEnter(Collider other)
     {
+#if UNITY_EDITOR
         Debug.Log($"=== ON TRIGGER ENTER CALLED [{torchID}] ===");
         Debug.Log("Collider tag: " + other.tag);
         Debug.Log("Is Player? " + other.CompareTag("Player"));
         Debug.Log("Current isInTorchMode: " + isInTorchMode);
         Debug.Log("Is torch already lit? " + isLit);
+#endif
 
         if (other.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("Player entered trigger!");
+#endif
 
             if (!isLit && !isInTorchMode)
             {
@@ -257,24 +285,32 @@ public class TorchMinigame : MonoBehaviour
             }
             else if (isLit)
             {
+#if UNITY_EDITOR
                 Debug.Log("Torch already lit - not showing UI");
+#endif
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.Log("Minigame already active, not showing UI");
+#endif
             }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
+#if UNITY_EDITOR
         Debug.Log($"=== ON TRIGGER EXIT CALLED [{torchID}] ===");
         Debug.Log("Collider tag: " + other.tag);
         Debug.Log("Is Player? " + other.CompareTag("Player"));
+#endif
 
         if (other.CompareTag("Player"))
         {
+#if UNITY_EDITOR
             Debug.Log("Player exited trigger!");
+#endif
 
             if (!isInTorchMode)
             {
@@ -285,35 +321,47 @@ public class TorchMinigame : MonoBehaviour
 
     public void ShowTorchUI()
     {
+#if UNITY_EDITOR
         Debug.Log($"=== SHOW TORCH UI [{torchID}] ===");
         Debug.Log("isInTorchMode: " + isInTorchMode);
         Debug.Log("isLit: " + isLit);
+#endif
 
         if (torchCanvas == null)
         {
+#if UNITY_EDITOR
             Debug.LogError($"CANNOT SHOW UI - TORCH CANVAS IS NULL FOR {torchID}!");
+#endif
             return;
         }
 
         if (litButton == null)
         {
+#if UNITY_EDITOR
             Debug.LogError($"CANNOT SHOW UI - LIT BUTTON IS NULL FOR {torchID}!");
+#endif
             return;
         }
 
         if (buttonPanel == null)
         {
+#if UNITY_EDITOR
             Debug.LogError($"CANNOT SHOW UI - BUTTON PANEL IS NULL FOR {torchID}!");
+#endif
             return;
         }
 
         // Show canvas
         torchCanvas.SetActive(true);
+#if UNITY_EDITOR
         Debug.Log($"Canvas set to active for {torchID}: " + torchCanvas.activeSelf);
+#endif
 
         // Show lit button
         litButton.gameObject.SetActive(true);
+#if UNITY_EDITOR
         Debug.Log($"Button set to active for {torchID}: " + litButton.gameObject.activeSelf);
+#endif
 
         // Update button text
         TextMeshProUGUI buttonText = litButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -322,29 +370,39 @@ public class TorchMinigame : MonoBehaviour
             buttonText.text = $"Light Torch ({torchID})";
         }
 
+#if UNITY_EDITOR
         Debug.Log($"=== UI SHOULD NOW BE VISIBLE FOR {torchID} ===");
+#endif
     }
 
     public void HideTorchUI()
     {
+#if UNITY_EDITOR
         Debug.Log($"=== HIDE TORCH UI [{torchID}] ===");
+#endif
 
         if (torchCanvas != null)
         {
             torchCanvas.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log($"Canvas hidden for {torchID}");
+#endif
         }
 
         if (litButton != null)
         {
             litButton.gameObject.SetActive(false);
+#if UNITY_EDITOR
             Debug.Log($"Button hidden for {torchID}");
+#endif
         }
     }
 
     public void StartTorchMinigame()
     {
+#if UNITY_EDITOR
         Debug.Log($"StartTorchMinigame called [{torchID}]. isInTorchMode: " + isInTorchMode);
+#endif
 
         if (isInTorchMode || isLit) return;
 
@@ -355,9 +413,13 @@ public class TorchMinigame : MonoBehaviour
         currentCorrectAnswers = 0;
         currentFlameScale = 0f;
 
-        // Switch camera
+        // Switch camera with smooth blend
+        SetCameraBlend();
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = activeCameraPriority;
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = inactiveCameraPriority;
 
         // Hide UI elements
         foreach (GameObject uiElement in uiElementsToDisable)
@@ -413,7 +475,9 @@ public class TorchMinigame : MonoBehaviour
                 }
                 else
                 {
+#if UNITY_EDITOR
                     Debug.LogError("No Go Food options!");
+#endif
                     return;
                 }
             }
@@ -432,7 +496,9 @@ public class TorchMinigame : MonoBehaviour
                 }
                 else
                 {
+#if UNITY_EDITOR
                     Debug.LogError("No Other Food options!");
+#endif
                     return;
                 }
             }
@@ -477,7 +543,7 @@ public class TorchMinigame : MonoBehaviour
     private IEnumerator HandleCorrectAnswerSequence(int foodIndex)
     {
         yield return StartCoroutine(PlayFoodAnimation(foodIndex, false));
-        yield return new WaitForSeconds(delayBeforeFlameScale);
+        yield return CoroutineYieldCache.WaitForSeconds(delayBeforeFlameScale);
         HandleCorrectAnswerResult();
         ReEnableButtons();
     }
@@ -515,14 +581,14 @@ public class TorchMinigame : MonoBehaviour
             if (foodAnimator != null)
                 foodAnimator.SetTrigger("Play");
 
-            yield return new WaitForSeconds(wrongFlameDuration);
+            yield return CoroutineYieldCache.WaitForSeconds(wrongFlameDuration);
 
             flameFoodSpawn.gameObject.SetActive(false);
             Destroy(spawnedFood);
         }
         else
         {
-            yield return new WaitForSeconds(wrongFlameDuration);
+            yield return CoroutineYieldCache.WaitForSeconds(wrongFlameDuration);
         }
 
         if (wrongFlameObject != null)
@@ -539,7 +605,7 @@ public class TorchMinigame : MonoBehaviour
         {
             Color originalColor = buttonImage.color;
             buttonImage.color = wrongButtonColor;
-            yield return new WaitForSeconds(buttonColorFlashDuration);
+            yield return CoroutineYieldCache.WaitForSeconds(buttonColorFlashDuration);
             buttonImage.color = originalColor;
         }
 
@@ -606,14 +672,14 @@ public class TorchMinigame : MonoBehaviour
                 foodAnimator.SetTrigger("Play");
 
             float duration = isWrongAnswer ? wrongFlameDuration : foodAnimationDuration;
-            yield return new WaitForSeconds(duration);
+            yield return CoroutineYieldCache.WaitForSeconds(duration);
 
             flameFoodSpawn.gameObject.SetActive(false);
             Destroy(spawnedFood);
         }
         else
         {
-            yield return new WaitForSeconds(foodAnimationDuration);
+            yield return CoroutineYieldCache.WaitForSeconds(foodAnimationDuration);
         }
     }
 
@@ -633,7 +699,9 @@ public class TorchMinigame : MonoBehaviour
         if (gameManager != null && pointsGainOnCorrectAnswer > 0)
         {
             gameManager.AddPoints(pointsGainOnCorrectAnswer);
+#if UNITY_EDITOR
             Debug.Log($"Added {pointsGainOnCorrectAnswer} points for correct answer");
+#endif
         }
 
         currentCorrectAnswers++;
@@ -661,7 +729,9 @@ public class TorchMinigame : MonoBehaviour
             if (pointsLossOnWrongAnswer > 0)
             {
                 gameManager.AddPoints(-pointsLossOnWrongAnswer);
+#if UNITY_EDITOR
                 Debug.Log($"Deducted {pointsLossOnWrongAnswer} points for wrong answer");
+#endif
             }
 
             gameManager.RemoveEnergy(energyLossOnWrongAnswer);
@@ -669,15 +739,19 @@ public class TorchMinigame : MonoBehaviour
             float currentEnergy = gameManager.GetCurrentEnergy();
             if (currentEnergy <= 0)
             {
+#if UNITY_EDITOR
                 Debug.Log("Energy depleted to 0! Ending minigame with life loss");
+#endif
 
                 if (damagePanel != null)
                 {
                     damagePanel.SetActive(true);
+#if UNITY_EDITOR
                     Debug.Log("Damage panel activated");
+#endif
                 }
 
-                yield return new WaitForSeconds(0.5f);
+                yield return CoroutineYieldCache.WaitForSeconds(0.5f);
                 EndTorchMinigame(false);
                 yield break;
             }
@@ -747,9 +821,9 @@ public class TorchMinigame : MonoBehaviour
 
     private IEnumerator CompleteMinigameSequence()
     {
-        yield return new WaitForSeconds(1f);
+        yield return CoroutineYieldCache.WaitForSeconds(1f);
         yield return StartCoroutine(SlideButtonPanel(false));
-        yield return new WaitForSeconds(0.5f);
+        yield return CoroutineYieldCache.WaitForSeconds(0.5f);
 
         if (gameManager != null)
         {
@@ -823,14 +897,18 @@ public class TorchMinigame : MonoBehaviour
         if (!coin.CompareTag("Coin"))
             coin.tag = "Coin";
 
+#if UNITY_EDITOR
         Debug.Log($"Coin setup: isTrigger={collider.isTrigger}, layer={LayerMask.LayerToName(coin.layer)}");
+#endif
     }
 
     private void SpawnCoinExplosion()
     {
         if (coinPrefab == null)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("Coin prefab not assigned!");
+#endif
             return;
         }
 
@@ -871,7 +949,9 @@ public class TorchMinigame : MonoBehaviour
             Destroy(coin, 10f);
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Spawned {numberOfCoins} coins in explosion!");
+#endif
     }
 
     private IEnumerator ResetButtonsForNextRound()
@@ -920,8 +1000,12 @@ public class TorchMinigame : MonoBehaviour
         foreach (GameObject uiElement in uiElementsToDisable)
             if (uiElement != null) uiElement.SetActive(true);
 
+        SetCameraBlend();
         if (torchVirtualCamera != null)
             torchVirtualCamera.Priority = inactiveCameraPriority;
+
+        if (playerFollowCamera != null)
+            playerFollowCamera.Priority = followCameraDefaultPriority;
 
         foreach (GameObject button in currentButtons)
             Destroy(button);
@@ -961,7 +1045,9 @@ public class TorchMinigame : MonoBehaviour
 
     public void ResetTorch()
     {
+#if UNITY_EDITOR
         Debug.Log($"Resetting torch: {torchID}");
+#endif
 
         // Reset state
         isLit = false;
@@ -973,7 +1059,9 @@ public class TorchMinigame : MonoBehaviour
         if (fireObject != null)
         {
             fireObject.transform.localScale = Vector3.zero;
+#if UNITY_EDITOR
             Debug.Log($"Fire object scale reset to zero for {torchID}");
+#endif
         }
 
         // Reset wrong flame
@@ -1024,7 +1112,9 @@ public class TorchMinigame : MonoBehaviour
             triggerCollider.enabled = true;
         }
 
+#if UNITY_EDITOR
         Debug.Log($"Torch {torchID} fully reset");
+#endif
     }
 
     // Public getter for fire object (optional, but helpful)
@@ -1060,6 +1150,15 @@ public class TorchMinigame : MonoBehaviour
         if (isInTorchMode)
         {
             EndTorchMinigame(false);
+        }
+    }
+
+    private void SetCameraBlend()
+    {
+        CinemachineBrain brain = Camera.main != null ? Camera.main.GetComponent<CinemachineBrain>() : null;
+        if (brain != null)
+        {
+            brain.m_DefaultBlend = new CinemachineBlendDefinition(cameraBlendStyle, cameraBlendTime);
         }
     }
 }

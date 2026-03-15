@@ -46,7 +46,7 @@ public class K3_CollectPreservatives : MonoBehaviour
     private float pickupTimer = 0f;
     private GameObject currentNearbyPotion = null;
     private bool isButtonVisible = false;
-    private AudioSource audioSource;
+    // REMOVED: private AudioSource audioSource; - NO LOCAL AUDIO SOURCE
     
     // Events for other systems
     public System.Action<GameObject, string> OnPotionCollected; // GameObject, PreservativeID
@@ -70,16 +70,7 @@ public class K3_CollectPreservatives : MonoBehaviour
             playerMovementScript = GetComponent<StarterAssets.ThirdPersonController>();
         }
         
-        // Get or add AudioSource component
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-            audioSource.rolloffMode = AudioRolloffMode.Linear;
-            audioSource.maxDistance = 10f;
-            Debug.Log("AudioSource component added");
-        }
+        // REMOVED: AudioSource setup - NO LOCAL AUDIO SOURCE
         
         // Convert parameter name to hash for better performance
         pickupHash = Animator.StringToHash(pickupParameterName);
@@ -134,6 +125,12 @@ public class K3_CollectPreservatives : MonoBehaviour
             {
                 Debug.LogError("PreservativesInformationManager not found! Please assign it in the inspector.");
             }
+        }
+        
+        // Check AudioHandler exists
+        if (AudioHandler.Instance == null)
+        {
+            Debug.LogWarning("AudioHandler.Instance not found! Make sure AudioHandler is in the scene.");
         }
     }
     
@@ -194,7 +191,6 @@ public class K3_CollectPreservatives : MonoBehaviour
             // No potions nearby
             if (currentNearbyPotion != null)
             {
-                Debug.Log("Moved away from preservative potion");
                 currentNearbyPotion = null;
             }
             
@@ -263,8 +259,8 @@ public class K3_CollectPreservatives : MonoBehaviour
         
         Debug.Log($"Pickup animation started for: {currentNearbyPotion.name}");
         
-        // Play pickup sound with delay to align with animation
-        if (playSoundOnPickup && pickupSound != null && audioSource != null)
+        // CHANGED: Play pickup sound with delay using AudioHandler
+        if (playSoundOnPickup && pickupSound != null && AudioHandler.Instance != null)
         {
             StartCoroutine(PlayPickupSoundWithDelay());
         }
@@ -276,14 +272,15 @@ public class K3_CollectPreservatives : MonoBehaviour
         CompletePickup();
     }
     
+    // CHANGED: Using AudioHandler instead of local AudioSource
     private IEnumerator PlayPickupSoundWithDelay()
     {
         yield return new WaitForSeconds(soundPlayDelay);
         
-        if (audioSource != null && pickupSound != null)
+        if (pickupSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
-            Debug.Log($"Pickup sound played: {pickupSound.name}");
+            AudioHandler.Instance.PlayCharacterSelectionSound(pickupSound);
+            Debug.Log($"Pickup sound played through AudioHandler: {pickupSound.name}");
         }
     }
     
@@ -494,11 +491,7 @@ public class K3_CollectPreservatives : MonoBehaviour
             isPickingUp = false;
             pickupTimer = 0f;
             
-            // Stop any playing sounds
-            if (audioSource != null && audioSource.isPlaying)
-            {
-                audioSource.Stop();
-            }
+            // REMOVED: Audio stopping code - AudioHandler handles this globally
             
             // Re-enable movement
             if (playerMovementScript != null)
@@ -603,13 +596,18 @@ public class K3_CollectPreservatives : MonoBehaviour
         }
     }
     
+    // CHANGED: Test sound using AudioHandler
     [ContextMenu("Test Pickup Sound")]
     public void TestPickupSound()
     {
-        if (audioSource != null && pickupSound != null)
+        if (pickupSound != null && AudioHandler.Instance != null)
         {
-            audioSource.PlayOneShot(pickupSound, pickupSoundVolume);
-            Debug.Log("Test pickup sound played");
+            AudioHandler.Instance.PlayCharacterSelectionSound(pickupSound);
+            Debug.Log("Test pickup sound played through AudioHandler");
+        }
+        else
+        {
+            Debug.LogWarning($"Cannot test pickup sound - PickupSound: {pickupSound != null}, AudioHandler.Instance: {AudioHandler.Instance != null}");
         }
     }
     
