@@ -517,7 +517,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea9070045de99a4499761ccb9ab8419f, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 71
     armorPercent: 15
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -551,7 +551,7 @@ MonoBehaviour:
       skillDescription: Chitin shell blocks 50% of damage for one turn.
     skill3:
       skillName: Shell Wall
-      type: 2
+      type: 1
       baseValue: 60
       minValue: 0
       maxValue: 0
