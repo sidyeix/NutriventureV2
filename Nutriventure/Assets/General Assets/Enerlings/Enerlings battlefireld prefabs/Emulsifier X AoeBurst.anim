@@ -1777,7 +1777,7 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 1.7166667
-    functionName: PlayJump
+    functionName: PlaySkill3
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
