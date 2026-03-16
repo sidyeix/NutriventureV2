@@ -126,6 +126,7 @@ public class BattlePlayManager : MonoBehaviour
     private bool isUnlocked = false;
     private bool battleStarted = false;
     private System.Collections.Generic.List<Image> heartImages = new System.Collections.Generic.List<Image>();
+    private bool hasInitializedBattleFlow = false;
 
     void Awake()
     {
@@ -186,8 +187,34 @@ public class BattlePlayManager : MonoBehaviour
 
         Debug.Log("=== BATTLE PLAY MANAGER INITIALIZED ===");
 
-        // Start battle scene
+        if (!BattleRuntimeStateStore.ShouldDeferBattleInitialization)
+        {
+            StartFreshBattleInitialization();
+        }
+    }
+
+    public void StartFreshBattleInitialization()
+    {
+        if (hasInitializedBattleFlow)
+            return;
+
+        hasInitializedBattleFlow = true;
         StartCoroutine(InitializeBattleScene());
+    }
+
+    public void StartResumedBattle(BattleRuntimeState state)
+    {
+        if (hasInitializedBattleFlow)
+            return;
+
+        if (state == null || !state.hasActiveBattle)
+        {
+            StartFreshBattleInitialization();
+            return;
+        }
+
+        hasInitializedBattleFlow = true;
+        StartCoroutine(StartResumedBattleRoutine(state));
     }
 
     void Update()
@@ -321,6 +348,69 @@ public class BattlePlayManager : MonoBehaviour
 
         // Start the introduction sequence
         yield return StartCoroutine(PlayIntroductionSequence());
+    }
+
+    IEnumerator StartResumedBattleRoutine(BattleRuntimeState state)
+    {
+        if (state == null)
+        {
+            StartCoroutine(InitializeBattleScene());
+            yield break;
+        }
+
+        if (PersistentDataManager.Instance != null)
+        {
+            PersistentDataManager.Instance.SaveOpponentEnerling(state.opponentEnerlingName);
+            PersistentDataManager.Instance.SaveSelectedEnerling(state.playerEnerlingName);
+        }
+
+        opponentEnerling = ingredientDatabase.GetIngredientInfo(state.opponentEnerlingName);
+        if (opponentEnerling == null)
+        {
+            Debug.LogWarning("BattlePlayManager: Could not find saved opponent, falling back to fresh flow.");
+            StartCoroutine(InitializeBattleScene());
+            yield break;
+        }
+
+        battleStarted = true;
+
+        if (catchEnerlingCanvas != null)
+            catchEnerlingCanvas.SetActive(false);
+
+        if (enerlingInfoCanvas != null)
+            enerlingInfoCanvas.SetActive(false);
+
+        if (enerlingPickingCanvas != null)
+            enerlingPickingCanvas.SetActive(false);
+
+        if (playableDirector != null)
+            playableDirector.gameObject.SetActive(false);
+
+        SetAllCamerasPriority(0);
+        if (battleFocusCamera != null)
+            battleFocusCamera.Priority = 20;
+
+        InitializeBattleSystemsForResume(state.playerEnerlingName);
+
+        yield return null;
+
+        if (battleManager != null && state.playerState != null)
+            battleManager.ApplyRuntimeState(state.playerState);
+
+        if (aiManager != null && state.aiState != null)
+            aiManager.ApplyRuntimeState(state.aiState);
+
+        if (turnSystem != null && state.turnState != null)
+            turnSystem.ApplyRuntimeState(state.turnState);
+
+        if (battleManager != null)
+            battleManager.ResetSpawnedEnerlingAnimatorBindings();
+
+        // One more frame helps when skin visuals finish hierarchy binding late.
+        yield return null;
+
+        if (battleManager != null)
+            battleManager.ResetSpawnedEnerlingAnimatorBindings();
     }
 
     void SetInitialGroceryCameraPosition(IngredientDatabase.KingdomOrigin kingdom)
@@ -688,6 +778,8 @@ public class BattlePlayManager : MonoBehaviour
 
     void OnSkipButtonClicked()
     {
+        BattleRuntimeStateStore.ClearState();
+
         if (!string.IsNullOrEmpty(scanOCRSceneName))
         {
             SceneManager.LoadScene(scanOCRSceneName);
@@ -913,6 +1005,28 @@ public class BattlePlayManager : MonoBehaviour
         Debug.Log("Battle systems initialized successfully!");
     }
 
+    void InitializeBattleSystemsForResume(string playerEnerlingName)
+    {
+        if (battleManager != null)
+            battleManager.InitializeBattlefieldWithEnerling(playerEnerlingName);
+
+        if (aiManager != null && opponentEnerling != null)
+            aiManager.InitializeAIEnerling(opponentEnerling.ingredientName, ingredientDatabase);
+
+        if (playerManager != null && battleManager != null)
+        {
+            var playerEnerling = battleManager.GetBattleEnerling();
+            if (playerEnerling != null)
+                playerManager.InitializePlayerEnerling(playerEnerling.ingredientName);
+        }
+
+        if (turnSystem != null)
+            turnSystem.InitializeBattle(battleManager, aiManager);
+
+        if (AudioManagerBattleField.Instance != null)
+            AudioManagerBattleField.Instance.StartBattleAudio();
+    }
+
     string GetRandomEnerlingName()
     {
         if (ingredientDatabase != null && ingredientDatabase.ingredients.Count > 0)
@@ -1060,6 +1174,7 @@ public class BattlePlayManager : MonoBehaviour
     /// </summary>
     public void OnBattleWin(string defeatedEnerlingName)
     {
+        BattleRuntimeStateStore.ClearState();
         Debug.Log($"BattlePlayManager: Battle won vs {defeatedEnerlingName}");
 
         if (PersistentDataManager.Instance != null)
@@ -1073,6 +1188,7 @@ public class BattlePlayManager : MonoBehaviour
     /// </summary>
     public void OnBattleLose()
     {
+        BattleRuntimeStateStore.ClearState();
         Debug.Log("BattlePlayManager: Battle lost — deducting 1 life");
 
         if (GameDataManager.Instance != null)

@@ -128,6 +128,23 @@ public class BattleEnerlingManager : MonoBehaviour
         return null;
     }
 
+    public void ResetSpawnedEnerlingAnimatorBindings()
+    {
+        if (spawnedEnerling == null)
+            return;
+
+        // Resume can restore into a partially initialized animator state for skinned
+        // emulsified enerlings; forcing full binding refresh restores expected playback.
+        RefreshAnimatorBindings(spawnedEnerling);
+
+        enerlingAnimator = spawnedEnerling.GetComponent<Animator>();
+        if (enerlingAnimator != null)
+        {
+            enerlingAnimator.Rebind();
+            enerlingAnimator.Update(0f);
+        }
+    }
+
     // ==================== NEW METHOD: Switch to battlefield with existing enerling ====================
     public void SwitchToBattlefieldWithExistingEnerling(string playerEnerlingName, GameObject existingPlayerEnerling)
     {
@@ -1630,9 +1647,61 @@ public class BattleEnerlingManager : MonoBehaviour
         }
     }
 
+    public BattlePlayerRuntimeState CaptureRuntimeState()
+    {
+        if (battleEnerling == null)
+            return null;
+
+        return new BattlePlayerRuntimeState
+        {
+            currentLife = battleEnerling.currentLife,
+            currentArmor = currentArmor,
+            activeDefend = activeDefend,
+            hasDefend = hasDefend,
+            defendUsedThisTurn = defendUsedThisTurn,
+            skill1Cooldown = battleEnerling.skill1Cooldown,
+            skill2Cooldown = battleEnerling.skill2Cooldown,
+            skill3Cooldown = battleEnerling.skill3Cooldown,
+            skill4Cooldown = battleEnerling.skill4Cooldown,
+            organCooldownTimer = organCooldownTimer,
+            maxOrganCooldown = maxOrganCooldown,
+            organCooldownReady = organCooldownReady
+        };
+    }
+
+    public void ApplyRuntimeState(BattlePlayerRuntimeState state)
+    {
+        if (battleEnerling == null || state == null)
+            return;
+
+        battleEnerling.currentLife = Mathf.Clamp(state.currentLife, 0, battleEnerling.baseLife);
+        currentArmor = Mathf.Max(0, state.currentArmor);
+        activeDefend = Mathf.Max(0, state.activeDefend);
+        hasDefend = state.hasDefend;
+        defendUsedThisTurn = state.defendUsedThisTurn;
+
+        battleEnerling.skill1Cooldown = Mathf.Max(0, state.skill1Cooldown);
+        battleEnerling.skill2Cooldown = Mathf.Max(0, state.skill2Cooldown);
+        battleEnerling.skill3Cooldown = Mathf.Max(0, state.skill3Cooldown);
+        battleEnerling.skill4Cooldown = Mathf.Max(0, state.skill4Cooldown);
+
+        maxOrganCooldown = Mathf.Max(1, state.maxOrganCooldown);
+        organCooldownTimer = Mathf.Clamp(state.organCooldownTimer, 0, maxOrganCooldown);
+        organCooldownReady = state.organCooldownReady;
+
+        UpdateBattlefieldUI();
+
+        if (playerEnerlingManager != null)
+            playerEnerlingManager.UpdateAllSkillButtons();
+    }
+
     void OnDestroy()
     {
-        SaveBattleState();
+        if (!BattleRuntimeStateStore.ShouldDeferBattleInitialization)
+        {
+            SaveBattleState();
+        }
+
         CleanupBattlefield();
     }
 

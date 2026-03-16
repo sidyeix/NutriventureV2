@@ -1413,6 +1413,50 @@ public class AIEnerlingManager : MonoBehaviour
         return null;
     }
 
+    public BattleAIRuntimeState CaptureRuntimeState()
+    {
+        if (aiEnerling == null)
+            return null;
+
+        return new BattleAIRuntimeState
+        {
+            currentLife = aiEnerling.currentLife,
+            currentArmor = currentAIArmor,
+            activeDefend = activeAIDefend,
+            hasDefend = hasAIDefend,
+            skill1Cooldown = skillCooldowns.ContainsKey(1) ? skillCooldowns[1] : 0,
+            skill2Cooldown = skillCooldowns.ContainsKey(2) ? skillCooldowns[2] : 0,
+            skill3Cooldown = skillCooldowns.ContainsKey(3) ? skillCooldowns[3] : 0,
+            skill4Cooldown = skillCooldowns.ContainsKey(4) ? skillCooldowns[4] : 0,
+            organCooldownTimer = aiOrganCooldownTimer,
+            maxOrganCooldown = aiMaxOrganCooldown,
+            organCooldownReady = aiOrganCooldownReady
+        };
+    }
+
+    public void ApplyRuntimeState(BattleAIRuntimeState state)
+    {
+        if (aiEnerling == null || state == null)
+            return;
+
+        aiEnerling.currentLife = Mathf.Clamp(state.currentLife, 0, aiEnerling.baseLife);
+        currentAIArmor = Mathf.Max(0, state.currentArmor);
+        activeAIDefend = Mathf.Max(0, state.activeDefend);
+        hasAIDefend = state.hasDefend;
+
+        skillCooldowns[1] = Mathf.Max(0, state.skill1Cooldown);
+        skillCooldowns[2] = Mathf.Max(0, state.skill2Cooldown);
+        skillCooldowns[3] = Mathf.Max(0, state.skill3Cooldown);
+        skillCooldowns[4] = Mathf.Max(0, state.skill4Cooldown);
+
+        aiMaxOrganCooldown = Mathf.Max(1, state.maxOrganCooldown);
+        aiOrganCooldownTimer = Mathf.Clamp(state.organCooldownTimer, 0, aiMaxOrganCooldown);
+        aiOrganCooldownReady = state.organCooldownReady;
+
+        UpdateAvailableSkills();
+        UpdateAIUI();
+    }
+
     public void Cleanup()
     {
         StopAllCoroutines();

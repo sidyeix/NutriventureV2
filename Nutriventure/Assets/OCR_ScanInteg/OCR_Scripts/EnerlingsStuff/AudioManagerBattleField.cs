@@ -89,18 +89,25 @@ public class AudioManagerBattleField : MonoBehaviour
             audienceSFXSource.clip = audienceSFX;
         }
 
-        // Play and fade in
-        StartCoroutine(FadeInBattleAudio());
+        // Play and fade in when possible, otherwise start immediately.
+        if (CanRunCoroutines())
+        {
+            if (fadeCoroutine != null)
+            {
+                StopCoroutine(fadeCoroutine);
+                fadeCoroutine = null;
+            }
+
+            fadeCoroutine = StartCoroutine(FadeInBattleAudio());
+        }
+        else
+        {
+            StartBattleAudioImmediate();
+        }
     }
 
     IEnumerator FadeInBattleAudio()
     {
-        // Stop any existing fade
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
-
         // Start playing
         if (battleMusicSource != null && battleMusicSource.clip != null)
         {
@@ -143,6 +150,7 @@ public class AudioManagerBattleField : MonoBehaviour
             audienceSFXSource.volume = audienceSFXVolume;
         }
 
+        fadeCoroutine = null;
         Debug.Log("Battle audio started and faded in");
     }
 
@@ -152,18 +160,25 @@ public class AudioManagerBattleField : MonoBehaviour
 
         isBattleActive = false;
 
-        // Fade out and stop
-        StartCoroutine(FadeOutBattleAudio());
+        // Fade out when possible; during teardown/inactive states stop immediately.
+        if (CanRunCoroutines())
+        {
+            if (fadeCoroutine != null)
+            {
+                StopCoroutine(fadeCoroutine);
+                fadeCoroutine = null;
+            }
+
+            fadeCoroutine = StartCoroutine(FadeOutBattleAudio());
+        }
+        else
+        {
+            StopBattleAudioImmediate();
+        }
     }
 
     IEnumerator FadeOutBattleAudio()
     {
-        // Stop any existing fade
-        if (fadeCoroutine != null)
-        {
-            StopCoroutine(fadeCoroutine);
-        }
-
         float startBattleVolume = battleMusicSource != null ? battleMusicSource.volume : 0f;
         float startAudienceVolume = audienceSFXSource != null ? audienceSFXSource.volume : 0f;
 
@@ -200,7 +215,43 @@ public class AudioManagerBattleField : MonoBehaviour
             audienceSFXSource.Stop();
         }
 
+        fadeCoroutine = null;
         Debug.Log("Battle audio stopped and faded out");
+    }
+
+    private bool CanRunCoroutines()
+    {
+        return gameObject.activeInHierarchy && isActiveAndEnabled;
+    }
+
+    private void StartBattleAudioImmediate()
+    {
+        if (battleMusicSource != null && battleMusicSource.clip != null)
+        {
+            battleMusicSource.Play();
+            battleMusicSource.volume = battleMusicVolume;
+        }
+
+        if (audienceSFXSource != null && audienceSFXSource.clip != null)
+        {
+            audienceSFXSource.Play();
+            audienceSFXSource.volume = audienceSFXVolume;
+        }
+    }
+
+    private void StopBattleAudioImmediate()
+    {
+        if (battleMusicSource != null)
+        {
+            battleMusicSource.volume = 0f;
+            battleMusicSource.Stop();
+        }
+
+        if (audienceSFXSource != null)
+        {
+            audienceSFXSource.volume = 0f;
+            audienceSFXSource.Stop();
+        }
     }
 
     public void PauseBattleAudio()
@@ -262,6 +313,7 @@ public class AudioManagerBattleField : MonoBehaviour
         if (fadeCoroutine != null)
         {
             StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
         }
 
         if (instance == this)

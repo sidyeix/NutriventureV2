@@ -1,5 +1,6 @@
 using Cinemachine;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -25,13 +26,18 @@ public class EndingManager : MonoBehaviour
     public RawImage videoRawImage;
     public VideoPlayer endingVideoPlayer;
     public RenderTexture videoRenderTexture;
+    public Button skipCutsceneButton;
 
     [Header("Audio")]
     public AudioSource audioSource;
+    public AudioSource endCanvasLoopAudioSource;
     public AudioClip playerWinAudio;
     public AudioClip playerLoseAudio;
     public AudioClip victoryAudio;
     public AudioClip defeatAudio;
+    [Range(0f, 1f)] public float endCanvasBaseVolume = 1f;
+    [Range(1f, 4f)] public float endCanvasVolumeMultiplier = 2f;
+    public bool forceEndCanvasVolumeToMax = true;
 
     [Header("Camera References")]
     public CinemachineVirtualCamera enerlingDefeatCamera;
@@ -47,9 +53,20 @@ public class EndingManager : MonoBehaviour
     public TextMeshProUGUI kingdomText;
     public Button continueButton;
     public GameObject unlockedText;
+    public GameObject progressUnlockPanel;
+    public Slider progressUnlockSlider;
+    public TextMeshProUGUI progressUnlockText;
+
+    [Header("Reward UI")]
+    public Transform rewardsPanelContainer;
+    public GameObject rewardItemPrefab;
+    public Sprite coinRewardImage;
+    public Sprite gemRewardImage;
+    public Sprite xpRewardImage;
 
     [Header("Player Defeated UI")]
     public Button playerDefeatedContinueButton;
+    public Transform playerDefeatedRewardsPanelContainer;
 
     [Header("Scene Names")]
     public string scanOCRSceneName = "ScanOCR";
@@ -68,6 +85,8 @@ public class EndingManager : MonoBehaviour
 
     [Header("Audio Listener")]
     public AudioListener audioListener;
+    public AudioSource continueAudioSource;
+    public AudioClip continueSfx;
 
     private bool gameEnded = false;
     private GameObject spawnedPlayerEnerling;
@@ -75,11 +94,40 @@ public class EndingManager : MonoBehaviour
     private Animator playerAnimator;
     private Animator aiAnimator;
     private IngredientDatabase.IngredientInfo defeatedAIEnerling;
+    private bool skipEndingVideoRequested = false;
+    private bool isEndingVideoSequenceActive = false;
+    private bool isEndCanvasLoopActive = false;
+    private readonly List<RewardGrant> pendingRewards = new List<RewardGrant>();
+    private readonly List<RewardGrant> pendingDefeatRewards = new List<RewardGrant>();
+    private bool rewardsApplied = false;
+    private bool defeatRewardsApplied = false;
+    private int catchCountBeforeWin = 0;
+    private int catchCountAfterWin = 0;
+
+    private enum RewardKind
+    {
+        Coins,
+        Gems,
+        XP
+    }
+
+    private struct RewardGrant
+    {
+        public RewardKind Kind;
+        public int Amount;
+
+        public RewardGrant(RewardKind kind, int amount)
+        {
+            Kind = kind;
+            Amount = amount;
+        }
+    }
 
     void Start()
     {
         EnsureSingleAudioListener();
         InitializeReferences();
+        EnsureEndCanvasLoopAudioSource();
         SetupButtonListeners();
 
         // Initially disable all ending canvases
@@ -201,6 +249,12 @@ public class EndingManager : MonoBehaviour
             continueButton.onClick.AddListener(OnEnerlingEndingCatchContinue);
         }
 
+        if (skipCutsceneButton != null)
+        {
+            skipCutsceneButton.onClick.RemoveAllListeners();
+            skipCutsceneButton.onClick.AddListener(OnSkipEndingCutsceneClicked);
+        }
+
         if (playerDefeatedContinueButton != null)
         {
             playerDefeatedContinueButton.onClick.RemoveAllListeners();
@@ -292,12 +346,6 @@ public class EndingManager : MonoBehaviour
     {
         Debug.Log("Player wins!");
 
-        if (audioSource != null && victoryAudio != null)
-        {
-            audioSource.clip = victoryAudio;
-            audioSource.Play();
-        }
-
         defeatedAIEnerling = aiManager?.GetAIEnerling();
         if (defeatedAIEnerling == null)
         {
@@ -305,11 +353,17 @@ public class EndingManager : MonoBehaviour
             yield break;
         }
 
+        catchCountBeforeWin = GetCurrentCatchCount(defeatedAIEnerling.ingredientName);
+
         // --- Increment catch count via BattlePlayManager ---
         if (BattlePlayManager.Instance != null)
         {
             BattlePlayManager.Instance.OnBattleWin(defeatedAIEnerling.ingredientName);
         }
+
+        catchCountAfterWin = GetCurrentCatchCount(defeatedAIEnerling.ingredientName);
+        BuildRewardsByRarity(defeatedAIEnerling.rarity);
+        rewardsApplied = false;
 
         Debug.Log($"Defeated enerling: {defeatedAIEnerling.ingredientName}");
         Debug.Log($"Has ending cutscene: {defeatedAIEnerling.endingCutscene != null}");
@@ -353,28 +407,34 @@ public class EndingManager : MonoBehaviour
     IEnumerator PlayEndingCutscene()
     {
         Debug.Log("=== Playing ending cutscene video ===");
+        skipEndingVideoRequested = false;
+        isEndingVideoSequenceActive = true;
 
         if (defeatedAIEnerling == null)
         {
             Debug.LogError("defeatedAIEnerling is null!");
+            isEndingVideoSequenceActive = false;
             yield break;
         }
 
         if (defeatedAIEnerling.endingCutscene == null)
         {
             Debug.LogError($"endingCutscene is null for {defeatedAIEnerling.ingredientName}");
+            isEndingVideoSequenceActive = false;
             yield break;
         }
 
         if (endingVideoPlayer == null)
         {
             Debug.LogError("endingVideoPlayer is null! Cannot play video.");
+            isEndingVideoSequenceActive = false;
             yield break;
         }
 
         if (endingCutsceneCanvas == null)
         {
             Debug.LogError("endingCutsceneCanvas is null! Cannot show video canvas.");
+            isEndingVideoSequenceActive = false;
             yield break;
         }
 
@@ -445,6 +505,13 @@ public class EndingManager : MonoBehaviour
         // Wait for video to finish - THIS IS CRITICAL
         while (endingVideoPlayer.isPlaying)
         {
+            if (skipEndingVideoRequested)
+            {
+                Debug.Log("Ending cutscene skip requested. Stopping video now.");
+                endingVideoPlayer.Stop();
+                break;
+            }
+
             yield return null;
         }
 
@@ -456,6 +523,16 @@ public class EndingManager : MonoBehaviour
 
         // Restore audio
         RestoreAudio();
+        isEndingVideoSequenceActive = false;
+        skipEndingVideoRequested = false;
+    }
+
+    void OnSkipEndingCutsceneClicked()
+    {
+        if (!isEndingVideoSequenceActive)
+            return;
+
+        skipEndingVideoRequested = true;
     }
 
     IEnumerator ShowEnerlingEndingCatch()
@@ -474,7 +551,9 @@ public class EndingManager : MonoBehaviour
             yield break;
         }
 
+        RestoreAudio();
         UpdateEnerlingEndingCatchUI();
+        StartEndCanvasLoopAudio(true);
 
         enerlingEndingCatchCanvas.SetActive(true);
         yield return StartCoroutine(FadeInCanvas(enerlingEndingCatchCanvas, fadeInDuration));
@@ -538,10 +617,224 @@ public class EndingManager : MonoBehaviour
             }
         }
 
+        ConfigureCatchProgressState();
+        RefreshRewardPanel();
+    }
+
+    void ConfigureCatchProgressState()
+    {
+        int maxCatch = Mathf.Max(1, defeatedAIEnerling.maxCatch);
+        int previousCatch = Mathf.Clamp(catchCountBeforeWin, 0, maxCatch);
+        int currentCatch = Mathf.Clamp(catchCountAfterWin, 0, maxCatch);
+        bool isFirstCatch = currentCatch <= 1;
+
         if (unlockedText != null)
+            unlockedText.SetActive(isFirstCatch);
+
+        if (progressUnlockPanel != null)
+            progressUnlockPanel.SetActive(!isFirstCatch);
+
+        if (progressUnlockSlider != null)
         {
-            unlockedText.SetActive(true);
+            progressUnlockSlider.minValue = 0f;
+            progressUnlockSlider.maxValue = maxCatch;
+            progressUnlockSlider.value = isFirstCatch ? currentCatch : previousCatch;
         }
+
+        if (progressUnlockText != null)
+            progressUnlockText.text = $"{(isFirstCatch ? currentCatch : previousCatch)}/{maxCatch}";
+
+        if (!isFirstCatch && currentCatch > previousCatch)
+            StartCoroutine(AnimateCatchProgress(previousCatch, currentCatch, maxCatch));
+        else
+            UpdateProgressDisplay(currentCatch, maxCatch);
+    }
+
+    IEnumerator AnimateCatchProgress(int from, int to, int maxCatch)
+    {
+        const float duration = 0.7f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float value = Mathf.Lerp(from, to, t);
+
+            if (progressUnlockSlider != null)
+                progressUnlockSlider.value = value;
+
+            int displayValue = Mathf.RoundToInt(value);
+            if (progressUnlockText != null)
+                progressUnlockText.text = $"{displayValue}/{maxCatch}";
+
+            yield return null;
+        }
+
+        UpdateProgressDisplay(to, maxCatch);
+    }
+
+    void UpdateProgressDisplay(int current, int maxCatch)
+    {
+        if (progressUnlockSlider != null)
+            progressUnlockSlider.value = current;
+
+        if (progressUnlockText != null)
+            progressUnlockText.text = $"{current}/{maxCatch}";
+    }
+
+    void BuildRewardsByRarity(IngredientDatabase.Rarity rarity)
+    {
+        pendingRewards.Clear();
+
+        switch (rarity)
+        {
+            case IngredientDatabase.Rarity.Rare:
+                pendingRewards.Add(new RewardGrant(RewardKind.Gems, 20));
+                pendingRewards.Add(new RewardGrant(RewardKind.Coins, 300));
+                pendingRewards.Add(new RewardGrant(RewardKind.XP, 200));
+                break;
+
+            case IngredientDatabase.Rarity.UltraRare:
+                pendingRewards.Add(new RewardGrant(RewardKind.Gems, 40));
+                pendingRewards.Add(new RewardGrant(RewardKind.Coins, 500));
+                pendingRewards.Add(new RewardGrant(RewardKind.XP, 500));
+                break;
+
+            default:
+                pendingRewards.Add(new RewardGrant(RewardKind.Gems, 10));
+                pendingRewards.Add(new RewardGrant(RewardKind.Coins, 100));
+                pendingRewards.Add(new RewardGrant(RewardKind.XP, 100));
+                break;
+        }
+    }
+
+    void RefreshRewardPanel()
+    {
+        if (rewardsPanelContainer == null)
+            return;
+
+        for (int i = rewardsPanelContainer.childCount - 1; i >= 0; i--)
+        {
+            Destroy(rewardsPanelContainer.GetChild(i).gameObject);
+        }
+
+        foreach (RewardGrant reward in pendingRewards)
+        {
+            SpawnRewardItem(reward, rewardsPanelContainer);
+        }
+    }
+
+    void RefreshDefeatRewardPanel()
+    {
+        if (playerDefeatedRewardsPanelContainer == null)
+            return;
+
+        for (int i = playerDefeatedRewardsPanelContainer.childCount - 1; i >= 0; i--)
+        {
+            Destroy(playerDefeatedRewardsPanelContainer.GetChild(i).gameObject);
+        }
+
+        foreach (RewardGrant reward in pendingDefeatRewards)
+        {
+            SpawnRewardItem(reward, playerDefeatedRewardsPanelContainer);
+        }
+    }
+
+    void SpawnRewardItem(RewardGrant reward, Transform container)
+    {
+        if (rewardItemPrefab == null || container == null)
+            return;
+
+        GameObject rewardObj = Instantiate(rewardItemPrefab, container);
+        Sprite rewardIcon = GetRewardImage(reward.Kind);
+        string rewardName = GetRewardDisplayName(reward.Kind);
+
+        RewardItemUI rewardItemUI = rewardObj.GetComponent<RewardItemUI>();
+        if (rewardItemUI != null)
+        {
+            if (rewardItemUI.rewardIcon != null)
+                rewardItemUI.rewardIcon.sprite = rewardIcon;
+            rewardItemUI.amountText.text = $"+{reward.Amount}";
+            rewardItemUI.rewardNameText.text = rewardName;
+            return;
+        }
+
+        RewardItem chestRewardItem = rewardObj.GetComponent<RewardItem>();
+        if (chestRewardItem != null)
+        {
+            if (chestRewardItem.rewardIcon != null)
+                chestRewardItem.rewardIcon.sprite = rewardIcon;
+            if (chestRewardItem.rewardAmountText != null)
+                chestRewardItem.rewardAmountText.text = $"+{reward.Amount}";
+            if (chestRewardItem.rewardNameText != null)
+                chestRewardItem.rewardNameText.text = rewardName;
+            return;
+        }
+
+        TextMeshProUGUI[] texts = rewardObj.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (TextMeshProUGUI text in texts)
+        {
+            string lowerName = text.gameObject.name.ToLower();
+            if (lowerName.Contains("amount"))
+                text.text = $"+{reward.Amount}";
+            else if (lowerName.Contains("name"))
+                text.text = rewardName;
+        }
+
+        Image[] images = rewardObj.GetComponentsInChildren<Image>(true);
+        foreach (Image image in images)
+        {
+            if (image.gameObject.name.ToLower().Contains("rewardimage") || image.gameObject.name.ToLower().Contains("rewardicon"))
+            {
+                image.sprite = rewardIcon;
+            }
+        }
+    }
+
+    Sprite GetRewardImage(RewardKind kind)
+    {
+        switch (kind)
+        {
+            case RewardKind.Coins:
+                return coinRewardImage;
+            case RewardKind.Gems:
+                return gemRewardImage;
+            case RewardKind.XP:
+                return xpRewardImage;
+            default:
+                return null;
+        }
+    }
+
+    string GetRewardDisplayName(RewardKind kind)
+    {
+        switch (kind)
+        {
+            case RewardKind.Coins:
+                return "Coins";
+            case RewardKind.Gems:
+                return "Gems";
+            case RewardKind.XP:
+                return "XP";
+            default:
+                return "Reward";
+        }
+    }
+
+    int GetCurrentCatchCount(string enerlingName)
+    {
+        int countFromPersistent = PersistentDataManager.Instance != null
+            ? PersistentDataManager.Instance.GetCatchCount(enerlingName)
+            : 0;
+
+        if (countFromPersistent > 0)
+            return countFromPersistent;
+
+        if (GameDataManager.Instance != null)
+            return GameDataManager.Instance.GetEnerlingCatchCount(enerlingName);
+
+        return 0;
     }
 
     Sprite GetKingdomSprite(IngredientDatabase.KingdomOrigin kingdom)
@@ -569,6 +862,10 @@ public class EndingManager : MonoBehaviour
 
     IEnumerator OnContinueButtonClicked()
     {
+        StopEndCanvasLoopAudio();
+        PlayContinueSfx();
+        ApplyPendingRewards();
+
         if (enerlingEndingCatchCanvas != null)
         {
             yield return StartCoroutine(FadeOutCanvas(enerlingEndingCatchCanvas, fadeOutDuration));
@@ -605,9 +902,103 @@ public class EndingManager : MonoBehaviour
         ReturnToScanOCRScene();
     }
 
+    void PlayContinueSfx()
+    {
+        if (continueSfx == null)
+            return;
+
+        AudioSource source = continueAudioSource != null ? continueAudioSource : audioSource;
+        if (source == null)
+            return;
+
+        source.PlayOneShot(continueSfx);
+    }
+
+    void ApplyPendingRewards()
+    {
+        if (rewardsApplied || GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return;
+
+        ApplyRewardListToGameData(pendingRewards);
+        rewardsApplied = true;
+    }
+
+    void ApplyPendingDefeatRewards()
+    {
+        if (defeatRewardsApplied || GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
+            return;
+
+        ApplyRewardListToGameData(pendingDefeatRewards);
+        defeatRewardsApplied = true;
+    }
+
+    void ApplyRewardListToGameData(List<RewardGrant> rewardList)
+    {
+        var gameData = GameDataManager.Instance.CurrentGameData;
+
+        foreach (RewardGrant reward in rewardList)
+        {
+            switch (reward.Kind)
+            {
+                case RewardKind.Coins:
+                    gameData.nutriCoins += reward.Amount;
+                    break;
+
+                case RewardKind.Gems:
+                    gameData.nutriGems += reward.Amount;
+                    break;
+
+                case RewardKind.XP:
+                    AddXP(gameData, reward.Amount);
+                    break;
+            }
+        }
+
+        GameDataManager.Instance.SaveGameData();
+    }
+
+    void BuildDefeatRewardsByRarity(IngredientDatabase.Rarity rarity)
+    {
+        pendingDefeatRewards.Clear();
+
+        int multiplier = 1;
+        if (rarity == IngredientDatabase.Rarity.Rare)
+            multiplier = 2;
+        else if (rarity == IngredientDatabase.Rarity.UltraRare)
+            multiplier = 3;
+
+        pendingDefeatRewards.Add(new RewardGrant(RewardKind.Gems, 1 * multiplier));
+        pendingDefeatRewards.Add(new RewardGrant(RewardKind.Coins, 20 * multiplier));
+        pendingDefeatRewards.Add(new RewardGrant(RewardKind.XP, 30 * multiplier));
+    }
+
+    void AddXP(GameData gameData, int amount)
+    {
+        if (gameData == null || amount <= 0)
+            return;
+
+        gameData.currentXP += amount;
+
+        while (gameData.currentXP >= gameData.xpToNextLevel)
+        {
+            gameData.currentXP -= gameData.xpToNextLevel;
+            gameData.playerLevel++;
+            gameData.xpToNextLevel *= 1.5f;
+        }
+    }
+
     IEnumerator HandlePlayerDefeated()
     {
         Debug.Log("Player defeated!");
+
+        defeatedAIEnerling = aiManager?.GetAIEnerling();
+        IngredientDatabase.Rarity aiRarity = defeatedAIEnerling != null
+            ? defeatedAIEnerling.rarity
+            : IngredientDatabase.Rarity.Common;
+
+        BuildDefeatRewardsByRarity(aiRarity);
+        defeatRewardsApplied = false;
+        RefreshDefeatRewardPanel();
 
         // --- Deduct 1 life via BattlePlayManager ---
         if (BattlePlayManager.Instance != null)
@@ -615,16 +1006,12 @@ public class EndingManager : MonoBehaviour
             BattlePlayManager.Instance.OnBattleLose();
         }
 
-        if (audioSource != null && defeatAudio != null)
-        {
-            audioSource.clip = defeatAudio;
-            audioSource.Play();
-        }
-
         yield return new WaitForSeconds(1f);
 
         if (playerDefeatedCanvas != null)
         {
+            RestoreAudio();
+            StartEndCanvasLoopAudio(false);
             playerDefeatedCanvas.SetActive(true);
             yield return StartCoroutine(FadeInCanvas(playerDefeatedCanvas, fadeInDuration));
         }
@@ -638,6 +1025,10 @@ public class EndingManager : MonoBehaviour
 
     IEnumerator OnPlayerDefeatedContinueCoroutine()
     {
+        StopEndCanvasLoopAudio();
+        PlayContinueSfx();
+        ApplyPendingDefeatRewards();
+
         if (playerDefeatedCanvas != null)
         {
             yield return StartCoroutine(FadeOutCanvas(playerDefeatedCanvas, fadeOutDuration));
@@ -649,6 +1040,7 @@ public class EndingManager : MonoBehaviour
 
     void ReturnToScanOCRScene()
     {
+        StopEndCanvasLoopAudio();
         RestoreAudio();
 
         if (!string.IsNullOrEmpty(scanOCRSceneName))
@@ -727,8 +1119,140 @@ public class EndingManager : MonoBehaviour
         }
     }
 
+    void StartEndCanvasLoopAudio(bool isWin)
+    {
+        AudioSource loopSource = GetEndCanvasLoopAudioSource();
+        if (loopSource == null)
+            return;
+
+        if (!loopSource.enabled || !loopSource.gameObject.activeInHierarchy)
+            return;
+
+        AudioClip loopClip = isWin ? GetWinningLoopClip() : GetLosingLoopClip();
+        if (loopClip == null)
+            return;
+
+        if (loopSource.clip == loopClip && loopSource.isPlaying && loopSource.loop)
+            return;
+
+        loopSource.Stop();
+        loopSource.mute = false;
+        loopSource.spatialBlend = 0f;
+        loopSource.ignoreListenerPause = true;
+        loopSource.playOnAwake = false;
+
+        if (forceEndCanvasVolumeToMax)
+        {
+            loopSource.volume = 1f;
+        }
+        else
+        {
+            float baseVolume = endCanvasBaseVolume;
+            if (AudioHandler.Instance != null && AudioHandler.Instance.soundEffectsSource != null)
+                baseVolume = AudioHandler.Instance.soundEffectsSource.volume;
+
+            loopSource.volume = Mathf.Clamp01(baseVolume * Mathf.Max(1f, endCanvasVolumeMultiplier));
+        }
+
+        loopSource.clip = loopClip;
+        loopSource.loop = true;
+        loopSource.Play();
+        isEndCanvasLoopActive = true;
+    }
+
+    void StopEndCanvasLoopAudio()
+    {
+        AudioSource loopSource = GetEndCanvasLoopAudioSource();
+        if (loopSource == null)
+            return;
+
+        if (loopSource.isPlaying)
+            loopSource.Stop();
+
+        loopSource.loop = false;
+        isEndCanvasLoopActive = false;
+    }
+
+    AudioSource GetEndCanvasLoopAudioSource()
+    {
+        EnsureEndCanvasLoopAudioSource();
+
+        if (endCanvasLoopAudioSource != null)
+            return endCanvasLoopAudioSource;
+
+        return audioSource;
+    }
+
+    void EnsureEndCanvasLoopAudioSource()
+    {
+        if (endCanvasLoopAudioSource != null)
+            return;
+
+        if (audioSource != null)
+        {
+            endCanvasLoopAudioSource = audioSource;
+
+            if (AudioHandler.Instance != null && endCanvasLoopAudioSource == AudioHandler.Instance.soundEffectsSource)
+            {
+                AudioSource dedicatedSource = gameObject.AddComponent<AudioSource>();
+                dedicatedSource.playOnAwake = false;
+                dedicatedSource.loop = false;
+                dedicatedSource.spatialBlend = 0f;
+                dedicatedSource.volume = 1f;
+                dedicatedSource.ignoreListenerPause = true;
+                endCanvasLoopAudioSource = dedicatedSource;
+            }
+            return;
+        }
+
+        endCanvasLoopAudioSource = gameObject.GetComponent<AudioSource>();
+        if (endCanvasLoopAudioSource == null)
+            endCanvasLoopAudioSource = gameObject.AddComponent<AudioSource>();
+
+        endCanvasLoopAudioSource.playOnAwake = false;
+        endCanvasLoopAudioSource.loop = false;
+        endCanvasLoopAudioSource.spatialBlend = 0f;
+        endCanvasLoopAudioSource.volume = Mathf.Clamp01(endCanvasBaseVolume);
+        endCanvasLoopAudioSource.ignoreListenerPause = true;
+        audioSource = endCanvasLoopAudioSource;
+    }
+
+    void LateUpdate()
+    {
+        if (!isEndCanvasLoopActive || !forceEndCanvasVolumeToMax)
+            return;
+
+        AudioSource loopSource = endCanvasLoopAudioSource;
+        if (loopSource == null)
+            return;
+
+        if (loopSource.volume < 0.999f)
+            loopSource.volume = 1f;
+
+        if (loopSource.mute)
+            loopSource.mute = false;
+    }
+
+    AudioClip GetWinningLoopClip()
+    {
+        if (playerWinAudio != null)
+            return playerWinAudio;
+
+        return victoryAudio;
+    }
+
+    AudioClip GetLosingLoopClip()
+    {
+        if (playerLoseAudio != null)
+            return playerLoseAudio;
+
+        return defeatAudio;
+    }
+
     void OnDestroy()
     {
+        StopEndCanvasLoopAudio();
+
         if (endingVideoPlayer != null && endingVideoPlayer.isPlaying)
         {
             endingVideoPlayer.Stop();
