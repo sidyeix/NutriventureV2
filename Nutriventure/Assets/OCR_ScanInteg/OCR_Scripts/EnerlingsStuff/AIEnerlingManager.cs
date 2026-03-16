@@ -412,6 +412,8 @@ public class AIEnerlingManager : MonoBehaviour
             {
                 Debug.LogWarning($"No animator controller assigned for AI enerling: {aiEnerling.ingredientName}");
             }
+
+            RefreshAnimatorBindings(spawnedAIEnerling);
         }
         else
         {
@@ -1232,6 +1234,7 @@ public class AIEnerlingManager : MonoBehaviour
             if (aiAnimator != null && aiEnerling.animatorController != null)
             {
                 aiAnimator.runtimeAnimatorController = aiEnerling.animatorController;
+                RefreshAnimatorBindings(spawnedAIEnerling);
             }
 
             Debug.Log($"Using existing AI enerling: {aiEnerling.ingredientName}");
@@ -1252,6 +1255,36 @@ public class AIEnerlingManager : MonoBehaviour
         PreloadEndingCutscene();
 
         Debug.Log($"AI Enerling initialized in battle scene: {aiEnerling.ingredientName}");
+    }
+
+    private void RefreshAnimatorBindings(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        bool wasActive = root.activeSelf;
+        if (wasActive)
+        {
+            root.SetActive(false);
+            root.SetActive(true);
+        }
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        foreach (Animator animator in animators)
+        {
+            if (animator == null)
+                continue;
+
+            bool wasEnabled = animator.enabled;
+            if (!wasEnabled)
+                animator.enabled = true;
+
+            animator.Rebind();
+            animator.Update(0f);
+
+            if (!wasEnabled)
+                animator.enabled = false;
+        }
     }
 
     IEnumerator PulseAIHealthSliderRed()

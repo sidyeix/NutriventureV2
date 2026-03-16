@@ -558,6 +558,12 @@ public class EmulsifierManager : MonoBehaviour
       return;
     }
 
+    selectedEnerling.isEmulsified = true;
+    if (PersistentDataManager.Instance != null)
+    {
+      PersistentDataManager.Instance.SetEnerlingEmulsified(selectedEnerling.ingredientName, true);
+    }
+
     SpawnEmulsifiedSkin();
     ResetAnimatorSelectionFlags();
     PlayEmulsifyTimeline();
@@ -745,11 +751,6 @@ public class EmulsifierManager : MonoBehaviour
 
   private void OnClaimClicked()
   {
-    if (selectedEnerling != null)
-    {
-      selectedEnerling.isSkinEquipped = true;
-    }
-
     DisableEmulsifiedEffects();
     ResetSpawnPoints();
 

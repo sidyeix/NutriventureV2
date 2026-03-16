@@ -166,6 +166,8 @@ public class BattleEnerlingManager : MonoBehaviour
                 enerlingAnimator.runtimeAnimatorController = battleEnerling.animatorController;
             }
 
+            RefreshAnimatorBindings(spawnedEnerling);
+
             Debug.Log($"Using existing player enerling: {playerEnerlingName}");
         }
         else
@@ -746,9 +748,13 @@ public class BattleEnerlingManager : MonoBehaviour
                 rarityTag.sprite = raritySprite;
         }
 
-        if (enerlingImage != null && battleEnerling.enerlingSprite != null)
+        Sprite displayedSprite = battleEnerling.isSkinEquipped && battleEnerling.skinSprite != null
+            ? battleEnerling.skinSprite
+            : battleEnerling.enerlingSprite;
+
+        if (enerlingImage != null && displayedSprite != null)
         {
-            enerlingImage.sprite = battleEnerling.enerlingSprite;
+            enerlingImage.sprite = displayedSprite;
             enerlingImage.preserveAspect = true;
         }
 
@@ -851,6 +857,9 @@ public class BattleEnerlingManager : MonoBehaviour
         spawnedEnerling = Instantiate(battleEnerling.modelPrefab, enerlingSpawningPoint);
         spawnedEnerling.transform.localPosition = Vector3.zero;
         spawnedEnerling.transform.localRotation = Quaternion.identity;
+        spawnedEnerling.transform.localScale = Vector3.one;
+
+        ApplyEquippedSkinToVisuals(spawnedEnerling, battleEnerling);
 
         enerlingAnimator = spawnedEnerling.GetComponent<Animator>();
         if (enerlingAnimator == null)
@@ -863,7 +872,64 @@ public class BattleEnerlingManager : MonoBehaviour
             enerlingAnimator.runtimeAnimatorController = battleEnerling.animatorController;
         }
 
+        RefreshAnimatorBindings(spawnedEnerling);
+
         Debug.Log($"Spawned enerling: {battleEnerling.ingredientName}");
+    }
+
+    private void ApplyEquippedSkinToVisuals(GameObject spawnedRoot, IngredientDatabase.IngredientInfo enerling)
+    {
+        if (spawnedRoot == null || enerling == null)
+            return;
+        if (!enerling.isSkinEquipped || enerling.skinPrefab == null)
+            return;
+
+        Transform visuals = spawnedRoot.transform.Find("Visuals");
+        if (visuals == null)
+            return;
+
+        for (int i = visuals.childCount - 1; i >= 0; i--)
+        {
+            Destroy(visuals.GetChild(i).gameObject);
+        }
+
+        GameObject skinInstance = Instantiate(enerling.skinPrefab, visuals);
+        skinInstance.name = enerling.skinPrefab.name;
+        skinInstance.transform.localPosition = Vector3.zero;
+        skinInstance.transform.localRotation = Quaternion.identity;
+        skinInstance.transform.localScale = Vector3.one;
+
+        RefreshAnimatorBindings(spawnedRoot);
+    }
+
+    private void RefreshAnimatorBindings(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        bool wasActive = root.activeSelf;
+        if (wasActive)
+        {
+            root.SetActive(false);
+            root.SetActive(true);
+        }
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        foreach (Animator animator in animators)
+        {
+            if (animator == null)
+                continue;
+
+            bool wasEnabled = animator.enabled;
+            if (!wasEnabled)
+                animator.enabled = true;
+
+            animator.Rebind();
+            animator.Update(0f);
+
+            if (!wasEnabled)
+                animator.enabled = false;
+        }
     }
 
     public void OnSkillButtonClicked(int skillNumber)

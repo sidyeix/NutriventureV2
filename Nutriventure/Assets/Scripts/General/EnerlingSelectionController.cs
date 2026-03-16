@@ -351,7 +351,7 @@ public class EnerlingSelectionController : MonoBehaviour
         {
             buttonController.Initialize(
                 enerling.ingredientName,
-                enerling.enerlingSprite,
+                GetDisplayedSprite(enerling),
                 enerling.rarity,
                 ingredientDatabase
             );
@@ -552,10 +552,79 @@ public class EnerlingSelectionController : MonoBehaviour
             currentPreviewModel = Instantiate(enerling.modelPrefab, previewSpawnPoint);
             currentPreviewModel.transform.localPosition = Vector3.zero;
             currentPreviewModel.transform.localRotation = Quaternion.identity;
+            currentPreviewModel.transform.localScale = Vector3.one;
+
+            ApplyEquippedSkinToVisuals(currentPreviewModel, enerling);
 
             SetLayerRecursively(currentPreviewModel, LayerMask.NameToLayer("UI"));
 
             StartCoroutine(RotatePreviewModel());
+        }
+    }
+
+    private Sprite GetDisplayedSprite(IngredientDatabase.IngredientInfo enerling)
+    {
+        if (enerling == null)
+            return null;
+
+        if (enerling.isSkinEquipped && enerling.skinSprite != null)
+            return enerling.skinSprite;
+
+        return enerling.enerlingSprite;
+    }
+
+    private void ApplyEquippedSkinToVisuals(GameObject spawnedRoot, IngredientDatabase.IngredientInfo enerling)
+    {
+        if (spawnedRoot == null || enerling == null)
+            return;
+        if (!enerling.isSkinEquipped || enerling.skinPrefab == null)
+            return;
+
+        Transform visuals = spawnedRoot.transform.Find("Visuals");
+        if (visuals == null)
+            return;
+
+        for (int i = visuals.childCount - 1; i >= 0; i--)
+        {
+            Destroy(visuals.GetChild(i).gameObject);
+        }
+
+        GameObject skinInstance = Instantiate(enerling.skinPrefab, visuals);
+        skinInstance.name = enerling.skinPrefab.name;
+        skinInstance.transform.localPosition = Vector3.zero;
+        skinInstance.transform.localRotation = Quaternion.identity;
+        skinInstance.transform.localScale = Vector3.one;
+
+        RefreshAnimatorBindings(spawnedRoot);
+    }
+
+    private void RefreshAnimatorBindings(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        bool wasActive = root.activeSelf;
+        if (wasActive)
+        {
+            root.SetActive(false);
+            root.SetActive(true);
+        }
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        foreach (Animator animator in animators)
+        {
+            if (animator == null)
+                continue;
+
+            bool wasEnabled = animator.enabled;
+            if (!wasEnabled)
+                animator.enabled = true;
+
+            animator.Rebind();
+            animator.Update(0f);
+
+            if (!wasEnabled)
+                animator.enabled = false;
         }
     }
 
@@ -584,7 +653,7 @@ public class EnerlingSelectionController : MonoBehaviour
         // Play button click sound
         PlayButtonClickSound();
 
-        currentSlotButton.EquipPet(selectedEnerling.ingredientName, selectedEnerling.enerlingSprite);
+        currentSlotButton.EquipPet(selectedEnerling.ingredientName, GetDisplayedSprite(selectedEnerling));
         CloseSelection();
     }
 
