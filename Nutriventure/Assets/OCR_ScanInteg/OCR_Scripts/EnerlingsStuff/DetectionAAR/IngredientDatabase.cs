@@ -126,6 +126,7 @@ public class IngredientDatabase : ScriptableObject
         public KingdomOrigin kingdom = KingdomOrigin.NutriKingdom;
         public bool isUnlocked = false; // This will be set by PersistentDataManager at runtime
         public bool isEmulsifier = false; // New checkbox for emulsifier flag
+        public bool isEmulsified = false;
 
         [Header("PowerUps")]
         public List<PowerUpInfo> powerUps = new List<PowerUpInfo>();
@@ -133,6 +134,7 @@ public class IngredientDatabase : ScriptableObject
         [Header("Visuals")]
         public Sprite enerlingSprite;
         public GameObject modelPrefab;
+        public GameObject defaultSkinPrefab;
         public GameObject skinPrefab;
         public Sprite skinSprite;
         public bool isSkinEquipped = false;
@@ -666,8 +668,10 @@ public class IngredientDatabase : ScriptableObject
             kingdom = original.kingdom,
             isUnlocked = original.isUnlocked,
             isEmulsifier = original.isEmulsifier, // Copy the emulsifier flag
+            isEmulsified = original.isEmulsified,
             enerlingSprite = original.enerlingSprite,
             modelPrefab = original.modelPrefab,
+            defaultSkinPrefab = original.defaultSkinPrefab,
             skinPrefab = original.skinPrefab,
             skinSprite = original.skinSprite,
             isSkinEquipped = original.isSkinEquipped,

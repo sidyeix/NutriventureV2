@@ -163,9 +163,17 @@ public class EnerlingSlotButton : MonoBehaviour
         if (petIconImage != null && ingredientDatabase != null)
         {
             var ingredient = ingredientDatabase.GetIngredientInfo(petName);
-            if (ingredient != null && ingredient.enerlingSprite != null)
+            Sprite displayedSprite = null;
+            if (ingredient != null)
             {
-                petIconImage.sprite = ingredient.enerlingSprite;
+                displayedSprite = ingredient.isSkinEquipped && ingredient.skinSprite != null
+                    ? ingredient.skinSprite
+                    : ingredient.enerlingSprite;
+            }
+
+            if (displayedSprite != null)
+            {
+                petIconImage.sprite = displayedSprite;
                 // Set color to white with full alpha (normal)
                 SetImageColor(petIconImage, Color.white, 1f);
                 petIconImage.gameObject.SetActive(true);

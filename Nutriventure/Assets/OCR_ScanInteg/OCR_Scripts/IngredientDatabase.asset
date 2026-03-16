@@ -29,6 +29,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 1
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 1
       amount: 1
@@ -38,6 +39,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 38b806056b196a4489d40cc5ac171274, type: 3}
     modelPrefab: {fileID: 1790790307989994943, guid: 772d8d7eb621ca345a471e5468d3b17b, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -112,6 +114,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 1
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 0
       amount: 10
@@ -120,6 +123,7 @@ MonoBehaviour:
       description: -10 seconds at the start of each journey (when equipped).
     enerlingSprite: {fileID: 21300000, guid: 98cfdc2f2f1441b48ac307d43f68265e, type: 3}
     modelPrefab: {fileID: 57221022565497146, guid: 7c809fe56dd518a4c897bfe374f529b4, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -200,6 +204,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 1
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 2
       amount: 1
@@ -208,6 +213,7 @@ MonoBehaviour:
       description: Gain +1 Speed while sprinting in any kingdom.
     enerlingSprite: {fileID: 21300000, guid: eba0a1b3a78943a4cb6c136b5b9b0651, type: 3}
     modelPrefab: {fileID: 2427407394295479639, guid: 46dd489de903f3a42a4fc3c68fae7ace, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -283,6 +289,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 2
       amount: 2
@@ -291,6 +298,7 @@ MonoBehaviour:
       description: Gain +2 Speed while sprinting in any kingdom.
     enerlingSprite: {fileID: 21300000, guid: 414c4fc7e8324964cab3cfcfe069db2c, type: 3}
     modelPrefab: {fileID: 1545884430150599015, guid: 4a61aa487d5cf1644a71cc35c23f0f22, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -365,6 +373,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 3
       amount: 10
@@ -374,6 +383,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 0752cf7d150e0184c8ec9d724cbaf960, type: 3}
     modelPrefab: {fileID: 4723278788635299402, guid: be65a2381ce7d0449b8821d2ae826a06, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -449,6 +459,7 @@ MonoBehaviour:
     kingdom: 1
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 4
       amount: 50
@@ -457,6 +468,7 @@ MonoBehaviour:
       description: Earn 50 EXP every 10 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 055b7ba359b2db145b32d735ba9e2c5a, type: 3}
     modelPrefab: {fileID: 5545957314174723285, guid: cf46ddbcd33ac4544a75969cb9acee8e, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -530,6 +542,7 @@ MonoBehaviour:
     kingdom: 1
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 5
       amount: 1
@@ -538,6 +551,7 @@ MonoBehaviour:
       description: Earn 1 gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 42a6d7f3379380f40ad011459f320edb, type: 3}
     modelPrefab: {fileID: 1440148696383731439, guid: 75e528ff87b7c0a43afd4086095633f1, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -613,6 +627,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 5
       amount: 5
@@ -621,6 +636,7 @@ MonoBehaviour:
       description: Earn 5 gems every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 5ede0c78e43ca574890e1fd95a9b0354, type: 3}
     modelPrefab: {fileID: 2931095760934502716, guid: f7f927a7861dde347b58ca1add59efd4, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -697,6 +713,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 0
       amount: 20
@@ -705,6 +722,7 @@ MonoBehaviour:
       description: -20 seconds at the start of each journey (when equipped).
     enerlingSprite: {fileID: 21300000, guid: c4db3cdb92323484e991c3d164aa4764, type: 3}
     modelPrefab: {fileID: 5268653089127011796, guid: 5290cb8080660db409317e782cce03e8, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -781,6 +799,7 @@ MonoBehaviour:
     kingdom: 3
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 1
       amount: 2
@@ -790,6 +809,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: c661b0465b76163489077aa16c88baf2, type: 3}
     modelPrefab: {fileID: 1482330113961061079, guid: aaeec4b6b30ccca47b946d2df3db01c9, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -864,6 +884,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 5
       amount: 20
@@ -872,6 +893,7 @@ MonoBehaviour:
       description: Earn 20  gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 285dab36aa1d68d479d8be5d5c9a533c, type: 3}
     modelPrefab: {fileID: 8608059987361140176, guid: b47ee876fdee7f04aac83106c980b371, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -947,6 +969,7 @@ MonoBehaviour:
     kingdom: 3
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 3
       amount: 100
@@ -956,6 +979,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: d3bf2388c4b43254b9d4d9563cc043db, type: 3}
     modelPrefab: {fileID: 375772980708063953, guid: 979b2d05f62b5d44b92e49fc6be9b641, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -1029,6 +1053,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 4
       amount: 200
@@ -1037,6 +1062,7 @@ MonoBehaviour:
       description: Earn 200 EXP every 2 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 17227884efa25094383e47ccbac6cb34, type: 3}
     modelPrefab: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -1110,6 +1136,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 5
       amount: 50
@@ -1118,9 +1145,10 @@ MonoBehaviour:
       description: Earn 50 gem every 5 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
     modelPrefab: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
-    skinPrefab: {fileID: 919132149155446097, guid: bd2adc6dd7300c0448afe9984df79456, type: 3}
+    defaultSkinPrefab: {fileID: 919132149155446097, guid: 4e5f65750865c1c469d3c146a93ab9f0, type: 3}
+    skinPrefab: {fileID: 919132149155446097, guid: 21cc9c737c17e83409232d07be5d6114, type: 3}
     skinSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
-    isSkinEquipped: 1
+    isSkinEquipped: 0
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 1d621b960f8110d43b81403c8c87affc, type: 2}
@@ -1191,6 +1219,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 3
       amount: 200
@@ -1200,6 +1229,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: 2916aedebc6892f4b8dadced0610dd4a, type: 3}
     modelPrefab: {fileID: 2699505879788354491, guid: 0000f02088e410e488597b7f3df02a80, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -1273,6 +1303,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 0
     isEmulsifier: 0
+    isEmulsified: 0
     powerUps:
     - powerUpType: 3
       amount: 50
@@ -1282,6 +1313,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: c39a57c2002861e458546203f742cee1, type: 3}
     modelPrefab: {fileID: 6023607372359657904, guid: dcbcd625aa8be004f889c08f71bdf2a0, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
@@ -1357,6 +1389,7 @@ MonoBehaviour:
     kingdom: 0
     isUnlocked: 1
     isEmulsifier: 1
+    isEmulsified: 0
     powerUps:
     - powerUpType: 3
       amount: 50
@@ -1366,6 +1399,7 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: cac53f36d9bb82b4a8947b8362e84b4e, type: 3}
     modelPrefab: {fileID: 7204146015282184607, guid: a326ba94d937de44abd4196785c4bd08, type: 3}
+    defaultSkinPrefab: {fileID: 0}
     skinPrefab: {fileID: 0}
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
