@@ -24,15 +24,13 @@ public class AllergenPickup : MonoBehaviour
   {
     if (!other.CompareTag("Player")) return;
 
-    if (AllergenGameManager.Instance != null)
-      AllergenGameManager.Instance.OnPlayerNearAllergen(this);
+    // Allergen pickup flow temporarily disabled while focusing on scroll flow
   }
 
   void OnTriggerExit(Collider other)
   {
     if (!other.CompareTag("Player")) return;
 
-    if (AllergenGameManager.Instance != null)
-      AllergenGameManager.Instance.OnPlayerLeftAllergen(this);
+    // Allergen pickup flow temporarily disabled while focusing on scroll flow
   }
 }
