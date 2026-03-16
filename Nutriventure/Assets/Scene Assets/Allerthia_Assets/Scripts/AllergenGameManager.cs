@@ -87,6 +87,10 @@ public class AllergenGameManager : MonoBehaviour
     public TMP_Text scrollInfoFunFactText;
     public TMP_Text scrollCollectedTrackerText;
 
+    [Header("External Tracker UI")]
+    [Tooltip("Optional tracker text outside the ObjectUIScroll. Format: 'Allergens: X/Y'")]
+    public TMP_Text externalAllergenTrackerText;
+
     [Header("Scroll Button Colors")]
     public Color scrollButtonDefaultColor = Color.white;
     public Color scrollButtonSelectedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
@@ -154,6 +158,8 @@ public class AllergenGameManager : MonoBehaviour
     private readonly Dictionary<string, Image> scrollButtonRootImageById = new Dictionary<string, Image>(System.StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Image> scrollButtonIconById = new Dictionary<string, Image>(System.StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, TMP_Text> scrollButtonNameById = new Dictionary<string, TMP_Text>(System.StringComparer.OrdinalIgnoreCase);
+    private const string initialUnlockedProductId = "peanut";
+    private const string initialUnlockedDisplayName = "Peanut";
     private string selectedScrollProductId = string.Empty;
     private Coroutine timelineFallbackCoroutine;
     private Coroutine closeScrollCoroutine;
@@ -199,6 +205,7 @@ public class AllergenGameManager : MonoBehaviour
         SetupButtonListeners();
         ResolveSpawnManager();
         EnsureScrollCanvasClickable();
+        SeedInitialUnlockedProducts();
         BuildScrollButtons();
         UpdateTimerUI();
         UpdatePointsUI();
@@ -651,6 +658,7 @@ public class AllergenGameManager : MonoBehaviour
         // Reset points and collected tracking
         currentPoints = 0;
         collectedAllergenIDs.Clear();
+        SeedInitialUnlockedProducts();
         UpdatePointsUI();
         UpdateCollectedTrackerUI();
 
@@ -709,6 +717,42 @@ public class AllergenGameManager : MonoBehaviour
                 scrollCanvas.worldCamera = Camera.main;
             }
         }
+    }
+
+    private void SeedInitialUnlockedProducts()
+    {
+        string matchedProductId = null;
+
+        if (allergenProductData != null && allergenProductData.allProducts != null)
+        {
+            foreach (var product in allergenProductData.allProducts)
+            {
+                if (product == null || string.IsNullOrEmpty(product.productID))
+                    continue;
+
+                string candidateId = product.productID.Trim();
+                string candidateDisplayName = string.IsNullOrEmpty(product.displayName) ? string.Empty : product.displayName.Trim();
+
+                if (string.Equals(candidateId, initialUnlockedProductId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    matchedProductId = candidateId;
+                    break;
+                }
+
+                if (matchedProductId == null && string.Equals(candidateDisplayName, initialUnlockedDisplayName, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    matchedProductId = candidateId;
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(matchedProductId))
+        {
+            matchedProductId = initialUnlockedProductId;
+        }
+
+        collectedAllergenIDs.Add(matchedProductId);
+        selectedScrollProductId = matchedProductId;
     }
 
     private void BuildScrollButtons()
@@ -1093,14 +1137,16 @@ public class AllergenGameManager : MonoBehaviour
 
     private void UpdateCollectedTrackerUI()
     {
-        if (scrollCollectedTrackerText == null)
-            return;
-
         int total = allergenProductData != null && allergenProductData.allProducts != null
             ? allergenProductData.allProducts.Length
             : 0;
+        int collectedCount = collectedAllergenIDs.Count;
 
-        scrollCollectedTrackerText.text = $"{collectedAllergenIDs.Count}/{total}";
+        if (scrollCollectedTrackerText != null)
+            scrollCollectedTrackerText.text = $"{collectedCount}/{total}";
+
+        if (externalAllergenTrackerText != null)
+            externalAllergenTrackerText.text = $"Allergens: {collectedCount}/{total}";
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1181,6 +1227,7 @@ public class AllergenGameManager : MonoBehaviour
         currentTargetIngredient = null;
         collectedAllergenIDs.Clear();
         selectedScrollProductId = string.Empty;
+        SeedInitialUnlockedProducts();
         ClearShowcaseProduct();
 
         // Restore scroll visibility
