@@ -60,6 +60,7 @@ public class EnerlingSelectionManager : MonoBehaviour
     [Header("UI References - Selection")]
     public Button selectButton;
     public TextMeshProUGUI selectButtonText;
+    public Button skinSwapButton;
 
     [Header("Skip Button")]
     public Button skipButton;
@@ -121,6 +122,13 @@ public class EnerlingSelectionManager : MonoBehaviour
 
     void Start()
     {
+        if (skinSwapButton != null)
+        {
+            skinSwapButton.onClick.RemoveAllListeners();
+            skinSwapButton.onClick.AddListener(OnSkinSwapButtonClicked);
+            skinSwapButton.gameObject.SetActive(false);
+        }
+
         StartCoroutine(InitializeAfterDelay());
     }
 
@@ -493,7 +501,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         {
             buttonController.Initialize(
                 enerling.ingredientName,
-                enerling.enerlingSprite,
+                GetDisplayedSprite(enerling),
                 enerling.rarity,
                 ingredientDatabase
             );
@@ -568,6 +576,57 @@ public class EnerlingSelectionManager : MonoBehaviour
         DisplayEnerlingInfo(enerlingName);
         UpdateSelectButton();
         Debug.Log($"Selected enerling: {enerlingName}");
+    }
+
+    private Sprite GetDisplayedSprite(IngredientDatabase.IngredientInfo enerling)
+    {
+        if (enerling == null)
+            return null;
+
+        if (enerling.isSkinEquipped && enerling.skinSprite != null)
+            return enerling.skinSprite;
+
+        return enerling.enerlingSprite;
+    }
+
+    private bool CanUseSkinSwap(IngredientDatabase.IngredientInfo enerling)
+    {
+        return enerling != null && enerling.isEmulsified && enerling.skinPrefab != null;
+    }
+
+    private void UpdateSkinSwapButton(IngredientDatabase.IngredientInfo enerling)
+    {
+        if (skinSwapButton == null)
+            return;
+
+        bool canSwap = CanUseSkinSwap(enerling);
+        skinSwapButton.gameObject.SetActive(canSwap);
+
+        TextMeshProUGUI buttonLabel = skinSwapButton.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (buttonLabel != null)
+        {
+            buttonLabel.text = enerling != null && enerling.isSkinEquipped ? "Unequip Skin" : "Equip Skin";
+        }
+    }
+
+    private void OnSkinSwapButtonClicked()
+    {
+        if (string.IsNullOrEmpty(selectedEnerlingName) || ingredientDatabase == null)
+            return;
+
+        var selectedEnerling = ingredientDatabase.GetIngredientInfo(selectedEnerlingName);
+        if (selectedEnerling == null || !CanUseSkinSwap(selectedEnerling))
+            return;
+
+        selectedEnerling.isSkinEquipped = !selectedEnerling.isSkinEquipped;
+
+        if (PersistentDataManager.Instance != null)
+        {
+            PersistentDataManager.Instance.SetEnerlingSkinEquipped(selectedEnerling.ingredientName, selectedEnerling.isSkinEquipped);
+        }
+
+        DisplayEnerlingInfo(selectedEnerling.ingredientName);
+        RefreshDisplay();
     }
 
     void HighlightButton(GameObject buttonObj, bool highlight)
@@ -661,7 +720,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         }
 
         enerlingDescriptionText.text = enerling.enerlingDescription;
-        enerlingIconImage.sprite = enerling.enerlingSprite;
+        enerlingIconImage.sprite = GetDisplayedSprite(enerling);
 
         if (enerling.skill1 != null)
         {
@@ -753,6 +812,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         string addedAbility = CalculateAddedAbilityText(enerling);
         addedAbilityText.text = addedAbility;
         DisplaySkills(enerling);
+        UpdateSkinSwapButton(enerling);
     }
 
     int CalculateArmorValue(IngredientDatabase.IngredientInfo enerling)
@@ -986,17 +1046,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         else
         {
             selectButton.interactable = true;
-
-            if (PersistentDataManager.Instance != null &&
-                PersistentDataManager.Instance.GetSelectedEnerlingName() == selectedEnerlingName)
-            {
-                selectButtonText.text = "Selected";
-                selectButton.interactable = false;
-            }
-            else
-            {
-                selectButtonText.text = "Select";
-            }
+            selectButtonText.text = "Select";
         }
     }
 
@@ -1170,6 +1220,8 @@ public class EnerlingSelectionManager : MonoBehaviour
         spawnedPlayerEnerling.transform.localPosition = Vector3.zero;
         spawnedPlayerEnerling.transform.localRotation = Quaternion.identity;
         spawnedPlayerEnerling.transform.localScale = Vector3.one;
+        ApplyEquippedSkinToVisuals(spawnedPlayerEnerling, playerEnerlingData);
+        RefreshAnimatorBindings(spawnedPlayerEnerling);
 
         Debug.Log($"Spawned player enerling: {selectedEnerlingName} at {playerSpawnPoint.name}");
     }
@@ -1213,6 +1265,7 @@ public class EnerlingSelectionManager : MonoBehaviour
         spawnedOpponentEnerling.transform.localPosition = Vector3.zero;
         spawnedOpponentEnerling.transform.localRotation = Quaternion.identity;
         spawnedOpponentEnerling.transform.localScale = Vector3.one;
+        ApplyEquippedSkinToVisuals(spawnedOpponentEnerling, opponentEnerlingData);
 
         Debug.Log($"Spawned opponent enerling: {opponentName} at {opponentSpawnPoint.name}");
     }
@@ -1250,6 +1303,61 @@ public class EnerlingSelectionManager : MonoBehaviour
         return "DefaultEnerling";
     }
 
+    private void ApplyEquippedSkinToVisuals(GameObject spawnedRoot, IngredientDatabase.IngredientInfo enerling)
+    {
+        if (spawnedRoot == null || enerling == null)
+            return;
+        if (!enerling.isSkinEquipped || enerling.skinPrefab == null)
+            return;
+
+        Transform visuals = spawnedRoot.transform.Find("Visuals");
+        if (visuals == null)
+            return;
+
+        for (int i = visuals.childCount - 1; i >= 0; i--)
+        {
+            Destroy(visuals.GetChild(i).gameObject);
+        }
+
+        GameObject skinInstance = Instantiate(enerling.skinPrefab, visuals);
+        skinInstance.name = enerling.skinPrefab.name;
+        skinInstance.transform.localPosition = Vector3.zero;
+        skinInstance.transform.localRotation = Quaternion.identity;
+        skinInstance.transform.localScale = Vector3.one;
+
+        RefreshAnimatorBindings(spawnedRoot);
+    }
+
+    private void RefreshAnimatorBindings(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        bool wasActive = root.activeSelf;
+        if (wasActive)
+        {
+            root.SetActive(false);
+            root.SetActive(true);
+        }
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+        foreach (Animator animator in animators)
+        {
+            if (animator == null)
+                continue;
+
+            bool wasEnabled = animator.enabled;
+            if (!wasEnabled)
+                animator.enabled = true;
+
+            animator.Rebind();
+            animator.Update(0f);
+
+            if (!wasEnabled)
+                animator.enabled = false;
+        }
+    }
+
     void LoadSelectedEnerling()
     {
         if (PersistentDataManager.Instance != null)
@@ -1267,6 +1375,8 @@ public class EnerlingSelectionManager : MonoBehaviour
                     {
                         HighlightButton(enerlingButtons[savedEnerling], true);
                     }
+
+                    UpdateSelectButton();
 
                     Debug.Log($"Loaded previously selected enerling: {savedEnerling}");
                     return;

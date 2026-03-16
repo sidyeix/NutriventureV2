@@ -1,29 +1,104 @@
 fileFormatVersion: 2
-guid: bd2adc6dd7300c0448afe9984df79456
+guid: 21cc9c737c17e83409232d07be5d6114
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects:
   - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Lit
+    second: {fileID: 2100000, guid: 3ecd31d2f3833de41821e095b2ba61f7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.190
+    second: {fileID: 2100000, guid: e95182c0600c45646936aa6e7e083be1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.215
+    second: {fileID: 2100000, guid: 2e4bf0d8f669e5a4e9f5029492e0b0c0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.216
+    second: {fileID: 2100000, guid: 7ad4a47f0b884a84ba0987650b927968, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.217
+    second: {fileID: 2100000, guid: 50238527062c96945b5328f77721ffb5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.218
+    second: {fileID: 2100000, guid: c18261337bb62364dbffc6b3f49f7120, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.219
+    second: {fileID: 2100000, guid: c96aef06d12f55b4cb6a3dc7d7de626f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.220
+    second: {fileID: 2100000, guid: 111035ee7742d8b41a2c6f3aa71a1498, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.223
+    second: {fileID: 2100000, guid: 62b687301b56f364d8de5336f62db241, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.224
+    second: {fileID: 2100000, guid: 3ca39ace394d30248b259e86b8b2efce, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.226
+    second: {fileID: 2100000, guid: 5583d40e6bbebfb47a5babe9e307697a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.228
+    second: {fileID: 2100000, guid: 05dcaad948b9aec478bb32a94b6913ed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.229
+    second: {fileID: 2100000, guid: a02603b53acf3084ca526860be6f7b59, type: 2}
+  - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Peppermint
-    second: {fileID: 2800000, guid: dce02b270134bf0498aa5feef86e18a4, type: 3}
+    second: {fileID: 2800000, guid: b8aa8ad4e6fb1b848aa7935b9ec65b15, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: SHeep
-    second: {fileID: 2800000, guid: e5b906d0a6c43c04c86d7f89bf7cfed8, type: 3}
+    second: {fileID: 2800000, guid: 44b57de519df55b48aa60eeca24152f9, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Sorbitol body
-    second: {fileID: 2800000, guid: 8ddc7852ac9a521468be1e2ace2548e4, type: 3}
+    second: {fileID: 2800000, guid: f22a3e677e346d549b8645d4b805edc9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Sorbitol skin
+    second: {fileID: 2800000, guid: 2398e3ceed127ef4e98132e77775f52a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: peppermint-swirl-clipart-36
+    second: {fileID: 2800000, guid: 418d7801f4fa83d48b920e53e6ab9f52, type: 3}
   materials:
-    materialImportMode: 1
+    materialImportMode: 2
     materialName: 0
     materialSearch: 1
-    materialLocation: 0
+    materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0

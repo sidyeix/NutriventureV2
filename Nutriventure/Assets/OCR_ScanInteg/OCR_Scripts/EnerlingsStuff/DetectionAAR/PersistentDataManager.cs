@@ -19,6 +19,8 @@ public class PersistentDataManager : MonoBehaviour
     private string opponentEnerlingName = "";
     private Dictionary<string, int> enerlingCurrentLife = new Dictionary<string, int>();
     private HashSet<string> unlockedEnerlings = new HashSet<string>();
+    private readonly Dictionary<string, bool> enerlingEmulsified = new Dictionary<string, bool>();
+    private readonly Dictionary<string, bool> enerlingSkinEquipped = new Dictionary<string, bool>();
 
     // Enerlings marked as unlocked by default in the ScriptableObject (e.g. Stevia Extract)
     // Captured once at startup so we can re-apply them after a reset.
@@ -235,6 +237,70 @@ public class PersistentDataManager : MonoBehaviour
         }
     }
 
+    public void SetEnerlingEmulsified(string enerlingName, bool isEmulsified)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        enerlingEmulsified[enerlingName] = isEmulsified;
+        PlayerPrefs.SetInt(enerlingName + "_IsEmulsified", isEmulsified ? 1 : 0);
+
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                ingredient.isEmulsified = isEmulsified;
+            }
+        }
+
+        PlayerPrefs.Save();
+    }
+
+    public bool IsEnerlingEmulsified(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return false;
+
+        bool value;
+        if (enerlingEmulsified.TryGetValue(enerlingName, out value))
+        {
+            return value;
+        }
+
+        return PlayerPrefs.GetInt(enerlingName + "_IsEmulsified", 0) == 1;
+    }
+
+    public void SetEnerlingSkinEquipped(string enerlingName, bool isSkinEquipped)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        enerlingSkinEquipped[enerlingName] = isSkinEquipped;
+        PlayerPrefs.SetInt(enerlingName + "_IsSkinEquipped", isSkinEquipped ? 1 : 0);
+
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                ingredient.isSkinEquipped = isSkinEquipped;
+            }
+        }
+
+        PlayerPrefs.Save();
+    }
+
+    public bool IsEnerlingSkinEquipped(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return false;
+
+        bool value;
+        if (enerlingSkinEquipped.TryGetValue(enerlingName, out value))
+        {
+            return value;
+        }
+
+        return PlayerPrefs.GetInt(enerlingName + "_IsSkinEquipped", 0) == 1;
+    }
+
     /// <summary>
     /// Increment the catch count for a specific enerling in the database, PlayerPrefs, and GameData.
     /// </summary>
@@ -399,6 +465,8 @@ public class PersistentDataManager : MonoBehaviour
 
         // Load unlocked enerlings
         unlockedEnerlings.Clear();
+        enerlingEmulsified.Clear();
+        enerlingSkinEquipped.Clear();
         if (ingredientDatabase != null)
         {
             foreach (var ingredient in ingredientDatabase.ingredients)
@@ -428,6 +496,14 @@ public class PersistentDataManager : MonoBehaviour
                     // Sync saved life back to the IngredientInfo on the ScriptableObject
                     ingredient.currentLife = life;
                 }
+
+                bool isEmulsified = PlayerPrefs.GetInt(ingredient.ingredientName + "_IsEmulsified", ingredient.isEmulsified ? 1 : 0) == 1;
+                bool isSkinEquipped = PlayerPrefs.GetInt(ingredient.ingredientName + "_IsSkinEquipped", ingredient.isSkinEquipped ? 1 : 0) == 1;
+
+                ingredient.isEmulsified = isEmulsified;
+                ingredient.isSkinEquipped = isSkinEquipped;
+                enerlingEmulsified[ingredient.ingredientName] = isEmulsified;
+                enerlingSkinEquipped[ingredient.ingredientName] = isSkinEquipped;
             }
         }
 
@@ -737,12 +813,16 @@ public class PersistentDataManager : MonoBehaviour
         opponentEnerlingName = "";
         enerlingCurrentLife.Clear();
         unlockedEnerlings.Clear();
+        enerlingEmulsified.Clear();
+        enerlingSkinEquipped.Clear();
 
         if (ingredientDatabase != null)
         {
             foreach (var ingredient in ingredientDatabase.ingredients)
             {
                 ingredient.isUnlocked = false;
+                ingredient.isEmulsified = false;
+                ingredient.isSkinEquipped = false;
                 ingredient.currentLife = ingredient.baseLife;
                 ingredient.currentCatchCount = 0;
                 ClearEnerlingHealthRegen(ingredient.ingredientName);
