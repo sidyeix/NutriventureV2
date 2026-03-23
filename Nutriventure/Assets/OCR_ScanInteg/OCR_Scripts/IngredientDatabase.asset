@@ -47,7 +47,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
-    currentLife: 108
+    currentLife: 101
     armorPercent: 25
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -131,7 +131,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 577aa91963a22364fb2bca5608c03f9f, type: 2}
     baseLife: 120
-    currentLife: 108
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -221,7 +221,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
     baseLife: 120
-    currentLife: 108
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -287,7 +287,7 @@ MonoBehaviour:
   - ingredientName: Vitamin A
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     isEmulsifier: 0
     isEmulsified: 0
     powerUps:
@@ -303,10 +303,10 @@ MonoBehaviour:
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 8
     animatorController: {fileID: 9100000, guid: 407649418f9798f4bb04cb92e3d2eb86, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -559,7 +559,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea9070045de99a4499761ccb9ab8419f, type: 2}
     baseLife: 120
-    currentLife: 71
+    currentLife: 120
     armorPercent: 15
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -967,7 +967,7 @@ MonoBehaviour:
   - ingredientName: Sodium Benzoate
     rarity: 2
     kingdom: 3
-    isUnlocked: 0
+    isUnlocked: 1
     isEmulsifier: 0
     isEmulsified: 0
     powerUps:
@@ -979,15 +979,15 @@ MonoBehaviour:
         is equipped.
     enerlingSprite: {fileID: 21300000, guid: d3bf2388c4b43254b9d4d9563cc043db, type: 3}
     modelPrefab: {fileID: 375772980708063953, guid: 979b2d05f62b5d44b92e49fc6be9b641, type: 3}
-    defaultSkinPrefab: {fileID: 0}
-    skinPrefab: {fileID: 0}
-    skinSprite: {fileID: 0}
-    isSkinEquipped: 0
+    defaultSkinPrefab: {fileID: 919132149155446097, guid: f4faa118b84c7244aae085b478e0ccdf, type: 3}
+    skinPrefab: {fileID: 919132149155446097, guid: 775b94ec4d6fc604db80e63745eff449, type: 3}
+    skinSprite: {fileID: 21300000, guid: ff417213bc90b414ea09ee2ca4d2e9b2, type: 3}
+    isSkinEquipped: 1
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 20
     animatorController: {fileID: 9100000, guid: aee6249c44d87704397621a3cff4012f, type: 2}
     baseLife: 200
-    currentLife: 200
+    currentLife: 164
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1062,15 +1062,15 @@ MonoBehaviour:
       description: Earn 200 EXP every 2 minutes while this Enerling is equipped.
     enerlingSprite: {fileID: 21300000, guid: 17227884efa25094383e47ccbac6cb34, type: 3}
     modelPrefab: {fileID: 31660376233747915, guid: 09083adc02025524995646d2487c36c5, type: 3}
-    defaultSkinPrefab: {fileID: 0}
-    skinPrefab: {fileID: 0}
-    skinSprite: {fileID: 0}
-    isSkinEquipped: 0
+    defaultSkinPrefab: {fileID: 919132149155446097, guid: c47d192d2fcf1224786f36ec8c6b036f, type: 3}
+    skinPrefab: {fileID: 919132149155446097, guid: 31b1c4af866aa0c4299d8fe8320c0eac, type: 3}
+    skinSprite: {fileID: 21300000, guid: e7e189e186c18ad4fa1c0a7fc02e640e, type: 3}
+    isSkinEquipped: 1
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
     baseLife: 200
-    currentLife: 170
+    currentLife: 200
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1136,7 +1136,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     isEmulsifier: 0
-    isEmulsified: 0
+    isEmulsified: 1
     powerUps:
     - powerUpType: 5
       amount: 50
@@ -1147,13 +1147,13 @@ MonoBehaviour:
     modelPrefab: {fileID: 494663837245868045, guid: 764aff80f0725694299287f4ddeb2404, type: 3}
     defaultSkinPrefab: {fileID: 919132149155446097, guid: 4e5f65750865c1c469d3c146a93ab9f0, type: 3}
     skinPrefab: {fileID: 919132149155446097, guid: 21cc9c737c17e83409232d07be5d6114, type: 3}
-    skinSprite: {fileID: 21300000, guid: 1361719d3fb098d42bcbd702854c290c, type: 3}
-    isSkinEquipped: 0
+    skinSprite: {fileID: 21300000, guid: f1e309905c983c94fa07af011acffeb5, type: 3}
+    isSkinEquipped: 1
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 1d621b960f8110d43b81403c8c87affc, type: 2}
     baseLife: 200
-    currentLife: 170
+    currentLife: 200
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1404,7 +1404,7 @@ MonoBehaviour:
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 20
     animatorController: {fileID: 9100000, guid: 80a07111e409922478dde27e7a64d44f, type: 2}
     baseLife: 120
     currentLife: 120

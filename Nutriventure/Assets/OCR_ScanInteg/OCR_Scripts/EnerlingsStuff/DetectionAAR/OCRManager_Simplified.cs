@@ -1070,7 +1070,7 @@ public class OCRManager_Simplified : MonoBehaviour
         // No text extracted at all — accidental scan, no energy deducted
         if (noIngredientText != null)
         {
-            noIngredientText.text = "No text was detected from the scan.\nMake sure the camera is pointed at an ingredient list and try again.";
+            noIngredientText.text = "No ingredients was detected from the scan.\nMake sure the camera is pointed at an ingredient list and try again.";
             noIngredientText.gameObject.SetActive(true);
         }
         ShowWarning("No text scanned — no energy was used.");

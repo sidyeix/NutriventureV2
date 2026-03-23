@@ -15,6 +15,16 @@ public class KartCollisionHandler : MonoBehaviour
     public float resetHeight = 0.5f;
     public float resetSpeed = 10f;
     public bool findNearestWaypoint = true;
+
+    [Header("Bounds Safety Reset")]
+    public bool enableOutOfBoundsReset = true;
+    public float positionLimitXZ = 50f;
+    public float outOfBoundsDuration = 3f;
+
+    [Header("Restricted Zone Reset")]
+    public bool enableRestrictedZoneReset = true;
+    public string restrictedZoneTag = "RestrictedZone";
+    public bool allowNameContainsRestricted = true;
     
     [Header("Damage Settings")]
     public int damagePerCollision = 1;
@@ -51,6 +61,7 @@ public class KartCollisionHandler : MonoBehaviour
     private bool isInvulnerable = false;
     private Camera mainCamera;
     private Vector3 cameraOriginalPosition;
+    private float outOfBoundsTimer = 0f;
     
     void Start()
     {
@@ -101,6 +112,11 @@ public class KartCollisionHandler : MonoBehaviour
             // ADDED: Ensure waypoints have correct rotation
             EnsureWaypointRotations();
         }
+    }
+
+    void Update()
+    {
+        HandleOutOfBoundsReset();
     }
     
     void FindRoadWaypoints()
@@ -191,6 +207,16 @@ public class KartCollisionHandler : MonoBehaviour
     {
         // Add DEBUG LOG to see what's triggering
         Debug.Log($"🔵 Kart OnTriggerEnter: {other.gameObject.name}");
+
+        if (enableRestrictedZoneReset && IsRestrictedZone(other.gameObject))
+        {
+            Debug.Log($"🚫 Entered restricted zone: {other.gameObject.name}. Resetting kart.");
+            if (!isResetting)
+            {
+                StartCoroutine(ResetToRoad());
+            }
+            return;
+        }
         
         // Check if it's a powerup FIRST
         ItemCollectible item = other.GetComponent<ItemCollectible>();
@@ -206,6 +232,51 @@ public class KartCollisionHandler : MonoBehaviour
         
         // Only handle allergens (not powerups)
         HandleAllergenTrigger(other);
+    }
+
+    void HandleOutOfBoundsReset()
+    {
+        if (!enableOutOfBoundsReset || isResetting)
+        {
+            outOfBoundsTimer = 0f;
+            return;
+        }
+
+        if (kartController != null && !kartController.enabled)
+        {
+            outOfBoundsTimer = 0f;
+            return;
+        }
+
+        bool outOfBounds = Mathf.Abs(transform.position.x) >= positionLimitXZ || Mathf.Abs(transform.position.z) >= positionLimitXZ;
+
+        if (!outOfBounds)
+        {
+            outOfBoundsTimer = 0f;
+            return;
+        }
+
+        outOfBoundsTimer += Time.deltaTime;
+        if (outOfBoundsTimer >= outOfBoundsDuration)
+        {
+            Debug.Log($"🧭 Out-of-bounds for {outOfBoundsDuration:F1}s (|X|/|Z| >= {positionLimitXZ}). Resetting kart.");
+            outOfBoundsTimer = 0f;
+            StartCoroutine(ResetToRoad());
+        }
+    }
+
+    bool IsRestrictedZone(GameObject obj)
+    {
+        if (obj == null)
+            return false;
+
+        if (!string.IsNullOrEmpty(restrictedZoneTag) && obj.CompareTag(restrictedZoneTag))
+            return true;
+
+        if (allowNameContainsRestricted && obj.name.ToLower().Contains("restricted"))
+            return true;
+
+        return false;
     }
     
     void HandleFenceCollision(Collision collision)

@@ -480,6 +480,58 @@ public class TurnSystem : MonoBehaviour
         return currentRound;
     }
 
+    public BattleTurnRuntimeState CaptureRuntimeState()
+    {
+        return new BattleTurnRuntimeState
+        {
+            isPlayerTurn = currentTurn == TurnState.Player,
+            isTurnActive = isTurnActive,
+            currentTurnTime = currentTurnTime,
+            currentRound = currentRound,
+            gameTimer = gameTimer
+        };
+    }
+
+    public void ApplyRuntimeState(BattleTurnRuntimeState state)
+    {
+        if (state == null)
+            return;
+
+        currentTurn = state.isPlayerTurn ? TurnState.Player : TurnState.AI;
+        isTurnActive = state.isTurnActive;
+        currentTurnTime = Mathf.Max(0f, state.currentTurnTime);
+        currentRound = Mathf.Max(1, state.currentRound);
+        gameTimer = Mathf.Max(0f, state.gameTimer);
+
+        isAnimating = false;
+        isWaitingForAnimation = false;
+        isGameTimerRunning = true;
+
+        if (playerTurnTimerText != null)
+            playerTurnTimerText.gameObject.SetActive(currentTurn == TurnState.Player);
+
+        if (aiTurnTimerText != null)
+            aiTurnTimerText.gameObject.SetActive(currentTurn == TurnState.AI);
+
+        UpdateTurnUI();
+        UpdateGameTimerUI();
+
+        if (playerManager == null)
+            playerManager = FindObjectOfType<PlayerEnerlingManager>();
+
+        if (playerManager != null)
+        {
+            bool enablePlayerButtons = currentTurn == TurnState.Player && isTurnActive;
+            playerManager.SetButtonsInteractable(enablePlayerButtons);
+            playerManager.UpdateAllSkillButtons();
+        }
+
+        if (currentTurn == TurnState.AI && isTurnActive && aiManager != null)
+        {
+            aiManager.StartAITurn();
+        }
+    }
+
     public void StopBattle()
     {
         isTurnActive = false;

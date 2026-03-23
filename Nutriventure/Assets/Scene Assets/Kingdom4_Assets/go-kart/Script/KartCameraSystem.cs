@@ -4,13 +4,19 @@ using System.Collections;
 
 public class KartCameraSystem : MonoBehaviour
 {
+    private const int KartCameraActivePriority = 50;
+    private const int KartCameraInactivePriority = 0;
+
     [Header("Camera References")]
     public CinemachineVirtualCamera kartFollowCamera;
 
     [Header("Kart Reference")]
     public KartController kartController;
 
-    private CinemachineVirtualCamera playerFollowCamera;
+    [Header("Trigger Reference")]
+    [SerializeField] private KartTrigger kartTrigger;
+
+    [SerializeField] private CinemachineVirtualCamera playerFollowCamera;
     private GameObject mainCamera;
     private bool isFindingCameras = false;
 
@@ -22,13 +28,16 @@ public class KartCameraSystem : MonoBehaviour
         // Find player follow camera automatically
         FindPlayerFollowCamera();
 
-        // Ensure kart camera is disabled initially
-        if (kartFollowCamera != null)
-            kartFollowCamera.gameObject.SetActive(false);
+        if (kartTrigger == null)
+        {
+            kartTrigger = FindAnyObjectByType<KartTrigger>();
+        }
 
-        // Ensure player camera is enabled initially
-        if (playerFollowCamera != null)
-            playerFollowCamera.gameObject.SetActive(true);
+        // Keep both camera objects active; use priority only for switching.
+        if (kartFollowCamera != null)
+        {
+            kartFollowCamera.Priority = KartCameraInactivePriority;
+        }
     }
 
     private void Update()
@@ -39,19 +48,18 @@ public class KartCameraSystem : MonoBehaviour
             StartCoroutine(RetryFindCameras());
         }
 
-        if (kartController == null) return;
+        bool isDriving = kartController != null && kartController.enabled;
+        bool isInKartCountdown = kartTrigger != null && kartTrigger.IsKartCameraMode;
+        bool useKartCamera = isDriving || isInKartCountdown;
 
-        bool isDriving = kartController.enabled;
-
-        // Switch cameras based on driving state
-        if (kartFollowCamera != null && kartFollowCamera.gameObject.activeSelf != isDriving)
+        if (kartFollowCamera != null)
         {
-            kartFollowCamera.gameObject.SetActive(isDriving);
+            kartFollowCamera.Priority = useKartCamera ? KartCameraActivePriority : KartCameraInactivePriority;
         }
 
-        if (playerFollowCamera != null && playerFollowCamera.gameObject.activeSelf == isDriving)
+        if (playerFollowCamera != null)
         {
-            playerFollowCamera.gameObject.SetActive(!isDriving);
+            playerFollowCamera.Priority = useKartCamera ? KartCameraInactivePriority : KartCameraActivePriority;
         }
     }
 
@@ -70,17 +78,12 @@ public class KartCameraSystem : MonoBehaviour
 
     private void FindPlayerFollowCamera()
     {
-        // Use the new FindAnyObjectByType method
-        CinemachineVirtualCamera cam = FindAnyObjectByType<CinemachineVirtualCamera>();
-
-        if (cam != null && cam != kartFollowCamera)
+        if (playerFollowCamera != null)
         {
-            playerFollowCamera = cam;
-            Debug.Log("✅ Player follow camera found automatically!");
             return;
         }
 
-        // Method 2: If still not found, try to find by common naming patterns
+        // Prefer common player camera names first.
         GameObject playerCamObj = GameObject.Find("PlayerFollowCamera")
                                 ?? GameObject.Find("ThirdPersonCamera")
                                 ?? GameObject.Find("Player Camera");
@@ -93,6 +96,28 @@ public class KartCameraSystem : MonoBehaviour
                 Debug.Log("✅ Player follow camera found by name!");
                 return;
             }
+        }
+
+        // Fallback: choose a non-kart virtual camera with highest current priority.
+        CinemachineVirtualCamera[] cameras = FindObjectsOfType<CinemachineVirtualCamera>();
+        int bestPriority = int.MinValue;
+        for (int i = 0; i < cameras.Length; i++)
+        {
+            CinemachineVirtualCamera candidate = cameras[i];
+            if (candidate == null || candidate == kartFollowCamera)
+                continue;
+
+            if (candidate.Priority > bestPriority)
+            {
+                bestPriority = candidate.Priority;
+                playerFollowCamera = candidate;
+            }
+        }
+
+        if (playerFollowCamera != null)
+        {
+            Debug.Log($"✅ Player follow camera fallback selected: {playerFollowCamera.name}");
+            return;
         }
 
         Debug.LogWarning("⚠️ Could not automatically find player follow camera!");

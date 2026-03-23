@@ -237,6 +237,77 @@ public class PersistentDataManager : MonoBehaviour
         }
     }
 
+    public void LockEnerling(string enerlingName)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        bool wasUnlocked = unlockedEnerlings.Remove(enerlingName);
+        PlayerPrefs.SetInt(enerlingName + "_Unlocked", 0);
+        PlayerPrefs.SetInt(enerlingName + "_CatchCount", 0);
+
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                ingredient.isUnlocked = false;
+                ingredient.currentCatchCount = 0;
+            }
+        }
+
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            var data = GameDataManager.Instance.CurrentGameData;
+            if (data.unlockedEnerlings != null)
+                data.unlockedEnerlings.Remove(enerlingName);
+
+            if (data.enerlingCatchCounts != null)
+                data.enerlingCatchCounts[enerlingName] = 0;
+
+            GameDataManager.Instance.SaveGameData();
+        }
+
+        PlayerPrefs.Save();
+        SyncUnlocksToGameData();
+
+        if (wasUnlocked)
+            Debug.Log($"Locked enerling: {enerlingName}");
+    }
+
+    public void SetCatchCount(string enerlingName, int catchCount)
+    {
+        if (string.IsNullOrEmpty(enerlingName)) return;
+
+        int clamped = Mathf.Max(0, catchCount);
+        int maxCatch = int.MaxValue;
+
+        if (ingredientDatabase != null)
+        {
+            var ingredient = ingredientDatabase.GetIngredientInfo(enerlingName);
+            if (ingredient != null)
+            {
+                maxCatch = Mathf.Max(0, ingredient.maxCatch);
+                clamped = Mathf.Clamp(clamped, 0, maxCatch);
+                ingredient.currentCatchCount = clamped;
+            }
+        }
+
+        PlayerPrefs.SetInt(enerlingName + "_CatchCount", clamped);
+        PlayerPrefs.Save();
+
+        if (GameDataManager.Instance != null && GameDataManager.Instance.CurrentGameData != null)
+        {
+            var data = GameDataManager.Instance.CurrentGameData;
+            if (data.enerlingCatchCounts == null)
+                data.enerlingCatchCounts = new GameData.StringIntDictionary3();
+
+            data.enerlingCatchCounts[enerlingName] = clamped;
+            GameDataManager.Instance.SaveGameData();
+        }
+
+        Debug.Log($"Set catch count for {enerlingName}: {clamped}" + (maxCatch == int.MaxValue ? "" : $"/{maxCatch}"));
+    }
+
     public void SetEnerlingEmulsified(string enerlingName, bool isEmulsified)
     {
         if (string.IsNullOrEmpty(enerlingName)) return;

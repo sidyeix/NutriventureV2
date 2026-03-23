@@ -61,11 +61,19 @@ public class PlayTimelineOnTrigger : MonoBehaviour
         if (other.CompareTag("Player") && !hasTriggered())
         {
             Debug.Log($"Player entered trigger. Checking phase...");
+
+            if (gameEndManager == null)
+                gameEndManager = FindObjectOfType<Kingdom4GameEndManager>();
             
             // Check current phase
             if (gameManager == null)
             {
-                Debug.LogError("AllerthriaGameManager.Instance is null!");
+                Debug.LogWarning("AllerthriaGameManager.Instance is null. Using direct summary fallback.");
+                if (reachQueen || completeGame)
+                {
+                    TriggerGameSummary();
+                    MarkAsPlayed();
+                }
                 return;
             }
             
@@ -93,57 +101,45 @@ public class PlayTimelineOnTrigger : MonoBehaviour
                 gameManager.StartPhase(AllerthriaGameManager.GamePhase.EndGame);
                 HandleEndGamePhase(true);
             }
+            else if (reachQueen || completeGame)
+            {
+                // Fallback path: queen/end trigger should always be able to open summary.
+                Debug.Log("Phase did not match expected branches. Forcing summary fallback.");
+                if (reachQueen)
+                {
+                    gameManager.ReachQueen();
+                }
+                if (completeGame)
+                {
+                    gameManager.CompleteGame();
+                }
+                TriggerGameSummary();
+                MarkAsPlayed();
+            }
         }
     }
     
     private void HandleCastlePhase(bool hasKeyAlready)
     {
-        // If player already has OCR Scanner Key AND we should skip to summary
-        if (hasKeyAlready && skipToSummaryIfHasKey)
-        {
-            Debug.Log("Player already has OCR Scanner Key in Castle Phase - going straight to summary");
-            
-            // Trigger castle phase actions
-            if (reachQueen)
-            {
-                gameManager.ReachQueen();
-            }
-            
-            // If we're in Platform Phase, transition to Castle Phase first
-            if (gameManager.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
-            {
-                gameManager.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
-            }
-            
-            // Go straight to game summary
-            TriggerGameSummary();
-            
-            MarkAsPlayed();
-            return;
-        }
-        
-        // If we're in Platform Phase, transition to Castle Phase first
+        // Always proceed straight to summary from queen trigger.
+        // Timeline playback is intentionally bypassed.
         if (gameManager.currentPhase == AllerthriaGameManager.GamePhase.PlatformPhase)
         {
             Debug.Log("Transitioning from Platform Phase to Castle Phase");
             gameManager.StartPhase(AllerthriaGameManager.GamePhase.CastlePhase);
         }
-        
-        // Normal flow (first time or if we're not skipping)
+
         if (reachQueen)
         {
             gameManager.ReachQueen();
         }
-        
-        // Play timeline if assigned (only for first time)
-        if (playableDirector != null && !hasKeyAlready)
+
+        if (completeGame)
         {
-            StartCoroutine(PlayTimelineWithDelay());
+            gameManager.CompleteGame();
         }
-        else if (hasKeyAlready)
-        {
-            Debug.Log("Player has key but timeline not played (skipToSummaryIfHasKey is false)");
-        }
+
+        TriggerGameSummary();
         
         MarkAsPlayed();
     }
