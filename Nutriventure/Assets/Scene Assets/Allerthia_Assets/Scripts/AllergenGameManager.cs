@@ -104,6 +104,14 @@ public class AllergenGameManager : MonoBehaviour
     [Tooltip("The AlerthiaInstruction PlayableDirector")]
     public PlayableDirector instructionTimeline;
 
+    [Header("Allergen Completion Cutscene")]
+    [Tooltip("Cutscene that plays once when player has collected all required allergens.")]
+    public PlayableDirector allAllergensCollectedCutscene;
+    [Tooltip("Target runtime-collected allergens needed to trigger completion cutscene.")]
+    public int requiredAllergenCountForCutscene = 9;
+    [Tooltip("If true, gameplay/timer stops when completion cutscene starts.")]
+    public bool stopGameplayWhenCompletionCutsceneStarts = true;
+
     // ─── TIMER ─────────────────────────────────────────────────
     [Header("Timer")]
     public TMP_Text timerText;
@@ -152,6 +160,7 @@ public class AllergenGameManager : MonoBehaviour
     private bool isPlayerInScrollTrigger = false;
     private IngredientInteractable currentTargetIngredient;
     private readonly HashSet<string> collectedAllergenIDs = new HashSet<string>();
+    private readonly HashSet<string> runtimeCollectedAllergenIDs = new HashSet<string>();
     private readonly List<GameObject> spawnedScrollButtons = new List<GameObject>();
     private readonly Dictionary<string, AllergenProductData.ProductInfo> productInfoById = new Dictionary<string, AllergenProductData.ProductInfo>(System.StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Button> scrollButtonById = new Dictionary<string, Button>(System.StringComparer.OrdinalIgnoreCase);
@@ -165,6 +174,7 @@ public class AllergenGameManager : MonoBehaviour
     private Coroutine closeScrollCoroutine;
     private readonly Dictionary<GameObject, bool> scrollOpenPreviousActiveState = new Dictionary<GameObject, bool>();
     private GameObject spawnedShowcaseProduct;
+    private bool hasPlayedAllergenCompletionCutscene = false;
 
     [Header("Player Tag")]
     public string playerTag = "Player";
@@ -489,6 +499,7 @@ public class AllergenGameManager : MonoBehaviour
         {
             string normalizedId = ingredientId.Trim();
             collectedAllergenIDs.Add(normalizedId);
+            runtimeCollectedAllergenIDs.Add(normalizedId);
             selectedScrollProductId = normalizedId;
         }
 
@@ -516,6 +527,39 @@ public class AllergenGameManager : MonoBehaviour
         {
             SpawnShowcaseProductById(ingredientId);
         }
+
+        TryPlayAllergensCompletionCutscene();
+    }
+
+    private void TryPlayAllergensCompletionCutscene()
+    {
+        if (hasPlayedAllergenCompletionCutscene)
+            return;
+
+        int target = Mathf.Max(1, requiredAllergenCountForCutscene);
+        if (runtimeCollectedAllergenIDs.Count < target)
+            return;
+
+        hasPlayedAllergenCompletionCutscene = true;
+
+        if (allAllergensCollectedCutscene == null)
+            return;
+
+        if (stopGameplayWhenCompletionCutsceneStarts)
+        {
+            isTimerRunning = false;
+            currentState = GameState.Finished;
+        }
+
+        allAllergensCollectedCutscene.stopped -= OnAllAllergensCutsceneFinished;
+        allAllergensCollectedCutscene.stopped += OnAllAllergensCutsceneFinished;
+        allAllergensCollectedCutscene.gameObject.SetActive(true);
+        allAllergensCollectedCutscene.Play();
+    }
+
+    private void OnAllAllergensCutsceneFinished(PlayableDirector director)
+    {
+        director.stopped -= OnAllAllergensCutsceneFinished;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -658,6 +702,8 @@ public class AllergenGameManager : MonoBehaviour
         // Reset points and collected tracking
         currentPoints = 0;
         collectedAllergenIDs.Clear();
+        runtimeCollectedAllergenIDs.Clear();
+        hasPlayedAllergenCompletionCutscene = false;
         SeedInitialUnlockedProducts();
         UpdatePointsUI();
         UpdateCollectedTrackerUI();
@@ -1185,6 +1231,10 @@ public class AllergenGameManager : MonoBehaviour
         {
             instructionTimeline.stopped -= OnInstructionTimelineFinished;
         }
+        if (allAllergensCollectedCutscene != null)
+        {
+            allAllergensCollectedCutscene.stopped -= OnAllAllergensCutsceneFinished;
+        }
         if (timelineFallbackCoroutine != null)
         {
             StopCoroutine(timelineFallbackCoroutine);
@@ -1226,6 +1276,8 @@ public class AllergenGameManager : MonoBehaviour
         currentPoints = 0;
         currentTargetIngredient = null;
         collectedAllergenIDs.Clear();
+        runtimeCollectedAllergenIDs.Clear();
+        hasPlayedAllergenCompletionCutscene = false;
         selectedScrollProductId = string.Empty;
         SeedInitialUnlockedProducts();
         ClearShowcaseProduct();

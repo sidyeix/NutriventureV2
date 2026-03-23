@@ -47,7 +47,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: ea6fe6d3939637c4f87c696e7ed96066, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 101
     armorPercent: 25
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -131,7 +131,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 577aa91963a22364fb2bca5608c03f9f, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -221,7 +221,7 @@ MonoBehaviour:
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 58f0cce8c17deb541924094c06990a41, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -287,7 +287,7 @@ MonoBehaviour:
   - ingredientName: Vitamin A
     rarity: 0
     kingdom: 0
-    isUnlocked: 0
+    isUnlocked: 1
     isEmulsifier: 0
     isEmulsified: 0
     powerUps:
@@ -303,10 +303,10 @@ MonoBehaviour:
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 8
     animatorController: {fileID: 9100000, guid: 407649418f9798f4bb04cb92e3d2eb86, type: 2}
     baseLife: 120
-    currentLife: 120
+    currentLife: 101
     armorPercent: 20
     baseDamage: 12
     immuneToOrganDamage: 1
@@ -984,10 +984,10 @@ MonoBehaviour:
     skinSprite: {fileID: 21300000, guid: ff417213bc90b414ea09ee2ca4d2e9b2, type: 3}
     isSkinEquipped: 1
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 20
     animatorController: {fileID: 9100000, guid: aee6249c44d87704397621a3cff4012f, type: 2}
     baseLife: 200
-    currentLife: 200
+    currentLife: 164
     armorPercent: 25
     baseDamage: 26
     immuneToOrganDamage: 0
@@ -1065,7 +1065,7 @@ MonoBehaviour:
     defaultSkinPrefab: {fileID: 919132149155446097, guid: c47d192d2fcf1224786f36ec8c6b036f, type: 3}
     skinPrefab: {fileID: 919132149155446097, guid: 31b1c4af866aa0c4299d8fe8320c0eac, type: 3}
     skinSprite: {fileID: 21300000, guid: e7e189e186c18ad4fa1c0a7fc02e640e, type: 3}
-    isSkinEquipped: 0
+    isSkinEquipped: 1
     maxCatch: 20
     currentCatchCount: 0
     animatorController: {fileID: 9100000, guid: 0261475b8ee5336458336511ac02100a, type: 2}
@@ -1136,7 +1136,7 @@ MonoBehaviour:
     kingdom: 2
     isUnlocked: 1
     isEmulsifier: 0
-    isEmulsified: 0
+    isEmulsified: 1
     powerUps:
     - powerUpType: 5
       amount: 50
@@ -1404,7 +1404,7 @@ MonoBehaviour:
     skinSprite: {fileID: 0}
     isSkinEquipped: 0
     maxCatch: 20
-    currentCatchCount: 0
+    currentCatchCount: 20
     animatorController: {fileID: 9100000, guid: 80a07111e409922478dde27e7a64d44f, type: 2}
     baseLife: 120
     currentLife: 120

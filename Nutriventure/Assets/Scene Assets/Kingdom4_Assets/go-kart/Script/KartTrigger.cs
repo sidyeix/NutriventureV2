@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Playables;
 using Cinemachine;
+using UnityEngine.UI;
 
 public class KartTrigger : MonoBehaviour
 {
@@ -15,14 +16,18 @@ public class KartTrigger : MonoBehaviour
     public GameObject playerUI;
     public GameObject kartDrivingUI;
     public TextMeshProUGUI destinationText;
-    
+
+    [Header("Drive Button")]
+    public GameObject driveButtonObject;
+    public Button driveButton;
+
     [Header("Countdown Settings")]
     public GameObject countdownUI;
     public TextMeshProUGUI countdownText;
     public float countdownTime = 3f;
     public AudioClip countdownBeepSound;
     public AudioClip countdownGoSound;
-    
+
     [Header("Horse Sound Effects")]
     public AudioClip horseIdleSound;
     public AudioClip horseRunningSound;
@@ -31,7 +36,19 @@ public class KartTrigger : MonoBehaviour
     [Range(0f, 1f)]
     public float runningVolume = 0.7f;
     public float fadeInOutDuration = 0.5f;
-    
+
+    [Header("Wagon Ride Sound Effects")]
+    [Tooltip("Looping SFX while the player is driving the wagon.")]
+    public AudioClip wagonDrivingLoopSfx;
+    [Tooltip("One-shot SFX when the player gets on the wagon.")]
+    public AudioClip wagonMountSfx;
+    [Tooltip("One-shot SFX when the player gets off the wagon.")]
+    public AudioClip wagonDismountSfx;
+    [Range(0f, 1f)]
+    public float wagonDrivingLoopVolume = 0.7f;
+    [Tooltip("Use 2D audio for wagon loop to ensure it stays audible while driving.")]
+    public bool wagonLoopUse2DAudio = true;
+
     [Header("Player UI Elements")]
     public GameObject[] playerUIElementsToHide;
 
@@ -55,6 +72,8 @@ public class KartTrigger : MonoBehaviour
     private bool isDriving = false;
     private bool isCountingDown = false;
 
+    public bool IsKartCameraMode => isCountingDown || isDriving;
+
     // Flags to control triggering
     private bool hasBeenUsed = false;
     private bool hasTriggeredThisEntry = false;
@@ -63,6 +82,7 @@ public class KartTrigger : MonoBehaviour
     private AudioSource audioSource;
     private AudioSource horseIdleSource;
     private AudioSource horseRunningSource;
+    private AudioSource wagonDrivingLoopSource;
     private Coroutine countdownCoroutine;
     private Coroutine idleFadeCoroutine;
     private Coroutine runningFadeCoroutine;
@@ -73,7 +93,7 @@ public class KartTrigger : MonoBehaviour
     private Transform playerOriginalParent;
 
     private bool hasPlayedTimeline = false;
-    
+
     // References for disabling movement/animation
     private StarterAssets.ThirdPersonController thirdPersonController;
     private StarterAssets.StarterAssetsInputs starterAssetsInputs;
@@ -87,7 +107,7 @@ public class KartTrigger : MonoBehaviour
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
-        
+
         // Get player components
         if (player != null)
         {
@@ -96,16 +116,16 @@ public class KartTrigger : MonoBehaviour
             playerAnimator = player.GetComponent<Animator>();
             characterController = player.GetComponent<CharacterController>();
         }
-        
+
         // Find camera references if not assigned
         FindCameraReferences();
-        
+
         // Store original player camera priority
         if (playerFollowCamera != null)
         {
             originalPlayerCameraPriority = playerFollowCamera.Priority;
         }
-        
+
         // Setup audio sources
         SetupAudioSources();
 
@@ -124,7 +144,14 @@ public class KartTrigger : MonoBehaviour
         // Initialize UI states
         if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
         if (countdownUI != null) countdownUI.SetActive(false);
-        
+        SetDriveButtonVisible(false);
+
+        if (driveButton != null)
+        {
+            driveButton.onClick.RemoveListener(OnDriveButtonClicked);
+            driveButton.onClick.AddListener(OnDriveButtonClicked);
+        }
+
         // Make sure wagon blocker is active at start
         if (wagonBlocker != null)
         {
@@ -177,7 +204,7 @@ public class KartTrigger : MonoBehaviour
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
-        
+
         // Setup separate audio sources for horse sounds
         horseIdleSource = gameObject.AddComponent<AudioSource>();
         horseIdleSource.spatialBlend = 1.0f;
@@ -185,27 +212,58 @@ public class KartTrigger : MonoBehaviour
         horseIdleSource.minDistance = 5f;
         horseIdleSource.maxDistance = 20f;
         horseIdleSource.loop = true;
-        
+
         horseRunningSource = gameObject.AddComponent<AudioSource>();
         horseRunningSource.spatialBlend = 1.0f;
         horseRunningSource.rolloffMode = AudioRolloffMode.Linear;
         horseRunningSource.minDistance = 5f;
         horseRunningSource.maxDistance = 30f;
         horseRunningSource.loop = true;
-        
+
+        SetupWagonDrivingLoopSource();
+
         // Configure horse idle sound
         if (horseIdleSound != null)
         {
             horseIdleSource.clip = horseIdleSound;
             horseIdleSource.volume = 0f;
         }
-        
+
         // Configure horse running sound
         if (horseRunningSound != null)
         {
             horseRunningSource.clip = horseRunningSound;
             horseRunningSource.volume = 0f;
         }
+
+        if (wagonDrivingLoopSfx != null)
+        {
+            wagonDrivingLoopSource.clip = wagonDrivingLoopSfx;
+            wagonDrivingLoopSource.volume = wagonDrivingLoopVolume;
+        }
+    }
+
+    private void SetupWagonDrivingLoopSource()
+    {
+        GameObject loopOwner = kartController != null ? kartController.gameObject : gameObject;
+
+        if (wagonDrivingLoopSource == null || wagonDrivingLoopSource.gameObject != loopOwner)
+        {
+            wagonDrivingLoopSource = loopOwner.AddComponent<AudioSource>();
+        }
+
+        // Prefer positional wagon loop so the sound follows the wagon while driving.
+        if (loopOwner != gameObject)
+        {
+            wagonLoopUse2DAudio = false;
+        }
+
+        wagonDrivingLoopSource.spatialBlend = wagonLoopUse2DAudio ? 0f : 1f;
+        wagonDrivingLoopSource.rolloffMode = AudioRolloffMode.Linear;
+        wagonDrivingLoopSource.minDistance = 5f;
+        wagonDrivingLoopSource.maxDistance = 35f;
+        wagonDrivingLoopSource.loop = true;
+        wagonDrivingLoopSource.playOnAwake = false;
     }
 
     private void Update()
@@ -215,6 +273,15 @@ public class KartTrigger : MonoBehaviour
         {
             ExitKart();
         }
+
+        // Keep loop alive while driving, in case another system interrupts audio playback.
+        if (isDriving && wagonDrivingLoopSfx != null)
+        {
+            if (wagonDrivingLoopSource == null || !wagonDrivingLoopSource.isPlaying)
+            {
+                StartWagonDrivingLoop();
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -223,16 +290,13 @@ public class KartTrigger : MonoBehaviour
         {
             playerInside = true;
             hasTriggeredThisEntry = true;
-            
+
             // Force stop the kart immediately
             ForceStopKart();
-            
-            // Automatically start the drive sequence
-            if (!isCountingDown && !isDriving)
-            {
-                StartDriveSequence();
-            }
-            
+
+            // Show drive button and wait for explicit player click.
+            SetDriveButtonVisible(true);
+
             // Start horse idle sound
             StartHorseIdleSound();
         }
@@ -243,14 +307,16 @@ public class KartTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = false;
-            
+
             if (!isDriving && !isCountingDown && !hasBeenUsed)
             {
                 hasTriggeredThisEntry = false;
             }
-            
+
+            SetDriveButtonVisible(false);
+
             FadeOutHorseIdleSound();
-            
+
             if (isCountingDown)
             {
                 StopCountdown();
@@ -258,23 +324,144 @@ public class KartTrigger : MonoBehaviour
         }
     }
 
+    public void OnDriveButtonClicked()
+    {
+        if (!playerInside || isDriving || isCountingDown || hasBeenUsed)
+            return;
+
+        SetDriveButtonVisible(false);
+        StartDriveSequence();
+    }
+
+    public void HandleStopPointCollision()
+    {
+        if (isCountingDown)
+        {
+            StopCountdown();
+            return;
+        }
+
+        if (isDriving)
+        {
+            ExitKart();
+        }
+    }
+
+    public void ResetRideAvailability()
+    {
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+            countdownCoroutine = null;
+        }
+
+        isCountingDown = false;
+        isDriving = false;
+        hasBeenUsed = false;
+        hasTriggeredThisEntry = false;
+        hasPlayedTimeline = false;
+
+        if (kartController != null)
+        {
+            kartController.SetControllable(false);
+        }
+
+        if (wagonBlocker != null)
+        {
+            wagonBlocker.SetActive(true);
+        }
+
+        if (countdownUI != null)
+        {
+            countdownUI.SetActive(false);
+        }
+
+        if (kartDrivingUI != null)
+        {
+            kartDrivingUI.SetActive(false);
+        }
+
+        SetDriveButtonVisible(playerInside);
+
+        Debug.Log("KartTrigger: Ride availability reset. Wagon can be ridden again.");
+    }
+
+    void SetDriveButtonVisible(bool isVisible)
+    {
+        if (driveButtonObject != null)
+        {
+            driveButtonObject.SetActive(isVisible);
+        }
+    }
+
     public void StartDriveSequence()
     {
         if (!playerInside || isDriving || isCountingDown || hasBeenUsed) return;
-        
+
+        SetDriveButtonVisible(false);
+        PlayOneShotSfx(wagonMountSfx);
+
         FadeOutHorseIdleSound();
         HidePlayerUIElements();
-        
+
         if (kartDrivingUI != null) kartDrivingUI.SetActive(true);
-        
+
         PreparePlayerForDriving();
+        StartCoroutine(StartCountdownAfterCameraPriority());
+    }
+
+    private IEnumerator StartCountdownAfterCameraPriority()
+    {
+        EnsureKartFollowCameraPriority();
+        ForceCameraRefresh();
+
+        // Wait briefly until kart camera is actually prioritized/active before countdown.
+        float timeout = 0.5f;
+        while (timeout > 0f && !IsKartCameraReadyForCountdown())
+        {
+            EnsureKartFollowCameraPriority();
+            ForceCameraRefresh();
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+
         StartCountdown();
+    }
+
+    private bool IsKartCameraReadyForCountdown()
+    {
+        if (kartFollowCamera == null)
+            return true;
+
+        bool hasPriority = playerFollowCamera == null || kartFollowCamera.Priority > playerFollowCamera.Priority;
+        bool isActiveInBrain = cinemachineBrain == null || cinemachineBrain.ActiveVirtualCamera == kartFollowCamera;
+
+        return hasPriority && isActiveInBrain;
+    }
+
+    private void EnsureKartFollowCameraPriority()
+    {
+        if (playerFollowCamera != null)
+        {
+            playerFollowCamera.Priority = 5;
+        }
+
+        if (kartFollowCamera != null)
+        {
+            if (!kartFollowCamera.gameObject.activeSelf)
+            {
+                kartFollowCamera.gameObject.SetActive(true);
+            }
+
+            kartFollowCamera.enabled = true;
+            kartFollowCamera.Priority = kartCameraPriority;
+        }
     }
 
     private void PreparePlayerForDriving()
     {
         if (player == null) return;
-        
+
         // Store original player transform
         playerOriginalPosition = player.transform.position;
         playerOriginalRotation = player.transform.rotation;
@@ -287,18 +474,18 @@ public class KartTrigger : MonoBehaviour
 
         // Disable player controllers
         ResetPlayerMovement();
-        
+
         if (characterController != null) characterController.enabled = false;
         if (thirdPersonController != null) thirdPersonController.enabled = false;
         if (starterAssetsInputs != null) starterAssetsInputs.enabled = false;
-        
+
         // Set driving animation
         if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
             playerAnimator.SetBool("IsDriving", true);
         }
-        
+
         // Switch to kart camera
         SwitchToKartCamera();
     }
@@ -306,14 +493,14 @@ public class KartTrigger : MonoBehaviour
     private void SwitchToKartCamera()
     {
         Debug.Log("Switching to KART camera");
-        
+
         // Lower player camera priority
         if (playerFollowCamera != null)
         {
             playerFollowCamera.Priority = 5;
             Debug.Log($"Player camera priority set to: {playerFollowCamera.Priority}");
         }
-        
+
         // Raise kart camera priority
         if (kartFollowCamera != null)
         {
@@ -322,7 +509,7 @@ public class KartTrigger : MonoBehaviour
             {
                 kartFollowCamera.gameObject.SetActive(true);
             }
-            
+
             kartFollowCamera.enabled = true;
             kartFollowCamera.Priority = kartCameraPriority;
             Debug.Log($"Kart camera priority set to: {kartFollowCamera.Priority}");
@@ -331,10 +518,10 @@ public class KartTrigger : MonoBehaviour
         {
             Debug.LogWarning("Kart follow camera not assigned!");
         }
-        
+
         // Force immediate camera refresh
         ForceCameraRefresh();
-        
+
         // Hard reset after a frame
         StartCoroutine(DelayedHardReset());
     }
@@ -342,14 +529,14 @@ public class KartTrigger : MonoBehaviour
     private void SwitchToPlayerCamera()
     {
         Debug.Log("Switching to PLAYER camera");
-        
+
         // Lower kart camera priority
         if (kartFollowCamera != null)
         {
             kartFollowCamera.Priority = 5;
             Debug.Log($"Kart camera priority set to: {kartFollowCamera.Priority}");
         }
-        
+
         // Restore player camera priority
         if (playerFollowCamera != null)
         {
@@ -358,15 +545,15 @@ public class KartTrigger : MonoBehaviour
             {
                 playerFollowCamera.gameObject.SetActive(true);
             }
-            
+
             playerFollowCamera.enabled = true;
             playerFollowCamera.Priority = originalPlayerCameraPriority;
             Debug.Log($"Player camera priority restored to: {playerFollowCamera.Priority}");
         }
-        
+
         // Force immediate camera refresh
         ForceCameraRefresh();
-        
+
         // Hard reset after a frame
         StartCoroutine(DelayedHardReset());
     }
@@ -378,10 +565,10 @@ public class KartTrigger : MonoBehaviour
             cinemachineBrain = FindObjectOfType<CinemachineBrain>();
             if (cinemachineBrain == null) return;
         }
-        
+
         // Force Cinemachine to update immediately
         cinemachineBrain.ManualUpdate();
-        
+
         if (cinemachineBrain.ActiveVirtualCamera != null)
         {
             Debug.Log($"Active camera after refresh: {cinemachineBrain.ActiveVirtualCamera.Name}");
@@ -391,22 +578,22 @@ public class KartTrigger : MonoBehaviour
     private void HardResetCamera()
     {
         Debug.Log("Hard resetting camera...");
-        
+
         if (cinemachineBrain == null)
         {
             cinemachineBrain = FindObjectOfType<CinemachineBrain>();
             if (cinemachineBrain == null) return;
         }
-        
+
         // Store current blend settings
         var defaultBlend = cinemachineBrain.m_DefaultBlend;
-        
+
         // Force a cut blend
         cinemachineBrain.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.Cut;
-        
+
         // Force update
         cinemachineBrain.ManualUpdate();
-        
+
         // Restore blend after frame
         StartCoroutine(RestoreBlendAfterFrame(defaultBlend));
     }
@@ -414,7 +601,7 @@ public class KartTrigger : MonoBehaviour
     private IEnumerator RestoreBlendAfterFrame(CinemachineBlendDefinition originalBlend)
     {
         yield return new WaitForEndOfFrame();
-        
+
         if (cinemachineBrain != null)
         {
             cinemachineBrain.m_DefaultBlend = originalBlend;
@@ -426,7 +613,7 @@ public class KartTrigger : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         HardResetCamera();
-        
+
         if (cinemachineBrain != null && cinemachineBrain.ActiveVirtualCamera != null)
         {
             Debug.Log($"Active camera after hard reset: {cinemachineBrain.ActiveVirtualCamera.Name}");
@@ -437,17 +624,17 @@ public class KartTrigger : MonoBehaviour
     public void DebugCameraState()
     {
         Debug.Log("=== CAMERA STATE DEBUG ===");
-        
+
         if (playerFollowCamera != null)
         {
             Debug.Log($"Player Camera - Active: {playerFollowCamera.gameObject.activeSelf}, Enabled: {playerFollowCamera.enabled}, Priority: {playerFollowCamera.Priority}");
         }
-        
+
         if (kartFollowCamera != null)
         {
             Debug.Log($"Kart Camera - Active: {kartFollowCamera.gameObject.activeSelf}, Enabled: {kartFollowCamera.enabled}, Priority: {kartFollowCamera.Priority}");
         }
-        
+
         if (cinemachineBrain != null)
         {
             var activeCam = cinemachineBrain.ActiveVirtualCamera;
@@ -469,15 +656,26 @@ public class KartTrigger : MonoBehaviour
         {
             StopCoroutine(countdownCoroutine);
         }
-        countdownCoroutine = StartCoroutine(CountdownRoutine());
+        countdownCoroutine = StartCoroutine(CountdownRoutineInternal(true));
     }
 
-    private IEnumerator CountdownRoutine()
+    public IEnumerator PlayRespawnCountdown()
+    {
+        if (countdownCoroutine != null)
+        {
+            StopCoroutine(countdownCoroutine);
+            countdownCoroutine = null;
+        }
+
+        yield return StartCoroutine(CountdownRoutineInternal(false));
+    }
+
+    private IEnumerator CountdownRoutineInternal(bool startDrivingAfterCountdown)
     {
         isCountingDown = true;
-        
+
         if (countdownUI != null) countdownUI.SetActive(true);
-        
+
         for (int i = (int)countdownTime; i > 0; i--)
         {
             if (countdownText != null)
@@ -485,44 +683,49 @@ public class KartTrigger : MonoBehaviour
                 countdownText.text = i.ToString();
                 countdownText.color = Color.yellow;
             }
-            
+
             if (countdownBeepSound != null)
             {
                 audioSource.PlayOneShot(countdownBeepSound);
             }
-            
+
             yield return StartCoroutine(ScaleCountdownText());
             yield return new WaitForSeconds(1f);
         }
-        
+
         if (countdownText != null)
         {
             countdownText.text = "GO!";
             countdownText.color = Color.green;
         }
-        
+
         if (countdownGoSound != null)
         {
             audioSource.PlayOneShot(countdownGoSound);
         }
-        
+
         yield return new WaitForSeconds(0.5f);
-        
+
         if (countdownUI != null) countdownUI.SetActive(false);
-        
+
         isCountingDown = false;
-        StartDriving();
+        countdownCoroutine = null;
+
+        if (startDrivingAfterCountdown)
+        {
+            StartDriving();
+        }
     }
 
     private IEnumerator ScaleCountdownText()
     {
         if (countdownText == null) yield break;
-        
+
         float duration = 0.3f;
         float elapsed = 0f;
         Vector3 originalScale = countdownText.transform.localScale;
         Vector3 targetScale = originalScale * 1.5f;
-        
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -530,7 +733,7 @@ public class KartTrigger : MonoBehaviour
             countdownText.transform.localScale = Vector3.Lerp(originalScale, targetScale, t);
             yield return null;
         }
-        
+
         elapsed = 0f;
         while (elapsed < duration)
         {
@@ -539,7 +742,7 @@ public class KartTrigger : MonoBehaviour
             countdownText.transform.localScale = Vector3.Lerp(targetScale, originalScale, t);
             yield return null;
         }
-        
+
         countdownText.transform.localScale = originalScale;
     }
 
@@ -549,9 +752,10 @@ public class KartTrigger : MonoBehaviour
 
         isDriving = true;
         hasBeenUsed = true;
-        
+
         RemoveWagonBlocker();
         StartHorseRunningSound();
+        StartWagonDrivingLoop();
 
         if (kartController != null)
         {
@@ -559,7 +763,7 @@ public class KartTrigger : MonoBehaviour
             UpdateDestinationUI();
         }
     }
-    
+
     private void RemoveWagonBlocker()
     {
         if (wagonBlocker != null)
@@ -571,25 +775,25 @@ public class KartTrigger : MonoBehaviour
     private void ForceStopKart()
     {
         if (kartController == null) return;
-        
+
         kartController.SetControllable(false);
-        
+
         Rigidbody rb = kartController.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
-        
+
         Debug.Log("Kart force stopped");
     }
 
     private void StartHorseIdleSound()
     {
         if (horseIdleSource == null || horseIdleSound == null) return;
-        
+
         horseIdleSource.Play();
-        
+
         if (idleFadeCoroutine != null)
         {
             StopCoroutine(idleFadeCoroutine);
@@ -600,7 +804,7 @@ public class KartTrigger : MonoBehaviour
     private void FadeOutHorseIdleSound()
     {
         if (horseIdleSource == null || !horseIdleSource.isPlaying) return;
-        
+
         if (idleFadeCoroutine != null)
         {
             StopCoroutine(idleFadeCoroutine);
@@ -611,9 +815,9 @@ public class KartTrigger : MonoBehaviour
     private void StartHorseRunningSound()
     {
         if (horseRunningSource == null || horseRunningSound == null) return;
-        
+
         horseRunningSource.Play();
-        
+
         if (runningFadeCoroutine != null)
         {
             StopCoroutine(runningFadeCoroutine);
@@ -624,7 +828,7 @@ public class KartTrigger : MonoBehaviour
     private void FadeOutHorseRunningSound()
     {
         if (horseRunningSource == null || !horseRunningSource.isPlaying) return;
-        
+
         if (runningFadeCoroutine != null)
         {
             StopCoroutine(runningFadeCoroutine);
@@ -635,7 +839,7 @@ public class KartTrigger : MonoBehaviour
     private IEnumerator FadeAudioSource(AudioSource source, float startVolume, float endVolume, float duration, bool stopAfterFade = false)
     {
         float elapsed = 0f;
-        
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -643,9 +847,9 @@ public class KartTrigger : MonoBehaviour
             source.volume = Mathf.Lerp(startVolume, endVolume, t);
             yield return null;
         }
-        
+
         source.volume = endVolume;
-        
+
         if (stopAfterFade && endVolume <= 0f)
         {
             source.Stop();
@@ -671,6 +875,7 @@ public class KartTrigger : MonoBehaviour
 
         ForceStopKart();
         FadeOutHorseRunningSound();
+        StopWagonDrivingLoop();
 
         if (kartController != null)
             kartController.SetControllable(false);
@@ -701,33 +906,35 @@ public class KartTrigger : MonoBehaviour
             StopCoroutine(countdownCoroutine);
             countdownCoroutine = null;
         }
-        
+
         isCountingDown = false;
-        
+
         if (countdownUI != null) countdownUI.SetActive(false);
         if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
-        
+
         ResetPlayerAfterCancellation();
-        
+
         if (playerInside)
         {
             StartHorseIdleSound();
         }
-        
+
+        PlayOneShotSfx(wagonDismountSfx);
+
         hasTriggeredThisEntry = false;
     }
 
     private void ResetPlayerAfterCancellation()
     {
         if (player == null) return;
-        
+
         player.transform.SetParent(playerOriginalParent);
         player.transform.position = playerOriginalPosition;
         player.transform.rotation = playerOriginalRotation;
 
         EnablePlayerMovementAndAnimation();
         ShowPlayerUIElements();
-        
+
         if (!isDriving)
         {
             hasBeenUsed = false;
@@ -739,15 +946,15 @@ public class KartTrigger : MonoBehaviour
         if (characterController != null) characterController.enabled = true;
         if (thirdPersonController != null) thirdPersonController.enabled = true;
         if (starterAssetsInputs != null) starterAssetsInputs.enabled = true;
-        if (playerAnimator != null) 
+        if (playerAnimator != null)
         {
             playerAnimator.enabled = true;
             playerAnimator.SetBool("IsDriving", false);
         }
-        
+
         // Switch back to player camera
         SwitchToPlayerCamera();
-        
+
         Debug.Log("Player movement and camera control restored");
     }
 
@@ -757,14 +964,14 @@ public class KartTrigger : MonoBehaviour
         {
             thirdPersonController.enabled = false;
         }
-        
+
         if (starterAssetsInputs != null)
         {
             starterAssetsInputs.move = Vector2.zero;
             starterAssetsInputs.jump = false;
             starterAssetsInputs.sprint = false;
         }
-        
+
         Rigidbody playerRb = player.GetComponent<Rigidbody>();
         if (playerRb != null)
         {
@@ -778,11 +985,13 @@ public class KartTrigger : MonoBehaviour
         if (!isDriving) return;
 
         ForceStopKart();
-        
+
         isDriving = false;
         playerInside = false;
 
         FadeOutHorseRunningSound();
+        StopWagonDrivingLoop();
+        PlayOneShotSfx(wagonDismountSfx);
         ShowPlayerUIElements();
 
         if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
@@ -797,7 +1006,7 @@ public class KartTrigger : MonoBehaviour
 
         if (kartController != null)
             kartController.SetControllable(false);
-            
+
         hasPlayedTimeline = false;
     }
 
@@ -806,6 +1015,8 @@ public class KartTrigger : MonoBehaviour
         if (!isDriving) return;
 
         isDriving = false;
+        StopWagonDrivingLoop();
+        PlayOneShotSfx(wagonDismountSfx);
         if (kartDrivingUI != null) kartDrivingUI.SetActive(false);
 
         CompleteAutoExit();
@@ -819,7 +1030,7 @@ public class KartTrigger : MonoBehaviour
         ShowPlayerUIElements();
 
         player.transform.SetParent(null);
-        
+
         if (kartController != null && kartController.CurrentDestination != null)
         {
             player.transform.position = kartController.CurrentDestination.position + Vector3.right * 2f;
@@ -833,10 +1044,10 @@ public class KartTrigger : MonoBehaviour
     {
         yield return new WaitForSeconds(cameraRestoreDelay);
         EnablePlayerMovementAndAnimation();
-        
+
         // Force hard reset after enabling
         HardResetCamera();
-        
+
         Debug.Log("Delayed player control enabled after timeline");
     }
 
@@ -908,7 +1119,7 @@ public class KartTrigger : MonoBehaviour
             }
         }
     }
-    
+
     private void OnDestroy()
     {
         if (idleFadeCoroutine != null)
@@ -919,10 +1130,52 @@ public class KartTrigger : MonoBehaviour
         {
             StopCoroutine(runningFadeCoroutine);
         }
-        
+
         if (destinationDirector != null)
         {
             destinationDirector.stopped -= OnTimelineFinished;
         }
+
+        StopWagonDrivingLoop();
+    }
+
+    private void StartWagonDrivingLoop()
+    {
+        if (wagonDrivingLoopSource == null)
+        {
+            SetupWagonDrivingLoopSource();
+            if (wagonDrivingLoopSource == null)
+                return;
+        }
+
+        wagonDrivingLoopSource.spatialBlend = wagonLoopUse2DAudio ? 0f : 1f;
+
+        if (wagonDrivingLoopSfx != null && wagonDrivingLoopSource.clip != wagonDrivingLoopSfx)
+        {
+            wagonDrivingLoopSource.clip = wagonDrivingLoopSfx;
+        }
+
+        wagonDrivingLoopSource.volume = wagonDrivingLoopVolume;
+
+        if (wagonDrivingLoopSource.clip != null && !wagonDrivingLoopSource.isPlaying)
+        {
+            wagonDrivingLoopSource.Play();
+        }
+    }
+
+    private void StopWagonDrivingLoop()
+    {
+        if (wagonDrivingLoopSource != null && wagonDrivingLoopSource.isPlaying)
+        {
+            wagonDrivingLoopSource.Stop();
+        }
+    }
+
+    private void PlayOneShotSfx(AudioClip clip)
+    {
+        if (clip == null || audioSource == null)
+            return;
+
+        audioSource.PlayOneShot(clip);
     }
 }

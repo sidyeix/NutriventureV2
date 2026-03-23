@@ -28,6 +28,7 @@ TagManager:
   - K3_KAFoods
   - Pushable
   - SpilledMilk
+  - RestrictedZone
   layers:
   - Default
   - TransparentFX

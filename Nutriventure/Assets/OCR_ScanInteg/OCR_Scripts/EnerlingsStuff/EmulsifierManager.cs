@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
@@ -57,6 +58,23 @@ public class EmulsifierManager : MonoBehaviour
   public Button emulsifyButton;
   public List<GameObject> disableOnEntry = new List<GameObject>();
 
+  [Header("Catch Requirements")]
+  public int requiredEnerlingCatchCount = 20;
+  public int requiredEmulsifierCatchCount = 5;
+
+  [Header("Catch UI")]
+  public Slider enerlingCatchSlider;
+  public TextMeshProUGUI enerlingCatchText;
+  public Slider emulsifierCatchSlider;
+  public TextMeshProUGUI emulsifierCatchText;
+
+  [Header("Warning UI")]
+  public GameObject warningPanel;
+  public CanvasGroup warningCanvasGroup;
+  public TextMeshProUGUI warningText;
+  public float warningShowSeconds = 2f;
+  public float warningFadeDuration = 0.25f;
+
   [Header("Enter UI Animation")]
   public AnimationCurve enterSlideCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
   public AnimationCurve enterFadeCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
@@ -81,6 +99,8 @@ public class EmulsifierManager : MonoBehaviour
   private bool isPlayerInside = false;
   private bool isEmulsifierOpen = false;
   private bool isTimelinePlaying = false;
+  private bool isEmulsifyInProgress = false;
+  private Coroutine warningCoroutine;
 
   private void Awake()
   {
@@ -169,6 +189,18 @@ public class EmulsifierManager : MonoBehaviour
     {
       emulsifierConfirmCanvas.SetActive(false);
     }
+
+    if (warningPanel != null)
+    {
+      warningPanel.SetActive(false);
+    }
+
+    if (warningCanvasGroup == null && warningPanel != null)
+    {
+      warningCanvasGroup = warningPanel.GetComponent<CanvasGroup>();
+    }
+
+    UpdateSelectedCatchUI();
   }
 
   private void OnTriggerEnter(Collider other)
@@ -237,6 +269,7 @@ public class EmulsifierManager : MonoBehaviour
     RefreshEnerlingList();
     RefreshEmulsifierList();
     UpdateAnimatorStates();
+    UpdateSelectedCatchUI();
   }
 
   public void ExitEmulsifier()
@@ -253,6 +286,7 @@ public class EmulsifierManager : MonoBehaviour
       emulsifyDirector.Stop();
     }
     isTimelinePlaying = false;
+    isEmulsifyInProgress = false;
 
     if (emulsifierCanvas != null)
     {
@@ -287,6 +321,14 @@ public class EmulsifierManager : MonoBehaviour
     }
 
     List<IngredientDatabase.IngredientInfo> enerlingsWithSkin = ingredientDatabase.GetEnerlingsWithSkin();
+    enerlingsWithSkin = enerlingsWithSkin.FindAll(i => i != null && !i.isEmulsified);
+
+    if (selectedEnerling != null && selectedEnerling.isEmulsified)
+    {
+      selectedEnerling = null;
+      ClearSpawned(ref spawnedEnerling);
+    }
+
     DisplayList(enerlingsWithSkin, enerlingContentParent, enerlingOddRowPrefab, enerlingEvenRowPrefab, enerlingButtonPrefab, OnEnerlingButtonClicked, enerlingButtons, selectedEnerling);
   }
 
@@ -409,19 +451,39 @@ public class EmulsifierManager : MonoBehaviour
       return;
     }
 
+    bool hadEnerlingBefore = selectedEnerling != null;
+
     if (selectedEnerling != null && selectedEnerling.ingredientName == enerlingName)
     {
+      // Toggle off current selection
       selectedEnerling = null;
       ClearSpawned(ref spawnedEnerling);
-    }
-    else
-    {
-      selectedEnerling = ingredientDatabase.GetIngredientInfo(enerlingName);
-      SpawnEnerling();
+
+      RefreshEnerlingList();
+      UpdateAnimatorStates();
+      UpdateSelectedCatchUI();
+      return;
     }
 
+    selectedEnerling = ingredientDatabase.GetIngredientInfo(enerlingName);
+
+    if (selectedEnerling != null && selectedEnerling.isEmulsified)
+    {
+      selectedEnerling = null;
+      ShowWarning("Already emulsified.");
+    }
+
+    SpawnEnerling();
+
     RefreshEnerlingList();
-    UpdateAnimatorStates();
+
+    // Animator params update only on first select or when selection gets removed.
+    if (!hadEnerlingBefore && selectedEnerling != null)
+    {
+      UpdateAnimatorStates();
+    }
+
+    UpdateSelectedCatchUI();
   }
 
   private void OnEmulsifierButtonClicked(string emulsifierName)
@@ -431,19 +493,32 @@ public class EmulsifierManager : MonoBehaviour
       return;
     }
 
+    bool hadEmulsifierBefore = selectedEmulsifier != null;
+
     if (selectedEmulsifier != null && SelectedEmulsifierMatches(emulsifierName))
     {
+      // Toggle off current selection
       selectedEmulsifier = null;
       ClearSpawned(ref spawnedEmulsifier);
-    }
-    else
-    {
-      selectedEmulsifier = ingredientDatabase.GetIngredientInfo(emulsifierName);
-      SpawnEmulsifier();
+
+      RefreshEmulsifierList();
+      UpdateAnimatorStates();
+      UpdateSelectedCatchUI();
+      return;
     }
 
+    selectedEmulsifier = ingredientDatabase.GetIngredientInfo(emulsifierName);
+    SpawnEmulsifier();
+
     RefreshEmulsifierList();
-    UpdateAnimatorStates();
+
+    // Animator params update only on first select or when selection gets removed.
+    if (!hadEmulsifierBefore && selectedEmulsifier != null)
+    {
+      UpdateAnimatorStates();
+    }
+
+    UpdateSelectedCatchUI();
   }
 
   private bool SelectedEmulsifierMatches(string emulsifierName)
@@ -454,6 +529,7 @@ public class EmulsifierManager : MonoBehaviour
   private void SpawnEnerling()
   {
     ClearSpawned(ref spawnedEnerling);
+    ClearClonedChildrenAtPoint(enerlingSpawnPoint);
 
     if (selectedEnerling == null || enerlingSpawnPoint == null)
     {
@@ -480,6 +556,7 @@ public class EmulsifierManager : MonoBehaviour
   private void SpawnEmulsifier()
   {
     ClearSpawned(ref spawnedEmulsifier);
+    ClearClonedChildrenAtPoint(emulsifierSpawnPoint);
 
     if (selectedEmulsifier == null || emulsifierSpawnPoint == null)
     {
@@ -501,6 +578,7 @@ public class EmulsifierManager : MonoBehaviour
   private void SpawnEmulsifiedSkin()
   {
     ClearSpawned(ref spawnedEmulsified);
+    ClearClonedChildrenAtPoint(emulsifiedSpawnPoint);
 
     if (selectedEnerling == null || emulsifiedSpawnPoint == null)
     {
@@ -523,6 +601,7 @@ public class EmulsifierManager : MonoBehaviour
   {
     if (spawned != null)
     {
+      spawned.SetActive(false);
       Destroy(spawned);
       spawned = null;
     }
@@ -542,7 +621,7 @@ public class EmulsifierManager : MonoBehaviour
 
     if (emulsifyButton != null)
     {
-      emulsifyButton.interactable = hasEnerling && hasEmulsifier;
+      emulsifyButton.interactable = hasEnerling && hasEmulsifier && !isEmulsifyInProgress && !isTimelinePlaying;
     }
   }
 
@@ -553,9 +632,49 @@ public class EmulsifierManager : MonoBehaviour
       return;
     }
 
-    if (isTimelinePlaying)
+    if (isTimelinePlaying || isEmulsifyInProgress)
     {
       return;
+    }
+
+    int selectedEnerlingCatchCount = GetCurrentCatchCount(selectedEnerling);
+    int selectedEmulsifierCatchCount = GetCurrentCatchCount(selectedEmulsifier);
+
+    int missingEnerling = Mathf.Max(0, requiredEnerlingCatchCount - selectedEnerlingCatchCount);
+    int missingEmulsifier = Mathf.Max(0, requiredEmulsifierCatchCount - selectedEmulsifierCatchCount);
+
+    if (missingEnerling > 0 || missingEmulsifier > 0)
+    {
+      ShowWarning(BuildCatchRequirementWarning(missingEnerling, missingEmulsifier));
+      return;
+    }
+
+    isEmulsifyInProgress = true;
+    if (emulsifyButton != null)
+      emulsifyButton.interactable = false;
+
+    PersistentDataManager pdm = PersistentDataManager.Instance;
+    if (pdm != null)
+    {
+      pdm.SetCatchCount(selectedEnerling.ingredientName, 1);
+
+      int remainingEmulsifierCatch = selectedEmulsifierCatchCount - requiredEmulsifierCatchCount;
+      pdm.SetCatchCount(selectedEmulsifier.ingredientName, remainingEmulsifierCatch);
+
+      if (remainingEmulsifierCatch <= 0)
+      {
+        pdm.LockEnerling(selectedEmulsifier.ingredientName);
+      }
+    }
+    else
+    {
+      selectedEnerling.currentCatchCount = 1;
+      selectedEmulsifier.currentCatchCount = Mathf.Max(0, selectedEmulsifierCatchCount - requiredEmulsifierCatchCount);
+
+      if (selectedEmulsifier.currentCatchCount <= 0)
+      {
+        selectedEmulsifier.isUnlocked = false;
+      }
     }
 
     selectedEnerling.isEmulsified = true;
@@ -564,8 +683,16 @@ public class EmulsifierManager : MonoBehaviour
       PersistentDataManager.Instance.SetEnerlingEmulsified(selectedEnerling.ingredientName, true);
     }
 
+    if (selectedEmulsifier != null && GetCurrentCatchCount(selectedEmulsifier) <= 0)
+    {
+      selectedEmulsifier = null;
+      ClearSpawned(ref spawnedEmulsifier);
+    }
+
     SpawnEmulsifiedSkin();
     ResetAnimatorSelectionFlags();
+    RefreshEmulsifierList();
+    UpdateSelectedCatchUI();
     PlayEmulsifyTimeline();
 
     if (emulsifierCanvas != null)
@@ -606,7 +733,128 @@ public class EmulsifierManager : MonoBehaviour
     RefreshEnerlingList();
     RefreshEmulsifierList();
     UpdateAnimatorStates();
+    UpdateSelectedCatchUI();
     ShowEnterUI(false);
+  }
+
+  private void UpdateSelectedCatchUI()
+  {
+    UpdateCatchDisplay(selectedEnerling, enerlingCatchSlider, enerlingCatchText);
+    UpdateCatchDisplay(selectedEmulsifier, emulsifierCatchSlider, emulsifierCatchText);
+  }
+
+  private void UpdateCatchDisplay(IngredientDatabase.IngredientInfo info, Slider slider, TextMeshProUGUI text)
+  {
+    int current = 0;
+    int max = 0;
+
+    if (info != null)
+    {
+      current = GetCurrentCatchCount(info);
+      max = Mathf.Max(0, info.maxCatch);
+    }
+
+    if (slider != null)
+    {
+      slider.minValue = 0f;
+      slider.maxValue = Mathf.Max(1, max);
+      slider.value = Mathf.Clamp(current, 0, Mathf.Max(1, max));
+    }
+
+    if (text != null)
+    {
+      text.text = $"{current}/{max}";
+    }
+  }
+
+  private int GetCurrentCatchCount(IngredientDatabase.IngredientInfo info)
+  {
+    if (info == null)
+      return 0;
+
+    if (PersistentDataManager.Instance != null)
+      return PersistentDataManager.Instance.GetCatchCount(info.ingredientName);
+
+    return Mathf.Max(0, info.currentCatchCount);
+  }
+
+  private string BuildCatchRequirementWarning(int missingEnerling, int missingEmulsifier)
+  {
+    List<string> parts = new List<string>();
+
+    if (missingEnerling > 0 && selectedEnerling != null)
+      parts.Add($"{missingEnerling} {selectedEnerling.ingredientName}");
+
+    if (missingEmulsifier > 0 && selectedEmulsifier != null)
+      parts.Add($"{missingEmulsifier} {selectedEmulsifier.ingredientName}");
+
+    if (parts.Count == 0)
+      return "Not enough catch count.";
+
+    return "Need " + string.Join(" and ", parts) + ".";
+  }
+
+  private void ShowWarning(string message)
+  {
+    if (warningText != null)
+      warningText.text = message;
+
+    if (warningPanel != null)
+      warningPanel.SetActive(true);
+
+    if (warningCoroutine != null)
+      StopCoroutine(warningCoroutine);
+
+    warningCoroutine = StartCoroutine(WarningRoutine());
+  }
+
+  private IEnumerator WarningRoutine()
+  {
+    if (warningCanvasGroup != null)
+    {
+      warningCanvasGroup.alpha = 1f;
+      warningCanvasGroup.interactable = false;
+      warningCanvasGroup.blocksRaycasts = false;
+    }
+
+    yield return new WaitForSeconds(warningShowSeconds);
+
+    if (warningCanvasGroup != null)
+    {
+      float elapsed = 0f;
+      float startAlpha = warningCanvasGroup.alpha;
+
+      while (elapsed < warningFadeDuration)
+      {
+        elapsed += Time.deltaTime;
+        float t = warningFadeDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / warningFadeDuration);
+        warningCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t);
+        yield return null;
+      }
+
+      warningCanvasGroup.alpha = 0f;
+    }
+
+    if (warningPanel != null)
+      warningPanel.SetActive(false);
+
+    warningCoroutine = null;
+  }
+
+  private void ClearClonedChildrenAtPoint(Transform spawnPoint)
+  {
+    if (spawnPoint == null)
+      return;
+
+    for (int i = spawnPoint.childCount - 1; i >= 0; i--)
+    {
+      Transform child = spawnPoint.GetChild(i);
+      if (child != null && child.gameObject.name.Contains("(Clone)"))
+      {
+        child.gameObject.SetActive(false);
+        Destroy(child.gameObject);
+      }
+    }
   }
 
   private void SetEntryObjectsActive(bool active)
@@ -732,6 +980,8 @@ public class EmulsifierManager : MonoBehaviour
     }
 
     isTimelinePlaying = false;
+    isEmulsifyInProgress = false;
+    UpdateAnimatorStates();
 
     if (emulsifierConfirmCanvas != null)
     {
