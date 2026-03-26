@@ -113,10 +113,8 @@ public class ProfileSettings : MonoBehaviour
 
     [Header("Reset Data Dialog")]
     public GameObject resetDataDialog;
-    public TMP_InputField resetConfirmationInput;
     public Button confirmResetButton;
     public Button cancelResetButton;
-    public string requiredConfirmationText = "I want to reset my Data";
 
     // Private variables
     private string originalName;
@@ -330,16 +328,10 @@ public class ProfileSettings : MonoBehaviour
             resetPlayerDataButton.onClick.AddListener(OnResetPlayerDataClicked);
 
         if (confirmResetButton != null)
-        {
-            confirmResetButton.interactable = false;
             confirmResetButton.onClick.AddListener(OnConfirmResetClicked);
-        }
 
         if (cancelResetButton != null)
             cancelResetButton.onClick.AddListener(OnCancelResetClicked);
-
-        if (resetConfirmationInput != null)
-            resetConfirmationInput.onValueChanged.AddListener(OnResetConfirmationTextChanged);
 
         if (achievementInfoCloseButton != null)
         {
@@ -1652,22 +1644,8 @@ public class ProfileSettings : MonoBehaviour
     {
         PlayButtonSound();
 
-        if (resetConfirmationInput != null)
-            resetConfirmationInput.text = "";
-
-        if (confirmResetButton != null)
-            confirmResetButton.interactable = false;
-
         if (resetDataDialog != null)
             resetDataDialog.SetActive(true);
-    }
-
-    private void OnResetConfirmationTextChanged(string text)
-    {
-        if (confirmResetButton == null) return;
-
-        bool isMatch = string.Equals(text.Trim(), requiredConfirmationText, System.StringComparison.OrdinalIgnoreCase);
-        confirmResetButton.interactable = isMatch;
     }
 
     private void OnConfirmResetClicked()
