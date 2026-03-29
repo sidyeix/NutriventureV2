@@ -20,7 +20,7 @@ public class GlobalMapManager : MonoBehaviour
     [SerializeField] private string kingdom1Scene = "3_kingdom1";
     [SerializeField] private string kingdom2Scene = "4_kingdom2";
     [SerializeField] private string kingdom3Scene = "5_kingdom3";
-    [SerializeField] private string kingdom4Scene = "6_kingdom4";
+    [SerializeField] private string kingdom4Scene = "6_Kingdom4_R";
 
     [Header("OCR Scanner Object")]
     [SerializeField] private GameObject ocrScannerObject;

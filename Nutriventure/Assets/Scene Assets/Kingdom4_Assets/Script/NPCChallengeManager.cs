@@ -71,6 +71,10 @@ public class NPCChallengeManager : MonoBehaviour
     public PlayerHealthManager playerHealthManager;
     public float wrongAnswerDamage = 1f;
 
+    [Header("Scoring")]
+    public int correctAnswerPoints = 100;
+    public int wrongAnswerPoints = 50;
+
     [Header("Answer Audio Feedback")]
     public AudioClip correctAnswerSfx;
     public AudioClip incorrectAnswerSfx;
@@ -83,6 +87,17 @@ public class NPCChallengeManager : MonoBehaviour
     public Animator npcAnimator;
     public string allergyParameterName = "isAllergy";
     public string happyParameterName = "isHappy";
+
+    [Header("Investigate Toggle Objects")]
+    [Tooltip("Objects toggled when the player clicks Investigate (disabled on inspect, re-enabled on close).")]
+    public List<GameObject> objectsToToggleOnInvestigate = new List<GameObject>();
+
+    [Header("Optional Animation On Complete")]
+    public bool triggerAnimationOnComplete;
+    public Animator onCompleteAnimator;
+    public bool useCompleteTriggerParam;
+    public string completeStateName;
+    public string completeTriggerParamName;
 
     private readonly Dictionary<NPCAllergenCategory, Sprite> spriteByCategory = new Dictionary<NPCAllergenCategory, Sprite>();
     private readonly List<NPCAllergenCategory> currentNpcAllergies = new List<NPCAllergenCategory>();
@@ -412,6 +427,7 @@ public class NPCChallengeManager : MonoBehaviour
 
         selectedFood.SetObserveCameraActive(true);
         FadeObserveCanvas(true);
+        SetInvestigateToggleObjects(false);
 
         if (investigateButtonRoot != null)
             investigateButtonRoot.SetActive(false);
@@ -450,6 +466,9 @@ public class NPCChallengeManager : MonoBehaviour
         {
             PlaySfx(correctAnswerSfx);
 
+            if (AllergenGameManager.Instance != null)
+                AllergenGameManager.Instance.AddPoints(correctAnswerPoints);
+
             if (playerChoseSafe)
                 selectedFood.ShowGreenShield();
             else
@@ -458,6 +477,10 @@ public class NPCChallengeManager : MonoBehaviour
         else
         {
             PlaySfx(incorrectAnswerSfx);
+
+            if (AllergenGameManager.Instance != null)
+                AllergenGameManager.Instance.DeductPoints(wrongAnswerPoints);
+
             DeductLife();
         }
 
@@ -513,6 +536,10 @@ public class NPCChallengeManager : MonoBehaviour
 
         challengeFinished = true;
 
+        // Notify AllergenGameManager that this challenge is done
+        if (AllergenGameManager.Instance != null)
+            AllergenGameManager.Instance.NotifyNPCChallengeCompleted();
+
         ShowAnswerResultIcons();
 
         bool hasMistake = false;
@@ -532,6 +559,14 @@ public class NPCChallengeManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(happyParameterName))
                 npcAnimator.SetBool(happyParameterName, !hasMistake);
+        }
+
+        if (triggerAnimationOnComplete && onCompleteAnimator != null)
+        {
+            if (useCompleteTriggerParam)
+                onCompleteAnimator.SetTrigger(completeTriggerParamName);
+            else
+                onCompleteAnimator.Play(completeStateName);
         }
 
         if (!reenableWagonAfterChallenge)
@@ -571,12 +606,9 @@ public class NPCChallengeManager : MonoBehaviour
 
     void DeductLife()
     {
-        if (playerHealthManager == null)
-            playerHealthManager = PlayerHealthManager.Instance;
-
-        if (playerHealthManager != null)
+        if (AllergenGameManager.Instance != null)
         {
-            playerHealthManager.TakeDamage(wrongAnswerDamage);
+            AllergenGameManager.Instance.TakeDamage(wrongAnswerDamage);
         }
     }
 
@@ -603,6 +635,16 @@ public class NPCChallengeManager : MonoBehaviour
         }
 
         FadeObserveCanvas(false);
+        SetInvestigateToggleObjects(true);
+    }
+
+    void SetInvestigateToggleObjects(bool active)
+    {
+        for (int i = 0; i < objectsToToggleOnInvestigate.Count; i++)
+        {
+            if (objectsToToggleOnInvestigate[i] != null)
+                objectsToToggleOnInvestigate[i].SetActive(active);
+        }
     }
 
     void FadeNpcCanvas(bool show)
@@ -683,6 +725,34 @@ public class NPCChallengeManager : MonoBehaviour
             T temp = list[i];
             list[i] = list[r];
             list[r] = temp;
+        }
+    }
+
+    /// <summary>
+    /// Resets this challenge so it can be triggered again on restart.
+    /// </summary>
+    public void ResetChallenge()
+    {
+        ClearSpawnedFood();
+        ClearAllergyGrid();
+        HideNpcCanvasImmediate();
+        HideObserveCanvasImmediate();
+
+        if (investigateButtonRoot != null)
+            investigateButtonRoot.SetActive(false);
+
+        challengeFinished = false;
+        hasTriggeredOnce = false;
+        playerInsideTrigger = false;
+        answerResults.Clear();
+        currentNpcAllergies.Clear();
+
+        if (npcAnimator != null)
+        {
+            if (!string.IsNullOrEmpty(allergyParameterName))
+                npcAnimator.SetBool(allergyParameterName, false);
+            if (!string.IsNullOrEmpty(happyParameterName))
+                npcAnimator.SetBool(happyParameterName, false);
         }
     }
 }

@@ -533,9 +533,9 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
     private void GetRemainingHealth()
     {
-        if (healthManager != null)
+        if (AllergenGameManager.Instance != null)
         {
-            remainingHearts = Mathf.CeilToInt(healthManager.currentHealth);
+            remainingHearts = Mathf.CeilToInt(AllergenGameManager.Instance.currentHealth);
         }
         else if (gameManager != null)
         {
@@ -559,36 +559,19 @@ public class Kingdom4GameEndManager : MonoBehaviour
         if (!playerWon || remainingHearts <= 0)
             return 0;
 
-        int maxStarsByTime;
-        if (completionTime < THREE_STAR_TIME_MAX)
-            maxStarsByTime = 3;
-        else if (completionTime < TWO_STAR_TIME_MAX)
-            maxStarsByTime = 2;
-        else
-            maxStarsByTime = 1;
-
-#if UNITY_EDITOR
-        Debug.Log($"Max stars by time ({FormatTime(completionTime)}): {maxStarsByTime}");
-#endif
-
-        int starsByHearts;
+        // Stars based on remaining health only
+        int finalStars;
         if (remainingHearts >= 4)
-            starsByHearts = 3;
+            finalStars = 3;
         else if (remainingHearts >= 3)
-            starsByHearts = 2;
+            finalStars = 2;
         else if (remainingHearts >= 1)
-            starsByHearts = 1;
+            finalStars = 1;
         else
-            starsByHearts = 0;
+            finalStars = 0;
 
 #if UNITY_EDITOR
-        Debug.Log($"Stars by hearts ({remainingHearts} hearts): {starsByHearts}");
-#endif
-
-        int finalStars = Mathf.Min(maxStarsByTime, starsByHearts);
-
-#if UNITY_EDITOR
-        Debug.Log($"Final stars: {finalStars}");
+        Debug.Log($"Stars by hearts ({remainingHearts} hearts): {finalStars}");
 #endif
         return finalStars;
     }
@@ -1389,7 +1372,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
         }
     }
 
-    private void TeleportPlayerToStartingPoint()
+    public void TeleportPlayerToStartingPoint()
     {
         if (playerController != null && startingPoint != null)
         {
@@ -1531,9 +1514,15 @@ public class Kingdom4GameEndManager : MonoBehaviour
             scoreManager.ResetScore();
         }
 
-        if (healthManager != null)
+        if (AllergenGameManager.Instance != null)
         {
-            healthManager.ResetHealth();
+            AllergenGameManager.Instance.ResetHealth();
+        }
+
+        // Reset K4 game systems (rocks, NPC challenges, animators)
+        if (AllergenGameManager.Instance != null)
+        {
+            AllergenGameManager.Instance.RestartK4Game();
         }
 
         if (collectKeyScript != null)
@@ -1636,13 +1625,24 @@ public class Kingdom4GameEndManager : MonoBehaviour
     private void AddCoinsToDatabase()
     {
         if (coinsAddedToDatabase || GameDataManager.Instance == null) return;
+        if (GameDataManager.Instance.CurrentGameData == null) return;
 
         GameDataManager.Instance.CurrentGameData.nutriCoins += totalCoins;
+
+        // Add XP and handle level-up
+        GameDataManager.Instance.CurrentGameData.currentXP += totalExp;
+        while (GameDataManager.Instance.CurrentGameData.currentXP >= GameDataManager.Instance.CurrentGameData.xpToNextLevel)
+        {
+            GameDataManager.Instance.CurrentGameData.playerLevel++;
+            GameDataManager.Instance.CurrentGameData.currentXP -= GameDataManager.Instance.CurrentGameData.xpToNextLevel;
+            GameDataManager.Instance.CurrentGameData.xpToNextLevel *= 1.5f;
+        }
+
         GameDataManager.Instance.SaveGameData();
         coinsAddedToDatabase = true;
 
 #if UNITY_EDITOR
-        Debug.Log($"Added {totalCoins} coins to database");
+        Debug.Log($"Added {totalCoins} coins and {totalExp} XP to database");
 #endif
     }
 

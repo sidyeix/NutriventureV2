@@ -108,17 +108,7 @@ public class MonsterAIHeartDamage : MonoBehaviour
         {
             playerTransform = player.transform;
 
-            // Try to get PlayerHealthManager from singleton first
-            playerHealth = PlayerHealthManager.Instance;
-
-            // If singleton is null, try to get it from the player GameObject
-            if (playerHealth == null)
-            {
-                playerHealth = player.GetComponent<PlayerHealthManager>();
-            }
-
-            if (playerHealth == null)
-                Debug.LogError("PlayerHealthManager NOT found on Player!");
+            // playerHealth reference kept for compatibility but not used for damage anymore
         }
         else
         {
@@ -505,19 +495,14 @@ public class MonsterAIHeartDamage : MonoBehaviour
 
     private void ApplyDamageToPlayer()
     {
-        if (playerHealth == null)
+        if (AllergenGameManager.Instance == null)
         {
-            // Try to get PlayerHealthManager from singleton
-            playerHealth = PlayerHealthManager.Instance;
-            if (playerHealth == null)
-            {
-                Debug.LogWarning("PlayerHealthManager is null!");
-                return;
-            }
+            Debug.LogWarning("AllergenGameManager is null!");
+            return;
         }
 
         // Deal 1 heart damage
-        playerHealth.TakeDamage(1f);
+        AllergenGameManager.Instance.TakeDamage(1f);
 
         Debug.Log("Monster damaged player's HEART!");
 
