@@ -25,9 +25,8 @@ public class SceneManagerController : MonoBehaviour
     // Convenience methods for each kingdom - UPDATED BASED ON YOUR SCENE LIST
     public void LoadNutriKingdom() => LoadScene("Scenes/3_Kingdom1");
     public void LoadSugaria() => LoadScene("Scenes/4_Kingdom 2");
-    public void LoadAlerthia() => LoadScene("Scenes/5_Kingdom3");
-    public void LoadPreservia() => LoadScene("Scenes/6_Kingdom4");
-
+    public void LoadAlerthia() => LoadScene("Scenes/6_Kingdom4_R");
+    public void LoadPreservia() => LoadScene("Scenes/5_Kingdom3");
     // Optional: You can also load by build index
     public void LoadSceneByIndex(int index)
     {

@@ -122,6 +122,7 @@ public class GameData
 
     // Kingdom Instruction Tracking (first-visit timeline played)
     public bool hasPlayedK1Instruction = false;
+    public bool hasPlayedK4CompletionCutscene = false;
 
     // Enerling catch counts (enerlingName -> catchCount)
     [System.Serializable]

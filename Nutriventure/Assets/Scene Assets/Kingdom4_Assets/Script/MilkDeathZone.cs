@@ -16,17 +16,16 @@ public class MilkDeathZone : MonoBehaviour
             return;
         }
 
-        // ❤️ Apply damage using PlayerHealthManager
-        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
-        if (healthManager != null)
+        // ❤️ Apply damage using AllergenGameManager
+        if (AllergenGameManager.Instance != null)
         {
-            float before = healthManager.currentHealth;
-            healthManager.TakeDamage(damageAmount);
-            Debug.Log($"🥛 Milk damage! Health: {before} → {healthManager.currentHealth}");
+            float before = AllergenGameManager.Instance.currentHealth;
+            AllergenGameManager.Instance.TakeDamage(damageAmount);
+            Debug.Log($"🥛 Milk damage! Health: {before} → {AllergenGameManager.Instance.currentHealth}");
         }
         else
         {
-            Debug.LogWarning("PlayerHealthManager not found!");
+            Debug.LogWarning("AllergenGameManager not found!");
         }
 
         // 🔥 Force detach from moving platform

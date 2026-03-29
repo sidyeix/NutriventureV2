@@ -293,22 +293,16 @@ public class ItemCollectible : MonoBehaviour
 
     void ApplyAllergenDamage()
     {
-        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
-
-        if (healthManager == null)
+        if (AllergenGameManager.Instance == null)
         {
-            healthManager = playerObject?.GetComponent<PlayerHealthManager>();
-            if (healthManager == null)
-            {
-                Debug.LogWarning("PlayerHealthManager not found!");
-                return;
-            }
+            Debug.LogWarning("AllergenGameManager not found!");
+            return;
         }
 
-        float healthBefore = healthManager.currentHealth;
-        healthManager.TakeDamage(damageAmount);
+        float healthBefore = AllergenGameManager.Instance.currentHealth;
+        AllergenGameManager.Instance.TakeDamage(damageAmount);
 
-        Debug.Log($"Player took {damageAmount} damage! Health: {healthBefore} → {healthManager.currentHealth}");
+        Debug.Log($"Player took {damageAmount} damage! Health: {healthBefore} → {AllergenGameManager.Instance.currentHealth}");
 
         if (currentPhase == Kingdom4Phase.Phase2_Wagon)
         {
@@ -362,21 +356,15 @@ public class ItemCollectible : MonoBehaviour
             Debug.Log("❤️ Heart collected! Healing player...");
             AttachHeartParticlesToKart();
 
-            PlayerHealthManager healthManager = PlayerHealthManager.Instance;
-            if (healthManager == null)
+            if (AllergenGameManager.Instance != null)
             {
-                healthManager = playerObject?.GetComponent<PlayerHealthManager>();
-            }
-
-            if (healthManager != null)
-            {
-                float healthBefore = healthManager.currentHealth;
-                healthManager.Heal(1);
-                Debug.Log($"Healed! Health: {healthBefore} → {healthManager.currentHealth}");
+                float healthBefore = AllergenGameManager.Instance.currentHealth;
+                AllergenGameManager.Instance.Heal(1);
+                Debug.Log($"Healed! Health: {healthBefore} → {AllergenGameManager.Instance.currentHealth}");
             }
             else
             {
-                Debug.LogError("PlayerHealthManager component not found!");
+                Debug.LogError("AllergenGameManager not found!");
             }
         }
         else

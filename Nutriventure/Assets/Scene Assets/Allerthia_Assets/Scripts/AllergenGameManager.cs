@@ -125,6 +125,30 @@ public class AllergenGameManager : MonoBehaviour
     public int pointsPerPickup = 100;
     private int currentPoints = 0;
 
+    // ─── HEALTH / HEARTS SYSTEM ───────────────────────────────
+    [Header("Heart System")]
+    public int maxHearts = 5;
+    public Transform heartsContainer;
+    public GameObject heartUIPrefab;
+    public Sprite fullHeartSprite;
+    public Sprite emptyHeartSprite;
+
+    [Header("Damage Settings")]
+    public float damageCooldown = 1f;
+
+    [Header("Damage Overlay")]
+    public GameObject damageOverlayObject;
+    public float overlayBlinkDuration = 2f;
+    public float overlayBlinkInterval = 0.15f;
+
+    [Header("Game End Reference")]
+    public Kingdom4GameEndManager gameEndManager;
+
+    [HideInInspector] public float currentHealth;
+    private float lastDamageTime;
+    private readonly List<Image> heartImages = new List<Image>();
+    private Coroutine overlayCoroutine;
+
     // ─── SPAWN MANAGER ────────────────────────────────────────
     [Header("Spawn Manager")]
     [Tooltip("Reference to the AllergenSpawnManager that handles prefab spawning")]
@@ -135,6 +159,12 @@ public class AllergenGameManager : MonoBehaviour
     public List<GameObject> objectsToDisableOnStart = new List<GameObject>();
     [Header("Objects to Enable When Game Starts")]
     public List<GameObject> objectsToEnableOnStart = new List<GameObject>();
+
+    [Header("Objects to Revert Position on Scroll Grab")]
+    [Tooltip("Their transforms are saved on scene start and restored when the scroll is grabbed (and on restart).")]
+    public List<GameObject> objectsToRevertOnScrollGrab = new List<GameObject>();
+    private struct SavedTransform { public Vector3 pos; public Quaternion rot; public Vector3 scale; }
+    private readonly Dictionary<GameObject, SavedTransform> savedScrollGrabTransforms = new Dictionary<GameObject, SavedTransform>();
 
     [Header("Food Interaction")]
     [Tooltip("Raycast origin for food detection (usually player armature/chest)")]
@@ -154,6 +184,27 @@ public class AllergenGameManager : MonoBehaviour
     [Header("Pickup SFX")]
     public AudioClip pickupSFX;
     [Range(0f, 1f)] public float pickupSfxVolume = 1f;
+
+    // ─── K4 GAME INTEGRATION ──────────────────────────────────
+    [Header("K4 Rock Obstacle Managers")]
+    [Tooltip("All K4_RockObstacleManagers in the scene. Their SpawnAll() is called on game start.")]
+    public K4_RockObstacleManager[] rockObstacleManagers;
+
+    [Header("K4 Stone Obstacles")]
+    [Tooltip("All K4_StoneObstacles in the scene. Reset on game restart.")]
+    public K4_StoneObstacles[] stoneObstacles;
+
+    [Header("K4 NPC Challenge Managers")]
+    [Tooltip("All NPC challenge stations. Reset on game restart.")]
+    public NPCChallengeManager[] npcChallengeManagers;
+
+    [Header("K4 Animators to Reset")]
+    [Tooltip("Additional Animators (ladders, elevators) to rebind on restart.")]
+    public Animator[] animatorsToReset;
+
+    [Header("K4 Scroll Camera Blend")]
+    [Tooltip("Smooth transition when opening/closing the scroll camera.")]
+    public float scrollCameraBlendDuration = 0.5f;
 
     // ─── INTERNAL STATE ────────────────────────────────────────
     private bool scrollAlreadyGrabbed = false;
@@ -175,6 +226,12 @@ public class AllergenGameManager : MonoBehaviour
     private readonly Dictionary<GameObject, bool> scrollOpenPreviousActiveState = new Dictionary<GameObject, bool>();
     private GameObject spawnedShowcaseProduct;
     private bool hasPlayedAllergenCompletionCutscene = false;
+    private bool pendingAllergenCompletionCutscene = false;
+
+    [Header("NPC Challenge Tracker")]
+    [Tooltip("UI text showing completed/total NPC challenges, e.g. '2/4'")]
+    public TMP_Text npcChallengeTrackerText;
+    private int completedNPCChallenges = 0;
 
     [Header("Player Tag")]
     public string playerTag = "Player";
@@ -212,6 +269,7 @@ public class AllergenGameManager : MonoBehaviour
         if (instructionCloseButton != null) instructionCloseButton.gameObject.SetActive(false);
         if (openMechanicsButton != null) openMechanicsButton.gameObject.SetActive(false);
 
+        SaveScrollGrabObjectTransforms();
         SetupButtonListeners();
         ResolveSpawnManager();
         EnsureScrollCanvasClickable();
@@ -220,6 +278,7 @@ public class AllergenGameManager : MonoBehaviour
         UpdateTimerUI();
         UpdatePointsUI();
         UpdateCollectedTrackerUI();
+        UpdateNPCChallengeTrackerUI();
     }
 
     void Update()
@@ -396,6 +455,9 @@ public class AllergenGameManager : MonoBehaviour
         scrollAlreadyGrabbed = true;
         currentState = GameState.ScrollGrabbed;
 
+        // Revert door / entrance objects to their saved positions
+        RevertScrollGrabObjectTransforms();
+
         // Hide scroll object and grab button
         if (allerthiaScrollObject != null) allerthiaScrollObject.SetActive(false);
         SetButtonActive(grabButton, false);
@@ -426,6 +488,7 @@ public class AllergenGameManager : MonoBehaviour
 
         if (scrollUIVirtualCamera != null)
         {
+            ApplyScrollCameraBlend();
             scrollUIVirtualCamera.Priority = scrollCameraOpenPriority;
         }
 
@@ -450,6 +513,7 @@ public class AllergenGameManager : MonoBehaviour
 
         if (scrollUIVirtualCamera != null)
         {
+            ApplyScrollCameraBlend();
             scrollUIVirtualCamera.Priority = scrollCameraClosedPriority;
         }
 
@@ -461,6 +525,13 @@ public class AllergenGameManager : MonoBehaviour
         }
 
         closeScrollCoroutine = StartCoroutine(CloseScrollUIAfterDelay());
+
+        // If this was the last allergen collected, play the completion cutscene now
+        if (pendingAllergenCompletionCutscene)
+        {
+            pendingAllergenCompletionCutscene = false;
+            TryPlayAllergensCompletionCutscene();
+        }
     }
 
     private IEnumerator CloseScrollUIAfterDelay()
@@ -528,7 +599,12 @@ public class AllergenGameManager : MonoBehaviour
             SpawnShowcaseProductById(ingredientId);
         }
 
-        TryPlayAllergensCompletionCutscene();
+        // Don't play cutscene immediately — wait for the player to close the scroll UI
+        int target = Mathf.Max(1, requiredAllergenCountForCutscene);
+        if (!hasPlayedAllergenCompletionCutscene && collectedAllergenIDs.Count >= target)
+        {
+            pendingAllergenCompletionCutscene = true;
+        }
     }
 
     private void TryPlayAllergensCompletionCutscene()
@@ -537,7 +613,7 @@ public class AllergenGameManager : MonoBehaviour
             return;
 
         int target = Mathf.Max(1, requiredAllergenCountForCutscene);
-        if (runtimeCollectedAllergenIDs.Count < target)
+        if (collectedAllergenIDs.Count < target)
             return;
 
         hasPlayedAllergenCompletionCutscene = true;
@@ -545,12 +621,7 @@ public class AllergenGameManager : MonoBehaviour
         if (allAllergensCollectedCutscene == null)
             return;
 
-        if (stopGameplayWhenCompletionCutsceneStarts)
-        {
-            isTimerRunning = false;
-            currentState = GameState.Finished;
-        }
-
+        // Do NOT stop timer or set Finished — collecting all allergens is not the end of the game.
         allAllergensCollectedCutscene.stopped -= OnAllAllergensCutsceneFinished;
         allAllergensCollectedCutscene.stopped += OnAllAllergensCutsceneFinished;
         allAllergensCollectedCutscene.gameObject.SetActive(true);
@@ -704,9 +775,15 @@ public class AllergenGameManager : MonoBehaviour
         collectedAllergenIDs.Clear();
         runtimeCollectedAllergenIDs.Clear();
         hasPlayedAllergenCompletionCutscene = false;
+        pendingAllergenCompletionCutscene = false;
+        completedNPCChallenges = 0;
         SeedInitialUnlockedProducts();
         UpdatePointsUI();
         UpdateCollectedTrackerUI();
+        UpdateNPCChallengeTrackerUI();
+
+        // Initialize hearts
+        InitializeHealth();
 
         // Spawn allergens via the spawn manager
         ResolveSpawnManager();
@@ -718,6 +795,292 @@ public class AllergenGameManager : MonoBehaviour
         else
         {
             Debug.LogWarning("AllergenGameManager: No AllergenSpawnManager assigned!");
+        }
+
+        // Spawn rock obstacle foods
+        if (rockObstacleManagers != null)
+        {
+            foreach (var rom in rockObstacleManagers)
+            {
+                if (rom != null) rom.SpawnAll();
+            }
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  K4 POINTS
+    // ══════════════════════════════════════════════════════════════
+
+    public void AddPoints(int amount)
+    {
+        currentPoints += amount;
+        UpdatePointsUI();
+    }
+
+    public void DeductPoints(int amount)
+    {
+        currentPoints = Mathf.Max(0, currentPoints - amount);
+        UpdatePointsUI();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  NPC CHALLENGE TRACKER
+    // ══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Called by NPCChallengeManager when a challenge is completed.
+    /// </summary>
+    public void NotifyNPCChallengeCompleted()
+    {
+        completedNPCChallenges++;
+        UpdateNPCChallengeTrackerUI();
+    }
+
+    private void UpdateNPCChallengeTrackerUI()
+    {
+        if (npcChallengeTrackerText == null) return;
+
+        int total = npcChallengeManagers != null ? npcChallengeManagers.Length : 0;
+        npcChallengeTrackerText.text = $"Helped: {completedNPCChallenges}/{total}";
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  HEALTH / HEARTS
+    // ══════════════════════════════════════════════════════════════
+
+    public void InitializeHealth()
+    {
+        currentHealth = maxHearts;
+        ClearHeartUI();
+        CreateHeartUI();
+        UpdateHeartUI();
+
+        if (damageOverlayObject != null)
+            damageOverlayObject.SetActive(false);
+    }
+
+    private void ClearHeartUI()
+    {
+        if (heartsContainer == null) return;
+
+        foreach (Transform child in heartsContainer)
+            Destroy(child.gameObject);
+
+        heartImages.Clear();
+    }
+
+    private void CreateHeartUI()
+    {
+        if (heartsContainer == null || heartUIPrefab == null) return;
+
+        for (int i = 0; i < maxHearts; i++)
+        {
+            GameObject heartGO = Instantiate(heartUIPrefab, heartsContainer);
+            heartGO.name = "Heart_" + i;
+            heartGO.transform.localScale = Vector3.one;
+
+            Image img = heartGO.GetComponent<Image>();
+            if (img == null)
+                img = heartGO.AddComponent<Image>();
+
+            if (fullHeartSprite != null)
+                img.sprite = fullHeartSprite;
+
+            heartImages.Add(img);
+        }
+    }
+
+    private void UpdateHeartUI()
+    {
+        float hp = currentHealth;
+
+        for (int i = 0; i < heartImages.Count; i++)
+        {
+            if (heartImages[i] == null) continue;
+
+            if (hp >= 1f)
+            {
+                heartImages[i].sprite = fullHeartSprite;
+                hp -= 1f;
+            }
+            else
+            {
+                heartImages[i].sprite = emptyHeartSprite;
+            }
+        }
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (Time.time < lastDamageTime + damageCooldown) return;
+
+        lastDamageTime = Time.time;
+        currentHealth = Mathf.Max(0f, currentHealth - amount);
+
+        ShowDamageOverlay();
+        UpdateHeartUI();
+
+        if (currentHealth <= 0f)
+            OnPlayerDied();
+    }
+
+    public void Heal(float amount)
+    {
+        currentHealth = Mathf.Min(maxHearts, currentHealth + amount);
+        UpdateHeartUI();
+    }
+
+    public void ResetHealth()
+    {
+        currentHealth = maxHearts;
+        UpdateHeartUI();
+        HideDamageOverlay();
+    }
+
+    private void OnPlayerDied()
+    {
+        Debug.Log("Player Died — showing game summary");
+
+        if (gameEndManager != null)
+            gameEndManager.HandleKingdom4GameOver();
+    }
+
+    private void ShowDamageOverlay()
+    {
+        if (damageOverlayObject == null) return;
+
+        if (overlayCoroutine != null)
+            StopCoroutine(overlayCoroutine);
+
+        overlayCoroutine = StartCoroutine(DamageOverlayRoutine());
+    }
+
+    private void HideDamageOverlay()
+    {
+        if (overlayCoroutine != null)
+        {
+            StopCoroutine(overlayCoroutine);
+            overlayCoroutine = null;
+        }
+
+        if (damageOverlayObject != null)
+            damageOverlayObject.SetActive(false);
+    }
+
+    private IEnumerator DamageOverlayRoutine()
+    {
+        CanvasGroup cg = damageOverlayObject.GetComponent<CanvasGroup>();
+        if (cg == null)
+            cg = damageOverlayObject.AddComponent<CanvasGroup>();
+
+        float elapsed = 0f;
+        bool visible = false;
+
+        while (elapsed < overlayBlinkDuration)
+        {
+            visible = !visible;
+            cg.alpha = visible ? 1f : 0f;
+            damageOverlayObject.SetActive(visible);
+            yield return new WaitForSeconds(overlayBlinkInterval);
+            elapsed += overlayBlinkInterval;
+        }
+
+        cg.alpha = 0f;
+        damageOverlayObject.SetActive(false);
+        overlayCoroutine = null;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  K4 FULL RESTART
+    // ══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Resets every K4 system back to its initial state so the game
+    /// can be started again as if it were freshly loaded.
+    /// </summary>
+    public void RestartK4Game()
+    {
+        // Reset rock obstacle spawned foods
+        if (rockObstacleManagers != null)
+        {
+            foreach (var rom in rockObstacleManagers)
+            {
+                if (rom != null) rom.ClearAll();
+            }
+        }
+
+        // Reset stone obstacles (animation + trigger)
+        if (stoneObstacles != null)
+        {
+            foreach (var so in stoneObstacles)
+            {
+                if (so != null) so.ResetObstacle();
+            }
+        }
+
+        // Reset NPC challenge managers
+        if (npcChallengeManagers != null)
+        {
+            foreach (var npc in npcChallengeManagers)
+            {
+                if (npc != null) npc.ResetChallenge();
+            }
+        }
+
+        // Reset additional animators (ladders, elevators, etc.)
+        if (animatorsToReset != null)
+        {
+            foreach (var anim in animatorsToReset)
+            {
+                if (anim != null)
+                {
+                    anim.Rebind();
+                    anim.Update(0f);
+                }
+            }
+        }
+
+        // Reset core session state (timer, points, allergens)
+        ResetSessionState();
+
+        // Reset health/hearts UI
+        ResetHealth();
+
+        // Reverse the start toggles: re-enable what was disabled, disable what was enabled
+        foreach (var obj in objectsToDisableOnStart)
+            if (obj != null) obj.SetActive(true);
+        foreach (var obj in objectsToEnableOnStart)
+            if (obj != null) obj.SetActive(false);
+
+        // Revert scroll-grab objects back to their saved positions
+        RevertScrollGrabObjectTransforms();
+    }
+
+    private void SaveScrollGrabObjectTransforms()
+    {
+        savedScrollGrabTransforms.Clear();
+        foreach (var obj in objectsToRevertOnScrollGrab)
+        {
+            if (obj != null)
+                savedScrollGrabTransforms[obj] = new SavedTransform
+                {
+                    pos = obj.transform.position,
+                    rot = obj.transform.rotation,
+                    scale = obj.transform.localScale
+                };
+        }
+    }
+
+    private void RevertScrollGrabObjectTransforms()
+    {
+        foreach (var kvp in savedScrollGrabTransforms)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.transform.position = kvp.Value.pos;
+                kvp.Key.transform.rotation = kvp.Value.rot;
+                kvp.Key.transform.localScale = kvp.Value.scale;
+            }
         }
     }
 
@@ -1196,6 +1559,38 @@ public class AllergenGameManager : MonoBehaviour
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  SCROLL CAMERA BLEND
+    // ══════════════════════════════════════════════════════════════
+
+    private Coroutine scrollBlendRestoreCoroutine;
+
+    private void ApplyScrollCameraBlend()
+    {
+        CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
+        if (brain == null) return;
+
+        if (scrollBlendRestoreCoroutine != null)
+            StopCoroutine(scrollBlendRestoreCoroutine);
+
+        CinemachineBlendDefinition original = brain.m_DefaultBlend;
+        brain.m_DefaultBlend = new CinemachineBlendDefinition(
+            CinemachineBlendDefinition.Style.EaseInOut,
+            Mathf.Max(0.1f, scrollCameraBlendDuration));
+
+        scrollBlendRestoreCoroutine = StartCoroutine(RestoreScrollBlend(brain, original));
+    }
+
+    private IEnumerator RestoreScrollBlend(CinemachineBrain brain, CinemachineBlendDefinition original)
+    {
+        yield return new WaitForSeconds(scrollCameraBlendDuration + 0.05f);
+
+        if (brain != null)
+            brain.m_DefaultBlend = original;
+
+        scrollBlendRestoreCoroutine = null;
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //  HELPERS
     // ══════════════════════════════════════════════════════════════
 
@@ -1265,6 +1660,22 @@ public class AllergenGameManager : MonoBehaviour
         ResetSessionState();
     }
 
+    public void StopTimer()
+    {
+        isTimerRunning = false;
+    }
+
+    public void PauseTimer()
+    {
+        isTimerRunning = false;
+    }
+
+    public void ResumeTimer()
+    {
+        if (currentState == GameState.Playing)
+            isTimerRunning = true;
+    }
+
     private void ResetSessionState()
     {
         // Reset gameplay flags
@@ -1278,6 +1689,8 @@ public class AllergenGameManager : MonoBehaviour
         collectedAllergenIDs.Clear();
         runtimeCollectedAllergenIDs.Clear();
         hasPlayedAllergenCompletionCutscene = false;
+        pendingAllergenCompletionCutscene = false;
+        completedNPCChallenges = 0;
         selectedScrollProductId = string.Empty;
         SeedInitialUnlockedProducts();
         ClearShowcaseProduct();
