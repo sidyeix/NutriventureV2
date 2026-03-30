@@ -1905,6 +1905,8 @@ public class Kingdom4GameEndManager : MonoBehaviour
         Debug.Log("Home button sequence complete");
 #endif
 
+        PlayLobbyMusic();
+
         isProcessingButton = false;
 
         if (homeButton != null)
@@ -1963,6 +1965,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
 
         ResetCharacterAnimation();
         RestoreBackgroundMusicVolume();
+        PlayRestartMusic();
         Time.timeScale = originalTimeScale;
 
         SwitchToPlayerCameraWithBlend();
@@ -1998,6 +2001,7 @@ public class Kingdom4GameEndManager : MonoBehaviour
             gameSummaryParent.SetActive(false);
 
         ResetPersistentData();
+        PlayRestartMusic();
 
         Time.timeScale = originalTimeScale;
 

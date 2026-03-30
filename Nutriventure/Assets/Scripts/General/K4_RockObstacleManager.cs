@@ -26,8 +26,20 @@ public class K4_RockObstacleManager : MonoBehaviour
   public void SpawnAll()
   {
     ClearAll();
-    SpawnFoods(safeFoodSpawnPoints, safeFoodPrefabs);
-    SpawnHeart();
+
+    // Pick a random safe-food point for the heart (if available)
+    int heartPointIndex = -1;
+    if (heartPrefab != null && safeFoodSpawnPoints != null && safeFoodSpawnPoints.Length > 0)
+    {
+      heartPointIndex = Random.Range(0, safeFoodSpawnPoints.Length);
+      Transform heartPoint = safeFoodSpawnPoints[heartPointIndex];
+      GameObject heart = Instantiate(heartPrefab, heartPoint.position, heartPoint.rotation, heartPoint);
+      AddFloating(heart);
+      spawnedObjects.Add(heart);
+    }
+
+    // Spawn safe foods on all points EXCEPT the heart's point
+    SpawnFoods(safeFoodSpawnPoints, safeFoodPrefabs, heartPointIndex);
     SpawnFoods(allergenSpawnPoints, allergenPrefabs);
   }
 
@@ -44,24 +56,16 @@ public class K4_RockObstacleManager : MonoBehaviour
     spawnedObjects.Clear();
   }
 
-  private void SpawnHeart()
-  {
-    if (heartPrefab == null || safeFoodSpawnPoints == null || safeFoodSpawnPoints.Length == 0)
-      return;
-
-    Transform point = safeFoodSpawnPoints[Random.Range(0, safeFoodSpawnPoints.Length)];
-    GameObject heart = Instantiate(heartPrefab, point.position, point.rotation, point);
-    AddFloating(heart);
-    spawnedObjects.Add(heart);
-  }
-
-  private void SpawnFoods(Transform[] spawnPoints, GameObject[] prefabs)
+  private void SpawnFoods(Transform[] spawnPoints, GameObject[] prefabs, int skipIndex = -1)
   {
     if (spawnPoints == null || spawnPoints.Length == 0 || prefabs == null || prefabs.Length == 0)
       return;
 
-    foreach (Transform point in spawnPoints)
+    for (int i = 0; i < spawnPoints.Length; i++)
     {
+      if (i == skipIndex) continue;
+
+      Transform point = spawnPoints[i];
       GameObject prefab = prefabs[Random.Range(0, prefabs.Length)];
       GameObject food = Instantiate(prefab, point.position, point.rotation, point);
       AddFloating(food);

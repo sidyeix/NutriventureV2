@@ -592,7 +592,11 @@ public class AllerthriaGameManager : MonoBehaviour
 
     public void CompleteGame()
     {
-        if (isGameComplete) return;
+        if (isGameComplete)
+        {
+            Debug.LogWarning("[AllerthriaGM] CompleteGame() called but isGameComplete is already true. Skipping.");
+            return;
+        }
 
         isGameComplete = true;
         UpdateQuestText("Mission Complete!");

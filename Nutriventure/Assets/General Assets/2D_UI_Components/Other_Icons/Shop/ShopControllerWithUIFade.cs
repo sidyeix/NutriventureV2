@@ -95,7 +95,7 @@ public class ShopControllerWithUIFade : MonoBehaviour
         // Activate shop camera
         if (shopCamera != null)
         {
-            shopCamera.Priority = 30;
+            shopCamera.Priority = 100;
         }
 
         // Show shop UI with fade
