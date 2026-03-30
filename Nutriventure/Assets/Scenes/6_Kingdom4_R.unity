@@ -67885,7 +67885,7 @@ GameObject:
   - component: {fileID: 517498968}
   - component: {fileID: 517498967}
   m_Layer: 5
-  m_Name: JumpInstruct
+  m_Name: FoodCollection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67930,7 +67930,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4cfb70a9aea3e5f44abef98630c75e73, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2b2acf4dc60609e4d947780cbe636834, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -154871,7 +154871,7 @@ GameObject:
   - component: {fileID: 1108861718}
   - component: {fileID: 1108861717}
   m_Layer: 5
-  m_Name: JumpInstruct
+  m_Name: ScrollOpen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -154916,7 +154916,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4cfb70a9aea3e5f44abef98630c75e73, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8cd25292d92f2694e8b440f25193c5d3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
