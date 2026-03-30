@@ -281,11 +281,11 @@ public class ChestManager : MonoBehaviour
         {
             isPlayerInTrigger = true;
             lastTriggerExitTime = 0f; // Reset exit time
-            
+
             // Cancel any pending hide operations
             if (showButtonCoroutine != null)
                 StopCoroutine(showButtonCoroutine);
-            
+
             // Only show claim button if there's a chest and it's claimable
             if (currentChest != null && currentChest.isClaimable && !currentChest.isOpened)
             {
@@ -301,11 +301,11 @@ public class ChestManager : MonoBehaviour
         {
             isPlayerInTrigger = false;
             lastTriggerExitTime = Time.time;
-            
+
             // Add a small delay before hiding to prevent flickering
             if (showButtonCoroutine != null)
                 StopCoroutine(showButtonCoroutine);
-            
+
             showButtonCoroutine = StartCoroutine(HideClaimButtonWithDelay(0.1f));
         }
     }
@@ -322,13 +322,13 @@ public class ChestManager : MonoBehaviour
         }
     }
 
-        // Add these new coroutines:
+    // Add these new coroutines:
     IEnumerator ShowClaimButtonWithDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Double-check conditions after delay
-        if (isPlayerInTrigger && currentChest != null && 
+        if (isPlayerInTrigger && currentChest != null &&
             currentChest.isClaimable && !currentChest.isOpened)
         {
             ShowClaimButton();
@@ -347,17 +347,17 @@ public class ChestManager : MonoBehaviour
         }
     }
 
-        IEnumerator HideClaimButtonWithDelay(float delay)
+    IEnumerator HideClaimButtonWithDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Check if player is still not in trigger (debounce)
         if (!isPlayerInTrigger)
         {
             HideClaimButton();
         }
     }
-    
+
 
     IEnumerator DeactivateAfterDelay(GameObject obj, float delay)
     {
@@ -451,7 +451,7 @@ public class ChestManager : MonoBehaviour
         ChangeBackgroundVideo(chestIndex);
         PlayChestBackgroundMusic(chestIndex);
 
-        chestCamera.Priority = 20;
+        chestCamera.Priority = 100;
         chestCamera.LookAt = chest.transform;
         chestCamera.Follow = chest.transform;
 
