@@ -917,21 +917,8 @@ public class KartController : MonoBehaviour
 
         SetControllable(false);
 
-        if (autoExitOnArrival)
-        {
-            StartCoroutine(AutoExitAfterDelay(autoExitDelay));
-        }
-    }
-
-    IEnumerator AutoExitAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        KartTrigger kartTrigger = FindAnyObjectByType<KartTrigger>();
-        if (kartTrigger != null)
-        {
-            kartTrigger.AutoExitKart();
-        }
+        // KartTrigger.LateUpdate handles playing the destination timeline
+        // and auto-exiting when the timeline finishes.
     }
 
     void ReadKeyboardAndGamepadInput()

@@ -118,21 +118,11 @@ public class GlobalMapManager : MonoBehaviour
     /// <summary>
     /// Checks if a kingdom is unlocked based on collected keys in GameData.
     /// Kingdom 1 = always unlocked, 2 = Sugaria key, 3 = Preservia key, 4 = Allerthia key.
+    /// NOTE: All kingdoms unlocked for build testing.
     /// </summary>
     private bool IsKingdomUnlocked(int kingdomNumber)
     {
-        if (GameDataManager.Instance == null || GameDataManager.Instance.CurrentGameData == null)
-            return false;
-
-        var gd = GameDataManager.Instance.CurrentGameData;
-        switch (kingdomNumber)
-        {
-            case 1: return true;
-            case 2: return gd.HasSugariaKey();
-            case 3: return gd.HasPreserviaKey();
-            case 4: return gd.HasAllerthiaKey();
-            default: return false;
-        }
+        return true;
     }
 
     public void TryLoad(string sceneName, bool canLoad)

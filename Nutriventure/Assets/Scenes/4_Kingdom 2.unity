@@ -140877,7 +140877,7 @@ MonoBehaviour:
   kingdom1Scene: 3_Kingdom1
   kingdom2Scene: 4_Kingdom 2
   kingdom3Scene: 5_Kingdom3
-  kingdom4Scene: 6_Kingdom4
+  kingdom4Scene: 6_Kingdom4_R
   ocrScannerObject: {fileID: 1404928592}
   bookOfEnerlingObject: {fileID: 0}
 --- !u!4 &1814711581

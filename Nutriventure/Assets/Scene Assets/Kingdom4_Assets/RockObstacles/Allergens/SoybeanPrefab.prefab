@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6589855192159605958}
   - component: {fileID: 304157843075466418}
+  - component: {fileID: -456685333307630556}
   m_Layer: 0
   m_Name: SoybeanPrefab
   m_TagString: Untagged
@@ -50,6 +51,27 @@ MonoBehaviour:
   safePoints: 100
   unsafePoints: 50
   collectSound: {fileID: 8300000, guid: 5fdb13d3756c84fecac96f5a2d124370, type: 3}
+--- !u!65 &-456685333307630556
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3649264645293908075}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &2368440495004075381
 PrefabInstance:
   m_ObjectHideFlags: 0

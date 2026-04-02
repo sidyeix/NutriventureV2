@@ -884,6 +884,10 @@ public class KartTrigger : MonoBehaviour
 
         if (destinationDirector != null)
         {
+            // Ensure the PlayableDirector's GameObject is active before playing
+            if (!destinationDirector.gameObject.activeSelf)
+                destinationDirector.gameObject.SetActive(true);
+
             destinationDirector.stopped += OnTimelineFinished;
             destinationDirector.Play();
         }

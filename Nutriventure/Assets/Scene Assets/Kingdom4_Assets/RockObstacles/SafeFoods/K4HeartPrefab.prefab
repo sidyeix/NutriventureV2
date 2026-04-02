@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4071549540031530787}
   - component: {fileID: 5593888611608195849}
+  - component: {fileID: -3265790834757905722}
   m_Layer: 0
   m_Name: K4HeartPrefab
   m_TagString: Untagged
@@ -47,6 +48,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::K4_HeartCollectible
   healAmount: 1
   collectSound: {fileID: 8300000, guid: 6e3b7845a2a48d443b9bd6165654a627, type: 3}
+--- !u!65 &-3265790834757905722
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8125444678559989855}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &4564096279091865598
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -9,6 +9,11 @@ public class K4_RockFoodCollectible : MonoBehaviour
 
   private bool collected;
 
+  private void OnEnable()
+  {
+    collected = false;
+  }
+
   private void OnTriggerEnter(Collider other)
   {
     if (collected) return;
@@ -33,6 +38,9 @@ public class K4_RockFoodCollectible : MonoBehaviour
     if (collectSound != null)
       AudioSource.PlayClipAtPoint(collectSound, transform.position);
 
-    Destroy(gameObject);
+    gameObject.SetActive(false);
+
+    if (K4_RockObstacleManager.Instance != null)
+      K4_RockObstacleManager.Instance.ScheduleRespawn(gameObject);
   }
 }
