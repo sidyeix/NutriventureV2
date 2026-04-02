@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4817638176983032084}
   - component: {fileID: 8823618561337269358}
+  - component: {fileID: -4617991562183107742}
   m_Layer: 0
   m_Name: AvocadoPrefab
   m_TagString: Untagged
@@ -50,6 +51,27 @@ MonoBehaviour:
   safePoints: 100
   unsafePoints: 50
   collectSound: {fileID: 8300000, guid: 47b85bec70ddabc4eba1bbd8750edd52, type: 3}
+--- !u!65 &-4617991562183107742
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832512529138163706}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &3972632887582397075
 GameObject:
   m_ObjectHideFlags: 0

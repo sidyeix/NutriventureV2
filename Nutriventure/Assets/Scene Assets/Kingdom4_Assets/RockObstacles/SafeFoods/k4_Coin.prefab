@@ -4978,6 +4978,7 @@ GameObject:
   - component: {fileID: 3730356594865710017}
   - component: {fileID: 6008453750810267052}
   - component: {fileID: -118797456906370380}
+  - component: {fileID: 1530128970625232605}
   m_Layer: 0
   m_Name: k4_Coin
   m_TagString: Coin
@@ -5058,6 +5059,27 @@ MonoBehaviour:
   amplitude: 0.25
   speed: 2
   phaseOffset: 0
+--- !u!65 &1530128970625232605
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3245123208443877900}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5712168516111765351
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,8 +1,11 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class K4_RockObstacleManager : MonoBehaviour
 {
+  public static K4_RockObstacleManager Instance { get; private set; }
+
   [Header("Safe Foods")]
   [SerializeField] private GameObject[] safeFoodPrefabs;
   [SerializeField] private Transform[] safeFoodSpawnPoints;
@@ -18,7 +21,15 @@ public class K4_RockObstacleManager : MonoBehaviour
   [SerializeField] private float floatAmplitude = 0.5f;
   [SerializeField] private float floatSpeed = 2f;
 
+  [Header("Respawn")]
+  [SerializeField] private float respawnDelay = 5f;
+
   private readonly List<GameObject> spawnedObjects = new List<GameObject>();
+
+  private void Awake()
+  {
+    Instance = this;
+  }
 
   /// <summary>
   /// Call this from AllergenGameManager when the game starts.
@@ -82,5 +93,17 @@ public class K4_RockObstacleManager : MonoBehaviour
     fa.amplitude = floatAmplitude;
     fa.speed = floatSpeed;
     fa.phaseOffset = Random.Range(0f, Mathf.PI * 2f);
+  }
+
+  public void ScheduleRespawn(GameObject obj)
+  {
+    StartCoroutine(RespawnAfterDelay(obj));
+  }
+
+  private IEnumerator RespawnAfterDelay(GameObject obj)
+  {
+    yield return new WaitForSeconds(respawnDelay);
+    if (obj != null)
+      obj.SetActive(true);
   }
 }
