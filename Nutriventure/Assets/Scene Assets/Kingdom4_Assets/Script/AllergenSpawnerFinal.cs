@@ -80,6 +80,67 @@ public class AllergenSpawnerFinal : MonoBehaviour
         return allergenPrefabs[index];
     }
 
+    public GameObject GetAllergenPrefabByName(string allergenName)
+    {
+        foreach (var prefab in allergenPrefabs)
+        {
+            if (prefab != null && prefab.name.Equals(allergenName, System.StringComparison.OrdinalIgnoreCase))
+                return prefab;
+        }
+        // Try partial match
+        foreach (var prefab in allergenPrefabs)
+        {
+            if (prefab != null && prefab.name.IndexOf(allergenName, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                return prefab;
+        }
+        Debug.LogWarning($"No allergen prefab found for: {allergenName}. Using random.");
+        return GetRandomAllergenPrefab();
+    }
+
+    public List<GameObject> GetSafeAllergenPrefabs(string excludeAllergen, int count)
+    {
+        List<GameObject> safeOptions = allergenPrefabs.FindAll(p =>
+            p != null &&
+            p.name.IndexOf(excludeAllergen, System.StringComparison.OrdinalIgnoreCase) < 0);
+        if (safeOptions.Count == 0) return new List<GameObject>();
+        Shuffle(safeOptions);
+        return safeOptions.GetRange(0, Mathf.Min(count, safeOptions.Count));
+    }
+
+    /// <summary>
+    /// Spawns the specified allergen on all rocks in the dangerous column.
+    /// </summary>
+    public void SpawnSpecificAllergenOnRocks(List<GameObject> rocks, string allergenName, float height)
+    {
+        ClearItemsOnRocks(rocks);
+        GameObject prefab = GetAllergenPrefabByName(allergenName);
+        foreach (var rock in rocks)
+        {
+            if (rock != null && prefab != null)
+                SpawnItemOnRock(rock, prefab, height);
+        }
+    }
+
+    /// <summary>
+    /// Spawns safe (non-dangerous) allergens on two safe columns.
+    /// Guarantees neither column gets the dangerous allergen.
+    /// </summary>
+    public void SpawnSafeAllergensOnRocks(List<GameObject> safeRocks1, List<GameObject> safeRocks2, string dangerousAllergen, float height)
+    {
+        ClearItemsOnRocks(safeRocks1);
+        ClearItemsOnRocks(safeRocks2);
+
+        List<GameObject> safePrefabs = GetSafeAllergenPrefabs(dangerousAllergen, 2);
+        GameObject safe1Prefab = safePrefabs.Count > 0 ? safePrefabs[0] : GetRandomAllergenPrefab();
+        GameObject safe2Prefab = safePrefabs.Count > 1 ? safePrefabs[1] : GetRandomAllergenPrefab();
+
+        foreach (var rock in safeRocks1)
+            if (rock != null) SpawnItemOnRock(rock, safe1Prefab, height);
+
+        foreach (var rock in safeRocks2)
+            if (rock != null) SpawnItemOnRock(rock, safe2Prefab, height);
+    }
+
    void SpawnItemOnRock(GameObject rock, GameObject itemPrefab, float height)
 {
     if (rock == null || itemPrefab == null) return;

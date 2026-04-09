@@ -146,6 +146,19 @@ private IEnumerator DisableItem()
     }
 }
     
+    /// <summary>
+    /// Resets the rock trigger state so the player can land on it again (used on retry).
+    /// </summary>
+    public void ResetRock()
+    {
+        isActivated = false;
+        isDangerousForCurrentNPC = false;
+        allergenOnThisRock = null;
+        if (triggerCollider != null)
+            triggerCollider.enabled = true;
+        Debug.Log($"Rock {gameObject.name} - Trigger reset.");
+    }
+
     // This is for debugging - show colliders in editor
     private void OnDrawGizmosSelected()
     {
